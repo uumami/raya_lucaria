@@ -1,0 +1,80 @@
+---
+layout: layouts/base.njk
+---
+
+{{ content | safe }}
+
+{# Read taskPage from pagination data cascade (not frontmatter taskType) #}
+{% set taskPage = taskPage %}
+{% set taskList = [] %}
+{% if taskPage %}
+  {% if taskPage.taskType == "homework" %}
+    {% set taskList = tasks.homework %}
+  {% elif taskPage.taskType == "exams" %}
+    {% set taskList = tasks.exams %}
+  {% elif taskPage.taskType == "projects" %}
+    {% set taskList = tasks.projects %}
+  {% endif %}
+{% elif taskType %}
+  {# Fallback: direct frontmatter taskType #}
+  {% if taskType == "homework" %}
+    {% set taskList = tasks.homework %}
+  {% elif taskType == "exams" %}
+    {% set taskList = tasks.exams %}
+  {% elif taskType == "projects" %}
+    {% set taskList = tasks.projects %}
+  {% endif %}
+{% endif %}
+
+{% if taskList and taskList.length > 0 %}
+<div class="space-y-4">
+  {% for task in taskList %}
+  <article class="p-4 rounded-lg border-l-4 bg-bg-secondary
+    {% if task.type == 'homework' %}border-homework{% endif %}
+    {% if task.type == 'exam' %}border-exam{% endif %}
+    {% if task.type == 'project' %}border-project{% endif %}
+  ">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+      <div>
+        <h3 class="font-bold text-lg">
+          <a href="{{ task.url | url }}" class="text-text hover:text-accent transition-colors">{{ task.title }}</a>
+        </h3>
+        {% if task.chapter %}
+        <p class="text-text-muted text-sm">{{ task.chapter }}</p>
+        {% endif %}
+      </div>
+      <div class="flex flex-col items-start sm:items-end text-sm gap-1">
+        {% if task.type == 'exam' and task.date %}
+        <span class="{% if task.overdue %}text-exam{% else %}text-text-muted{% endif %}">
+          {{ task.date | formatDate }}
+        </span>
+        {% elif task.due %}
+        <span class="{% if task.overdue %}text-exam{% else %}text-text-muted{% endif %}">
+          {{ task.due | formatDate }}
+          {% if task.due | isOverdue %}
+          <span class="text-xs ml-1">(pasado)</span>
+          {% else %}
+          <span class="text-xs ml-1 text-accent">({{ task.due | formatDateRelative }})</span>
+          {% endif %}
+        </span>
+        {% endif %}
+        {% if task.points %}
+        <span class="text-accent text-xs">{{ task.points }} pts</span>
+        {% endif %}
+        {% if task.location %}
+        <span class="text-text-muted text-xs">{{ task.location }}</span>
+        {% endif %}
+        {% if task.duration %}
+        <span class="text-text-muted text-xs">{{ task.duration }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% if task.summary %}
+    <p class="mt-2 text-text-muted text-sm">{{ task.summary }}</p>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<p class="text-text-muted text-center py-8 italic">No se han descubierto tareas en esta region.</p>
+{% endif %}

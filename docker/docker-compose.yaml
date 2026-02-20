@@ -1,0 +1,78 @@
+# Glintstone Docker Compose
+# Run from course repo root: docker compose -f glintstone/docker/docker-compose.yaml up build
+
+services:
+  build:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../clase:/app/clase:ro
+      - ../../glintstone.yaml:/app/glintstone.yaml:ro
+      - ../../calendario_temas.csv:/app/calendario_temas.csv:ro
+      - ../../anuncios.md:/app/anuncios.md:ro
+      - ../../README.md:/app/README.md:ro
+      - ../../glintstone/docs:/app/glintstone/docs:ro
+      - ../../_site:/app/_site
+    command: ["sh", "glintstone/docker/scripts/build.sh"]
+
+  dev:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../clase:/app/clase:ro
+      - ../../glintstone.yaml:/app/glintstone.yaml:ro
+      - ../../calendario_temas.csv:/app/calendario_temas.csv:ro
+      - ../../anuncios.md:/app/anuncios.md:ro
+      - ../../README.md:/app/README.md:ro
+      - ../../glintstone/docs:/app/glintstone/docs:ro
+      - ../../_site:/app/_site
+      # Mount source for live reload during development
+      - ../../glintstone/src:/app/glintstone/src:ro
+    ports:
+      - "3000:3000"
+    environment:
+      - PATH_PREFIX=${PATH_PREFIX:-}
+    command: ["sh", "glintstone/docker/scripts/dev.sh"]
+    stdin_open: true
+    tty: true
+
+  preprocess:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../clase:/app/clase:ro
+      - ../../glintstone.yaml:/app/glintstone.yaml:ro
+      - ../../README.md:/app/README.md:ro
+      - ../../glintstone/docs:/app/glintstone/docs:ro
+      - ../../glintstone/src/eleventy/_data:/app/glintstone/src/eleventy/_data
+    command: ["sh", "-c", "PYTHONPATH=/app/glintstone/src python3 -m preprocessing --verbose build"]
+
+  validate:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../clase:/app/clase:ro
+      - ../../glintstone.yaml:/app/glintstone.yaml:ro
+    command: ["sh", "-c", "PYTHONPATH=/app/glintstone/src python3 -m preprocessing validate"]
+
+  slides:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../clase:/app/clase:ro
+      - ../../_site:/app/_site
+    command: ["sh", "glintstone/docker/scripts/slides.sh"]
+
+  test:
+    build:
+      context: ../..
+      dockerfile: glintstone/docker/Dockerfile
+    volumes:
+      - ../../glintstone:/app/glintstone:ro
+      - ../../tests:/app/tests:ro
+    command: ["sh", "-c", "cd /app && python3 -m pytest tests/python/ -v"]

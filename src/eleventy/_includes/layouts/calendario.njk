@@ -1,0 +1,32 @@
+---
+layout: layouts/base.njk
+---
+
+{{ content | safe }}
+
+{% if calendar_topics and calendar_topics.length > 0 %}
+<div class="overflow-x-auto my-6">
+  <table class="w-full text-sm">
+    <thead>
+      <tr>
+        <th class="text-left px-3 py-2">Sem.</th>
+        <th class="text-left px-3 py-2">Fecha</th>
+        <th class="text-left px-3 py-2">Tema</th>
+        <th class="text-left px-3 py-2">Notas</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for week in calendar_topics %}
+      <tr class="{% if week.nota %}bg-bg-tertiary{% elif loop.index0 % 2 == 0 %}bg-bg-secondary{% endif %}">
+        <td class="px-3 py-2 text-accent-secondary font-mono">{{ week.semana }}</td>
+        <td class="px-3 py-2 text-text-muted whitespace-nowrap">{{ week.fecha }}</td>
+        <td class="px-3 py-2 text-text font-medium">{{ week.tema }}</td>
+        <td class="px-3 py-2 text-text-muted italic">{{ week.nota }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-text-muted text-center py-8 italic">No hay calendario disponible.</p>
+{% endif %}

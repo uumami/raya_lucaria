@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="{{ site.language | default('es') }}" data-theme="eva-02-dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {# Theme CSS — static link with fallback; inline script overrides href for saved theme #}
+  <link rel="stylesheet" href="{{ '/css/themes/eva-02-dark.css' | url }}" id="theme-stylesheet">
+  <script>
+    (function(){
+      var t=localStorage.getItem('glintstone-theme')||'eva-02-dark',h=document.documentElement;
+      h.setAttribute('data-theme',t);
+      var el=document.getElementById('theme-stylesheet');
+      if(el)el.setAttribute('href',el.getAttribute('href').replace(/[^/]+\.css$/,t+'.css'));
+      var s=localStorage.getItem('glintstone-size');
+      if(s&&s!=='normal')h.classList.add('size-'+s);
+      if(localStorage.getItem('glintstone-dyslexic')==='true')h.classList.add('font-dyslexic');
+    })();
+  </script>
+
+  <title>{% if title and title != "Inicio" %}{{ title }} | {% endif %}{{ site.name | default("Course Site") }}</title>
+  <meta name="description" content="{{ summary | default(site.description) }}">
+
+  {# Favicon #}
+  <link rel="icon" href="{{ '/favicon.ico' | url }}" type="image/x-icon">
+  <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | url }}">
+  <link rel="manifest" href="{{ '/manifest.json' | url }}">
+
+  {# Google Fonts: Inter + JetBrains Mono #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+  {# OpenDyslexic from jsDelivr #}
+  <link rel="stylesheet" href="{{ '/fonts/fonts.css' | url }}">
+
+  {# Tailwind styles #}
+  <link rel="stylesheet" href="{{ '/css/styles.css' | url }}">
+
+  {# KaTeX CSS (CDN) #}
+  {% if features.math %}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  {% endif %}
+
+  {# Pagefind search CSS #}
+  {% if features.search %}
+  <link rel="stylesheet" href="{{ '/pagefind/pagefind-ui.css' | url }}">
+  {% endif %}
+</head>
+<body class="bg-bg text-text min-h-screen font-sans antialiased">
+
+  {# Sidebar #}
+  <aside id="sidebar" class="sidebar fixed left-0 top-0 h-screen bg-bg-secondary border-r border-border flex flex-col z-50">
+    <div class="sidebar-content flex flex-col h-full">
+      {# Header #}
+      <div class="h-12 flex items-center justify-between px-3 border-b border-border flex-shrink-0">
+        <a href="{{ '/' | url }}" class="flex items-center space-x-2 text-accent hover:text-accent-hover transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <span class="font-bold text-sm truncate">{{ site.name | default("Course Site") }}</span>
+        </a>
+        <button id="sidebar-collapse" class="p-1.5 rounded hover:bg-bg-tertiary text-text-muted hover:text-accent transition-colors" title="Colapsar">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+          </svg>
+        </button>
+      </div>
+
+      {# Search widget #}
+      {% if features.search %}
+      <div class="px-2 py-2 border-b border-border">
+        {% include "components/search.njk" %}
+      </div>
+      {% endif %}
+
+      {# Navigation #}
+      <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-3 px-2">
+        {% include "components/nav.njk" %}
+      </nav>
+
+      {# Footer controls #}
+      <div class="p-2 border-t border-border flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-1">
+            {% if features.font_toggle %}
+            <button id="size-toggle" class="p-1.5 rounded text-text-muted hover:text-accent hover:bg-bg-tertiary transition-colors" title="Tamano de texto">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+              </svg>
+            </button>
+            <button id="font-toggle" class="p-1.5 rounded text-text-muted hover:text-accent hover:bg-bg-tertiary transition-colors" title="OpenDyslexic">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+              </svg>
+            </button>
+            {% endif %}
+            {% if features.theme_toggle %}
+            <button id="theme-toggle" class="p-1.5 rounded text-text-muted hover:text-accent hover:bg-bg-tertiary transition-colors" title="Cambiar tema">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+              </svg>
+            </button>
+            {% endif %}
+          </div>
+          <span class="text-xs text-text-muted">{{ site.description | default("") }}</span>
+        </div>
+      </div>
+    </div>
+
+    {# Collapsed state #}
+    <div class="sidebar-collapsed-content flex-col h-full items-center py-2">
+      <button id="sidebar-expand" class="p-2 rounded hover:bg-bg-tertiary text-text-muted hover:text-accent transition-colors mb-2" title="Expandir">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+        </svg>
+      </button>
+      <a href="{{ '/' | url }}" class="p-2 rounded hover:bg-bg-tertiary text-accent hover:text-accent-hover transition-colors" title="Inicio">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+      </a>
+    </div>
+  </aside>
+
+  {# Mobile overlay #}
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+
+  {# Main content #}
+  <div class="main-content min-h-screen flex flex-col">
+    {# Top bar #}
+    <header class="sticky top-0 z-30 h-12 bg-bg/95 backdrop-blur border-b border-border flex items-center px-4">
+      <button id="mobile-menu" class="p-2 -ml-2 rounded hover:bg-bg-secondary text-text-muted hover:text-accent transition-colors lg:hidden">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+
+      {# Breadcrumbs #}
+      {% if navigation.show_breadcrumbs %}
+      <nav class="flex items-center text-sm text-text-muted ml-2 lg:ml-0 overflow-hidden">
+        <a href="{{ '/' | url }}" class="hover:text-accent transition-colors flex-shrink-0">Inicio</a>
+        {% if breadcrumbs and breadcrumbs.length > 0 %}
+        {% for crumb in breadcrumbs %}
+        <svg class="w-4 h-4 mx-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+        {% if crumb.url %}
+        <a href="{{ crumb.url | url }}" class="hover:text-accent transition-colors truncate">{{ crumb.title }}</a>
+        {% else %}
+        <span class="text-text truncate">{{ crumb.title }}</span>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+      </nav>
+      {% endif %}
+    </header>
+
+    {# Content area with optional TOC sidebar #}
+    <div class="flex-1 flex">
+      <main id="main-content" class="flex-1 p-4 lg:p-6 xl:p-8 min-w-0">
+        <div class="w-full">
+          {# Prev/Next navigation (top) #}
+          {% if navigation.show_prev_next and (prevPage or nextPage) %}
+          <nav class="mb-6 flex items-center justify-between text-sm">
+            {% if prevPage %}
+            <a href="{{ prevPage.url | url }}" class="flex items-center gap-1 text-text-muted hover:text-accent transition-colors" data-prev>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              <span class="hidden sm:inline truncate max-w-[200px]">{{ prevPage.title }}</span>
+              <span class="sm:hidden">Anterior</span>
+            </a>
+            {% else %}<div></div>{% endif %}
+            {% if nextPage %}
+            <a href="{{ nextPage.url | url }}" class="flex items-center gap-1 text-text-muted hover:text-accent transition-colors" data-next>
+              <span class="hidden sm:inline truncate max-w-[200px]">{{ nextPage.title }}</span>
+              <span class="sm:hidden">Siguiente</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+            {% endif %}
+          </nav>
+          {% endif %}
+
+          {% if title and title != "Inicio" %}
+          <h1 class="text-2xl font-bold text-text mb-2">{{ title }}</h1>
+          {% endif %}
+          {% if readingTime %}
+          <div class="text-sm text-text-muted mb-4">{{ readingTime }} min de lectura</div>
+          {% endif %}
+
+          <article class="prose max-w-none">
+            {{ content | safe }}
+          </article>
+
+          {# Prev/Next navigation (bottom) #}
+          {% if navigation.show_prev_next and (prevPage or nextPage) %}
+          <nav class="mt-10 pt-6 border-t border-border grid grid-cols-2 gap-4">
+            {% if prevPage %}
+            <a href="{{ prevPage.url | url }}" class="group p-3 rounded-lg bg-bg-secondary hover:bg-bg-tertiary transition-colors">
+              <div class="text-xs text-text-muted">Anterior</div>
+              <div class="text-sm font-medium text-text group-hover:text-accent truncate">{{ prevPage.title }}</div>
+            </a>
+            {% else %}<div></div>{% endif %}
+            {% if nextPage %}
+            <a href="{{ nextPage.url | url }}" class="group p-3 rounded-lg bg-bg-secondary hover:bg-bg-tertiary transition-colors text-right">
+              <div class="text-xs text-text-muted">Siguiente</div>
+              <div class="text-sm font-medium text-text group-hover:text-accent truncate">{{ nextPage.title }}</div>
+            </a>
+            {% endif %}
+          </nav>
+          {% endif %}
+        </div>
+      </main>
+
+      {# Page TOC (right sidebar) #}
+      {% if navigation.show_toc %}
+      {% include "components/toc.njk" %}
+      {% endif %}
+    </div>
+
+    <footer class="border-t border-border px-4 py-3 flex items-center justify-between text-xs text-text-muted">
+      <span>{{ site.name | default("Course Site") }}</span>
+      <span class="text-accent-secondary">Raya Lucaria</span>
+    </footer>
+  </div>
+
+  {# JS bundle (NO inline JS) #}
+  <script defer src="{{ '/js/bundle.js' | url }}"></script>
+
+  {# KaTeX (CDN) #}
+  {% if features.math %}
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" data-katex-autorender></script>
+  {% endif %}
+
+  {# Mermaid (ESM CDN) #}
+  {% if features.mermaid %}
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    window.mermaid = mermaid;
+    window.dispatchEvent(new CustomEvent('mermaid-loaded'));
+  </script>
+  {% endif %}
+
+  {# Pagefind search JS #}
+  {% if features.search %}
+  <script defer src="{{ '/pagefind/pagefind-ui.js' | url }}"></script>
+  {% endif %}
+</body>
+</html>

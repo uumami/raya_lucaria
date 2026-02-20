@@ -1,0 +1,315 @@
+{
+  "00_index.md": {
+    "path": "00_index.md",
+    "title": "Curso de Ejemplo",
+    "type": "lesson",
+    "order": 0,
+    "summary": null,
+    "tags": [],
+    "components": [],
+    "has_frontmatter": true
+  },
+  "01_primeros_pasos/00_index.md": {
+    "path": "01_primeros_pasos/00_index.md",
+    "title": "Primeros Pasos",
+    "type": "lesson",
+    "order": 0,
+    "summary": "Introduccion al curso y configuracion del entorno",
+    "tags": [],
+    "components": [],
+    "has_frontmatter": true
+  },
+  "01_primeros_pasos/01_bienvenida.md": {
+    "path": "01_primeros_pasos/01_bienvenida.md",
+    "title": "Bienvenida",
+    "type": "lesson",
+    "order": 1,
+    "summary": "Introduccion y primera tarea",
+    "tags": [],
+    "components": [
+      {
+        "type": "homework",
+        "attrs": {
+          "id": "tarea-01",
+          "title": "Configuracion Inicial",
+          "due": "2026-03-01",
+          "points": "10"
+        },
+        "content_preview": "Configura tu entorno de desarrollo:\n\n1. Instala Docker\n2. Clona el repositorio\n3. Ejecuta `docker compose up dev`\n4. Verifica que el sitio funcione en `http://localhost:3000`\n\n**Entrega:** Captura de ",
+        "line_number": 18
+      },
+      {
+        "type": "exercise",
+        "attrs": {
+          "title": "Hola Mundo",
+          "difficulty": "1"
+        },
+        "content_preview": "Crea un archivo `hola.md` en la carpeta `clase/` con el siguiente contenido:\n\n```markdown\n---\ntitle: \"Mi Primera Pagina\"\n---\n\n# Hola Mundo\n\nEsta es mi primera pagina.\n```\n\nVerifica que aparezca en la ",
+        "line_number": 33
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "01_primeros_pasos/02_configuracion.md": {
+    "path": "01_primeros_pasos/02_configuracion.md",
+    "title": "Configuracion",
+    "type": "lesson",
+    "order": 2,
+    "summary": "Configuracion del entorno de trabajo",
+    "tags": [],
+    "components": [
+      {
+        "type": "prompt",
+        "attrs": {
+          "title": "Generar README",
+          "for": "ChatGPT"
+        },
+        "content_preview": "Genera un README.md para un curso universitario de ciencia de datos.\nIncluye: descripcion del curso, requisitos, calendario tentativo,\ny politicas de evaluacion.",
+        "line_number": 11
+      },
+      {
+        "type": "example",
+        "attrs": {
+          "title": "glintstone.yaml basico"
+        },
+        "content_preview": "```yaml\nsite:\n  name: \"Mi Curso - ITAM\"\n  description: \"Primavera 2026\"\n  language: \"es\"\n\nsource:\n  content_dir: \"clase\"\n\ntheme:\n  default: \"raya-lucaria\"\n```\n\nEste es el archivo minimo necesario para",
+        "line_number": 21
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "02_avanzado/00_index.md": {
+    "path": "02_avanzado/00_index.md",
+    "title": "Temas Avanzados",
+    "type": "lesson",
+    "order": 0,
+    "summary": "Examenes, proyectos, matematicas y diagramas",
+    "tags": [],
+    "components": [],
+    "has_frontmatter": true
+  },
+  "02_avanzado/01_examenes.md": {
+    "path": "02_avanzado/01_examenes.md",
+    "title": "Examenes",
+    "type": "lesson",
+    "order": 1,
+    "summary": "Informacion sobre examenes del curso",
+    "tags": [],
+    "components": [
+      {
+        "type": "exam",
+        "attrs": {
+          "id": "parcial-01",
+          "title": "Primer Parcial",
+          "date": "2026-03-15",
+          "location": "Salon 101",
+          "duration": "2h"
+        },
+        "content_preview": "**Temas:**\n- Configuracion de entorno\n- Markdown basico\n- Componentes del framework\n\n**Material permitido:** Una hoja de notas (ambos lados).",
+        "line_number": 5
+      },
+      {
+        "type": "exam",
+        "attrs": {
+          "id": "parcial-02",
+          "title": "Segundo Parcial",
+          "date": "2026-05-10",
+          "location": "Salon 101",
+          "duration": "2h"
+        },
+        "content_preview": "**Temas:**\n- Temas avanzados\n- Matematicas y diagramas\n- Proyecto final\n\n**Material permitido:** Una hoja de notas (ambos lados).",
+        "line_number": 18
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "02_avanzado/02_proyecto.md": {
+    "path": "02_avanzado/02_proyecto.md",
+    "title": "Proyecto Final",
+    "type": "lesson",
+    "order": 2,
+    "summary": "Descripcion del proyecto final del curso",
+    "tags": [],
+    "components": [
+      {
+        "type": "project",
+        "attrs": {
+          "id": "proyecto-final",
+          "title": "Sitio de Curso",
+          "due": "2026-05-20",
+          "points": "100"
+        },
+        "content_preview": "## Descripcion\n\nCrea un sitio web completo para un curso usando el framework Raya Lucaria.\n\n## Requisitos\n\n1. Al menos 5 paginas de contenido\n2. Uso de al menos 3 tipos de componentes\n3. Incluir matem",
+        "line_number": 3
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "02_avanzado/03_matematicas.md": {
+    "path": "02_avanzado/03_matematicas.md",
+    "title": "Matematicas",
+    "type": "lesson",
+    "order": 3,
+    "summary": "Ejemplos de formulas matematicas con KaTeX",
+    "tags": [],
+    "components": [
+      {
+        "type": "exercise",
+        "attrs": {
+          "title": "Derivadas",
+          "difficulty": "2"
+        },
+        "content_preview": "Calcula las siguientes derivadas:\n\n1. $\\frac{d}{dx}(3x^2 + 2x - 5)$\n2. $\\frac{d}{dx}(\\sin(x) \\cdot e^x)$\n3. $\\frac{d}{dx}\\left(\\frac{x^2 + 1}{x - 1}\\right)$",
+        "line_number": 47
+      },
+      {
+        "type": "prompt",
+        "attrs": {
+          "title": "Reflexion sobre limites"
+        },
+        "content_preview": "Explica intuitivamente por que $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$. Piensa en la geometria del circulo unitario y la relacion entre el arco y la cuerda cuando el angulo es pequeno.",
+        "line_number": 57
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "02_avanzado/04_diagramas.md": {
+    "path": "02_avanzado/04_diagramas.md",
+    "title": "Diagramas",
+    "type": "lesson",
+    "order": 4,
+    "summary": "Ejemplos de diagramas con Mermaid",
+    "tags": [],
+    "components": [
+      {
+        "type": "example",
+        "attrs": {
+          "title": "Tip: Mermaid y Temas"
+        },
+        "content_preview": "Los diagramas de Mermaid se adaptan automaticamente al tema seleccionado.\nPrueba cambiar entre los temas usando el boton en la barra lateral.\nHaz click en cualquier diagrama para verlo en pantalla com",
+        "line_number": 72
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "02_avanzado/05_showcase.md": {
+    "path": "02_avanzado/05_showcase.md",
+    "title": "Showcase",
+    "type": "lesson",
+    "order": 5,
+    "summary": "Pagina de demostacion con todas las funcionalidades del framework",
+    "tags": [],
+    "components": [
+      {
+        "type": "homework",
+        "attrs": {
+          "id": "tarea-showcase",
+          "title": "Tarea de Ejemplo",
+          "due": "2026-06-01",
+          "points": "15"
+        },
+        "content_preview": "Esta es una **tarea** de ejemplo. Las tareas aparecen en la pagina `/tareas/` automaticamente.\n\n- Paso 1: Leer la documentacion\n- Paso 2: Completar el ejercicio\n- Paso 3: Entregar antes de la fecha li",
+        "line_number": 91
+      },
+      {
+        "type": "exercise",
+        "attrs": {
+          "title": "Ejercicio de Practica",
+          "difficulty": "3"
+        },
+        "content_preview": "Los ejercicios son para practica y no tienen fecha de entrega.\n\nResuelve: $\\sum_{k=1}^{n} k^2 = \\frac{n(n+1)(2n+1)}{6}$ para $n = 10$.",
+        "line_number": 101
+      },
+      {
+        "type": "prompt",
+        "attrs": {
+          "title": "Pregunta de Reflexion"
+        },
+        "content_preview": "Explica en tus propias palabras: ?`por que es importante la notacion matematica formal en ciencias de la computacion?",
+        "line_number": 109
+      },
+      {
+        "type": "example",
+        "attrs": {
+          "title": "Ejemplo Ilustrativo"
+        },
+        "content_preview": "Los bloques de ejemplo son utiles para mostrar soluciones o patrones:\n\n```python\n# Patron Observer en Python\nclass EventEmitter:\n    def __init__(self):\n        self._listeners = {}\n\n    def on(self, ",
+        "line_number": 115
+      },
+      {
+        "type": "exam",
+        "attrs": {
+          "id": "parcial-ejemplo",
+          "title": "Examen Parcial de Ejemplo",
+          "date": "2026-04-15",
+          "location": "Salon 101",
+          "duration": "2 horas",
+          "points": "100"
+        },
+        "content_preview": "Este es un bloque de tipo examen. Los examenes aparecen en la pagina `/examenes/`.\n\n**Temas incluidos:**\n- Estructuras de datos\n- Algoritmos de ordenamiento\n- Complejidad computacional",
+        "line_number": 135
+      },
+      {
+        "type": "project",
+        "attrs": {
+          "id": "proyecto-ejemplo",
+          "title": "Proyecto Final de Ejemplo",
+          "due": "2026-05-20",
+          "points": "200"
+        },
+        "content_preview": "Los proyectos son asignaciones de largo plazo. Aparecen en `/proyectos/`.\n\n**Entregables:**\n1. Propuesta del proyecto\n2. Codigo fuente en repositorio\n3. Presentacion final",
+        "line_number": 146
+      },
+      {
+        "type": "quiz",
+        "attrs": {
+          "title": "Verificacion de Conceptos"
+        },
+        "content_preview": "- [ ] Python es un lenguaje compilado\n- [x] Python es un lenguaje interpretado\n- [ ] Python no soporta orientacion a objetos\n- [x] Python soporta multiples paradigmas",
+        "line_number": 157
+      },
+      {
+        "type": "embed",
+        "attrs": {
+          "src": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+          "title": "Video Tutorial de Ejemplo"
+        },
+        "content_preview": "Este es un ejemplo de recurso embebido. El iframe se ajusta responsivamente al ancho disponible.",
+        "line_number": 166
+      }
+    ],
+    "has_frontmatter": true
+  },
+  "a_apendice/00_index.md": {
+    "path": "a_apendice/00_index.md",
+    "title": "Apendice",
+    "type": "lesson",
+    "order": 0,
+    "summary": "Material de referencia",
+    "tags": [],
+    "components": [],
+    "has_frontmatter": true
+  },
+  "a_apendice/01_referencia.md": {
+    "path": "a_apendice/01_referencia.md",
+    "title": "Referencia",
+    "type": "lesson",
+    "order": 1,
+    "summary": "Guia rapida de referencia",
+    "tags": [],
+    "components": [
+      {
+        "type": "homework",
+        "attrs": {
+          "id": "tarea-02",
+          "title": "Explorar Referencia",
+          "due": "2026-03-15",
+          "points": "5"
+        },
+        "content_preview": "Revisa esta guia de referencia y responde:\n\n1. Cuantos tipos de componentes hay?\n2. Que atajo de teclado se usa para ir a la pagina siguiente?\n3. Que prefijo indica trabajo en progreso?",
+        "line_number": 33
+      }
+    ],
+    "has_frontmatter": true
+  }
+}

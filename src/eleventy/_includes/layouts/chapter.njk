@@ -1,0 +1,42 @@
+---
+layout: layouts/base.njk
+---
+
+{{ content | safe }}
+
+{# Auto-generated children listing from hierarchy #}
+{% set cleanPath = page.inputPath | replace("./clase-stage/", "") | replace("./clase/", "") %}
+{% set isDoc = cleanPath | startsWith("docs/") %}
+{% set activeHierarchy = hierarchy_docs if isDoc else hierarchy %}
+{% set currentPath = cleanPath | replace("docs/", "") | replace("/00_index.md", "") if isDoc else cleanPath | replace("/00_index.md", "") %}
+{% set urlPrefix = "/docs/" if isDoc else "/" %}
+
+{% if activeHierarchy and activeHierarchy.children %}
+  {% set currentNode = null %}
+
+  {# Find this chapter in hierarchy #}
+  {% for child in activeHierarchy.children %}
+    {% if child.path == currentPath or child.name == currentPath %}
+      {% set currentNode = child %}
+    {% endif %}
+  {% endfor %}
+
+  {% if currentNode and currentNode.children and currentNode.children.length > 0 %}
+  <section class="mt-8">
+    <h2 class="text-xl font-bold mb-4">Contenido</h2>
+    <div class="grid gap-3">
+      {% for child in currentNode.children %}
+      {% if child.type == "file" or (child.type == "directory" and child.has_index) %}
+      <a href="{{ (urlPrefix + child.path | replace('.md', '') + '/') | url }}"
+         class="block p-4 rounded-lg bg-bg-secondary hover:bg-bg-tertiary border border-border hover:border-accent transition-colors group">
+        <div class="font-medium text-text group-hover:text-accent">{{ child.title }}</div>
+        {% if child.summary %}
+        <div class="text-sm text-text-muted mt-1">{{ child.summary }}</div>
+        {% endif %}
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+{% endif %}

@@ -1,0 +1,46 @@
+/**
+ * Elden Ring Light Theme
+ * Inspired by the Golden Order — Gold/Warm parchment
+ */
+
+[data-theme="elden-ring-light"] {
+  --color-bg:               #faf8f0;
+  --color-bg-secondary:     #f0ece0;
+  --color-bg-tertiary:      #e6e0d0;
+  --color-text:             #2c2820;
+  --color-text-muted:       #6b6358;
+  --color-accent:           #b8860b;
+  --color-accent-hover:     #d4a020;
+  --color-accent-secondary: #8a7638;
+  --color-border:           #d4ccb8;
+  --color-code-bg:          #2c2820;
+  --color-homework:         #c26a30;
+  --color-exercise:         #2878a0;
+  --color-prompt:           #6b42a0;
+  --color-example:          #6b6358;
+  --color-exam:             #b83040;
+  --color-project:          #a08020;
+  --color-quiz:             #059669;
+  --color-embed:            #0891b2;
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+[data-theme="elden-ring-light"] pre,
+[data-theme="elden-ring-light"] code { color: #e8e8e8; }
+[data-theme="elden-ring-light"] :not(pre) > code { background: var(--color-bg-tertiary); color: var(--color-text); }
+
+[data-theme="elden-ring-light"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="elden-ring-light"] ::-webkit-scrollbar-track { background: var(--color-bg); }
+[data-theme="elden-ring-light"] ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+[data-theme="elden-ring-light"] ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+[data-theme="elden-ring-light"] ::selection {
+  background: var(--color-accent);
+  color: white;
+}
+
+[data-theme="elden-ring-light"] *:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

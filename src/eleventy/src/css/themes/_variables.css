@@ -1,0 +1,29 @@
+/**
+ * Sellen Theme Variables Specification
+ *
+ * All themes must define these CSS custom properties.
+ * Create a new theme by copying raya-lucaria.css or leyndell.css
+ * and changing the values.
+ *
+ * Required variables:
+ * --color-bg               Main background
+ * --color-bg-secondary     Sidebar, cards, secondary surfaces
+ * --color-bg-tertiary      Hover states, tertiary surfaces
+ * --color-text             Primary text
+ * --color-text-muted       Secondary/helper text
+ * --color-accent           Links, active states, primary brand
+ * --color-accent-hover     Hover state for accent
+ * --color-accent-secondary Secondary accent (nav numbers, tags)
+ * --color-border           Borders, dividers
+ * --color-code-bg          Code block backgrounds
+ * --color-homework         Homework component accent
+ * --color-exercise         Exercise component accent
+ * --color-prompt           Prompt component accent
+ * --color-example          Example component accent
+ * --color-exam             Exam component accent
+ * --color-project          Project component accent
+ * --color-quiz             Quiz component accent
+ * --color-embed            Embed component accent
+ * --font-family-base       Body text font stack
+ * --font-family-mono       Code/monospace font stack
+ */

@@ -1,0 +1,33 @@
+/**
+ * Sellen Font Declarations
+ *
+ * Inter and JetBrains Mono are loaded via Google Fonts <link> in base.njk.
+ * Only OpenDyslexic is declared here, loaded from jsDelivr CDN.
+ */
+
+/* OpenDyslexic - Accessibility (regular) */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Regular.woff') format('woff');
+}
+
+/* OpenDyslexic - Accessibility (bold) */
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Bold.woff') format('woff');
+}
+
+/* OpenDyslexic Mono - Code */
+@font-face {
+  font-family: 'OpenDyslexic Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexicMono-Regular.woff') format('woff');
+}

@@ -1,0 +1,27 @@
+# Leyndell Theme (Light)
+# Inspired by the Royal Capital Leyndell -- golds and warm parchment
+#
+# This file is documentation only. The actual theme is in:
+# src/eleventy/src/css/themes/leyndell.css
+
+name: "Leyndell"
+type: light
+description: "Light theme inspired by the Royal Capital Leyndell"
+
+colors:
+  bg: "#faf8f0"
+  bg_secondary: "#f0ece0"
+  bg_tertiary: "#e6e0d0"
+  text: "#2c2820"
+  text_muted: "#6b6358"
+  accent: "#b8860b"
+  accent_hover: "#d4a020"
+  accent_secondary: "#4a6741"
+  border: "#d4ccb8"
+  code_bg: "#2c2820"
+  homework: "#c26a30"
+  exercise: "#2878a0"
+  prompt: "#6b42a0"
+  example: "#6b6358"
+  exam: "#b83040"
+  project: "#a08020"

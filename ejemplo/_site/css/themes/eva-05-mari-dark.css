@@ -1,0 +1,42 @@
+/**
+ * EVA-05 Mari Dark Theme
+ * Inspired by Mari Makinami's Unit — Pink/Teal on dark
+ */
+
+[data-theme="eva-05-mari-dark"] {
+  --color-bg:               #120a18;
+  --color-bg-secondary:     #22142e;
+  --color-bg-tertiary:      #341e48;
+  --color-text:             #e4d0e8;
+  --color-text-muted:       #9878a8;
+  --color-accent:           #e860a0;
+  --color-accent-hover:     #f080b8;
+  --color-accent-secondary: #40c8b0;
+  --color-border:           #341e48;
+  --color-code-bg:          #08050c;
+  --color-homework:         #e8925a;
+  --color-exercise:         #40c8b0;
+  --color-prompt:           #c870e0;
+  --color-example:          #9878a8;
+  --color-exam:             #e05c6c;
+  --color-project:          #d4a843;
+  --color-quiz:             #10b981;
+  --color-embed:            #06b6d4;
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+[data-theme="eva-05-mari-dark"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="eva-05-mari-dark"] ::-webkit-scrollbar-track { background: var(--color-bg); }
+[data-theme="eva-05-mari-dark"] ::-webkit-scrollbar-thumb { background: var(--color-bg-tertiary); border-radius: 4px; }
+[data-theme="eva-05-mari-dark"] ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+[data-theme="eva-05-mari-dark"] ::selection {
+  background: var(--color-accent);
+  color: #120a18;
+}
+
+[data-theme="eva-05-mari-dark"] *:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

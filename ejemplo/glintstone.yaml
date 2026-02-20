@@ -1,0 +1,63 @@
+# "Primal glintstone sorcery is the study of the stars themselves."
+# Glintstone configuration for example course
+
+site:
+  name: "Curso de Ejemplo - ITAM"
+  description: "Semestre Ejemplo 2026"
+  language: "es"
+  author: "ITAM"
+
+repository:
+  name: "raya-lucaria-ejemplo"
+
+source:
+  content_dir: "clase"
+  exclude:
+    - "b_libros"
+    - "README_FLOW.md"
+
+theme:
+  default: "eva-02-dark"
+  available:
+    - eva-02-dark
+    - eva-02-light
+    - eva-01-dark
+    - eva-00-light
+    - eva-02-dark
+    - eva-02-light
+    - eva-05-mari-dark
+    - eva-05-mari-light
+    - elden-ring-dark
+    - elden-ring-light
+    - elden-ring-raya-lucaria-dark
+    - elden-ring-raya-lucaria-light
+
+build:
+  output_dir: "_site"
+
+navigation:
+  show_breadcrumbs: true
+  show_sidebar: true
+  show_prev_next: true
+  show_toc: true
+
+features:
+  search: true
+  theme_toggle: true
+  font_toggle: true
+  copy_code_button: true
+  math: true
+  mermaid: true
+  docs: true
+
+tasks:
+  pages:
+    - type: homework
+      title: "Tareas"
+      slug: "tareas"
+    - type: exam
+      title: "Examenes"
+      slug: "examenes"
+    - type: project
+      title: "Proyectos"
+      slug: "proyectos"

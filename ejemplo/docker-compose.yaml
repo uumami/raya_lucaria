@@ -1,0 +1,80 @@
+# Glintstone Example -- Local testing
+# Run from ejemplo/: docker compose up build
+#                     docker compose up dev
+
+services:
+  # Full production build
+  build:
+    build:
+      context: ..
+      dockerfile: ejemplo/Dockerfile
+    volumes:
+      - ./clase:/app/clase:ro
+      - ./glintstone.yaml:/app/glintstone.yaml:ro
+      - ./calendario_temas.csv:/app/calendario_temas.csv:ro
+      - ./anuncios.md:/app/anuncios.md:ro
+      - ../docs:/app/glintstone/docs:ro
+      - ./_site:/app/_site
+    command: ["sh", "glintstone/docker/scripts/build.sh"]
+
+  # Development server with live reload (port 3000)
+  dev:
+    build:
+      context: ..
+      dockerfile: ejemplo/Dockerfile
+    volumes:
+      - ./clase:/app/clase:ro
+      - ./glintstone.yaml:/app/glintstone.yaml:ro
+      - ./calendario_temas.csv:/app/calendario_temas.csv:ro
+      - ./anuncios.md:/app/anuncios.md:ro
+      - ../docs:/app/glintstone/docs:ro
+      - ./_site:/app/_site
+      # Mount framework source for live reload (specific dirs to preserve node_modules)
+      - ../src/eleventy/_includes:/app/glintstone/src/eleventy/_includes:ro
+      - ../src/eleventy/_data:/app/glintstone/src/eleventy/_data
+      - ../src/eleventy/lib:/app/glintstone/src/eleventy/lib:ro
+      - ../src/eleventy/.eleventy.js:/app/glintstone/src/eleventy/.eleventy.js:ro
+      - ../src/eleventy/tailwind.config.js:/app/glintstone/src/eleventy/tailwind.config.js:ro
+      - ../src/eleventy/src:/app/glintstone/src/eleventy/src:ro
+      - ../src/preprocessing:/app/glintstone/src/preprocessing:ro
+      - ../docker/scripts:/app/glintstone/docker/scripts:ro
+    ports:
+      - "3001:3001"
+    environment:
+      - PATH_PREFIX=${PATH_PREFIX:-/}
+    command: ["sh", "-c", "PORT=3001 sh glintstone/docker/scripts/dev.sh"]
+    stdin_open: true
+    tty: true
+
+  # Preprocessing only (debug)
+  preprocess:
+    build:
+      context: ..
+      dockerfile: ejemplo/Dockerfile
+    volumes:
+      - ./clase:/app/clase:ro
+      - ./glintstone.yaml:/app/glintstone.yaml:ro
+      - ../src/eleventy/_data:/app/glintstone/src/eleventy/_data
+      - ../src/preprocessing:/app/glintstone/src/preprocessing:ro
+    command: ["sh", "-c", "PYTHONPATH=/app/glintstone/src python3 -m preprocessing --verbose build"]
+
+  # Slide generation
+  slides:
+    build:
+      context: ..
+      dockerfile: ejemplo/Dockerfile
+    volumes:
+      - ./clase:/app/clase:ro
+      - ./_site:/app/_site
+    command: ["sh", "glintstone/docker/scripts/slides.sh"]
+
+  # Content validation
+  validate:
+    build:
+      context: ..
+      dockerfile: ejemplo/Dockerfile
+    volumes:
+      - ./clase:/app/clase:ro
+      - ./glintstone.yaml:/app/glintstone.yaml:ro
+      - ../src/preprocessing:/app/glintstone/src/preprocessing:ro
+    command: ["sh", "-c", "PYTHONPATH=/app/glintstone/src python3 -m preprocessing validate"]

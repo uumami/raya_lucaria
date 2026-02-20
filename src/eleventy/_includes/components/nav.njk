@@ -1,0 +1,289 @@
+{# Sidebar navigation component with hierarchical numbering #}
+
+{% macro isActive(itemPath, currentUrl) %}
+{%- set fullCurrentUrl = currentUrl | url -%}
+{%- set normalizedCurrent = fullCurrentUrl | replace("/00_index/", "/") -%}
+{%- set itemPathBase = itemPath | replace("/00_index/", "/") -%}
+{%- if itemPath == fullCurrentUrl or itemPath == normalizedCurrent -%}current
+{%- elif fullCurrentUrl.startsWith(itemPathBase) and itemPathBase.length > 1 -%}ancestor
+{%- else -%}inactive{%- endif -%}
+{% endmacro %}
+
+{% macro itemUrl(item) %}
+{%- if item.url -%}
+{{ item.url | url }}
+{%- elif item.type == "directory" and item.has_index -%}
+{{ ("/" + item.path + "/00_index/") | url }}
+{%- elif item.type == "directory" -%}
+{%- if item.children and item.children.length > 0 -%}
+{{ itemUrl(item.children[0]) }}
+{%- else -%}#
+{%- endif -%}
+{%- elif item.type == "file" -%}
+{{ ("/" + item.path | replace(".md", "") + "/") | url }}
+{%- else -%}#
+{%- endif -%}
+{% endmacro %}
+
+{% macro isVisible(item) %}
+{%- if item.title and item.type == "file" and not item.name.startsWith("00_") -%}true
+{%- elif item.type == "directory" and (item.has_index or (item.children and item.children.length > 0)) -%}true
+{%- else -%}false{%- endif -%}
+{% endmacro %}
+
+{% macro countVisibleChildren(children) %}
+{%- set count = 0 -%}
+{%- for child in children -%}
+  {%- if isVisible(child) | trim == "true" -%}
+    {%- set count = count + 1 -%}
+  {%- endif -%}
+{%- endfor -%}
+{{ count }}
+{% endmacro %}
+
+{% macro renderNavItem(item, prefix, index, depth, currentUrl) %}
+{% set num = item.name | getNavNumber(prefix, index) %}
+{% set childCount = countVisibleChildren(item.children) | trim | int %}
+{% set thisUrl = itemUrl(item) | trim %}
+{% set activeState = isActive(thisUrl, currentUrl) | trim %}
+{% set navPath = item.path | default(item.name) %}
+
+<div class="nav-item"
+     data-nav-path="{{ navPath }}"
+     data-expanded="false"
+     data-depth="{{ depth }}"
+     data-active="{{ activeState }}"
+     role="treeitem"
+     aria-expanded="false">
+  <div class="flex items-start group">
+    {% if childCount > 0 %}
+    <button class="nav-toggle p-0.5 mt-1 rounded hover:bg-bg-tertiary text-text-muted hover:text-accent transition-colors flex-shrink-0"
+            aria-label="Toggle {{ item.title | cleanNavTitle | trim | default(item.name) }}"
+            onclick="toggleNavSection('{{ navPath }}')">
+      <svg class="w-3 h-3 transform transition-transform nav-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+    {% else %}
+    <span class="w-4 flex-shrink-0"></span>
+    {% endif %}
+
+    <a href="{{ thisUrl }}"
+       {% if activeState == 'current' %}aria-current="page"{% endif %}
+       class="flex-1 min-w-0 flex items-baseline px-1.5 py-1 rounded text-sm transition-colors
+              {% if activeState == 'current' %}bg-accent/15 text-accent border-l-2 border-accent -ml-0.5 pl-2
+              {% elif activeState == 'ancestor' %}text-text bg-bg-tertiary/50
+              {% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      {% if not item.no_number %}
+      <span class="nav-number text-xs {% if activeState == 'current' %}text-accent{% else %}text-accent-secondary{% endif %} mr-1.5 flex-shrink-0 font-mono">{{ num }}</span>
+      {% endif %}
+      <span class="nav-title leading-snug">{{ (item.title | cleanNavTitle) | trim | default(item.name) }}</span>
+    </a>
+  </div>
+
+  {% if childCount > 0 %}
+  <div class="nav-children ml-4 mt-0.5 pl-2 border-l border-border/50 space-y-0.5" role="group">
+    {% set childIndex = 0 %}
+    {% for child in item.children %}
+      {% if isVisible(child) | trim == "true" %}
+        {{ renderNavItem(child, num + ".", childIndex, depth + 1, currentUrl) }}
+        {% set childIndex = childIndex + 1 %}
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# Task pages section #}
+{% set currentFullUrl = page.url | url %}
+<div class="nav-tasks mb-4 pb-3 border-b border-border/50">
+  <div class="text-xs text-text-muted uppercase tracking-wide px-2 mb-2">Curso</div>
+  <div class="space-y-0.5">
+    {% set tareasUrl = '/tareas/' | url %}
+    <a href="{{ tareasUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == tareasUrl %}bg-homework/15 text-homework{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-homework">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+      </span>
+      <span>Tareas</span>
+      {% if tasks and tasks.homework and tasks.homework.length > 0 %}
+      <span class="ml-auto text-xs bg-homework/20 text-homework px-1.5 py-0.5 rounded">{{ tasks.homework.length }}</span>
+      {% endif %}
+    </a>
+    {% set examenesUrl = '/examenes/' | url %}
+    <a href="{{ examenesUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == examenesUrl %}bg-exam/15 text-exam{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-exam">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </span>
+      <span>Examenes</span>
+      {% if tasks and tasks.exams and tasks.exams.length > 0 %}
+      <span class="ml-auto text-xs bg-exam/20 text-exam px-1.5 py-0.5 rounded">{{ tasks.exams.length }}</span>
+      {% endif %}
+    </a>
+    {% set proyectosUrl = '/proyectos/' | url %}
+    <a href="{{ proyectosUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == proyectosUrl %}bg-project/15 text-project{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-project">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </span>
+      <span>Proyectos</span>
+      {% if tasks and tasks.projects and tasks.projects.length > 0 %}
+      <span class="ml-auto text-xs bg-project/20 text-project px-1.5 py-0.5 rounded">{{ tasks.projects.length }}</span>
+      {% endif %}
+    </a>
+    {% if calendar_topics and calendar_topics.length > 0 %}
+    {% set calendarioUrl = '/calendario/' | url %}
+    <a href="{{ calendarioUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == calendarioUrl %}bg-accent/15 text-accent{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-accent-secondary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </span>
+      <span>Calendario</span>
+    </a>
+    {% endif %}
+    {% if features.anuncios %}
+    {% set anunciosUrl = '/anuncios/' | url %}
+    <a href="{{ anunciosUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == anunciosUrl %}bg-accent/15 text-accent{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-accent-secondary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+        </svg>
+      </span>
+      <span>Anuncios</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{# Content section #}
+<div class="text-xs text-text-muted uppercase tracking-wide px-2 mb-2 mt-1">Contenido</div>
+<div class="nav-root space-y-1" role="tree" aria-label="Contenido del curso">
+  {% if hierarchy and hierarchy.children %}
+    {% set topIndex = 0 %}
+    {% for item in hierarchy.children %}
+      {% if item.title and not item.name.startsWith("??") and (item.type != "directory" or item.has_index or (item.children and item.children.length > 0)) %}
+        {{ renderNavItem(item, "", topIndex, 0, page.url) }}
+        {% set topIndex = topIndex + 1 %}
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p class="text-text-muted text-sm px-2 py-4">Sin contenido</p>
+  {% endif %}
+</div>
+
+{# Documentation section #}
+{% if features.docs and hierarchy_docs and hierarchy_docs.children and hierarchy_docs.children.length > 0 %}
+
+{% macro docsItemUrl(item) %}
+{%- if item.type == "directory" and item.has_index -%}
+{{ ("/docs/" + item.path + "/00_index/") | url }}
+{%- elif item.type == "directory" -%}
+{%- if item.children and item.children.length > 0 -%}
+{{ docsItemUrl(item.children[0]) }}
+{%- else -%}#
+{%- endif -%}
+{%- elif item.type == "file" -%}
+{{ ("/docs/" + item.path | replace(".md", "") + "/") | url }}
+{%- else -%}#
+{%- endif -%}
+{% endmacro %}
+
+{% macro renderDocsNavItem(item, prefix, index, depth, currentUrl) %}
+{% set num = item.name | getNavNumber(prefix, index) %}
+{% set childCount = countVisibleChildren(item.children) | trim | int %}
+{% set thisUrl = docsItemUrl(item) | trim %}
+{% set activeState = isActive(thisUrl, currentUrl) | trim %}
+{% set navPath = "docs/" + (item.path | default(item.name)) %}
+
+<div class="nav-item"
+     data-nav-path="{{ navPath }}"
+     data-expanded="false"
+     data-depth="{{ depth }}"
+     data-active="{{ activeState }}"
+     role="treeitem"
+     aria-expanded="false">
+  <div class="flex items-start group">
+    {% if childCount > 0 %}
+    <button class="nav-toggle p-0.5 mt-1 rounded hover:bg-bg-tertiary text-text-muted hover:text-accent transition-colors flex-shrink-0"
+            aria-label="Toggle {{ item.title | cleanNavTitle | trim | default(item.name) }}"
+            onclick="toggleNavSection('{{ navPath }}')">
+      <svg class="w-3 h-3 transform transition-transform nav-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+    {% else %}
+    <span class="w-4 flex-shrink-0"></span>
+    {% endif %}
+
+    <a href="{{ thisUrl }}"
+       {% if activeState == 'current' %}aria-current="page"{% endif %}
+       class="flex-1 min-w-0 flex items-baseline px-1.5 py-1 rounded text-sm transition-colors
+              {% if activeState == 'current' %}bg-accent/15 text-accent border-l-2 border-accent -ml-0.5 pl-2
+              {% elif activeState == 'ancestor' %}text-text bg-bg-tertiary/50
+              {% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      {% if not item.no_number %}
+      <span class="nav-number text-xs {% if activeState == 'current' %}text-accent{% else %}text-accent-secondary{% endif %} mr-1.5 flex-shrink-0 font-mono">{{ num }}</span>
+      {% endif %}
+      <span class="nav-title leading-snug">{{ (item.title | cleanNavTitle) | trim | default(item.name) }}</span>
+    </a>
+  </div>
+
+  {% if childCount > 0 %}
+  <div class="nav-children ml-4 mt-0.5 pl-2 border-l border-border/50 space-y-0.5" role="group">
+    {% set childIndex = 0 %}
+    {% for child in item.children %}
+      {% if isVisible(child) | trim == "true" %}
+        {{ renderDocsNavItem(child, num + ".", childIndex, depth + 1, currentUrl) }}
+        {% set childIndex = childIndex + 1 %}
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+<div class="nav-docs mt-4 pt-3 border-t border-border/50">
+  <div class="text-xs text-text-muted uppercase tracking-wide px-2 mb-2">Documentacion</div>
+  <div class="nav-root space-y-1" role="tree" aria-label="Documentacion">
+    {% for item in hierarchy_docs.children %}
+      {% if isVisible(item) | trim == "true" %}
+        {{ renderDocsNavItem(item, "", loop.index0, 0, page.url) }}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<style>
+  .nav-children {
+    overflow: hidden;
+    transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+  }
+  .nav-item[data-expanded="false"] > .nav-children {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .nav-item[data-expanded="true"] > .nav-children {
+    max-height: 2000px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .nav-arrow { transition: transform 0.2s ease-out; }
+  .nav-item[data-expanded="false"] > div > button .nav-arrow { transform: rotate(0deg); }
+  .nav-item[data-expanded="true"] > div > button .nav-arrow { transform: rotate(90deg); }
+  .nav-title { word-break: break-word; hyphens: auto; }
+  .nav-item[data-depth="0"] > div > a { font-weight: 500; }
+  .nav-item[data-active="current"] > div > a { font-weight: 600; }
+</style>

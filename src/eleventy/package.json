@@ -1,0 +1,34 @@
+{
+  "name": "glintstone",
+  "version": "1.0.0",
+  "description": "Glintstone -- Static site generator for ITAM course materials",
+  "private": true,
+  "scripts": {
+    "build": "npx @11ty/eleventy",
+    "build:css": "npx tailwindcss -i ./src/css/main.css -o ../../_site/css/styles.css --minify",
+    "dev": "npx @11ty/eleventy --serve --port=3000",
+    "clean": "rm -rf ../../_site",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.1",
+    "markdown-it": "^14.0.0",
+    "markdown-it-container": "^4.0.0",
+    "markdown-it-attrs": "^4.1.6",
+    "markdown-it-anchor": "^8.6.7",
+    "nunjucks": "^3.2.4",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.32",
+    "autoprefixer": "^10.4.16",
+    "esbuild": "^0.20.0",
+    "vitest": "^1.2.0",
+    "cheerio": "^1.0.0",
+    "pagefind": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,13 @@
+{# Shared component header bar macro #}
+{# Usage: {% include "components/component-header.njk" %} with label, title, badges vars #}
+<div class="component__header flex items-center flex-wrap gap-2 mb-3 pb-2 border-b border-border/30">
+  <span class="component__label font-bold text-xs uppercase tracking-wide">{{ label }}</span>
+  <span class="component__title font-medium">{{ componentTitle }}</span>
+  {% if badges %}
+  <div class="component__badges flex items-center gap-2 ml-auto">
+    {% for badge in badges %}
+    <span class="component__badge text-xs px-2 py-0.5 rounded bg-bg-tertiary text-text-muted">{{ badge }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

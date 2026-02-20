@@ -1,0 +1,10 @@
+{
+  "search": true,
+  "theme_toggle": true,
+  "font_toggle": true,
+  "copy_code_button": true,
+  "math": true,
+  "mermaid": true,
+  "docs": true,
+  "anuncios": true
+}

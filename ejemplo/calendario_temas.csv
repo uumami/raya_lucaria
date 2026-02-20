@@ -1,0 +1,17 @@
+semana,fecha,tema,nota
+1,2026-02-02,Introduccion y bienvenida,
+2,2026-02-09,Configuracion del entorno,
+3,2026-02-16,Markdown basico,
+4,2026-02-23,Componentes del framework,
+5,2026-03-02,Matematicas con KaTeX,
+6,2026-03-09,Repaso para parcial,
+7,2026-03-16,PRIMER PARCIAL,Salon 101
+8,2026-03-23,Diagramas con Mermaid,
+9,2026-03-30,Temas personalizados,
+10,2026-04-06,Descanso,Semana Santa
+11,2026-04-13,Proyecto: planificacion,
+12,2026-04-20,Proyecto: desarrollo,
+13,2026-04-27,Proyecto: desarrollo,
+14,2026-05-04,Repaso para parcial,
+15,2026-05-11,SEGUNDO PARCIAL,Salon 101
+16,2026-05-18,Entrega proyecto final,

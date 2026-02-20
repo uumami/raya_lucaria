@@ -1,0 +1,27 @@
+# Raya Lucaria Theme (Dark)
+# Inspired by the Academy of Raya Lucaria -- blues and purples of glintstone sorcery
+#
+# This file is documentation only. The actual theme is in:
+# src/eleventy/src/css/themes/raya-lucaria.css
+
+name: "Raya Lucaria"
+type: dark
+description: "Dark theme inspired by the Academy of Raya Lucaria"
+
+colors:
+  bg: "#0a1628"
+  bg_secondary: "#152238"
+  bg_tertiary: "#1e3150"
+  text: "#d4dce8"
+  text_muted: "#7a8ba0"
+  accent: "#7ba7e1"
+  accent_hover: "#a3c4f0"
+  accent_secondary: "#9d7cd8"
+  border: "#1e3150"
+  code_bg: "#060d18"
+  homework: "#e8925a"
+  exercise: "#5ba8c8"
+  prompt: "#9d7cd8"
+  example: "#7a8ba0"
+  exam: "#e05c6c"
+  project: "#d4a843"

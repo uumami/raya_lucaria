@@ -1,0 +1,43 @@
+/**
+ * EVA-02 Dark Theme (Default)
+ * Inspired by Unit-02 (Asuka Langley) — Red/Orange on dark
+ */
+
+:root,
+[data-theme="eva-02-dark"] {
+  --color-bg:               #180a0a;
+  --color-bg-secondary:     #2e1414;
+  --color-bg-tertiary:      #441e1e;
+  --color-text:             #e8d0d0;
+  --color-text-muted:       #a07878;
+  --color-accent:           #e84040;
+  --color-accent-hover:     #f06060;
+  --color-accent-secondary: #e8a030;
+  --color-border:           #441e1e;
+  --color-code-bg:          #0e0505;
+  --color-homework:         #e8925a;
+  --color-exercise:         #5ba8c8;
+  --color-prompt:           #c070d0;
+  --color-example:          #a07878;
+  --color-exam:             #e05c6c;
+  --color-project:          #d4a843;
+  --color-quiz:             #10b981;
+  --color-embed:            #06b6d4;
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+[data-theme="eva-02-dark"] ::-webkit-scrollbar { width: 8px; height: 8px; }
+[data-theme="eva-02-dark"] ::-webkit-scrollbar-track { background: var(--color-bg); }
+[data-theme="eva-02-dark"] ::-webkit-scrollbar-thumb { background: var(--color-bg-tertiary); border-radius: 4px; }
+[data-theme="eva-02-dark"] ::-webkit-scrollbar-thumb:hover { background: var(--color-accent); }
+
+[data-theme="eva-02-dark"] ::selection {
+  background: var(--color-accent);
+  color: #180a0a;
+}
+
+[data-theme="eva-02-dark"] *:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

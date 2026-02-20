@@ -1,0 +1,179 @@
+{
+  "name": "docs",
+  "path": "",
+  "type": "root",
+  "title": "Documentacion",
+  "children": [
+    {
+      "name": "01_estudiante",
+      "path": "01_estudiante",
+      "type": "directory",
+      "title": "Guia del Estudiante",
+      "has_index": true,
+      "children": [
+        {
+          "name": "01_navegacion.md",
+          "path": "01_estudiante/01_navegacion.md",
+          "type": "file",
+          "title": "Navegacion",
+          "summary": "Como moverte por el sitio del curso",
+          "children": []
+        },
+        {
+          "name": "02_busqueda.md",
+          "path": "01_estudiante/02_busqueda.md",
+          "type": "file",
+          "title": "Busqueda",
+          "summary": "Como buscar contenido en el sitio",
+          "children": []
+        },
+        {
+          "name": "03_temas.md",
+          "path": "01_estudiante/03_temas.md",
+          "type": "file",
+          "title": "Temas visuales",
+          "summary": "Como cambiar la apariencia del sitio",
+          "children": []
+        },
+        {
+          "name": "04_accesibilidad.md",
+          "path": "01_estudiante/04_accesibilidad.md",
+          "type": "file",
+          "title": "Accesibilidad",
+          "summary": "Opciones de accesibilidad y personalizacion",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "02_profesor",
+      "path": "02_profesor",
+      "type": "directory",
+      "title": "Guia del Profesor",
+      "has_index": true,
+      "children": [
+        {
+          "name": "01_inicio_rapido.md",
+          "path": "02_profesor/01_inicio_rapido.md",
+          "type": "file",
+          "title": "Inicio rapido",
+          "summary": "Primeros pasos para crear tu sitio de curso",
+          "children": []
+        },
+        {
+          "name": "02_estructura.md",
+          "path": "02_profesor/02_estructura.md",
+          "type": "file",
+          "title": "Estructura de contenido",
+          "summary": "Como organizar archivos y directorios del curso",
+          "children": []
+        },
+        {
+          "name": "03_markdown.md",
+          "path": "02_profesor/03_markdown.md",
+          "type": "file",
+          "title": "Markdown",
+          "summary": "Referencia de formato Markdown para contenido",
+          "children": []
+        },
+        {
+          "name": "04_componentes.md",
+          "path": "02_profesor/04_componentes.md",
+          "type": "file",
+          "title": "Componentes",
+          "summary": "Tareas, ejercicios, ejemplos, examenes, proyectos, quizzes y embeds",
+          "children": []
+        },
+        {
+          "name": "05_matematicas.md",
+          "path": "02_profesor/05_matematicas.md",
+          "type": "file",
+          "title": "Matematicas",
+          "summary": "Ecuaciones y formulas con KaTeX",
+          "children": []
+        },
+        {
+          "name": "06_diagramas.md",
+          "path": "02_profesor/06_diagramas.md",
+          "type": "file",
+          "title": "Diagramas",
+          "summary": "Diagramas con Mermaid",
+          "children": []
+        },
+        {
+          "name": "07_configuracion.md",
+          "path": "02_profesor/07_configuracion.md",
+          "type": "file",
+          "title": "Configuracion",
+          "summary": "Referencia completa de glintstone.yaml",
+          "children": []
+        },
+        {
+          "name": "08_calendario.md",
+          "path": "02_profesor/08_calendario.md",
+          "type": "file",
+          "title": "Calendario",
+          "summary": "Calendario de temas del curso",
+          "children": []
+        },
+        {
+          "name": "09_despliegue.md",
+          "path": "02_profesor/09_despliegue.md",
+          "type": "file",
+          "title": "Despliegue",
+          "summary": "Publicar el sitio en GitHub Pages",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "03_agentes",
+      "path": "03_agentes",
+      "type": "directory",
+      "title": "Agent Guide",
+      "has_index": true,
+      "children": [
+        {
+          "name": "01_architecture.md",
+          "path": "03_agentes/01_architecture.md",
+          "type": "file",
+          "title": "Architecture",
+          "summary": "Pipeline, directories, data flow, and build system",
+          "children": []
+        },
+        {
+          "name": "02_content_patterns.md",
+          "path": "03_agentes/02_content_patterns.md",
+          "type": "file",
+          "title": "Content Patterns",
+          "summary": "Naming rules, sort keys, frontmatter, and link resolution",
+          "children": []
+        },
+        {
+          "name": "03_component_reference.md",
+          "path": "03_agentes/03_component_reference.md",
+          "type": "file",
+          "title": "Component Reference",
+          "summary": "Registry, parsing, HTML output, and adding new types",
+          "children": []
+        },
+        {
+          "name": "04_best_practices.md",
+          "path": "03_agentes/04_best_practices.md",
+          "type": "file",
+          "title": "Best Practices",
+          "summary": "Workflow, danger zones, testing, and code style",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "VISION.md",
+      "path": "VISION.md",
+      "type": "file",
+      "title": "Raya Lucaria — Vision Document",
+      "summary": null,
+      "children": []
+    }
+  ]
+}
