@@ -88,12 +88,26 @@ function configureMarkdown() {
     return true;
   });
 
-  // $$...$$ display math as block
+  // $$...$$ display math as block (single-line and multi-line)
   md.block.ruler.before('fence', 'math_display', (state, startLine, endLine, silent) => {
     const startPos = state.bMarks[startLine] + state.tShift[startLine];
     if (state.src.charCodeAt(startPos) !== 0x24 || state.src.charCodeAt(startPos + 1) !== 0x24) return false;
 
-    // Find closing $$
+    const startMax = state.eMarks[startLine];
+    const firstLine = state.src.slice(startPos, startMax).trim();
+
+    // Single-line: $$content$$ (must have closing $$ on same line, after opening)
+    if (firstLine.length > 4 && firstLine.endsWith('$$')) {
+      if (silent) return true;
+      const token = state.push('math_display', 'div', 0);
+      token.content = firstLine.slice(2, -2).trim();
+      token.markup = '$$';
+      token.map = [startLine, startLine + 1];
+      state.line = startLine + 1;
+      return true;
+    }
+
+    // Multi-line: $$ on opening line, content, $$ on closing line
     let nextLine = startLine + 1;
     while (nextLine < endLine) {
       const pos = state.bMarks[nextLine] + state.tShift[nextLine];

@@ -60,6 +60,26 @@ $$
 $$
 ```
 
+## Formato en linea vs en bloque
+
+Ambos formatos de `$$` funcionan:
+
+**Multi-linea** (recomendado):
+
+```markdown
+$$
+\sqrt{\pi}
+$$
+```
+
+**Linea unica** (tambien valido):
+
+```markdown
+$$\sqrt{\pi}$$
+```
+
+Ambos producen el mismo resultado. El formato multi-linea es mas legible para expresiones complejas.
+
 ## Cosas a tener en cuenta
 
 - `$5` por si solo **no** es matematicas (signo de dolar seguido de digito)

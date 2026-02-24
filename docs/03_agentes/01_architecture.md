@@ -99,6 +99,12 @@ The graph page at `/grafo/` uses d3.js for a force-directed interactive visualiz
 
 Controlled by `features.graph` in `glintstone.yaml` (default: `true`). When disabled, empty JSON files are still written so templates don't crash.
 
+## Math Processing
+
+Math uses a two-phase approach: markdown-it tokenizes `$...$` and `$$...$$` at build time (wrapping in `<span class="math-inline">` / `<div class="math-display">`), then KaTeX renders client-side.
+
+The block math rule (`math_display`) handles both single-line (`$$content$$`) and multi-line (`$$` / content / `$$`) formats. Single-line support is critical because `markdown-it-attrs` would otherwise interpret trailing `{...}` in math expressions as HTML attributes (e.g., `\sqrt{\pi}` would have `{\pi}` stripped and added as `\pi=""` on the parent `<p>`). The block rule intercepts before attrs can interfere.
+
 ## Docker Multi-Stage Build
 
 The Dockerfile uses three stages:
