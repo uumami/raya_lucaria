@@ -9,9 +9,6 @@ services:
     volumes:
       - ../../clase:/app/clase:ro
       - ../../glintstone.yaml:/app/glintstone.yaml:ro
-      - ../../calendario_temas.csv:/app/calendario_temas.csv:ro
-      - ../../anuncios.md:/app/anuncios.md:ro
-      - ../../README.md:/app/README.md:ro
       - ../../glintstone/docs:/app/glintstone/docs:ro
       - ../../_site:/app/_site
     command: ["sh", "glintstone/docker/scripts/build.sh"]
@@ -23,9 +20,6 @@ services:
     volumes:
       - ../../clase:/app/clase:ro
       - ../../glintstone.yaml:/app/glintstone.yaml:ro
-      - ../../calendario_temas.csv:/app/calendario_temas.csv:ro
-      - ../../anuncios.md:/app/anuncios.md:ro
-      - ../../README.md:/app/README.md:ro
       - ../../glintstone/docs:/app/glintstone/docs:ro
       - ../../_site:/app/_site
       # Mount source for live reload during development

@@ -34,9 +34,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      # Auto-detect layout: template mode (src/ at root) vs submodule mode (glintstone/)
-      # Course repos created from the template have src/ at root.
-      # Course repos using glintstone as a submodule have glintstone/src/.
       PYTHONDONTWRITEBYTECODE: 1
     steps:
       - name: Checkout
@@ -66,44 +63,6 @@ jobs:
             exit 1
           fi
 
-          # Detect content directory: clase/ at root, or ejemplo/clase/ (framework dev)
-          if [ -d "clase" ]; then
-            echo "clasedir=clase" >> "$GITHUB_OUTPUT"
-          elif [ -d "ejemplo/clase" ]; then
-            echo "clasedir=ejemplo/clase" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::Cannot find content directory. Expected clase/ or ejemplo/clase/"
-            exit 1
-          fi
-
-          # Detect config file
-          if [ -f "glintstone.yaml" ]; then
-            echo "config=glintstone.yaml" >> "$GITHUB_OUTPUT"
-          elif [ -f "ejemplo/glintstone.yaml" ]; then
-            echo "config=ejemplo/glintstone.yaml" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::Cannot find glintstone.yaml"
-            exit 1
-          fi
-
-      - name: Prepare workspace
-        run: |
-          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
-          CONFIG="${{ steps.layout.outputs.config }}"
-
-          # When running from the framework repo (ejemplo mode), create symlinks
-          # so preprocessing finds content at the paths specified in glintstone.yaml
-          if [ "$CLASEDIR" != "clase" ] && [ ! -d "clase" ]; then
-            ln -s "$CLASEDIR" clase
-            echo "Created symlink: clase -> $CLASEDIR"
-          fi
-
-          # Symlink config to root if it's nested
-          if [ "$CONFIG" != "glintstone.yaml" ] && [ ! -f "glintstone.yaml" ]; then
-            ln -s "$CONFIG" glintstone.yaml
-            echo "Created symlink: glintstone.yaml -> $CONFIG"
-          fi
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -122,7 +81,7 @@ jobs:
       - name: Run preprocessing
         run: |
           PYTHONPATH=${{ steps.layout.outputs.srcdir }} python3 -m preprocessing \
-            --config ${{ steps.layout.outputs.config }} \
+            --config glintstone.yaml \
             build --output ${{ steps.layout.outputs.eleventy }}/_data
 
       - name: Stage content
@@ -130,16 +89,20 @@ jobs:
           SRCDIR="${{ steps.layout.outputs.srcdir }}"
           ELEVENTY="${{ steps.layout.outputs.eleventy }}"
           DOCSDIR="${{ steps.layout.outputs.docsdir }}"
-          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
           STAGE=clase-stage
           DATA="$ELEVENTY/_data"
 
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
 
-          # Symlink content files
-          for f in "$CLASEDIR"/*; do
-            [ -e "$f" ] && ln -s "$(pwd)/$f" "$STAGE/$(basename "$f")"
+          # Symlink content files (skip files handled separately below)
+          for f in clase/*; do
+            [ -e "$f" ] || continue
+            base="$(basename "$f")"
+            case "$base" in
+              anuncios.md|calendario_temas.csv) continue ;;
+            esac
+            ln -s "$(pwd)/$f" "$STAGE/$base"
           done
 
           # Symlink docs (if enabled and exists)
@@ -164,8 +127,8 @@ jobs:
                   '---\nlayout: layouts/task-list.njk\ntitle: \"' + p['title'] + '\"\npermalink: /' + p['slug'] + '/\ntaskType: ' + tt + '\neleventyExcludeFromCollections: true\n---\n')
           "
 
-          # Generate calendario page (if CSV exists)
-          if [ -f calendario_temas.csv ]; then
+          # Generate calendario page (if CSV exists in content dir)
+          if [ -f clase/calendario_temas.csv ]; then
             PYTHONPATH=$SRCDIR python3 -m preprocessing.process_calendar
             cat > "$STAGE/_calendario.njk" << 'EOF'
           ---
@@ -177,11 +140,11 @@ jobs:
           EOF
           fi
 
-          # Generate announcements page (if anuncios.md exists)
-          if [ -f anuncios.md ]; then
+          # Generate announcements page (if anuncios.md exists in content dir)
+          if [ -f clase/anuncios.md ]; then
             { echo "---"; echo 'title: "Anuncios"'; echo 'permalink: "/anuncios/"';
               echo "eleventyExcludeFromCollections: true"; echo "---"; echo "";
-              cat anuncios.md; } > "$STAGE/_anuncios.md"
+              cat clase/anuncios.md; } > "$STAGE/_anuncios.md"
             python3 -c "
           import json, pathlib
           f = pathlib.Path('$DATA/features.json')
@@ -239,22 +202,20 @@ jobs:
       - name: Copy static assets
         run: |
           ELEVENTY="${{ steps.layout.outputs.eleventy }}"
-          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
-          SRCDIR="${{ steps.layout.outputs.srcdir }}"
 
           # Fonts
           [ -d "$ELEVENTY/src/fonts" ] && cp -r "$ELEVENTY/src/fonts" _site/fonts
           # Favicon
-          cp "$CLASEDIR"/favicon.ico "$CLASEDIR"/apple-touch-icon.png _site/ 2>/dev/null || true
+          cp clase/favicon.ico clase/apple-touch-icon.png _site/ 2>/dev/null || true
           # Images from content
-          find "$CLASEDIR" -type d -name "images" | while read img_dir; do
-            rel_path="${img_dir#$CLASEDIR/}"
+          find clase -type d -name "images" | while read img_dir; do
+            rel_path="${img_dir#clase/}"
             mkdir -p "_site/$rel_path"
             cp -r "$img_dir"/* "_site/$rel_path/" 2>/dev/null || true
           done
           # PDFs from content
-          find "$CLASEDIR" -name "*.pdf" | while read pdf; do
-            rel_path="${pdf#$CLASEDIR/}"
+          find clase -name "*.pdf" | while read pdf; do
+            rel_path="${pdf#clase/}"
             mkdir -p "_site/$(dirname "$rel_path")"
             cp "$pdf" "_site/$rel_path"
           done

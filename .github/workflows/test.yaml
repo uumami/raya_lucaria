@@ -37,14 +37,11 @@ jobs:
         run: cd src/eleventy && npx vitest run
         continue-on-error: true
 
-      - name: Build example site
+      - name: Build site (integration test)
         run: |
-          cd ejemplo
-          cp glintstone.yaml ../glintstone.yaml.test
-          PYTHONPATH=../src python3 -m preprocessing \
-            --config ../glintstone.yaml.test \
-            build --output ../src/eleventy/_data
-          cd ..
-          GLINTSTONE_ROOT=. GLINTSTONE_INPUT=ejemplo/clase \
+          PYTHONPATH=src python3 -m preprocessing \
+            --config glintstone.yaml \
+            build --output src/eleventy/_data
+          GLINTSTONE_ROOT=. GLINTSTONE_INPUT=clase \
           npx @11ty/eleventy --config=src/eleventy/.eleventy.js
         continue-on-error: true

@@ -8,7 +8,7 @@ site:
   author: "ITAM"
 
 repository:
-  name: "raya-lucaria-ejemplo"
+  name: "raya-lucaria"
 
 source:
   content_dir: "clase"

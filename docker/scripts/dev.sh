@@ -20,7 +20,12 @@ STAGE=/app/clase-stage
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
 for f in /app/clase/*; do
-  ln -s "$f" "$STAGE/$(basename "$f")"
+  base="$(basename "$f")"
+  # Skip files handled separately by later build steps
+  case "$base" in
+    anuncios.md|calendario_temas.csv) continue ;;
+  esac
+  ln -s "$f" "$STAGE/$base"
 done
 
 # Symlink framework docs (if enabled and dir exists)
@@ -49,8 +54,8 @@ for p in data:
 "
 echo ""
 
-# Step 1d: Generate calendario page (if CSV exists)
-if [ -f calendario_temas.csv ]; then
+# Step 1d: Generate calendario page (if CSV exists in content dir)
+if [ -f clase/calendario_temas.csv ]; then
   echo "[*] Charting the calendar..."
   PYTHONPATH=/app/glintstone/src python3 -m preprocessing.process_calendar
   cat > "$STAGE/_calendario.njk" << 'CALEOF'
@@ -64,12 +69,12 @@ CALEOF
   echo ""
 fi
 
-# Step 1e: Generate announcements page (if anuncios.md exists)
-if [ -f anuncios.md ]; then
+# Step 1e: Generate announcements page (if anuncios.md exists in content dir)
+if [ -f clase/anuncios.md ]; then
   echo "[*] Inscribing announcements..."
   { echo "---"; echo 'title: "Anuncios"'; echo 'permalink: "/anuncios/"';
     echo "eleventyExcludeFromCollections: true"; echo "---"; echo "";
-    cat anuncios.md; } > "$STAGE/_anuncios.md"
+    cat clase/anuncios.md; } > "$STAGE/_anuncios.md"
   python3 -c "
 import json, pathlib
 f = pathlib.Path('glintstone/src/eleventy/_data/features.json')

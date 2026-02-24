@@ -9,7 +9,7 @@ El calendario de temas es una tabla que muestra las fechas y temas del curso a l
 
 ## Formato del CSV
 
-Crea un archivo `calendario_temas.csv` en la raiz del repositorio del curso. El formato es:
+Crea un archivo `calendario_temas.csv` dentro del directorio `clase/`. El formato es:
 
 ```csv
 semana,fecha,tema,notas
@@ -33,4 +33,4 @@ El calendario aparece como una tabla con formato en la ruta `/calendario/` del s
 
 ## Condicional
 
-El calendario solo se muestra si el archivo `calendario_temas.csv` existe. Si no existe, la entrada no aparece en el menu lateral.
+El calendario solo se muestra si el archivo `clase/calendario_temas.csv` existe. Si no existe, la entrada no aparece en el menu lateral.

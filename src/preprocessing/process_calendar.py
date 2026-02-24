@@ -3,7 +3,7 @@
 Usage (called from build scripts):
     PYTHONPATH=/app/glintstone/src python3 -m preprocessing.process_calendar
 
-Reads calendario_temas.csv from CWD, writes calendar_topics.json to _data.
+Reads clase/calendario_temas.csv from CWD, writes calendar_topics.json to _data.
 """
 import csv
 import json
@@ -31,7 +31,7 @@ def process_calendar(csv_path: Path, output_path: Path) -> list:
 
 
 def main():
-    csv_path = Path('calendario_temas.csv')
+    csv_path = Path('clase/calendario_temas.csv')
     if not csv_path.exists():
         print(f"[calendario] No {csv_path} found, skipping.", file=sys.stderr)
         sys.exit(0)

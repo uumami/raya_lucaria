@@ -10,7 +10,7 @@ summary: "Workflow, danger zones, testing, and code style"
 ### Always validate before commit
 
 ```bash
-docker compose -f glintstone/docker/docker-compose.yaml up validate
+docker compose up validate
 ```
 
 This runs `validate_content.py` which checks for:
@@ -20,12 +20,12 @@ This runs `validate_content.py` which checks for:
 - Missing required attributes
 - Broken internal links
 
-### Test with ejemplo
+### Test with Docker build
 
-The `ejemplo/` directory contains a complete example course. Always test framework changes against it:
+This repo serves as both the framework and a working example course. Test framework changes with:
 
 ```bash
-cd ejemplo && docker compose up build
+docker compose up build
 ```
 
 ## Common Operations

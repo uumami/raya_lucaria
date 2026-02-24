@@ -3,7 +3,7 @@
  * Uses globs instead of hardcoded prefixes.
  */
 
-const INPUT_DIR = process.env.SELLEN_INPUT || 'clase';
+const INPUT_DIR = process.env.GLINTSTONE_INPUT || 'clase';
 
 function configurePassthrough(eleventyConfig) {
   // CSS

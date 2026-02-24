@@ -49,8 +49,7 @@ course-repo/
 │   ├── docs/                 # Framework documentation (this)
 │   └── docker/               # Dockerfile + docker-compose + scripts
 ├── glintstone.yaml            # Course configuration
-├── _site/                    # Build output (gitignored)
-└── calendario_temas.csv      # Optional calendar
+└── _site/                    # Build output (gitignored)
 ```
 
 ## Data Flow
