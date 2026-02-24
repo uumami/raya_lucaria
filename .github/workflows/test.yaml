@@ -22,8 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: src/eleventy/package-lock.json
 
       - name: Install Python dependencies
         run: pip install pyyaml pytest
@@ -43,9 +41,10 @@ jobs:
         run: |
           cd ejemplo
           cp glintstone.yaml ../glintstone.yaml.test
-          PYTHONPATH=../src python3 -m preprocessing build \
+          PYTHONPATH=../src python3 -m preprocessing \
             --config ../glintstone.yaml.test \
-            --output ../src/eleventy/_data
+            build --output ../src/eleventy/_data
           cd ..
+          GLINTSTONE_ROOT=. GLINTSTONE_INPUT=ejemplo/clase \
           npx @11ty/eleventy --config=src/eleventy/.eleventy.js
         continue-on-error: true
