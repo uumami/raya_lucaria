@@ -10,19 +10,63 @@ layout: layouts/base.njk
 
 {{ content | safe }}
 
-<div id="graph-container" class="w-full" style="height: calc(100vh - 14rem);">
+<div id="graph-container" class="w-full transition-all duration-300" style="height: calc(100vh - 14rem);">
   <div class="flex items-center gap-3 mb-3 flex-wrap">
     <input id="graph-search" type="text" placeholder="Buscar pagina..."
            class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text w-48 focus:outline-none focus:border-accent">
+    <select id="graph-layout"
+            class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text focus:outline-none focus:border-accent">
+      <option value="force" selected>Fuerza</option>
+      <option value="hierarchy">Jerarquia</option>
+      <option value="circular">Circular</option>
+      <option value="grid">Cuadricula</option>
+    </select>
     <button id="graph-fit"
             class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text-muted hover:text-accent hover:border-accent transition-colors">
       Ajustar
     </button>
+    <button id="graph-reset"
+            class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text-muted hover:text-accent hover:border-accent transition-colors">
+      Reset
+    </button>
+    <button id="graph-expand"
+            class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text-muted hover:text-accent hover:border-accent transition-colors ml-auto"
+            title="Expandir / Contraer">
+      &#x26F6; Expandir
+    </button>
   </div>
-  <div id="graph-svg" class="w-full rounded border border-border bg-bg-secondary"
-       style="height: calc(100% - 4rem);"></div>
-  <div id="graph-legend" class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-text-muted"></div>
+
+  <div id="graph-legend" class="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-text-muted"></div>
+
+  <div id="graph-canvas" class="w-full rounded border border-border bg-bg-secondary"
+       style="height: calc(100% - 6rem);"></div>
+
+  <div id="graph-status" class="mt-2 text-xs text-text-muted"></div>
 </div>
 
-{# d3 loaded only on this page #}
-<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+{# Help section below graph #}
+<div class="mt-6 text-sm text-text-muted space-y-3">
+  <details>
+    <summary class="cursor-pointer font-medium text-text hover:text-accent transition-colors">
+      Controles del grafo
+    </summary>
+    <div class="mt-2 ml-4 space-y-2">
+      <p><strong>Buscar:</strong> Escribe para filtrar paginas por nombre. Soporta busqueda aproximada (ej. "mate" encuentra "Matematicas").</p>
+      <p><strong>Disposicion:</strong> Cambia como se organizan los nodos.</p>
+      <ul class="list-disc ml-5 space-y-1">
+        <li><em>Fuerza</em> &mdash; Los nodos se repelen como imanes y las aristas los atraen. Revela clusters naturales.</li>
+        <li><em>Jerarquia</em> &mdash; Arbol de arriba a abajo siguiendo la direccion de las aristas.</li>
+        <li><em>Circular</em> &mdash; Todos los nodos en un circulo. Util para ver todas las conexiones.</li>
+        <li><em>Cuadricula</em> &mdash; Nodos en una rejilla ordenada. Util cuando hay muchos nodos sin conexiones.</li>
+      </ul>
+      <p><strong>Ajustar:</strong> Centra y escala el grafo para que todos los nodos sean visibles.</p>
+      <p><strong>Reset:</strong> Restaura el grafo completo, limpia filtros y busqueda.</p>
+      <p><strong>Expandir:</strong> Agranda el grafo para ocupar toda la pantalla.</p>
+      <p><strong>Capitulos:</strong> Haz click en los chips de color para mostrar/ocultar capitulos.</p>
+      <p><strong>Interaccion:</strong> Arrastra nodos para moverlos. Usa scroll para zoom. Haz click en un nodo para ir a esa pagina.</p>
+    </div>
+  </details>
+</div>
+
+{# Cytoscape loaded only on this page (cose layout is built-in, no extra deps) #}
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.min.js"></script>
