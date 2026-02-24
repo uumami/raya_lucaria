@@ -1,5 +1,5 @@
 /**
- * Page table of contents with scroll tracking and collapse toggle.
+ * Page table of contents with scroll tracking and full sidebar collapse.
  * Populates the right sidebar TOC from h2/h3 headings.
  */
 
@@ -8,7 +8,10 @@ const TOC_STORAGE_KEY = 'glintstone-toc-collapsed';
 export function initToc() {
   const tocNav = document.getElementById('toc-nav');
   const tocAside = document.getElementById('page-toc');
+  const tocExpanded = document.getElementById('toc-expanded');
+  const tocCollapsedTab = document.getElementById('toc-collapsed-tab');
   const collapseBtn = document.getElementById('toc-collapse-btn');
+  const expandBtn = document.getElementById('toc-expand-btn');
   if (!tocNav || !tocAside) return;
 
   // Find all h2 and h3 headings in main content
@@ -39,23 +42,28 @@ export function initToc() {
     tocNav.appendChild(link);
   });
 
-  // Restore collapsed state
-  if (localStorage.getItem(TOC_STORAGE_KEY) === 'true') {
-    tocNav.classList.add('toc-collapsed');
-    if (collapseBtn) {
-      collapseBtn.querySelector('.toc-collapse-icon').style.transform = 'rotate(-90deg)';
-    }
+  function collapse() {
+    tocAside.classList.add('toc-sidebar-collapsed');
+    if (tocExpanded) tocExpanded.classList.add('hidden');
+    if (tocCollapsedTab) tocCollapsedTab.classList.remove('hidden');
+    localStorage.setItem(TOC_STORAGE_KEY, 'true');
   }
 
-  // Collapse toggle
-  if (collapseBtn) {
-    collapseBtn.addEventListener('click', () => {
-      const isCollapsed = tocNav.classList.toggle('toc-collapsed');
-      localStorage.setItem(TOC_STORAGE_KEY, isCollapsed);
-      collapseBtn.querySelector('.toc-collapse-icon').style.transform =
-        isCollapsed ? 'rotate(-90deg)' : '';
-    });
+  function expand() {
+    tocAside.classList.remove('toc-sidebar-collapsed');
+    if (tocExpanded) tocExpanded.classList.remove('hidden');
+    if (tocCollapsedTab) tocCollapsedTab.classList.add('hidden');
+    localStorage.setItem(TOC_STORAGE_KEY, 'false');
   }
+
+  // Restore collapsed state
+  if (localStorage.getItem(TOC_STORAGE_KEY) === 'true') {
+    collapse();
+  }
+
+  // Collapse/expand handlers
+  if (collapseBtn) collapseBtn.addEventListener('click', collapse);
+  if (expandBtn) expandBtn.addEventListener('click', expand);
 
   // Scroll tracking with IntersectionObserver
   const observer = new IntersectionObserver(

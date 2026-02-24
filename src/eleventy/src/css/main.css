@@ -388,20 +388,13 @@
 .size-x-large #main-content img,
 .size-x-large .mermaid-container { zoom: 1.25; }
 
-/* TOC collapse transition (outside @layer to prevent purging) */
-.toc-links {
-  max-height: 2000px;
-  opacity: 1;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.2s ease;
+/* TOC sidebar collapse (outside @layer to prevent purging) */
+.toc-sidebar {
+  transition: width 0.2s ease;
 }
-.toc-collapsed {
-  max-height: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none;
-}
-.toc-collapse-icon {
-  transition: transform 0.2s ease;
+.toc-sidebar-collapsed {
+  width: 2.5rem;
+  border-left-color: transparent;
 }
 
 /* ============================================
