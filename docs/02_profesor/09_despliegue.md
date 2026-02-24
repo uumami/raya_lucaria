@@ -9,85 +9,105 @@ summary: "Publicar el sitio en GitHub Pages"
 
 El sitio se despliega automaticamente a GitHub Pages usando GitHub Actions.
 
-### Configuracion del repositorio
+### Paso 1: Configurar el repositorio
 
 1. Ve a **Settings > Pages** en tu repositorio de GitHub
 2. En **Source**, selecciona **GitHub Actions**
 3. No necesitas seleccionar una rama especifica
 
-### Archivo de GitHub Actions
+### Paso 2: Copiar el workflow
 
-Crea `.github/workflows/deploy.yml` en tu repositorio:
+Copia el archivo `glintstone/.github/workflows/deploy.yaml` a tu repositorio:
 
-```yaml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - name: Build site
-        run: docker compose -f glintstone/docker/docker-compose.yaml up build
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+```bash
+mkdir -p .github/workflows
+cp glintstone/.github/workflows/deploy.yaml .github/workflows/deploy.yaml
 ```
 
-### Variable PATH_PREFIX
+Este workflow:
+- Se ejecuta automaticamente en cada push a `main`
+- Se puede ejecutar manualmente desde la pestana **Actions**
+- Auto-detecta el nombre del repositorio para el prefijo de ruta
+- Funciona con cualquier dominio personalizado sin configuracion adicional
 
-Para que los enlaces funcionen correctamente en GitHub Pages, el prefijo de ruta se configura automaticamente desde el nombre del repositorio. Si necesitas un prefijo diferente, configura la variable de entorno `PATH_PREFIX`:
+### Paso 3: Push
 
-```yaml
-env:
-  PATH_PREFIX: /mi-curso
+```bash
+git add .github/workflows/deploy.yaml
+git commit -m "Add GitHub Pages deployment"
+git push
 ```
+
+El sitio estara disponible en `https://{usuario}.github.io/{nombre-repo}/`.
 
 ## Dominio personalizado
 
-Para usar un dominio personalizado:
+Para publicar en un dominio personalizado como `midominio.com/{nombre-repo}/`:
 
-1. Ve a **Settings > Pages > Custom domain**
-2. Ingresa tu dominio
-3. Agrega los registros DNS correspondientes
-4. Cuando uses un dominio personalizado, `PATH_PREFIX` debe ser `/`
+### Configuracion unica (a nivel de organizacion o usuario)
+
+1. Crea un repositorio llamado `{usuario}.github.io` (o `{org}.github.io`)
+2. Agrega un archivo `CNAME` con tu dominio:
+   ```
+   www.midominio.com
+   ```
+3. Configura DNS:
+   - **Registro A** apuntando a las IPs de GitHub Pages:
+     ```
+     185.199.108.153
+     185.199.109.153
+     185.199.110.153
+     185.199.111.153
+     ```
+   - **Registro CNAME** para `www`: `{usuario}.github.io`
+
+### Como funciona
+
+Una vez configurado el dominio a nivel de usuario/organizacion, **todos** tus repositorios con GitHub Pages se sirven automaticamente bajo ese dominio:
+
+```
+https://www.midominio.com/repo-1/
+https://www.midominio.com/repo-2/
+https://www.midominio.com/curso-stats/
+```
+
+No necesitas configurar nada adicional en cada repositorio. El workflow auto-detecta el nombre del repositorio y lo usa como prefijo de ruta.
+
+### Variable PATH_PREFIX
+
+El prefijo de ruta se configura automaticamente. Solo necesitas sobreescribirlo si:
+- Quieres un prefijo diferente al nombre del repositorio
+- Tu dominio personalizado sirve el sitio en la raiz (`/`)
+
+Para sobreescribir, edita el workflow:
+
+```yaml
+env:
+  PATH_PREFIX: /mi-prefijo-custom/
+```
 
 ## Resolucion de problemas
 
 ### Pagina en blanco
 
-- Verifica que `PATH_PREFIX` este configurado correctamente
-- Revisa que el build de Docker se complete sin errores
+- Verifica que **Settings > Pages > Source** sea **GitHub Actions**
+- Revisa que el build se complete sin errores en la pestana **Actions**
+- Verifica que `PATH_PREFIX` coincida con el nombre del repositorio
 
-### Assets faltantes (CSS, JS)
+### Assets faltantes (CSS, JS, imagenes)
 
-- Verifica que el prefijo de ruta coincida con el nombre del repositorio
-- Revisa la consola del navegador para ver errores 404
+- Abre la consola del navegador (F12) y busca errores 404
+- Verifica que las rutas incluyan el prefijo correcto (`/{nombre-repo}/css/...`)
+- Si usas dominio personalizado, asegura que el DNS este configurado correctamente
 
 ### Submodulo no se clona
 
-- Asegura que el checkout de GitHub Actions use `submodules: true`
-- Verifica que el submodulo apunte a un repositorio accesible
+- El workflow usa `submodules: recursive` — verifica que el submodulo apunte a un repositorio publico o accesible
+- Si el submodulo es privado, configura un deploy key en el repositorio
+
+### El dominio personalizado no funciona
+
+- Verifica que el repositorio `{usuario}.github.io` existe y tiene el archivo `CNAME`
+- Revisa la configuracion DNS con `dig www.midominio.com` — debe apuntar a GitHub Pages
+- Espera hasta 24 horas para la propagacion de DNS
+- En **Settings > Pages**, verifica que "Enforce HTTPS" este habilitado

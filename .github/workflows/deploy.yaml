@@ -1,0 +1,232 @@
+# Glintstone GitHub Pages Deployment
+# Builds and deploys the course site to GitHub Pages.
+#
+# This workflow is designed for COURSE REPOS that use glintstone as a submodule.
+# Copy this file to your course repo's .github/workflows/deploy.yaml.
+#
+# Site URL: https://{custom-domain}/{repo-name}/
+#   or:     https://{user}.github.io/{repo-name}/
+#
+# The path prefix is auto-detected from the repo name. Custom domains are
+# configured at the org/user level (via {user}.github.io CNAME) — no
+# per-repo domain configuration needed.
+#
+# Prerequisites:
+#   1. Repository Settings > Pages > Source: "GitHub Actions"
+#   2. glintstone/ exists as a git submodule
+#   3. (Optional) Custom domain configured at org/user level:
+#      - Create {user}.github.io repo with CNAME file containing your domain
+#      - Configure DNS A/CNAME records pointing to GitHub Pages
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'estudiantes/**'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: glintstone/src/eleventy/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install pyyaml
+
+      - name: Install Node.js dependencies
+        working-directory: glintstone/src/eleventy
+        run: npm ci
+
+      - name: Run preprocessing
+        run: PYTHONPATH=glintstone/src python3 -m preprocessing build
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
+
+      - name: Stage content
+        run: |
+          STAGE=clase-stage
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          for f in clase/*; do
+            ln -s "$(pwd)/$f" "$STAGE/$(basename "$f")"
+          done
+
+          # Symlink docs (if enabled)
+          DOCS_ENABLED=$(python3 -c "
+          import json, pathlib
+          try:
+              f = json.loads(pathlib.Path('glintstone/src/eleventy/_data/features.json').read_text())
+              print('true' if f.get('docs', True) else 'false')
+          except: print('true')
+          ")
+          if [ "$DOCS_ENABLED" = "true" ] && [ -d glintstone/docs ]; then
+            ln -s "$(pwd)/glintstone/docs" "$STAGE/docs"
+          fi
+
+          # Generate task pages
+          python3 -c "
+          import json, pathlib
+          data = json.loads(pathlib.Path('glintstone/src/eleventy/_data/taskPages.json').read_text())
+          for p in data:
+              tt = 'exams' if p['type'] == 'exam' else ('homework' if p['type'] == 'homework' else 'projects')
+              pathlib.Path('$STAGE/_task-' + p['slug'] + '.njk').write_text(
+                  '---\nlayout: layouts/task-list.njk\ntitle: \"' + p['title'] + '\"\npermalink: /' + p['slug'] + '/\ntaskType: ' + tt + '\neleventyExcludeFromCollections: true\n---\n')
+          "
+
+          # Generate calendario page (if CSV exists)
+          if [ -f calendario_temas.csv ]; then
+            PYTHONPATH=glintstone/src python3 -m preprocessing.process_calendar
+            cat > "$STAGE/_calendario.njk" << 'CALEOF'
+          ---
+          layout: layouts/calendario.njk
+          title: "Calendario"
+          permalink: "/calendario/"
+          eleventyExcludeFromCollections: true
+          ---
+          CALEOF
+          fi
+
+          # Generate announcements page (if anuncios.md exists)
+          if [ -f anuncios.md ]; then
+            { echo "---"; echo 'title: "Anuncios"'; echo 'permalink: "/anuncios/"';
+              echo "eleventyExcludeFromCollections: true"; echo "---"; echo "";
+              cat anuncios.md; } > "$STAGE/_anuncios.md"
+            python3 -c "
+          import json, pathlib
+          f = pathlib.Path('glintstone/src/eleventy/_data/features.json')
+          d = json.loads(f.read_text()); d['anuncios'] = True
+          f.write_text(json.dumps(d, indent=2))"
+          fi
+
+          # Generate graph page (if enabled)
+          GRAPH_ENABLED=$(python3 -c "
+          import json, pathlib
+          try:
+              f = json.loads(pathlib.Path('glintstone/src/eleventy/_data/features.json').read_text())
+              print('true' if f.get('graph', True) else 'false')
+          except: print('true')
+          ")
+          if [ "$GRAPH_ENABLED" = "true" ]; then
+            cat > "$STAGE/_grafo.njk" << 'GRAFEOF'
+          ---
+          layout: layouts/graph.njk
+          title: "Grafo del Curso"
+          permalink: /grafo/
+          eleventyExcludeFromCollections: true
+          ---
+          GRAFEOF
+          fi
+
+      - name: Build site with Eleventy
+        run: |
+          GLINTSTONE_INPUT=clase-stage \
+          npx @11ty/eleventy --config=glintstone/src/eleventy/.eleventy.js
+        env:
+          NODE_ENV: production
+          PATH_PREFIX: "/${{ github.event.repository.name }}/"
+
+      - name: Build CSS with Tailwind
+        run: |
+          mkdir -p _site/css/themes
+          ./glintstone/src/eleventy/node_modules/.bin/tailwindcss \
+            -c glintstone/src/eleventy/tailwind.config.js \
+            -i glintstone/src/eleventy/src/css/main.css \
+            -o _site/css/styles.css --minify
+          cp glintstone/src/eleventy/src/css/themes/*.css _site/css/themes/
+
+      - name: Bundle JavaScript
+        run: |
+          ./glintstone/src/eleventy/node_modules/.bin/esbuild \
+            glintstone/src/eleventy/src/js/main.js \
+            --bundle --minify --sourcemap \
+            --outfile=_site/js/bundle.js --format=iife \
+            2>/dev/null || true
+
+      - name: Copy static assets
+        run: |
+          # Fonts
+          if [ -d glintstone/src/eleventy/src/fonts ]; then
+            cp -r glintstone/src/eleventy/src/fonts _site/fonts
+          fi
+          # Favicon
+          cp clase/favicon.ico clase/apple-touch-icon.png _site/ 2>/dev/null || true
+          # Images from content
+          find clase -type d -name "images" | while read img_dir; do
+            rel_path="${img_dir#clase/}"
+            mkdir -p "_site/$rel_path"
+            cp -r "$img_dir"/* "_site/$rel_path/" 2>/dev/null || true
+          done
+          # PDFs from content
+          find clase -name "*.pdf" | while read pdf; do
+            rel_path="${pdf#clase/}"
+            mkdir -p "_site/$(dirname "$rel_path")"
+            cp "$pdf" "_site/$rel_path"
+          done
+          # Manifest and service worker
+          cp glintstone/src/eleventy/src/sw.js _site/sw.js 2>/dev/null || true
+          python3 -c "
+          import json, pathlib
+          try: site = json.loads(pathlib.Path('glintstone/src/eleventy/_data/site.json').read_text())
+          except: site = {}
+          manifest = {
+              'name': site.get('name', 'Course Site'),
+              'short_name': site.get('name', 'Course')[:12],
+              'start_url': '.', 'display': 'standalone',
+              'background_color': '#180a0a', 'theme_color': '#e84040',
+              'icons': [{'src': 'apple-touch-icon.png', 'sizes': '180x180', 'type': 'image/png'}]
+          }
+          pathlib.Path('_site/manifest.json').write_text(json.dumps(manifest, indent=2))
+          " 2>/dev/null || true
+          touch _site/.nojekyll
+
+      - name: Build search index
+        run: |
+          npx pagefind --site _site --glob "**/*.html" 2>/dev/null || true
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        timeout-minutes: 10
