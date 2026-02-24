@@ -129,6 +129,17 @@ manifest = {
 pathlib.Path('_site/manifest.json').write_text(json.dumps(manifest, indent=2))
 " 2>/dev/null || true
 
+# Step 2c: Bundle JavaScript
+echo "[*] Forging armaments..."
+mkdir -p _site/js
+esbuild \
+  glintstone/src/eleventy/src/js/main.js \
+  --bundle --sourcemap \
+  --outfile=_site/js/bundle.js \
+  --format=iife \
+  2>/dev/null || echo "    (no JS to bundle)"
+echo ""
+
 # Step 3: Copy static assets
 if [ -d glintstone/src/eleventy/src/fonts ]; then
   cp -r glintstone/src/eleventy/src/fonts _site/fonts
