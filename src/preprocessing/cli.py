@@ -44,7 +44,8 @@ def cmd_build(args):
     log.info("  Hierarchy saved")
 
     # Generate docs hierarchy (if enabled and docs dir exists)
-    docs_dir = Path('glintstone/docs')
+    # Auto-detect: submodule mode (glintstone/docs) or template mode (docs/)
+    docs_dir = Path('glintstone/docs') if Path('glintstone/docs').exists() else Path('docs')
     if config.features.docs and docs_dir.exists():
         log.info("Generating docs hierarchy...")
         docs_metadata = extract_all_metadata(docs_dir, exclude=[], verbose=verbose)

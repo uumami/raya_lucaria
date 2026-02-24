@@ -86,6 +86,24 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare workspace
+        run: |
+          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
+          CONFIG="${{ steps.layout.outputs.config }}"
+
+          # When running from the framework repo (ejemplo mode), create symlinks
+          # so preprocessing finds content at the paths specified in glintstone.yaml
+          if [ "$CLASEDIR" != "clase" ] && [ ! -d "clase" ]; then
+            ln -s "$CLASEDIR" clase
+            echo "Created symlink: clase -> $CLASEDIR"
+          fi
+
+          # Symlink config to root if it's nested
+          if [ "$CONFIG" != "glintstone.yaml" ] && [ ! -f "glintstone.yaml" ]; then
+            ln -s "$CONFIG" glintstone.yaml
+            echo "Created symlink: glintstone.yaml -> $CONFIG"
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
