@@ -29,7 +29,7 @@ jobs:
         run: pip install pyyaml pytest
 
       - name: Install Node dependencies
-        run: cd src/eleventy && npm ci
+        run: cd src/eleventy && npm install
 
       - name: Run Python tests
         run: PYTHONPATH=src pytest tests/python/ -v

@@ -97,7 +97,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pyyaml
-          cd ${{ steps.layout.outputs.eleventy }} && npm ci
+          cd ${{ steps.layout.outputs.eleventy }} && npm install
 
       - name: Run preprocessing
         run: |
