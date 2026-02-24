@@ -1,22 +1,16 @@
 # Glintstone GitHub Pages Deployment
+#
 # Builds and deploys the course site to GitHub Pages.
+# Works automatically with any GitHub Pages setup:
+#   - Default:        https://{user}.github.io/{repo-name}/
+#   - Custom domain:  https://{custom-domain}/{repo-name}/
 #
-# This workflow is designed for COURSE REPOS that use glintstone as a submodule.
-# Copy this file to your course repo's .github/workflows/deploy.yaml.
-#
-# Site URL: https://{custom-domain}/{repo-name}/
-#   or:     https://{user}.github.io/{repo-name}/
-#
-# The path prefix is auto-detected from the repo name. Custom domains are
-# configured at the org/user level (via {user}.github.io CNAME) — no
-# per-repo domain configuration needed.
+# The path prefix is auto-detected from the repo name.
+# Custom domains are configured once at the org/user level
+# (via {user}.github.io CNAME) — no per-repo config needed.
 #
 # Prerequisites:
 #   1. Repository Settings > Pages > Source: "GitHub Actions"
-#   2. glintstone/ exists as a git submodule
-#   3. (Optional) Custom domain configured at org/user level:
-#      - Create {user}.github.io repo with CNAME file containing your domain
-#      - Configure DNS A/CNAME records pointing to GitHub Pages
 
 name: Deploy to GitHub Pages
 
@@ -25,7 +19,7 @@ on:
     branches: [main]
     paths-ignore:
       - 'estudiantes/**'
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,61 +33,111 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Auto-detect layout: template mode (src/ at root) vs submodule mode (glintstone/)
+      # Course repos created from the template have src/ at root.
+      # Course repos using glintstone as a submodule have glintstone/src/.
+      PYTHONDONTWRITEBYTECODE: 1
     steps:
-      - name: Checkout (with submodules)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Detect project layout
+        id: layout
+        run: |
+          if [ -d "src/preprocessing" ]; then
+            echo "Framework source at repo root (template mode)"
+            echo "srcdir=src" >> "$GITHUB_OUTPUT"
+            echo "eleventy=src/eleventy" >> "$GITHUB_OUTPUT"
+            echo "docsdir=docs" >> "$GITHUB_OUTPUT"
+            echo "scriptdir=docker/scripts" >> "$GITHUB_OUTPUT"
+          elif [ -d "glintstone/src/preprocessing" ]; then
+            echo "Framework source in glintstone/ submodule"
+            echo "srcdir=glintstone/src" >> "$GITHUB_OUTPUT"
+            echo "eleventy=glintstone/src/eleventy" >> "$GITHUB_OUTPUT"
+            echo "docsdir=glintstone/docs" >> "$GITHUB_OUTPUT"
+            echo "scriptdir=glintstone/docker/scripts" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Cannot find framework source. Expected src/preprocessing/ or glintstone/src/preprocessing/"
+            exit 1
+          fi
+
+          # Detect content directory: clase/ at root, or ejemplo/clase/ (framework dev)
+          if [ -d "clase" ]; then
+            echo "clasedir=clase" >> "$GITHUB_OUTPUT"
+          elif [ -d "ejemplo/clase" ]; then
+            echo "clasedir=ejemplo/clase" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Cannot find content directory. Expected clase/ or ejemplo/clase/"
+            exit 1
+          fi
+
+          # Detect config file
+          if [ -f "glintstone.yaml" ]; then
+            echo "config=glintstone.yaml" >> "$GITHUB_OUTPUT"
+          elif [ -f "ejemplo/glintstone.yaml" ]; then
+            echo "config=ejemplo/glintstone.yaml" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Cannot find glintstone.yaml"
+            exit 1
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: glintstone/src/eleventy/package-lock.json
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Python dependencies
-        run: pip install pyyaml
-
-      - name: Install Node.js dependencies
-        working-directory: glintstone/src/eleventy
-        run: npm ci
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+          cd ${{ steps.layout.outputs.eleventy }} && npm ci
 
       - name: Run preprocessing
-        run: PYTHONPATH=glintstone/src python3 -m preprocessing build
-        env:
-          PYTHONDONTWRITEBYTECODE: 1
+        run: |
+          PYTHONPATH=${{ steps.layout.outputs.srcdir }} python3 -m preprocessing build \
+            --config ${{ steps.layout.outputs.config }} \
+            --output ${{ steps.layout.outputs.eleventy }}/_data
 
       - name: Stage content
         run: |
+          SRCDIR="${{ steps.layout.outputs.srcdir }}"
+          ELEVENTY="${{ steps.layout.outputs.eleventy }}"
+          DOCSDIR="${{ steps.layout.outputs.docsdir }}"
+          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
           STAGE=clase-stage
+          DATA="$ELEVENTY/_data"
+
           rm -rf "$STAGE"
           mkdir -p "$STAGE"
-          for f in clase/*; do
-            ln -s "$(pwd)/$f" "$STAGE/$(basename "$f")"
+
+          # Symlink content files
+          for f in "$CLASEDIR"/*; do
+            [ -e "$f" ] && ln -s "$(pwd)/$f" "$STAGE/$(basename "$f")"
           done
 
-          # Symlink docs (if enabled)
+          # Symlink docs (if enabled and exists)
           DOCS_ENABLED=$(python3 -c "
           import json, pathlib
           try:
-              f = json.loads(pathlib.Path('glintstone/src/eleventy/_data/features.json').read_text())
+              f = json.loads(pathlib.Path('$DATA/features.json').read_text())
               print('true' if f.get('docs', True) else 'false')
           except: print('true')
           ")
-          if [ "$DOCS_ENABLED" = "true" ] && [ -d glintstone/docs ]; then
-            ln -s "$(pwd)/glintstone/docs" "$STAGE/docs"
+          if [ "$DOCS_ENABLED" = "true" ] && [ -d "$DOCSDIR" ]; then
+            ln -s "$(pwd)/$DOCSDIR" "$STAGE/docs"
           fi
 
           # Generate task pages
           python3 -c "
           import json, pathlib
-          data = json.loads(pathlib.Path('glintstone/src/eleventy/_data/taskPages.json').read_text())
+          data = json.loads(pathlib.Path('$DATA/taskPages.json').read_text())
           for p in data:
               tt = 'exams' if p['type'] == 'exam' else ('homework' if p['type'] == 'homework' else 'projects')
               pathlib.Path('$STAGE/_task-' + p['slug'] + '.njk').write_text(
@@ -102,15 +146,15 @@ jobs:
 
           # Generate calendario page (if CSV exists)
           if [ -f calendario_temas.csv ]; then
-            PYTHONPATH=glintstone/src python3 -m preprocessing.process_calendar
-            cat > "$STAGE/_calendario.njk" << 'CALEOF'
+            PYTHONPATH=$SRCDIR python3 -m preprocessing.process_calendar
+            cat > "$STAGE/_calendario.njk" << 'EOF'
           ---
           layout: layouts/calendario.njk
           title: "Calendario"
           permalink: "/calendario/"
           eleventyExcludeFromCollections: true
           ---
-          CALEOF
+          EOF
           fi
 
           # Generate announcements page (if anuncios.md exists)
@@ -120,7 +164,7 @@ jobs:
               cat anuncios.md; } > "$STAGE/_anuncios.md"
             python3 -c "
           import json, pathlib
-          f = pathlib.Path('glintstone/src/eleventy/_data/features.json')
+          f = pathlib.Path('$DATA/features.json')
           d = json.loads(f.read_text()); d['anuncios'] = True
           f.write_text(json.dumps(d, indent=2))"
           fi
@@ -129,71 +173,75 @@ jobs:
           GRAPH_ENABLED=$(python3 -c "
           import json, pathlib
           try:
-              f = json.loads(pathlib.Path('glintstone/src/eleventy/_data/features.json').read_text())
+              f = json.loads(pathlib.Path('$DATA/features.json').read_text())
               print('true' if f.get('graph', True) else 'false')
           except: print('true')
           ")
           if [ "$GRAPH_ENABLED" = "true" ]; then
-            cat > "$STAGE/_grafo.njk" << 'GRAFEOF'
+            cat > "$STAGE/_grafo.njk" << 'EOF'
           ---
           layout: layouts/graph.njk
           title: "Grafo del Curso"
           permalink: /grafo/
           eleventyExcludeFromCollections: true
           ---
-          GRAFEOF
+          EOF
           fi
 
       - name: Build site with Eleventy
         run: |
           GLINTSTONE_INPUT=clase-stage \
-          npx @11ty/eleventy --config=glintstone/src/eleventy/.eleventy.js
+          npx @11ty/eleventy --config=${{ steps.layout.outputs.eleventy }}/.eleventy.js
         env:
           NODE_ENV: production
           PATH_PREFIX: "/${{ github.event.repository.name }}/"
 
-      - name: Build CSS with Tailwind
+      - name: Build CSS
         run: |
+          ELEVENTY="${{ steps.layout.outputs.eleventy }}"
           mkdir -p _site/css/themes
-          ./glintstone/src/eleventy/node_modules/.bin/tailwindcss \
-            -c glintstone/src/eleventy/tailwind.config.js \
-            -i glintstone/src/eleventy/src/css/main.css \
+          ./"$ELEVENTY"/node_modules/.bin/tailwindcss \
+            -c "$ELEVENTY"/tailwind.config.js \
+            -i "$ELEVENTY"/src/css/main.css \
             -o _site/css/styles.css --minify
-          cp glintstone/src/eleventy/src/css/themes/*.css _site/css/themes/
+          cp "$ELEVENTY"/src/css/themes/*.css _site/css/themes/
 
       - name: Bundle JavaScript
         run: |
-          ./glintstone/src/eleventy/node_modules/.bin/esbuild \
-            glintstone/src/eleventy/src/js/main.js \
+          ELEVENTY="${{ steps.layout.outputs.eleventy }}"
+          ./"$ELEVENTY"/node_modules/.bin/esbuild \
+            "$ELEVENTY"/src/js/main.js \
             --bundle --minify --sourcemap \
             --outfile=_site/js/bundle.js --format=iife \
             2>/dev/null || true
 
       - name: Copy static assets
         run: |
+          ELEVENTY="${{ steps.layout.outputs.eleventy }}"
+          CLASEDIR="${{ steps.layout.outputs.clasedir }}"
+          SRCDIR="${{ steps.layout.outputs.srcdir }}"
+
           # Fonts
-          if [ -d glintstone/src/eleventy/src/fonts ]; then
-            cp -r glintstone/src/eleventy/src/fonts _site/fonts
-          fi
+          [ -d "$ELEVENTY/src/fonts" ] && cp -r "$ELEVENTY/src/fonts" _site/fonts
           # Favicon
-          cp clase/favicon.ico clase/apple-touch-icon.png _site/ 2>/dev/null || true
+          cp "$CLASEDIR"/favicon.ico "$CLASEDIR"/apple-touch-icon.png _site/ 2>/dev/null || true
           # Images from content
-          find clase -type d -name "images" | while read img_dir; do
-            rel_path="${img_dir#clase/}"
+          find "$CLASEDIR" -type d -name "images" | while read img_dir; do
+            rel_path="${img_dir#$CLASEDIR/}"
             mkdir -p "_site/$rel_path"
             cp -r "$img_dir"/* "_site/$rel_path/" 2>/dev/null || true
           done
           # PDFs from content
-          find clase -name "*.pdf" | while read pdf; do
-            rel_path="${pdf#clase/}"
+          find "$CLASEDIR" -name "*.pdf" | while read pdf; do
+            rel_path="${pdf#$CLASEDIR/}"
             mkdir -p "_site/$(dirname "$rel_path")"
             cp "$pdf" "_site/$rel_path"
           done
-          # Manifest and service worker
-          cp glintstone/src/eleventy/src/sw.js _site/sw.js 2>/dev/null || true
+          # Service worker + manifest
+          cp "$ELEVENTY/src/sw.js" _site/sw.js 2>/dev/null || true
           python3 -c "
           import json, pathlib
-          try: site = json.loads(pathlib.Path('glintstone/src/eleventy/_data/site.json').read_text())
+          try: site = json.loads(pathlib.Path('$ELEVENTY/_data/site.json').read_text())
           except: site = {}
           manifest = {
               'name': site.get('name', 'Course Site'),
@@ -207,8 +255,7 @@ jobs:
           touch _site/.nojekyll
 
       - name: Build search index
-        run: |
-          npx pagefind --site _site --glob "**/*.html" 2>/dev/null || true
+        run: npx pagefind --site _site --glob "**/*.html" 2>/dev/null || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
