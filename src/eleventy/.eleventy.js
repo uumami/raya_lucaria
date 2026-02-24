@@ -62,11 +62,15 @@ module.exports = function(eleventyConfig) {
   // that merges read-only clase/ content with generated templates
   const inputDir = process.env.GLINTSTONE_INPUT || "clase";
 
+  // GLINTSTONE_ROOT: "glintstone" (submodule mode) or "." (template mode, framework at repo root)
+  const glintstoneRoot = process.env.GLINTSTONE_ROOT || "glintstone";
+  const rootPrefix = glintstoneRoot === "." ? "" : glintstoneRoot + "/";
+
   return {
     dir: {
       input: inputDir,
-      includes: "../glintstone/src/eleventy/_includes",
-      data: "../glintstone/src/eleventy/_data",
+      includes: `../${rootPrefix}src/eleventy/_includes`,
+      data: `../${rootPrefix}src/eleventy/_data`,
       output: "_site"
     },
     templateFormats: ["md", "njk", "html"],

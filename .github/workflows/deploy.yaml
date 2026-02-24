@@ -53,12 +53,14 @@ jobs:
             echo "eleventy=src/eleventy" >> "$GITHUB_OUTPUT"
             echo "docsdir=docs" >> "$GITHUB_OUTPUT"
             echo "scriptdir=docker/scripts" >> "$GITHUB_OUTPUT"
+            echo "glintstoneroot=." >> "$GITHUB_OUTPUT"
           elif [ -d "glintstone/src/preprocessing" ]; then
             echo "Framework source in glintstone/ submodule"
             echo "srcdir=glintstone/src" >> "$GITHUB_OUTPUT"
             echo "eleventy=glintstone/src/eleventy" >> "$GITHUB_OUTPUT"
             echo "docsdir=glintstone/docs" >> "$GITHUB_OUTPUT"
             echo "scriptdir=glintstone/docker/scripts" >> "$GITHUB_OUTPUT"
+            echo "glintstoneroot=glintstone" >> "$GITHUB_OUTPUT"
           else
             echo "::error::Cannot find framework source. Expected src/preprocessing/ or glintstone/src/preprocessing/"
             exit 1
@@ -191,6 +193,7 @@ jobs:
       - name: Build site with Eleventy
         run: |
           GLINTSTONE_INPUT=clase-stage \
+          GLINTSTONE_ROOT=${{ steps.layout.outputs.glintstoneroot }} \
           npx @11ty/eleventy --config=${{ steps.layout.outputs.eleventy }}/.eleventy.js
         env:
           NODE_ENV: production
