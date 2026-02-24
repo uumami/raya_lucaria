@@ -1,5 +1,8 @@
 /**
  * Navigation expand/collapse state management.
+ *
+ * Ancestors of the current page are pre-expanded in the template (no flash).
+ * This JS handles: toggle clicks, localStorage persistence, auto-scroll.
  */
 
 const NAV_STATE_KEY = 'glintstone-nav-expanded';
@@ -16,12 +19,12 @@ export function initNavState() {
     const isExpanded = item.dataset.expanded === 'true';
     const newState = !isExpanded;
 
-    // Accordion: collapse siblings when expanding
+    // Accordion: collapse siblings at same depth when expanding
     if (newState) {
       const depth = item.dataset.depth;
       const parent = item.parentElement;
       if (parent) {
-        parent.querySelectorAll(`:scope > [data-nav-path][data-depth="${depth}"]`).forEach(sibling => {
+        parent.querySelectorAll(`:scope > .nav-item[data-depth="${depth}"]`).forEach(sibling => {
           if (sibling !== item && sibling.dataset.expanded === 'true') {
             sibling.dataset.expanded = 'false';
             sibling.setAttribute('aria-expanded', 'false');
@@ -35,38 +38,19 @@ export function initNavState() {
     saveExpandedSections();
   };
 
-  // Expand ancestors of current page
-  const currentItem = document.querySelector('[data-active="current"]');
-  if (currentItem) {
-    let parent = currentItem.closest('[data-nav-path]');
-    while (parent) {
-      parent.dataset.expanded = 'true';
-      parent.setAttribute('aria-expanded', 'true');
-      const grandparent = parent.parentElement;
-      parent = grandparent ? grandparent.closest('[data-nav-path]') : null;
-    }
-  }
-
-  // Also expand ancestors marked as "ancestor"
-  document.querySelectorAll('[data-active="ancestor"]').forEach(ancestor => {
-    const navItem = ancestor.closest('[data-nav-path]');
-    if (navItem) {
-      navItem.dataset.expanded = 'true';
-      navItem.setAttribute('aria-expanded', 'true');
-    }
-  });
-
-  // Restore saved expanded sections
+  // Restore additional user-expanded sections from localStorage
+  // (template already expanded ancestors — this restores extra sections the user opened)
   try {
     const saved = JSON.parse(localStorage.getItem(NAV_STATE_KEY)) || [];
     saved.forEach(path => {
       const item = document.querySelector(`[data-nav-path="${path}"]`);
       if (item && item.dataset.expanded !== 'true') {
+        // Respect accordion: don't expand if a sibling at same depth is already open
         const depth = item.dataset.depth;
         const parent = item.parentElement;
         if (parent) {
           const expandedSibling = parent.querySelector(
-            `:scope > [data-nav-path][data-depth="${depth}"][data-expanded="true"]`
+            `:scope > .nav-item[data-depth="${depth}"][data-expanded="true"]`
           );
           if (!expandedSibling) {
             item.dataset.expanded = 'true';
@@ -77,9 +61,13 @@ export function initNavState() {
     });
   } catch (e) { /* ignore */ }
 
+  // Save initial state (includes template pre-expanded + localStorage restored)
+  saveExpandedSections();
+
   // Auto-scroll current page into view
+  const currentItem = document.querySelector('[data-active="current"]');
   if (currentItem) {
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       const sidebarNav = document.getElementById('sidebar-nav');
       if (sidebarNav) {
         const link = currentItem.querySelector('a[aria-current="page"]') || currentItem.querySelector('a');
@@ -88,11 +76,11 @@ export function initNavState() {
           const linkRect = link.getBoundingClientRect();
           const isVisible = linkRect.top >= navRect.top && linkRect.bottom <= navRect.bottom;
           if (!isVisible) {
-            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            link.scrollIntoView({ behavior: 'instant', block: 'center' });
           }
         }
       }
-    }, 150);
+    });
   }
 }
 

@@ -43,5 +43,5 @@ jobs:
             --config glintstone.yaml \
             build --output src/eleventy/_data
           GLINTSTONE_ROOT=. GLINTSTONE_INPUT=clase \
-          npx @11ty/eleventy --config=src/eleventy/.eleventy.js
+          ./src/eleventy/node_modules/.bin/eleventy --config=src/eleventy/.eleventy.js
         continue-on-error: true
