@@ -362,44 +362,46 @@
 @layer utilities {
   .prose { max-width: 100%; }
   .prose > * { max-width: 100%; }
+}
 
-  /* OpenDyslexic font toggle */
-  .font-dyslexic,
-  .font-dyslexic * {
-    font-family: 'OpenDyslexic', sans-serif !important;
-  }
+/* JS-toggled classes — outside @layer to prevent Tailwind purging */
 
-  .font-dyslexic code,
-  .font-dyslexic pre,
-  .font-dyslexic .font-mono {
-    font-family: 'OpenDyslexic Mono', 'OpenDyslexic', monospace !important;
-  }
+/* OpenDyslexic font toggle */
+.font-dyslexic,
+.font-dyslexic * {
+  font-family: 'OpenDyslexic', sans-serif !important;
+}
 
-  /* Font size toggle */
-  .size-large { font-size: 112.5%; }
-  .size-x-large { font-size: 125%; }
+.font-dyslexic code,
+.font-dyslexic pre,
+.font-dyslexic .font-mono {
+  font-family: 'OpenDyslexic Mono', 'OpenDyslexic', monospace !important;
+}
 
-  /* Scale images and diagrams with font size */
-  .size-large #main-content img,
-  .size-large .mermaid-container { zoom: 1.125; }
-  .size-x-large #main-content img,
-  .size-x-large .mermaid-container { zoom: 1.25; }
+/* Font size toggle */
+.size-large { font-size: 112.5%; }
+.size-x-large { font-size: 125%; }
 
-  /* TOC collapse transition */
-  .toc-links {
-    max-height: 2000px;
-    opacity: 1;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-  }
-  .toc-collapsed {
-    max-height: 0 !important;
-    opacity: 0 !important;
-    pointer-events: none;
-  }
-  .toc-collapse-icon {
-    transition: transform 0.2s ease;
-  }
+/* Scale images and diagrams with font size */
+.size-large #main-content img,
+.size-large .mermaid-container { zoom: 1.125; }
+.size-x-large #main-content img,
+.size-x-large .mermaid-container { zoom: 1.25; }
+
+/* TOC collapse transition (outside @layer to prevent purging) */
+.toc-links {
+  max-height: 2000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+.toc-collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+.toc-collapse-icon {
+  transition: transform 0.2s ease;
 }
 
 /* ============================================
