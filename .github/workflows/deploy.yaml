@@ -129,6 +129,7 @@ jobs:
 
           # Generate calendario page (if CSV exists in content dir)
           if [ -f clase/calendario_temas.csv ]; then
+            GLINTSTONE_ROOT=${{ steps.layout.outputs.glintstoneroot }} \
             PYTHONPATH=$SRCDIR python3 -m preprocessing.process_calendar
             cat > "$STAGE/_calendario.njk" << 'EOF'
           ---

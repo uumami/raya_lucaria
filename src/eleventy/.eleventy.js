@@ -34,6 +34,11 @@ module.exports = function(eleventyConfig) {
   // Default layout
   eleventyConfig.addGlobalData("layout", "layouts/base.njk");
 
+  // Disable gitignore-based ignoring: the repo .gitignore lists clase-stage/
+  // (the staging directory used as GLINTSTONE_INPUT in CI), which would cause
+  // Eleventy to ignore all templates in its own input directory.
+  eleventyConfig.setUseGitIgnore(false);
+
   // Watch targets
   eleventyConfig.addWatchTarget("./src/");
 

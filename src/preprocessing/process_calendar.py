@@ -4,9 +4,11 @@ Usage (called from build scripts):
     PYTHONPATH=/app/glintstone/src python3 -m preprocessing.process_calendar
 
 Reads clase/calendario_temas.csv from CWD, writes calendar_topics.json to _data.
+Uses GLINTSTONE_ROOT env var to determine framework source location.
 """
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -36,7 +38,9 @@ def main():
         print(f"[calendario] No {csv_path} found, skipping.", file=sys.stderr)
         sys.exit(0)
 
-    output_path = Path('glintstone/src/eleventy/_data/calendar_topics.json')
+    glintstone_root = os.environ.get('GLINTSTONE_ROOT', 'glintstone')
+    root_prefix = '' if glintstone_root == '.' else glintstone_root + '/'
+    output_path = Path(f'{root_prefix}src/eleventy/_data/calendar_topics.json')
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     weeks = process_calendar(csv_path, output_path)
