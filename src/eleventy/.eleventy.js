@@ -58,9 +58,9 @@ module.exports = function(eleventyConfig) {
   // Path prefix
   const pathPrefix = resolvePathPrefix();
 
-  // SELLEN_INPUT allows build scripts to use a staging directory
+  // GLINTSTONE_INPUT allows build scripts to use a staging directory
   // that merges read-only clase/ content with generated templates
-  const inputDir = process.env.SELLEN_INPUT || "clase";
+  const inputDir = process.env.GLINTSTONE_INPUT || "clase";
 
   return {
     dir: {

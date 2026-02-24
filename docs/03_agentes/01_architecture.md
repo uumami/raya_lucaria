@@ -72,7 +72,7 @@ Static site in _site/
 
 ## Staging Directory Pattern
 
-The `clase/` directory is mounted read-only in Docker. The build scripts create a `clase-stage/` directory with symlinks to `clase/*` contents, then add generated files (task pages, calendar page, docs symlink) into `clase-stage/`. Eleventy uses `clase-stage/` as its input directory (via `SELLEN_INPUT` env var).
+The `clase/` directory is mounted read-only in Docker. The build scripts create a `clase-stage/` directory with symlinks to `clase/*` contents, then add generated files (task pages, calendar page, docs symlink) into `clase-stage/`. Eleventy uses `clase-stage/` as its input directory (via `GLINTSTONE_INPUT` env var).
 
 This is why you see `clase-stage` in path-cleaning regexes throughout the codebase.
 
@@ -80,7 +80,7 @@ This is why you see `clase-stage` in path-cleaning regexes throughout the codeba
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SELLEN_INPUT` | `clase` | Eleventy input directory (set to `clase-stage` by build scripts) |
+| `GLINTSTONE_INPUT` | `clase` | Eleventy input directory (set to `clase-stage` by build scripts) |
 | `PATH_PREFIX` | `""` | URL path prefix for GitHub Pages deployment |
 | `PORT` | `3000` | Dev server port |
 

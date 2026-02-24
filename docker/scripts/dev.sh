@@ -122,7 +122,7 @@ echo "[*] Site of grace kindled. Watching for changes..."
 echo "    http://localhost:${SERVE_PORT}"
 echo ""
 
-SELLEN_INPUT=clase-stage eleventy \
+GLINTSTONE_INPUT=clase-stage eleventy \
   --config=glintstone/src/eleventy/.eleventy.js \
   --serve \
   --port=${SERVE_PORT}

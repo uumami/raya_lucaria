@@ -86,7 +86,7 @@ fi
 # Step 2: Eleventy build (using staging dir as input)
 echo "[*] Channeling glintstone sorcery..."
 cd /app
-SELLEN_INPUT=clase-stage eleventy --config=glintstone/src/eleventy/.eleventy.js
+GLINTSTONE_INPUT=clase-stage eleventy --config=glintstone/src/eleventy/.eleventy.js
 echo ""
 
 # Step 3: Tailwind CSS
