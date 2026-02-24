@@ -101,9 +101,9 @@ jobs:
 
       - name: Run preprocessing
         run: |
-          PYTHONPATH=${{ steps.layout.outputs.srcdir }} python3 -m preprocessing build \
+          PYTHONPATH=${{ steps.layout.outputs.srcdir }} python3 -m preprocessing \
             --config ${{ steps.layout.outputs.config }} \
-            --output ${{ steps.layout.outputs.eleventy }}/_data
+            build --output ${{ steps.layout.outputs.eleventy }}/_data
 
       - name: Stage content
         run: |
