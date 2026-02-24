@@ -52,6 +52,7 @@ class FeaturesConfig:
     math: bool = True
     mermaid: bool = True
     docs: bool = True
+    graph: bool = True
 
 
 @dataclass

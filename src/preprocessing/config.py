@@ -82,6 +82,7 @@ def load_config(config_path: Path) -> GlintstoneConfig:
         math=feat_raw.get('math', True),
         mermaid=feat_raw.get('mermaid', True),
         docs=feat_raw.get('docs', True),
+        graph=feat_raw.get('graph', True),
     )
 
     tasks_raw = raw.get('tasks', {})

@@ -195,6 +195,37 @@
             {{ content | safe }}
           </article>
 
+          {# Backlinks (Primeval Current) #}
+          {% if features.graph and graph and graph.backlinks %}
+            {% set cleanPath = page.inputPath
+              | replace("./clase-stage/", "")
+              | replace("./clase/", "")
+              | replace("clase-stage/", "")
+              | replace("clase/", "") %}
+            {% set myBacklinks = graph.backlinks[cleanPath] %}
+            {% if myBacklinks and myBacklinks.length > 0 %}
+            <section class="mt-8 pt-6 border-t border-border">
+              <h2 class="text-sm font-semibold text-text-muted mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                Referenciado por
+              </h2>
+              <ul class="space-y-1">
+                {% for bl in myBacklinks %}
+                <li>
+                  <a href="{{ bl.url | url }}"
+                     class="text-sm text-accent hover:text-accent-hover transition-colors">
+                    {{ bl.title }}
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+            </section>
+            {% endif %}
+          {% endif %}
+
           {# Prev/Next navigation (bottom) #}
           {% if navigation.show_prev_next and (prevPage or nextPage) %}
           <nav class="mt-10 pt-6 border-t border-border grid grid-cols-2 gap-4">

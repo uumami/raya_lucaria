@@ -78,6 +78,26 @@ f.write_text(json.dumps(d, indent=2))"
   echo ""
 fi
 
+# Step 1f: Generate graph page (if enabled)
+GRAPH_ENABLED=$(python3 -c "
+import json, pathlib
+try:
+    f = json.loads(pathlib.Path('glintstone/src/eleventy/_data/features.json').read_text())
+    print('true' if f.get('graph', True) else 'false')
+except: print('true')
+")
+if [ "$GRAPH_ENABLED" = "true" ]; then
+  echo "[*] Charting the primeval current..."
+  cat > "$STAGE/_grafo.njk" << 'GRAFEOF'
+---
+layout: layouts/graph.njk
+title: "Grafo del Curso"
+permalink: /grafo/
+eleventyExcludeFromCollections: true
+---
+GRAFEOF
+fi
+
 # Step 2: Build CSS once
 echo "[*] Weaving golden threads..."
 mkdir -p _site/css/themes

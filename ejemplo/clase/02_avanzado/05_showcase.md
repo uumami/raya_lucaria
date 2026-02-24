@@ -64,6 +64,8 @@ console.log(greet("glintstone"));
 
 - Enlace interno: [Bienvenida](../../01_primeros_pasos/01_bienvenida/)
 - Enlace a seccion: [Matematicas](../03_matematicas/)
+- Wikilink: [[bienvenida|pagina de bienvenida]]
+- Wikilink con fragmento: [[matematicas#limites]]
 
 ---
 

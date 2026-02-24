@@ -9,7 +9,7 @@ summary: "Pipeline, directories, data flow, and build system"
 
 Glintstone uses a three-stage build pipeline:
 
-1. **Python preprocessing** -- Reads Markdown frontmatter, builds hierarchy tree, aggregates tasks, writes JSON data files
+1. **Python preprocessing** -- Reads Markdown frontmatter, builds hierarchy tree, aggregates tasks, builds knowledge graph (Primeval Current), writes JSON data files
 2. **Eleventy (11ty)** -- Static site generator that reads Markdown + JSON data + Nunjucks templates to produce HTML
 3. **Post-processing** -- Tailwind CSS generation, esbuild JS bundling, static asset copying, Pagefind search indexing
 
@@ -26,6 +26,7 @@ course-repo/
 │   │   │   ├── extract_metadata.py
 │   │   │   ├── generate_hierarchy.py
 │   │   │   ├── aggregate_tasks.py
+│   │   │   ├── extract_links.py   # Knowledge graph (Primeval Current)
 │   │   │   ├── validate_content.py
 │   │   │   └── schemas/config.py
 │   │   └── eleventy/         # Eleventy project
@@ -59,8 +60,9 @@ Markdown in clase/
     ↓ Python extracts frontmatter, components
     ↓ Builds hierarchy tree
     ↓ Aggregates tasks (homework, exam, project)
+    ↓ Builds knowledge graph (links, backlinks, wikilink map)
 JSON data in _data/
-    ↓ metadata.json, hierarchy.json, tasks.json, etc.
+    ↓ metadata.json, hierarchy.json, tasks.json, graph.json, wikilink_map.json, etc.
     ↓ Eleventy reads data + content
     ↓ Applies Nunjucks templates
 HTML in _site/
@@ -83,6 +85,19 @@ This is why you see `clase-stage` in path-cleaning regexes throughout the codeba
 | `GLINTSTONE_INPUT` | `clase` | Eleventy input directory (set to `clase-stage` by build scripts) |
 | `PATH_PREFIX` | `""` | URL path prefix for GitHub Pages deployment |
 | `PORT` | `3000` | Dev server port |
+
+## Primeval Current (Knowledge Graph)
+
+The `extract_links.py` module extracts links between content pages and builds:
+
+- **`graph.json`**: Nodes (from metadata), directed edges (from links), backlinks (inverted edges). Node IDs are namespaced `{repo}:{path}` for future multi-repo merging.
+- **`wikilink_map.json`**: Resolution table mapping keys → `{path, url, title}`. Keys include exact stem, stripped prefix, title, and path-qualified forms.
+
+Wikilink syntax: `[[target]]` or `[[target|display text]]`. Resolution is case-insensitive. Fragments (`[[page#heading]]`) are supported — edge is page-level, fragment preserved for rendering.
+
+The graph page at `/grafo/` uses d3.js for a force-directed interactive visualization. Backlinks appear as "Referenciado por" sections at the bottom of content pages.
+
+Controlled by `features.graph` in `glintstone.yaml` (default: `true`). When disabled, empty JSON files are still written so templates don't crash.
 
 ## Docker Multi-Stage Build
 

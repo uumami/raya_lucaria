@@ -406,6 +406,16 @@
    KaTeX overrides
    ============================================ */
 
+/* ============================================
+   Wikilink styles
+   ============================================ */
+
+.wikilink-broken {
+  color: var(--color-exam);
+  text-decoration: underline wavy;
+  cursor: help;
+}
+
 .math-inline { display: inline; }
 .math-display {
   @apply my-4 overflow-x-auto;

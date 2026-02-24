@@ -47,6 +47,8 @@ $$\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e$$
 
 $$\lim_{x \to 0} \frac{\sin x}{x} = 1$$
 
+Para la configuracion inicial del entorno, ve [[configuracion]].
+
 ## Ejercicio
 
 :::exercise{title="Derivadas" difficulty="2"}

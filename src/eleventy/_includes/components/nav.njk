@@ -163,6 +163,21 @@
       <span>Anuncios</span>
     </a>
     {% endif %}
+    {% if features.graph %}
+    {% set grafoUrl = '/grafo/' | url %}
+    <a href="{{ grafoUrl }}" class="flex items-center px-2 py-1.5 rounded text-sm transition-colors
+       {% if currentFullUrl == grafoUrl %}bg-accent/15 text-accent{% else %}text-text-muted hover:text-text hover:bg-bg-tertiary{% endif %}">
+      <span class="w-5 h-5 mr-2 flex items-center justify-center text-accent-secondary">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle cx="12" cy="5" r="2" stroke-width="2"/>
+          <circle cx="5" cy="19" r="2" stroke-width="2"/>
+          <circle cx="19" cy="19" r="2" stroke-width="2"/>
+          <path stroke-width="2" d="M12 7v5M7.5 17.5L12 12M16.5 17.5L12 12"/>
+        </svg>
+      </span>
+      <span>Grafo</span>
+    </a>
+    {% endif %}
   </div>
 </div>
 

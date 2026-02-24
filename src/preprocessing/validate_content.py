@@ -38,6 +38,7 @@ def validate_content(
     metadata: Dict[str, Any],
     exclude: List[str],
     verbose: bool = False,
+    wikilink_map: dict = None,
 ) -> List[ValidationError]:
     """Run all validation checks on content directory."""
     errors = []
@@ -170,7 +171,26 @@ def validate_content(
                                 f"(expected YYYY-MM-DD)"
                             ))
 
-    # Check 7: Numbering gaps
+        # Check 7: Unresolved wikilinks
+        if wikilink_map is not None:
+            in_code = False
+            for i, line in enumerate(lines, 1):
+                stripped = line.strip()
+                if stripped.startswith('```'):
+                    in_code = not in_code
+                    continue
+                if in_code:
+                    continue
+                for match in re.finditer(r'\[\[([^\]|]+)(?:\|[^\]]+)?\]\]', line):
+                    target = match.group(1).strip()
+                    target_key = target.split('#')[0].lower() if '#' in target else target.lower()
+                    if target_key not in wikilink_map:
+                        errors.append(ValidationError(
+                            rel_path, i, 'WARNING',
+                            f"The primeval current cannot reach -- wikilink [[{target}]] unresolved"
+                        ))
+
+    # Check 8: Numbering gaps
     _check_numbering_gaps(content_path, exclude, errors)
 
     return errors

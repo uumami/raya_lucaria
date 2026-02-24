@@ -1,0 +1,28 @@
+---
+layout: layouts/base.njk
+---
+
+{# Graph data and prefix injected as script variables #}
+<script>
+  window.__GRAPH_DATA__ = {{ graph | dump | safe }};
+  window.__PATH_PREFIX__ = "{{ '/' | url }}";
+</script>
+
+{{ content | safe }}
+
+<div id="graph-container" class="w-full" style="height: calc(100vh - 14rem);">
+  <div class="flex items-center gap-3 mb-3 flex-wrap">
+    <input id="graph-search" type="text" placeholder="Buscar pagina..."
+           class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text w-48 focus:outline-none focus:border-accent">
+    <button id="graph-fit"
+            class="px-3 py-1.5 rounded bg-bg-secondary border border-border text-sm text-text-muted hover:text-accent hover:border-accent transition-colors">
+      Ajustar
+    </button>
+  </div>
+  <div id="graph-svg" class="w-full rounded border border-border bg-bg-secondary"
+       style="height: calc(100% - 4rem);"></div>
+  <div id="graph-legend" class="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-text-muted"></div>
+</div>
+
+{# d3 loaded only on this page #}
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>

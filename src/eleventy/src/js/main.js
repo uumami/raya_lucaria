@@ -15,6 +15,7 @@ import { initKatex } from './katex-init.js';
 import { initSearch } from './search-init.js';
 import { initQuiz } from './quiz.js';
 import { initServiceWorker } from './sw-register.js';
+import { initGraph } from './graph.js';
 
 // Initialize all modules when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,4 +31,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   initQuiz();
   initServiceWorker();
+  initGraph();
 });

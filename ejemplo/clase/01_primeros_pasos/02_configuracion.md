@@ -44,7 +44,9 @@ Este es el archivo minimo necesario para configurar Glintstone.
 
 ## Formulas Matematicas
 
-El framework soporta matematicas con KaTeX. Por ejemplo, la formula cuadratica:
+El framework soporta matematicas con KaTeX. Para mas detalles, consulta [[matematicas]].
+
+Por ejemplo, la formula cuadratica:
 
 $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
 

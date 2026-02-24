@@ -16,6 +16,7 @@ from preprocessing.config import load_config, resolve_repo_info
 from preprocessing.extract_metadata import extract_all_metadata
 from preprocessing.generate_hierarchy import generate_hierarchy
 from preprocessing.aggregate_tasks import aggregate_all_tasks
+from preprocessing.extract_links import build_graph, build_wikilink_map
 from preprocessing.validate_content import validate_content
 from preprocessing.scaffold import scaffold_chapter, scaffold_component
 
@@ -61,6 +62,23 @@ def cmd_build(args):
     total_tasks = sum(len(v) for v in tasks.values())
     log.info(f"  {total_tasks} tasks saved")
 
+    # Build knowledge graph (Primeval Current)
+    if config.features.graph:
+        log.info("Building knowledge graph...")
+        graph_data, wikilink_map = build_graph(
+            content_dir, metadata, hierarchy, exclude
+        )
+        _write_json(output_dir / 'graph.json', graph_data)
+        _write_json(output_dir / 'wikilink_map.json', wikilink_map)
+        edges = len(graph_data['edges'])
+        bl = sum(len(v) for v in graph_data['backlinks'].values())
+        log.info(f"  {len(graph_data['nodes'])} nodes, {edges} edges, {bl} backlinks")
+    else:
+        _write_json(output_dir / 'graph.json', {
+            "repo": {"name": ""}, "nodes": [], "edges": [], "backlinks": {}
+        })
+        _write_json(output_dir / 'wikilink_map.json', {})
+
     log.info("Resolving repository configuration...")
     try:
         repo_info = resolve_repo_info(config, verbose)
@@ -91,6 +109,7 @@ def cmd_build(args):
         'math': config.features.math,
         'mermaid': config.features.mermaid,
         'docs': config.features.docs,
+        'graph': config.features.graph,
     }
     _write_json(output_dir / 'features.json', features_data)
 
@@ -123,8 +142,11 @@ def cmd_validate(args):
     log.info("Extracting metadata for validation...")
     metadata = extract_all_metadata(content_dir, exclude, args.verbose)
 
+    wikilink_map, _ = build_wikilink_map(content_dir, metadata, exclude)
+
     log.info("Running content validation...")
-    errors = validate_content(content_dir, metadata, exclude, args.verbose)
+    errors = validate_content(content_dir, metadata, exclude, args.verbose,
+                              wikilink_map=wikilink_map)
 
     if not errors:
         log.info("All clear, Tarnished. No issues found.")
