@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+__pypackages__/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# JavaScript and build output
+dist/
+build/
+coverage/
+
+# Generated course/site artifacts
+_site/
+**/_site/
+site/
+**/site/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.envrc
+
+# Local caches
+.cache/
+.parcel-cache/
+.turbo/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

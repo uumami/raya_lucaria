@@ -1,0 +1,83 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+context: |
+  Raya Lucaria is not a product or SaaS. It is a full end-to-end open-source
+  educational framework and commons: collective, solarpunk, and designed for
+  shared ownership rather than extraction.
+
+  Core principles: pedagogical quality and educational freedom are equally
+  important. The framework must serve serious university-level learning, with
+  pedagogy treated as a first-class design concern. Do not hardcode one
+  pedagogical doctrine; keep the system research-informed, adaptable, and open
+  to further investigation.
+
+  Own the domain model, schema, course content, and application logic. Vendors
+  are replaceable deployment adapters, not architectural dependencies.
+
+  The framework must run static-only, locally, self-hosted on one machine, on
+  on-premise infrastructure, and on cheap/free/paid cloud services. One shared
+  installation should serve many courses/repos.
+
+  Engineering bias: be portable, not infinitely abstract. Prefer Git, Postgres,
+  S3-compatible storage, OIDC/JWT, HTTP APIs, WebSocket/SSE, containers,
+  Docker Compose, OpenTofu/Pulumi, and static files. Keep the course site useful
+  without a backend. Keep student work portable/exportable. Paid infrastructure
+  is optional; free or near-free paths should remain first-class.
+
+  Access and contribution model: professors and students may work by hand, by
+  web UI, by local code, or through agents. Local agentic coding and web-based
+  edits should be able to produce private drafts, shared artifacts, or proposed
+  changes. Canonical course material remains reviewed and owned by the
+  responsible course team. Keep personal, community, generated, and official
+  domains explicit in permissions, UI, and data design.
+
+  Coding-agent compatibility is a core design principle. Repository structure,
+  CLI workflows, configuration, validation, diagnostics, and deployment recipes
+  should be explicit, scriptable, documented, and safe for humans and coding
+  agents to operate. Agents should be able to install, configure, validate, fix,
+  upgrade, deploy, and propose changes without hidden state or vendor-specific
+  assumptions.
+
+  Naming should stay Raya Lucaria-centric and easy to understand. Related repos,
+  services, packages, and deployment profiles should use clear raya-lucaria
+  names or coherent lore names only when they improve usability.
+
+  Named domains and learning quanta are part of the architectural language.
+  Domains such as Glintstone, Primeval Current, Glintstone Key, Rennala, Debate
+  Parlor, Sellen, and Graven School should remain visible where they clarify
+  responsibility. Course directories and nested content units are semantic
+  learning quanta, not just filesystem organization.
+
+  Multi-repo and multi-course integration must be explicit and secure. Courses,
+  installations, domains, and backends should link through stable IDs,
+  authenticated registration, clear permissions, and auditable configuration, not
+  implicit discovery or trust by URL alone.
+
+  Git is the canonical path for course ownership, but GitHub access must not be
+  required for everyday use. After someone deploys the framework, professors and
+  students should be able to read, teach, study, create notes, contribute drafts,
+  and use learning tools through the web UI. Code, Git, forks, and pull requests
+  are powerful paths, not mandatory paths.
+
+  Truth-surface discipline is part of the engineering model. Keep current
+  framework truth separate from implementation reference, examples, tooling
+  adapters, and historical material. Prefer a small, explicit current tree over
+  preserving stale legacy guidance in authoritative locations.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
