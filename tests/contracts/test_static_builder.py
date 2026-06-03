@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 from raya_schema import (
+    inspect_artifact,
     validate_artifact_manifest,
     validate_links_index,
     validate_official_index,
@@ -16,6 +17,7 @@ from raya_static import build_course
 
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
+RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 
 
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
@@ -114,6 +116,75 @@ def test_source_assets_are_copied(tmp_path: Path) -> None:
     assert copied.read_text(encoding="utf-8") == "asset fixture"
 
 
+def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    root_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+    nested_html = (artifact / "site" / "01_static_path" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    site_asset = artifact / "site" / "_raya" / "assets" / "diagrams" / "static-path.txt"
+    artifact_asset = artifact / "assets" / "diagrams" / "static-path.txt"
+
+    assert 'href="_raya/assets/diagrams/static-path.txt"' in root_html
+    assert 'href="../_raya/assets/diagrams/static-path.txt"' in nested_html
+    assert site_asset.read_text(encoding="utf-8") == artifact_asset.read_text(
+        encoding="utf-8"
+    )
+    assert "Raya Lucaria render fixture asset" in site_asset.read_text(encoding="utf-8")
+
+
+def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    build_report = build_course(course)
+    inspect_report = inspect_artifact(course / "artifact")
+
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    assert inspect_report.ok, [
+        diagnostic.format() for diagnostic in inspect_report.diagnostics
+    ]
+    assert (course / "artifact" / "assets" / "diagrams" / "static-path.txt").exists()
+
+
+def test_external_and_fragment_links_are_not_rewritten_as_static_assets(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'href="https://example.com"' in html
+    assert 'href="mailto:test@example.com"' in html
+    assert 'href="tel:123"' in html
+    assert 'href="#fixture"' in html
+    assert 'href="_raya/assets/https://example.com"' not in html
+
+
+def test_rendered_internal_urls_are_deployment_neutral(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    root_html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    nested_html = (
+        course / "artifact" / "site" / "01_static_path" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'href="01_static_path/index.html"' in root_html
+    assert 'href="_raya/assets/diagrams/static-path.txt"' in root_html
+    assert 'href="../index.html"' in nested_html
+    assert 'href="../_raya/assets/diagrams/static-path.txt"' in nested_html
+    assert 'href="/_raya/' not in root_html
+    assert 'href="/01_static_path/' not in root_html
+
+
 def test_source_content_links_are_exported_to_links_index(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     index = course / "content" / "00_index.md"
@@ -188,4 +259,10 @@ def test_build_stops_when_source_validation_fails(tmp_path: Path) -> None:
 def _copy_minimal(tmp_path: Path) -> Path:
     course = tmp_path / "course"
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    return course
+
+
+def _copy_render_fixture(tmp_path: Path) -> Path:
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     return course

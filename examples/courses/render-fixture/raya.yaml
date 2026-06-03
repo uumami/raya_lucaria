@@ -1,0 +1,7 @@
+course_id: render-fixture
+title: Render Fixture
+description: Representative fixture for Glintstone static rendering tests.
+language: en
+content: content
+artifact: artifact
+assets: assets

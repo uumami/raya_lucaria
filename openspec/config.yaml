@@ -69,5 +69,7 @@ rules:
     - Keep student work portable and exportable.
   tasks:
     - Start with schema, validation, fixture, CLI, and artifact contract tests when a change touches contracts.
+    - Include real e2e/static-read-path tests when a change touches rendered HTML, browser-facing resources, deployment portability, or static site behavior.
+    - Use representative fixture content for render/e2e tests; label it as fixture material and avoid letting examples become canonical pedagogy or architecture.
     - Keep examples minimal and labeled as fixtures, not pedagogy by accident.
     - Split dynamic domains into separate proposals after static contracts are stable.

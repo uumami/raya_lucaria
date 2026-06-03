@@ -32,6 +32,8 @@ from raya_schema.yaml_io import load_yaml_file, parse_frontmatter
 ARTIFACT_VERSION = "0.1"
 SOURCE_SCHEMA_VERSION = "0.1"
 SUPPORTED_OFFICIAL_SUFFIXES = {".yaml", ".yml", ".json"}
+STATIC_RESOURCE_DIR = "_raya"
+STATIC_ASSETS_PATH = Path(STATIC_RESOURCE_DIR) / "assets"
 
 
 @dataclass(frozen=True)
@@ -86,7 +88,8 @@ def build_course(course_path: str | Path) -> ValidationReport:
     site_dir = artifact_dir / "site"
     data_dir = artifact_dir / "data"
     artifact_assets_dir = artifact_dir / "assets"
-    for directory in (site_dir, data_dir, artifact_assets_dir):
+    site_assets_dir = site_dir / STATIC_ASSETS_PATH
+    for directory in (site_dir, data_dir, artifact_assets_dir, site_assets_dir):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
 
@@ -102,6 +105,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
                 pages=pages,
                 pages_by_source=pages_by_source,
                 course_root=root,
+                assets_dir=assets_dir,
                 course_title=str(config["title"]),
                 language=str(config["language"]),
             ),
@@ -110,6 +114,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         report.wrote_output(output_file)
 
     copied_assets = _copy_assets(assets_dir, artifact_assets_dir, report)
+    copied_site_assets = _copy_assets(assets_dir, site_assets_dir, report)
 
     pages_index = _pages_index(course_id, pages)
     quanta_index = _quanta_index(course_id, pages)
@@ -150,6 +155,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
             report.add_info(
                 f"Copied {copied_assets} asset file(s)",
                 path=artifact_assets_dir,
+            )
+        if copied_site_assets:
+            report.add_info(
+                f"Copied {copied_site_assets} browser asset file(s)",
+                path=site_assets_dir,
             )
     return report
 
@@ -312,6 +322,7 @@ def _render_page(
     pages: list[SourcePage],
     pages_by_source: dict[Path, SourcePage],
     course_root: Path,
+    assets_dir: Path,
     course_title: str,
     language: str,
 ) -> str:
@@ -339,7 +350,7 @@ def _render_page(
             "</nav>",
             "</header>",
             "<main>",
-            _render_markdown(page.body, page, pages_by_source, course_root),
+            _render_markdown(page.body, page, pages_by_source, course_root, assets_dir),
             "</main>",
             "</body>",
             "</html>",
@@ -353,6 +364,7 @@ def _render_markdown(
     page: SourcePage,
     pages_by_source: dict[Path, SourcePage],
     course_root: Path,
+    assets_dir: Path,
 ) -> str:
     output: list[str] = []
     paragraph: list[str] = []
@@ -361,7 +373,7 @@ def _render_markdown(
     def flush_paragraph() -> None:
         if paragraph:
             output.append(
-                f"<p>{_render_inline(' '.join(paragraph), page, pages_by_source, course_root)}</p>"
+                f"<p>{_render_inline(' '.join(paragraph), page, pages_by_source, course_root, assets_dir)}</p>"
             )
             paragraph.clear()
 
@@ -385,7 +397,7 @@ def _render_markdown(
             close_list()
             heading_text = stripped[heading_level + 1 :].strip()
             output.append(
-                f"<h{heading_level}>{_render_inline(heading_text, page, pages_by_source, course_root)}</h{heading_level}>"
+                f"<h{heading_level}>{_render_inline(heading_text, page, pages_by_source, course_root, assets_dir)}</h{heading_level}>"
             )
             continue
 
@@ -395,7 +407,7 @@ def _render_markdown(
                 output.append("<ul>")
                 in_list = True
             output.append(
-                f"<li>{_render_inline(stripped[2:].strip(), page, pages_by_source, course_root)}</li>"
+                f"<li>{_render_inline(stripped[2:].strip(), page, pages_by_source, course_root, assets_dir)}</li>"
             )
             continue
 
@@ -411,6 +423,7 @@ def _render_inline(
     page: SourcePage,
     pages_by_source: dict[Path, SourcePage],
     course_root: Path,
+    assets_dir: Path,
 ) -> str:
     rendered: list[str] = []
     cursor = 0
@@ -422,6 +435,7 @@ def _render_inline(
             link.target,
             pages_by_source,
             course_root,
+            assets_dir,
         )
         rendered.append(f'<a href="{html.escape(href)}">{label}</a>')
         cursor = link.end
@@ -434,14 +448,20 @@ def _resolve_markdown_href(
     href: str,
     pages_by_source: dict[Path, SourcePage],
     course_root: Path,
+    assets_dir: Path,
 ) -> str:
-    if classify_markdown_target(href) == "ignored":
+    kind = classify_markdown_target(href)
+    if kind == "ignored":
         return href
     fragment = markdown_link_fragment(href)
-    if classify_markdown_target(href) == "content":
+    if kind == "content":
         target_page = _target_content_page(page, href, pages_by_source, course_root)
         if target_page is not None:
             return _relative_href(page.output_path, target_page.output_path) + fragment
+    if kind == "asset":
+        target_href = _target_asset_href(page, href, course_root, assets_dir)
+        if target_href is not None:
+            return target_href + fragment
     return href
 
 
@@ -521,6 +541,25 @@ def _target_content_page(
         target_path=markdown_link_path(target),
     )
     return pages_by_source.get(target_path)
+
+
+def _target_asset_href(
+    page: SourcePage,
+    target: str,
+    course_root: Path,
+    assets_dir: Path,
+) -> str | None:
+    target_path = resolve_local_markdown_target(
+        source_path=page.source_path,
+        course_root=course_root,
+        target_path=markdown_link_path(target),
+    )
+    try:
+        rel_asset_path = target_path.relative_to(assets_dir)
+    except ValueError:
+        return None
+    static_asset_path = (STATIC_ASSETS_PATH / rel_asset_path).as_posix()
+    return _relative_href(page.output_path, static_asset_path)
 
 
 def _official_index(

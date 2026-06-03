@@ -37,6 +37,8 @@ Future course content uses `raya.yaml`, `content/`, `assets/`, `official/`, and 
 
 Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
 
+Generated artifacts distinguish machine surfaces from browser-facing static resources. `manifest.json`, `data/*.json`, and artifact-level `assets/` remain artifact-root surfaces for inspection, agents, and future installations. Rendered browser pages under `site/` use `site/_raya/assets/` for local assets so the static read path can be served directly.
+
 Course validation checks local Markdown content links and local asset references before build. Local `.md` links must point under configured `content/`; local asset references must point under configured/default `assets/`. External URLs, `mailto:`, `tel:`, and fragment-only links do not fail local validation in this baseline.
 
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
@@ -52,6 +54,8 @@ Write tests against current contracts, not legacy behavior. Start with schema, v
 Use temporary directories for scenario tests that need throwaway courses. The external smoke test exists to prove `raya validate`, `raya build`, and `raya artifacts inspect` work on a course outside the framework checkout; do not add permanent course repos or generated course outputs for that purpose.
 
 Test local source links and local asset references with throwaway courses, not permanent generated outputs. Broken local references should fail validation before build writes a successful artifact.
+
+Changes to rendered HTML, browser-facing resources, deployment portability, or static site behavior should include e2e/static-read-path tests. Use representative fixture content such as `examples/courses/render-fixture`, label it as fixture material, and keep `docs/foundation/` as the authority surface.
 
 Validation and diagnostics should be actionable for both humans and coding agents: identify files read, outputs written, detected context, concrete next actions, and nonzero failures.
 

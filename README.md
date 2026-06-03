@@ -38,6 +38,13 @@ The first implementation baseline is Docker/uv/Python:
 
 Course validation catches broken local Markdown content links and missing local asset references before build. The minimal builder exports navigation, parent, and valid source content links into `data/links.json`.
 
+The generated artifact keeps machine-readable surfaces at the artifact root while making the browser static read path self-contained:
+
+- `artifact/manifest.json` and `artifact/data/*.json` are for artifact inspection, agents, and future installations.
+- `artifact/assets/` preserves copied source assets as artifact-level generated output.
+- `artifact/site/` is the static read path.
+- `artifact/site/_raya/assets/` contains browser-facing local assets referenced by rendered pages.
+
 Renderer, TypeScript/web UI, backend, identity, dynamic study-state choices, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
 
 ## Development Commands
@@ -74,6 +81,8 @@ External-course smoke test:
 ```
 
 The smoke test copies the minimal fixture into a temporary directory outside the repository, validates, builds, and inspects it locally, validates, builds, and inspects it through Docker with an explicit temporary mount, and removes the temporary files afterward.
+
+Rendered static-site behavior also has e2e/static-read-path coverage through `pytest -q tests/e2e`, using `examples/courses/render-fixture` as labeled fixture content.
 
 Artifact inspection is read-only and manifest-centered: it validates `manifest.json`, required artifact directories, and manifest-declared data indexes without rebuilding source.
 
