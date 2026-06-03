@@ -1,7 +1,7 @@
 # source-link-asset-validation Specification
 
 ## Purpose
-TBD - created by archiving change add-source-link-and-asset-validation. Update Purpose after archive.
+Defines validation for local Markdown content links and local asset references before build, while ignoring external and fragment-only links.
 ## Requirements
 ### Requirement: Local content link validation
 Source course validation SHALL validate local Markdown links that target course content files.
@@ -38,4 +38,3 @@ Link and asset validation SHALL produce diagnostics useful to humans and coding 
 #### Scenario: Link diagnostic details
 - **WHEN** validation finds a broken local link or missing local asset
 - **THEN** the diagnostic MUST include the source file, link target field, and a concrete next action
-

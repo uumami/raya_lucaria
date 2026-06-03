@@ -39,6 +39,13 @@ context: |
   course material, generated drafts, backend state, and accepted changes.
   Agents inherit user authority and do not receive special trust.
 
+  Documentation is a first-class explanatory surface for
+  contributors/collaborators, professors, students, and agents. Role
+  documentation must use separate English and Spanish role directories with
+  index pages so each role can grow into multiple topics. Code, package names,
+  commands, schema fields, file paths, domain names, and stable identifiers
+  remain English.
+
   Study features grow from official learning objects toward personal and shared
   learning state. Rennala may later include review queues, spaced repetition,
   confidence ratings, mastery maps, and study planning, but the first contracts
@@ -57,19 +64,26 @@ rules:
     - State the minimum requirement and the intended growth path.
     - Separate static-first contracts from optional dynamic domains.
     - Name legacy assumptions being salvaged or rejected.
+    - Identify documentation impact for contributors/collaborators, professors, students, and agents, or state that no role-facing documentation update is needed.
   specs:
     - Write testable requirements derived from foundation decisions.
     - Separate required baseline behavior from future or optional capabilities.
     - Preserve authority boundaries for official, personal, shared, generated, and accepted material.
     - Keep provider dependencies out of core contracts unless the provider is explicitly an adapter.
+    - Require separate English and Spanish role-documentation directories with index pages when contributor/collaborator, professor, student, or agent documentation is created or updated.
   design:
     - Map domain names to plain package boundaries when implementation structure matters.
     - Preserve static-only operation before adding backend, web UI, realtime, or agent features.
     - Show how new functionality can increase without invalidating current contracts.
     - Keep student work portable and exportable.
+    - Keep English and Spanish role documentation in separate role directories while preserving English technical identifiers.
   tasks:
     - Start with schema, validation, fixture, CLI, and artifact contract tests when a change touches contracts.
     - Include real e2e/static-read-path tests when a change touches rendered HTML, browser-facing resources, deployment portability, or static site behavior.
     - Use representative fixture content for render/e2e tests; label it as fixture material and avoid letting examples become canonical pedagogy or architecture.
     - Keep examples minimal and labeled as fixtures, not pedagogy by accident.
+    - Include documentation tasks for affected contributors/collaborators, professors, students, and agents.
+    - Update separate English and Spanish role-documentation directories when role docs are created or changed, or explicitly track any deferred language directory/page.
+    - Include documentation hygiene checks for current specs so `Purpose: TBD` placeholders do not remain after archive.
+    - Keep rendered documentation fixtures separate from class/course examples and verify they use the static read path when rendered.
     - Split dynamic domains into separate proposals after static contracts are stable.

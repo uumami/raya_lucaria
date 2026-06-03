@@ -1,7 +1,7 @@
 # dev-workflow-baseline Specification
 
 ## Purpose
-TBD - created by archiving change establish-dev-and-contract-baseline. Update Purpose after archive.
+Defines the Docker Compose and `uv` development workflow, local escape hatch, smoke checks, e2e expectations, and provider-neutral baseline.
 ## Requirements
 ### Requirement: Docker Compose reference workflow
 The repository SHALL provide Docker Compose as the documented reference development workflow for the first contract and CLI implementation.
@@ -67,4 +67,30 @@ The development workflow SHALL include real e2e or static-read-path tests when a
 #### Scenario: Fixture content remains labeled
 - **WHEN** e2e fixture content is created for renderer coverage
 - **THEN** it MUST be labeled as fixture material and MUST NOT be treated as canonical pedagogy, architecture, or foundation truth
+
+### Requirement: Documentation impact in change workflow
+The development workflow SHALL require documentation impact to be considered for every substantial change.
+
+#### Scenario: Proposal documents documentation impact
+- **WHEN** a proposal is created for a change that affects behavior, contracts, commands, rendering, deployment, pedagogy, authority boundaries, or user-facing workflows
+- **THEN** the proposal MUST identify affected documentation audiences or explicitly state that no documentation update is needed
+
+#### Scenario: Tasks include documentation work
+- **WHEN** a proposal identifies documentation impact
+- **THEN** the task list MUST include the smallest appropriate documentation updates and any required documentation checks
+
+### Requirement: Documentation hygiene checks
+The development workflow SHALL include focused documentation hygiene checks when a change creates or updates documentation, specs, or rendered documentation fixtures.
+
+#### Scenario: Specs are updated
+- **WHEN** a change creates or updates current OpenSpec specs
+- **THEN** verification MUST check that current specs do not retain `Purpose: TBD` placeholders
+
+#### Scenario: Documentation fixtures are added
+- **WHEN** a change adds rendered documentation or documentation fixtures
+- **THEN** verification MUST check that the fixture is labeled as documentation or fixture material and remains separate from class/course examples
+
+#### Scenario: Role documentation is updated
+- **WHEN** a change creates or updates documentation for contributors/collaborators, professors, students, or agents
+- **THEN** verification MUST check that separate English and Spanish role directories with index pages are present or that any deferred language version is tracked
 

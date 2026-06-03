@@ -1,0 +1,7 @@
+course_id: documentation-fixture
+title: Documentation Fixture
+description: Fixture for rendered documentation boundary tests.
+language: en
+content: content
+artifact: artifact
+assets: assets

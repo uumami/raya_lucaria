@@ -21,6 +21,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [Legacy Salvage](12_legacy_salvage.md) -- principles worth keeping from old code without inheriting architecture.
 - [Truth Surfaces](13_truth_surfaces.md) -- authority levels after the reset.
 - [Domain Language](14_domain_language.md) -- canonical Raya Lucaria domain names and their package mapping.
+- [Documentation Surfaces](16_documentation_surfaces.md) -- role documentation, language pages, and rendered-doc boundaries.
 
 ## Reset Rule
 

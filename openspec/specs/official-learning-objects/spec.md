@@ -1,7 +1,7 @@
 # official-learning-objects Specification
 
 ## Purpose
-TBD - created by archiving change establish-dev-and-contract-baseline. Update Purpose after archive.
+Defines official course-owned learning object families, authority labels, source validation, and artifact export without personal study state.
 ## Requirements
 ### Requirement: Official learning object families
 The source course contract SHALL support official cards, quizzes, prompts, examples, assignments, exams, projects, and tasks as course-owned learning objects.
@@ -52,4 +52,3 @@ Official learning-object indexes SHALL be compatible with future personal study 
 #### Scenario: Future review queue reference
 - **WHEN** an official learning object is indexed
 - **THEN** the index MUST include enough stable identity and scope information for a future review queue to reference it
-

@@ -1,7 +1,7 @@
 # course-source-contract Specification
 
 ## Purpose
-TBD - created by archiving change establish-dev-and-contract-baseline. Update Purpose after archive.
+Defines the baseline source course tree, `raya.yaml` configuration, content rules, learning quanta, fixtures, and validation behavior.
 ## Requirements
 ### Requirement: Minimal source course shape
 A source course SHALL use `raya.yaml`, `content/`, optional `assets/`, and optional `official/` as the baseline file-tree contract.
@@ -86,4 +86,3 @@ The source course contract SHALL require local content links and local asset ref
 #### Scenario: External source reference
 - **WHEN** course validation scans Markdown content and finds an external URL or fragment-only link
 - **THEN** validation MUST NOT require that link to exist as a local source file
-

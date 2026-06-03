@@ -8,6 +8,7 @@ This repository is being reset to a foundation-first starting point. Legacy code
 
 - Seed truth: `docs/foundation/`.
 - Future specs: regenerated OpenSpec specs derived from the foundation.
+- Role documentation: `docs/guides/en/` and `docs/guides/es/`, below foundation/spec authority.
 - Operational guidance: `README.md`, `AGENTS.md`, and agent/editor adapters.
 - Examples, packages, and deployment recipes: valid only after they are rebuilt against current contracts.
 - Historical material: Git history, old branches, archived changes, and legacy code.
@@ -24,6 +25,9 @@ See `docs/foundation/13_truth_surfaces.md`.
 - `docs/foundation/08_package_boundaries.md`: clean package map for rebuilding.
 - `docs/foundation/11_iteration_roadmap.md`: order of work after the reset.
 - `docs/foundation/14_domain_language.md`: canonical Raya Lucaria domain names.
+- `docs/foundation/16_documentation_surfaces.md`: role documentation and rendered-doc boundaries.
+
+Role guides are split by language: English under `docs/guides/en/` and Spanish under `docs/guides/es/`. Technical identifiers such as commands, paths, package names, schema fields, and domain names remain in English.
 
 ## Current State
 

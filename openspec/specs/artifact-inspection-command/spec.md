@@ -1,7 +1,7 @@
 # artifact-inspection-command Specification
 
 ## Purpose
-TBD - created by archiving change add-artifact-inspect-command. Update Purpose after archive.
+Defines the read-only artifact inspection command and diagnostics used to validate built course artifacts without rebuilding source courses.
 ## Requirements
 ### Requirement: Artifact inspection command
 The system SHALL provide a read-only artifact inspection workflow for validating a built course artifact as a portable unit.
@@ -37,4 +37,3 @@ Artifact inspection SHALL use predictable diagnostics suitable for humans and co
 #### Scenario: Inspection failure
 - **WHEN** artifact inspection finds malformed JSON, invalid schema data, or missing manifest-declared indexes
 - **THEN** it MUST fail with nonzero CLI exit behavior and diagnostics naming concrete files or fields
-

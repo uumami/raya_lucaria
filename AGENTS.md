@@ -6,6 +6,8 @@ Raya Lucaria is a foundation-first open educational framework and commons, not a
 
 Current seed truth lives in `docs/foundation/`. Start with `docs/foundation/00_index.md` and `docs/foundation/15_system_overview.md`, then read `docs/foundation/13_truth_surfaces.md` for the authority map and the relevant foundation file for the task. Legacy code, examples, archived OpenSpec changes, and old guides may be mined for principles, but they are not canonical after the reset.
 
+Role documentation lives under `docs/guides/en/` and `docs/guides/es/`. Keep English and Spanish role directories separate, with each role starting at an `index.md` page. Do not mix languages in one role page. Technical identifiers such as commands, paths, package names, schema fields, domain names, and stable IDs remain in English.
+
 Future structure is defined in `docs/foundation/08_package_boundaries.md`: plain package names such as `cli`, `schema`, `static`, `graph`, `study`, `agents`, `collaboration`, `live`, `identity`, `core`, `web`, and `ui`. Domain names are defined in `docs/foundation/14_domain_language.md`; use them for conceptual ownership and user-facing language, not as default package directory names.
 
 ## Build, Test, and Development Commands
@@ -56,6 +58,8 @@ Use temporary directories for scenario tests that need throwaway courses. The ex
 Test local source links and local asset references with throwaway courses, not permanent generated outputs. Broken local references should fail validation before build writes a successful artifact.
 
 Changes to rendered HTML, browser-facing resources, deployment portability, or static site behavior should include e2e/static-read-path tests. Use representative fixture content such as `examples/courses/render-fixture`, label it as fixture material, and keep `docs/foundation/` as the authority surface.
+
+Changes that affect contributors/collaborators, professors, students, or agents should include role-documentation impact. If role docs change, update both the English role directory under `docs/guides/en/` and the Spanish role directory under `docs/guides/es/`, or explicitly track the deferred language page in the OpenSpec tasks.
 
 Validation and diagnostics should be actionable for both humans and coding agents: identify files read, outputs written, detected context, concrete next actions, and nonzero failures.
 

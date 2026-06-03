@@ -1,7 +1,7 @@
 # cli-contract-baseline Specification
 
 ## Purpose
-TBD - created by archiving change establish-dev-and-contract-baseline. Update Purpose after archive.
+Defines the first `raya` CLI package, command surface, diagnostics, and baseline workflows for humans and coding agents.
 ## Requirements
 ### Requirement: Python CLI package
 The first operational CLI SHALL be a Python package managed through the repository's `uv` workflow.
@@ -101,4 +101,3 @@ The CLI SHALL provide `raya course init <path>` to create a valid minimal source
 #### Scenario: Init has no hidden global state
 - **WHEN** a user passes an explicit target path to `raya course init`
 - **THEN** initialization inputs MUST derive from that path and explicit command flags
-

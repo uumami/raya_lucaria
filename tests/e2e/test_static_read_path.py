@@ -12,6 +12,7 @@ from raya_static import build_course
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+DOCS_FIXTURE = ROOT / "examples" / "docs" / "documentation-fixture"
 
 
 def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path) -> None:
@@ -32,6 +33,36 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert 'href="_raya/assets/diagrams/static-path.txt"' in root_html
     assert 'href="../_raya/assets/diagrams/static-path.txt"' in nested_html
     assert "Raya Lucaria render fixture asset" in asset_text
+
+
+def test_documentation_fixture_static_read_path_serves_pages_and_assets(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "documentation-fixture"
+    shutil.copytree(DOCS_FIXTURE, source, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(source)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = source / "artifact" / "site"
+
+    with _serve(site) as base_url:
+        root_html = _fetch_text(f"{base_url}/index.html")
+        english_html = _fetch_text(f"{base_url}/en/contributors/index.html")
+        spanish_html = _fetch_text(f"{base_url}/es/colaboradores/index.html")
+        asset_text = _fetch_text(
+            f"{base_url}/_raya/assets/reference/documentation-surface.txt"
+        )
+
+    assert "Raya Lucaria Documentation Fixture" in root_html
+    assert 'href="en/contributors/index.html"' in root_html
+    assert 'href="es/colaboradores/index.html"' in root_html
+    assert 'href="_raya/assets/reference/documentation-surface.txt"' in root_html
+    assert "Contributors" in english_html
+    assert "Colaboradores" in spanish_html
+    assert "Esta pagina es material" not in english_html
+    assert "This page is documentation fixture material" not in spanish_html
+    assert "Raya Lucaria documentation fixture asset" in asset_text
 
 
 @contextlib.contextmanager

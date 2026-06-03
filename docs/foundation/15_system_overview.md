@@ -250,6 +250,24 @@ course truth        build product         user/course/role    not architecture
 
 Generated data is not canonical course truth. It can always be rebuilt from source.
 
+## Documentation Surfaces
+
+Documentation is an explanatory surface for contributors/collaborators, professors, students, and agents. It sits below foundation docs and accepted specs, and it stays separate from examples, course/class material, generated artifacts, and history.
+
+```text
+foundation docs       accepted specs        role documentation
+seed truth            testable contracts    operational guidance
+       |                    |                       |
+       +---------+----------+-----------------------+
+                 |
+                 v
+          examples and rendered docs
+          fixtures or generated output,
+          never higher authority
+```
+
+Role documentation uses separate English and Spanish role directories with index pages. Code, package names, commands, schema fields, paths, domain names, and stable IDs stay in English.
+
 ## Learning Loop
 
 Every feature should know which part of learning it supports.

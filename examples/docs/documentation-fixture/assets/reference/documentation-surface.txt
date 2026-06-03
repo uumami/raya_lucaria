@@ -1,0 +1,4 @@
+Raya Lucaria documentation fixture asset.
+
+This text asset is copied into artifact-level assets and site/_raya/assets
+so static-read-path tests can fetch it from generated documentation HTML.

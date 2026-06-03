@@ -1,7 +1,7 @@
 # minimal-static-builder Specification
 
 ## Purpose
-TBD - created by archiving change add-minimal-static-artifact-builder. Update Purpose after archive.
+Defines the first Glintstone static builder behavior for readable HTML, navigation, artifact data indexes, assets, and deployment-neutral output.
 ## Requirements
 ### Requirement: Glintstone static builder package
 The repository SHALL provide a minimal Glintstone builder implementation under the plain package path `packages/static`.
@@ -107,4 +107,3 @@ The minimal builder SHALL avoid deployment-root assumptions in generated browser
 #### Scenario: No absolute deployment root for local resources
 - **WHEN** generated HTML references another generated page or local asset
 - **THEN** the generated URL MUST be relative and MUST NOT require an absolute `/` root, configured host, backend route, or CDN
-

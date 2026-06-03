@@ -2,7 +2,9 @@
 
 This repository is the Raya Lucaria framework reset workspace. Production courses and installations should eventually be separate repos generated from templates; current implementation material is historical unless rebuilt from the foundation.
 
-Authority order: `docs/foundation/`, then future regenerated OpenSpec specs, then root operational guidance, then rebuilt package/example/deploy docs. See `docs/foundation/13_truth_surfaces.md`.
+Authority order: `docs/foundation/`, then future regenerated OpenSpec specs, then role documentation, then root operational guidance, then rebuilt package/example/deploy docs. See `docs/foundation/13_truth_surfaces.md`.
+
+Role documentation lives under `docs/guides/en/` and `docs/guides/es/`. Keep English and Spanish role directories separate, with each role starting at `index.md`; keep commands, paths, package names, schema fields, domain names, and stable IDs in English.
 
 ## Current State
 
@@ -25,6 +27,7 @@ The surviving memory is:
 - `docs/foundation/12_legacy_salvage.md`
 - `docs/foundation/13_truth_surfaces.md`
 - `docs/foundation/14_domain_language.md`
+- `docs/foundation/16_documentation_surfaces.md`
 
 ## Reset Checks
 

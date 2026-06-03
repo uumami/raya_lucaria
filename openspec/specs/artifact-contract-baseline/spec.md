@@ -1,7 +1,7 @@
 # artifact-contract-baseline Specification
 
 ## Purpose
-TBD - created by archiving change establish-dev-and-contract-baseline. Update Purpose after archive.
+Defines the portable course artifact shape, including static read paths, manifest-centered machine surfaces, generated indexes, and inspectable assets.
 ## Requirements
 ### Requirement: Portable artifact shape
 A course artifact SHALL contain a static read path, a manifest, generated data indexes, and copied or referenced local assets.
@@ -103,4 +103,3 @@ The artifact contract SHALL preserve artifact-level copied assets as inspectable
 #### Scenario: Artifact assets inspected
 - **WHEN** an artifact containing source assets is inspected
 - **THEN** inspection MUST continue to recognize the artifact-level `assets/` directory as part of the generated artifact shape
-
