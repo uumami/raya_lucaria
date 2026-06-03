@@ -36,7 +36,9 @@ The first implementation baseline is Docker/uv/Python:
 - `packages/cli` owns the command surface.
 - `packages/static` owns the first Glintstone static artifact builder.
 
-Renderer, TypeScript/web UI, backend, identity, and dynamic study-state choices remain out of scope until later proposals.
+Course validation catches broken local Markdown content links and missing local asset references before build. The minimal builder exports navigation, parent, and valid source content links into `data/links.json`.
+
+Renderer, TypeScript/web UI, backend, identity, dynamic study-state choices, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
 
 ## Development Commands
 
@@ -74,6 +76,8 @@ External-course smoke test:
 The smoke test copies the minimal fixture into a temporary directory outside the repository, validates, builds, and inspects it locally, validates, builds, and inspects it through Docker with an explicit temporary mount, and removes the temporary files afterward.
 
 Artifact inspection is read-only and manifest-centered: it validates `manifest.json`, required artifact directories, and manifest-declared data indexes without rebuilding source.
+
+Source-course validation is local and source-oriented: local `.md` links must resolve under configured `content/`, local asset references must resolve under configured/default `assets/`, and external URLs, `mailto:`, `tel:`, and fragment-only links are ignored by this baseline.
 
 Course initialization creates replaceable scaffold and refuses to overwrite non-empty directories:
 

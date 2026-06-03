@@ -37,17 +37,21 @@ Future course content uses `raya.yaml`, `content/`, `assets/`, `official/`, and 
 
 Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
 
+Course validation checks local Markdown content links and local asset references before build. Local `.md` links must point under configured `content/`; local asset references must point under configured/default `assets/`. External URLs, `mailto:`, `tel:`, and fragment-only links do not fail local validation in this baseline.
+
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
 
 Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. Avoid carrying forward old source directory names, old generated JSON shapes, old renderer stacks, old theme systems, or old examples as architecture.
 
-Use Python 3.10 for the current baseline. `packages/schema` owns schemas and validators; `packages/cli` owns the `raya` command; `packages/static` owns the Glintstone static builder. Renderer, TypeScript/web UI, backend, identity, and dynamic study state remain out of scope until later proposals.
+Use Python 3.10 for the current baseline. `packages/schema` owns schemas and validators; `packages/cli` owns the `raya` command; `packages/static` owns the Glintstone static builder. Renderer, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
 
 ## Testing Guidelines
 
 Write tests against current contracts, not legacy behavior. Start with schema, validation, fixture, CLI, and artifact contract tests. Keep examples minimal and labeled; examples must not accidentally define pedagogy or architecture.
 
 Use temporary directories for scenario tests that need throwaway courses. The external smoke test exists to prove `raya validate`, `raya build`, and `raya artifacts inspect` work on a course outside the framework checkout; do not add permanent course repos or generated course outputs for that purpose.
+
+Test local source links and local asset references with throwaway courses, not permanent generated outputs. Broken local references should fail validation before build writes a successful artifact.
 
 Validation and diagnostics should be actionable for both humans and coding agents: identify files read, outputs written, detected context, concrete next actions, and nonzero failures.
 

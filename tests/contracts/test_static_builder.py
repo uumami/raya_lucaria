@@ -114,6 +114,28 @@ def test_source_assets_are_copied(tmp_path: Path) -> None:
     assert copied.read_text(encoding="utf-8") == "asset fixture"
 
 
+def test_source_content_links_are_exported_to_links_index(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "content" / "00_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\nContinue to [First Topic](01_unit/01_topic.md).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    links = json.loads(
+        (course / "artifact" / "data" / "links.json").read_text(encoding="utf-8")
+    )
+    assert {
+        "from": "course-root",
+        "to": "first-topic",
+        "kind": "content",
+    } in links["links"]
+
+
 def test_rebuild_replaces_stale_artifact_output(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     stale = course / "artifact" / "site" / "stale.html"
@@ -124,6 +146,21 @@ def test_rebuild_replaces_stale_artifact_output(tmp_path: Path) -> None:
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert not stale.exists()
+
+
+def test_build_stops_when_local_source_link_is_broken(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "content" / "00_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8") + "\nContinue to [Missing](missing.md).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any("Broken local content link" in item.message for item in report.diagnostics)
+    assert not (course / "artifact" / "manifest.json").exists()
 
 
 def test_build_stops_when_source_validation_fails(tmp_path: Path) -> None:

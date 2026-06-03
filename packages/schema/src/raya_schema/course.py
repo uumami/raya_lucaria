@@ -7,6 +7,13 @@ from typing import Any
 from jsonschema import ValidationError
 
 from raya_schema.diagnostics import ValidationReport
+from raya_schema.links import (
+    classify_markdown_target,
+    extract_markdown_links,
+    markdown_link_path,
+    path_is_under,
+    resolve_local_markdown_target,
+)
 from raya_schema.schema_loader import validator_for
 from raya_schema.yaml_io import load_yaml_file, parse_frontmatter
 
@@ -51,7 +58,10 @@ def validate_course(course_path: str | Path) -> ValidationReport:
     _validate_schema(config, "raya-course.schema.json", config_path, report)
 
     content_dir_name = config.get("content")
-    content_dir = root / str(content_dir_name) if content_dir_name else root / "content"
+    content_dir = (
+        root / str(content_dir_name) if content_dir_name else root / "content"
+    ).resolve()
+    assets_dir = (root / str(config.get("assets", "assets"))).resolve()
     if not content_dir.exists() or not content_dir.is_dir():
         report.add_error(
             "Configured content directory is missing",
@@ -89,6 +99,15 @@ def validate_course(course_path: str | Path) -> ValidationReport:
                 next_action="Fix frontmatter syntax",
             )
             continue
+
+        _validate_markdown_source_links(
+            md_path=md_path,
+            body=_markdown_body(md_path),
+            course_root=root,
+            content_dir=content_dir,
+            assets_dir=assets_dir,
+            report=report,
+        )
 
         quantum = frontmatter.get("quantum")
         if isinstance(quantum, dict) and quantum.get("id"):
@@ -228,6 +247,78 @@ def _validate_official_objects(
             f"Found official {object_type} object(s)",
             path=paths[0] if paths else official_dir,
         )
+
+
+def _validate_markdown_source_links(
+    *,
+    md_path: Path,
+    body: str,
+    course_root: Path,
+    content_dir: Path,
+    assets_dir: Path,
+    report: ValidationReport,
+) -> None:
+    for link in extract_markdown_links(body):
+        kind = classify_markdown_target(link.target)
+        if kind == "ignored":
+            continue
+
+        target_text = markdown_link_path(link.target)
+        target_path = resolve_local_markdown_target(
+            source_path=md_path,
+            course_root=course_root,
+            target_path=target_text,
+        )
+        field = f"link:{link.target}"
+        if kind == "content":
+            if not path_is_under(target_path, content_dir) or not target_path.is_file():
+                report.add_error(
+                    "Broken local content link",
+                    path=md_path,
+                    field=field,
+                    next_action=(
+                        f"Create {target_path} or update the link to an existing "
+                        f"Markdown file under {content_dir.name}/"
+                    ),
+                )
+            else:
+                report.read_file(target_path)
+            continue
+
+        if not path_is_under(target_path, assets_dir):
+            report.add_error(
+                "Local asset reference is outside the assets directory",
+                path=md_path,
+                field=field,
+                next_action=(
+                    f"Move the asset under {assets_dir.name}/ or update the link "
+                    f"to point under the configured assets directory"
+                ),
+            )
+        elif not target_path.is_file():
+            report.add_error(
+                "Missing local asset reference",
+                path=md_path,
+                field=field,
+                next_action=(
+                    f"Create {target_path} or update the link to an existing "
+                    f"asset under {assets_dir.name}/"
+                ),
+            )
+        else:
+            report.read_file(target_path)
+
+
+def _markdown_body(path: Path) -> str:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        return text
+    marker = "\n---"
+    end = text.find(marker, 4)
+    if end == -1:
+        return text
+    body = text[end + len(marker) :]
+    return body[1:] if body.startswith("\n") else body
 
 
 def _schema_error_key(error: ValidationError) -> tuple[str, str]:

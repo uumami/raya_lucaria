@@ -4,7 +4,6 @@ import hashlib
 import html
 import json
 import os
-import re
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -20,13 +19,19 @@ from raya_schema import (
     validate_pages_index,
     validate_quanta_index,
 )
+from raya_schema.links import (
+    classify_markdown_target,
+    extract_markdown_links,
+    markdown_link_fragment,
+    markdown_link_path,
+    resolve_local_markdown_target,
+)
 from raya_schema.yaml_io import load_yaml_file, parse_frontmatter
 
 
 ARTIFACT_VERSION = "0.1"
 SOURCE_SCHEMA_VERSION = "0.1"
 SUPPORTED_OFFICIAL_SUFFIXES = {".yaml", ".yml", ".json"}
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 
 @dataclass(frozen=True)
@@ -85,7 +90,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
 
-    pages_by_rel = {page.rel_path: page for page in pages}
+    pages_by_source = {page.source_path.resolve(): page for page in pages}
     pages_by_quantum = {page.quantum_id: page for page in pages}
 
     for page in pages:
@@ -95,7 +100,8 @@ def build_course(course_path: str | Path) -> ValidationReport:
             _render_page(
                 page=page,
                 pages=pages,
-                pages_by_rel=pages_by_rel,
+                pages_by_source=pages_by_source,
+                course_root=root,
                 course_title=str(config["title"]),
                 language=str(config["language"]),
             ),
@@ -107,7 +113,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
 
     pages_index = _pages_index(course_id, pages)
     quanta_index = _quanta_index(course_id, pages)
-    links_index = _links_index(course_id, pages, pages_by_quantum)
+    links_index = _links_index(course_id, pages, pages_by_quantum, pages_by_source, root)
     official_index = _official_index(course_id, official_objects)
 
     _write_json(data_dir / "pages.json", pages_index, report)
@@ -304,7 +310,8 @@ def _render_page(
     *,
     page: SourcePage,
     pages: list[SourcePage],
-    pages_by_rel: dict[str, SourcePage],
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
     course_title: str,
     language: str,
 ) -> str:
@@ -332,7 +339,7 @@ def _render_page(
             "</nav>",
             "</header>",
             "<main>",
-            _render_markdown(page.body, page, pages_by_rel),
+            _render_markdown(page.body, page, pages_by_source, course_root),
             "</main>",
             "</body>",
             "</html>",
@@ -344,7 +351,8 @@ def _render_page(
 def _render_markdown(
     body: str,
     page: SourcePage,
-    pages_by_rel: dict[str, SourcePage],
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
 ) -> str:
     output: list[str] = []
     paragraph: list[str] = []
@@ -353,7 +361,7 @@ def _render_markdown(
     def flush_paragraph() -> None:
         if paragraph:
             output.append(
-                f"<p>{_render_inline(' '.join(paragraph), page, pages_by_rel)}</p>"
+                f"<p>{_render_inline(' '.join(paragraph), page, pages_by_source, course_root)}</p>"
             )
             paragraph.clear()
 
@@ -377,7 +385,7 @@ def _render_markdown(
             close_list()
             heading_text = stripped[heading_level + 1 :].strip()
             output.append(
-                f"<h{heading_level}>{_render_inline(heading_text, page, pages_by_rel)}</h{heading_level}>"
+                f"<h{heading_level}>{_render_inline(heading_text, page, pages_by_source, course_root)}</h{heading_level}>"
             )
             continue
 
@@ -387,7 +395,7 @@ def _render_markdown(
                 output.append("<ul>")
                 in_list = True
             output.append(
-                f"<li>{_render_inline(stripped[2:].strip(), page, pages_by_rel)}</li>"
+                f"<li>{_render_inline(stripped[2:].strip(), page, pages_by_source, course_root)}</li>"
             )
             continue
 
@@ -401,16 +409,22 @@ def _render_markdown(
 def _render_inline(
     text: str,
     page: SourcePage,
-    pages_by_rel: dict[str, SourcePage],
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
 ) -> str:
     rendered: list[str] = []
     cursor = 0
-    for match in MARKDOWN_LINK_RE.finditer(text):
-        rendered.append(html.escape(text[cursor : match.start()]))
-        label = html.escape(match.group(1))
-        href = _resolve_markdown_href(page, match.group(2), pages_by_rel)
+    for link in extract_markdown_links(text):
+        rendered.append(html.escape(text[cursor : link.start]))
+        label = html.escape(link.label)
+        href = _resolve_markdown_href(
+            page,
+            link.target,
+            pages_by_source,
+            course_root,
+        )
         rendered.append(f'<a href="{html.escape(href)}">{label}</a>')
-        cursor = match.end()
+        cursor = link.end
     rendered.append(html.escape(text[cursor:]))
     return "".join(rendered)
 
@@ -418,16 +432,14 @@ def _render_inline(
 def _resolve_markdown_href(
     page: SourcePage,
     href: str,
-    pages_by_rel: dict[str, SourcePage],
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
 ) -> str:
-    if "://" in href or href.startswith("#"):
+    if classify_markdown_target(href) == "ignored":
         return href
-    href_path = href.split("#", 1)[0]
-    fragment = f"#{href.split('#', 1)[1]}" if "#" in href else ""
-    if href_path.endswith(".md"):
-        current_dir = Path(page.rel_path).parent
-        target_rel = (current_dir / href_path).as_posix()
-        target_page = pages_by_rel.get(target_rel)
+    fragment = markdown_link_fragment(href)
+    if classify_markdown_target(href) == "content":
+        target_page = _target_content_page(page, href, pages_by_source, course_root)
         if target_page is not None:
             return _relative_href(page.output_path, target_page.output_path) + fragment
     return href
@@ -466,25 +478,49 @@ def _links_index(
     course_id: str,
     pages: list[SourcePage],
     pages_by_quantum: dict[str, SourcePage],
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
 ) -> dict[str, Any]:
     links: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+
+    def add_link(source: str, target: str, kind: str) -> None:
+        key = (source, target, kind)
+        if key in seen:
+            return
+        seen.add(key)
+        links.append({"from": source, "to": target, "kind": kind})
+
     for page in pages:
         if page.parent and page.parent in pages_by_quantum:
-            links.append(
-                {
-                    "from": page.parent,
-                    "to": page.quantum_id,
-                    "kind": "navigation",
-                }
+            add_link(page.parent, page.quantum_id, "navigation")
+            add_link(page.quantum_id, page.parent, "parent")
+        for link in extract_markdown_links(page.body):
+            if classify_markdown_target(link.target) != "content":
+                continue
+            target_page = _target_content_page(
+                page,
+                link.target,
+                pages_by_source,
+                course_root,
             )
-            links.append(
-                {
-                    "from": page.quantum_id,
-                    "to": page.parent,
-                    "kind": "parent",
-                }
-            )
+            if target_page is not None:
+                add_link(page.quantum_id, target_page.quantum_id, "content")
     return {"course_id": course_id, "links": links}
+
+
+def _target_content_page(
+    page: SourcePage,
+    target: str,
+    pages_by_source: dict[Path, SourcePage],
+    course_root: Path,
+) -> SourcePage | None:
+    target_path = resolve_local_markdown_target(
+        source_path=page.source_path,
+        course_root=course_root,
+        target_path=markdown_link_path(target),
+    )
+    return pages_by_source.get(target_path)
 
 
 def _official_index(

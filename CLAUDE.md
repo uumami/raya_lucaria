@@ -67,6 +67,8 @@ Use temporary directories for throwaway course validation/build/inspection scena
 
 Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
 
+Course validation catches broken local `.md` content links under configured `content/` and missing local asset references under configured/default `assets/` before build. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored locally. Graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain future work.
+
 Course initialization creates replaceable scaffold only. It refuses non-empty target directories and must not be treated as required pedagogy or official course canon.
 
 ## Guidance Boundary

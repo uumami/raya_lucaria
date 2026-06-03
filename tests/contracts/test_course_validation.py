@@ -63,6 +63,98 @@ def test_duplicate_quantum_ids_fail(tmp_path: Path) -> None:
     assert any("Duplicate quantum ID" in item.message for item in report.diagnostics)
 
 
+def test_local_markdown_content_link_validates(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    content = tmp_path / "content"
+    content.mkdir()
+    (content / "00_index.md").write_text(
+        "# Root\n\nContinue to [Topic](01_topic.md).\n",
+        encoding="utf-8",
+    )
+    target = content / "01_topic.md"
+    target.write_text("# Topic\n", encoding="utf-8")
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert target in report.files_read
+
+
+def test_broken_local_markdown_content_link_fails(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    content = tmp_path / "content"
+    content.mkdir()
+    source = content / "00_index.md"
+    source.write_text("# Root\n\nContinue to [Missing](missing.md).\n", encoding="utf-8")
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    diagnostic = next(
+        item for item in report.diagnostics if item.message == "Broken local content link"
+    )
+    assert diagnostic.path == source
+    assert diagnostic.field == "link:missing.md"
+    assert diagnostic.next_action and "Create" in diagnostic.next_action
+
+
+def test_local_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    content = tmp_path / "content"
+    content.mkdir()
+    asset = tmp_path / "assets" / "diagram.txt"
+    asset.parent.mkdir()
+    asset.write_text("asset fixture", encoding="utf-8")
+    (content / "00_index.md").write_text(
+        "# Root\n\nUse [diagram](../assets/diagram.txt).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert asset in report.files_read
+
+
+def test_missing_local_asset_reference_fails(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    content = tmp_path / "content"
+    content.mkdir()
+    source = content / "00_index.md"
+    source.write_text(
+        "# Root\n\nUse [diagram](../assets/missing.txt).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    diagnostic = next(
+        item for item in report.diagnostics if item.message == "Missing local asset reference"
+    )
+    assert diagnostic.path == source
+    assert diagnostic.field == "link:../assets/missing.txt"
+    assert diagnostic.next_action and "asset under assets/" in diagnostic.next_action
+
+
+def test_external_urls_and_fragment_only_links_are_ignored(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    content = tmp_path / "content"
+    content.mkdir()
+    (content / "00_index.md").write_text(
+        "# Root\n\n"
+        "[Web](https://example.com/missing.md), "
+        "[Mail](mailto:test@example.com), "
+        "[Phone](tel:123), "
+        "[Fragment](#local).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
 def test_duplicate_official_object_ids_fail(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
     content = tmp_path / "content"
