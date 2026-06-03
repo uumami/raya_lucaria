@@ -1,0 +1,10 @@
+id: first-topic-card
+type: card
+authority: official
+scope:
+  quantum: first-topic
+content:
+  front: What loop does Raya Lucaria support?
+  back: Read, retrieve, reflect, adapt, revisit, and contribute.
+retrieval:
+  kind: recall

@@ -6,6 +6,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 
 ## Foundation Map
 
+- [System Overview](15_system_overview.md) -- newcomer map with core concepts and ASCII diagrams.
 - [Charter](01_charter.md) -- non-negotiable identity, ownership, portability, pedagogy, and agent principles.
 - [System Model](02_system_model.md) -- source courses, artifacts, optional installations, and user experiences.
 - [Pedagogy](03_pedagogy.md) -- learning-first design without hardcoding one doctrine.
@@ -19,6 +20,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [Iteration Roadmap](11_iteration_roadmap.md) -- build order after the reset.
 - [Legacy Salvage](12_legacy_salvage.md) -- principles worth keeping from old code without inheriting architecture.
 - [Truth Surfaces](13_truth_surfaces.md) -- authority levels after the reset.
+- [Domain Language](14_domain_language.md) -- canonical Raya Lucaria domain names and their package mapping.
 
 ## Reset Rule
 

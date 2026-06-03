@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/links-index.schema.json",
+  "title": "Raya Links Index",
+  "type": "object",
+  "required": [
+    "course_id",
+    "links"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string"
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "kind"
+        ],
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -71,6 +71,31 @@ quantum:
 
 Official flashcards, quizzes, prompts, examples, assignments, and projects are course-owned artifacts. They may live beside content or under `official/`, but they must be distinguishable from private, shared, and generated material.
 
+At minimum, official learning objects should be structured enough to validate, index, export, and attach to learning quanta. They should not be only prose hidden inside rendered pages.
+
+Initial object families:
+
+- cards for retrieval and spaced review,
+- quizzes for concept checks and practice,
+- prompts for reflection, Socratic work, or agent-assisted practice,
+- examples and worked examples,
+- assignments, exams, projects, and tasks.
+
+The first contract does not need to implement personal review scheduling. It should make the official source objects legible so Rennala can later add private cards, review queues, spaced repetition state, confidence ratings, mastery maps, and study planning.
+
+```text
+official object in source
+          |
+          v
+validated object index
+          |
+          v
+artifact data readable by static site
+          |
+          v
+future personal/shared study state
+```
+
 ## Validation
 
 A course must be validated before build. Validation should check at least:
@@ -83,6 +108,7 @@ A course must be validated before build. Validation should check at least:
 - missing local assets,
 - duplicate stable IDs,
 - invalid dates or schema fields,
-- generated/official authority labels.
+- generated/official authority labels,
+- invalid or unscoped official learning objects.
 
 Validation errors must be actionable.

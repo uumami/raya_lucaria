@@ -1,0 +1,9 @@
+id: first-topic-prompt
+type: prompt
+authority: official
+scope:
+  quantum: first-topic
+content:
+  prompt: Explain how retrieval practice differs from rereading.
+retrieval:
+  kind: reflection

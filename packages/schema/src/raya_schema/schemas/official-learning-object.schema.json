@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/official-learning-object.schema.json",
+  "title": "Raya Official Learning Object",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "id",
+    "type",
+    "authority",
+    "scope",
+    "content"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "assignment",
+        "card",
+        "exam",
+        "example",
+        "project",
+        "prompt",
+        "quiz",
+        "task"
+      ]
+    },
+    "authority": {
+      "const": "official"
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "quantum"
+      ],
+      "properties": {
+        "quantum": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "content": {
+      "type": "object"
+    },
+    "retrieval": {
+      "type": "object"
+    }
+  }
+}

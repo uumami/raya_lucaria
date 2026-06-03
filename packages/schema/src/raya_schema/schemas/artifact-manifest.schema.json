@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/artifact-manifest.schema.json",
+  "title": "Raya Artifact Manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "artifact_version",
+    "course_id",
+    "course_version_id",
+    "generated_at",
+    "source_schema_version",
+    "static_site_root",
+    "data"
+  ],
+  "properties": {
+    "artifact_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "course_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "course_version_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "static_site_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "pages",
+        "quanta",
+        "links",
+        "official"
+      ],
+      "properties": {
+        "pages": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quanta": {
+          "type": "string",
+          "minLength": 1
+        },
+        "links": {
+          "type": "string",
+          "minLength": 1
+        },
+        "official": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -16,20 +16,74 @@ See `docs/foundation/13_truth_surfaces.md`.
 
 ## Foundation Map
 
+- `docs/foundation/15_system_overview.md`: newcomer map with core concepts and ASCII diagrams.
 - `docs/foundation/01_charter.md`: identity and non-negotiable principles.
 - `docs/foundation/02_system_model.md`: source, artifacts, installations, and workflows.
 - `docs/foundation/05_course_contract.md`: future course source contract.
 - `docs/foundation/06_artifact_contract.md`: future static artifact contract.
 - `docs/foundation/08_package_boundaries.md`: clean package map for rebuilding.
 - `docs/foundation/11_iteration_roadmap.md`: order of work after the reset.
+- `docs/foundation/14_domain_language.md`: canonical Raya Lucaria domain names.
 
 ## Current State
 
-No implementation stack is canonical yet. The next correct work is to regenerate specs and build the first contracts outward: schema, minimal fixture, CLI, static builder, then dynamic services.
+The first implementation baseline is Docker/uv/Python:
+
+- Docker Compose is the reference development workflow.
+- `uv` is the Python environment and package tool.
+- `raya` is the Python CLI entrypoint.
+- `packages/schema` owns portable contracts and validation helpers.
+- `packages/cli` owns the command surface.
+- `packages/static` owns the first Glintstone static artifact builder.
+
+Renderer, TypeScript/web UI, backend, identity, and dynamic study-state choices remain out of scope until later proposals.
+
+## Development Commands
+
+Reference Docker workflow:
+
+```bash
+docker compose run --rm dev uv run raya --help
+docker compose run --rm dev uv run raya doctor
+docker compose run --rm dev uv run raya course --help
+docker compose run --rm dev uv run raya validate examples/courses/minimal
+docker compose run --rm dev uv run raya build examples/courses/minimal
+docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact
+docker compose run --rm dev uv run pytest -q
+```
+
+Local non-Docker workflow:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local uv sync --python 3.10 --all-packages --dev
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
+```
+
+External-course smoke test:
+
+```bash
+./scripts/smoke-test.sh
+```
+
+The smoke test copies the minimal fixture into a temporary directory outside the repository, validates, builds, and inspects it locally, validates, builds, and inspects it through Docker with an explicit temporary mount, and removes the temporary files afterward.
+
+Artifact inspection is read-only and manifest-centered: it validates `manifest.json`, required artifact directories, and manifest-declared data indexes without rebuilding source.
+
+Course initialization creates replaceable scaffold and refuses to overwrite non-empty directories:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course init /tmp/raya-course-demo --course-id raya-course-demo --title "Raya Course Demo"
+```
 
 Useful reset check:
 
 ```bash
 find docs/foundation -maxdepth 1 -type f | sort
-rg -n "Glintstone|Eleventy|Tailwind|Pagefind|clase" docs/foundation
+rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'
 ```

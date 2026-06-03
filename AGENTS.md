@@ -2,23 +2,54 @@
 
 ## Project Structure & Module Organization
 
-Raya Lucaria is a foundation-first open educational framework and commons, not a product repo. Current seed truth lives in `docs/foundation/`. Legacy code, examples, and archived OpenSpec changes may be mined for principles, but they are not canonical after the reset. Future structure is defined in `docs/foundation/08_package_boundaries.md`.
+Raya Lucaria is a foundation-first open educational framework and commons, not a product repo. The reset starts from contracts, specs, and package boundaries before implementation.
+
+Current seed truth lives in `docs/foundation/`. Start with `docs/foundation/00_index.md` and `docs/foundation/15_system_overview.md`, then read `docs/foundation/13_truth_surfaces.md` for the authority map and the relevant foundation file for the task. Legacy code, examples, archived OpenSpec changes, and old guides may be mined for principles, but they are not canonical after the reset.
+
+Future structure is defined in `docs/foundation/08_package_boundaries.md`: plain package names such as `cli`, `schema`, `static`, `graph`, `study`, `agents`, `collaboration`, `live`, `identity`, `core`, `web`, and `ui`. Domain names are defined in `docs/foundation/14_domain_language.md`; use them for conceptual ownership and user-facing language, not as default package directory names.
 
 ## Build, Test, and Development Commands
 
-No implementation command is canonical yet. Use documentation and spec checks during the reset:
+Docker Compose is the reference development workflow. Local `uv` execution remains supported.
 
 - `find docs/foundation -maxdepth 1 -type f | sort` lists the surviving foundation set.
-- `rg -n "Glintstone|Eleventy|Tailwind|Pagefind|clase" docs/foundation` catches stale implementation assumptions.
+- `rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'` catches stale renderer assumptions outside the domain-language reset boundary.
+- `openspec list --json` shows whether an active change already exists.
 - `openspec validate --specs --strict` may be used only after specs are regenerated from the foundation.
+- `docker compose run --rm dev uv run raya --help` runs the CLI through the reference container.
+- `docker compose run --rm dev uv run raya doctor` reports detected context.
+- `docker compose run --rm dev uv run raya course --help` shows course subcommands.
+- `docker compose run --rm dev uv run raya validate examples/courses/minimal` validates the minimal fixture.
+- `docker compose run --rm dev uv run raya build examples/courses/minimal` builds the minimal fixture artifact.
+- `docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact` inspects the generated artifact through its manifest.
+- `docker compose run --rm dev uv run pytest -q` runs tests through the reference container.
+- `./scripts/smoke-test.sh` validates, builds, and inspects a temporary external course copy locally and through Docker without adding course output to the repository.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv sync --python 3.10 --all-packages --dev` sets up the local non-Docker workflow.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact`, and `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q` run the local workflow.
+
+The current CLI baseline implements `raya --help`, `raya doctor`, `raya course init <path>`, `raya validate <course>`, `raya build <course>`, and `raya artifacts inspect <artifact>`. Do not treat any legacy command as canonical unless current specs say so.
 
 ## Coding Style & Naming Conventions
 
-Keep new files explicit, small, and easy for humans and coding agents to inspect. Prefer plain package names (`cli`, `schema`, `static`, `core`, `web`, `ui`) and reserve lore names for concepts or UI labels when they improve clarity. Future course content uses `raya.yaml`, `content/`, and ordered learning quanta.
+Keep new files explicit, small, and easy for humans and coding agents to inspect. Prefer boring names over clever ones. Schemas and contracts sit below implementations; provider adapters belong at the edges.
+
+Future course content uses `raya.yaml`, `content/`, `assets/`, `official/`, and ordered learning quanta as described in `docs/foundation/05_course_contract.md`. Generated artifacts use the manifest-centered shape in `docs/foundation/06_artifact_contract.md`; generated data is rebuildable and must not become canonical course truth.
+
+Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
+
+Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
+
+Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. Avoid carrying forward old source directory names, old generated JSON shapes, old renderer stacks, old theme systems, or old examples as architecture.
+
+Use Python 3.10 for the current baseline. `packages/schema` owns schemas and validators; `packages/cli` owns the `raya` command; `packages/static` owns the Glintstone static builder. Renderer, TypeScript/web UI, backend, identity, and dynamic study state remain out of scope until later proposals.
 
 ## Testing Guidelines
 
 Write tests against current contracts, not legacy behavior. Start with schema, validation, fixture, CLI, and artifact contract tests. Keep examples minimal and labeled; examples must not accidentally define pedagogy or architecture.
+
+Use temporary directories for scenario tests that need throwaway courses. The external smoke test exists to prove `raya validate`, `raya build`, and `raya artifacts inspect` work on a course outside the framework checkout; do not add permanent course repos or generated course outputs for that purpose.
+
+Validation and diagnostics should be actionable for both humans and coding agents: identify files read, outputs written, detected context, concrete next actions, and nonzero failures.
 
 ## Commit & Pull Request Guidelines
 
@@ -26,4 +57,8 @@ Use short, imperative commit subjects. Pull requests should describe the change,
 
 ## Agent-Specific Instructions
 
-Treat `docs/foundation/13_truth_surfaces.md` as the authority map. Do not preserve legacy docs in current guide paths merely because they exist; use Git history as the archive. Do not edit generated outputs, dependency folders, caches, or legacy code unless the current task explicitly includes the reset cleanup.
+Treat `docs/foundation/13_truth_surfaces.md` as the authority map. If a lower surface conflicts with `docs/foundation/`, the lower surface is wrong until a new accepted decision updates the foundation.
+
+For foundation work, update the smallest relevant foundation file and keep `docs/foundation/00_index.md` accurate. For implementation work, prefer creating or updating OpenSpec proposals/specs from foundation decisions before writing package code.
+
+Do not preserve legacy docs in current guide paths merely because they exist; use Git history as the archive. Do not edit generated outputs, dependency folders, caches, or legacy code unless the current task explicitly includes reset cleanup. When salvaging legacy behavior, copy the principle intentionally into a proposal, define the new contract, rewrite the smallest useful idea, and add tests against the new contract.

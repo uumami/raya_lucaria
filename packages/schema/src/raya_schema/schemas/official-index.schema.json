@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/official-index.schema.json",
+  "title": "Raya Official Learning Object Index",
+  "type": "object",
+  "required": [
+    "course_id",
+    "objects"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string"
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "authority",
+          "scope",
+          "content"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "authority": {
+            "const": "official"
+          },
+          "scope": {
+            "type": "object"
+          },
+          "content": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

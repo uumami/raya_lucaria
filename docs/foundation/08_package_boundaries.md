@@ -1,6 +1,8 @@
 # Package Boundaries
 
-Use plain package names first. Lore names can remain in docs or UI if they help, but package names should be obvious to new contributors and agents.
+Use plain package names for filesystem clarity. Raya Lucaria domain names are still core architectural vocabulary; see `docs/foundation/14_domain_language.md`.
+
+The package name explains where code lives. The domain name explains what responsibility the code serves.
 
 ## Fresh Monorepo Shape
 
@@ -74,4 +76,4 @@ Public repo and package names should be clear:
 - `raya-lucaria-core`
 - `raya-lucaria-course-template`
 
-Lore names are optional labels, not required package names.
+Domain names such as Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. They may appear in specs, docs, UI labels, service concepts, and diagrams. They are not required as package directory names.

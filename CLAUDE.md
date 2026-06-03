@@ -6,10 +6,11 @@ Authority order: `docs/foundation/`, then future regenerated OpenSpec specs, the
 
 ## Current State
 
-The repository is intentionally starting over from durable principles. Do not treat old Glintstone, Eleventy, course examples, archived changes, or package names as current architecture.
+The repository is intentionally starting over from durable principles. Glintstone and the other Raya Lucaria domain names are canonical concepts, but old Eleventy renderer assumptions, course examples, archived changes, and package names are not current architecture.
 
 The surviving memory is:
 
+- `docs/foundation/15_system_overview.md`
 - `docs/foundation/01_charter.md`
 - `docs/foundation/02_system_model.md`
 - `docs/foundation/03_pedagogy.md`
@@ -23,13 +24,50 @@ The surviving memory is:
 - `docs/foundation/11_iteration_roadmap.md`
 - `docs/foundation/12_legacy_salvage.md`
 - `docs/foundation/13_truth_surfaces.md`
+- `docs/foundation/14_domain_language.md`
 
 ## Reset Checks
 
 ```bash
 find docs/foundation -maxdepth 1 -type f | sort
-rg -n "Glintstone|Eleventy|Tailwind|Pagefind|clase" docs/foundation
+rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'
 ```
+
+## Development Commands
+
+Docker Compose is the reference workflow:
+
+```bash
+docker compose run --rm dev uv run raya --help
+docker compose run --rm dev uv run raya doctor
+docker compose run --rm dev uv run raya course --help
+docker compose run --rm dev uv run raya validate examples/courses/minimal
+docker compose run --rm dev uv run raya build examples/courses/minimal
+docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact
+docker compose run --rm dev uv run pytest -q
+./scripts/smoke-test.sh
+```
+
+Local `uv` workflow:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local uv sync --python 3.10 --all-packages --dev
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
+```
+
+The current implementation baseline is Python 3.10, `packages/schema`, `packages/cli`, and `packages/static`. Renderer, TypeScript/web UI, backend, identity, and dynamic study state remain out of scope for this baseline.
+
+Use temporary directories for throwaway course validation/build/inspection scenarios. The smoke test copies the minimal fixture outside the repository, validates, builds, and inspects that external course locally and through Docker, then cleans up the temporary files.
+
+Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
+
+Course initialization creates replaceable scaffold only. It refuses non-empty target directories and must not be treated as required pedagogy or official course canon.
 
 ## Guidance Boundary
 
@@ -40,5 +78,6 @@ rg -n "Glintstone|Eleventy|Tailwind|Pagefind|clase" docs/foundation
 Do not edit generated outputs:
 
 - `_site/` or nested example `_site/`,
+- `artifact/` or nested example `artifact/`,
 - `node_modules/`,
 - `.pytest_cache/`.

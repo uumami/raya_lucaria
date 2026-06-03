@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/quanta-index.schema.json",
+  "title": "Raya Quanta Index",
+  "type": "object",
+  "required": [
+    "course_id",
+    "quanta"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string"
+    },
+    "quanta": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "path"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "parent": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -20,6 +20,7 @@ Build:
 - `raya.yaml` schema,
 - `content/` rules,
 - learning-quanta model,
+- official learning-object model,
 - artifact manifest schema,
 - minimal fixture course.
 
@@ -61,7 +62,23 @@ Add:
 - internal links and backlinks,
 - graph data,
 - official cards/quizzes/prompts,
-- retrieval-practice hooks.
+- retrieval-practice hooks,
+- artifact indexes that future Rennala and Sellen features can read.
+
+Do not start with full personal study state. First prove that course-owned study objects validate, build, and remain portable.
+
+## Bridge After Phase 4: Personal Study Contracts
+
+After official study objects exist, define contracts for:
+
+- private notes,
+- student-created cards,
+- review queues,
+- spaced repetition state,
+- confidence ratings,
+- export of personal study data.
+
+This phase is the bridge from static study seeds to Rennala as a dynamic study domain.
 
 ## Phase 5: Templates And Installation
 

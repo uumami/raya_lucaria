@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 .venv/
+.venv-local/
 venv/
 env/
 __pypackages__/
@@ -26,6 +27,8 @@ _site/
 **/_site/
 site/
 **/site/
+artifact/
+**/artifact/
 
 # Local configuration and secrets
 .env

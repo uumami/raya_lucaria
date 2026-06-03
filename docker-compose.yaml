@@ -1,0 +1,13 @@
+services:
+  dev:
+    build:
+      context: .
+    working_dir: /workspace
+    user: "${RAYA_DOCKER_USER:-1000:1000}"
+    environment:
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_PROJECT_ENVIRONMENT: /tmp/raya-venv
+    volumes:
+      - .:/workspace
+    command: ["uv", "run", "raya", "--help"]

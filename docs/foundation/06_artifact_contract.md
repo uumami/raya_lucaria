@@ -65,6 +65,27 @@ Generated data should make the course legible to future domains:
 
 Generated data is not canonical course truth. It can always be rebuilt from source.
 
+## Study Seed Data
+
+Artifacts should expose official learning objects as seed data for future study systems. Static artifacts may include cards, quizzes, prompts, tasks, and quanta scopes, but they should not contain private review history or personal mastery state.
+
+```text
+course source official/
+          |
+          v
+artifact data official indexes
+          |
+          v
+Rennala can later add:
+  private cards
+  review queues
+  spaced repetition state
+  confidence ratings
+  mastery maps
+```
+
+This keeps the official base portable while allowing dynamic study features to grow around it.
+
 ## Builder Boundary
 
 The first static builder should be fresh code. Legacy implementations may be mined for ideas, but no renderer dependency is part of the framework contract.
