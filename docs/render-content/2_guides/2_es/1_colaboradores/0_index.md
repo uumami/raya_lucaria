@@ -1,0 +1,1 @@
+../../../../guides/es/colaboradores/index.md

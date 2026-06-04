@@ -1,0 +1,13 @@
+course_id: ordered-fixture
+title: Ordered Content Fixture
+description: Representative fixture for ordered source, generated indexes, stable links, and appendices.
+language: en
+source: course
+artifact: artifact
+appendix_label: Anexo
+hierarchy:
+  levels:
+    - key: unit
+      label: Unit
+    - key: topic
+      label: Topic

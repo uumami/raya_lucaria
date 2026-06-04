@@ -6,7 +6,9 @@ from pathlib import Path
 from raya_schema import (
     inspect_artifact,
     validate_artifact_manifest,
+    validate_indices_index,
     validate_links_index,
+    validate_navigation_index,
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
@@ -32,6 +34,8 @@ def test_valid_artifact_manifest(tmp_path: Path) -> None:
     "pages": "data/pages.json",
     "quanta": "data/quanta.json",
     "links": "data/links.json",
+    "navigation": "data/navigation.json",
+    "indices": "data/indices.json",
     "official": "data/official.json"
   }
 }
@@ -73,11 +77,23 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         '{"course_id":"minimal-course","objects":[{"id":"card-1","type":"card","authority":"official","scope":{"quantum":"course-root"},"content":{"front":"Q","back":"A"}}]}',
         encoding="utf-8",
     )
+    navigation = tmp_path / "navigation.json"
+    navigation.write_text(
+        '{"course_id":"minimal-course","root":"course-root","items":[{"id":"course-root","path":"0_index.md","url":"index.html","title":"Home","label":"","children":[]}]}',
+        encoding="utf-8",
+    )
+    indices = tmp_path / "indices.json"
+    indices.write_text(
+        '{"course_id":"minimal-course","local":[{"id":"course-root","entries":[]}],"master":[]}',
+        encoding="utf-8",
+    )
 
     for report in (
         validate_pages_index(pages),
         validate_quanta_index(quanta),
         validate_links_index(links),
+        validate_navigation_index(navigation),
+        validate_indices_index(indices),
         validate_official_index(official),
     ):
         assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]

@@ -1,0 +1,6 @@
+course_id: invalid-unordered-file
+title: Invalid Unordered File
+description: Invalid fixture for unordered published files.
+language: en
+source: course
+artifact: artifact

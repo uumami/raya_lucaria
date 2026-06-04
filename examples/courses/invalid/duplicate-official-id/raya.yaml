@@ -1,0 +1,6 @@
+course_id: duplicate-official-id
+title: Duplicate Official ID
+description: Invalid fixture for duplicate official learning object IDs.
+language: en
+source: course
+artifact: artifact

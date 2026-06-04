@@ -1,3 +1,9 @@
+---
+id: docs-artifact-contract
+title: Artifact Contract
+summary: Portable artifact shape for static sites, manifests, data indexes, and assets.
+status: ready
+---
 # Artifact Contract
 
 A course artifact is the portable output of a course build. It must be useful as static files and readable by optional dynamic services.
@@ -12,6 +18,8 @@ artifact/
     pages.json
     quanta.json
     links.json
+    navigation.json
+    indices.json
     official.json
   assets/
 ```
@@ -29,7 +37,7 @@ It should include:
 - `course_version_id` or content hash,
 - generated timestamp,
 - source schema version,
-- page/quanta index locations,
+- page/quanta/link/navigation/index data locations,
 - official learning-object indexes,
 - static site root,
 - optional graph/search data locations.
@@ -57,6 +65,8 @@ Generated data should make the course legible to future domains:
 
 - graph and backlinks,
 - study scopes,
+- resolved navigation tree,
+- generated local and master indexes,
 - official cards/quizzes/prompts,
 - task lists,
 - citation/source map,
@@ -65,12 +75,14 @@ Generated data should make the course legible to future domains:
 
 Generated data is not canonical course truth. It can always be rebuilt from source.
 
+Navigation and generated index data should expose clean URLs, hierarchy labels, breadcrumbs, previous/next relationships, child entries, summaries, appendices/anexos, and official study-object counts. Dynamic services read these data products through `manifest.json`; they do not scrape rendered HTML as authority.
+
 ## Study Seed Data
 
 Artifacts should expose official learning objects as seed data for future study systems. Static artifacts may include cards, quizzes, prompts, tasks, and quanta scopes, but they should not contain private review history or personal mastery state.
 
 ```text
-course source official/
+course/_official/
           |
           v
 artifact data official indexes

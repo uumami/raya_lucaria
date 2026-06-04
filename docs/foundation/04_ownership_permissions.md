@@ -1,3 +1,10 @@
+---
+id: docs-ownership-permissions
+title: Ownership And Permissions
+nav_title: Ownership
+summary: Authority domains, review boundaries, permissions, and ownership rules.
+status: ready
+---
 # Ownership & Permissions
 
 Raya Lucaria must keep authority visible. The same text, card, explanation, or note can mean different things depending on who created it, who can see it, and whether it has been reviewed.

@@ -1,0 +1,8 @@
+id: topic-card
+type: card
+authority: official
+scope:
+  quantum: root
+content:
+  front: Question
+  back: Answer

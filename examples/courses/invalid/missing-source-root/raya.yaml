@@ -1,0 +1,6 @@
+course_id: missing-source-root
+title: Missing Source Root
+description: Invalid fixture for missing authored source root.
+language: en
+source: course
+artifact: artifact

@@ -1,3 +1,9 @@
+---
+id: docs-iteration-roadmap
+title: Iteration Roadmap
+summary: Build order from foundation and contracts outward after the reset.
+status: ready
+---
 # Iteration Roadmap
 
 After the reset, build from contracts outward. Do not start with a rich renderer, backend, or web UI.
@@ -18,7 +24,7 @@ Outcome: shared truth before code.
 Build:
 
 - `raya.yaml` schema,
-- `content/` rules,
+- `source: course` and ordered `course/` rules,
 - learning-quanta model,
 - official learning-object model,
 - artifact manifest schema,

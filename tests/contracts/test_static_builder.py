@@ -7,7 +7,9 @@ from pathlib import Path
 from raya_schema import (
     inspect_artifact,
     validate_artifact_manifest,
+    validate_indices_index,
     validate_links_index,
+    validate_navigation_index,
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
@@ -28,12 +30,14 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     artifact = course / "artifact"
     assert (artifact / "site" / "index.html").exists()
-    assert (artifact / "site" / "01_unit" / "index.html").exists()
-    assert (artifact / "site" / "01_unit" / "01_topic.html").exists()
+    assert (artifact / "site" / "unit" / "index.html").exists()
+    assert (artifact / "site" / "unit" / "topic" / "index.html").exists()
     assert (artifact / "manifest.json").exists()
     assert (artifact / "data" / "pages.json").exists()
     assert (artifact / "data" / "quanta.json").exists()
     assert (artifact / "data" / "links.json").exists()
+    assert (artifact / "data" / "navigation.json").exists()
+    assert (artifact / "data" / "indices.json").exists()
     assert (artifact / "data" / "official.json").exists()
     assert (artifact / "assets").is_dir()
     assert artifact / "manifest.json" in report.outputs_written
@@ -51,6 +55,8 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         validate_pages_index(artifact / "data" / "pages.json"),
         validate_quanta_index(artifact / "data" / "quanta.json"),
         validate_links_index(artifact / "data" / "links.json"),
+        validate_navigation_index(artifact / "data" / "navigation.json"),
+        validate_indices_index(artifact / "data" / "indices.json"),
         validate_official_index(artifact / "data" / "official.json"),
     ):
         assert validation_report.ok, [
@@ -60,30 +66,31 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
 
 def test_generated_html_is_escaped_and_static_linked(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
-    extra = course / "content" / "02_escape.md"
+    extra = course / "course" / "2_escape.md"
     extra.write_text(
         "---\n"
+        "id: escaping\n"
         "title: Escaping\n"
-        "quantum:\n"
-        "  id: escaping\n"
-        "  type: page\n"
-        "  parent: course-root\n"
+        "summary: Escaping fixture page.\n"
+        "status: ready\n"
         "---\n"
         "# Escaping\n\n"
-        "Use <script>alert('x')</script> safely and visit [root](00_index.md).\n",
+        "Use <script>alert('x')</script> safely and visit [root](raya:course-root).\n",
         encoding="utf-8",
     )
 
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    html = (course / "artifact" / "site" / "02_escape.html").read_text(encoding="utf-8")
-    assert "&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;" in html
-    assert 'href="index.html"' in html
-    nested = (course / "artifact" / "site" / "01_unit" / "01_topic.html").read_text(
+    html = (course / "artifact" / "site" / "escape" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert 'href="../index.html"' in nested
+    assert "&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;" in html
+    assert 'href="../index.html"' in html
+    nested = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'href="../../index.html"' in nested
 
 
 def test_official_objects_export_without_personal_state(tmp_path: Path) -> None:
@@ -99,20 +106,21 @@ def test_official_objects_export_without_personal_state(tmp_path: Path) -> None:
     assert {item["type"] for item in objects} == {"card", "prompt", "quiz"}
     assert all(item["authority"] == "official" for item in objects)
     assert all(item["scope"]["quantum"] == "first-topic" for item in objects)
+    assert all("_official" in item["source_path"] for item in objects)
     forbidden = {"review_history", "confidence", "mastery", "spaced_repetition"}
     assert all(forbidden.isdisjoint(item.keys()) for item in objects)
 
 
 def test_source_assets_are_copied(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
-    asset = course / "assets" / "notes" / "diagram.txt"
+    asset = course / "course" / "_assets" / "notes" / "diagram.txt"
     asset.parent.mkdir(parents=True)
     asset.write_text("asset fixture", encoding="utf-8")
 
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    copied = course / "artifact" / "assets" / "notes" / "diagram.txt"
+    copied = course / "artifact" / "assets" / "_source" / "_local" / "notes" / "diagram.txt"
     assert copied.read_text(encoding="utf-8") == "asset fixture"
 
 
@@ -124,18 +132,60 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     artifact = course / "artifact"
     root_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
-    nested_html = (artifact / "site" / "01_static_path" / "index.html").read_text(
+    nested_html = (artifact / "site" / "static-path" / "index.html").read_text(
         encoding="utf-8"
     )
-    site_asset = artifact / "site" / "_raya" / "assets" / "diagrams" / "static-path.txt"
-    artifact_asset = artifact / "assets" / "diagrams" / "static-path.txt"
+    site_asset = (
+        artifact
+        / "site"
+        / "_raya"
+        / "assets"
+        / "_source"
+        / "_local"
+        / "diagrams"
+        / "static-path.txt"
+    )
+    artifact_asset = (
+        artifact
+        / "assets"
+        / "_source"
+        / "_local"
+        / "diagrams"
+        / "static-path.txt"
+    )
+    site_local_asset = (
+        artifact
+        / "site"
+        / "_raya"
+        / "assets"
+        / "_source"
+        / "1_static_path"
+        / "_local"
+        / "local-static-path.txt"
+    )
+    artifact_local_asset = (
+        artifact
+        / "assets"
+        / "_source"
+        / "1_static_path"
+        / "_local"
+        / "local-static-path.txt"
+    )
 
-    assert 'href="_raya/assets/diagrams/static-path.txt"' in root_html
-    assert 'href="../_raya/assets/diagrams/static-path.txt"' in nested_html
+    assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    assert (
+        'href="../_raya/assets/_source/1_static_path/_local/local-static-path.txt"'
+        in nested_html
+    )
     assert site_asset.read_text(encoding="utf-8") == artifact_asset.read_text(
         encoding="utf-8"
     )
+    assert site_local_asset.read_text(encoding="utf-8") == artifact_local_asset.read_text(
+        encoding="utf-8"
+    )
     assert "Raya Lucaria render fixture asset" in site_asset.read_text(encoding="utf-8")
+    assert "colocated asset" in site_local_asset.read_text(encoding="utf-8")
 
 
 def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> None:
@@ -148,7 +198,24 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
     assert inspect_report.ok, [
         diagnostic.format() for diagnostic in inspect_report.diagnostics
     ]
-    assert (course / "artifact" / "assets" / "diagrams" / "static-path.txt").exists()
+    assert (
+        course
+        / "artifact"
+        / "assets"
+        / "_source"
+        / "_local"
+        / "diagrams"
+        / "static-path.txt"
+    ).exists()
+    assert (
+        course
+        / "artifact"
+        / "assets"
+        / "_source"
+        / "1_static_path"
+        / "_local"
+        / "local-static-path.txt"
+    ).exists()
 
 
 def test_external_and_fragment_links_are_not_rewritten_as_static_assets(
@@ -174,23 +241,23 @@ def test_rendered_internal_urls_are_deployment_neutral(tmp_path: Path) -> None:
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     root_html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
-    nested_html = (
-        course / "artifact" / "site" / "01_static_path" / "index.html"
-    ).read_text(encoding="utf-8")
-    assert 'href="01_static_path/index.html"' in root_html
-    assert 'href="_raya/assets/diagrams/static-path.txt"' in root_html
+    nested_html = (course / "artifact" / "site" / "static-path" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'href="static-path/index.html"' in root_html
+    assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert 'href="../index.html"' in nested_html
-    assert 'href="../_raya/assets/diagrams/static-path.txt"' in nested_html
+    assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
     assert 'href="/_raya/' not in root_html
-    assert 'href="/01_static_path/' not in root_html
+    assert 'href="/static-path/' not in root_html
 
 
 def test_source_content_links_are_exported_to_links_index(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
-    index = course / "content" / "00_index.md"
+    index = course / "course" / "0_index.md"
     index.write_text(
         index.read_text(encoding="utf-8")
-        + "\nContinue to [First Topic](01_unit/01_topic.md).\n",
+        + "\nContinue to [First Topic](1_unit/1_topic/0_index.md).\n",
         encoding="utf-8",
     )
 
@@ -221,7 +288,7 @@ def test_rebuild_replaces_stale_artifact_output(tmp_path: Path) -> None:
 
 def test_build_stops_when_local_source_link_is_broken(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
-    index = course / "content" / "00_index.md"
+    index = course / "course" / "0_index.md"
     index.write_text(
         index.read_text(encoding="utf-8") + "\nContinue to [Missing](missing.md).\n",
         encoding="utf-8",
@@ -240,9 +307,9 @@ def test_build_stops_when_source_validation_fails(tmp_path: Path) -> None:
             [
                 "course_id: broken-course",
                 "title: Broken Course",
-                "description: Missing content",
+                "description: Missing source",
                 "language: en",
-                "content: content",
+                "source: course",
                 "artifact: artifact",
             ]
         ),
@@ -252,7 +319,10 @@ def test_build_stops_when_source_validation_fails(tmp_path: Path) -> None:
     report = build_course(tmp_path)
 
     assert not report.ok
-    assert any("content directory is missing" in item.message for item in report.diagnostics)
+    assert any(
+        "authored source directory is missing" in item.message
+        for item in report.diagnostics
+    )
     assert not (tmp_path / "artifact" / "manifest.json").exists()
 
 

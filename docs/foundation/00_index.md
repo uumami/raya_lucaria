@@ -1,3 +1,10 @@
+---
+id: docs-foundation
+title: Raya Lucaria Foundation
+nav_title: Foundation
+summary: Seed truth for future specs, packages, templates, examples, and deployment recipes.
+status: ready
+---
 # Raya Lucaria Foundation
 
 This folder is the memory that should survive a full code reset. It is the source for future specs, packages, templates, examples, and deployment recipes.
@@ -11,7 +18,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [System Model](02_system_model.md) -- source courses, artifacts, optional installations, and user experiences.
 - [Pedagogy](03_pedagogy.md) -- learning-first design without hardcoding one doctrine.
 - [Ownership & Permissions](04_ownership_permissions.md) -- official, personal, shared, generated, and accepted authority domains.
-- [Course Contract](05_course_contract.md) -- `raya.yaml`, `content/`, learning quanta, official objects, and validation.
+- [Course Contract](05_course_contract.md) -- `raya.yaml`, `source: course`, ordered learning quanta, colocated support material, official objects, and validation.
 - [Artifact Contract](06_artifact_contract.md) -- static site, manifest, generated indexes, and renderer boundary.
 - [CLI Contract](07_cli_contract.md) -- command surface for humans and coding agents.
 - [Package Boundaries](08_package_boundaries.md) -- fresh package map for rebuilding from zero.

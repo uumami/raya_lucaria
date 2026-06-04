@@ -1,3 +1,9 @@
+---
+id: docs-domain-language
+title: Domain Language
+summary: Canonical Raya Lucaria domain names and their package mapping.
+status: ready
+---
 # Domain Language
 
 Raya Lucaria's named domains are core architectural vocabulary. They are not decorative labels, and they are not legacy implementation details by themselves.

@@ -2,6 +2,11 @@ course_id: documentation-fixture
 title: Documentation Fixture
 description: Fixture for rendered documentation boundary tests.
 language: en
-content: content
+source: course
 artifact: artifact
-assets: assets
+hierarchy:
+  levels:
+    - key: language
+      label: Language
+    - key: role
+      label: Role

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
+import shutil
 from pathlib import Path
+
+from raya_static import build_course
 
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "openspec" / "config.yaml"
 SPECS = ROOT / "openspec" / "specs"
+DOCS_ROOT = ROOT / "docs"
 GUIDES = ROOT / "docs" / "guides"
 DOCS_FIXTURE = ROOT / "examples" / "docs" / "documentation-fixture"
 
@@ -63,7 +68,7 @@ def test_rendered_documentation_fixture_is_labeled_and_separate() -> None:
 
     markdown = "\n".join(
         path.read_text(encoding="utf-8")
-        for path in sorted((DOCS_FIXTURE / "content").rglob("*.md"))
+        for path in sorted((DOCS_FIXTURE / "course").rglob("*.md"))
     )
     assert "documentation fixture material" in markdown
     assert "not class material" in markdown
@@ -73,8 +78,8 @@ def test_rendered_documentation_fixture_is_labeled_and_separate() -> None:
 
 
 def test_rendered_documentation_fixture_keeps_role_languages_separate() -> None:
-    english = DOCS_FIXTURE / "content" / "en" / "contributors" / "00_index.md"
-    spanish = DOCS_FIXTURE / "content" / "es" / "colaboradores" / "00_index.md"
+    english = DOCS_FIXTURE / "course" / "1_en" / "1_contributors" / "0_index.md"
+    spanish = DOCS_FIXTURE / "course" / "2_es" / "1_colaboradores" / "0_index.md"
 
     assert english.exists()
     assert spanish.exists()
@@ -82,3 +87,48 @@ def test_rendered_documentation_fixture_keeps_role_languages_separate() -> None:
     assert "Colaboradores" in spanish.read_text(encoding="utf-8")
     assert "Colaboradores" not in english.read_text(encoding="utf-8")
     assert "Contributors" not in spanish.read_text(encoding="utf-8")
+
+
+def test_current_documentation_tree_is_a_renderable_docs_course(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "docs"
+    shutil.copytree(DOCS_ROOT, source, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(source)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = source / "artifact"
+    pages = json.loads((artifact / "data" / "pages.json").read_text(encoding="utf-8"))
+    page_ids = {item["quantum_id"] for item in pages["pages"]}
+    assert "docs-foundation" in page_ids
+    assert "docs-system-overview" in page_ids
+    assert "docs-guides-en-contributors" in page_ids
+    assert "docs-guides-es-colaboradores" in page_ids
+
+    navigation = json.loads(
+        (artifact / "data" / "navigation.json").read_text(encoding="utf-8")
+    )
+    assert navigation["root"] == "docs-root"
+    urls = {item["url"] for item in navigation["items"]}
+    assert "foundation/system-overview/index.html" in urls
+    assert "guides/en/contributors/index.html" in urls
+    assert "guides/es/colaboradores/index.html" in urls
+
+    indices = json.loads((artifact / "data" / "indices.json").read_text(encoding="utf-8"))
+    assert [item["id"] for item in indices["master"]] == [
+        "docs-foundation",
+        "docs-guides",
+    ]
+
+
+def test_current_documentation_render_content_points_to_real_docs() -> None:
+    render_content = DOCS_ROOT / "render-content"
+    assert (DOCS_ROOT / "raya.yaml").exists()
+    assert (render_content / "0_index.md").is_symlink()
+    assert (render_content / "1_foundation" / "0_index.md").resolve() == (
+        DOCS_ROOT / "foundation" / "00_index.md"
+    ).resolve()
+    assert (
+        render_content / "2_guides" / "1_en" / "1_contributors" / "0_index.md"
+    ).resolve() == (DOCS_ROOT / "guides" / "en" / "contributors" / "index.md").resolve()

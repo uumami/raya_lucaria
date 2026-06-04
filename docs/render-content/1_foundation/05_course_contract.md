@@ -1,0 +1,1 @@
+../../foundation/05_course_contract.md

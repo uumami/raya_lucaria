@@ -1,3 +1,9 @@
+---
+id: docs-documentation-surfaces
+title: Documentation Surfaces
+summary: Role documentation, language separation, rendered-doc boundaries, and documentation fixtures.
+status: ready
+---
 # Documentation Surfaces
 
 Documentation explains accepted Raya Lucaria behavior for people and agents. It is not course canon, generated output, or a substitute for foundation decisions and accepted OpenSpec specs.
@@ -48,3 +54,22 @@ Documentation must:
 Glintstone may render documentation or documentation fixtures to prove static rendering behavior. Rendered documentation remains explanatory material. It must stay separate from class/course examples and must use the same static read path rules as course artifacts.
 
 Rendered documentation does not replace `manifest.json`, `data/*.json`, source course files, accepted specs, or foundation docs as authority surfaces.
+
+The live repository documentation is also a renderable docs course. `docs/raya.yaml` uses `source: render-content` to point Glintstone at `docs/render-content/`, an ordered render tree that references the real `docs/foundation/` and `docs/guides/` pages. The render tree exists to satisfy source-order validation and static-read-path tests; the readable documentation paths remain `docs/foundation/` and `docs/guides/`.
+
+```text
+readable docs                 render source                 generated output
+-------------                 -------------                 ----------------
+docs/foundation/   <------    docs/render-content/   --->   docs/artifact/
+docs/guides/                  ordered symlink tree          site/ + data/*.json
+docs/raya.yaml                source-order contract         ignored, rebuildable
+```
+
+Maintenance rule:
+
+- edit the real Markdown under `docs/foundation/` and `docs/guides/`,
+- keep compact frontmatter metadata on rendered documentation pages,
+- update `docs/render-content/` when adding or reordering rendered docs pages,
+- validate with `raya validate docs`,
+- build or test with `raya build docs` or static-read-path tests,
+- never edit `docs/artifact/` as source truth.

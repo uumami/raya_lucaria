@@ -1,3 +1,9 @@
+---
+id: docs-system-model
+title: System Model
+summary: Source, artifacts, dynamic state, deployment, and user experience boundaries.
+status: ready
+---
 # System Model
 
 Raya Lucaria separates source, artifacts, dynamic state, and deployment.
@@ -8,7 +14,7 @@ Raya Lucaria separates source, artifacts, dynamic state, and deployment.
 
 +-------------------+       +------------------------+
 | Course Source     |<----->| Course Team            |
-| raya.yaml/content |       | review, canon, quality |
+| raya.yaml/course  |       | review, canon, quality |
 +---------+---------+       +------------------------+
           |
           v

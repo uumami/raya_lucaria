@@ -1,33 +1,24 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from jsonschema import ValidationError
 
 from raya_schema.diagnostics import ValidationReport
+from raya_schema.content import markdown_body, resolve_course_content
 from raya_schema.links import (
     classify_markdown_target,
     extract_markdown_links,
     markdown_link_path,
     path_is_under,
+    resolve_course_asset_reference,
     resolve_local_markdown_target,
+    stable_markdown_id,
 )
+from raya_schema.official import discover_official_objects
 from raya_schema.schema_loader import validator_for
-from raya_schema.yaml_io import load_yaml_file, parse_frontmatter
-
-
-SUPPORTED_OBJECT_TYPES = {
-    "assignment",
-    "card",
-    "exam",
-    "example",
-    "project",
-    "prompt",
-    "quiz",
-    "task",
-}
+from raya_schema.yaml_io import load_yaml_file
 
 
 def validate_course(course_path: str | Path) -> ValidationReport:
@@ -57,84 +48,53 @@ def validate_course(course_path: str | Path) -> ValidationReport:
 
     _validate_schema(config, "raya-course.schema.json", config_path, report)
 
-    content_dir_name = config.get("content")
-    content_dir = (
-        root / str(content_dir_name) if content_dir_name else root / "content"
-    ).resolve()
-    assets_dir = (root / str(config.get("assets", "assets"))).resolve()
-    if not content_dir.exists() or not content_dir.is_dir():
+    source_root = resolve_course_source_root(root=root, config=config, report=report)
+    if source_root is None:
+        return report
+    source_dir = source_root
+    if not source_dir.exists() or not source_dir.is_dir():
         report.add_error(
-            "Configured content directory is missing",
-            path=content_dir,
-            field="content",
-            next_action="Create the content directory or update raya.yaml",
+            "Configured authored source directory is missing",
+            path=source_dir,
+            field="source",
+            next_action="Create the authored source directory or update raya.yaml",
         )
         return report
 
-    markdown_files = sorted(content_dir.rglob("*.md"))
+    markdown_files = sorted(source_dir.rglob("*.md"))
     if not markdown_files:
         report.add_error(
-            "Content directory contains no Markdown files",
-            path=content_dir,
-            next_action="Add at least one Markdown content file",
+            "Authored source directory contains no Markdown files",
+            path=source_dir,
+            next_action="Add at least one rendered Markdown source file",
         )
-
-    explicit_quantum_ids: dict[str, Path] = {}
-    scoped_quantum_names: set[str] = set()
-    duplicate_quantum_paths: list[tuple[str, Path, Path]] = []
 
     course_id = str(config.get("course_id", "unknown-course"))
-    for md_path in markdown_files:
-        report.read_file(md_path)
-        rel_path = md_path.relative_to(content_dir).as_posix()
-        scoped_quantum_names.add(rel_path)
-        scoped_quantum_names.add(f"{course_id}:{rel_path}")
-
-        try:
-            frontmatter = parse_frontmatter(md_path)
-        except Exception as exc:
-            report.add_error(
-                f"Unreadable Markdown frontmatter: {exc}",
-                path=md_path,
-                next_action="Fix frontmatter syntax",
-            )
-            continue
-
+    content_model = resolve_course_content(
+        course_root=root,
+        content_dir=source_dir,
+        course_id=course_id,
+        config=config,
+        report=report,
+    )
+    for page in content_model.pages:
         _validate_markdown_source_links(
-            md_path=md_path,
-            body=_markdown_body(md_path),
+            md_path=page.source_path,
+            body=page.body,
             course_root=root,
-            content_dir=content_dir,
-            assets_dir=assets_dir,
+            source_dir=source_dir,
+            pages_by_source=content_model.pages_by_source,
+            stable_targets=set(content_model.pages_by_id) | set(content_model.pages_by_alias),
             report=report,
         )
 
-        quantum = frontmatter.get("quantum")
-        if isinstance(quantum, dict) and quantum.get("id"):
-            quantum_id = str(quantum["id"])
-            scoped_quantum_names.add(quantum_id)
-            if quantum_id in explicit_quantum_ids:
-                duplicate_quantum_paths.append(
-                    (quantum_id, explicit_quantum_ids[quantum_id], md_path)
-                )
-            else:
-                explicit_quantum_ids[quantum_id] = md_path
-
-    for quantum_id, first, second in duplicate_quantum_paths:
-        report.add_error(
-            "Duplicate quantum ID",
-            path=second,
-            field="quantum.id",
-            next_action=f"Use a unique quantum ID; first seen in {first}",
-        )
-
-    official_dir = root / "official"
-    if official_dir.exists():
-        _validate_official_objects(
-            official_dir=official_dir,
-            valid_scopes=scoped_quantum_names,
-            report=report,
-        )
+    discover_official_objects(
+        course_root=root,
+        course_id=course_id,
+        source_dir=source_dir,
+        content_model=content_model,
+        report=report,
+    )
 
     if report.ok:
         report.add_info(
@@ -143,6 +103,53 @@ def validate_course(course_path: str | Path) -> ValidationReport:
             next_action="Run raya build after a builder exists",
         )
     return report
+
+
+def resolve_course_source_root(
+    *,
+    root: Path,
+    config: dict[str, Any],
+    report: ValidationReport,
+) -> Path | None:
+    config_path = root / "raya.yaml"
+    source_value = config.get("source")
+
+    if "content" in config:
+        report.add_error(
+            "Unsupported course configuration field",
+            path=config_path,
+            field="content",
+            next_action="Use source: course; content: is not part of the new source-course contract",
+        )
+        return None
+    if "assets" in config:
+        report.add_error(
+            "Unsupported course configuration field",
+            path=config_path,
+            field="assets",
+            next_action="Put source assets under course/_assets/ instead of declaring a root assets directory",
+        )
+        return None
+
+    if source_value is not None and not isinstance(source_value, str):
+        report.add_error(
+            "Course source field must be a string",
+            path=config_path,
+            field="source",
+            next_action="Use a relative path such as source: course",
+        )
+        return None
+
+    if source_value:
+        return (root / source_value).resolve()
+
+    report.add_error(
+        "Missing authored source root",
+        path=config_path,
+        field="source",
+        next_action="Add source: course",
+    )
+    return None
 
 
 def _load_mapping(path: Path, report: ValidationReport) -> dict[str, Any] | None:
@@ -182,85 +189,32 @@ def _validate_schema(
         )
 
 
-def _validate_official_objects(
-    *,
-    official_dir: Path,
-    valid_scopes: set[str],
-    report: ValidationReport,
-) -> None:
-    object_validator = validator_for("official-learning-object.schema.json")
-    seen_ids: dict[str, Path] = {}
-    by_type: dict[str, list[Path]] = defaultdict(list)
-
-    for object_path in sorted(
-        path
-        for path in official_dir.rglob("*")
-        if path.suffix.lower() in {".yaml", ".yml", ".json"}
-    ):
-        data = _load_mapping(object_path, report)
-        if data is None:
-            continue
-
-        for error in sorted(object_validator.iter_errors(data), key=_schema_error_key):
-            report.add_error(
-                _schema_error_message(error),
-                path=object_path,
-                field=".".join(str(part) for part in error.absolute_path) or None,
-                next_action="Update the official learning object",
-            )
-
-        object_id = data.get("id")
-        object_type = data.get("type")
-        if isinstance(object_type, str):
-            by_type[object_type].append(object_path)
-            if object_type not in SUPPORTED_OBJECT_TYPES:
-                report.add_error(
-                    "Unsupported official learning object type",
-                    path=object_path,
-                    field="type",
-                    next_action="Use a supported official learning object type",
-                )
-
-        if isinstance(object_id, str):
-            if object_id in seen_ids:
-                report.add_error(
-                    "Duplicate official learning object ID",
-                    path=object_path,
-                    field="id",
-                    next_action=f"Use a unique object ID; first seen in {seen_ids[object_id]}",
-                )
-            else:
-                seen_ids[object_id] = object_path
-
-        scope = data.get("scope")
-        quantum = scope.get("quantum") if isinstance(scope, dict) else None
-        if isinstance(quantum, str) and quantum not in valid_scopes:
-            report.add_error(
-                "Official learning object references an unknown quantum scope",
-                path=object_path,
-                field="scope.quantum",
-                next_action="Point scope.quantum to a content path or explicit quantum ID",
-            )
-
-    for object_type, paths in sorted(by_type.items()):
-        report.add_info(
-            f"Found official {object_type} object(s)",
-            path=paths[0] if paths else official_dir,
-        )
-
-
 def _validate_markdown_source_links(
     *,
     md_path: Path,
     body: str,
     course_root: Path,
-    content_dir: Path,
-    assets_dir: Path,
+    source_dir: Path,
+    pages_by_source: dict[Path, Any],
+    stable_targets: set[str],
     report: ValidationReport,
 ) -> None:
     for link in extract_markdown_links(body):
         kind = classify_markdown_target(link.target)
         if kind == "ignored":
+            continue
+        if kind == "stable":
+            stable_id = stable_markdown_id(link.target)
+            if stable_id not in stable_targets:
+                report.add_error(
+                    "Broken stable content reference",
+                    path=md_path,
+                    field=f"link:{link.target}",
+                    next_action=(
+                        "Use a raya: link target that matches a rendered page "
+                        "frontmatter id or alias"
+                    ),
+                )
             continue
 
         target_text = markdown_link_path(link.target)
@@ -271,54 +225,73 @@ def _validate_markdown_source_links(
         )
         field = f"link:{link.target}"
         if kind == "content":
-            if not path_is_under(target_path, content_dir) or not target_path.is_file():
+            if target_path.resolve() in pages_by_source:
+                report.read_file(target_path)
+                report.add_info(
+                    "Path content link has a durable raya: alternative",
+                    path=md_path,
+                    field=field,
+                    next_action=(
+                        "Use a raya: stable ID link when this reference "
+                        "must survive renumbering or moves"
+                    ),
+                )
+            elif not path_is_under(target_path, source_dir) or not target_path.is_file():
                 report.add_error(
                     "Broken local content link",
                     path=md_path,
                     field=field,
                     next_action=(
                         f"Create {target_path} or update the link to an existing "
-                        f"Markdown file under {content_dir.name}/"
+                        f"Markdown file under {source_dir.name}/"
                     ),
                 )
-            else:
-                report.read_file(target_path)
             continue
 
-        if not path_is_under(target_path, assets_dir):
+        asset_ref = resolve_course_asset_reference(
+            source_path=md_path,
+            course_root=course_root,
+            source_dir=source_dir,
+            target_path=target_text,
+        )
+        if asset_ref.kind == "blocked":
             report.add_error(
-                "Local asset reference is outside the assets directory",
+                "Local asset reference points to non-asset support material",
                 path=md_path,
                 field=field,
                 next_action=(
-                    f"Move the asset under {assets_dir.name}/ or update the link "
-                    f"to point under the configured assets directory"
+                    "Do not link rendered pages directly into _official/, _drafts/, "
+                    "_partials/, or other private support paths"
                 ),
             )
-        elif not target_path.is_file():
+            continue
+        if asset_ref.kind != "colocated":
+            report.add_error(
+                "Local asset reference is outside supported asset roots",
+                path=md_path,
+                field=field,
+                next_action=(
+                    "Move the asset under an own/ancestor _assets/ directory, "
+                    "or update the link"
+                ),
+            )
+            continue
+        if not asset_ref.target_path.is_file():
             report.add_error(
                 "Missing local asset reference",
                 path=md_path,
                 field=field,
                 next_action=(
-                    f"Create {target_path} or update the link to an existing "
-                    f"asset under {assets_dir.name}/"
+                    f"Create {asset_ref.target_path} or update the link to an existing "
+                    "asset under an own/ancestor _assets/ directory"
                 ),
             )
         else:
-            report.read_file(target_path)
+            report.read_file(asset_ref.target_path)
 
 
 def _markdown_body(path: Path) -> str:
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        return text
-    marker = "\n---"
-    end = text.find(marker, 4)
-    if end == -1:
-        return text
-    body = text[end + len(marker) :]
-    return body[1:] if body.startswith("\n") else body
+    return markdown_body(path)
 
 
 def _schema_error_key(error: ValidationError) -> tuple[str, str]:

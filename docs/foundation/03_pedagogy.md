@@ -1,3 +1,9 @@
+---
+id: docs-pedagogy
+title: Pedagogy
+summary: Learning-first design principles and the minimum surfaces for later study systems.
+status: ready
+---
 # Pedagogy
 
 Raya Lucaria exists to support learning, not only content delivery. It should help university students read carefully, retrieve knowledge, practice, reflect, adapt, collaborate, and contribute.

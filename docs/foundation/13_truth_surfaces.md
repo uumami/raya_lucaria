@@ -1,3 +1,9 @@
+---
+id: docs-truth-surfaces
+title: Truth Surfaces
+summary: Authority hierarchy for foundation docs, specs, documentation, examples, and history.
+status: ready
+---
 # Truth Surfaces
 
 Raya Lucaria must keep current truth separate from implementation, examples, tooling, and history.

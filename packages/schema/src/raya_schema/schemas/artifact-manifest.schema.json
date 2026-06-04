@@ -44,6 +44,8 @@
         "pages",
         "quanta",
         "links",
+        "navigation",
+        "indices",
         "official"
       ],
       "properties": {
@@ -56,6 +58,14 @@
           "minLength": 1
         },
         "links": {
+          "type": "string",
+          "minLength": 1
+        },
+        "navigation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "indices": {
           "type": "string",
           "minLength": 1
         },

@@ -1,6 +1,13 @@
+---
+id: docs-root
+title: Raya Lucaria Documentation
+nav_title: Documentation
+summary: Entry point for current Raya Lucaria foundation and role documentation.
+status: ready
+---
 # Raya Lucaria Documentation
 
-This documentation tree is being reduced to foundation-first truth. The current source of direction is [Foundation](foundation/00_index.md).
+This documentation tree is being reduced to foundation-first truth. The current source of direction is [Foundation](raya:docs-foundation).
 
 Role documentation starts at `docs/guides/en/` and `docs/guides/es/`. These guides explain current workflows for contributors/collaborators, professors, students, and agents, but they do not outrank foundation docs or accepted OpenSpec specs.
 

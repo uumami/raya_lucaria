@@ -94,3 +94,47 @@ The development workflow SHALL include focused documentation hygiene checks when
 - **WHEN** a change creates or updates documentation for contributors/collaborators, professors, students, or agents
 - **THEN** verification MUST check that separate English and Spanish role directories with index pages are present or that any deferred language version is tracked
 
+### Requirement: Ordered content verification
+Changes that affect ordered content, generated indexes, stable references, or static navigation SHALL include focused contract and e2e verification.
+
+#### Scenario: Ordered content contracts changed
+- **WHEN** a change modifies ordered source conventions, page metadata, generated index behavior, stable `raya:` links, or navigation artifact data
+- **THEN** verification MUST include contract tests for source validation, metadata parsing, stable reference resolution, generated navigation data, and generated index data
+
+#### Scenario: Rendered index behavior changed
+- **WHEN** a change modifies generated local indexes, master indexes, breadcrumbs, previous/next links, or stable rendered links
+- **THEN** verification MUST include a representative static-read-path e2e fixture that renders those behaviors from source content
+
+### Requirement: Ordered content documentation
+Changes that introduce or modify the ordered authoring model SHALL update role documentation for affected audiences.
+
+#### Scenario: Role docs updated
+- **WHEN** ordered content, generated indexes, stable IDs, or authoring metadata change
+- **THEN** documentation tasks MUST update separate English and Spanish role documentation for contributors/collaborators, professors, students, and agents or explicitly track any deferred role-language page
+
+#### Scenario: Documentation includes source and rendered views
+- **WHEN** role documentation explains ordered content behavior
+- **THEN** it MUST show both the source-tree authoring model and the rendered student-facing result so readers do not confuse filename mechanics with student navigation labels
+
+### Requirement: Unified source tree verification
+Changes that affect the authored source root, support-directory conventions, official learning-object colocation, or colocated assets SHALL include focused contract and e2e verification.
+
+#### Scenario: Unified source contract changed
+- **WHEN** a change modifies `source: course`, unsupported source-root fields, `_official/`, `_assets/`, support path classification, or source-root behavior
+- **THEN** verification MUST include contract tests for configuration resolution, source validation, support directory privacy, official object discovery, asset validation, and representative artifact generation
+
+#### Scenario: Unified source static behavior changed
+- **WHEN** a change modifies how unified source content renders, exports study seed data, copies assets, or creates browser-facing links
+- **THEN** verification MUST include a representative static-read-path e2e fixture that exercises rendered pages, generated indexes, official object export, and colocated asset URLs
+
+### Requirement: Unified source documentation
+Changes that introduce or modify the unified authored source tree SHALL update the documentation surfaces that authors, learners, contributors, and agents use to understand course structure.
+
+#### Scenario: Unified source role docs updated
+- **WHEN** `source: course`, colocated `_official/`, colocated `_assets/`, or support-directory privacy changes
+- **THEN** documentation tasks MUST update separate English and Spanish role documentation for contributors/collaborators, professors, students, and agents or explicitly track any deferred role-language page
+
+#### Scenario: Unified source foundation docs updated
+- **WHEN** the canonical source-course tree changes
+- **THEN** documentation tasks MUST update the foundation course contract, system overview, documentation surface map, and OpenSpec config guidance as needed
+

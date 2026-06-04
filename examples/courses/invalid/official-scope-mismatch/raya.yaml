@@ -1,0 +1,6 @@
+course_id: official-scope-mismatch
+title: Official Scope Mismatch
+description: Invalid fixture for colocated official scope mismatch.
+language: en
+source: course
+artifact: artifact

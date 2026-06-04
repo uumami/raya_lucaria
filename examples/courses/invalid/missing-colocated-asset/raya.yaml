@@ -1,0 +1,6 @@
+course_id: missing-colocated-asset
+title: Missing Colocated Asset
+description: Invalid fixture for missing colocated assets.
+language: en
+source: course
+artifact: artifact

@@ -1,0 +1,6 @@
+course_id: invalid-duplicate-clean-slug
+title: Invalid Duplicate Clean Slug
+description: Invalid fixture for duplicate stripped slugs.
+language: en
+source: course
+artifact: artifact

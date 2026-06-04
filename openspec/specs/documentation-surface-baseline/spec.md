@@ -1,7 +1,7 @@
 # documentation-surface-baseline Specification
 
 ## Purpose
-TBD - created by archiving change establish-documentation-surface-baseline. Update Purpose after archive.
+Define documentation as a current truth surface for contributors, professors, students, and agents, including role-scoped English and Spanish guides, source-readable Markdown, rendered documentation fixtures, and spec-purpose hygiene.
 ## Requirements
 ### Requirement: Documentation is a current truth surface
 Raya Lucaria SHALL treat current documentation as an explicit truth surface below foundation decisions and accepted specs, and separate from examples, generated artifacts, and historical material.
@@ -68,6 +68,14 @@ Rendered documentation or documentation fixtures SHALL preserve the static-first
 #### Scenario: Rendered documentation stays portable
 - **WHEN** rendered documentation is served from its static read path
 - **THEN** it MUST not require a backend, configured host, CDN, identity provider, or client-side router
+
+#### Scenario: Current docs render through ordered source
+- **WHEN** the live repository documentation under `docs/` is validated or built
+- **THEN** `docs/raya.yaml` MUST define a docs course whose ordered render source includes current foundation and role documentation without making generated artifact output authoritative
+
+#### Scenario: Render source preserves readable doc paths
+- **WHEN** the live docs render source references current documentation
+- **THEN** readable repository paths such as `docs/foundation/` and `docs/guides/` MUST remain the human-facing documentation paths
 
 ### Requirement: Spec purpose hygiene
 Accepted current specs SHALL have meaningful purpose text.

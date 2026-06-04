@@ -22,11 +22,11 @@ A course artifact SHALL contain a static read path, a manifest, generated data i
 - **THEN** the artifact contract MUST require it to discover data through `manifest.json` instead of scraping rendered HTML as authority
 
 ### Requirement: Generated data indexes
-Artifact data SHALL expose pages, quanta, links, and official learning objects as generated indexes.
+Artifact data SHALL expose pages, quanta, links, navigation, generated indexes, and official learning objects as generated indexes.
 
 #### Scenario: Data indexes present
 - **WHEN** artifact data is validated
-- **THEN** it MUST include page, quanta, link, and official learning-object indexes
+- **THEN** it MUST include page, quanta, link, navigation, generated index, and official learning-object indexes
 
 #### Scenario: Rebuildable generated data
 - **WHEN** generated data differs from source course truth
@@ -62,11 +62,11 @@ Artifacts produced by the minimal Glintstone builder SHALL satisfy the baseline 
 
 #### Scenario: Produced artifact shape
 - **WHEN** `raya build <course>` completes successfully
-- **THEN** the produced artifact MUST contain `site/`, `manifest.json`, `data/pages.json`, `data/quanta.json`, `data/links.json`, `data/official.json`, and `assets/`
+- **THEN** the produced artifact MUST contain `site/`, `manifest.json`, `data/pages.json`, `data/quanta.json`, `data/links.json`, `data/navigation.json`, `data/indices.json`, `data/official.json`, and `assets/`
 
 #### Scenario: Produced artifact schemas
 - **WHEN** the produced manifest and data indexes are validated
-- **THEN** they MUST pass the artifact manifest, pages index, quanta index, links index, and official index schema validators
+- **THEN** they MUST pass the artifact manifest, pages index, quanta index, links index, navigation index, generated indexes, and official index schema validators
 
 ### Requirement: Static site output from builder
 Builder-produced artifacts SHALL include static HTML that remains useful when served as files.
@@ -103,3 +103,25 @@ The artifact contract SHALL preserve artifact-level copied assets as inspectable
 #### Scenario: Artifact assets inspected
 - **WHEN** an artifact containing source assets is inspected
 - **THEN** inspection MUST continue to recognize the artifact-level `assets/` directory as part of the generated artifact shape
+
+### Requirement: Navigation artifact data
+Artifact data SHALL expose resolved navigation as machine-readable generated data rather than requiring consumers to scrape rendered HTML.
+
+#### Scenario: Navigation data present
+- **WHEN** a baseline artifact is produced
+- **THEN** `manifest.json` MUST declare a navigation data path and that data MUST describe the resolved order, labels, URLs, parent/child relationships, breadcrumbs, previous links, and next links
+
+#### Scenario: Navigation data is generated
+- **WHEN** source order, hierarchy labels, or page metadata changes
+- **THEN** navigation artifact data MUST be regenerated from source truth rather than edited as canonical source
+
+### Requirement: Generated index artifact data
+Artifact data SHALL expose generated local and master index data as machine-readable generated data.
+
+#### Scenario: Index data present
+- **WHEN** a baseline artifact is produced
+- **THEN** `manifest.json` MUST declare a generated index data path and that data MUST describe local section indexes, master index entries, appendix entries, summaries, and study-object counts available to the static site
+
+#### Scenario: Index data does not include private material
+- **WHEN** generated index data is produced
+- **THEN** it MUST NOT include private, draft, partial, or unrendered source content as public index entries

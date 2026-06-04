@@ -1,0 +1,8 @@
+id: derivatives-card
+type: card
+authority: official
+content:
+  front: What does a derivative measure?
+  back: It measures how one quantity changes with respect to another.
+retrieval:
+  kind: recall

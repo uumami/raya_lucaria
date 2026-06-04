@@ -1,3 +1,9 @@
+---
+id: docs-security-registration
+title: Security And Registration
+summary: Stable IDs, trust boundaries, registration flow, and audit principles.
+status: ready
+---
 # Security & Registration
 
 Static sites, repositories, agents, and backends must not be trusted just because they claim a name or URL.

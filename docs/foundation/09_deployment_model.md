@@ -1,3 +1,9 @@
+---
+id: docs-deployment-model
+title: Deployment Model
+summary: Static, local, one-machine, on-prem, free-tier, and paid-cloud deployment profiles.
+status: ready
+---
 # Deployment Model
 
 Deployment is an adapter layer. It must not define the architecture.

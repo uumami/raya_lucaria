@@ -2,5 +2,11 @@ course_id: minimal-course
 title: Minimal Course Fixture
 description: Minimal fixture for Raya Lucaria contract validation.
 language: en
-content: content
+source: course
 artifact: artifact
+hierarchy:
+  levels:
+    - key: unit
+      label: Unit
+    - key: topic
+      label: Topic

@@ -62,6 +62,8 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "pages": validate_pages_index,
         "quanta": validate_quanta_index,
         "links": validate_links_index,
+        "navigation": validate_navigation_index,
+        "indices": validate_indices_index,
         "official": validate_official_index,
     }
     for key, validator in validators.items():
@@ -143,6 +145,14 @@ def validate_quanta_index(index_path: str | Path) -> ValidationReport:
 
 def validate_links_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "links-index.schema.json")
+
+
+def validate_navigation_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "navigation-index.schema.json")
+
+
+def validate_indices_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "indices-index.schema.json")
 
 
 def validate_official_index(index_path: str | Path) -> ValidationReport:

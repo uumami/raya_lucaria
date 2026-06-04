@@ -1,3 +1,9 @@
+---
+id: docs-cli-contract
+title: CLI Contract
+summary: Stable command surface for humans and coding agents.
+status: ready
+---
 # CLI Contract
 
 The CLI is the stable operational interface for humans and coding agents. It should be boring, explicit, scriptable, and safe.
@@ -10,7 +16,7 @@ The CLI operates in three contexts:
 framework repo     course repo       installation repo
 source packages    course source     deployment config
 templates          raya.yaml         installation.yaml
-docs/specs         content/          registered courses
+docs/specs         course/           registered courses
 ```
 
 Unknown contexts should produce diagnostics, not guesses.

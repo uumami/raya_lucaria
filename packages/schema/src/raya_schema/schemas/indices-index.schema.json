@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/indices-index.schema.json",
+  "title": "Raya Generated Indices",
+  "type": "object",
+  "required": [
+    "course_id",
+    "local",
+    "master"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string"
+    },
+    "local": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "entries"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "url",
+                "title",
+                "summary"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "estimated_time": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "hierarchy_key": {
+                  "type": "string"
+                },
+                "hierarchy_label": {
+                  "type": "string"
+                },
+                "study_counts": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "study_counts": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "master": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "title",
+          "summary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "estimated_time": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hierarchy_key": {
+            "type": "string"
+          },
+          "hierarchy_label": {
+            "type": "string"
+          },
+          "study_counts": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

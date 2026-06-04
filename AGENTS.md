@@ -35,13 +35,13 @@ The current CLI baseline implements `raya --help`, `raya doctor`, `raya course i
 
 Keep new files explicit, small, and easy for humans and coding agents to inspect. Prefer boring names over clever ones. Schemas and contracts sit below implementations; provider adapters belong at the edges.
 
-Future course content uses `raya.yaml`, `content/`, `assets/`, `official/`, and ordered learning quanta as described in `docs/foundation/05_course_contract.md`. Generated artifacts use the manifest-centered shape in `docs/foundation/06_artifact_contract.md`; generated data is rebuildable and must not become canonical course truth.
+Future course content uses `raya.yaml`, `source: course`, one ordered `course/` tree, colocated `_official/`, colocated `_assets/`, and ordered learning quanta as described in `docs/foundation/05_course_contract.md`. Do not add source `content:`, root `official/`, or root source `assets/` to new contracts, scaffolds, fixtures, or examples. Generated artifacts use the manifest-centered shape in `docs/foundation/06_artifact_contract.md`; generated data is rebuildable and must not become canonical course truth.
 
 Artifact inspection is read-only and manifest-centered. It validates `manifest.json`, required artifact paths, and manifest-declared data indexes without rebuilding source course files.
 
 Generated artifacts distinguish machine surfaces from browser-facing static resources. `manifest.json`, `data/*.json`, and artifact-level `assets/` remain artifact-root surfaces for inspection, agents, and future installations. Rendered browser pages under `site/` use `site/_raya/assets/` for local assets so the static read path can be served directly.
 
-Course validation checks local Markdown content links and local asset references before build. Local `.md` links must point under configured `content/`; local asset references must point under configured/default `assets/`. External URLs, `mailto:`, `tel:`, and fragment-only links do not fail local validation in this baseline.
+Course validation checks local Markdown source links and local asset references before build. Local `.md` links must point under the configured authored source root. Local asset references must point under the page's own `_assets/` directory or an ancestor `_assets/` directory inside the authored source tree; rendered pages must not link into private support paths such as `_official/`, `_drafts/`, or `_partials/`. External URLs, `mailto:`, `tel:`, and fragment-only links do not fail local validation in this baseline.
 
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
 

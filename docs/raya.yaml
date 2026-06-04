@@ -1,0 +1,14 @@
+course_id: raya-lucaria-docs
+title: Raya Lucaria Documentation
+description: Renderable documentation surface for foundation and role guidance.
+language: en
+source: render-content
+artifact: artifact
+hierarchy:
+  levels:
+    - key: section
+      label: Section
+    - key: page
+      label: Page
+    - key: topic
+      label: Topic

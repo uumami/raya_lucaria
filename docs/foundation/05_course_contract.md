@@ -1,3 +1,9 @@
+---
+id: docs-course-contract
+title: Course Contract
+summary: Source course shape, ordered content, learning quanta, metadata, and validation rules.
+status: ready
+---
 # Course Contract
 
 A course is source-controlled educational material plus configuration. It must be understandable as files, not only through a database or web UI.
@@ -5,21 +11,27 @@ A course is source-controlled educational material plus configuration. It must b
 ## Minimal Shape
 
 ```text
-course/
+course-root/
   raya.yaml
-  content/
-    00_index.md
-    01_unit/
-      00_index.md
-      01_topic.md
-  assets/
-  official/
-    cards/
-    quizzes/
-    prompts/
+  course/
+    0_index.md
+    _assets/
+    _official/
+      cards/
+        1_course_card.yaml
+    1_unit/
+      0_index.md
+      1_topic/
+        0_index.md
+        _assets/
+        _official/
+          cards/
+            1_topic_card.yaml
+    A_reference/
+      0_index.md
 ```
 
-`content/` is the canonical content directory for the new start. Legacy names are not part of the contract.
+`source: course` and `course/` are the canonical authored source shape for source courses. The authored course tree is one ordered tree: rendered pages, official learning objects, local assets, drafts, and partials live under `course/` with private support directories. Do not add source `content:`, root `official/`, or root source `assets/` to new course contracts, scaffolds, fixtures, or examples.
 
 ## Course Configuration
 
@@ -30,8 +42,9 @@ Initial required ideas:
 - stable `course_id`,
 - human title and description,
 - course language,
-- content directory,
+- authored source root,
 - artifact output directory,
+- optional hierarchy labels such as Unit/Topic or Chapter/Section,
 - optional institution/course-team metadata.
 
 Configuration should be simple enough for a professor, student, or coding agent to edit safely.
@@ -51,25 +64,59 @@ Installation
 
 Quanta can define navigation scope, graph scope, study scope, permissions, analytics, agent context, review ownership, and export boundaries.
 
-At first, identity may be path-derived:
+Source order is visible in file and directory names. Numeric prefixes define the main sequence and appendix prefixes define appendix/anexo material:
 
 ```text
-course_id: algorithms-2026
-path: 01_foundations/02_examples.md
+course/
+  0_index.md
+  1_foundations/
+    0_index.md
+    1_limits/
+      0_index.md
+      _official/
+        prompts/
+          1_limits_prompt.yaml
+    2_derivatives/
+      0_index.md
+  2_practice/
+    0_index.md
+  A_reference/
+    0_index.md
 ```
 
-Later, explicit metadata can stabilize long-lived references:
+Prefixes are authoring order only. They are stripped from rendered URLs, labels, and stable IDs. Source links that must survive renumbering or moves should target stable IDs:
+
+```markdown
+Review [derivatives](raya:derivatives-rates).
+```
+
+Rendered directories use `0_index.md` as the manual landing page and metadata source. Generated local indexes and master indexes are rendered from child metadata and official learning-object scopes, but generated sections are not written back into source files.
+
+Private support directories do not render. `_official/`, `_assets/`, `_drafts/`, `drafts/`, `_partials/`, and other leading-underscore support paths are source support, not navigation entries. A quantum that owns `_official/` or `_assets/` must be a directory page with `0_index.md`; a standalone file page remains valid only when it owns no child support material.
+
+Page frontmatter should stay compact:
 
 ```yaml
-quantum:
-  id: foundations-examples
-  type: page
-  parent: foundations
+---
+id: derivatives-rates
+title: Derivatives as Rates of Change
+nav_title: Derivatives
+summary: Introduces derivatives through average and instantaneous rates.
+status: ready
+estimated_time: 25m
+tags: [calculus, rates]
+prerequisites:
+  - limits-intuition
+aliases:
+  - old-derivatives
+---
 ```
+
+Stable IDs, aliases, prerequisites, official learning-object scopes, links, graph data, and future study state must not depend on order prefixes.
 
 ## Official Learning Objects
 
-Official flashcards, quizzes, prompts, examples, assignments, and projects are course-owned artifacts. They may live beside content or under `official/`, but they must be distinguishable from private, shared, and generated material.
+Official flashcards, quizzes, prompts, examples, assignments, exams, projects, and tasks are course-owned artifacts. Courses author them under `_official/<family>/` beside the learning quantum they support, or under source-root `course/_official/<family>/` when the object is intentionally course-level and declares an explicit scope.
 
 At minimum, official learning objects should be structured enough to validate, index, export, and attach to learning quanta. They should not be only prose hidden inside rendered pages.
 
@@ -84,10 +131,10 @@ Initial object families:
 The first contract does not need to implement personal review scheduling. It should make the official source objects legible so Rennala can later add private cards, review queues, spaced repetition state, confidence ratings, mastery maps, and study planning.
 
 ```text
-official object in source
+course/1_unit/1_topic/_official/cards/1_topic_card.yaml
           |
           v
-validated object index
+validated object with inferred scope.quantum
           |
           v
 artifact data readable by static site
@@ -96,19 +143,26 @@ artifact data readable by static site
 future personal/shared study state
 ```
 
+Colocated official object filenames use ordered prefixes for authoring and export order. The object `id` remains the durable identity; the filename prefix is not an ID. Objects under a quantum's `_official/` may omit `scope.quantum`; Glintstone infers the nearest directory page. Source-root `_official/` objects require explicit `scope.quantum`.
+
+Colocated assets use `_assets/` beside the page or section that owns them. Rendered Markdown may reference its own `_assets/` or an ancestor `_assets/` inside the authored source tree. Rendered pages must not link into `_official/`, `_drafts/`, `_partials/`, or other non-asset support paths.
+
 ## Validation
 
 A course must be validated before build. Validation should check at least:
 
 - required configuration,
-- content directory existence,
+- authored source directory existence,
 - readable markdown/frontmatter,
 - missing indexes where required,
+- invalid ordered source names,
+- duplicate order values or clean slugs,
+- duplicate stable IDs or aliases,
 - broken internal links,
-- missing local assets,
-- duplicate stable IDs,
+- broken `raya:` stable references,
+- missing local or colocated assets,
 - invalid dates or schema fields,
 - generated/official authority labels,
-- invalid or unscoped official learning objects.
+- invalid, unscoped, unordered, duplicated, or mismatched official learning objects.
 
 Validation errors must be actionable.

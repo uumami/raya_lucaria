@@ -1,3 +1,9 @@
+---
+id: docs-charter
+title: Charter
+summary: Non-negotiable identity, ownership, portability, pedagogy, and agent principles.
+status: ready
+---
 # Charter
 
 This document is the memory that should survive a repository wipe. It describes what Raya Lucaria is, what it must protect, and what future code must serve.

@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from raya_schema import validate_course
 
 
@@ -17,15 +15,15 @@ def test_minimal_fixture_validates() -> None:
     assert MINIMAL / "raya.yaml" in report.files_read
 
 
-def test_missing_content_directory_fails(tmp_path: Path) -> None:
+def test_missing_source_directory_fails(tmp_path: Path) -> None:
     (tmp_path / "raya.yaml").write_text(
         "\n".join(
             [
                 "course_id: invalid-course",
                 "title: Invalid",
-                "description: Missing content",
+                "description: Missing source",
                 "language: en",
-                "content: content",
+                "source: course",
                 "artifact: artifact",
             ]
         ),
@@ -34,14 +32,69 @@ def test_missing_content_directory_fails(tmp_path: Path) -> None:
 
     report = validate_course(tmp_path)
     assert not report.ok
-    assert any("content directory is missing" in item.message for item in report.diagnostics)
+    assert any(
+        "authored source directory is missing" in item.message
+        for item in report.diagnostics
+    )
+
+
+def test_content_configuration_field_fails(tmp_path: Path) -> None:
+    (tmp_path / "raya.yaml").write_text(
+        "\n".join(
+            [
+                "course_id: invalid-course",
+                "title: Invalid",
+                "description: Unsupported content field",
+                "language: en",
+                "source: course",
+                "content: content",
+                "artifact: artifact",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "course").mkdir()
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.field == "content" and "Unsupported course configuration field" in item.message
+        for item in report.diagnostics
+    )
+
+
+def test_root_assets_configuration_field_fails(tmp_path: Path) -> None:
+    (tmp_path / "raya.yaml").write_text(
+        "\n".join(
+            [
+                "course_id: invalid-course",
+                "title: Invalid",
+                "description: Unsupported assets field",
+                "language: en",
+                "source: course",
+                "artifact: artifact",
+                "assets: assets",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "course").mkdir()
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.field == "assets" and "Unsupported course configuration field" in item.message
+        for item in report.diagnostics
+    )
 
 
 def test_unreadable_frontmatter_fails(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text("---\ntitle: [broken\n---\n# Broken\n", encoding="utf-8")
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text("---\ntitle: [broken\n---\n# Broken\n", encoding="utf-8")
 
     report = validate_course(tmp_path)
     assert not report.ok
@@ -50,11 +103,11 @@ def test_unreadable_frontmatter_fails(tmp_path: Path) -> None:
 
 def test_duplicate_quantum_ids_fail(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    for name in ("00_index.md", "01_other.md"):
-        (content / name).write_text(
-            "---\nquantum:\n  id: duplicate\n  type: page\n---\n# Page\n",
+    source = tmp_path / "course"
+    source.mkdir()
+    for name in ("0_index.md", "1_other.md"):
+        (source / name).write_text(
+            "---\nid: duplicate\ntitle: Page\nsummary: Duplicate ID page.\n---\n# Page\n",
             encoding="utf-8",
         )
 
@@ -65,14 +118,17 @@ def test_duplicate_quantum_ids_fail(tmp_path: Path) -> None:
 
 def test_local_markdown_content_link_validates(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text(
-        "# Root\n\nContinue to [Topic](01_topic.md).\n",
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nContinue to [Topic](1_topic.md).\n",
         encoding="utf-8",
     )
-    target = content / "01_topic.md"
-    target.write_text("# Topic\n", encoding="utf-8")
+    target = source / "1_topic.md"
+    target.write_text(
+        "---\nid: topic\ntitle: Topic\nsummary: Topic page.\n---\n# Topic\n",
+        encoding="utf-8",
+    )
 
     report = validate_course(tmp_path)
 
@@ -82,10 +138,13 @@ def test_local_markdown_content_link_validates(tmp_path: Path) -> None:
 
 def test_broken_local_markdown_content_link_fails(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    source = content / "00_index.md"
-    source.write_text("# Root\n\nContinue to [Missing](missing.md).\n", encoding="utf-8")
+    source_dir = tmp_path / "course"
+    source_dir.mkdir()
+    source = source_dir / "0_index.md"
+    source.write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nContinue to [Missing](missing.md).\n",
+        encoding="utf-8",
+    )
 
     report = validate_course(tmp_path)
 
@@ -98,15 +157,32 @@ def test_broken_local_markdown_content_link_fails(tmp_path: Path) -> None:
     assert diagnostic.next_action and "Create" in diagnostic.next_action
 
 
-def test_local_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None:
+def test_markdown_links_inside_fenced_code_are_not_validated(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    asset = tmp_path / "assets" / "diagram.txt"
-    asset.parent.mkdir()
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        "```markdown\n"
+        "Example [Missing](missing.md) and [Stable](raya:missing-id).\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
+def test_root_colocated_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    asset = source / "_assets" / "diagram.txt"
+    asset.parent.mkdir(parents=True)
     asset.write_text("asset fixture", encoding="utf-8")
-    (content / "00_index.md").write_text(
-        "# Root\n\nUse [diagram](../assets/diagram.txt).\n",
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nUse [diagram](_assets/diagram.txt).\n",
         encoding="utf-8",
     )
 
@@ -118,11 +194,11 @@ def test_local_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None
 
 def test_missing_local_asset_reference_fails(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    source = content / "00_index.md"
+    source_dir = tmp_path / "course"
+    source_dir.mkdir()
+    source = source_dir / "0_index.md"
     source.write_text(
-        "# Root\n\nUse [diagram](../assets/missing.txt).\n",
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nUse [diagram](_assets/missing.txt).\n",
         encoding="utf-8",
     )
 
@@ -133,16 +209,58 @@ def test_missing_local_asset_reference_fails(tmp_path: Path) -> None:
         item for item in report.diagnostics if item.message == "Missing local asset reference"
     )
     assert diagnostic.path == source
-    assert diagnostic.field == "link:../assets/missing.txt"
-    assert diagnostic.next_action and "asset under assets/" in diagnostic.next_action
+    assert diagnostic.field == "link:_assets/missing.txt"
+    assert diagnostic.next_action and "_assets/" in diagnostic.next_action
+
+
+def test_colocated_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    asset = source / "_assets" / "diagram.txt"
+    asset.parent.mkdir(parents=True)
+    asset.write_text("colocated asset fixture", encoding="utf-8")
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nUse [diagram](_assets/diagram.txt).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert asset in report.files_read
+
+
+def test_non_asset_support_link_fails(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    blocked = source / "_official" / "cards" / "1_card.yaml"
+    blocked.parent.mkdir(parents=True)
+    blocked.write_text(
+        "id: card\ntype: card\nauthority: official\nscope:\n  quantum: root\ncontent:\n  front: Q\n  back: A\n",
+        encoding="utf-8",
+    )
+    page = source / "0_index.md"
+    page.write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\nDo not link [private](_official/cards/1_card.yaml).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        "non-asset support material" in item.message for item in report.diagnostics
+    )
 
 
 def test_external_urls_and_fragment_only_links_are_ignored(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text(
-        "# Root\n\n"
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
         "[Web](https://example.com/missing.md), "
         "[Mail](mailto:test@example.com), "
         "[Phone](tel:123), "
@@ -157,23 +275,26 @@ def test_external_urls_and_fragment_only_links_are_ignored(tmp_path: Path) -> No
 
 def test_duplicate_official_object_ids_fail(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text("# Root\n", encoding="utf-8")
-    official = tmp_path / "official" / "cards"
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n",
+        encoding="utf-8",
+    )
+    official = source / "_official" / "cards"
     official.mkdir(parents=True)
     object_text = (
         "id: duplicate-card\n"
         "type: card\n"
         "authority: official\n"
         "scope:\n"
-        "  quantum: 00_index.md\n"
+        "  quantum: root\n"
         "content:\n"
         "  front: Question\n"
         "  back: Answer\n"
     )
-    (official / "a.yaml").write_text(object_text, encoding="utf-8")
-    (official / "b.yaml").write_text(object_text, encoding="utf-8")
+    (official / "1_first.yaml").write_text(object_text, encoding="utf-8")
+    (official / "2_second.yaml").write_text(object_text, encoding="utf-8")
 
     report = validate_course(tmp_path)
     assert not report.ok
@@ -182,17 +303,20 @@ def test_duplicate_official_object_ids_fail(tmp_path: Path) -> None:
 
 def test_official_object_requires_official_authority(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text("# Root\n", encoding="utf-8")
-    official = tmp_path / "official" / "cards"
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n",
+        encoding="utf-8",
+    )
+    official = source / "_official" / "cards"
     official.mkdir(parents=True)
-    (official / "generated.yaml").write_text(
+    (official / "1_generated.yaml").write_text(
         "id: generated-card\n"
         "type: card\n"
         "authority: generated\n"
         "scope:\n"
-        "  quantum: 00_index.md\n"
+        "  quantum: root\n"
         "content:\n"
         "  front: Question\n"
         "  back: Answer\n",
@@ -206,12 +330,15 @@ def test_official_object_requires_official_authority(tmp_path: Path) -> None:
 
 def test_official_object_unknown_scope_fails(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
-    content = tmp_path / "content"
-    content.mkdir()
-    (content / "00_index.md").write_text("# Root\n", encoding="utf-8")
-    official = tmp_path / "official" / "cards"
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n",
+        encoding="utf-8",
+    )
+    official = source / "_official" / "cards"
     official.mkdir(parents=True)
-    (official / "bad-scope.yaml").write_text(
+    (official / "1_bad_scope.yaml").write_text(
         "id: bad-scope\n"
         "type: card\n"
         "authority: official\n"
@@ -228,6 +355,36 @@ def test_official_object_unknown_scope_fails(tmp_path: Path) -> None:
     assert any("unknown quantum scope" in item.message for item in report.diagnostics)
 
 
+def test_colocated_official_object_infers_scope(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    topic = source / "1_topic"
+    official = topic / "_official" / "cards"
+    official.mkdir(parents=True)
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n",
+        encoding="utf-8",
+    )
+    (topic / "0_index.md").write_text(
+        "---\nid: topic\ntitle: Topic\nsummary: Topic page.\n---\n# Topic\n",
+        encoding="utf-8",
+    )
+    (official / "1_topic_card.yaml").write_text(
+        "id: topic-card\n"
+        "type: card\n"
+        "authority: official\n"
+        "content:\n"
+        "  front: Question\n"
+        "  back: Answer\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
 def _write_valid_config(path: Path) -> None:
     path.joinpath("raya.yaml").write_text(
         "\n".join(
@@ -236,7 +393,7 @@ def _write_valid_config(path: Path) -> None:
                 "title: Test Course",
                 "description: Test fixture",
                 "language: en",
-                "content: content",
+                "source: course",
                 "artifact: artifact",
             ]
         ),

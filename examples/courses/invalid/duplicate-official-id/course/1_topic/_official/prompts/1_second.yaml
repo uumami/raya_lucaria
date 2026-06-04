@@ -1,0 +1,5 @@
+id: duplicate-object
+type: prompt
+authority: official
+content:
+  prompt: Second

@@ -1,3 +1,9 @@
+---
+id: docs-system-overview
+title: System Overview
+summary: Newcomer map for Raya Lucaria core concepts, system parts, and ASCII diagrams.
+status: ready
+---
 # System Overview
 
 This is the fast map for a new contributor, professor, student, or coding agent. It summarizes the shape of Raya Lucaria without replacing the detailed foundation docs.
@@ -17,8 +23,8 @@ Raya Lucaria is an open educational framework and commons where course teams own
         +----------------------+        +----------------------+
         | Course Source        |<------>| Course Team          |
         | raya.yaml            |        | review, canon,       |
-        | content/             |        | quality, ownership   |
-        | official/            |        +----------------------+
+        | course/              |        | quality, ownership   |
+        | _official/ _assets/  |        +----------------------+
         +----------+-----------+
                    |
                    | validate and build
@@ -69,6 +75,8 @@ artifact/
     pages.json
     quanta.json
     links.json
+    navigation.json
+    indices.json
     official.json
 ```
 
@@ -239,9 +247,9 @@ Do not blur these surfaces.
 Course Source       Course Artifact       Dynamic State       Deployment
 -------------       ---------------       -------------       ----------
 raya.yaml           site/                 notes               static host
-content/            manifest.json         study progress      local machine
-official/           data/*.json           discussions         one server
-assets/             generated assets      sessions            on-prem
+course/             manifest.json         study progress      local machine
+course/_official/   data/*.json           discussions         one server
+course/_assets/     generated assets      sessions            on-prem
 reviewed canon      rebuildable output    permissions         free/paid cloud
 
 canonical           portable              scoped by           adapter layer,
@@ -249,6 +257,58 @@ course truth        build product         user/course/role    not architecture
 ```
 
 Generated data is not canonical course truth. It can always be rebuilt from source.
+
+## Ordered Content And Generated Indexes
+
+Course source uses visible order for authoring and stable IDs for references.
+
+```text
+course/
+  0_index.md
+  1_foundations/
+    0_index.md
+    1_limits/
+      0_index.md
+      _official/
+        prompts/
+          1_limits_prompt.yaml
+    2_derivatives/
+      0_index.md
+  2_practice/
+    0_index.md
+  A_reference/
+    0_index.md
+```
+
+```text
+ordered source tree
+        |
+        v
+Glintstone validation
+        |
+        v
+generated student surfaces
+  clean URLs
+  breadcrumbs
+  previous / next
+  local indexes
+  master indexes
+  study-object counts
+        |
+        v
+artifact data
+  navigation.json
+  indices.json
+```
+
+Order prefixes are not stable identity. Published pages use frontmatter `id`,
+and durable source links use `raya:<id>` so links, official objects, future
+graph data, and future study state can survive renumbering or moves.
+
+The authored source tree is unified: rendered pages, colocated `_official/`
+study seeds, colocated `_assets/`, drafts, and partials live under the
+learning structure they support. Support directories stay private and do not
+enter navigation, local indexes, or master indexes.
 
 ## Documentation Surfaces
 
@@ -267,6 +327,22 @@ seed truth            testable contracts    operational guidance
 ```
 
 Role documentation uses separate English and Spanish role directories with index pages. Code, package names, commands, schema fields, paths, domain names, and stable IDs stay in English.
+
+The live docs are renderable through Glintstone:
+
+```text
+docs/raya.yaml
+      |
+      v
+docs/render-content/       docs/foundation/ and docs/guides/
+ordered render tree  ----> readable source pages
+      |
+      v
+docs/artifact/
+generated static docs, ignored and rebuildable
+```
+
+Edit the readable docs, not generated output. Keep `docs/render-content/` aligned when new documentation pages should appear in the rendered docs site.
 
 ## Learning Loop
 

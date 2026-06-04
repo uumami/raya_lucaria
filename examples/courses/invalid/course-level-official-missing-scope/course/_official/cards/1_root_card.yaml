@@ -1,0 +1,6 @@
+id: root-card
+type: card
+authority: official
+content:
+  front: Question
+  back: Answer

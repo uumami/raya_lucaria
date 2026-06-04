@@ -9,7 +9,7 @@
     "title",
     "description",
     "language",
-    "content",
+    "source",
     "artifact"
   ],
   "properties": {
@@ -30,7 +30,7 @@
       "type": "string",
       "minLength": 2
     },
-    "content": {
+    "source": {
       "type": "string",
       "minLength": 1
     },

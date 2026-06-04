@@ -1,0 +1,7 @@
+course_id: unsupported-content-field
+title: Unsupported Content Field
+description: Invalid fixture for unsupported source content configuration.
+language: en
+source: course
+content: content
+artifact: artifact

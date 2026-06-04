@@ -1,0 +1,6 @@
+course_id: course-level-official-missing-scope
+title: Course-Level Official Missing Scope
+description: Invalid fixture for source-root official object scope requirements.
+language: en
+source: course
+artifact: artifact

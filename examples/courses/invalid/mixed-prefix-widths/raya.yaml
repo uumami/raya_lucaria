@@ -1,0 +1,6 @@
+course_id: invalid-mixed-prefix-widths
+title: Invalid Mixed Prefix Widths
+description: Invalid fixture for mixed numeric prefix styles.
+language: en
+source: course
+artifact: artifact

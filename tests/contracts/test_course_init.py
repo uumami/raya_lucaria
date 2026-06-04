@@ -19,12 +19,15 @@ def test_init_course_creates_expected_source_tree(tmp_path: Path) -> None:
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert (course / "raya.yaml").exists()
-    assert (course / "content" / "00_index.md").exists()
-    assert (course / "assets").is_dir()
-    assert (course / "official" / "cards").is_dir()
-    assert (course / "official" / "quizzes").is_dir()
-    assert (course / "official" / "prompts").is_dir()
+    assert (course / "course" / "0_index.md").exists()
+    assert (course / "course" / "_assets").is_dir()
+    assert (course / "course" / "_official").is_dir()
+    assert (course / "course" / "_official" / "cards").is_dir()
+    assert (course / "course" / "_official" / "quizzes").is_dir()
+    assert (course / "course" / "_official" / "prompts").is_dir()
+    assert not (course / "assets").exists()
     assert course / "raya.yaml" in report.outputs_written
+    assert "source: course" in (course / "raya.yaml").read_text(encoding="utf-8")
 
 
 def test_initialized_course_validates_builds_and_inspects(tmp_path: Path) -> None:
@@ -64,6 +67,7 @@ def test_init_course_marks_content_as_replaceable_scaffold(tmp_path: Path) -> No
     report = init_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    content = (course / "content" / "00_index.md").read_text(encoding="utf-8")
+    content = (course / "course" / "0_index.md").read_text(encoding="utf-8")
     assert "replaceable scaffold" in content
     assert "official canon" in content
+    assert "id: course-root" in content

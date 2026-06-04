@@ -8,7 +8,7 @@ The system SHALL provide a CLI workflow for creating a minimal source course tre
 
 #### Scenario: Initialize new course
 - **WHEN** a user runs `raya course init <path>` against a missing or empty directory
-- **THEN** the command MUST create `raya.yaml`, `content/00_index.md`, `assets/`, `official/cards/`, `official/quizzes/`, and `official/prompts/`
+- **THEN** the command MUST create `raya.yaml`, `course/0_index.md`, `course/_official/`, `course/_assets/`, and the generated-output target directory convention without requiring separate top-level `content/`, `official/`, or `assets/` source roots
 
 ### Requirement: Initialized course validates
 Initialized courses SHALL satisfy the baseline source course contract.
@@ -37,3 +37,23 @@ Course init SHALL keep generated starter content minimal and replaceable.
 #### Scenario: Generated content is scaffold
 - **WHEN** initialized content is inspected
 - **THEN** starter text MUST be labeled as replaceable scaffold and MUST NOT define required pedagogy, architecture, or official course canon
+
+### Requirement: Initialized ordered scaffold
+Course init SHALL create starter source content that follows the blessed ordered source convention without defining course canon by accident.
+
+#### Scenario: Root index metadata created
+- **WHEN** `raya course init <path>` creates starter content
+- **THEN** `course/0_index.md` MUST include minimal frontmatter needed for a published root index and starter prose labeled as replaceable scaffold
+
+#### Scenario: Scaffold uses canonical prefix style
+- **WHEN** `raya course init <path>` creates ordered starter files or directories beyond the root index
+- **THEN** those entries MUST use the canonical unpadded prefix style such as `1_` and `2_`
+
+#### Scenario: Scaffold uses source field
+- **WHEN** `raya course init <path>` creates `raya.yaml`
+- **THEN** the configuration MUST use `source: course` as the canonical authored source root
+
+#### Scenario: Scaffold support dirs remain private
+- **WHEN** initialized support directories such as `course/_official/` or `course/_assets/` are inspected
+- **THEN** they MUST be clearly private source support directories and MUST NOT define rendered navigation by their existence
+

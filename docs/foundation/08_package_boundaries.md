@@ -1,3 +1,9 @@
+---
+id: docs-package-boundaries
+title: Package Boundaries
+summary: Plain package names, domain vocabulary, and future monorepo boundaries.
+status: ready
+---
 # Package Boundaries
 
 Use plain package names for filesystem clarity. Raya Lucaria domain names are still core architectural vocabulary; see `docs/foundation/14_domain_language.md`.

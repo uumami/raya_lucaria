@@ -1,0 +1,6 @@
+course_id: invalid-duplicate-id
+title: Invalid Duplicate ID
+description: Invalid fixture for duplicate stable IDs.
+language: en
+source: course
+artifact: artifact

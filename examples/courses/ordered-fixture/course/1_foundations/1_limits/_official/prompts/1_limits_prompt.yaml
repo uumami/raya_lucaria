@@ -1,0 +1,7 @@
+id: limits-prompt
+type: prompt
+authority: official
+content:
+  prompt: Explain a limit without using formal notation.
+retrieval:
+  kind: reflection

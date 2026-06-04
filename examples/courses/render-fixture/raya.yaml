@@ -2,6 +2,11 @@ course_id: render-fixture
 title: Render Fixture
 description: Representative fixture for Glintstone static rendering tests.
 language: en
-content: content
+source: course
 artifact: artifact
-assets: assets
+hierarchy:
+  levels:
+    - key: section
+      label: Section
+    - key: topic
+      label: Topic

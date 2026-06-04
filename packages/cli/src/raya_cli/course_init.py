@@ -54,11 +54,12 @@ def init_course(
     report.wrote_output(target)
 
     directories = [
-        target / "content",
-        target / "assets",
-        target / "official" / "cards",
-        target / "official" / "quizzes",
-        target / "official" / "prompts",
+        target / "course",
+        target / "course" / "_assets",
+        target / "course" / "_official",
+        target / "course" / "_official" / "cards",
+        target / "course" / "_official" / "quizzes",
+        target / "course" / "_official" / "prompts",
     ]
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
@@ -72,7 +73,7 @@ def init_course(
                 f"title: {_yaml_string(resolved_title)}",
                 f"description: {_yaml_string(resolved_description)}",
                 f"language: {_yaml_string(language)}",
-                "content: content",
+                "source: course",
                 "artifact: artifact",
                 "",
             ]
@@ -81,15 +82,15 @@ def init_course(
     )
     report.wrote_output(config_path)
 
-    index_path = target / "content" / "00_index.md"
+    index_path = target / "course" / "0_index.md"
     index_path.write_text(
         "\n".join(
             [
                 "---",
+                "id: course-root",
                 f"title: {resolved_title}",
-                "quantum:",
-                "  id: course-root",
-                "  type: page",
+                "summary: Replaceable root index scaffold for this course.",
+                "status: ready",
                 "---",
                 "",
                 f"# {resolved_title}",

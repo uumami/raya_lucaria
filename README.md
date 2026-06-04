@@ -90,7 +90,7 @@ Rendered static-site behavior also has e2e/static-read-path coverage through `py
 
 Artifact inspection is read-only and manifest-centered: it validates `manifest.json`, required artifact directories, and manifest-declared data indexes without rebuilding source.
 
-Source-course validation is local and source-oriented: local `.md` links must resolve under configured `content/`, local asset references must resolve under configured/default `assets/`, and external URLs, `mailto:`, `tel:`, and fragment-only links are ignored by this baseline.
+Source-course validation is local and source-oriented: local `.md` links must resolve under the configured authored source root, new courses use `source: course`, local asset references must resolve under the page's own `_assets/` directory or an ancestor `_assets/` directory inside the authored source tree, and rendered pages must not link into private support paths such as `_official/`. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored by this baseline.
 
 Course initialization creates replaceable scaffold and refuses to overwrite non-empty directories:
 

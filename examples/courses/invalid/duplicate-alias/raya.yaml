@@ -1,0 +1,6 @@
+course_id: invalid-duplicate-alias
+title: Invalid Duplicate Alias
+description: Invalid fixture for duplicate aliases.
+language: en
+source: course
+artifact: artifact

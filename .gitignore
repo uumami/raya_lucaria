@@ -13,14 +13,22 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.tox/
+.nox/
+.hypothesis/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
+junit.xml
+junit-*.xml
+test-results/
 
 # JavaScript and build output
 dist/
 build/
 coverage/
+playwright-report/
 
 # Generated course/site artifacts
 _site/
@@ -38,6 +46,7 @@ artifact/
 
 # Local caches
 .cache/
+.uv-cache/
 .parcel-cache/
 .turbo/
 

@@ -1,0 +1,6 @@
+course_id: invalid-missing-section-index
+title: Invalid Missing Section Index
+description: Invalid fixture for missing rendered directory index.
+language: en
+source: course
+artifact: artifact

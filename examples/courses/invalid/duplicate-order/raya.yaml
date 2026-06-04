@@ -1,0 +1,6 @@
+course_id: invalid-duplicate-order
+title: Invalid Duplicate Order
+description: Invalid fixture for duplicate normalized order.
+language: en
+source: course
+artifact: artifact

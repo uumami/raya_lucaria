@@ -13,8 +13,8 @@ The repository SHALL provide a minimal Glintstone builder implementation under t
 ### Requirement: Source course build
 The minimal builder SHALL build a validated source course into the artifact output directory declared by `raya.yaml`.
 
-#### Scenario: Build minimal fixture
-- **WHEN** `raya build examples/courses/minimal` runs against the minimal fixture
+#### Scenario: Build canonical source fixture
+- **WHEN** `raya build examples/courses/minimal` runs against a fixture using `source: course`
 - **THEN** it MUST create the configured artifact directory with `site/`, `manifest.json`, `data/`, and `assets/`
 
 #### Scenario: Validation before build
@@ -25,7 +25,7 @@ The minimal builder SHALL build a validated source course into the artifact outp
 The minimal builder SHALL render readable static HTML pages from source Markdown content.
 
 #### Scenario: Render content pages
-- **WHEN** a course contains Markdown files under the configured content directory
+- **WHEN** a course contains Markdown files under the configured authored source root
 - **THEN** the generated `site/` directory MUST contain corresponding `.html` pages with escaped readable content, document titles, navigation links, and no backend dependency
 
 #### Scenario: Static internal links
@@ -33,18 +33,18 @@ The minimal builder SHALL render readable static HTML pages from source Markdown
 - **THEN** links MUST use static relative HTML paths rather than requiring a router or dynamic service
 
 ### Requirement: Artifact data indexes
-The minimal builder SHALL generate manifest-declared page, quanta, link, and official learning-object indexes.
+The minimal builder SHALL generate manifest-declared page, quanta, link, navigation, generated index, and official learning-object indexes.
 
 #### Scenario: Generated indexes validate
 - **WHEN** the generated artifact is inspected
-- **THEN** `manifest.json`, `data/pages.json`, `data/quanta.json`, `data/links.json`, and `data/official.json` MUST validate against the baseline artifact schemas
+- **THEN** `manifest.json`, `data/pages.json`, `data/quanta.json`, `data/links.json`, `data/navigation.json`, `data/indices.json`, and `data/official.json` MUST validate against the baseline artifact schemas
 
 ### Requirement: Official study seed export
-The minimal builder SHALL export official learning objects as static study seed data while preserving authority and scope.
+The minimal builder SHALL export official learning objects from source-root and quantum-colocated `_official/` locations as static study seed data while preserving authority and scope.
 
-#### Scenario: Official objects indexed
-- **WHEN** source official cards, quizzes, or prompts exist
-- **THEN** `data/official.json` MUST include them with stable IDs, object types, official authority labels, learning-quantum scope, and content payloads
+#### Scenario: Colocated official objects indexed
+- **WHEN** source official cards, quizzes, or prompts exist under `_official/`
+- **THEN** `data/official.json` MUST include them with stable IDs, object types, official authority labels, inferred or explicit learning-quantum scope, source paths, and content payloads
 
 #### Scenario: Personal state excluded
 - **WHEN** official learning objects are exported
@@ -53,9 +53,9 @@ The minimal builder SHALL export official learning objects as static study seed 
 ### Requirement: Asset copying
 The minimal builder SHALL copy local course assets into the artifact assets directory when source assets exist.
 
-#### Scenario: Copy local assets
-- **WHEN** a source course contains files under the configured or default assets directory
-- **THEN** the generated artifact MUST copy those files under `assets/` without treating them as canonical source truth
+#### Scenario: Copy colocated assets
+- **WHEN** a source course contains referenced files under `_assets/` inside the authored source tree
+- **THEN** the generated artifact MUST copy those files into artifact assets and browser-facing static assets without rendering the `_assets/` directory as course pages
 
 ### Requirement: Deterministic rebuild surface
 The minimal builder SHALL make generated artifacts rebuildable from source course truth.
@@ -78,13 +78,13 @@ The minimal builder SHALL include valid source content links in the generated li
 ### Requirement: Static read-path asset copying
 The minimal builder SHALL copy browser-facing local course assets into the generated static read path.
 
-#### Scenario: Referenced asset copied for static site
-- **WHEN** a source Markdown page references an existing local asset
-- **THEN** the generated artifact MUST contain that asset under `site/_raya/assets/` with its source asset relative path preserved
+#### Scenario: Referenced colocated asset copied for static site
+- **WHEN** a source Markdown page references an existing colocated `_assets/` file
+- **THEN** the generated artifact MUST contain that asset under `site/_raya/assets/` with a collision-safe path and a deployment-neutral rendered URL
 
 #### Scenario: Existing artifact asset copy preserved
-- **WHEN** a source course contains files under the configured or default assets directory
-- **THEN** the generated artifact MUST continue to copy those files under artifact-level `assets/`
+- **WHEN** a source course contains referenced colocated `_assets/`
+- **THEN** the generated artifact MUST continue to expose copied assets under artifact-level `assets/`
 
 ### Requirement: Rendered local asset URLs
 The minimal builder SHALL rewrite rendered local asset references to deployment-neutral relative URLs.
@@ -107,3 +107,41 @@ The minimal builder SHALL avoid deployment-root assumptions in generated browser
 #### Scenario: No absolute deployment root for local resources
 - **WHEN** generated HTML references another generated page or local asset
 - **THEN** the generated URL MUST be relative and MUST NOT require an absolute `/` root, configured host, backend route, or CDN
+
+### Requirement: Ordered navigation rendering
+The minimal builder SHALL render static navigation from the resolved ordered content tree.
+
+#### Scenario: Ordered pages render clean URLs
+- **WHEN** a source page such as `course/1_foundations/2_derivatives.md` is built
+- **THEN** the rendered static page MUST use a clean URL derived from stripped path segments and MUST NOT expose order prefixes as URL identity
+
+#### Scenario: Breadcrumb and sequence navigation render
+- **WHEN** a rendered page has resolved parent, previous, or next entries
+- **THEN** the static page MUST expose usable breadcrumb and previous/next navigation without requiring a backend or client-side router
+
+### Requirement: Generated index rendering
+The minimal builder SHALL render generated local and master index sections from resolved source metadata and official study-object scopes.
+
+#### Scenario: Local index rendered
+- **WHEN** a section landing page has rendered child pages
+- **THEN** the static section page MUST include generated child index entries with labels, titles, summaries, and links in resolved order
+
+#### Scenario: Master index rendered
+- **WHEN** the root course index is built
+- **THEN** the static root page MUST include generated master index entries for main ordered sections and appendices
+
+#### Scenario: Study counts rendered without personal state
+- **WHEN** official cards, quizzes, or prompts are scoped to rendered quanta
+- **THEN** generated index data MUST expose official study-object counts for rendered quanta and MUST NOT include private review history, confidence ratings, personal mastery state, or spaced repetition history
+
+### Requirement: Stable reference rendering
+The minimal builder SHALL render validated `raya:` stable source references as static links to current generated page URLs.
+
+#### Scenario: Stable content link rendered
+- **WHEN** source Markdown links to a valid `raya:` page ID
+- **THEN** the generated HTML MUST link to the current static URL for that page using a deployment-neutral relative path
+
+#### Scenario: Stable alias link rendered
+- **WHEN** source Markdown links to a valid alias declared by a rendered page
+- **THEN** the generated HTML MUST link to the current static URL for the page that owns the alias
+

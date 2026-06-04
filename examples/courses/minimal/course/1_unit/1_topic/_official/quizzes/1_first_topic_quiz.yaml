@@ -1,0 +1,14 @@
+id: first-topic-quiz
+type: quiz
+authority: official
+content:
+  questions:
+    - id: learning-loop
+      prompt: Which action is part of the Raya Lucaria learning loop?
+      options:
+        - label: Retrieve
+          correct: true
+        - label: Vendor lock-in
+          correct: false
+retrieval:
+  kind: concept-check

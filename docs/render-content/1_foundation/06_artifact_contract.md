@@ -1,0 +1,1 @@
+../../foundation/06_artifact_contract.md

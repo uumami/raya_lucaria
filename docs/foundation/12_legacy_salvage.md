@@ -1,3 +1,9 @@
+---
+id: docs-legacy-salvage
+title: Legacy Salvage
+summary: Principles worth keeping from old code without preserving old architecture.
+status: ready
+---
 # Legacy Salvage
 
 Old code and branches are historical reference. They are not current truth. If useful behavior is needed, copy the idea intentionally into new code after a proposal.

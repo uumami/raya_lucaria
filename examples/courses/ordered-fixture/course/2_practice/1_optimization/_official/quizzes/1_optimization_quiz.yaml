@@ -1,0 +1,14 @@
+id: optimization-quiz
+type: quiz
+authority: official
+content:
+  questions:
+    - id: derivative-use
+      prompt: Which idea supports optimization practice?
+      options:
+        - label: Derivatives describe local change.
+          correct: true
+        - label: URLs define stable learning identity.
+          correct: false
+retrieval:
+  kind: concept-check
