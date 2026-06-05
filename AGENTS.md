@@ -27,11 +27,13 @@ Docker Compose is the reference development workflow. Local `uv` execution remai
 - `docker compose run --rm dev uv run raya build examples/courses/reference-fixture` builds the code/notebook reference fixture.
 - `docker compose run --rm dev uv run raya validate examples/courses/runtime-fixture` validates the runtime metadata fixture.
 - `docker compose run --rm dev uv run raya build examples/courses/runtime-fixture` builds the runtime metadata fixture.
+- `docker compose run --rm dev uv run raya validate examples/courses/execution-fixture` validates the explicit execution fixture without running targets.
+- `docker compose run --rm dev uv run raya run examples/courses/execution-fixture manual-script --dry-run` checks the local execution plan without running code.
 - `docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact` inspects the generated artifact through its manifest.
 - `docker compose run --rm dev uv run pytest -q` runs tests through the reference container.
 - `./scripts/smoke-test.sh` validates, builds, and inspects a temporary external course copy locally and through Docker without adding course output to the repository.
 - `UV_PROJECT_ENVIRONMENT=.venv-local uv sync --python 3.10 --all-packages --dev` sets up the local non-Docker workflow.
-- `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact`, and `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q` run the local workflow.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact`, and `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q` run the local workflow.
 
 The current CLI baseline implements `raya --help`, `raya doctor`, `raya course init <path>`, `raya validate <course>`, `raya build <course>`, and `raya artifacts inspect <artifact>`. Do not treat any legacy command as canonical unless current specs say so.
 
@@ -50,6 +52,8 @@ Course validation checks local Markdown source links and local asset references 
 Local `.py` and `.ipynb` references are static source support, not rendered pages and not execution requests. Keep them under colocated `code/` and `notebooks/` directories owned by the nearest learning quantum or an allowed ancestor. Validation must reject missing files, malformed notebooks, private support paths, path escapes, and cross-quantum support references. Builds copy referenced files to `artifact/files/` and `artifact/site/_raya/files/`, and write manifest-declared `data/references.json` with `not-executed` status.
 
 Runtime metadata is source support outside learning order. Keep `runtime/profiles.yaml`, root `pyproject.toml`, and `uv.lock` beside `course/`; do not put runtime profiles inside ordered pages. Runtime validation and build output may read metadata and write `data/runtime.json`, `data/execution.json`, and `data/cache.json`, but must not execute scripts, notebooks, `uv`, Docker, kernels, package installers, or cache refreshes.
+
+Local execution is explicit and target-scoped. Use `raya run <course> <target>` only when the current task requires execution; prefer `--dry-run` when checking command shape. `raya run` may write generated logs, outputs, cache records, and `data/execution-results.json` under the artifact root. It must not promote generated outputs to source truth, and it must not become an implicit part of `validate`, `build`, artifact inspection, or static serving.
 
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
 
@@ -70,6 +74,8 @@ Changes to rendered HTML, browser-facing resources, deployment portability, or s
 Use `examples/courses/reference-fixture` for code/notebook reference behavior. It is fixture material for copied files, rewritten links, static previews, and `references.json`; it must not become hidden pedagogy or an execution contract.
 
 Use `examples/courses/runtime-fixture` for runtime profile and cache metadata behavior. It is fixture material for metadata, policies, cache keys, and no-execution sentinels; it must not become an execution contract.
+
+Use `examples/courses/execution-fixture` for explicit local execution behavior. It is fixture material for `raya run`, policy refusals, cache reuse, refresh behavior, generated logs/results, and notebook output handling; it must not become pedagogy or run during static build.
 
 Changes that affect contributors/collaborators, professors, students, or agents should include role-documentation impact. If role docs change, update both the English role directory under `docs/guides/en/` and the Spanish role directory under `docs/guides/es/`, or explicitly track the deferred language page in the OpenSpec tasks.
 

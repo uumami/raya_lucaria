@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/execution-results.schema.json",
+  "title": "Raya Local Execution Results",
+  "type": "object",
+  "required": [
+    "course_id",
+    "results"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "target_id",
+          "source_path",
+          "kind",
+          "policy",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "target_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reference_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "runtime_target_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "code",
+              "notebook"
+            ]
+          },
+          "policy": {
+            "enum": [
+              "manual",
+              "cache",
+              "always"
+            ]
+          },
+          "profile": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "failed",
+              "cached"
+            ]
+          },
+          "exit_code": {
+            "type": "integer"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "output_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "log_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stdout_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stderr_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cache_key": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "cache_result_path": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

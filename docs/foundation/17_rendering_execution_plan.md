@@ -67,6 +67,9 @@ artifact
   site/
   data/
   assets/
+  execution/
+  logs/
+  cache/
   execution metadata and outputs
 ```
 
@@ -364,6 +367,50 @@ Minimum work:
 - cache reuse and explicit refresh,
 - docs for professors, students, contributors, and agents.
 
+Accepted baseline:
+
+- Local execution is available only through `raya run <course> <target>`.
+- The target is explicit: a validated reference ID, runtime target ID, or course-root-relative referenced source path. There is no implicit course-wide execution.
+- `raya run --dry-run` reports the resolved target, policy, profile, command shape, cache decision, and output paths without executing code.
+- Script targets execute through `uv run` from the course root using the selected runtime profile metadata.
+- Notebook targets execute through Jupyter `nbconvert` under the selected `uv` profile and write a generated output notebook under the artifact root.
+- Docker plus `uv` is an explicit wrapper through `raya run --docker`; it requires profile Docker Compose service metadata and is never the default.
+- Policy behavior is enforced: `never` refuses, `manual` runs only when selected, `cache` reuses valid generated cache results unless `--refresh` is passed, `always` reruns when selected, and `frozen` refuses until a trusted-output contract exists.
+- Build, validate, artifact inspection, and static serving remain non-executing. They must not call `uv`, Docker, kernels, package installers, notebooks, scripts, or cache refreshes.
+- Execution results are generated artifact data. `raya run` writes logs, captured stdout/stderr, output notebooks or stdout files, cache result records, and manifest-declared `data/execution-results.json` under the artifact root.
+- Generated execution results do not become course source truth. A future frozen-output contract must define any reviewed output promotion.
+
+Recommended command shape:
+
+```text
+raya run . manual-script --dry-run
+raya run . manual-script
+raya run . cache-script
+raya run . cache-script --refresh
+raya run . manual-script --docker --dry-run
+```
+
+Recommended generated artifact shape after an execution run:
+
+```text
+artifact/
+  manifest.json
+  data/
+    execution-results.json
+  execution/
+    outputs/
+      <target>/
+        stdout.txt
+        <target>.ipynb
+  logs/
+    <target>.log
+    <target>.stdout.log
+    <target>.stderr.log
+  cache/
+    results/
+      <cache-key>.json
+```
+
 ### Phase 5: Browser And Optional Runners
 
 Add progressive execution paths after local execution is stable.
@@ -397,8 +444,8 @@ The goal is simple authoring and predictable builds:
 ```text
 raya validate .
 raya build .
-raya run <target>
-raya run --refresh <target>
+raya run . <target>
+raya run . <target> --refresh
 docker compose run --rm dev ...
 ```
 

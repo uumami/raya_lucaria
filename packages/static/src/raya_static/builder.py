@@ -43,6 +43,7 @@ from raya_schema.references import (
     notebook_validation_error,
     reference_format,
     resolve_course_reference,
+    source_reference_id,
 )
 from raya_schema.runtime import (
     RuntimeModel,
@@ -818,7 +819,7 @@ def _collect_source_references(
             )
             references.append(
                 SourceReference(
-                    id=_reference_id(course_id, page.id, resolved.output_path),
+                    id=source_reference_id(course_id, page.id, resolved.output_path),
                     page_id=page.id,
                     page_source_path=page.rel_path,
                     label=link.label,
@@ -951,13 +952,6 @@ def _reference_preview(reference: SourceReference) -> str:
             "</code></pre>"
         )
     return ""
-
-
-def _reference_id(course_id: str, page_id: str, output_path: str) -> str:
-    digest = hashlib.sha256(
-        f"{course_id}\0{page_id}\0{output_path}".encode("utf-8")
-    ).hexdigest()[:12]
-    return f"{page_id}:{digest}"
 
 
 def _official_index(

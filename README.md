@@ -56,6 +56,8 @@ The current code/notebook reference baseline is static and non-executing. Course
 
 The current runtime/cache baseline is also non-executing. Courses may declare root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml` metadata for future local or Docker execution. Builds emit `data/runtime.json`, `data/execution.json`, and `data/cache.json` with profiles, policies, cache keys, and `not-executed` status; validation, build, artifact inspection, and static serving do not call `uv`, Docker, kernels, scripts, notebooks, or cache refreshes.
 
+The current local execution baseline is explicit and target-scoped. `raya run <course> <target>` can run one validated script or notebook reference through the selected `uv` profile, optionally wrapped by Docker Compose with `--docker`. `--dry-run` prints the command shape without executing, `--refresh` reruns cache-policy targets, and generated logs, outputs, cache records, and `data/execution-results.json` stay under the artifact root. `raya validate`, `raya build`, `raya artifacts inspect`, and static serving remain non-executing.
+
 ## Development Commands
 
 Reference Docker workflow:
@@ -70,6 +72,8 @@ docker compose run --rm dev uv run raya validate examples/courses/reference-fixt
 docker compose run --rm dev uv run raya build examples/courses/reference-fixture
 docker compose run --rm dev uv run raya validate examples/courses/runtime-fixture
 docker compose run --rm dev uv run raya build examples/courses/runtime-fixture
+docker compose run --rm dev uv run raya validate examples/courses/execution-fixture
+docker compose run --rm dev uv run raya run examples/courses/execution-fixture manual-script --dry-run
 docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact
 docker compose run --rm dev uv run pytest -q
 ```
@@ -87,6 +91,8 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/referen
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/reference-fixture
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/runtime-fixture
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/runtime-fixture
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/execution-fixture
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
 ```
@@ -105,11 +111,21 @@ Code/notebook reference behavior uses `examples/courses/reference-fixture` as la
 
 Runtime metadata behavior uses `examples/courses/runtime-fixture` as labeled fixture content. The fixture proves `uv` profile metadata, Docker Compose service metadata, execution policy records, cache-key records, and no-execution sentinels; it does not define execution pedagogy or run code.
 
+Local execution behavior uses `examples/courses/execution-fixture` as labeled fixture content. The fixture proves explicit `raya run` target selection, dry-run plans, policy refusals, cache reuse, refresh behavior, generated logs/results, and notebook output handling; it does not define pedagogy or run during static build.
+
 Artifact inspection is read-only and manifest-centered: it validates `manifest.json`, required artifact directories, and manifest-declared data indexes without rebuilding source.
 
 Source-course validation is local and source-oriented: local `.md` links must resolve under the configured authored source root, new courses use `source: course`, local asset references must resolve under the page's own `_assets/` directory or an ancestor `_assets/` directory inside the authored source tree, and rendered pages must not link into private support paths such as `_official/`. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored by this baseline.
 
 Local `.py` and `.ipynb` references are source support links, not page links. They must resolve under accepted `code/` or `notebooks/` support roots, and cross-quantum references fail until a future shared-code contract exists.
+
+Local execution is a separate command, not a build side effect:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture cache-script
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture cache-script --refresh
+```
 
 Course initialization creates replaceable scaffold and refuses to overwrite non-empty directories:
 

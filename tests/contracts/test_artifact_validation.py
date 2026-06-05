@@ -8,6 +8,7 @@ from raya_schema import (
     validate_artifact_manifest,
     validate_cache_index,
     validate_execution_index,
+    validate_execution_results_index,
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
@@ -108,6 +109,11 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         '{"course_id":"minimal-course","targets":[]}',
         encoding="utf-8",
     )
+    execution_results = tmp_path / "execution-results.json"
+    execution_results.write_text(
+        '{"course_id":"minimal-course","results":[]}',
+        encoding="utf-8",
+    )
     cache = tmp_path / "cache.json"
     cache.write_text(
         '{"course_id":"minimal-course","entries":[]}',
@@ -124,6 +130,7 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_references_index(references),
         validate_runtime_index(runtime),
         validate_execution_index(execution),
+        validate_execution_results_index(execution_results),
         validate_cache_index(cache),
     ):
         assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]

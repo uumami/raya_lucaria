@@ -1,0 +1,6 @@
+course_id: execution-fixture
+title: Local Execution Fixture
+description: Fixture for explicit local code and notebook execution behavior.
+language: en
+source: course
+artifact: artifact

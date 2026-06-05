@@ -18,6 +18,8 @@ For code and notebook references, treat `code/` and `notebooks/` as private sour
 
 For runtime metadata, treat `runtime/profiles.yaml`, root `pyproject.toml`, and `uv.lock` as source support outside learning order. Validate and emit runtime, execution-plan, and cache metadata, but never call `uv`, Docker, kernels, package installers, notebooks, scripts, or cache refreshes unless a later accepted execution contract explicitly says to do so.
 
+For local execution, use `raya run <course> <target>` only when the task explicitly requires running a target. Prefer `--dry-run` to inspect the plan first. Treat `artifact/data/execution-results.json`, `artifact/logs/`, `artifact/execution/`, and `artifact/cache/results/` as generated output; do not edit or promote them as source truth.
+
 For repository documentation, `docs/raya.yaml` renders the live docs through `docs/render-content/`. Edit `docs/foundation/` and `docs/guides/` as the readable source, update the ordered render tree when a rendered docs page is added or reordered, and use `raya validate docs` plus `raya build docs` before relying on the static docs artifact.
 
 When updating documentation, keep English and Spanish role pages separate. Preserve English technical identifiers such as `raya`, `raya.yaml`, `source`, `course/`, `_official/`, `_assets/`, `artifact/`, `packages/static`, and `OpenSpec`.

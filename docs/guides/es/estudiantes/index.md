@@ -18,6 +18,8 @@ Algunas paginas pueden incluir scripts o notebooks referenciados. Se copian como
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.
 
+Cuando un curso te pida ejecutar codigo, usa el target exacto indicado por el equipo del curso, por ejemplo `raya run . manual-script` desde la raiz del curso o el comando Docker que provean. `--dry-run` muestra que se ejecutaria antes de ejecutarlo. Targets con policy `cache` pueden reutilizar output generado previo salvo que el curso pida `--refresh`.
+
 Usa la documentacion de rol como guia. Usa las paginas de curso y objetos oficiales de aprendizaje como material de curso. Si documentacion y material de curso entran en conflicto, el equipo de curso y la autoridad aceptada de specs OpenSpec o `docs/foundation/` deciden que cambia.
 
 La documentacion renderizada del repositorio puede leerse como paginas estaticas, pero sigue siendo guia sobre el framework. No es la misma superficie de autoridad que un artifact oficial de curso.

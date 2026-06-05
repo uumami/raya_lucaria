@@ -95,6 +95,18 @@ context: |
   artifact inspection, and static serving must not call `uv`, Docker, kernels,
   scripts, notebooks, package installers, or cache refreshes.
 
+  Local execution is the Phase 4 explicit-run baseline: `raya run <course>
+  <target>` runs one validated script or notebook reference through the selected
+  `uv` profile, optionally with Docker Compose plus `uv` when `--docker` is
+  requested and profile metadata declares a service. `--dry-run` reports the
+  plan without execution; `--refresh` reruns cache-policy targets. Generated
+  logs, outputs, cache result records, and `data/execution-results.json` live
+  under the artifact root and remain generated data, not course source truth.
+  `never` and `frozen` refuse in the baseline, `manual` runs only when selected,
+  `cache` reuses valid generated cache records unless refreshed, and `always`
+  reruns only when selected. No proposal may make validation, build, artifact
+  inspection, static serving, or rendered preview paths execute code by default.
+
   Legacy material is historical reference. Salvage principles intentionally,
   define new contracts, and test against current specs. Do not reintroduce old
   source names, renderer stacks, generated JSON shapes, examples, or workflow
@@ -114,6 +126,7 @@ rules:
     - Reference the rendering and execution phase plan when changes affect rich rendering, code, notebooks, runtimes, cache behavior, or executable examples.
     - Separate static code/notebook reference behavior from execution behavior when proposals touch scripts, notebooks, kernels, runtimes, cache, or outputs.
     - Keep runtime/cache proposals metadata-only unless the proposal explicitly opens local execution as a later phase.
+    - Keep local execution target-scoped through `raya run <course> <target>` unless a future proposal explicitly defines a safe multi-target selector.
   specs:
     - Write testable requirements derived from foundation decisions.
     - Separate required baseline behavior from future or optional capabilities.
@@ -123,6 +136,7 @@ rules:
     - Keep ordered source conventions, stable `raya:<id>` references, generated navigation data, and generated index data explicit when specs touch content ordering or rendering.
     - Keep `source: course` canonical and reject source `content:`, root authored `official/`, and root authored `assets/` unless a future accepted proposal explicitly reopens the contract.
     - Make execution policies, cache invalidation, runtime profiles, and static artifact outputs testable when specs touch executable content.
+    - Require no-execution behavior for validation, build, artifact inspection, static serving, and rendered previews whenever local execution behavior changes.
   design:
     - Map domain names to plain package boundaries when implementation structure matters.
     - Preserve static-only operation before adding backend, web UI, realtime, or agent features.
@@ -131,6 +145,7 @@ rules:
     - Keep English and Spanish role documentation in separate role directories while preserving English technical identifiers.
     - Treat generated navigation and index JSON as machine surfaces derived from source, not as hand-edited canonical source.
     - Keep support material colocated under the learning quantum it serves unless the design explicitly justifies a course-level/global source.
+    - Treat execution results, logs, notebook outputs, and cache records as generated artifact data unless a future frozen-output contract promotes reviewed output.
   tasks:
     - Start with schema, validation, fixture, CLI, and artifact contract tests when a change touches contracts.
     - Include real e2e/static-read-path tests when a change touches rendered HTML, browser-facing resources, deployment portability, or static site behavior.
@@ -145,3 +160,4 @@ rules:
     - Include ordered-content fixture and e2e coverage when source ordering, generated indexes, stable links, or static navigation changes.
     - Include unified-source fixture and e2e coverage when `source: course`, `_official/`, `_assets/`, or source-tree privacy changes.
     - Include examples, invalid fixtures, contract tests, e2e/static-read-path tests, role docs, and rendered-doc updates when rendering or executable-content workflows change.
+    - Include explicit `raya run` tests, cache reuse/refresh tests, notebook output tests, Docker command-shape coverage, and no-execution regressions when local execution changes.

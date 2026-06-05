@@ -68,6 +68,7 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "references": validate_references_index,
         "runtime": validate_runtime_index,
         "execution": validate_execution_index,
+        "execution_results": validate_execution_results_index,
         "cache": validate_cache_index,
     }
     for key, validator in validators.items():
@@ -83,6 +84,8 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
             _validate_reference_files(root, index_path, report)
         if key in {"runtime", "execution", "cache"} and validation_report.ok:
             _validate_metadata_paths(key, index_path, report)
+        if key == "execution_results" and validation_report.ok:
+            _validate_execution_result_files(root, index_path, report)
 
     if report.ok:
         report.add_info(
@@ -178,6 +181,10 @@ def validate_runtime_index(index_path: str | Path) -> ValidationReport:
 
 def validate_execution_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "execution-index.schema.json")
+
+
+def validate_execution_results_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "execution-results.schema.json")
 
 
 def validate_cache_index(index_path: str | Path) -> ValidationReport:
@@ -373,6 +380,48 @@ def _validate_metadata_paths(
                             path=index_path,
                             field=f"entries.{index}.input_hashes.{input_index}.path",
                         )
+
+
+def _validate_execution_result_files(
+    artifact_root: Path,
+    index_path: Path,
+    report: ValidationReport,
+) -> None:
+    try:
+        data = load_yaml_file(index_path)
+    except Exception:
+        return
+    if not isinstance(data, dict):
+        return
+    results = data.get("results")
+    if not isinstance(results, list):
+        return
+    for index, item in enumerate(results):
+        if not isinstance(item, dict):
+            continue
+        source_path = item.get("source_path")
+        if isinstance(source_path, str):
+            _validate_relative_metadata_path(
+                source_path,
+                report,
+                path=index_path,
+                field=f"results.{index}.source_path",
+            )
+        for field_name in (
+            "output_path",
+            "log_path",
+            "stdout_path",
+            "stderr_path",
+            "cache_result_path",
+        ):
+            declared_path = item.get(field_name)
+            if isinstance(declared_path, str):
+                _validate_manifest_relative_file(
+                    artifact_root,
+                    declared_path,
+                    report,
+                    field=f"results.{index}.{field_name}",
+                )
 
 
 def _validate_relative_metadata_path(

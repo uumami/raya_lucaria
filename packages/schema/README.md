@@ -6,7 +6,7 @@ This package owns:
 
 - `raya.yaml` schema,
 - artifact manifest schema,
-- page/quanta/official object index schemas,
+- page, quanta, links, navigation, index, official object, reference, runtime, execution-plan, cache, and execution-results schemas,
 - source course validators,
 - artifact validators.
 

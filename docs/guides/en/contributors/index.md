@@ -19,6 +19,8 @@ Code and notebook references are static source support in the current baseline. 
 
 Runtime profiles are metadata only. Keep `runtime/profiles.yaml`, `pyproject.toml`, and `uv.lock` outside the ordered `course/` tree; validate policies, profile paths, cache inputs, and generated `runtime.json`, `execution.json`, and `cache.json` without calling `uv`, Docker, kernels, or source files.
 
+Local execution is explicit. `raya run <course> <target>` may run one validated script or notebook through the selected `uv` profile, with `--docker` only when requested and configured. Execution changes need CLI tests for dry-run, policies, cache reuse, refresh, logs, output files, notebook output preservation, Docker command shape, artifact inspection, and no-execution regressions for validate/build/inspect/static serving.
+
 Current documentation is also a renderable docs course. Edit the readable pages under `docs/foundation/` and `docs/guides/`, keep `docs/render-content/` aligned for rendered order, and treat `docs/artifact/` as ignored generated output. Use `raya validate docs`, `raya build docs`, and static-read-path tests when changing documentation rendering behavior.
 
 For substantial changes, state the documentation impact for contributors/collaborators, professors, students, and agents. If role documentation changes, keep the English and Spanish pages separate.

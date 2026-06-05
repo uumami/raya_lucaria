@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote
@@ -95,6 +96,13 @@ def reference_format(kind: str) -> str:
 def reference_output_path(source_dir: Path, target_path: Path) -> str:
     rel_parts = target_path.resolve().relative_to(source_dir.resolve()).parts
     return Path("_source", *rel_parts).as_posix()
+
+
+def source_reference_id(course_id: str, page_id: str, output_path: str) -> str:
+    digest = hashlib.sha256(
+        f"{course_id}\0{page_id}\0{output_path}".encode("utf-8")
+    ).hexdigest()[:12]
+    return f"{page_id}:{digest}"
 
 
 def resolve_course_reference(

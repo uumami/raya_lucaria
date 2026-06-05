@@ -15,6 +15,7 @@ DOCS_ROOT = ROOT / "docs"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
+EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 DOCS_FIXTURE = ROOT / "examples" / "docs" / "documentation-fixture"
 ORDERED_FIXTURE = ROOT / "examples" / "courses" / "ordered-fixture"
 
@@ -120,6 +121,30 @@ def test_runtime_fixture_static_read_path_remains_static(tmp_path: Path) -> None
     assert "SHOULD_NOT_EXIST_RUNTIME_SENTINEL" in runtime_task
     assert not (course / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
     assert not (course / "artifact" / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
+
+
+def test_execution_fixture_static_read_path_remains_static(tmp_path: Path) -> None:
+    course = tmp_path / "execution-fixture"
+    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+
+    with _serve(site) as base_url:
+        root_html = _fetch_text(f"{base_url}/index.html")
+        manual_script = _fetch_text(
+            f"{base_url}/_raya/files/_source/code/manual_task.py"
+        )
+
+    assert "Local Execution Fixture" in root_html
+    assert 'href="_raya/files/_source/code/manual_task.py"' in root_html
+    assert "not executed during build" in root_html
+    assert "manual execution sentinel" in manual_script
+    assert not (course / "execution-side-effect.txt").exists()
+    assert not (course / "SHOULD_NOT_EXIST_NEVER_SENTINEL").exists()
+    assert not (course / "artifact" / "data" / "execution-results.json").exists()
 
 
 def test_documentation_fixture_static_read_path_serves_pages_and_assets(

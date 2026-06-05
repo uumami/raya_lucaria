@@ -6,6 +6,7 @@ from pathlib import Path
 from raya_schema import ValidationReport, inspect_artifact, validate_course
 from raya_static import build_course
 from raya_cli.course_init import init_course
+from raya_cli.execution import run_course_target
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,6 +29,28 @@ def main(argv: list[str] | None = None) -> int:
         help="Build a static course artifact",
     )
     build_parser.add_argument("course", help="Path to a source course")
+
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Run one explicit local code or notebook target",
+    )
+    run_parser.add_argument("course", help="Path to a source course")
+    run_parser.add_argument("target", help="Reference ID, runtime target ID, or source path")
+    run_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the resolved execution plan without running the target",
+    )
+    run_parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Refresh cache policy targets instead of reusing a valid cache result",
+    )
+    run_parser.add_argument(
+        "--docker",
+        action="store_true",
+        help="Run through Docker Compose plus uv using the selected runtime profile",
+    )
 
     course_parser = subparsers.add_parser(
         "course",
@@ -66,6 +89,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report.ok else 1
     if args.command == "build":
         report = build_course(args.course)
+        _print_report(report)
+        return 0 if report.ok else 1
+    if args.command == "run":
+        report = run_course_target(
+            args.course,
+            args.target,
+            dry_run=args.dry_run,
+            refresh=args.refresh,
+            docker=args.docker,
+        )
         _print_report(report)
         return 0 if report.ok else 1
     if args.command == "course" and args.course_command == "init":

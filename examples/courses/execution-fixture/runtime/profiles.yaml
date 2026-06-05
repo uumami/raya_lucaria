@@ -1,0 +1,43 @@
+profiles:
+  default:
+    manager: uv
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock
+    docker:
+      compose_service: dev
+execution:
+  defaults:
+    policy: never
+    profile: default
+  references:
+    - id: manual-script
+      source: course/code/manual_task.py
+      policy: manual
+      profile: default
+    - id: cache-script
+      source: course/code/cache_task.py
+      policy: cache
+      profile: default
+      inputs:
+        - course/_assets/cache-input.txt
+    - id: always-script
+      source: course/code/always_task.py
+      policy: always
+      profile: default
+    - id: never-script
+      source: course/code/never_task.py
+      policy: never
+      profile: default
+    - id: frozen-script
+      source: course/code/frozen_task.py
+      policy: frozen
+      profile: default
+    - id: failing-script
+      source: course/code/failing_task.py
+      policy: manual
+      profile: default
+    - id: demo-notebook
+      source: course/notebooks/demo.ipynb
+      policy: manual
+      profile: default
