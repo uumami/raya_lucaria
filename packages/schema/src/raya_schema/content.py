@@ -9,8 +9,17 @@ from raya_schema.diagnostics import ValidationReport
 from raya_schema.yaml_io import parse_frontmatter
 
 
-PRIVATE_DIR_NAMES = {"drafts", "_drafts", "_partials", "_official", "_assets"}
-SUPPORT_OWNER_DIR_NAMES = {"_official", "_assets"}
+PRIVATE_DIR_NAMES = {
+    "drafts",
+    "_drafts",
+    "_partials",
+    "_official",
+    "_assets",
+    "code",
+    "notebooks",
+    "runtime",
+}
+SUPPORT_OWNER_DIR_NAMES = {"_official", "_assets", "code", "notebooks"}
 SUPPORTED_STATUSES = {"draft", "ready", "archived", "deprecated"}
 DEFAULT_HIERARCHY = (
     {"key": "unit", "label": "Unit"},
@@ -562,7 +571,10 @@ def _validate_support_owner_indexes(
             report.add_error(
                 "Learning quantum support directory requires a directory index page",
                 path=owner_dir,
-                next_action="Represent the quantum as a directory with 0_index.md before adding _official/ or _assets/",
+                next_action=(
+                    "Represent the quantum as a directory with 0_index.md "
+                    "before adding _official/, _assets/, code/, or notebooks/"
+                ),
             )
 
 

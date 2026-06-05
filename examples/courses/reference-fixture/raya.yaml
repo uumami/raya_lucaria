@@ -1,0 +1,12 @@
+course_id: reference-fixture
+title: Code And Notebook Reference Fixture
+description: Fixture for static code and notebook reference behavior.
+language: en
+source: course
+artifact: artifact
+hierarchy:
+  levels:
+    - key: section
+      label: Section
+    - key: topic
+      label: Topic

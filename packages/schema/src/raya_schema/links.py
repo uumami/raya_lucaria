@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from raya_schema.references import reference_kind_for_path
+
 
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
@@ -78,6 +80,9 @@ def classify_markdown_target(target: str) -> str:
         return "ignored"
     if path.lower().endswith(".md"):
         return "content"
+    reference_kind = reference_kind_for_path(path)
+    if reference_kind is not None:
+        return reference_kind
     return "asset"
 
 
@@ -191,7 +196,7 @@ def _blocked_source_support_segment(target_path: Path, source_dir: Path) -> str 
     for part in rel_parts[:-1]:
         if part == "_assets":
             continue
-        if part == "drafts" or part.startswith("_"):
+        if part in {"drafts", "runtime"} or part.startswith("_"):
             return part
     return None
 

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/runtime-index.schema.json",
+  "title": "Raya Runtime Metadata Index",
+  "type": "object",
+  "required": [
+    "course_id",
+    "profiles",
+    "defaults"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "manager",
+          "source",
+          "inferred"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "manager": {
+            "const": "uv"
+          },
+          "python": {
+            "type": "string",
+            "minLength": 1
+          },
+          "project": {
+            "type": "string",
+            "minLength": 1
+          },
+          "lockfile": {
+            "type": "string",
+            "minLength": 1
+          },
+          "docker": {
+            "type": "object",
+            "properties": {
+              "compose_service": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inferred": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "required": [
+        "policy"
+      ],
+      "properties": {
+        "policy": {
+          "enum": [
+            "never",
+            "manual",
+            "cache",
+            "always",
+            "frozen"
+          ]
+        },
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/references-index.schema.json",
+  "title": "Raya Code And Notebook References Index",
+  "type": "object",
+  "required": [
+    "course_id",
+    "references"
+  ],
+  "properties": {
+    "course_id": {
+      "type": "string"
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "page_id",
+          "page_source_path",
+          "label",
+          "target",
+          "kind",
+          "format",
+          "source_path",
+          "artifact_path",
+          "browser_path",
+          "sha256",
+          "execution"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "code",
+              "notebook"
+            ]
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifact_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "browser_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "execution": {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "const": "not-executed"
+              },
+              "policy": {
+                "enum": [
+                  "never",
+                  "manual",
+                  "cache",
+                  "always",
+                  "frozen"
+                ]
+              },
+              "profile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "cache_key": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

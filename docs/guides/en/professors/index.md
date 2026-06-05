@@ -14,6 +14,10 @@ Course source uses `source: course` and visible order inside `course/`: `0_index
 
 Course pages may use the accepted rich static baseline: tables, math, displayed code, callouts, footnotes, heading anchors, and generated page tables of contents. Code blocks are display-only in this phase, raw HTML is escaped, and rendered support files are generated under `artifact/site/_raya/`.
 
+Course pages may also link to scripts in colocated `code/` directories and notebooks in colocated `notebooks/` directories. Those files are validated, copied for reading and download, and previewed statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
+
+Courses may declare runtime metadata with root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml`. This helps future local or Docker execution stay reproducible, but the current build only records profiles, policies, and cache keys; it does not run code, install packages, refresh caches, or trust notebook outputs.
+
 OpenSpec specs describe accepted contracts. Role documentation explains how to work with those contracts, but it does not outrank foundation docs or accepted specs.
 
 Rendered repository documentation is guidance, not course canon. It is built from `docs/raya.yaml` and remains separate from class material and official course artifacts.

@@ -1,0 +1,12 @@
+profiles:
+  default:
+    manager: uv
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock
+execution:
+  references:
+    - source: course/code/runtime_task.py
+      policy: cache
+      inputs:
+        - ../outside.txt

@@ -65,6 +65,10 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "navigation": validate_navigation_index,
         "indices": validate_indices_index,
         "official": validate_official_index,
+        "references": validate_references_index,
+        "runtime": validate_runtime_index,
+        "execution": validate_execution_index,
+        "cache": validate_cache_index,
     }
     for key, validator in validators.items():
         declared_path = data_paths.get(key)
@@ -73,7 +77,12 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         index_path = _manifest_relative_path(root, key, declared_path, report)
         if index_path is None:
             continue
-        _merge_report(report, validator(index_path))
+        validation_report = validator(index_path)
+        _merge_report(report, validation_report)
+        if key == "references" and validation_report.ok:
+            _validate_reference_files(root, index_path, report)
+        if key in {"runtime", "execution", "cache"} and validation_report.ok:
+            _validate_metadata_paths(key, index_path, report)
 
     if report.ok:
         report.add_info(
@@ -159,6 +168,22 @@ def validate_official_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "official-index.schema.json")
 
 
+def validate_references_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "references-index.schema.json")
+
+
+def validate_runtime_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "runtime-index.schema.json")
+
+
+def validate_execution_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "execution-index.schema.json")
+
+
+def validate_cache_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "cache-index.schema.json")
+
+
 def validate_artifact_index(index_path: str | Path, schema_name: str) -> ValidationReport:
     path = Path(index_path).resolve()
     report = ValidationReport(context="artifact")
@@ -238,6 +263,169 @@ def _manifest_relative_path(
         )
         return None
     return resolved
+
+
+def _validate_reference_files(
+    artifact_root: Path,
+    index_path: Path,
+    report: ValidationReport,
+) -> None:
+    try:
+        data = load_yaml_file(index_path)
+    except Exception:
+        return
+    if not isinstance(data, dict):
+        return
+    references = data.get("references")
+    if not isinstance(references, list):
+        return
+    for index, item in enumerate(references):
+        if not isinstance(item, dict):
+            continue
+        artifact_path = item.get("artifact_path")
+        if isinstance(artifact_path, str):
+            _validate_manifest_relative_file(
+                artifact_root,
+                artifact_path,
+                report,
+                field=f"references.{index}.artifact_path",
+            )
+        browser_path = item.get("browser_path")
+        if isinstance(browser_path, str):
+            _validate_manifest_relative_file(
+                artifact_root / "site",
+                browser_path,
+                report,
+                field=f"references.{index}.browser_path",
+            )
+
+
+def _validate_metadata_paths(
+    key: str,
+    index_path: Path,
+    report: ValidationReport,
+) -> None:
+    try:
+        data = load_yaml_file(index_path)
+    except Exception:
+        return
+    if not isinstance(data, dict):
+        return
+    if key == "runtime":
+        for index, profile in enumerate(data.get("profiles", [])):
+            if not isinstance(profile, dict):
+                continue
+            for field_name in ("project", "lockfile"):
+                value = profile.get(field_name)
+                if isinstance(value, str):
+                    _validate_relative_metadata_path(
+                        value,
+                        report,
+                        path=index_path,
+                        field=f"profiles.{index}.{field_name}",
+                    )
+        return
+    if key == "execution":
+        for index, target in enumerate(data.get("targets", [])):
+            if not isinstance(target, dict):
+                continue
+            source_path = target.get("source_path")
+            if isinstance(source_path, str):
+                _validate_relative_metadata_path(
+                    source_path,
+                    report,
+                    path=index_path,
+                    field=f"targets.{index}.source_path",
+                )
+            inputs = target.get("inputs")
+            if isinstance(inputs, list):
+                for input_index, input_path in enumerate(inputs):
+                    if isinstance(input_path, str):
+                        _validate_relative_metadata_path(
+                            input_path,
+                            report,
+                            path=index_path,
+                            field=f"targets.{index}.inputs.{input_index}",
+                        )
+        return
+    if key == "cache":
+        for index, entry in enumerate(data.get("entries", [])):
+            if not isinstance(entry, dict):
+                continue
+            source_path = entry.get("source_path")
+            if isinstance(source_path, str):
+                _validate_relative_metadata_path(
+                    source_path,
+                    report,
+                    path=index_path,
+                    field=f"entries.{index}.source_path",
+                )
+            input_hashes = entry.get("input_hashes")
+            if isinstance(input_hashes, list):
+                for input_index, item in enumerate(input_hashes):
+                    if not isinstance(item, dict):
+                        continue
+                    input_path = item.get("path")
+                    if isinstance(input_path, str):
+                        _validate_relative_metadata_path(
+                            input_path,
+                            report,
+                            path=index_path,
+                            field=f"entries.{index}.input_hashes.{input_index}.path",
+                        )
+
+
+def _validate_relative_metadata_path(
+    declared_path: str,
+    report: ValidationReport,
+    *,
+    path: Path,
+    field: str,
+) -> None:
+    raw_path = Path(declared_path)
+    if raw_path.is_absolute() or ".." in raw_path.parts:
+        report.add_error(
+            "Runtime metadata path must be relative and stay inside course source",
+            path=path,
+            field=field,
+            next_action="Use a generated relative path without .. segments",
+        )
+
+
+def _validate_manifest_relative_file(
+    root: Path,
+    declared_path: str,
+    report: ValidationReport,
+    *,
+    field: str,
+) -> None:
+    path = Path(declared_path)
+    if path.is_absolute():
+        report.add_error(
+            "Reference file path must be relative",
+            path=root,
+            field=field,
+            next_action="Use a generated artifact-relative reference path",
+        )
+        return
+    resolved = (root / path).resolve()
+    try:
+        resolved.relative_to(root.resolve())
+    except ValueError:
+        report.add_error(
+            "Reference file path escapes artifact root",
+            path=root,
+            field=field,
+            next_action="Keep reference file paths inside generated artifact output",
+        )
+        return
+    if not resolved.is_file():
+        report.add_error(
+            "Referenced artifact file is missing",
+            path=resolved,
+            field=field,
+            next_action="Rebuild the artifact so referenced files are copied",
+        )
 
 
 def _merge_report(target: ValidationReport, source: ValidationReport) -> None:

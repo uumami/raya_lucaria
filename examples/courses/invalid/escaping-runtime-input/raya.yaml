@@ -1,0 +1,6 @@
+course_id: escaping-runtime-input
+title: Escaping Runtime Input
+description: Invalid fixture for escaping runtime input diagnostics.
+language: en
+source: course
+artifact: artifact

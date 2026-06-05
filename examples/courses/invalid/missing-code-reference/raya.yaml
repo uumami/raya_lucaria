@@ -1,0 +1,6 @@
+course_id: missing-code-reference
+title: Missing Code Reference
+description: Invalid fixture for missing code reference diagnostics.
+language: en
+source: course
+artifact: artifact

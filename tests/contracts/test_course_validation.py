@@ -7,6 +7,12 @@ from raya_schema import validate_course
 
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
+REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
+RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
+INVALID_UNSUPPORTED_RUNTIME = ROOT / "examples" / "courses" / "invalid" / "unsupported-runtime-manager"
+INVALID_MISSING_RUNTIME_LOCKFILE = ROOT / "examples" / "courses" / "invalid" / "missing-runtime-lockfile"
+INVALID_ESCAPING_RUNTIME_INPUT = ROOT / "examples" / "courses" / "invalid" / "escaping-runtime-input"
+INVALID_UNSAFE_RUNTIME_DEFAULT = ROOT / "examples" / "courses" / "invalid" / "unsafe-runtime-default"
 
 
 def test_minimal_fixture_validates() -> None:
@@ -88,6 +94,96 @@ def test_root_assets_configuration_field_fails(tmp_path: Path) -> None:
         item.field == "assets" and "Unsupported course configuration field" in item.message
         for item in report.diagnostics
     )
+
+
+def test_root_code_configuration_field_fails(tmp_path: Path) -> None:
+    (tmp_path / "raya.yaml").write_text(
+        "\n".join(
+            [
+                "course_id: invalid-course",
+                "title: Invalid",
+                "description: Unsupported code field",
+                "language: en",
+                "source: course",
+                "artifact: artifact",
+                "code: code",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "course").mkdir()
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.field == "code" and "Unsupported course configuration field" in item.message
+        for item in report.diagnostics
+    )
+
+
+def test_root_runtime_configuration_field_fails(tmp_path: Path) -> None:
+    (tmp_path / "raya.yaml").write_text(
+        "\n".join(
+            [
+                "course_id: invalid-course",
+                "title: Invalid",
+                "description: Unsupported runtime field",
+                "language: en",
+                "source: course",
+                "artifact: artifact",
+                "runtime: runtime",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "course").mkdir()
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.field == "runtime" and "Unsupported course configuration field" in item.message
+        for item in report.diagnostics
+    )
+
+
+def test_runtime_fixture_validates_and_reads_metadata() -> None:
+    report = validate_course(RUNTIME_FIXTURE)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert RUNTIME_FIXTURE / "runtime" / "profiles.yaml" in report.files_read
+    assert RUNTIME_FIXTURE / "pyproject.toml" in report.files_read
+    assert RUNTIME_FIXTURE / "uv.lock" in report.files_read
+    assert RUNTIME_FIXTURE / "course" / "code" / "runtime_task.py" in report.files_read
+
+
+def test_unsupported_runtime_manager_fails() -> None:
+    report = validate_course(INVALID_UNSUPPORTED_RUNTIME)
+
+    assert not report.ok
+    assert any("Unsupported runtime manager" in item.message for item in report.diagnostics)
+
+
+def test_missing_runtime_lockfile_fails() -> None:
+    report = validate_course(INVALID_MISSING_RUNTIME_LOCKFILE)
+
+    assert not report.ok
+    assert any("Missing runtime lockfile" in item.message for item in report.diagnostics)
+
+
+def test_escaping_runtime_input_fails() -> None:
+    report = validate_course(INVALID_ESCAPING_RUNTIME_INPUT)
+
+    assert not report.ok
+    assert any("Runtime path escapes course root" in item.message for item in report.diagnostics)
+
+
+def test_unsafe_runtime_default_fails() -> None:
+    report = validate_course(INVALID_UNSAFE_RUNTIME_DEFAULT)
+
+    assert not report.ok
+    assert any("Unsafe default execution policy" in item.message for item in report.diagnostics)
 
 
 def test_unreadable_frontmatter_fails(tmp_path: Path) -> None:
@@ -252,6 +348,65 @@ def test_non_asset_support_link_fails(tmp_path: Path) -> None:
     assert not report.ok
     assert any(
         "non-asset support material" in item.message for item in report.diagnostics
+    )
+
+
+def test_code_and_notebook_reference_fixture_validates_and_reads_files() -> None:
+    report = validate_course(REFERENCE_FIXTURE)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert REFERENCE_FIXTURE / "course" / "code" / "shared_helper.py" in report.files_read
+    assert (
+        REFERENCE_FIXTURE / "course" / "notebooks" / "overview.ipynb"
+        in report.files_read
+    )
+    assert (
+        REFERENCE_FIXTURE / "course" / "1_analysis" / "code" / "clean_data.py"
+        in report.files_read
+    )
+    assert (
+        REFERENCE_FIXTURE
+        / "course"
+        / "1_analysis"
+        / "notebooks"
+        / "exploration.ipynb"
+        in report.files_read
+    )
+
+
+def test_missing_code_reference_fixture_fails() -> None:
+    report = validate_course(ROOT / "examples" / "courses" / "invalid" / "missing-code-reference")
+
+    assert not report.ok
+    assert any(
+        item.message == "Missing local code reference"
+        and item.field == "link:code/missing.py"
+        for item in report.diagnostics
+    )
+
+
+def test_malformed_notebook_reference_fixture_fails() -> None:
+    report = validate_course(
+        ROOT / "examples" / "courses" / "invalid" / "malformed-notebook-reference"
+    )
+
+    assert not report.ok
+    assert any(
+        item.message == "Unreadable notebook reference"
+        and item.field == "link:notebooks/bad.ipynb"
+        for item in report.diagnostics
+    )
+
+
+def test_cross_quantum_code_reference_fixture_fails() -> None:
+    report = validate_course(
+        ROOT / "examples" / "courses" / "invalid" / "cross-quantum-code-reference"
+    )
+
+    assert not report.ok
+    assert any(
+        item.message == "Local code reference crosses a learning quantum boundary"
+        for item in report.diagnostics
     )
 
 

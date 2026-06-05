@@ -7,12 +7,16 @@ from pathlib import Path
 from raya_schema import (
     inspect_artifact,
     validate_artifact_manifest,
+    validate_cache_index,
+    validate_execution_index,
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
+    validate_references_index,
+    validate_runtime_index,
 )
 from raya_static import build_course
 
@@ -20,6 +24,8 @@ from raya_static import build_course
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
+RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 
 
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
@@ -39,7 +45,12 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "data" / "navigation.json").exists()
     assert (artifact / "data" / "indices.json").exists()
     assert (artifact / "data" / "official.json").exists()
+    assert (artifact / "data" / "references.json").exists()
+    assert (artifact / "data" / "runtime.json").exists()
+    assert (artifact / "data" / "execution.json").exists()
+    assert (artifact / "data" / "cache.json").exists()
     assert (artifact / "assets").is_dir()
+    assert (artifact / "files").is_dir()
     assert artifact / "manifest.json" in report.outputs_written
 
 
@@ -58,6 +69,10 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         validate_navigation_index(artifact / "data" / "navigation.json"),
         validate_indices_index(artifact / "data" / "indices.json"),
         validate_official_index(artifact / "data" / "official.json"),
+        validate_references_index(artifact / "data" / "references.json"),
+        validate_runtime_index(artifact / "data" / "runtime.json"),
+        validate_execution_index(artifact / "data" / "execution.json"),
+        validate_cache_index(artifact / "data" / "cache.json"),
     ):
         assert validation_report.ok, [
             diagnostic.format() for diagnostic in validation_report.diagnostics
@@ -269,6 +284,133 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
     ).exists()
 
 
+def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
+    course = _copy_reference_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    references = json.loads(
+        (artifact / "data" / "references.json").read_text(encoding="utf-8")
+    )
+    root_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+    nested_html = (artifact / "site" / "analysis" / "index.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert manifest["data"]["references"] == "data/references.json"
+    assert manifest["files"] == "files"
+    assert len(references["references"]) == 5
+    assert {item["kind"] for item in references["references"]} == {"code", "notebook"}
+    assert all(
+        item["execution"]["status"] == "not-executed"
+        for item in references["references"]
+    )
+    assert any(
+        item["source_path"] == "1_analysis/code/clean_data.py"
+        and item["browser_path"] == "_raya/files/_source/1_analysis/code/clean_data.py"
+        and item["artifact_path"] == "files/_source/1_analysis/code/clean_data.py"
+        for item in references["references"]
+    )
+    assert (
+        artifact / "files" / "_source" / "1_analysis" / "code" / "clean_data.py"
+    ).exists()
+    assert (
+        artifact
+        / "site"
+        / "_raya"
+        / "files"
+        / "_source"
+        / "1_analysis"
+        / "notebooks"
+        / "exploration.ipynb"
+    ).exists()
+    assert 'href="_raya/files/_source/code/shared_helper.py"' in root_html
+    assert 'href="_raya/files/_source/notebooks/overview.ipynb"' in root_html
+    assert 'href="../_raya/files/_source/1_analysis/code/clean_data.py"' in nested_html
+    assert (
+        'href="../_raya/files/_source/1_analysis/notebooks/exploration.ipynb"'
+        in nested_html
+    )
+    assert '<section class="raya-reference-panel" aria-label="Referenced work">' in root_html
+    assert "These files are copied for reading and download. They were not executed during build." in root_html
+    assert "Reference fixture helper" in root_html
+    assert "1. markdown: # Overview notebook" in root_html
+    assert "ignored output" not in root_html
+
+
+def test_runtime_fixture_builds_metadata_without_execution(tmp_path: Path) -> None:
+    course = _copy_runtime_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    runtime = json.loads((artifact / "data" / "runtime.json").read_text(encoding="utf-8"))
+    execution = json.loads(
+        (artifact / "data" / "execution.json").read_text(encoding="utf-8")
+    )
+    cache = json.loads((artifact / "data" / "cache.json").read_text(encoding="utf-8"))
+    references = json.loads(
+        (artifact / "data" / "references.json").read_text(encoding="utf-8")
+    )
+    html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+
+    assert manifest["data"]["runtime"] == "data/runtime.json"
+    assert manifest["data"]["execution"] == "data/execution.json"
+    assert manifest["data"]["cache"] == "data/cache.json"
+    assert runtime["profiles"][0]["manager"] == "uv"
+    assert runtime["profiles"][0]["docker"]["compose_service"] == "dev"
+    assert runtime["defaults"] == {"policy": "never", "profile": "default"}
+    assert len(execution["targets"]) == 1
+    assert execution["targets"][0]["policy"] == "cache"
+    assert execution["targets"][0]["profile"] == "default"
+    assert execution["targets"][0]["status"] == "not-executed"
+    assert execution["targets"][0]["inputs"] == ["course/_assets/runtime-input.txt"]
+    assert len(cache["entries"]) == 1
+    assert cache["entries"][0]["policy"] == "cache"
+    assert len(cache["entries"][0]["cache_key"]) == 64
+    assert references["references"][0]["execution"]["policy"] == "cache"
+    assert references["references"][0]["execution"]["profile"] == "default"
+    assert "runtime_task.py" in html
+    assert "not executed during build" in html
+    assert not (course / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
+    assert not (artifact / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
+
+
+def test_reference_fixture_artifact_inspection_checks_copied_files(
+    tmp_path: Path,
+) -> None:
+    course = _copy_reference_fixture(tmp_path)
+
+    build_report = build_course(course)
+    assert build_report.ok, [
+        diagnostic.format() for diagnostic in build_report.diagnostics
+    ]
+    missing = (
+        course
+        / "artifact"
+        / "site"
+        / "_raya"
+        / "files"
+        / "_source"
+        / "code"
+        / "shared_helper.py"
+    )
+    missing.unlink()
+
+    inspect_report = inspect_artifact(course / "artifact")
+
+    assert not inspect_report.ok
+    assert any(
+        item.message == "Referenced artifact file is missing"
+        for item in inspect_report.diagnostics
+    )
+
+
 def test_external_and_fragment_links_are_not_rewritten_as_static_assets(
     tmp_path: Path,
 ) -> None:
@@ -402,4 +544,16 @@ def _copy_minimal(tmp_path: Path) -> Path:
 def _copy_render_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    return course
+
+
+def _copy_reference_fixture(tmp_path: Path) -> Path:
+    course = tmp_path / "reference-fixture"
+    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    return course
+
+
+def _copy_runtime_fixture(tmp_path: Path) -> Path:
+    course = tmp_path / "runtime-fixture"
+    shutil.copytree(RUNTIME_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     return course

@@ -140,3 +140,45 @@ Artifacts SHALL preserve rich rendering outputs as generated static resources an
 #### Scenario: Rendered HTML remains non-authoritative
 - **WHEN** future dynamic services or agents need course structure, navigation, indexes, links, or official learning objects
 - **THEN** they MUST continue reading manifest-declared data rather than treating rich rendered HTML as canonical source truth
+
+### Requirement: Code and notebook reference artifact surfaces
+Artifacts SHALL expose referenced code and notebook files through manifest-centered generated surfaces without making rendered HTML authoritative.
+
+#### Scenario: Reference manifest data declared
+- **WHEN** a build generates code or notebook reference data
+- **THEN** `manifest.json` MUST declare the reference data path
+
+#### Scenario: Artifact file storage present
+- **WHEN** a build copies referenced code or notebook files
+- **THEN** artifact-level file storage MUST preserve those generated copies for inspection and future local tooling
+
+#### Scenario: Browser file storage present
+- **WHEN** a build copies referenced code or notebook files for static pages
+- **THEN** browser-facing copies MUST live under the artifact static read path and use deployment-neutral URLs
+
+#### Scenario: Rendered HTML remains non-authoritative for references
+- **WHEN** future agents, graph tools, launchers, or execution managers need reference metadata
+- **THEN** they MUST read manifest-declared reference data rather than rendered HTML
+
+### Requirement: Runtime and execution metadata surfaces
+Course artifacts SHALL expose runtime profiles, execution plans, and cache metadata through manifest-declared generated data surfaces without treating rendered HTML as authority.
+
+#### Scenario: Runtime data declared
+- **WHEN** a build generates runtime profile metadata
+- **THEN** `manifest.json` MUST declare the runtime data path
+
+#### Scenario: Execution plan data declared
+- **WHEN** a build generates execution policy metadata for referenced code or notebooks
+- **THEN** `manifest.json` MUST declare the execution plan data path
+
+#### Scenario: Cache metadata declared
+- **WHEN** a build generates cache-key metadata
+- **THEN** `manifest.json` MUST declare the cache metadata path
+
+#### Scenario: Metadata remains generated
+- **WHEN** runtime, execution, or cache data is present in an artifact
+- **THEN** it MUST be treated as rebuildable generated output derived from source files and accepted contracts
+
+#### Scenario: Metadata does not imply execution
+- **WHEN** runtime, execution, or cache data is present in an artifact
+- **THEN** the artifact MUST distinguish planned or not-executed targets from executed outputs, trusted frozen outputs, logs, or refreshed cache entries

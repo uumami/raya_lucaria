@@ -13,6 +13,8 @@ from raya_static import build_course
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "docs"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
+RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 DOCS_FIXTURE = ROOT / "examples" / "docs" / "documentation-fixture"
 ORDERED_FIXTURE = ROOT / "examples" / "courses" / "ordered-fixture"
 
@@ -55,6 +57,69 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert "Raya Lucaria render fixture colocated asset" in local_asset_text
     assert ".raya-code-block" in render_css
     assert ".math.block" in render_css
+
+
+def test_reference_fixture_static_read_path_serves_referenced_files(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path / "reference-fixture"
+    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+
+    with _serve(site) as base_url:
+        root_html = _fetch_text(f"{base_url}/index.html")
+        nested_html = _fetch_text(f"{base_url}/analysis/index.html")
+        shared_helper = _fetch_text(f"{base_url}/_raya/files/_source/code/shared_helper.py")
+        cleaning_script = _fetch_text(
+            f"{base_url}/_raya/files/_source/1_analysis/code/clean_data.py"
+        )
+        overview_notebook = _fetch_text(
+            f"{base_url}/_raya/files/_source/notebooks/overview.ipynb"
+        )
+        exploration_notebook = _fetch_text(
+            f"{base_url}/_raya/files/_source/1_analysis/notebooks/exploration.ipynb"
+        )
+
+    assert "Referenced Work" in root_html
+    assert 'href="_raya/files/_source/code/shared_helper.py"' in root_html
+    assert 'href="_raya/files/_source/notebooks/overview.ipynb"' in root_html
+    assert 'href="../_raya/files/_source/1_analysis/code/clean_data.py"' in nested_html
+    assert (
+        'href="../_raya/files/_source/1_analysis/notebooks/exploration.ipynb"'
+        in nested_html
+    )
+    assert "not executed during build" in root_html
+    assert "def shared_value" in shared_helper
+    assert "def clean_rows" in cleaning_script
+    assert "Overview notebook" in overview_notebook
+    assert "Exploration" in exploration_notebook
+
+
+def test_runtime_fixture_static_read_path_remains_static(tmp_path: Path) -> None:
+    course = tmp_path / "runtime-fixture"
+    shutil.copytree(RUNTIME_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+
+    with _serve(site) as base_url:
+        root_html = _fetch_text(f"{base_url}/index.html")
+        runtime_task = _fetch_text(
+            f"{base_url}/_raya/files/_source/code/runtime_task.py"
+        )
+
+    assert "Runtime Metadata Fixture" in root_html
+    assert 'href="_raya/files/_source/code/runtime_task.py"' in root_html
+    assert "not executed during build" in root_html
+    assert "SHOULD_NOT_EXIST_RUNTIME_SENTINEL" in runtime_task
+    assert not (course / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
+    assert not (course / "artifact" / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
 
 
 def test_documentation_fixture_static_read_path_serves_pages_and_assets(

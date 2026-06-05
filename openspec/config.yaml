@@ -78,6 +78,23 @@ context: |
   `site/_raya/`. This baseline must remain static-first and must not execute
   code, notebooks, kernels, or runtime profiles.
 
+  Code and notebook references are the Phase 2 static baseline: `.py` links
+  under `code/` and `.ipynb` links under `notebooks/` validate before build,
+  remain private source support owned by a learning quantum or accepted
+  ancestor, copy into `artifact/files/` and `artifact/site/_raya/files/`, write
+  manifest-declared `data/references.json`, and record `not-executed` status.
+  Cross-quantum reuse, execution, kernels, runtime profiles, cache refresh,
+  trusted outputs, and browser execution require later accepted proposals.
+
+  Runtime profile and cache metadata are the Phase 3 non-executing baseline:
+  root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml` live beside
+  `course/`; `uv` is the default profile manager; Docker plus `uv` is recorded
+  as reproducibility metadata; execution policies are explicit; generated
+  `data/runtime.json`, `data/execution.json`, and `data/cache.json` describe
+  profiles, plans, cache keys, and `not-executed` status. Validation, build,
+  artifact inspection, and static serving must not call `uv`, Docker, kernels,
+  scripts, notebooks, package installers, or cache refreshes.
+
   Legacy material is historical reference. Salvage principles intentionally,
   define new contracts, and test against current specs. Do not reintroduce old
   source names, renderer stacks, generated JSON shapes, examples, or workflow
@@ -95,6 +112,8 @@ rules:
     - Preserve convention-first source ordering and stable ID references when changes affect course content, navigation, generated indexes, graph data, or study objects.
     - Preserve `source: course`, ordered `course/` quanta, colocated `_official/`, colocated `_assets/`, and support-directory privacy when changes affect source-course structure.
     - Reference the rendering and execution phase plan when changes affect rich rendering, code, notebooks, runtimes, cache behavior, or executable examples.
+    - Separate static code/notebook reference behavior from execution behavior when proposals touch scripts, notebooks, kernels, runtimes, cache, or outputs.
+    - Keep runtime/cache proposals metadata-only unless the proposal explicitly opens local execution as a later phase.
   specs:
     - Write testable requirements derived from foundation decisions.
     - Separate required baseline behavior from future or optional capabilities.

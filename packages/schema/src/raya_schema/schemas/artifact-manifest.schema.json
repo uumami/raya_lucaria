@@ -72,8 +72,28 @@
         "official": {
           "type": "string",
           "minLength": 1
+        },
+        "references": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cache": {
+          "type": "string",
+          "minLength": 1
         }
       }
+    },
+    "files": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }

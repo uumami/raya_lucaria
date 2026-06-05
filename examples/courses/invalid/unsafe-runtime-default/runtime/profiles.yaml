@@ -1,0 +1,10 @@
+profiles:
+  default:
+    manager: uv
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock
+execution:
+  defaults:
+    policy: always
+    profile: default

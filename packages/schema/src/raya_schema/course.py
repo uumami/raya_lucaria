@@ -17,6 +17,12 @@ from raya_schema.links import (
     stable_markdown_id,
 )
 from raya_schema.official import discover_official_objects
+from raya_schema.references import (
+    notebook_validation_error,
+    reference_format,
+    resolve_course_reference,
+)
+from raya_schema.runtime import load_runtime_model
 from raya_schema.schema_loader import validator_for
 from raya_schema.yaml_io import load_yaml_file
 
@@ -95,6 +101,7 @@ def validate_course(course_path: str | Path) -> ValidationReport:
         content_model=content_model,
         report=report,
     )
+    load_runtime_model(root, report)
 
     if report.ok:
         report.add_info(
@@ -128,6 +135,26 @@ def resolve_course_source_root(
             path=config_path,
             field="assets",
             next_action="Put source assets under course/_assets/ instead of declaring a root assets directory",
+        )
+        return None
+    for field_name in ("code", "notebooks"):
+        if field_name in config:
+            report.add_error(
+                "Unsupported course configuration field",
+                path=config_path,
+                field=field_name,
+                next_action=(
+                    f"Put {field_name}/ support directories under course/ "
+                    "beside the quantum they support"
+                ),
+            )
+            return None
+    if "runtime" in config:
+        report.add_error(
+            "Unsupported course configuration field",
+            path=config_path,
+            field="runtime",
+            next_action="Put runtime profiles under runtime/profiles.yaml beside course/",
         )
         return None
 
@@ -248,6 +275,18 @@ def _validate_markdown_source_links(
                 )
             continue
 
+        if kind in {"code", "notebook"}:
+            _validate_code_or_notebook_reference(
+                md_path=md_path,
+                link_target=link.target,
+                target_text=target_text,
+                kind=kind,
+                course_root=course_root,
+                source_dir=source_dir,
+                report=report,
+            )
+            continue
+
         asset_ref = resolve_course_asset_reference(
             source_path=md_path,
             course_root=course_root,
@@ -288,6 +327,93 @@ def _validate_markdown_source_links(
             )
         else:
             report.read_file(asset_ref.target_path)
+
+
+def _validate_code_or_notebook_reference(
+    *,
+    md_path: Path,
+    link_target: str,
+    target_text: str,
+    kind: str,
+    course_root: Path,
+    source_dir: Path,
+    report: ValidationReport,
+) -> None:
+    field = f"link:{link_target}"
+    reference = resolve_course_reference(
+        source_path=md_path,
+        course_root=course_root,
+        source_dir=source_dir,
+        target_path=target_text,
+        kind=kind,
+    )
+    label = "notebook" if kind == "notebook" else "code"
+    support_dir = "notebooks/" if kind == "notebook" else "code/"
+    if reference.status == "outside":
+        report.add_error(
+            f"Local {label} reference escapes the authored source tree",
+            path=md_path,
+            field=field,
+            next_action=(
+                f"Move the file under an own/ancestor {support_dir} directory "
+                "inside the authored source tree"
+            ),
+        )
+        return
+    if reference.status == "blocked":
+        report.add_error(
+            f"Local {label} reference points to private support material",
+            path=md_path,
+            field=field,
+            next_action=(
+                "Do not link rendered pages directly into _official/, _drafts/, "
+                "drafts/, _partials/, _assets/, or other private support paths"
+            ),
+        )
+        return
+    if reference.status == "cross_owner":
+        report.add_error(
+            f"Local {label} reference crosses a learning quantum boundary",
+            path=md_path,
+            field=field,
+            next_action=(
+                f"Move the file under an own/ancestor {support_dir} directory "
+                "or propose an explicit shared-code contract"
+            ),
+        )
+        return
+    if reference.status != "referenced":
+        report.add_error(
+            f"Local {label} reference is outside supported {support_dir} roots",
+            path=md_path,
+            field=field,
+            next_action=(
+                f"Move the file under an own/ancestor {support_dir} directory "
+                "or update the link"
+            ),
+        )
+        return
+    if not reference.target_path.is_file():
+        report.add_error(
+            f"Missing local {label} reference",
+            path=md_path,
+            field=field,
+            next_action=(
+                f"Create {reference.target_path} or update the link to an "
+                f"existing {reference_format(kind)} file under {support_dir}"
+            ),
+        )
+        return
+    report.read_file(reference.target_path)
+    if kind == "notebook":
+        error = notebook_validation_error(reference.target_path)
+        if error is not None:
+            report.add_error(
+                "Unreadable notebook reference",
+                path=md_path,
+                field=field,
+                next_action=f"Fix {reference.target_path}: {error}",
+            )
 
 
 def _markdown_body(path: Path) -> str:

@@ -23,6 +23,10 @@ Docker Compose is the reference development workflow. Local `uv` execution remai
 - `docker compose run --rm dev uv run raya course --help` shows course subcommands.
 - `docker compose run --rm dev uv run raya validate examples/courses/minimal` validates the minimal fixture.
 - `docker compose run --rm dev uv run raya build examples/courses/minimal` builds the minimal fixture artifact.
+- `docker compose run --rm dev uv run raya validate examples/courses/reference-fixture` validates the code/notebook reference fixture.
+- `docker compose run --rm dev uv run raya build examples/courses/reference-fixture` builds the code/notebook reference fixture.
+- `docker compose run --rm dev uv run raya validate examples/courses/runtime-fixture` validates the runtime metadata fixture.
+- `docker compose run --rm dev uv run raya build examples/courses/runtime-fixture` builds the runtime metadata fixture.
 - `docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact` inspects the generated artifact through its manifest.
 - `docker compose run --rm dev uv run pytest -q` runs tests through the reference container.
 - `./scripts/smoke-test.sh` validates, builds, and inspects a temporary external course copy locally and through Docker without adding course output to the repository.
@@ -43,6 +47,10 @@ Generated artifacts distinguish machine surfaces from browser-facing static reso
 
 Course validation checks local Markdown source links and local asset references before build. Local `.md` links must point under the configured authored source root. Local asset references must point under the page's own `_assets/` directory or an ancestor `_assets/` directory inside the authored source tree; rendered pages must not link into private support paths such as `_official/`, `_drafts/`, or `_partials/`. External URLs, `mailto:`, `tel:`, and fragment-only links do not fail local validation in this baseline.
 
+Local `.py` and `.ipynb` references are static source support, not rendered pages and not execution requests. Keep them under colocated `code/` and `notebooks/` directories owned by the nearest learning quantum or an allowed ancestor. Validation must reject missing files, malformed notebooks, private support paths, path escapes, and cross-quantum support references. Builds copy referenced files to `artifact/files/` and `artifact/site/_raya/files/`, and write manifest-declared `data/references.json` with `not-executed` status.
+
+Runtime metadata is source support outside learning order. Keep `runtime/profiles.yaml`, root `pyproject.toml`, and `uv.lock` beside `course/`; do not put runtime profiles inside ordered pages. Runtime validation and build output may read metadata and write `data/runtime.json`, `data/execution.json`, and `data/cache.json`, but must not execute scripts, notebooks, `uv`, Docker, kernels, package installers, or cache refreshes.
+
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
 
 Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. Avoid carrying forward old source directory names, old generated JSON shapes, old renderer stacks, old theme systems, or old examples as architecture.
@@ -58,6 +66,10 @@ Use temporary directories for scenario tests that need throwaway courses. The ex
 Test local source links and local asset references with throwaway courses, not permanent generated outputs. Broken local references should fail validation before build writes a successful artifact.
 
 Changes to rendered HTML, browser-facing resources, deployment portability, or static site behavior should include e2e/static-read-path tests. Use representative fixture content such as `examples/courses/render-fixture`, label it as fixture material, and keep `docs/foundation/` as the authority surface.
+
+Use `examples/courses/reference-fixture` for code/notebook reference behavior. It is fixture material for copied files, rewritten links, static previews, and `references.json`; it must not become hidden pedagogy or an execution contract.
+
+Use `examples/courses/runtime-fixture` for runtime profile and cache metadata behavior. It is fixture material for metadata, policies, cache keys, and no-execution sentinels; it must not become an execution contract.
 
 Changes that affect contributors/collaborators, professors, students, or agents should include role-documentation impact. If role docs change, update both the English role directory under `docs/guides/en/` and the Spanish role directory under `docs/guides/es/`, or explicitly track the deferred language page in the OpenSpec tasks.
 

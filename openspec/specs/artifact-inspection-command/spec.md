@@ -37,3 +37,41 @@ Artifact inspection SHALL use predictable diagnostics suitable for humans and co
 #### Scenario: Inspection failure
 - **WHEN** artifact inspection finds malformed JSON, invalid schema data, or missing manifest-declared indexes
 - **THEN** it MUST fail with nonzero CLI exit behavior and diagnostics naming concrete files or fields
+
+### Requirement: Inspect code and notebook reference artifacts
+Artifact inspection SHALL validate manifest-declared code and notebook reference data and copied referenced files.
+
+#### Scenario: Reference data validates
+- **WHEN** artifact inspection finds manifest-declared reference data
+- **THEN** it MUST validate that data against the accepted reference data schema
+
+#### Scenario: Referenced artifact file exists
+- **WHEN** reference data declares an artifact-level file path
+- **THEN** artifact inspection MUST verify that the copied file exists under generated artifact file storage
+
+#### Scenario: Referenced browser file exists
+- **WHEN** reference data declares a browser-facing file path
+- **THEN** artifact inspection MUST verify that the copied file exists under the artifact static read path
+
+#### Scenario: Missing referenced file fails inspection
+- **WHEN** manifest-declared reference data points to a missing copied file
+- **THEN** artifact inspection MUST fail with an actionable diagnostic
+
+### Requirement: Inspect runtime and cache metadata
+Artifact inspection SHALL validate manifest-declared runtime, execution-plan, and cache metadata without executing targets or resolving environments.
+
+#### Scenario: Runtime metadata validates
+- **WHEN** artifact inspection finds manifest-declared runtime profile data
+- **THEN** it MUST validate that data against the accepted runtime metadata schema
+
+#### Scenario: Execution plan metadata validates
+- **WHEN** artifact inspection finds manifest-declared execution plan data
+- **THEN** it MUST validate policy values, target references, runtime profile references, and not-executed status fields against the accepted execution metadata schema
+
+#### Scenario: Cache metadata validates
+- **WHEN** artifact inspection finds manifest-declared cache metadata
+- **THEN** it MUST validate cache-key records and declared hash fields against the accepted cache metadata schema
+
+#### Scenario: Inspection remains non-executing
+- **WHEN** artifact inspection validates runtime, execution, or cache metadata
+- **THEN** it MUST NOT call `uv`, Docker, kernels, package installers, remote runners, or executable source files

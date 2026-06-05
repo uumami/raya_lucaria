@@ -1,0 +1,6 @@
+course_id: unsupported-runtime-manager
+title: Unsupported Runtime Manager
+description: Invalid fixture for unsupported runtime manager diagnostics.
+language: en
+source: course
+artifact: artifact

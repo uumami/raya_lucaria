@@ -13,6 +13,8 @@ from typing import Any
 from raya_schema import (
     ValidationReport,
     validate_artifact_manifest,
+    validate_cache_index,
+    validate_execution_index,
     validate_indices_index,
     validate_course,
     validate_links_index,
@@ -20,6 +22,8 @@ from raya_schema import (
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
+    validate_references_index,
+    validate_runtime_index,
 )
 from raya_schema.content import ContentModel, ContentPage, resolve_course_content
 from raya_schema.course import resolve_course_source_root
@@ -34,6 +38,20 @@ from raya_schema.links import (
     stable_markdown_id,
 )
 from raya_schema.official import discover_official_objects
+from raya_schema.references import (
+    SourceReference,
+    notebook_validation_error,
+    reference_format,
+    resolve_course_reference,
+)
+from raya_schema.runtime import (
+    RuntimeModel,
+    cache_index,
+    execution_index,
+    load_runtime_model,
+    reference_execution_metadata,
+    runtime_index,
+)
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
@@ -47,6 +65,7 @@ ARTIFACT_VERSION = "0.1"
 SOURCE_SCHEMA_VERSION = "0.1"
 STATIC_RESOURCE_DIR = "_raya"
 STATIC_ASSETS_PATH = Path(STATIC_RESOURCE_DIR) / "assets"
+STATIC_FILES_PATH = Path(STATIC_RESOURCE_DIR) / "files"
 
 
 def build_course(course_path: str | Path) -> ValidationReport:
@@ -69,6 +88,9 @@ def build_course(course_path: str | Path) -> ValidationReport:
     if source_root is None:
         return report
     source_dir = source_root
+    runtime_model = load_runtime_model(root, report)
+    if not report.ok:
+        return report
     artifact_dir = (root / str(config["artifact"])).resolve()
 
     if _is_unsafe_artifact_dir(root, source_dir, artifact_dir):
@@ -106,8 +128,17 @@ def build_course(course_path: str | Path) -> ValidationReport:
     site_dir = artifact_dir / "site"
     data_dir = artifact_dir / "data"
     artifact_assets_dir = artifact_dir / "assets"
+    artifact_files_dir = artifact_dir / "files"
     site_assets_dir = site_dir / STATIC_ASSETS_PATH
-    for directory in (site_dir, data_dir, artifact_assets_dir, site_assets_dir):
+    site_files_dir = site_dir / STATIC_FILES_PATH
+    for directory in (
+        site_dir,
+        data_dir,
+        artifact_assets_dir,
+        artifact_files_dir,
+        site_assets_dir,
+        site_files_dir,
+    ):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
     _write_rich_render_resources(site_dir, report)
@@ -118,6 +149,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
         **content_model.pages_by_alias,
     }
     official_counts = _official_counts(official_objects)
+    references = _collect_source_references(
+        course_id,
+        content_model,
+        root,
+        source_dir,
+        runtime_model,
+        report,
+    )
+    references_by_page = _references_by_page(references)
 
     for page in pages:
         output_file = site_dir / page.output_path
@@ -133,6 +173,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
                 course_title=str(config["title"]),
                 language=str(config["language"]),
                 official_counts=official_counts,
+                page_references=references_by_page.get(page.id, []),
             ),
             encoding="utf-8",
         )
@@ -148,6 +189,12 @@ def build_course(course_path: str | Path) -> ValidationReport:
         site_assets_dir,
         report,
     )
+    copied_reference_files = _copy_reference_files(
+        references,
+        artifact_files_dir,
+        site_files_dir,
+        report,
+    )
 
     pages_index = _pages_index(course_id, pages)
     quanta_index = _quanta_index(course_id, pages)
@@ -161,6 +208,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
     navigation_index = _navigation_index(course_id, content_model)
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
+    references_index = _references_index(course_id, references)
+    runtime_data = runtime_index(course_id, runtime_model)
+    execution_data = execution_index(course_id, references, runtime_model)
+    cache_data = cache_index(
+        course_id,
+        references,
+        runtime_model,
+        schema_version=SOURCE_SCHEMA_VERSION,
+    )
 
     _write_json(data_dir / "pages.json", pages_index, report)
     _write_json(data_dir / "quanta.json", quanta_index, report)
@@ -168,6 +224,10 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "navigation.json", navigation_index, report)
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
+    _write_json(data_dir / "references.json", references_index, report)
+    _write_json(data_dir / "runtime.json", runtime_data, report)
+    _write_json(data_dir / "execution.json", execution_data, report)
+    _write_json(data_dir / "cache.json", cache_data, report)
 
     manifest = {
         "artifact_version": ARTIFACT_VERSION,
@@ -183,8 +243,13 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "navigation": "data/navigation.json",
             "indices": "data/indices.json",
             "official": "data/official.json",
+            "references": "data/references.json",
+            "runtime": "data/runtime.json",
+            "execution": "data/execution.json",
+            "cache": "data/cache.json",
         },
         "assets": "assets",
+        "files": "files",
         "generated_by": "Glintstone minimal builder",
     }
     _write_json(artifact_dir / "manifest.json", manifest, report)
@@ -205,6 +270,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
             report.add_info(
                 f"Copied {copied_site_source_assets} browser source asset file(s)",
                 path=site_assets_dir,
+            )
+        if copied_reference_files:
+            report.add_info(
+                f"Copied {copied_reference_files} referenced code/notebook file(s)",
+                path=artifact_files_dir,
             )
     return report
 
@@ -241,7 +311,7 @@ def _is_unsafe_artifact_dir(
 
 def _replace_generated_output(artifact_dir: Path, report: ValidationReport) -> None:
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    for relative in ("site", "data", "assets"):
+    for relative in ("site", "data", "assets", "files"):
         path = artifact_dir / relative
         if path.exists():
             shutil.rmtree(path)
@@ -281,6 +351,7 @@ def _render_page(
     course_title: str,
     language: str,
     official_counts: dict[str, dict[str, int]],
+    page_references: list[SourceReference],
 ) -> str:
     nav_items = []
     for target in content_model.pages:
@@ -328,6 +399,7 @@ def _render_page(
                     source_dir,
                 ),
             ),
+            _render_reference_panel(page, page_references),
             "</main>",
             sequence_nav,
             "</body>",
@@ -359,6 +431,10 @@ def _resolve_markdown_href(
             return _relative_href(page.output_path, target_page.output_path) + fragment
     if kind == "asset":
         target_href = _target_asset_href(page, href, course_root, source_dir)
+        if target_href is not None:
+            return target_href + fragment
+    if kind in {"code", "notebook"}:
+        target_href = _target_reference_href(page, href, course_root, source_dir, kind)
         if target_href is not None:
             return target_href + fragment
     return href
@@ -679,6 +755,211 @@ def _target_asset_href(
     return _relative_href(page.output_path, static_asset_path)
 
 
+def _target_reference_href(
+    page: ContentPage,
+    target: str,
+    course_root: Path,
+    source_dir: Path,
+    kind: str,
+) -> str | None:
+    reference = resolve_course_reference(
+        source_path=page.source_path,
+        course_root=course_root,
+        source_dir=source_dir,
+        target_path=markdown_link_path(target),
+        kind=kind,
+    )
+    if reference.status != "referenced" or reference.output_path is None:
+        return None
+    static_file_path = (STATIC_FILES_PATH / reference.output_path).as_posix()
+    return _relative_href(page.output_path, static_file_path)
+
+
+def _collect_source_references(
+    course_id: str,
+    content_model: ContentModel,
+    course_root: Path,
+    source_dir: Path,
+    runtime_model: RuntimeModel,
+    report: ValidationReport,
+) -> list[SourceReference]:
+    references: list[SourceReference] = []
+    seen: set[tuple[str, Path]] = set()
+    for page in content_model.pages:
+        for link in extract_markdown_links(page.body):
+            kind = classify_markdown_target(link.target)
+            if kind not in {"code", "notebook"}:
+                continue
+            resolved = resolve_course_reference(
+                source_path=page.source_path,
+                course_root=course_root,
+                source_dir=source_dir,
+                target_path=markdown_link_path(link.target),
+                kind=kind,
+            )
+            if (
+                resolved.status != "referenced"
+                or resolved.output_path is None
+                or not resolved.target_path.is_file()
+            ):
+                continue
+            if kind == "notebook" and notebook_validation_error(resolved.target_path):
+                continue
+            key = (page.id, resolved.target_path.resolve())
+            if key in seen:
+                continue
+            seen.add(key)
+            source_rel_path = resolved.target_path.relative_to(source_dir).as_posix()
+            artifact_path = (Path("files") / resolved.output_path).as_posix()
+            browser_path = (STATIC_FILES_PATH / resolved.output_path).as_posix()
+            execution = reference_execution_metadata(
+                reference_source_path=resolved.target_path,
+                model=runtime_model,
+            )
+            references.append(
+                SourceReference(
+                    id=_reference_id(course_id, page.id, resolved.output_path),
+                    page_id=page.id,
+                    page_source_path=page.rel_path,
+                    label=link.label,
+                    target=link.target,
+                    kind=kind,
+                    format=reference_format(kind),
+                    source_path=resolved.target_path,
+                    source_rel_path=source_rel_path,
+                    output_path=resolved.output_path,
+                    artifact_path=artifact_path,
+                    browser_path=browser_path,
+                    sha256=_file_sha256(resolved.target_path),
+                    execution_policy=execution["policy"],
+                    runtime_profile=execution.get("profile"),
+                )
+            )
+            report.read_file(resolved.target_path)
+    return references
+
+
+def _references_by_page(
+    references: list[SourceReference],
+) -> dict[str, list[SourceReference]]:
+    grouped: dict[str, list[SourceReference]] = defaultdict(list)
+    for reference in references:
+        grouped[reference.page_id].append(reference)
+    return dict(grouped)
+
+
+def _copy_reference_files(
+    references: list[SourceReference],
+    artifact_files_dir: Path,
+    site_files_dir: Path,
+    report: ValidationReport,
+) -> int:
+    copied = 0
+    seen: set[str] = set()
+    for reference in references:
+        if reference.output_path in seen:
+            continue
+        seen.add(reference.output_path)
+        for root in (artifact_files_dir, site_files_dir):
+            target_path = root / reference.output_path
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(reference.source_path, target_path)
+            report.wrote_output(target_path)
+        copied += 1
+    return copied
+
+
+def _references_index(
+    course_id: str,
+    references: list[SourceReference],
+) -> dict[str, Any]:
+    return {
+        "course_id": course_id,
+        "references": [reference.to_index_item() for reference in references],
+    }
+
+
+def _render_reference_panel(
+    page: ContentPage,
+    references: list[SourceReference],
+) -> str:
+    if not references:
+        return ""
+    parts = ['<section class="raya-reference-panel" aria-label="Referenced work">']
+    parts.append("<h2>Referenced Work</h2>")
+    parts.append("<p>These files are copied for reading and download. They were not executed during build.</p>")
+    parts.append("<ul>")
+    for reference in references:
+        href = _relative_href(page.output_path, reference.browser_path)
+        label = "Notebook" if reference.kind == "notebook" else "Script"
+        parts.append(f'<li class="raya-reference-item raya-reference-{html.escape(reference.kind)}">')
+        parts.append(
+            f'<p><strong>{label}</strong>: '
+            f'<a href="{html.escape(href)}">{html.escape(Path(reference.source_rel_path).name)}</a> '
+            f'<span class="raya-reference-status">not executed</span></p>'
+        )
+        preview = _reference_preview(reference)
+        if preview:
+            parts.append(preview)
+        parts.append("</li>")
+    parts.append("</ul>")
+    parts.append("</section>")
+    return "\n".join(parts)
+
+
+def _reference_preview(reference: SourceReference) -> str:
+    if reference.kind == "code":
+        text = reference.source_path.read_text(encoding="utf-8", errors="replace")
+        excerpt = "\n".join(text.splitlines()[:12])
+        return (
+            '<pre class="raya-reference-preview"><code>'
+            f"{html.escape(excerpt)}"
+            "</code></pre>"
+            if excerpt
+            else ""
+        )
+    if reference.kind == "notebook":
+        try:
+            data = json.loads(reference.source_path.read_text(encoding="utf-8"))
+        except Exception:
+            return ""
+        cells = data.get("cells")
+        if not isinstance(cells, list):
+            return ""
+        lines: list[str] = []
+        for index, cell in enumerate(cells[:5], start=1):
+            if not isinstance(cell, dict):
+                continue
+            cell_type = str(cell.get("cell_type") or "cell")
+            source = cell.get("source")
+            if isinstance(source, list):
+                source_text = "".join(str(part) for part in source)
+            elif isinstance(source, str):
+                source_text = source
+            else:
+                source_text = ""
+            first_line = next(
+                (line.strip() for line in source_text.splitlines() if line.strip()),
+                "",
+            )
+            lines.append(f"{index}. {cell_type}: {first_line}")
+        if not lines:
+            return ""
+        return (
+            '<pre class="raya-reference-preview"><code>'
+            f"{html.escape(chr(10).join(lines))}"
+            "</code></pre>"
+        )
+    return ""
+
+
+def _reference_id(course_id: str, page_id: str, output_path: str) -> str:
+    digest = hashlib.sha256(
+        f"{course_id}\0{page_id}\0{output_path}".encode("utf-8")
+    ).hexdigest()[:12]
+    return f"{page_id}:{digest}"
+
+
 def _official_index(
     course_id: str,
     official_objects: list[dict[str, Any]],
@@ -782,6 +1063,10 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_navigation_index(artifact_dir / "data" / "navigation.json"),
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
+        validate_references_index(artifact_dir / "data" / "references.json"),
+        validate_runtime_index(artifact_dir / "data" / "runtime.json"),
+        validate_execution_index(artifact_dir / "data" / "execution.json"),
+        validate_cache_index(artifact_dir / "data" / "cache.json"),
     ):
         _merge_report(report, generated_report)
 
@@ -800,6 +1085,12 @@ def _source_hash(
 ) -> str:
     digest = hashlib.sha256()
     source_files = [root / "raya.yaml"]
+    for support_file in (root / "pyproject.toml", root / "uv.lock"):
+        if support_file.exists():
+            source_files.append(support_file)
+    runtime_dir = root / "runtime"
+    if runtime_dir.exists():
+        source_files.extend(path for path in runtime_dir.rglob("*") if path.is_file())
     if source_dir.exists():
         source_files.extend(path for path in source_dir.rglob("*") if path.is_file())
     for path in sorted(source_files):
@@ -807,6 +1098,12 @@ def _source_hash(
         digest.update(b"\0")
         digest.update(path.read_bytes())
         digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    digest.update(path.read_bytes())
     return digest.hexdigest()
 
 

@@ -1,0 +1,6 @@
+profiles:
+  default:
+    manager: conda
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock

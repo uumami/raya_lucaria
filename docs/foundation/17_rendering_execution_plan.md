@@ -149,11 +149,11 @@ Minimum work:
 
 - source conventions for code files and notebooks beside quanta,
 - validation for referenced `.py` and `.ipynb` files,
-- static rendering of code links, notebook links, and declared outputs,
+- static rendering of code links, notebook links, and safe source previews,
 - artifact data for code/notebook references,
 - examples and e2e tests that prove local and web static paths work.
 
-Proposal-ready target:
+Accepted baseline:
 
 - Use `code/` and `notebooks/` as user-facing support directories owned by the nearest learning quantum.
 - Do not put runnable code or notebooks under `_assets/`; assets are opaque support files, while code and notebooks need semantic validation and future execution metadata.
@@ -161,9 +161,11 @@ Proposal-ready target:
 - Treat code and notebook files as authored source support material, not rendered navigation entries.
 - Let ordinary Markdown links reference supported files first. Add richer reference syntax only when normal links cannot express a needed behavior.
 - Validate referenced files before build and diagnose missing, unsupported, private, or path-escaping references.
-- Copy referenced files into artifact-level inspection storage and browser-facing static storage with deployment-neutral links.
-- Generate machine-readable reference data so future agents, launchers, graph tools, and execution managers do not scrape rendered HTML.
-- Render source previews safely: code source can be displayed; notebooks can show a static outline or cell-source preview; neither path executes.
+- Own-or-ancestor `code/` and `notebooks/` references are accepted; cross-quantum references are invalid until a later shared-code contract exists.
+- Copy referenced files into `artifact/files/` for artifact inspection and `artifact/site/_raya/files/` for browser-facing static storage.
+- Generate manifest-declared `artifact/data/references.json` so future agents, launchers, graph tools, and execution managers do not scrape rendered HTML.
+- Record page ID, source path, target, kind, format, hash, artifact path, browser path, and `not-executed` status for each reference.
+- Render deployment-neutral links plus safe previews: code previews show source excerpts; notebook previews read JSON source cells and ignore outputs.
 - Defer notebook execution, output trust, cache refresh, kernel selection, and browser execution.
 
 Recommended source shape:
@@ -215,7 +217,6 @@ Phase 2 should render a small generated reference panel from validated links:
 Referenced Work
   Script    clean_data.py        view source | download
   Notebook  exploration.ipynb    preview | download
-  Asset     sample.csv           download
 ```
 
 The panel is generated output. It should not be written back into source. The
@@ -248,10 +249,10 @@ artifact/
 
 `artifact/files/` is for artifact inspection and future local tooling.
 `artifact/site/_raya/files/` is for browser download and static read paths.
-`artifact/data/references.json` should record at least source page ID, source
-path, kind, language or format, hash, artifact path, browser path, and whether
-the file was copied because it was referenced. If `references.json` is added,
-`manifest.json` must declare it.
+`artifact/data/references.json` records at least source page ID, source path,
+target, kind, format, hash, artifact path, browser path, and no-execution
+status. `manifest.json` declares the reference index and generated `files/`
+directory.
 
 Suggested validation boundary:
 
@@ -295,6 +296,60 @@ Minimum work:
 - policy metadata for `never`, `manual`, `cache`, `always`, and `frozen`,
 - artifact shape for execution outputs, logs, and cache metadata,
 - diagnostics for missing runtimes, stale lockfiles, and unsafe execution defaults.
+
+Accepted baseline:
+
+- Runtime profile source lives beside the ordered `course/` tree.
+- Use `runtime/profiles.yaml` for named runtime profiles.
+- Root-level `pyproject.toml` and `uv.lock` are runtime support files, not learning quanta.
+- `uv` is the only baseline runtime manager; other managers are future adapters.
+- Docker plus `uv` is represented as profile metadata, such as a Docker Compose service name, without making Docker required for static reading.
+- Execution policies are explicit: `never`, `manual`, `cache`, `always`, and `frozen`.
+- Missing policy defaults to `never`; `always` must be target-specific and cannot be inferred as a default.
+- Validation may parse runtime metadata, validate paths, check profile references, and check cache input declarations.
+- Validation, build, artifact inspection, and static serving must not execute scripts, notebooks, kernels, `uv`, Docker, package installers, or cache refreshes.
+- Glintstone may emit manifest-declared `data/runtime.json`, `data/execution.json`, and `data/cache.json`.
+- Generated execution metadata records planned targets with status `not-executed`.
+- Cache keys are metadata derived from source hashes, declared input hashes, runtime profile metadata, lockfile hash when present, execution policy, and Raya or Glintstone schema versions.
+- Phase 3 does not define trusted frozen outputs, output logs, notebook kernels, browser execution, remote runners, or `raya run`.
+
+Recommended source shape:
+
+```text
+course-root/
+  raya.yaml
+  pyproject.toml
+  uv.lock
+  runtime/
+    profiles.yaml
+  course/
+    0_index.md
+    code/
+      example.py
+```
+
+Compact `runtime/profiles.yaml` example:
+
+```yaml
+profiles:
+  default:
+    manager: uv
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock
+    docker:
+      compose_service: dev
+execution:
+  defaults:
+    policy: never
+    profile: default
+  references:
+    - source: course/code/example.py
+      policy: cache
+      profile: default
+      inputs:
+        - course/_assets/sample.csv
+```
 
 ### Phase 4: Local Execution
 

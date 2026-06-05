@@ -1,0 +1,6 @@
+course_id: missing-runtime-lockfile
+title: Missing Runtime Lockfile
+description: Invalid fixture for missing runtime lockfile diagnostics.
+language: en
+source: course
+artifact: artifact

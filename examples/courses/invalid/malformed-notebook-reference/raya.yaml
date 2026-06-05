@@ -1,0 +1,6 @@
+course_id: malformed-notebook-reference
+title: Malformed Notebook Reference
+description: Invalid fixture for malformed notebook diagnostics.
+language: en
+source: course
+artifact: artifact

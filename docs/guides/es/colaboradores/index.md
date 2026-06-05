@@ -14,6 +14,10 @@ Cuando cambies validacion o rendering de cursos, preserva el modelo convention-f
 
 El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y librerias de math detras de `packages/static`; los contratos de source deben describir comportamiento de autoria, no detalles internos de librerias. Cambios de renderer necesitan fixtures representativos, diagnosticos invalidos cuando aplique, tests de contrato, tests e2e/static-read-path y actualizaciones de documentacion de rol.
 
+Las referencias de codigo y notebooks son soporte source estatico en el baseline actual. Valida links `.py` bajo `code/` y links `.ipynb` bajo `notebooks/`, copia archivos referenciados a `artifact/files/` y `artifact/site/_raya/files/`, mantiene `references.json` como superficie de datos, y conserva el estado `not-executed` hasta que una propuesta de ejecucion acepte runtimes y caches.
+
+Los runtime profiles son solo metadata. Mantiene `runtime/profiles.yaml`, `pyproject.toml` y `uv.lock` fuera del arbol ordenado `course/`; valida policies, rutas de perfiles, cache inputs y los outputs `runtime.json`, `execution.json` y `cache.json` sin llamar `uv`, Docker, kernels ni archivos source.
+
 La documentacion actual tambien es un curso de docs renderizable. Edita las paginas legibles en `docs/foundation/` y `docs/guides/`, manten alineado `docs/render-content/` para el orden renderizado, y trata `docs/artifact/` como output generado e ignorado. Usa `raya validate docs`, `raya build docs` y tests static-read-path cuando cambies el rendering de documentacion.
 
 Para cambios sustanciales, declara el impacto de documentacion para colaboradores, profesores, estudiantes y agentes. Si cambia la documentacion de rol, manten separadas las paginas en ingles y espanol.

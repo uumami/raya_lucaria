@@ -160,3 +160,63 @@ The minimal builder SHALL build a representative rich rendering fixture that exe
 - **WHEN** contributors inspect rich rendering fixture source or output
 - **THEN** it MUST be labeled as fixture material and MUST point to `docs/foundation/` for authority
 
+### Requirement: Static code and notebook reference output
+The minimal static builder SHALL build validated code and notebook references into portable static artifacts without executing them.
+
+#### Scenario: Code reference copied and linked
+- **WHEN** a rendered page references a validated code file
+- **THEN** the builder MUST copy the file to artifact-level file storage, copy it to `site/_raya/files/`, and rewrite the rendered link to a deployment-neutral browser path
+
+#### Scenario: Notebook reference copied and linked
+- **WHEN** a rendered page references a validated notebook file
+- **THEN** the builder MUST copy the file to artifact-level file storage, copy it to `site/_raya/files/`, and rewrite the rendered link to a deployment-neutral browser path
+
+#### Scenario: Reference panel rendered
+- **WHEN** a page has validated code or notebook references
+- **THEN** the generated HTML MUST expose those references through a compact static panel or equivalent readable surface
+
+#### Scenario: Preview does not execute
+- **WHEN** a reference panel or preview is generated for code or notebook files
+- **THEN** the builder MUST NOT execute scripts, notebook cells, kernels, or runtime commands
+
+### Requirement: Code and notebook reference indexes
+The minimal static builder SHALL generate machine-readable reference data when code or notebook references are present.
+
+#### Scenario: References data emitted
+- **WHEN** a build includes validated code or notebook references
+- **THEN** the artifact MUST contain `data/references.json` or equivalent manifest-declared data for those references
+
+#### Scenario: No references data omitted or empty
+- **WHEN** a build has no code or notebook references
+- **THEN** the artifact MUST either omit reference data from the manifest or emit an empty valid reference data file consistently
+
+### Requirement: Static runtime metadata output
+The minimal static builder SHALL emit runtime and execution metadata as generated artifact data without executing code or notebooks.
+
+#### Scenario: Runtime profile metadata emitted
+- **WHEN** a course declares valid runtime profiles
+- **THEN** the builder MUST emit manifest-declared runtime metadata derived from `runtime/profiles.yaml` and related root runtime files
+
+#### Scenario: Execution plan metadata emitted
+- **WHEN** a course has code or notebook references with execution policy metadata
+- **THEN** the builder MUST emit manifest-declared execution plan metadata with target IDs, policy, runtime profile when declared, and status `not-executed`
+
+#### Scenario: Cache metadata emitted
+- **WHEN** executable targets declare policy `cache`, `always`, or `frozen`
+- **THEN** the builder MUST emit manifest-declared cache-key metadata without executing targets or refreshing outputs
+
+#### Scenario: Static pages preserved
+- **WHEN** runtime metadata is present
+- **THEN** generated pages, deployment-neutral links, reference panels, assets, navigation, indexes, and static read paths MUST remain usable without runtime support
+
+### Requirement: Runtime metadata indexes
+The minimal static builder SHALL keep runtime, execution-plan, and cache metadata machine-readable and manifest-centered.
+
+#### Scenario: Metadata data files validate
+- **WHEN** the builder writes runtime, execution-plan, or cache metadata files
+- **THEN** those files MUST pass the accepted artifact data validators during build
+
+#### Scenario: No runtime metadata omitted or empty
+- **WHEN** a course has no runtime profiles and no executable policy metadata beyond the Phase 2 default
+- **THEN** the artifact MUST either omit runtime/cache metadata from the manifest or emit empty valid metadata files consistently
+

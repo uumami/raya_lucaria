@@ -6,18 +6,24 @@ from pathlib import Path
 from raya_schema import (
     inspect_artifact,
     validate_artifact_manifest,
+    validate_cache_index,
+    validate_execution_index,
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
+    validate_references_index,
+    validate_runtime_index,
 )
 from raya_static import build_course
 
 
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
+REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
+RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 
 
 def test_valid_artifact_manifest(tmp_path: Path) -> None:
@@ -87,6 +93,26 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         '{"course_id":"minimal-course","local":[{"id":"course-root","entries":[]}],"master":[]}',
         encoding="utf-8",
     )
+    references = tmp_path / "references.json"
+    references.write_text(
+        '{"course_id":"minimal-course","references":[]}',
+        encoding="utf-8",
+    )
+    runtime = tmp_path / "runtime.json"
+    runtime.write_text(
+        '{"course_id":"minimal-course","profiles":[],"defaults":{"policy":"never"}}',
+        encoding="utf-8",
+    )
+    execution = tmp_path / "execution.json"
+    execution.write_text(
+        '{"course_id":"minimal-course","targets":[]}',
+        encoding="utf-8",
+    )
+    cache = tmp_path / "cache.json"
+    cache.write_text(
+        '{"course_id":"minimal-course","entries":[]}',
+        encoding="utf-8",
+    )
 
     for report in (
         validate_pages_index(pages),
@@ -95,6 +121,10 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_navigation_index(navigation),
         validate_indices_index(indices),
         validate_official_index(official),
+        validate_references_index(references),
+        validate_runtime_index(runtime),
+        validate_execution_index(execution),
+        validate_cache_index(cache),
     ):
         assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
@@ -111,6 +141,55 @@ def test_inspect_built_artifact_succeeds(tmp_path: Path) -> None:
     assert course / "artifact" / "data" / "pages.json" in report.files_read
     assert not report.outputs_written
     assert any("Artifact inspection passed" in item.message for item in report.diagnostics)
+
+
+def test_inspect_reference_artifact_succeeds(tmp_path: Path) -> None:
+    course = tmp_path / "reference-fixture"
+    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+
+    report = inspect_artifact(course / "artifact")
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert course / "artifact" / "data" / "references.json" in report.files_read
+
+
+def test_inspect_runtime_artifact_succeeds(tmp_path: Path) -> None:
+    course = tmp_path / "runtime-fixture"
+    shutil.copytree(RUNTIME_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+
+    report = inspect_artifact(course / "artifact")
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert course / "artifact" / "data" / "runtime.json" in report.files_read
+    assert course / "artifact" / "data" / "execution.json" in report.files_read
+    assert course / "artifact" / "data" / "cache.json" in report.files_read
+
+
+def test_inspect_runtime_artifact_rejects_escaping_metadata_path(tmp_path: Path) -> None:
+    course = tmp_path / "runtime-fixture"
+    shutil.copytree(RUNTIME_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    cache_path = course / "artifact" / "data" / "cache.json"
+    cache_path.write_text(
+        cache_path.read_text(encoding="utf-8").replace(
+            '"course/_assets/runtime-input.txt"',
+            '"../outside.txt"',
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_artifact(course / "artifact")
+
+    assert not report.ok
+    assert any(
+        item.message == "Runtime metadata path must be relative and stay inside course source"
+        for item in report.diagnostics
+    )
 
 
 def test_inspect_artifact_fails_for_missing_required_paths(tmp_path: Path) -> None:

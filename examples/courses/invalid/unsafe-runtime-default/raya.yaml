@@ -1,0 +1,6 @@
+course_id: unsafe-runtime-default
+title: Unsafe Runtime Default
+description: Invalid fixture for unsafe runtime default diagnostics.
+language: en
+source: course
+artifact: artifact

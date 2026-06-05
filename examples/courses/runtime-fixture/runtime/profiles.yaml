@@ -1,0 +1,18 @@
+profiles:
+  default:
+    manager: uv
+    python: "3.10"
+    project: pyproject.toml
+    lockfile: uv.lock
+    docker:
+      compose_service: dev
+execution:
+  defaults:
+    policy: never
+    profile: default
+  references:
+    - source: course/code/runtime_task.py
+      policy: cache
+      profile: default
+      inputs:
+        - course/_assets/runtime-input.txt
