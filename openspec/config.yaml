@@ -65,6 +65,19 @@ context: |
   root authored `official/`, or root authored `assets/` to new contracts,
   scaffolds, fixtures, or examples.
 
+  Rendering and executable content must advance in phases using
+  docs/foundation/17_rendering_execution_plan.md. Raya owns the renderer and
+  artifact contracts; external tools are adapters. Use `uv` as the default
+  Python runtime contract, Docker plus `uv` as the reference classroom path,
+  and explicit execution/cache policies so normal rendering never reruns heavy
+  or unsafe work by accident.
+
+  Rich static rendering is the Phase 1 baseline: common Markdown, tables,
+  displayed code, math, callouts, footnotes, heading anchors, page tables of
+  contents, escaped raw HTML, and generated browser support resources under
+  `site/_raya/`. This baseline must remain static-first and must not execute
+  code, notebooks, kernels, or runtime profiles.
+
   Legacy material is historical reference. Salvage principles intentionally,
   define new contracts, and test against current specs. Do not reintroduce old
   source names, renderer stacks, generated JSON shapes, examples, or workflow
@@ -81,6 +94,7 @@ rules:
     - Identify documentation impact for contributors/collaborators, professors, students, and agents, or state that no role-facing documentation update is needed.
     - Preserve convention-first source ordering and stable ID references when changes affect course content, navigation, generated indexes, graph data, or study objects.
     - Preserve `source: course`, ordered `course/` quanta, colocated `_official/`, colocated `_assets/`, and support-directory privacy when changes affect source-course structure.
+    - Reference the rendering and execution phase plan when changes affect rich rendering, code, notebooks, runtimes, cache behavior, or executable examples.
   specs:
     - Write testable requirements derived from foundation decisions.
     - Separate required baseline behavior from future or optional capabilities.
@@ -89,6 +103,7 @@ rules:
     - Require separate English and Spanish role-documentation directories with index pages when contributor/collaborator, professor, student, or agent documentation is created or updated.
     - Keep ordered source conventions, stable `raya:<id>` references, generated navigation data, and generated index data explicit when specs touch content ordering or rendering.
     - Keep `source: course` canonical and reject source `content:`, root authored `official/`, and root authored `assets/` unless a future accepted proposal explicitly reopens the contract.
+    - Make execution policies, cache invalidation, runtime profiles, and static artifact outputs testable when specs touch executable content.
   design:
     - Map domain names to plain package boundaries when implementation structure matters.
     - Preserve static-only operation before adding backend, web UI, realtime, or agent features.
@@ -110,3 +125,4 @@ rules:
     - Split dynamic domains into separate proposals after static contracts are stable.
     - Include ordered-content fixture and e2e coverage when source ordering, generated indexes, stable links, or static navigation changes.
     - Include unified-source fixture and e2e coverage when `source: course`, `_official/`, `_assets/`, or source-tree privacy changes.
+    - Include examples, invalid fixtures, contract tests, e2e/static-read-path tests, role docs, and rendered-doc updates when rendering or executable-content workflows change.

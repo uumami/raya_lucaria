@@ -43,6 +43,10 @@ Future browser-facing renderer capabilities SHALL use the `site/_raya/` namespac
 - **WHEN** a later proposal adds math rendering, syntax highlighting, public browser data, or interactive component assets
 - **THEN** those browser-facing resources MUST fit under `site/_raya/` or explicitly update the static resource contract
 
+#### Scenario: Rich render support resources
+- **WHEN** rich static rendering needs browser-facing support resources such as local math support, style sheets, syntax highlighting assets, or small renderer data files
+- **THEN** those resources MUST be generated under `site/_raya/` and referenced by deployment-neutral relative URLs
+
 ### Requirement: Representative static render e2e fixture
 The repository SHALL include representative fixture content for static render e2e tests when browser-facing static resource behavior is changed.
 
@@ -79,3 +83,14 @@ Rendered documentation SHALL remain explanatory guidance and MUST NOT replace ma
 #### Scenario: Dynamic installation reads course truth
 - **WHEN** a future dynamic installation needs artifact data
 - **THEN** it MUST continue reading through `manifest.json` and manifest-declared `data/*.json` paths rather than treating rendered documentation HTML as authority
+
+### Requirement: Render support resources are generated output
+Browser-facing render support resources SHALL be treated as generated artifact resources rather than course source truth.
+
+#### Scenario: Render resources are not source
+- **WHEN** the builder writes rich rendering support files under `artifact/site/_raya/`
+- **THEN** those files MUST be considered generated output and MUST NOT be edited as canonical course source
+
+#### Scenario: Render resources work from static read path
+- **WHEN** `artifact/site/` is served directly
+- **THEN** rich rendering support resources MUST resolve without relying on sibling artifact directories, an absolute deployment root, a CDN, or a backend route

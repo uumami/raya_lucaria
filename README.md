@@ -48,8 +48,9 @@ The generated artifact keeps machine-readable surfaces at the artifact root whil
 - `artifact/assets/` preserves copied source assets as artifact-level generated output.
 - `artifact/site/` is the static read path.
 - `artifact/site/_raya/assets/` contains browser-facing local assets referenced by rendered pages.
+- `artifact/site/_raya/render/` contains generated rich-render support resources.
 
-Renderer, TypeScript/web UI, backend, identity, dynamic study-state choices, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
+Glintstone now owns the first rich static rendering baseline: common Markdown, pipe tables, displayed code with highlighting, static math, callouts, footnotes, page-local heading anchors, and page tables of contents. Code blocks are display-only; execution, notebooks, runtime profiles, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, and expanded external link policy remain out of scope until later proposals.
 
 ## Development Commands
 

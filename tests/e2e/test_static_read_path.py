@@ -35,16 +35,26 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
         local_asset_text = _fetch_text(
             f"{base_url}/_raya/assets/_source/1_static_path/_local/local-static-path.txt"
         )
+        render_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
 
     assert "Raya Lucaria Render Fixture" in root_html
+    assert '<nav class="raya-page-toc" aria-label="Page contents">' in root_html
+    assert '<aside class="raya-callout raya-callout-note"' in root_html
+    assert '<section class="footnotes">' in root_html
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'src="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert '<link rel="stylesheet" href="_raya/render/rich.css">' in root_html
     assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
+    assert '<aside class="raya-callout raya-callout-tip"' in nested_html
     assert (
         'href="../_raya/assets/_source/1_static_path/_local/local-static-path.txt"'
         in nested_html
     )
     assert "Raya Lucaria render fixture asset" in asset_text
     assert "Raya Lucaria render fixture colocated asset" in local_asset_text
+    assert ".raya-code-block" in render_css
+    assert ".math.block" in render_css
 
 
 def test_documentation_fixture_static_read_path_serves_pages_and_assets(
@@ -126,17 +136,23 @@ def test_current_documentation_static_read_path_serves_live_docs(
         root_html = _fetch_text(f"{base_url}/index.html")
         foundation_html = _fetch_text(f"{base_url}/foundation/index.html")
         overview_html = _fetch_text(f"{base_url}/foundation/system-overview/index.html")
+        rendering_plan_html = _fetch_text(
+            f"{base_url}/foundation/rendering-execution-plan/index.html"
+        )
         english_html = _fetch_text(f"{base_url}/guides/en/contributors/index.html")
         spanish_html = _fetch_text(f"{base_url}/guides/es/colaboradores/index.html")
+        render_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
 
     assert "Raya Lucaria Documentation" in root_html
     assert 'href="foundation/index.html"' in root_html
     assert 'href="guides/index.html"' in root_html
     assert "Raya Lucaria Foundation" in foundation_html
     assert "System Overview" in overview_html
+    assert "Rendering And Execution Plan" in rendering_plan_html
     assert "Contributors And Collaborators" in english_html
     assert "Colaboradores" in spanish_html
     assert "Course Index" in root_html
+    assert ".raya-page-toc" in render_css
 
 
 @contextlib.contextmanager

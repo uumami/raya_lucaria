@@ -85,7 +85,8 @@ def test_generated_html_is_escaped_and_static_linked(tmp_path: Path) -> None:
     html = (course / "artifact" / "site" / "escape" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert "&lt;script&gt;alert(&#x27;x&#x27;)&lt;/script&gt;" in html
+    assert "&lt;script&gt;alert('x')&lt;/script&gt;" in html
+    assert "<script>" not in html
     assert 'href="../index.html"' in html
     nested = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
         encoding="utf-8"
@@ -173,6 +174,8 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     )
 
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'src="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'href="static-path/index.html"' in root_html
     assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
     assert (
         'href="../_raya/assets/_source/1_static_path/_local/local-static-path.txt"'
@@ -186,6 +189,51 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     )
     assert "Raya Lucaria render fixture asset" in site_asset.read_text(encoding="utf-8")
     assert "colocated asset" in site_local_asset.read_text(encoding="utf-8")
+
+
+def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    nested_html = (course / "artifact" / "site" / "static-path" / "index.html").read_text(
+        encoding="utf-8"
+    )
+
+    assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
+    assert '<nav class="raya-page-toc" aria-label="Page contents">' in html
+    assert 'href="#rich-static-baseline"' in html
+    assert 'id="duplicate-heading"' in html
+    assert 'id="duplicate-heading-2"' in html
+    assert "<strong>strong text</strong>" in html
+    assert "<em>emphasis</em>" in html
+    assert "<code>inline code</code>" in html
+    assert "<ol>" in html
+    assert "<ul>" in html
+    assert "<blockquote>" in html
+    assert "<hr />" in html
+    assert "<table>" in html
+    assert '<span class="math inline">a^2 + b^2 = c^2</span>' in html
+    assert '<div class="math block">' in html
+    assert 'data-language="python"' in html
+    assert 'class="language-python"' in html
+    assert 'data-language="unknownlang"' in html
+    assert "&lt;script&gt;not_executed()&lt;/script&gt;" in html
+    assert '<aside class="raya-callout raya-callout-note"' in html
+    assert '<aside class="raya-callout raya-callout-warning"' in html
+    assert '<section class="footnotes">' in html
+    assert 'href="#fn1"' in html
+    assert "&lt;script&gt;alert('fixture')&lt;/script&gt;" in html
+    assert "<script>" not in html
+
+    assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
+    assert 'href="#nested-rich-content"' in nested_html
+    assert 'id="nested-duplicate"' in nested_html
+    assert 'id="nested-duplicate-2"' in nested_html
+    assert '<aside class="raya-callout raya-callout-tip"' in nested_html
+    assert '<span class="math inline">x_i</span>' in nested_html
 
 
 def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> None:
@@ -215,6 +263,9 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
         / "1_static_path"
         / "_local"
         / "local-static-path.txt"
+    ).exists()
+    assert (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
     ).exists()
 
 
@@ -272,6 +323,22 @@ def test_source_content_links_are_exported_to_links_index(tmp_path: Path) -> Non
         "to": "first-topic",
         "kind": "content",
     } in links["links"]
+
+
+def test_build_stops_when_footnote_definition_is_missing(tmp_path: Path) -> None:
+    source = ROOT / "examples" / "courses" / "invalid" / "missing-footnote-definition"
+    course = tmp_path / "missing-footnote-definition"
+    shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Missing footnote definition"
+        and diagnostic.field == "footnote:missing-note"
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
 
 
 def test_rebuild_replaces_stale_artifact_output(tmp_path: Path) -> None:

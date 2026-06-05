@@ -12,6 +12,8 @@ Las paginas estaticas de curso son utiles sin cuentas. Estado dinamico de estudi
 
 Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiantes deben ver titulos limpios, etiquetas de jerarquia, summaries, breadcrumbs, links anterior/siguiente, indices generados de seccion, anexos, prerequisitos y conteos de objetos oficiales de estudio cuando el curso provee esa metadata.
 
+Las paginas estaticas pueden incluir math, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. Todo debe leerse sin cuentas ni backend. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
+
 Usa la documentacion de rol como guia. Usa las paginas de curso y objetos oficiales de aprendizaje como material de curso. Si documentacion y material de curso entran en conflicto, el equipo de curso y la autoridad aceptada de specs OpenSpec o `docs/foundation/` deciden que cambia.
 
 La documentacion renderizada del repositorio puede leerse como paginas estaticas, pero sigue siendo guia sobre el framework. No es la misma superficie de autoridad que un artifact oficial de curso.

@@ -35,6 +35,12 @@ from raya_schema.links import (
 )
 from raya_schema.official import discover_official_objects
 from raya_schema.yaml_io import load_yaml_file
+from raya_static.rendering import (
+    RENDER_STYLESHEET_PATH,
+    missing_footnote_definitions,
+    render_markdown_body,
+    rich_render_css,
+)
 
 
 ARTIFACT_VERSION = "0.1"
@@ -91,6 +97,9 @@ def build_course(course_path: str | Path) -> ValidationReport:
     )
     if not report.ok:
         return report
+    _validate_rich_markdown_inputs(pages, report)
+    if not report.ok:
+        return report
 
     _replace_generated_output(artifact_dir, report)
 
@@ -101,6 +110,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     for directory in (site_dir, data_dir, artifact_assets_dir, site_assets_dir):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
+    _write_rich_render_resources(site_dir, report)
 
     pages_by_source = content_model.pages_by_source
     pages_by_reference = {
@@ -285,6 +295,7 @@ def _render_page(
         content_model,
         official_counts,
     )
+    stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
 
     return "\n".join(
         [
@@ -294,6 +305,7 @@ def _render_page(
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             "</head>",
             "<body>",
             "<header>",
@@ -304,14 +316,17 @@ def _render_page(
             breadcrumbs,
             "</header>",
             "<main>",
-            _render_markdown(
+            render_markdown_body(
                 page.body,
-                page,
-                pages_by_source,
-                pages_by_reference,
-                course_root,
-                source_dir,
-                generated_index,
+                generated_index=generated_index,
+                resolve_href=lambda href: _resolve_markdown_href(
+                    page,
+                    href,
+                    pages_by_source,
+                    pages_by_reference,
+                    course_root,
+                    source_dir,
+                ),
             ),
             "</main>",
             sequence_nav,
@@ -320,104 +335,6 @@ def _render_page(
             "",
         ]
     )
-
-
-def _render_markdown(
-    body: str,
-    page: ContentPage,
-    pages_by_source: dict[Path, ContentPage],
-    pages_by_reference: dict[str, ContentPage],
-    course_root: Path,
-    source_dir: Path,
-    generated_index: str = "",
-) -> str:
-    output: list[str] = []
-    paragraph: list[str] = []
-    in_list = False
-    marker_used = False
-
-    def flush_paragraph() -> None:
-        if paragraph:
-            output.append(
-                f"<p>{_render_inline(' '.join(paragraph), page, pages_by_source, pages_by_reference, course_root, source_dir)}</p>"
-            )
-            paragraph.clear()
-
-    def close_list() -> None:
-        nonlocal in_list
-        if in_list:
-            output.append("</ul>")
-            in_list = False
-
-    for raw_line in body.splitlines():
-        line = raw_line.rstrip()
-        stripped = line.strip()
-        if not stripped:
-            flush_paragraph()
-            close_list()
-            continue
-        if stripped == "<!-- raya:index -->":
-            flush_paragraph()
-            close_list()
-            if generated_index:
-                output.append(generated_index)
-            marker_used = True
-            continue
-
-        heading_level = _heading_level(stripped)
-        if heading_level:
-            flush_paragraph()
-            close_list()
-            heading_text = stripped[heading_level + 1 :].strip()
-            output.append(
-                f"<h{heading_level}>{_render_inline(heading_text, page, pages_by_source, pages_by_reference, course_root, source_dir)}</h{heading_level}>"
-            )
-            continue
-
-        if stripped.startswith("- "):
-            flush_paragraph()
-            if not in_list:
-                output.append("<ul>")
-                in_list = True
-            output.append(
-                f"<li>{_render_inline(stripped[2:].strip(), page, pages_by_source, pages_by_reference, course_root, source_dir)}</li>"
-            )
-            continue
-
-        paragraph.append(stripped)
-
-    flush_paragraph()
-    close_list()
-    if generated_index and not marker_used:
-        output.append(generated_index)
-    return "\n".join(output)
-
-
-def _render_inline(
-    text: str,
-    page: ContentPage,
-    pages_by_source: dict[Path, ContentPage],
-    pages_by_reference: dict[str, ContentPage],
-    course_root: Path,
-    source_dir: Path,
-) -> str:
-    rendered: list[str] = []
-    cursor = 0
-    for link in extract_markdown_links(text):
-        rendered.append(html.escape(text[cursor : link.start]))
-        label = html.escape(link.label)
-        href = _resolve_markdown_href(
-            page,
-            link.target,
-            pages_by_source,
-            pages_by_reference,
-            course_root,
-            source_dir,
-        )
-        rendered.append(f'<a href="{html.escape(href)}">{label}</a>')
-        cursor = link.end
-    rendered.append(html.escape(text[cursor:]))
-    return "".join(rendered)
 
 
 def _resolve_markdown_href(
@@ -445,6 +362,23 @@ def _resolve_markdown_href(
         if target_href is not None:
             return target_href + fragment
     return href
+
+
+def _validate_rich_markdown_inputs(
+    pages: list[ContentPage],
+    report: ValidationReport,
+) -> None:
+    for page in pages:
+        for label in missing_footnote_definitions(page.body):
+            report.add_error(
+                "Missing footnote definition",
+                path=page.source_path,
+                field=f"footnote:{label}",
+                next_action=(
+                    f"Add a [^{label}]: footnote definition on this page "
+                    f"or remove the [^{label}] reference"
+                ),
+            )
 
 
 def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
@@ -832,6 +766,13 @@ def _write_json(path: Path, data: dict[str, Any], report: ValidationReport) -> N
     report.wrote_output(path)
 
 
+def _write_rich_render_resources(site_dir: Path, report: ValidationReport) -> None:
+    stylesheet = site_dir / RENDER_STYLESHEET_PATH
+    stylesheet.parent.mkdir(parents=True, exist_ok=True)
+    stylesheet.write_text(rich_render_css(), encoding="utf-8")
+    report.wrote_output(stylesheet)
+
+
 def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -> None:
     for generated_report in (
         validate_artifact_manifest(artifact_dir / "manifest.json"),
@@ -867,15 +808,6 @@ def _source_hash(
         digest.update(path.read_bytes())
         digest.update(b"\0")
     return digest.hexdigest()
-
-
-def _heading_level(stripped: str) -> int | None:
-    if not stripped.startswith("#"):
-        return None
-    hashes = len(stripped) - len(stripped.lstrip("#"))
-    if 1 <= hashes <= 6 and len(stripped) > hashes and stripped[hashes] == " ":
-        return hashes
-    return None
 
 
 def _relative_href(from_output: str, to_output: str) -> str:
