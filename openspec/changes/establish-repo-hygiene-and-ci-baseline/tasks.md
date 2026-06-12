@@ -6,9 +6,9 @@
 ## 2. Check Scripts
 
 - [x] 2.1 Implement `scripts/check-hygiene.sh` for stale guidance, generated-output pollution, OpenSpec incomplete markers, fixture labeling, and command/source-layout drift scans.
-- [ ] 2.2 Implement `scripts/check-python.sh` for Python/Raya dependency sync, tests, fixture validation/build/inspection, and docs validation/build/inspection.
-- [ ] 2.3 Implement `scripts/check.sh` as the canonical host full check.
-- [ ] 2.4 Implement `scripts/check-docker.sh` as the Docker Compose verification path.
+- [x] 2.2 Implement `scripts/check-python.sh` for Python/Raya dependency sync, tests, fixture validation/build/inspection, and docs validation/build/inspection.
+- [x] 2.3 Implement `scripts/check.sh` as the canonical host full check.
+- [x] 2.4 Implement `scripts/check-docker.sh` as the Docker Compose verification path.
 
 ## 3. CI
 
