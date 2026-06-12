@@ -139,7 +139,11 @@ Accepted baseline:
 - Glintstone uses a parser-backed Markdown pipeline; Quarto remains an optional future adapter, not core.
 - Common Markdown blocks and inline syntax render, including headings, paragraphs, ordered and unordered lists, blockquotes, thematic breaks, emphasis, strong text, inline code, links, images, and pipe tables.
 - Fenced code blocks render as escaped static code with language metadata and syntax highlighting when supported. They never execute.
-- Inline math with `$...$` and display math with `$$...$$` render as static math elements with TeX preserved in generated HTML.
+- Inline dollar math and display dollar-delimiter blocks are pre-rendered at build time with MathJax into `artifact/site/`.
+- Build-time math uses renderer dependencies only. It does not execute course code, notebooks, kernels, `uv`, Docker, package installers, runtime profiles, or cache refreshes.
+- MathJax support CSS and fonts are copied under `artifact/site/_raya/render/math/` and linked with deployment-neutral relative URLs so local preview and static web deployment use the same files.
+- The first accepted math subset uses MathJax `base`, `ams`, and `newcommand`: common algebra, calculus, matrices, aligned equations, cases, probability/statistics notation, optimization notation, Greek symbols, operators, accents, sums, products, limits, integrals, page-local `\newcommand`, and page-local `\renewcommand`.
+- Unknown macros, malformed display delimiters, unsupported nested delimiters, full LaTeX documents, missing local MathJax resources, and raw visible math leakage are publication-blocking diagnostics.
 - GitHub-style blockquote callouts render for `[!NOTE]`, `[!TIP]`, `[!WARNING]`, and `[!CAUTION]`.
 - Footnotes render on the same page. A missing footnote definition is a build diagnostic naming the source page and label.
 - Heading anchors are page-local conveniences derived from heading text. Duplicate anchors receive suffixes. Durable identity remains frontmatter `id` plus `raya:<id>` links.
@@ -154,12 +158,27 @@ Compact rendered example:
 
 | Source feature | Baseline behavior |
 | --- | --- |
-| Math | Inline $E = mc^2$ and display math preserve TeX. |
+| Math | Inline $E = mc^2$ and display math are pre-rendered with MathJax. |
 | Code | Code is displayed and highlighted, not executed. |
 
 $$
 \int_0^1 x^2\,dx = \frac{1}{3}
 $$
+
+Accepted display math uses delimiter lines on their own:
+
+```markdown
+$$
+\begin{aligned}
+\hat{\theta} &= \operatorname*{arg\,max}_{\theta \in \Theta} L(\theta) \\
+\bar{x} &= \frac{1}{n}\sum_{i=1}^{n}x_i
+\end{aligned}
+$$
+```
+
+Escaped dollar signs such as `\$5` stay text. Fenced code is code, not math.
+Standalone LaTeX document commands such as `documentclass` or `begin{document}`
+are not part of the static course authoring contract.
 
 ```python
 def displayed_only() -> str:

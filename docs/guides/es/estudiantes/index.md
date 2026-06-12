@@ -12,7 +12,7 @@ Las paginas estaticas de curso son utiles sin cuentas. Estado dinamico de estudi
 
 Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiantes deben ver titulos limpios, etiquetas de jerarquia, summaries, breadcrumbs, links anterior/siguiente, indices generados de seccion, anexos, prerequisitos y conteos de objetos oficiales de estudio cuando el curso provee esa metadata.
 
-Las paginas estaticas pueden incluir math, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. Todo debe leerse sin cuentas ni backend. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
+Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
 Algunas paginas pueden incluir scripts o notebooks linkeados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Los archivos source no linkeados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 

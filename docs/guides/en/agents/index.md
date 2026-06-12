@@ -14,7 +14,7 @@ Use the canonical check scripts from `README.md` and `AGENTS.md`: `./scripts/che
 
 For course content, treat source files as canonical and generated artifacts as rebuildable. Preserve `source: course`, the ordered `course/` tree, frontmatter `id`, `raya:<id>` links, colocated `_official/` and `_assets/` privacy, generated index markers, and manifest-declared data surfaces. Do not edit generated `artifact/` output as source truth.
 
-For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML and static read paths instead of relying on a browser framework.
+For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, pre-render accepted MathJax math at build time, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML, static read paths, browser-visible math, local math assets, no external renderer requests, and desktop/mobile overflow.
 
 For code and notebook references, classify linked `.py` and `.ipynb` files by extension and own-or-ancestor quantum ownership. Treat folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` as ordinary author choices, block private or cross-quantum references, copy only validated linked files to artifact and browser-facing file surfaces, update `references.json`, and never infer execution from previews.
 

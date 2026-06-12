@@ -59,7 +59,15 @@ Minimum expectations:
 - navigation,
 - internal links,
 - accessible HTML,
-- local assets.
+- local assets,
+- pre-rendered math and local MathJax support resources when pages use accepted math.
+
+Build-time math resources belong to the static read path, for example
+`artifact/site/_raya/render/math/mathjax.css` and
+`artifact/site/_raya/render/math/fonts/`. Generated pages must link them with
+relative deployment-neutral URLs. Static hosting and `raya preview` should use
+the same pre-rendered HTML, CSS, and font files; neither path should require a
+CDN, configured host, backend, Python, Node, or browser-side MathJax conversion.
 
 `raya preview <course>` is the local review workflow for this static site. It serves the generated `artifact/site/` read path and exposes the inspection URL for reviewers, but it does not make rendered HTML the authority surface and does not execute course code.
 

@@ -47,10 +47,10 @@
 
 ## 7. Documentation And Guidance
 
-- [ ] 7.1 Update `docs/foundation/17_rendering_execution_plan.md` and related artifact or CLI foundation docs for the accepted build-time math boundary.
-- [ ] 7.2 Update author-facing rendered docs or documentation fixtures with accepted math delimiters, supported subset, macro rules, escaping guidance, unsupported notation, and diagnostics.
-- [ ] 7.3 Update separate English and Spanish role guide pages for contributors/collaborators, professors, students, and agents.
-- [ ] 7.4 Update `AGENTS.md`, `README.md` if commands change, and `openspec/config.yaml` so future renderer proposals inherit math and browser verification requirements.
+- [x] 7.1 Update `docs/foundation/17_rendering_execution_plan.md` and related artifact or CLI foundation docs for the accepted build-time math boundary.
+- [x] 7.2 Update author-facing rendered docs or documentation fixtures with accepted math delimiters, supported subset, macro rules, escaping guidance, unsupported notation, and diagnostics.
+- [x] 7.3 Update separate English and Spanish role guide pages for contributors/collaborators, professors, students, and agents.
+- [x] 7.4 Update `AGENTS.md`, `README.md` if commands change, and `openspec/config.yaml` so future renderer proposals inherit math and browser verification requirements.
 
 ## 8. Verification And Archive Readiness
 

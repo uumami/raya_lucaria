@@ -71,6 +71,8 @@ Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glints
 
 Use Python 3.10 for the current baseline. `packages/schema` owns schemas and validators; `packages/cli` owns the `raya` command; `packages/static` owns the Glintstone static builder. Renderer, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
 
+Build-time MathJax math is part of the current Glintstone baseline. Accepted authoring uses inline `$...$`, display `$$` delimiter lines, and page-local `\newcommand` or `\renewcommand` within the supported MathJax `base`, `ams`, and `newcommand` subset. Unknown macros, malformed delimiters, unsupported nested delimiters, full LaTeX documents, missing local MathJax resources, and raw visible math leakage must fail with actionable diagnostics. Math support CSS and fonts belong under `artifact/site/_raya/render/math/`; preview and static deployment must serve the same local files without CDN, backend, or browser-side MathJax conversion.
+
 When cleaning current guidance, update `README.md`, `AGENTS.md`, affected role docs, and `openspec/config.yaml` together so repository commands and source-layout rules do not drift across guidance surfaces.
 
 ## Testing Guidelines

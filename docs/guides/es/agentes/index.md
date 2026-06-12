@@ -14,7 +14,7 @@ Usa los check scripts canonicos de `README.md` y `AGENTS.md`: `./scripts/check.s
 
 Para contenido de curso, trata los archivos source como canonicos y los artifacts generados como reconstruibles. Preserva `source: course`, el arbol ordenado `course/`, `id` en frontmatter, links `raya:<id>`, privacidad de `_official/` y `_assets/` colocados, markers de indice generado y superficies de datos declaradas en manifest. No edites `artifact/` generado como source truth.
 
-Para rich static rendering, preserva el limite de Glintstone: reescribe links mediante reglas Raya, genera anchors locales y tablas de contenido desde headings de source, mantiene archivos de soporte bajo `site/_raya/`, escapa raw HTML y no ejecutes bloques de codigo. Testea HTML generado y static read paths en vez de depender de un browser framework.
+Para rich static rendering, preserva el limite de Glintstone: reescribe links mediante reglas Raya, genera anchors locales y tablas de contenido desde headings de source, pre-renderiza math MathJax aceptada durante build, mantiene archivos de soporte bajo `site/_raya/`, escapa raw HTML y no ejecutes bloques de codigo. Testea HTML generado, static read paths, math visible en browser, assets locales de math, ausencia de requests externos del renderer y overflow en desktop/mobile.
 
 Para referencias de codigo y notebooks, clasifica archivos `.py` y `.ipynb` linkeados por extension y por pertenencia al quantum propio o a un ancestro aceptado. Trata nombres como `scripts/`, `labs/`, `code/` y `notebooks/` como elecciones ordinarias de autoria, bloquea referencias privadas o cross-quantum, copia solo archivos linkeados y validados a superficies de artifact y de browser, actualiza `references.json`, y nunca infieras ejecucion desde previews.
 

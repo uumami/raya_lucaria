@@ -73,10 +73,15 @@ context: |
   or unsafe work by accident.
 
   Rich static rendering is the Phase 1 baseline: common Markdown, tables,
-  displayed code, math, callouts, footnotes, heading anchors, page tables of
-  contents, escaped raw HTML, and generated browser support resources under
-  `site/_raya/`. This baseline must remain static-first and must not execute
-  code, notebooks, kernels, or runtime profiles.
+  displayed code, build-time MathJax math, callouts, footnotes, heading
+  anchors, page tables of contents, escaped raw HTML, and generated browser
+  support resources under `site/_raya/`. Accepted math uses inline `$...$`,
+  display `$$` delimiter lines, MathJax `base`, `ams`, and `newcommand`,
+  page-local macros, local `site/_raya/render/math/` CSS/fonts, strict
+  diagnostics for malformed or unsupported math, browser checks for visible
+  typesetting, and no external renderer asset requests. This baseline must
+  remain static-first and must not execute code, notebooks, kernels, runtime
+  profiles, package installers, Docker, or `uv`.
 
   Code and notebook references are the Phase 2 static baseline: Markdown links
   to `.py` and `.ipynb` files validate before build by extension and
@@ -190,6 +195,7 @@ rules:
     - Include ordered-content fixture and e2e coverage when source ordering, generated indexes, stable links, or static navigation changes.
     - Include unified-source fixture and e2e coverage when `source: course`, `_official/`, `_assets/`, or source-tree privacy changes.
     - Include examples, invalid fixtures, contract tests, e2e/static-read-path tests, role docs, and rendered-doc updates when rendering or executable-content workflows change.
+    - Include MathJax adapter tests, invalid math fixtures, local math asset checks, Chromium visible-math checks, no-external-renderer-request assertions, and desktop/mobile overflow checks when changes touch math rendering.
     - Include metadata-leakage assertions, static inspection coverage, and examples/gallery checks when rendered pages expose or hide generated artifact metadata.
     - Include preview command tests, static-read-path/e2e tests, and visual/layout checks when changes touch default page layout, support panels, examples/gallery, inspection pages, deployment portability, or preview behavior.
     - Include explicit `raya run` tests, cache reuse/refresh tests, notebook output tests, Docker command-shape coverage, and no-execution regressions when local execution changes.

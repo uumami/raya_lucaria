@@ -12,7 +12,7 @@ Static course pages are useful without accounts. Dynamic study state, review que
 
 Rendered courses hide source filename mechanics. Students should see clean page titles, hierarchy labels, summaries, breadcrumbs, previous/next links, generated section indexes, appendices, prerequisites, and official study-object counts when the course provides that metadata.
 
-Static pages may include math, highlighted code, tables, callouts, footnotes, heading anchors, and page contents. These are readable without accounts or a backend. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
+Static pages may include pre-rendered math, highlighted code, tables, callouts, footnotes, heading anchors, and page contents. Math should already be typeset in the generated page and should not require a CDN, account, backend, or browser-side MathJax conversion. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 

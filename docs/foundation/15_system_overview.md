@@ -97,6 +97,7 @@ Minimum static expectations:
 - internal links,
 - accessible HTML,
 - local assets,
+- build-time MathJax for accepted math with local support resources,
 - local static preview,
 - manifest and generated data for future services.
 
