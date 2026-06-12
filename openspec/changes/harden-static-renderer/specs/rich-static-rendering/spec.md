@@ -62,12 +62,16 @@ contributors, and agents do not guess which TeX/LaTeX forms are supported.
 - **THEN** build MUST fail with an actionable diagnostic rather than attempting to publish it as supported course math
 
 #### Scenario: Supported MathJax baseline extensions
-- **WHEN** a page uses notation supported by the `base`, `ams`, `newcommand`, or `noundefined` MathJax TeX extensions
+- **WHEN** a page uses notation supported by the `base`, `ams`, or `newcommand` MathJax TeX extensions
 - **THEN** build MUST support common matrices, aligned equations, cases, operators, accents, fractions, sums, products, limits, integrals, Greek symbols, subscripts, and superscripts
 
 #### Scenario: Page-local macros accepted
 - **WHEN** a page or expression defines TeX-local macros with `\newcommand` or `\renewcommand`
 - **THEN** build MUST render those macros through MathJax without requiring a course-level macro configuration file
+
+#### Scenario: Unknown macros fail
+- **WHEN** a page uses an unknown macro or control sequence that is not defined by supported page-local TeX macro syntax
+- **THEN** build MUST fail with an actionable diagnostic naming the source file, source span or nearby context, unknown macro or control sequence, and next action
 
 #### Scenario: Course-level macro config deferred
 - **WHEN** a course includes a proposed course-level math macro configuration file

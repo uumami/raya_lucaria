@@ -13,6 +13,7 @@
 - [ ] 2.2 Add focused tests for the Python math-renderer adapter before implementing it.
 - [ ] 2.3 Create `packages/static/src/raya_static/math_renderer.py` with `MathItem`, `MathRenderResult`, subprocess invocation, CSS collection, and diagnostic mapping.
 - [ ] 2.4 Prove inline and display math render to MathJax output and broken math produces actionable diagnostics naming the source file and expression context.
+- [ ] 2.5 Configure MathJax with `base`, `ams`, and `newcommand` only, and add coverage that unknown macros or control sequences fail unless defined by supported page-local TeX macro syntax.
 
 ## 3. Static Renderer Integration
 
@@ -33,7 +34,7 @@
 
 - [ ] 5.1 Expand the representative render fixture or add a math fixture covering inline math, display math, matrices, aligned equations, cases, calculus, probability, statistics, optimization, page-local macros, images, links, code, callouts, tables, footnotes, and nested pages.
 - [ ] 5.2 Keep all fixture content labeled as fixture material and point authority back to `docs/foundation/`.
-- [ ] 5.3 Add invalid fixture coverage for MathJax conversion errors, malformed delimiters, unsupported delimiter nesting, and missing local math support assets.
+- [ ] 5.3 Add invalid fixture coverage for MathJax conversion errors, malformed delimiters, unknown macros or control sequences, unsupported delimiter nesting, and missing local math support assets.
 - [ ] 5.4 Add authoring-contract fixture coverage for inline `$...$`, display `$$` blocks on their own lines, fenced-code non-math, escaped dollar signs, page-local `\newcommand` and `\renewcommand`, and rejection of full LaTeX documents.
 - [ ] 5.5 Verify diagnostics identify files read, expressions or spans involved, outputs withheld, failure reasons, and concrete next actions.
 

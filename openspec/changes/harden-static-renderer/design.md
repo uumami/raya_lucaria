@@ -95,10 +95,13 @@ surface:
 - Escaped dollar signs remain text.
 - Arbitrary full LaTeX documents are not accepted.
 
-The MathJax invocation should enable the `base`, `ams`, `newcommand`, and
-`noundefined` TeX extensions. The supported first-baseline notation includes
-common matrices, aligned equations, cases, operators, accents, fractions, sums,
-products, limits, integrals, Greek symbols, subscripts, and superscripts.
+The MathJax invocation should enable only the `base`, `ams`, and `newcommand`
+TeX extensions. It must not enable extensions that turn unknown control
+sequences into visible fallback output because unknown control sequences need to
+fail under the strict publication policy. The supported first-baseline notation
+includes common matrices, aligned equations, cases, operators, accents,
+fractions, sums, products, limits, integrals, Greek symbols, subscripts, and
+superscripts.
 
 Macro support is local to the rendered page or expression through MathJax
 handling of `\newcommand` and `\renewcommand`. This change does not introduce a
@@ -106,8 +109,9 @@ course-level macro configuration file unless a later accepted proposal opens
 that contract.
 
 Unsupported or malformed syntax fails with diagnostics. Delimiter mistakes,
-nested unsupported delimiters, MathJax conversion failures, missing local
-support resources, and visible raw math leakage are publication-blocking
+nested unsupported delimiters, unknown macros or control sequences not defined
+by supported page-local TeX macro syntax, MathJax conversion failures, missing
+local support resources, and visible raw math leakage are publication-blocking
 failures rather than warnings.
 
 ## Failure Policy
@@ -118,6 +122,8 @@ Validation or build must fail when math would visibly break a published page:
 
 - malformed delimiters,
 - parser errors,
+- unknown macros or control sequences not defined by supported page-local
+  `\newcommand` or `\renewcommand`,
 - unsupported delimiter nesting,
 - MathJax conversion errors,
 - missing local MathJax support assets,
