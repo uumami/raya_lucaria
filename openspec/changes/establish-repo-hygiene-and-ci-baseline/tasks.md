@@ -1,7 +1,7 @@
 ## 1. Tests
 
-- [ ] 1.1 Add contract tests for canonical check script help output, hygiene stale-guidance detection, and generated-output pollution detection.
-- [ ] 1.2 Run the focused hygiene script tests and keep failures visible until the scripts exist.
+- [x] 1.1 Add contract tests for canonical check script help output, hygiene stale-guidance detection, and generated-output pollution detection.
+- [x] 1.2 Run the focused hygiene script tests and keep failures visible until the scripts exist.
 - [x] 1.3 Add regression coverage for `scripts/check-docker.sh` Docker user default and override behavior.
 
 ## 2. Check Scripts
@@ -19,10 +19,10 @@
 
 ## 4. Current Guidance
 
-- [ ] 4.1 Clean stale current guidance in `README.md`, `AGENTS.md`, foundation docs, rendered docs, and OpenSpec config so commands and source layout agree with accepted contracts.
-- [ ] 4.2 Add a known-missing-work document for deferred features and intentional gaps.
-- [ ] 4.3 Update English and Spanish contributor and agent role guides for canonical checks, generated-output handling, and deferred work.
-- [ ] 4.4 Update `.gitignore` and generated-output ignore rules so artifacts, static output, caches, dependency folders, and local session output do not appear as source changes.
+- [x] 4.1 Clean stale current guidance in `README.md`, `AGENTS.md`, foundation docs, rendered docs, and OpenSpec config so commands and source layout agree with accepted contracts.
+- [x] 4.2 Add a known-missing-work document for deferred features and intentional gaps.
+- [x] 4.3 Update English and Spanish contributor and agent role guides for canonical checks, generated-output handling, and deferred work.
+- [x] 4.4 Update `.gitignore` and generated-output ignore rules so artifacts, static output, caches, dependency folders, and local session output do not appear as source changes.
 
 ## 5. Verification And Archive
 

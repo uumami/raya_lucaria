@@ -10,6 +10,8 @@ Agents operate through explicit files, commands, OpenSpec specs, diagnostics, an
 
 Use `docs/foundation/13_truth_surfaces.md` for the authority map, accepted OpenSpec specs for testable contracts, and `AGENTS.md` for repository workflow.
 
+Use the canonical check scripts from `README.md` and `AGENTS.md`: `./scripts/check.sh` for the host gate, `./scripts/check-docker.sh` for reference-container Python/Raya verification, and `./scripts/smoke-test.sh` for external-course portability checks. Avoid editing generated outputs, dependency folders, caches, or local session output. Keep deferred capabilities in `docs/foundation/18_known_missing_work.md` until an accepted OpenSpec change makes them current.
+
 For course content, treat source files as canonical and generated artifacts as rebuildable. Preserve `source: course`, the ordered `course/` tree, frontmatter `id`, `raya:<id>` links, colocated `_official/` and `_assets/` privacy, generated index markers, and manifest-declared data surfaces. Do not edit generated `artifact/` output as source truth.
 
 For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML and static read paths instead of relying on a browser framework.

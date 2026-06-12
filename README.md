@@ -54,7 +54,7 @@ The generated artifact keeps machine-readable surfaces at the artifact root whil
 
 Glintstone now owns the first rich static rendering baseline: common Markdown, pipe tables, displayed code with highlighting, static math, callouts, footnotes, page-local heading anchors, and page tables of contents. Code blocks are display-only; execution, notebook execution, runtime profiles, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, and expanded external link policy remain out of scope until later proposals.
 
-The current code/notebook reference baseline is static and non-executing. Course pages may link to `.py` files under `code/` and `.ipynb` files under `notebooks/` owned by the page's learning quantum or an ancestor. Validation checks those references before build, copied files are written to `artifact/files/` and `artifact/site/_raya/files/`, and `artifact/data/references.json` records hash, paths, kind, format, and `not-executed` status.
+The current code/notebook reference baseline is static and non-executing. Course pages may link to `.py` and `.ipynb` files classified by extension and own-or-ancestor learning-quantum ownership. Folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` are ordinary author organization choices, not required support roots. Validation checks those references before build, copied files are written to `artifact/files/` and `artifact/site/_raya/files/`, and `artifact/data/references.json` records hash, paths, kind, format, and `not-executed` status.
 
 The current runtime/cache baseline is also non-executing. Courses may declare root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml` metadata for future local or Docker execution. Builds emit `data/runtime.json`, `data/execution.json`, and `data/cache.json` with profiles, policies, cache keys, and `not-executed` status; validation, build, artifact inspection, and static serving do not call `uv`, Docker, kernels, scripts, notebooks, or cache refreshes.
 
@@ -63,6 +63,16 @@ The current local execution baseline is explicit and target-scoped. `raya run <c
 Reviewed execution output is source-controlled support material under colocated `_reviewed/execution/<target>/`. `raya outputs list <course>` reports generated/reviewed/frozen state. `raya outputs freeze <course> <target>` copies a current successful generated result into `_reviewed/` for human review and commit. Builds expose current reviewed outputs through `data/reviewed-outputs.json`, `artifact/reviewed/`, `artifact/site/_raya/reviewed/`, reference metadata, and compact static panels.
 
 ## Development Commands
+
+Canonical checks:
+
+```bash
+./scripts/check.sh
+./scripts/check-docker.sh
+./scripts/smoke-test.sh
+```
+
+`./scripts/check.sh` is the host archive gate. `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container. `./scripts/smoke-test.sh` validates, builds, and inspects temporary external courses locally and through Docker.
 
 Reference Docker workflow:
 
@@ -125,7 +135,7 @@ Artifact inspection is read-only and manifest-centered: it validates `manifest.j
 
 Source-course validation is local and source-oriented: local `.md` links must resolve under the configured authored source root, new courses use `source: course`, local asset references must resolve under the page's own `_assets/` directory or an ancestor `_assets/` directory inside the authored source tree, and rendered pages must not link into private support paths such as `_official/`. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored by this baseline.
 
-Local `.py` and `.ipynb` references are source support links, not page links. They must resolve under accepted `code/` or `notebooks/` support roots, and cross-quantum references fail until a future shared-code contract exists.
+Local `.py` and `.ipynb` references are source support links, not page links. They are classified by extension and own-or-ancestor learning-quantum ownership, while folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` are ordinary author organization choices. Cross-quantum references fail until a future shared-code contract exists.
 
 Local execution is a separate command, not a build side effect:
 

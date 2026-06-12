@@ -14,6 +14,9 @@ Future structure is defined in `docs/foundation/08_package_boundaries.md`: plain
 
 Docker Compose is the reference development workflow. Local `uv` execution remains supported.
 
+- `./scripts/check.sh` is the canonical host archive gate.
+- `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container.
+- `./scripts/smoke-test.sh` validates, builds, and inspects temporary external course copies locally and through Docker.
 - `find docs/foundation -maxdepth 1 -type f | sort` lists the surviving foundation set.
 - `rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'` catches stale renderer assumptions outside the domain-language reset boundary.
 - `openspec list --json` shows whether an active change already exists.
@@ -65,6 +68,8 @@ Course initialization creates replaceable scaffold only. It must refuse non-empt
 Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. Avoid carrying forward old source directory names, old generated JSON shapes, old renderer stacks, old theme systems, or old examples as architecture.
 
 Use Python 3.10 for the current baseline. `packages/schema` owns schemas and validators; `packages/cli` owns the `raya` command; `packages/static` owns the Glintstone static builder. Renderer, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals.
+
+When cleaning current guidance, update `README.md`, `AGENTS.md`, affected role docs, and `openspec/config.yaml` together so repository commands and source-layout rules do not drift across guidance surfaces.
 
 ## Testing Guidelines
 

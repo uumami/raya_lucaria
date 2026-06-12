@@ -184,3 +184,4 @@ rules:
     - Include metadata-leakage assertions, static inspection coverage, and examples/gallery checks when rendered pages expose or hide generated artifact metadata.
     - Include explicit `raya run` tests, cache reuse/refresh tests, notebook output tests, Docker command-shape coverage, and no-execution regressions when local execution changes.
     - Include `raya outputs list`, `raya outputs freeze`, reviewed-output schema, stale/missing reviewed-output diagnostics, frozen-policy validation, artifact inspection, and static-read-path tests when reviewed or frozen output behavior changes.
+    - Include canonical script checks, stale current-guidance scans, generated-output scans, and known-missing-work updates when hygiene changes affect repository guidance or workflow boundaries.

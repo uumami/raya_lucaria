@@ -30,6 +30,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [Domain Language](14_domain_language.md) -- canonical Raya Lucaria domain names and their package mapping.
 - [Documentation Surfaces](16_documentation_surfaces.md) -- role documentation, language pages, and rendered-doc boundaries.
 - [Rendering And Execution Plan](17_rendering_execution_plan.md) -- phase plan for rich rendering, executable code, notebooks, runtime profiles, caching, examples, tests, and documentation.
+- [Known Missing Work](18_known_missing_work.md) -- deferred capabilities and intentional gaps.
 
 ## Reset Rule
 

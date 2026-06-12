@@ -8,7 +8,7 @@ status: ready
 
 Empieza con `docs/foundation/15_system_overview.md`, despues `docs/foundation/13_truth_surfaces.md`, y despues las specs OpenSpec aceptadas para la capacidad que estas cambiando.
 
-Usa los comandos Docker Compose y `uv` de `README.md` y `AGENTS.md` cuando cambies codigo, contratos, docs o tests. Mantiene rutas de paquetes, comandos, campos de schema e IDs estables en ingles.
+Usa los comandos Docker Compose y `uv` de `README.md` y `AGENTS.md` cuando cambies codigo, contratos, docs o tests. Ejecuta `./scripts/check.sh` antes de archivar o commitear, ejecuta `./scripts/check-docker.sh` cuando cambie comportamiento Docker, y conserva `./scripts/smoke-test.sh` para smoke checks de cursos externos cuando cambie la portabilidad de comandos o cursos. Mantiene rutas de paquetes, comandos, campos de schema e IDs estables en ingles.
 
 Cuando cambies validacion o rendering de cursos, preserva el modelo convention-first: `source: course` apunta al arbol ordenado `course/`, los nombres ordenados definen el orden de autoria, `id` en frontmatter define identidad estable, `_official/` y `_assets/` colocados permanecen privados, y `navigation.json` junto con `indices.json` son datos generados del artifact. Los tests deben cubrir diagnosticos de source, export de objetos oficiales, copia de assets, schemas de artifact y rendering static-read-path.
 
