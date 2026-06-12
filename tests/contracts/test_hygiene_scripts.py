@@ -122,6 +122,26 @@ def test_check_hygiene_rejects_stale_required_code_notebook_guidance(
     assert "README.md" in result.stdout
 
 
+def test_check_hygiene_rejects_incomplete_markers_in_domain_language(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    (fixture / "docs" / "foundation" / "14_domain_language.md").write_text(
+        "# Domain Language Fixture\n\nTODO: finish this current foundation note.\n",
+        encoding="utf-8",
+    )
+    init_git_repo(fixture)
+    commit_all(fixture, "Track incomplete foundation marker")
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode != 0
+    assert "current spec/doc incomplete markers" in result.stdout
+    assert "docs/foundation/14_domain_language.md" in result.stdout
+
+
 def test_check_hygiene_rejects_tracked_generated_course_artifact(
     tmp_path: Path,
 ) -> None:

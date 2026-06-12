@@ -82,6 +82,31 @@ reject_matches() {
   local pattern="$2"
   shift 2
 
+  local rg_args=(
+    --glob '!openspec/changes/archive/**'
+    --glob '!docs/superpowers/**'
+  )
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --rg-glob)
+        if [[ $# -lt 2 ]]; then
+          echo "FAILED: $label scan received --rg-glob without a value"
+          return 1
+        fi
+        rg_args+=(--glob "$2")
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
   local paths=()
   local path
   while IFS= read -r path; do
@@ -98,9 +123,7 @@ reject_matches() {
   set +e
   output="$(
     rg -n \
-      --glob '!openspec/changes/archive/**' \
-      --glob '!docs/superpowers/**' \
-      --glob '!docs/foundation/14_domain_language.md' \
+      "${rg_args[@]}" \
       -- "$pattern" "${paths[@]}" 2>&1
   )"
   status=$?
@@ -139,6 +162,8 @@ check_stale_renderer_guidance() {
   reject_matches \
     "stale renderer stack guidance" \
     'Eleventy|Tailwind|Pagefind' \
+    --rg-glob '!docs/foundation/14_domain_language.md' \
+    -- \
     docs/foundation \
     openspec/specs \
     docs/guides \
