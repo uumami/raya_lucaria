@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import re
 import shutil
@@ -198,6 +199,8 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     browser_executable = _browser_executable()
+    debug_dir_value = os.environ.get("RAYA_RENDER_DEBUG_DIR")
+    debug_dir = Path(debug_dir_value) if debug_dir_value else None
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
@@ -234,6 +237,15 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
                         assert "a^2 + b^2 = c^2" not in visible_text
                         assert "\\rayaVec" not in visible_text
                         assert "\\argmax" not in visible_text
+                        if debug_dir is not None:
+                            _capture_render_debug_artifact(
+                                page,
+                                debug_dir=debug_dir,
+                                page_name="index",
+                                viewport_name=_viewport_name(viewport),
+                                viewport=viewport,
+                                external_requests=external_requests,
+                            )
 
                         page.goto(
                             f"{base_url}/static-path/index.html",
@@ -241,6 +253,15 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
                         )
                         _assert_no_horizontal_overflow(page)
                         _assert_visible_mathjax_output(page, minimum=2)
+                        if debug_dir is not None:
+                            _capture_render_debug_artifact(
+                                page,
+                                debug_dir=debug_dir,
+                                page_name="static-path",
+                                viewport_name=_viewport_name(viewport),
+                                viewport=viewport,
+                                external_requests=external_requests,
+                            )
                     finally:
                         page.close()
             finally:
@@ -249,6 +270,75 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
         handle.close()
 
     assert external_requests == []
+
+
+def test_render_fixture_debug_artifacts_are_written_when_enabled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    debug_dir = tmp_path / "renderer-debug"
+    monkeypatch.setenv("RAYA_RENDER_DEBUG_DIR", str(debug_dir))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.on(
+                    "request",
+                    lambda request: _record_external_request(
+                        request.url,
+                        base_url,
+                        external_requests,
+                    ),
+                )
+                try:
+                    page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    _assert_visible_mathjax_output(page, minimum=6)
+                    _capture_render_debug_artifact(
+                        page,
+                        debug_dir=debug_dir,
+                        page_name="index",
+                        viewport_name="mobile",
+                        viewport={"width": 390, "height": 844},
+                        external_requests=external_requests,
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    screenshot = debug_dir / "mobile-index.png"
+    summary_path = debug_dir / "summary.json"
+    assert screenshot.is_file()
+    assert screenshot.stat().st_size > 0
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["captures"][0]["page"] == "index"
+    assert summary["captures"][0]["viewport"]["name"] == "mobile"
+    assert summary["captures"][0]["mathjax_container_count"] >= 6
+    assert summary["captures"][0]["raw_tex_visible"] is False
+    assert summary["captures"][0]["horizontal_overflow"] <= 1
+    assert summary["captures"][0]["external_requests"] == []
+    assert summary["captures"][0]["screenshot"].endswith("mobile-index.png")
 
 
 @contextlib.contextmanager
@@ -346,6 +436,57 @@ def _assert_visible_mathjax_output(page, *, minimum: int) -> None:
     assert first_box is not None
     assert first_box["width"] > 0
     assert first_box["height"] > 0
+
+
+def _capture_render_debug_artifact(
+    page,
+    *,
+    debug_dir: Path,
+    page_name: str,
+    viewport_name: str,
+    viewport: dict[str, int],
+    external_requests: list[str],
+) -> None:
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
+    page.screenshot(path=str(screenshot_path), full_page=True)
+    visible_text = page.locator("body").inner_text()
+    overflow = page.evaluate(
+        "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
+    )
+    capture = {
+        "page": page_name,
+        "url": page.url,
+        "viewport": {
+            "name": viewport_name,
+            "width": viewport["width"],
+            "height": viewport["height"],
+        },
+        "screenshot": str(screenshot_path),
+        "mathjax_container_count": page.locator("mjx-container").count(),
+        "raw_tex_visible": any(
+            token in visible_text
+            for token in ("\\rayaVec", "\\argmax", "a^2 + b^2 = c^2")
+        ),
+        "external_requests": sorted(set(external_requests)),
+        "horizontal_overflow": overflow,
+    }
+    summary_path = debug_dir / "summary.json"
+    if summary_path.exists():
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    else:
+        summary = {"captures": []}
+    summary["captures"].append(capture)
+    summary_path.write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _viewport_name(viewport: dict[str, int]) -> str:
+    if viewport["width"] <= 720:
+        return "mobile"
+    return "desktop"
 
 
 def _record_external_request(url: str, base_url: str, requests: list[str]) -> None:
