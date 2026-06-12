@@ -17,11 +17,11 @@
 
 ## 3. Static Renderer Integration
 
-- [ ] 3.1 Update rich renderer tests so raw TeX spans fail and MathJax output is required.
-- [ ] 3.2 Collect inline and display math tokens with stable per-page IDs and source paths before rendering the Markdown token stream.
-- [ ] 3.3 Replace math tokens with `MathRenderer.render_many()` HTML output while keeping any fallback path diagnostic-backed.
-- [ ] 3.4 Stop `raya build` before writing successful page output when math rendering diagnostics make the report fail.
-- [ ] 3.5 Preserve existing link, asset, code block, table, callout, footnote, heading-anchor, and page table of contents behavior.
+- [x] 3.1 Update rich renderer tests so raw TeX spans fail and MathJax output is required.
+- [x] 3.2 Collect inline and display math tokens with stable per-page IDs and source paths before rendering the Markdown token stream.
+- [x] 3.3 Replace math tokens with `MathRenderer.render_many()` HTML output while keeping any fallback path diagnostic-backed.
+- [x] 3.4 Stop `raya build` before writing successful page output when math rendering diagnostics make the report fail.
+- [x] 3.5 Preserve existing link, asset, code block, table, callout, footnote, heading-anchor, and page table of contents behavior.
 
 ## 4. Artifact Resources And Static Read Path
 

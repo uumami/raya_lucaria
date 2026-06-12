@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import html
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from pathlib import Path
 
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
@@ -13,6 +14,9 @@ from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
+from raya_schema import ValidationReport
+
+from raya_static.math_renderer import MathItem, MathRenderer
 
 
 INDEX_MARKER = "<!-- raya:index -->"
@@ -46,8 +50,18 @@ class _Callout:
 
 
 class RichMarkdownRenderer:
-    def __init__(self, resolve_href: Callable[[str], str]) -> None:
+    def __init__(
+        self,
+        resolve_href: Callable[[str], str],
+        *,
+        source_path: Path,
+        report: ValidationReport,
+        math_renderer: MathRenderer,
+    ) -> None:
         self._resolve_href = resolve_href
+        self._source_path = source_path
+        self._report = report
+        self._math_renderer = math_renderer
         self._md = MarkdownIt("commonmark", {"html": False})
         self._md.enable("table")
         self._md.use(footnote_plugin)
@@ -57,6 +71,8 @@ class RichMarkdownRenderer:
         self._md.renderer.rules["link_open"] = self._render_link_open
         self._md.renderer.rules["image"] = self._render_image
         self._md.renderer.rules["fence"] = self._render_fence
+        self._md.renderer.rules["math_inline"] = self._render_math
+        self._md.renderer.rules["math_block"] = self._render_math
 
     def render(self, body: str, generated_index: str = "") -> str:
         prepared_body, callouts = _extract_callouts(body)
@@ -64,7 +80,36 @@ class RichMarkdownRenderer:
         marker_used = INDEX_MARKER in prepared_body
         if marker_used:
             prepared_body = prepared_body.replace(INDEX_MARKER, _INDEX_PLACEHOLDER)
-        html_fragment = self._md.render(prepared_body, env)
+        page_tokens = self._md.parse(prepared_body, env)
+        callout_fragments: dict[str, tuple[_Callout, list[Token], dict]] = {}
+        for placeholder, callout in callouts.items():
+            callout_env = _new_env(self._resolve_href, collect_headings=False)
+            callout_tokens = self._md.parse(callout.body, callout_env)
+            callout_fragments[placeholder] = (callout, callout_tokens, callout_env)
+
+        math_items = _collect_math_items(
+            page_tokens,
+            source_path=self._source_path,
+            counter=0,
+        )
+        counter = len(math_items)
+        for _, callout_tokens, _ in callout_fragments.values():
+            new_items = _collect_math_items(
+                callout_tokens,
+                source_path=self._source_path,
+                counter=counter,
+            )
+            math_items.extend(new_items)
+            counter += len(new_items)
+
+        math_result = self._math_renderer.render_many(math_items, report=self._report)
+        if not self._report.ok:
+            return ""
+        env["raya_math_html_by_id"] = math_result.html_by_id
+        for _, _, callout_env in callout_fragments.values():
+            callout_env["raya_math_html_by_id"] = math_result.html_by_id
+
+        html_fragment = self._md.renderer.render(page_tokens, self._md.options, env)
 
         if marker_used:
             html_fragment = html_fragment.replace(
@@ -75,7 +120,21 @@ class RichMarkdownRenderer:
             if generated_index:
                 html_fragment = html_fragment.rstrip() + "\n" + generated_index + "\n"
 
-        html_fragment = self._replace_callout_placeholders(html_fragment, callouts)
+        rendered_callouts = {
+            placeholder: self._render_callout(
+                callout,
+                self._md.renderer.render(callout_tokens, self._md.options, callout_env),
+            )
+            for placeholder, (
+                callout,
+                callout_tokens,
+                callout_env,
+            ) in callout_fragments.items()
+        }
+        html_fragment = self._replace_callout_placeholders(
+            html_fragment,
+            rendered_callouts,
+        )
         toc = _render_page_toc(env["raya_headings"])
         if toc:
             return toc + "\n" + html_fragment
@@ -84,17 +143,15 @@ class RichMarkdownRenderer:
     def _replace_callout_placeholders(
         self,
         html_fragment: str,
-        callouts: dict[str, _Callout],
+        callouts: dict[str, str],
     ) -> str:
-        for placeholder, callout in callouts.items():
-            callout_html = self._render_callout(callout)
+        for placeholder, callout_html in callouts.items():
             html_fragment = html_fragment.replace(f"<p>{placeholder}</p>", callout_html)
         return html_fragment
 
-    def _render_callout(self, callout: _Callout) -> str:
+    def _render_callout(self, callout: _Callout, inner_html: str) -> str:
         label = _callout_label(callout.kind)
-        inner_env = _new_env(self._resolve_href, collect_headings=False)
-        inner = self._md.render(callout.body, inner_env).strip()
+        inner = inner_html.strip()
         body = inner if inner else "<p></p>"
         return "\n".join(
             [
@@ -182,14 +239,47 @@ class RichMarkdownRenderer:
             "</div>\n"
         )
 
+    def _render_math(
+        self,
+        tokens: list[Token],
+        idx: int,
+        options: dict,
+        env: dict,
+    ) -> str:
+        token = tokens[idx]
+        item_id = token.meta.get("raya_math_id")
+        if isinstance(item_id, str):
+            html_by_id = env.get("raya_math_html_by_id", {})
+            rendered = html_by_id.get(item_id)
+            if isinstance(rendered, str):
+                return rendered
+        self._report.add_error(
+            "Math rendering failed",
+            path=self._source_path,
+            field="math",
+            next_action=(
+                "Check the MathJax renderer contract. "
+                "No rendered HTML was available for this math token."
+            ),
+        )
+        return ""
+
 
 def render_markdown_body(
     body: str,
     *,
     generated_index: str,
     resolve_href: Callable[[str], str],
+    source_path: Path,
+    report: ValidationReport,
+    math_renderer: MathRenderer,
 ) -> str:
-    return RichMarkdownRenderer(resolve_href).render(body, generated_index)
+    return RichMarkdownRenderer(
+        resolve_href,
+        source_path=source_path,
+        report=report,
+        math_renderer=math_renderer,
+    ).render(body, generated_index)
 
 
 def missing_footnote_definitions(body: str) -> list[str]:
@@ -445,6 +535,36 @@ def _new_env(
         "raya_headings": [],
         "raya_collect_headings": collect_headings,
     }
+
+
+def _walk_tokens(tokens: list[Token]) -> Iterator[Token]:
+    for token in tokens:
+        yield token
+        if token.children:
+            yield from _walk_tokens(token.children)
+
+
+def _collect_math_items(
+    tokens: list[Token],
+    *,
+    source_path: Path,
+    counter: int,
+) -> list[MathItem]:
+    items: list[MathItem] = []
+    for token in _walk_tokens(tokens):
+        if token.type in {"math_inline", "math_block"}:
+            item_id = f"math-{counter}"
+            token.meta["raya_math_id"] = item_id
+            items.append(
+                MathItem(
+                    id=item_id,
+                    tex=token.content.strip(),
+                    display=token.type == "math_block",
+                    source_path=source_path,
+                )
+            )
+            counter += 1
+    return items
 
 
 def _extract_callouts(body: str) -> tuple[str, dict[str, _Callout]]:

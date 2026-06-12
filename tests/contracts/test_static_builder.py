@@ -236,8 +236,9 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert "<blockquote>" in html
     assert "<hr />" in html
     assert "<table>" in html
-    assert '<span class="math inline">a^2 + b^2 = c^2</span>' in html
-    assert '<div class="math block">' in html
+    assert "mjx-container" in html
+    assert "a^2 + b^2 = c^2" not in _visible_text(html)
+    assert '<span class="math inline">a^2 + b^2 = c^2</span>' not in html
     assert 'data-language="python"' in html
     assert 'class="language-python"' in html
     assert 'data-language="unknownlang"' in html
@@ -254,7 +255,8 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert 'id="nested-duplicate"' in nested_html
     assert 'id="nested-duplicate-2"' in nested_html
     assert '<aside class="raya-callout raya-callout-tip"' in nested_html
-    assert '<span class="math inline">x_i</span>' in nested_html
+    assert "mjx-container" in nested_html
+    assert '<span class="math inline">x_i</span>' not in nested_html
 
 
 def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> None:

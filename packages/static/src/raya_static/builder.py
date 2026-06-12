@@ -63,6 +63,7 @@ from raya_schema.runtime import (
     runtime_index,
 )
 from raya_schema.yaml_io import load_yaml_file
+from raya_static.math_renderer import MathRenderer
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
     missing_footnote_definitions,
@@ -198,26 +199,29 @@ def build_course(course_path: str | Path) -> ValidationReport:
         return report
     reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
+    math_renderer = MathRenderer()
 
     for page in pages:
+        rendered_page = _render_page(
+            page=page,
+            content_model=content_model,
+            pages_by_source=pages_by_source,
+            pages_by_reference=pages_by_reference,
+            course_root=root,
+            source_dir=source_dir,
+            course_title=str(config["title"]),
+            language=str(config["language"]),
+            official_counts=official_counts,
+            page_references=references_by_page.get(page.id, []),
+            reviewed_by_reference=reviewed_by_reference,
+            report=report,
+            math_renderer=math_renderer,
+        )
+        if not report.ok:
+            return report
         output_file = site_dir / page.output_path
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        output_file.write_text(
-            _render_page(
-                page=page,
-                content_model=content_model,
-                pages_by_source=pages_by_source,
-                pages_by_reference=pages_by_reference,
-                course_root=root,
-                source_dir=source_dir,
-                course_title=str(config["title"]),
-                language=str(config["language"]),
-                official_counts=official_counts,
-                page_references=references_by_page.get(page.id, []),
-                reviewed_by_reference=reviewed_by_reference,
-            ),
-            encoding="utf-8",
-        )
+        output_file.write_text(rendered_page, encoding="utf-8")
         report.wrote_output(output_file)
 
     copied_source_assets = _copy_source_assets(
@@ -418,6 +422,8 @@ def _render_page(
     official_counts: dict[str, dict[str, int]],
     page_references: list[SourceReference],
     reviewed_by_reference: dict[str, ReviewedOutput],
+    report: ValidationReport,
+    math_renderer: MathRenderer,
 ) -> str:
     nav_items = []
     for target in content_model.pages:
@@ -480,6 +486,9 @@ def _render_page(
                     course_root,
                     source_dir,
                 ),
+                source_path=page.source_path,
+                report=report,
+                math_renderer=math_renderer,
             ),
             "</article>",
             (
