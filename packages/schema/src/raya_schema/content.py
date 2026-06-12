@@ -14,12 +14,11 @@ PRIVATE_DIR_NAMES = {
     "_drafts",
     "_partials",
     "_official",
+    "_reviewed",
     "_assets",
-    "code",
-    "notebooks",
     "runtime",
 }
-SUPPORT_OWNER_DIR_NAMES = {"_official", "_assets", "code", "notebooks"}
+SUPPORT_OWNER_DIR_NAMES = {"_official", "_reviewed", "_assets"}
 SUPPORTED_STATUSES = {"draft", "ready", "archived", "deprecated"}
 DEFAULT_HIERARCHY = (
     {"key": "unit", "label": "Unit"},
@@ -573,7 +572,7 @@ def _validate_support_owner_indexes(
                 path=owner_dir,
                 next_action=(
                     "Represent the quantum as a directory with 0_index.md "
-                    "before adding _official/, _assets/, code/, or notebooks/"
+                    "before adding private source support directories"
                 ),
             )
 

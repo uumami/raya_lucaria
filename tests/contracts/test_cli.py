@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import shutil
@@ -11,9 +12,22 @@ MINIMAL = ROOT / "examples" / "courses" / "minimal"
 
 
 def run_cli(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
+    env = {**os.environ}
+    pythonpath = ":".join(
+        str(path)
+        for path in (
+            ROOT / "packages" / "schema" / "src",
+            ROOT / "packages" / "static" / "src",
+            ROOT / "packages" / "cli" / "src",
+        )
+    )
+    env["PYTHONPATH"] = (
+        f"{pythonpath}:{env['PYTHONPATH']}" if env.get("PYTHONPATH") else pythonpath
+    )
     return subprocess.run(
         [sys.executable, "-m", "raya_cli", *args],
         cwd=cwd,
+        env=env,
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -28,6 +42,7 @@ def test_cli_help() -> None:
     assert "validate" in result.stdout
     assert "build" in result.stdout
     assert "run" in result.stdout
+    assert "outputs" in result.stdout
     assert "course" in result.stdout
     assert "artifacts" in result.stdout
 
@@ -44,6 +59,14 @@ def test_cli_artifacts_help() -> None:
 
     assert result.returncode == 0
     assert "inspect" in result.stdout
+
+
+def test_cli_outputs_help() -> None:
+    result = run_cli("outputs", "--help")
+
+    assert result.returncode == 0
+    assert "list" in result.stdout
+    assert "freeze" in result.stdout
 
 
 def test_cli_doctor_framework_context() -> None:

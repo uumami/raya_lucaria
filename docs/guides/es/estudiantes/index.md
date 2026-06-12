@@ -14,11 +14,15 @@ Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiant
 
 Las paginas estaticas pueden incluir math, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. Todo debe leerse sin cuentas ni backend. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
-Algunas paginas pueden incluir scripts o notebooks referenciados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
+Algunas paginas pueden incluir scripts o notebooks linkeados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Los archivos source no linkeados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.
 
 Cuando un curso te pida ejecutar codigo, usa el target exacto indicado por el equipo del curso, por ejemplo `raya run . manual-script` desde la raiz del curso o el comando Docker que provean. `--dry-run` muestra que se ejecutaria antes de ejecutarlo. Targets con policy `cache` pueden reutilizar output generado previo salvo que el curso pida `--refresh`.
+
+Algunas paginas pueden mostrar panels de reviewed output. Ese output es soporte de curso que el equipo congelo dentro de revision de source, por eso puede mostrarse estaticamente sin volver a ejecutar codigo. Es diferente de tu trabajo personal y de logs generados localmente. Si el reviewed output esta stale o falta, el artifact del curso debe fallar antes de publicarlo como current.
+
+Las paginas estaticas muestran una vista de lectura enfocada. Hashes internos, cache keys, rutas source, rutas de artifact y detalles de runtime quedan fuera del flujo normal; son para profesores, colaboradores, agentes o herramientas que inspeccionan el artifact.
 
 Usa la documentacion de rol como guia. Usa las paginas de curso y objetos oficiales de aprendizaje como material de curso. Si documentacion y material de curso entran en conflicto, el equipo de curso y la autoridad aceptada de specs OpenSpec o `docs/foundation/` deciden que cambia.
 

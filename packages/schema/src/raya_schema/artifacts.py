@@ -66,6 +66,7 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "indices": validate_indices_index,
         "official": validate_official_index,
         "references": validate_references_index,
+        "reviewed_outputs": validate_reviewed_outputs_index,
         "runtime": validate_runtime_index,
         "execution": validate_execution_index,
         "execution_results": validate_execution_results_index,
@@ -82,6 +83,8 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         _merge_report(report, validation_report)
         if key == "references" and validation_report.ok:
             _validate_reference_files(root, index_path, report)
+        if key == "reviewed_outputs" and validation_report.ok:
+            _validate_reviewed_output_files(root, index_path, report)
         if key in {"runtime", "execution", "cache"} and validation_report.ok:
             _validate_metadata_paths(key, index_path, report)
         if key == "execution_results" and validation_report.ok:
@@ -173,6 +176,10 @@ def validate_official_index(index_path: str | Path) -> ValidationReport:
 
 def validate_references_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "references-index.schema.json")
+
+
+def validate_reviewed_outputs_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "reviewed-outputs.schema.json")
 
 
 def validate_runtime_index(index_path: str | Path) -> ValidationReport:
@@ -305,6 +312,55 @@ def _validate_reference_files(
                 report,
                 field=f"references.{index}.browser_path",
             )
+
+
+def _validate_reviewed_output_files(
+    artifact_root: Path,
+    index_path: Path,
+    report: ValidationReport,
+) -> None:
+    try:
+        data = load_yaml_file(index_path)
+    except Exception:
+        return
+    if not isinstance(data, dict):
+        return
+    outputs = data.get("outputs")
+    if not isinstance(outputs, list):
+        return
+    for output_index, item in enumerate(outputs):
+        if not isinstance(item, dict):
+            continue
+        source_path = item.get("source_path")
+        if isinstance(source_path, str):
+            _validate_relative_metadata_path(
+                source_path,
+                report,
+                path=index_path,
+                field=f"outputs.{output_index}.source_path",
+            )
+        files = item.get("files")
+        if not isinstance(files, list):
+            continue
+        for file_index, file_item in enumerate(files):
+            if not isinstance(file_item, dict):
+                continue
+            artifact_path = file_item.get("artifact_path")
+            if isinstance(artifact_path, str):
+                _validate_manifest_relative_file(
+                    artifact_root,
+                    artifact_path,
+                    report,
+                    field=f"outputs.{output_index}.files.{file_index}.artifact_path",
+                )
+            browser_path = file_item.get("browser_path")
+            if isinstance(browser_path, str):
+                _validate_manifest_relative_file(
+                    artifact_root / "site",
+                    browser_path,
+                    report,
+                    field=f"outputs.{output_index}.files.{file_index}.browser_path",
+                )
 
 
 def _validate_metadata_paths(

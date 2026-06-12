@@ -1,0 +1,18 @@
+id: demo-notebook
+target_id: execution-root:edf702c7fa35
+reference_id: execution-root:edf702c7fa35
+runtime_target_id: demo-notebook
+source_path: course/notebooks/demo.ipynb
+kind: notebook
+policy: manual
+profile: default
+source_sha256: 4a2573a137e7e882bafb84d3514c61dead581f646d21a5e9f4073120f865293b
+input_hashes: []
+runtime_profile_sha256: 04064df94aa50440a348065bcb07dc89e2f03c34fa651d6ac3ef3cd94d8af8ce
+lockfile_sha256: c1b76b15c2c59534d7132b8d2272404bed12032cd3240f76711f5dc02e112024
+review_key: 8859cae093fe0a02322cba76d6106d7344d8ffcbafa0ba7777c51968536a8ef2
+reviewed_at: "2026-06-05T00:00:00Z"
+outputs:
+  - path: demo-notebook.ipynb
+    kind: notebook
+    sha256: a8f210200abc6d10059cbe4ab566d135920fbe6f2a193e99a29c05812e010830

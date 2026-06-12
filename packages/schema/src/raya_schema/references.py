@@ -7,7 +7,6 @@ from pathlib import Path
 from urllib.parse import unquote
 
 
-REFERENCE_SUPPORT_DIRS = {"code", "notebooks"}
 REFERENCE_EXTENSIONS = {
     ".py": "code",
     ".ipynb": "notebook",
@@ -16,16 +15,14 @@ REFERENCE_FORMATS = {
     "code": "python",
     "notebook": "ipynb",
 }
-REFERENCE_DIR_BY_KIND = {
-    "code": "code",
-    "notebook": "notebooks",
-}
 PRIVATE_REFERENCE_SEGMENTS = {
     "_assets",
     "_official",
+    "_reviewed",
     "_drafts",
     "_partials",
     "drafts",
+    "runtime",
 }
 
 
@@ -118,7 +115,7 @@ def resolve_course_reference(
         course_root=course_root,
         target_path=target_path,
     )
-    if kind not in REFERENCE_DIR_BY_KIND:
+    if kind not in REFERENCE_FORMATS or reference_kind_for_path(target) != kind:
         return ReferenceResolution(kind=kind, target_path=target, status="unsupported")
     if not _path_is_under(target, source_dir):
         return ReferenceResolution(kind=kind, target_path=target, status="outside")
@@ -132,19 +129,18 @@ def resolve_course_reference(
             blocked_segment=blocked_segment,
         )
 
-    for support_root in _allowed_support_roots(source_path, source_dir, kind):
-        if _path_is_under(target, support_root):
-            return ReferenceResolution(
-                kind=kind,
-                target_path=target,
-                status="referenced",
-                output_path=reference_output_path(source_dir, target),
-                support_root=support_root,
-            )
+    target_owner = _owner_dir_for_path(target, source_dir)
+    allowed_owners = _allowed_owner_dirs(source_path, source_dir)
+    if target_owner.resolve() in {owner.resolve() for owner in allowed_owners}:
+        return ReferenceResolution(
+            kind=kind,
+            target_path=target,
+            status="referenced",
+            output_path=reference_output_path(source_dir, target),
+            support_root=target_owner,
+        )
 
-    if _target_uses_reference_dir(target, source_dir, kind):
-        return ReferenceResolution(kind=kind, target_path=target, status="cross_owner")
-    return ReferenceResolution(kind=kind, target_path=target, status="outside_support")
+    return ReferenceResolution(kind=kind, target_path=target, status="cross_owner")
 
 
 def notebook_validation_error(path: Path) -> str | None:
@@ -161,34 +157,52 @@ def notebook_validation_error(path: Path) -> str | None:
     return None
 
 
-def _allowed_support_roots(
+def _allowed_owner_dirs(
     source_path: Path,
     source_dir: Path,
-    kind: str,
 ) -> list[Path]:
-    support_dir_name = REFERENCE_DIR_BY_KIND[kind]
     roots: list[Path] = []
-    current = source_path.parent.resolve()
+    current = _owner_dir_for_path(source_path, source_dir).resolve()
     source_root = source_dir.resolve()
     while True:
         try:
             current.relative_to(source_root)
         except ValueError:
             break
-        roots.append(current / support_dir_name)
+        roots.append(current)
         if current == source_root:
             break
         current = current.parent
     return roots
 
 
-def _target_uses_reference_dir(target_path: Path, source_dir: Path, kind: str) -> bool:
-    try:
-        rel_parts = target_path.resolve().relative_to(source_dir.resolve()).parts
-    except ValueError:
+def _owner_dir_for_path(path: Path, source_dir: Path) -> Path:
+    source_root = source_dir.resolve()
+    current = path.resolve().parent
+    while True:
+        try:
+            current.relative_to(source_root)
+        except ValueError:
+            return source_root
+        if _has_normalized_zero_index(current):
+            return current
+        if current == source_root:
+            return source_root
+        current = current.parent
+
+
+def _has_normalized_zero_index(directory: Path) -> bool:
+    if not directory.is_dir():
         return False
-    support_dir_name = REFERENCE_DIR_BY_KIND[kind]
-    return support_dir_name in rel_parts[:-1]
+    for child in directory.iterdir():
+        if (
+            child.is_file()
+            and child.suffix == ".md"
+            and child.stem.startswith("0")
+            and child.stem.strip("0") == "_index"
+        ):
+            return True
+    return False
 
 
 def _blocked_reference_segment(target_path: Path, source_dir: Path) -> str | None:
@@ -197,9 +211,7 @@ def _blocked_reference_segment(target_path: Path, source_dir: Path) -> str | Non
     except ValueError:
         return None
     for part in rel_parts[:-1]:
-        if part in PRIVATE_REFERENCE_SEGMENTS or (
-            part.startswith("_") and part not in REFERENCE_SUPPORT_DIRS
-        ):
+        if part in PRIVATE_REFERENCE_SEGMENTS or part.startswith("_"):
             return part
     return None
 

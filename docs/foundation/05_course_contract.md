@@ -19,6 +19,11 @@ course-root/
     _official/
       cards/
         1_course_card.yaml
+    _reviewed/
+      execution/
+        cache-script/
+          reviewed.yaml
+          stdout.txt
     1_unit/
       0_index.md
       1_topic/
@@ -31,7 +36,7 @@ course-root/
       0_index.md
 ```
 
-`source: course` and `course/` are the canonical authored source shape for source courses. The authored course tree is one ordered tree: rendered pages, official learning objects, local assets, drafts, and partials live under `course/` with private support directories. Do not add source `content:`, root `official/`, or root source `assets/` to new course contracts, scaffolds, fixtures, or examples.
+`source: course` and `course/` are the canonical authored source shape for source courses. The authored course tree is one ordered tree: rendered pages, official learning objects, local assets, reviewed execution output support, drafts, and partials live under `course/` with private support directories. Do not add source `content:`, root `official/`, or root source `assets/` to new course contracts, scaffolds, fixtures, or examples.
 
 ## Course Configuration
 
@@ -92,7 +97,7 @@ Review [derivatives](raya:derivatives-rates).
 
 Rendered directories use `0_index.md` as the manual landing page and metadata source. Generated local indexes and master indexes are rendered from child metadata and official learning-object scopes, but generated sections are not written back into source files.
 
-Private support directories do not render. `_official/`, `_assets/`, `_drafts/`, `drafts/`, `_partials/`, and other leading-underscore support paths are source support, not navigation entries. A quantum that owns `_official/` or `_assets/` must be a directory page with `0_index.md`; a standalone file page remains valid only when it owns no child support material.
+Private support directories do not render. `_official/`, `_assets/`, `_reviewed/`, `_drafts/`, `drafts/`, `_partials/`, and other leading-underscore support paths are source support, not navigation entries. A quantum that owns `_official/`, `_assets/`, or `_reviewed/` must be a directory page with `0_index.md`; a standalone file page remains valid only when it owns no child support material.
 
 Page frontmatter should stay compact:
 
@@ -147,6 +152,10 @@ Colocated official object filenames use ordered prefixes for authoring and expor
 
 Colocated assets use `_assets/` beside the page or section that owns them. Rendered Markdown may reference its own `_assets/` or an ancestor `_assets/` inside the authored source tree. Rendered pages must not link into `_official/`, `_drafts/`, `_partials/`, or other non-asset support paths.
 
+Rendered Markdown may link to `.py` and `.ipynb` files as code and notebook source support. Glintstone classifies those references by extension and validates that the target belongs to the page's own learning quantum or an accepted ancestor. Folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` are ordinary author organization choices; only validated, linked files are copied into generated reference artifacts.
+
+Reviewed execution output uses `_reviewed/execution/<target>/` beside the quantum or accepted ancestor that owns the target. A `reviewed.yaml` manifest records target identity, source/runtime/input/review hashes, and reviewed files. `_reviewed/` is source support for reviewed course material; it must not overwrite pages, assets, official objects, code, or notebooks.
+
 ## Validation
 
 A course must be validated before build. Validation should check at least:
@@ -161,6 +170,8 @@ A course must be validated before build. Validation should check at least:
 - broken internal links,
 - broken `raya:` stable references,
 - missing local or colocated assets,
+- missing, stale, or escaping reviewed execution output files,
+- `policy: frozen` targets without current reviewed output,
 - invalid dates or schema fields,
 - generated/official authority labels,
 - invalid, unscoped, unordered, duplicated, or mismatched official learning objects.

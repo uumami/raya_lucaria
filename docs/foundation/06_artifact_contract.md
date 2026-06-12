@@ -21,7 +21,10 @@ artifact/
     navigation.json
     indices.json
     official.json
+    reviewed-outputs.json
   assets/
+  files/
+  reviewed/
 ```
 
 The exact renderer can change. The artifact contract should not depend on a specific static-site generator, JavaScript framework, or CSS pipeline.
@@ -39,6 +42,7 @@ It should include:
 - source schema version,
 - page/quanta/link/navigation/index data locations,
 - official learning-object indexes,
+- reviewed execution output indexes,
 - static site root,
 - optional graph/search data locations.
 
@@ -59,6 +63,28 @@ Minimum expectations:
 
 Search, themes, graphs, offline support, slides, and interactive components are future capabilities, not initial requirements.
 
+## Rendered Surface Discipline
+
+Rendered HTML is a view over artifact data, not the authority surface. Glintstone should keep ordinary pages focused and move verbose internals to inspection or machine surfaces.
+
+```text
+artifact data                 rendered surfaces
+-------------                 -----------------
+manifest.json + data/*.json   student-default pages
+copied files                  compact support panels
+reviewed copies               static inspection pages
+                              machine-only data
+```
+
+Surface tiers:
+
+- `student-default`: authored learning content, navigation, indexes, local assets, selected study/resource cues.
+- `support-panel`: compact status, labels, summaries, and deployment-neutral links for references, reviewed output, or study support.
+- `inspection`: static audit pages for professors, contributors, and agents, generated from artifact data.
+- `machine-only`: manifest-declared JSON and copied files for tools and future services.
+
+Default pages should not dump raw JSON, source hashes, cache keys, artifact storage paths, runtime profile internals, or reviewed-output freshness details into the reading flow. Those details remain available through `manifest.json`, `data/*.json`, copied artifact files, and optional static inspection pages.
+
 ## Data Products
 
 Generated data should make the course legible to future domains:
@@ -72,6 +98,7 @@ Generated data should make the course legible to future domains:
 - citation/source map,
 - quanta tree,
 - asset map.
+- reviewed output map.
 
 Generated data is not canonical course truth. It can always be rebuilt from source.
 
@@ -97,6 +124,21 @@ Rennala can later add:
 ```
 
 This keeps the official base portable while allowing dynamic study features to grow around it.
+
+## Reviewed Output Data
+
+Artifacts may expose reviewed execution output that was frozen into source support before build. Reviewed output data is useful to static pages, agents, launchers, and future execution tools, but the source `_reviewed/` manifest and files remain the authority.
+
+```text
+course/_reviewed/execution/<target>/
+          |
+          v
+artifact/data/reviewed-outputs.json
+artifact/reviewed/<target>/
+artifact/site/_raya/reviewed/<target>/
+```
+
+The builder must not execute code to produce reviewed output. It validates current reviewed metadata and copied files, then renders compact panels or links from manifest-declared data. Stale or missing reviewed output should fail before a static artifact presents it as current.
 
 ## Builder Boundary
 

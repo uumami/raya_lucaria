@@ -14,11 +14,15 @@ Rendered courses hide source filename mechanics. Students should see clean page 
 
 Static pages may include math, highlighted code, tables, callouts, footnotes, heading anchors, and page contents. These are readable without accounts or a backend. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
-Some pages may include referenced scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
+Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Some courses include runtime metadata for future local or Docker execution. In the current static artifact, that metadata only explains intended profiles, policies, and cache keys. It does not mean the web page has already run the code.
 
 When a course asks you to run code, use the exact target named by the course team, such as `raya run . manual-script` from the course root or the Docker command they provide. `--dry-run` shows what would run before it runs. Cache-policy targets may reuse previous generated output unless the course asks for `--refresh`.
+
+Some pages may show reviewed output panels. Reviewed output is course support that the course team has frozen into source review, so it can be shown statically without rerunning code. It is different from your personal work and from generated-only local logs. If reviewed output is stale or missing, the course artifact should fail before publishing it as current.
+
+Static pages show a focused reading view. Internal hashes, cache keys, source paths, artifact paths, and runtime details are kept out of the normal page flow; they are for professors, contributors, agents, or tools inspecting the artifact.
 
 Use role documentation as guidance. Use course pages and official learning objects as course material. If documentation and course material conflict, the course team and accepted OpenSpec specs or `docs/foundation/` authority decide what changes.
 

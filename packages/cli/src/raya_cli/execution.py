@@ -22,6 +22,11 @@ from raya_schema.references import (
     resolve_course_reference,
     source_reference_id,
 )
+from raya_schema.reviewed import (
+    discover_reviewed_outputs,
+    freshness_for_reference,
+    reviewed_outputs_by_reference,
+)
 from raya_schema.runtime import (
     RuntimeModel,
     RuntimeProfile,
@@ -137,11 +142,31 @@ def run_course_target(
         )
         return report
     if resolved.policy == "frozen":
-        report.add_error(
-            "Frozen execution policy is not accepted for local runs yet",
-            path=resolved.reference.source_path,
-            field="policy",
-            next_action="Wait for a frozen-output trust contract or use a different policy",
+        reviewed_outputs = discover_reviewed_outputs(
+            course_id=course_id,
+            course_root=root,
+            source_dir=source_dir,
+            runtime_model=runtime_model,
+            references=references,
+            report=report,
+            require_frozen=False,
+        )
+        current_reviewed = reviewed_outputs_by_reference(reviewed_outputs).get(
+            resolved.reference.id
+        )
+        if current_reviewed is None:
+            report.add_error(
+                "Frozen execution target is missing current reviewed output",
+                path=resolved.reference.source_path,
+                field="policy",
+                next_action="Run a runnable policy target, use raya outputs freeze, review _reviewed/, then keep policy: frozen",
+            )
+            return report
+        report.add_info(
+            "Frozen execution target reviewed output is current",
+            path=current_reviewed.manifest_path,
+            field=resolved.reference.id,
+            next_action="No code was executed; reviewed output metadata was validated",
         )
         return report
     if resolved.policy not in {"manual", "cache", "always"}:
@@ -267,6 +292,7 @@ def run_course_target(
         started_at=started_at,
         ended_at=ended_at,
         output_path=output_path if output_path.exists() else None,
+        runtime_model=runtime_model,
     )
     _write_execution_result_index(course_id, artifact_dir, result, report)
     if resolved.policy == "cache" and status == "succeeded" and paths.cache_result_path is not None:
@@ -636,6 +662,7 @@ def _result_record(
     started_at: str,
     ended_at: str,
     output_path: Path | None,
+    runtime_model: RuntimeModel,
 ) -> dict[str, Any]:
     source_path = target.reference.source_path.relative_to(root).as_posix()
     record: dict[str, Any] = {
@@ -667,6 +694,22 @@ def _result_record(
             record["cache_result_path"] = paths.cache_result_path.relative_to(
                 artifact_dir
             ).as_posix()
+    freshness = freshness_for_reference(
+        course_root=root,
+        reference=target.reference,
+        runtime_model=runtime_model,
+        cache_entry=target.cache_entry,
+    )
+    for field_name in (
+        "source_sha256",
+        "input_hashes",
+        "runtime_profile_sha256",
+        "lockfile_sha256",
+        "review_key",
+    ):
+        value = freshness.get(field_name)
+        if value is not None:
+            record[field_name] = value
     return record
 
 

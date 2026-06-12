@@ -49,6 +49,17 @@ Documentation must:
 - keep rendered documentation fixtures separate from class/course examples,
 - avoid defining pedagogy or architecture by accident.
 
+## Rendered Display Boundaries
+
+Rendered documentation and rendered course pages follow the same display discipline:
+
+- normal pages are `student-default` or reader-default views,
+- generated support panels stay compact,
+- verbose build/runtime/reference/review metadata belongs in static inspection pages or manifest-declared data,
+- `manifest.json` and `data/*.json` remain the machine-readable authority.
+
+This lets documentation demonstrate capabilities without turning raw artifact internals into the reading experience.
+
 ## Rendered Documentation
 
 Glintstone may render documentation or documentation fixtures to prove static rendering behavior. Rendered documentation remains explanatory material. It must stay separate from class/course examples and must use the same static read path rules as course artifacts.

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from raya_schema import validate_course
 
 
@@ -361,17 +363,89 @@ def test_code_and_notebook_reference_fixture_validates_and_reads_files() -> None
         in report.files_read
     )
     assert (
-        REFERENCE_FIXTURE / "course" / "1_analysis" / "code" / "clean_data.py"
+        REFERENCE_FIXTURE / "course" / "1_analysis" / "scripts" / "clean_data.py"
         in report.files_read
     )
     assert (
         REFERENCE_FIXTURE
         / "course"
         / "1_analysis"
-        / "notebooks"
+        / "labs"
         / "exploration.ipynb"
         in report.files_read
     )
+
+
+def test_extension_based_code_and_notebook_references_validate(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    script = source / "scripts" / "clean.py"
+    notebook = source / "labs" / "explore.ipynb"
+    script.parent.mkdir(parents=True)
+    notebook.parent.mkdir(parents=True)
+    script.write_text("def clean() -> str:\n    return 'ok'\n", encoding="utf-8")
+    _write_notebook(notebook, title="Exploration")
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        "Use the [script](scripts/clean.py) and [notebook](labs/explore.ipynb).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert script in report.files_read
+    assert notebook in report.files_read
+
+
+def test_code_and_notebook_folder_names_remain_valid_when_owned(
+    tmp_path: Path,
+) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    script = source / "code" / "helper.py"
+    notebook = source / "notebooks" / "overview.ipynb"
+    script.parent.mkdir(parents=True)
+    notebook.parent.mkdir(parents=True)
+    script.write_text("VALUE = 1\n", encoding="utf-8")
+    _write_notebook(notebook, title="Overview")
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        "Use the [helper](code/helper.py) and [overview](notebooks/overview.ipynb).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert script in report.files_read
+    assert notebook in report.files_read
+
+
+def test_ancestor_code_reference_validates(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    shared = source / "shared" / "helper.py"
+    topic = source / "1_topic"
+    shared.parent.mkdir(parents=True)
+    topic.mkdir(parents=True)
+    shared.write_text("def shared() -> str:\n    return 'ancestor'\n", encoding="utf-8")
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n",
+        encoding="utf-8",
+    )
+    (topic / "0_index.md").write_text(
+        "---\nid: topic\ntitle: Topic\nsummary: Topic page.\n---\n# Topic\n\n"
+        "Use the ancestor [helper](../shared/helper.py).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert shared in report.files_read
 
 
 def test_missing_code_reference_fixture_fails() -> None:
@@ -380,7 +454,7 @@ def test_missing_code_reference_fixture_fails() -> None:
     assert not report.ok
     assert any(
         item.message == "Missing local code reference"
-        and item.field == "link:code/missing.py"
+        and item.field == "link:scripts/missing.py"
         for item in report.diagnostics
     )
 
@@ -393,7 +467,89 @@ def test_malformed_notebook_reference_fixture_fails() -> None:
     assert not report.ok
     assert any(
         item.message == "Unreadable notebook reference"
-        and item.field == "link:notebooks/bad.ipynb"
+        and item.field == "link:labs/bad.ipynb"
+        for item in report.diagnostics
+    )
+
+
+def test_descendant_quantum_code_reference_fails(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    topic = source / "1_topic"
+    script = topic / "scripts" / "owned.py"
+    script.parent.mkdir(parents=True)
+    script.write_text("VALUE = 'descendant'\n", encoding="utf-8")
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        "Do not reach into a descendant [script](1_topic/scripts/owned.py).\n",
+        encoding="utf-8",
+    )
+    (topic / "0_index.md").write_text(
+        "---\nid: topic\ntitle: Topic\nsummary: Topic page.\n---\n# Topic\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.message == "Local code reference crosses a learning quantum boundary"
+        for item in report.diagnostics
+    )
+
+
+def test_escaping_code_reference_fails(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    outside = tmp_path / "outside.py"
+    outside.write_text("VALUE = 'outside'\n", encoding="utf-8")
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        "Do not escape to [outside](../outside.py).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.message == "Local code reference escapes the authored source tree"
+        for item in report.diagnostics
+    )
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        "_official/private.py",
+        "_reviewed/execution/private/private.py",
+        "_assets/private.py",
+        "_drafts/private.py",
+        "drafts/private.py",
+        "_partials/private.py",
+        "runtime/private.py",
+    ],
+)
+def test_private_code_reference_paths_fail(tmp_path: Path, target: str) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    private_file = source / target
+    private_file.parent.mkdir(parents=True)
+    private_file.write_text("VALUE = 'private'\n", encoding="utf-8")
+    source.mkdir(exist_ok=True)
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        f"Do not link [private]({target}).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        item.message == "Local code reference points to private support material"
+        and item.field == f"link:{target}"
         for item in report.diagnostics
     )
 
@@ -551,6 +707,26 @@ def _write_valid_config(path: Path) -> None:
                 "source: course",
                 "artifact: artifact",
             ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_notebook(path: Path, *, title: str) -> None:
+    path.write_text(
+        (
+            "{\n"
+            '  "cells": [\n'
+            "    {\n"
+            '      "cell_type": "markdown",\n'
+            '      "metadata": {},\n'
+            f'      "source": ["# {title}\\n"]\n'
+            "    }\n"
+            "  ],\n"
+            '  "metadata": {},\n'
+            '  "nbformat": 4,\n'
+            '  "nbformat_minor": 5\n'
+            "}\n"
         ),
         encoding="utf-8",
     )

@@ -77,6 +77,10 @@
           "type": "string",
           "minLength": 1
         },
+        "reviewed_outputs": {
+          "type": "string",
+          "minLength": 1
+        },
         "runtime": {
           "type": "string",
           "minLength": 1

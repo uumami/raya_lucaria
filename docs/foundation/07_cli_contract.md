@@ -30,6 +30,10 @@ raya --help
 raya doctor
 raya validate <course>
 raya build <course>
+raya run <course> <target>
+raya outputs list <course>
+raya outputs freeze <course> <target>
+raya artifacts inspect <artifact>
 ```
 
 Next commands:
@@ -37,7 +41,6 @@ Next commands:
 ```text
 raya course init
 raya installation init
-raya artifacts inspect
 raya specs validate
 ```
 
@@ -68,6 +71,18 @@ course artifact
 ```
 
 The CLI may call package-owned behavior, but it should not own pedagogy, rendering internals, auth, study algorithms, or provider logic.
+
+## Execution Commands
+
+Execution commands are explicit and target-scoped:
+
+- `raya run <course> <target>` may execute one validated target through the selected runtime profile.
+- `raya run --dry-run` reports command shape without execution.
+- `raya outputs list <course>` reports generated and reviewed output state without execution.
+- `raya outputs freeze <course> <target>` copies a current successful generated result into `_reviewed/` source support without execution.
+- `raya artifacts inspect <artifact>` reads manifest-declared artifact data without rebuilding or executing.
+
+No command except `raya run` may run scripts, notebooks, kernels, `uv`, Docker, package installers, or cache refreshes. `policy: frozen` validates current reviewed output and never executes.
 
 ## Diagnostics
 

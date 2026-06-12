@@ -16,6 +16,7 @@ from raya_schema import (
     validate_pages_index,
     validate_quanta_index,
     validate_references_index,
+    validate_reviewed_outputs_index,
     validate_runtime_index,
 )
 from raya_static import build_course
@@ -25,6 +26,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
+EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 
 
 def test_valid_artifact_manifest(tmp_path: Path) -> None:
@@ -99,6 +101,11 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         '{"course_id":"minimal-course","references":[]}',
         encoding="utf-8",
     )
+    reviewed_outputs = tmp_path / "reviewed-outputs.json"
+    reviewed_outputs.write_text(
+        '{"course_id":"minimal-course","authority":"reviewed-course-support","outputs":[]}',
+        encoding="utf-8",
+    )
     runtime = tmp_path / "runtime.json"
     runtime.write_text(
         '{"course_id":"minimal-course","profiles":[],"defaults":{"policy":"never"}}',
@@ -128,6 +135,7 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_indices_index(indices),
         validate_official_index(official),
         validate_references_index(references),
+        validate_reviewed_outputs_index(reviewed_outputs),
         validate_runtime_index(runtime),
         validate_execution_index(execution),
         validate_execution_results_index(execution_results),
@@ -174,6 +182,36 @@ def test_inspect_runtime_artifact_succeeds(tmp_path: Path) -> None:
     assert course / "artifact" / "data" / "runtime.json" in report.files_read
     assert course / "artifact" / "data" / "execution.json" in report.files_read
     assert course / "artifact" / "data" / "cache.json" in report.files_read
+
+
+def test_inspect_reviewed_output_artifact_files(tmp_path: Path) -> None:
+    course = tmp_path / "execution-fixture"
+    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+
+    report = inspect_artifact(course / "artifact")
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert course / "artifact" / "data" / "reviewed-outputs.json" in report.files_read
+
+
+def test_inspect_reviewed_output_artifact_fails_when_file_missing(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path / "execution-fixture"
+    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    (course / "artifact" / "reviewed" / "frozen-script" / "stdout.txt").unlink()
+
+    report = inspect_artifact(course / "artifact")
+
+    assert not report.ok
+    assert any(
+        item.message == "Referenced artifact file is missing"
+        for item in report.diagnostics
+    )
 
 
 def test_inspect_runtime_artifact_rejects_escaping_metadata_path(tmp_path: Path) -> None:

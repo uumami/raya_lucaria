@@ -78,10 +78,12 @@ context: |
   `site/_raya/`. This baseline must remain static-first and must not execute
   code, notebooks, kernels, or runtime profiles.
 
-  Code and notebook references are the Phase 2 static baseline: `.py` links
-  under `code/` and `.ipynb` links under `notebooks/` validate before build,
-  remain private source support owned by a learning quantum or accepted
-  ancestor, copy into `artifact/files/` and `artifact/site/_raya/files/`, write
+  Code and notebook references are the Phase 2 static baseline: Markdown links
+  to `.py` and `.ipynb` files validate before build by extension and
+  own-or-ancestor learning-quantum ownership, not by required folder names.
+  Folder names such as `code/`, `notebooks/`, `scripts/`, `helpers/`, and
+  `labs/` are ordinary author organization choices. Only validated linked
+  files copy into `artifact/files/` and `artifact/site/_raya/files/`, write
   manifest-declared `data/references.json`, and record `not-executed` status.
   Cross-quantum reuse, execution, kernels, runtime profiles, cache refresh,
   trusted outputs, and browser execution require later accepted proposals.
@@ -102,10 +104,29 @@ context: |
   plan without execution; `--refresh` reruns cache-policy targets. Generated
   logs, outputs, cache result records, and `data/execution-results.json` live
   under the artifact root and remain generated data, not course source truth.
-  `never` and `frozen` refuse in the baseline, `manual` runs only when selected,
-  `cache` reuses valid generated cache records unless refreshed, and `always`
-  reruns only when selected. No proposal may make validation, build, artifact
+  `never` refuses, `manual` runs only when selected, `cache` reuses valid
+  generated cache records unless refreshed, `always` reruns only when selected,
+  and `frozen` validates current reviewed output without executing. No proposal
+  may make validation, build, artifact
   inspection, static serving, or rendered preview paths execute code by default.
+
+  Reviewed output is the Phase 5 frozen-output baseline: source-controlled
+  reviewed execution output lives under colocated `_reviewed/execution/`
+  support, `raya outputs list <course>` reports generated/reviewed/frozen state
+  without executing, and `raya outputs freeze <course> <target>` copies a
+  current successful generated result into `_reviewed/` for human source review.
+  Glintstone emits `data/reviewed-outputs.json`, copies reviewed files into
+  `artifact/reviewed/` and `artifact/site/_raya/reviewed/`, and renders compact
+  reviewed-output panels. Stale or missing reviewed output must fail validation
+  and build before publication.
+
+  Rendered surface discipline is the baseline for Glintstone pages: normal
+  rendered pages are student-default views, support panels stay compact,
+  static `_raya/inspect/` pages may expose audit details, and
+  `manifest.json`, `data/*.json`, and copied files remain machine authority.
+  Do not dump raw JSON, hashes, cache keys, source paths, artifact paths,
+  browser storage paths, runtime internals, or reviewed-output freshness
+  internals into the default reading flow.
 
   Legacy material is historical reference. Salvage principles intentionally,
   define new contracts, and test against current specs. Do not reintroduce old
@@ -145,7 +166,7 @@ rules:
     - Keep English and Spanish role documentation in separate role directories while preserving English technical identifiers.
     - Treat generated navigation and index JSON as machine surfaces derived from source, not as hand-edited canonical source.
     - Keep support material colocated under the learning quantum it serves unless the design explicitly justifies a course-level/global source.
-    - Treat execution results, logs, notebook outputs, and cache records as generated artifact data unless a future frozen-output contract promotes reviewed output.
+    - Treat execution results, logs, notebook outputs, and cache records as generated artifact data unless `raya outputs freeze` promotes selected current output into `_reviewed/` reviewed source support.
   tasks:
     - Start with schema, validation, fixture, CLI, and artifact contract tests when a change touches contracts.
     - Include real e2e/static-read-path tests when a change touches rendered HTML, browser-facing resources, deployment portability, or static site behavior.
@@ -160,4 +181,6 @@ rules:
     - Include ordered-content fixture and e2e coverage when source ordering, generated indexes, stable links, or static navigation changes.
     - Include unified-source fixture and e2e coverage when `source: course`, `_official/`, `_assets/`, or source-tree privacy changes.
     - Include examples, invalid fixtures, contract tests, e2e/static-read-path tests, role docs, and rendered-doc updates when rendering or executable-content workflows change.
+    - Include metadata-leakage assertions, static inspection coverage, and examples/gallery checks when rendered pages expose or hide generated artifact metadata.
     - Include explicit `raya run` tests, cache reuse/refresh tests, notebook output tests, Docker command-shape coverage, and no-execution regressions when local execution changes.
+    - Include `raya outputs list`, `raya outputs freeze`, reviewed-output schema, stale/missing reviewed-output diagnostics, frozen-policy validation, artifact inspection, and static-read-path tests when reviewed or frozen output behavior changes.

@@ -201,3 +201,41 @@ Course artifacts SHALL expose local execution results as generated, inspectable 
 #### Scenario: Static read path unaffected
 - **WHEN** local execution writes generated outputs
 - **THEN** the existing static `site/` read path MUST remain usable without execution services
+
+### Requirement: Reviewed output artifact surfaces
+Course artifacts SHALL expose reviewed execution outputs as manifest-declared data and copied files without making rendered HTML authoritative.
+
+#### Scenario: Reviewed output data declared
+- **WHEN** a build includes current reviewed output metadata
+- **THEN** `manifest.json` MUST declare the reviewed output data path
+
+#### Scenario: Reviewed artifact file storage present
+- **WHEN** a build copies reviewed execution output files
+- **THEN** artifact-level reviewed file storage MUST preserve those generated copies for inspection and future local tooling
+
+#### Scenario: Reviewed browser file storage present
+- **WHEN** a build copies reviewed execution output files for static pages
+- **THEN** browser-facing reviewed copies MUST live under the artifact static read path and use deployment-neutral URLs
+
+#### Scenario: Source reviewed output remains canonical
+- **WHEN** reviewed output is copied into an artifact
+- **THEN** the source `_reviewed/` metadata and files MUST remain the authority for reviewed output unless a future contract defines another trust surface
+
+### Requirement: Surface-aware artifact contract
+Course artifacts SHALL distinguish complete machine-readable generated data from the smaller set of data exposed on default rendered pages.
+
+#### Scenario: Complete artifact data preserved
+- **WHEN** a builder hides verbose metadata from normal rendered pages
+- **THEN** `manifest.json` and manifest-declared `data/*.json` MUST still expose the accepted complete generated data for artifact inspection, agents, future services, graph tools, launchers, and execution tools
+
+#### Scenario: Default HTML is a view
+- **WHEN** generated HTML summarizes navigation, references, runtime state, execution state, cache state, reviewed output, official objects, or copied files
+- **THEN** that HTML MUST be treated as a reader-facing view derived from artifact data rather than the authority surface
+
+#### Scenario: Inspection data discovers through manifest
+- **WHEN** a static inspection surface needs detailed generated metadata
+- **THEN** it MUST read or be generated from manifest-declared artifact data rather than relying on hidden assumptions in the rendered page shell
+
+#### Scenario: Static usefulness preserved
+- **WHEN** rendered pages apply student-default surface discipline
+- **THEN** course pages, navigation, internal links, accessible HTML, local assets, referenced files, and reviewed files MUST remain usable without accounts, network services, backend routes, or client-side routing

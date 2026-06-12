@@ -101,6 +101,41 @@
               "cache_key": {
                 "type": "string",
                 "pattern": "^[a-f0-9]{64}$"
+              },
+              "reviewed_output": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "id",
+                  "artifact_paths",
+                  "browser_paths"
+                ],
+                "properties": {
+                  "status": {
+                    "const": "current"
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "authority": {
+                    "const": "reviewed-course-support"
+                  },
+                  "artifact_paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "browser_paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
               }
             }
           }

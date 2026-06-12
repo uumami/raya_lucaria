@@ -7,4 +7,4 @@ status: ready
 
 # Malformed Notebook Reference
 
-This page references a malformed [notebook](notebooks/bad.ipynb).
+This page references a malformed [notebook](labs/bad.ipynb).

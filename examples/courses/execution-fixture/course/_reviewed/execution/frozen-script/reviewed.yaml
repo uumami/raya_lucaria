@@ -1,0 +1,19 @@
+id: frozen-script
+target_id: execution-root:f9cc2ae49b04
+reference_id: execution-root:f9cc2ae49b04
+runtime_target_id: frozen-script
+source_path: course/code/frozen_task.py
+kind: code
+policy: frozen
+profile: default
+source_sha256: d5ac85056eb048be0fe7bab7135ba20dddd70799642e7f37e1a91cf00c04648a
+input_hashes: []
+runtime_profile_sha256: 04064df94aa50440a348065bcb07dc89e2f03c34fa651d6ac3ef3cd94d8af8ce
+lockfile_sha256: c1b76b15c2c59534d7132b8d2272404bed12032cd3240f76711f5dc02e112024
+cache_key: 279c9ec115afb8e69eb7d0216d0231b292738cbe8b56637ee6ffb522d4bfae3a
+review_key: 5cd115cef2e2ad65bc4caffec42f230a0d3833bc2d646b96e45cdb6c0943686a
+reviewed_at: "2026-06-05T00:00:00Z"
+outputs:
+  - path: stdout.txt
+    kind: stdout
+    sha256: 8052027244671b6e85d77eb77a91fb6c3412581c87b50a27ab12d280f02ded79

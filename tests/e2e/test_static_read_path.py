@@ -12,12 +12,14 @@ from raya_static import build_course
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_ROOT = ROOT / "docs"
+MINIMAL_FIXTURE = ROOT / "examples" / "courses" / "minimal"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 DOCS_FIXTURE = ROOT / "examples" / "docs" / "documentation-fixture"
 ORDERED_FIXTURE = ROOT / "examples" / "courses" / "ordered-fixture"
+EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
 
 
 def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path) -> None:
@@ -74,23 +76,28 @@ def test_reference_fixture_static_read_path_serves_referenced_files(
     with _serve(site) as base_url:
         root_html = _fetch_text(f"{base_url}/index.html")
         nested_html = _fetch_text(f"{base_url}/analysis/index.html")
+        inspection_html = _fetch_text(f"{base_url}/_raya/inspect/index.html")
         shared_helper = _fetch_text(f"{base_url}/_raya/files/_source/code/shared_helper.py")
         cleaning_script = _fetch_text(
-            f"{base_url}/_raya/files/_source/1_analysis/code/clean_data.py"
+            f"{base_url}/_raya/files/_source/1_analysis/scripts/clean_data.py"
         )
         overview_notebook = _fetch_text(
             f"{base_url}/_raya/files/_source/notebooks/overview.ipynb"
         )
         exploration_notebook = _fetch_text(
-            f"{base_url}/_raya/files/_source/1_analysis/notebooks/exploration.ipynb"
+            f"{base_url}/_raya/files/_source/1_analysis/labs/exploration.ipynb"
         )
 
     assert "Referenced Work" in root_html
+    assert 'data-raya-surface="student-default"' in root_html
+    assert 'data-raya-surface="inspection"' in inspection_html
+    assert "Surface tier: inspection" in inspection_html
+    assert 'href="../files/_source/code/shared_helper.py"' in inspection_html
     assert 'href="_raya/files/_source/code/shared_helper.py"' in root_html
     assert 'href="_raya/files/_source/notebooks/overview.ipynb"' in root_html
-    assert 'href="../_raya/files/_source/1_analysis/code/clean_data.py"' in nested_html
+    assert 'href="../_raya/files/_source/1_analysis/scripts/clean_data.py"' in nested_html
     assert (
-        'href="../_raya/files/_source/1_analysis/notebooks/exploration.ipynb"'
+        'href="../_raya/files/_source/1_analysis/labs/exploration.ipynb"'
         in nested_html
     )
     assert "not executed during build" in root_html
@@ -134,12 +141,22 @@ def test_execution_fixture_static_read_path_remains_static(tmp_path: Path) -> No
 
     with _serve(site) as base_url:
         root_html = _fetch_text(f"{base_url}/index.html")
+        inspection_html = _fetch_text(f"{base_url}/_raya/inspect/index.html")
         manual_script = _fetch_text(
             f"{base_url}/_raya/files/_source/code/manual_task.py"
+        )
+        reviewed_stdout = _fetch_text(
+            f"{base_url}/_raya/reviewed/frozen-script/stdout.txt"
         )
 
     assert "Local Execution Fixture" in root_html
     assert 'href="_raya/files/_source/code/manual_task.py"' in root_html
+    assert "Reviewed Output" in root_html
+    assert 'href="_raya/reviewed/frozen-script/stdout.txt"' in root_html
+    assert 'href="../reviewed/frozen-script/stdout.txt"' in inspection_html
+    assert "Review key" in inspection_html
+    assert "reviewed output current" in root_html
+    assert reviewed_stdout == "frozen reviewed output fixture\n"
     assert "not executed during build" in root_html
     assert "manual execution sentinel" in manual_script
     assert not (course / "execution-side-effect.txt").exists()
@@ -209,6 +226,47 @@ def test_ordered_fixture_static_read_path_serves_generated_indexes_and_links(
     assert 'href="../../index.html"' in derivatives_html
     assert 'href="../foundations/derivatives/index.html"' in practice_html
     assert "Anexo" in reference_html
+
+
+def test_examples_gallery_static_read_path_links_built_fixtures(
+    tmp_path: Path,
+) -> None:
+    examples_root = tmp_path / "examples"
+    courses_root = examples_root / "courses"
+    shutil.copytree(EXAMPLES_GALLERY, examples_root / "gallery")
+    courses_root.mkdir(parents=True)
+
+    fixtures = [
+        (MINIMAL_FIXTURE, "minimal"),
+        (ORDERED_FIXTURE, "ordered-fixture"),
+        (RENDER_FIXTURE, "render-fixture"),
+        (REFERENCE_FIXTURE, "reference-fixture"),
+        (RUNTIME_FIXTURE, "runtime-fixture"),
+        (EXECUTION_FIXTURE, "execution-fixture"),
+    ]
+    for source, name in fixtures:
+        course = courses_root / name
+        shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+        report = build_course(course)
+        assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    with _serve(examples_root) as base_url:
+        gallery_html = _fetch_text(f"{base_url}/gallery/index.html")
+        minimal_html = _fetch_text(f"{base_url}/courses/minimal/artifact/site/index.html")
+        reference_inspection_html = _fetch_text(
+            f"{base_url}/courses/reference-fixture/artifact/site/_raya/inspect/index.html"
+        )
+        reviewed_file = _fetch_text(
+            f"{base_url}/courses/execution-fixture/artifact/site/_raya/reviewed/frozen-script/stdout.txt"
+        )
+
+    assert "fixture material" in gallery_html
+    assert "../courses/minimal/artifact/site/index.html" in gallery_html
+    assert "../courses/execution-fixture/artifact/site/index.html" in gallery_html
+    assert "Foundation docs and accepted OpenSpec specs remain the authority" in gallery_html
+    assert "Minimal Course Fixture" in minimal_html
+    assert "Artifact Inspection" in reference_inspection_html
+    assert reviewed_file == "frozen reviewed output fixture\n"
 
 
 def test_current_documentation_static_read_path_serves_live_docs(

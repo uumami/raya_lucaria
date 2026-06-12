@@ -7,6 +7,7 @@ from raya_schema import ValidationReport, inspect_artifact, validate_course
 from raya_static import build_course
 from raya_cli.course_init import init_course
 from raya_cli.execution import run_course_target
+from raya_cli.outputs import freeze_course_output, list_course_outputs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,6 +52,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Run through Docker Compose plus uv using the selected runtime profile",
     )
+
+    outputs_parser = subparsers.add_parser(
+        "outputs",
+        help="Inspect and freeze reviewed execution outputs",
+    )
+    outputs_subparsers = outputs_parser.add_subparsers(dest="outputs_command")
+    outputs_subparsers.required = True
+    outputs_list_parser = outputs_subparsers.add_parser(
+        "list",
+        help="List generated and reviewed execution output status",
+    )
+    outputs_list_parser.add_argument("course", help="Path to a source course")
+    outputs_freeze_parser = outputs_subparsers.add_parser(
+        "freeze",
+        help="Freeze a successful generated result into reviewed source support",
+    )
+    outputs_freeze_parser.add_argument("course", help="Path to a source course")
+    outputs_freeze_parser.add_argument("target", help="Reference ID, runtime target ID, or source path")
 
     course_parser = subparsers.add_parser(
         "course",
@@ -99,6 +118,14 @@ def main(argv: list[str] | None = None) -> int:
             refresh=args.refresh,
             docker=args.docker,
         )
+        _print_report(report)
+        return 0 if report.ok else 1
+    if args.command == "outputs" and args.outputs_command == "list":
+        report = list_course_outputs(args.course)
+        _print_report(report)
+        return 0 if report.ok else 1
+    if args.command == "outputs" and args.outputs_command == "freeze":
+        report = freeze_course_output(args.course, args.target)
         _print_report(report)
         return 0 if report.ok else 1
     if args.command == "course" and args.course_command == "init":

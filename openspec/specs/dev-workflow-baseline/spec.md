@@ -173,14 +173,22 @@ Changes that affect code or notebook reference behavior SHALL include representa
 
 #### Scenario: Representative reference fixture
 - **WHEN** code or notebook reference behavior changes
-- **THEN** verification MUST include a representative fixture with at least one root or nested page referencing a script and a notebook
+- **THEN** verification MUST include a representative fixture with at least one root or nested page referencing a script and a notebook through extension-based links that do not depend on mandatory `code/` or `notebooks/` support roots
+
+#### Scenario: Optional folder compatibility fixture
+- **WHEN** code or notebook reference behavior changes
+- **THEN** verification MUST prove that existing `code/` or `notebooks/` folder names still work as ordinary author organization choices when linked references satisfy the ownership boundary
 
 #### Scenario: Invalid reference fixtures
 - **WHEN** code or notebook reference validation changes
-- **THEN** verification MUST include invalid fixtures or equivalent tests for missing, unsupported, private, or path-escaping references
+- **THEN** verification MUST include invalid fixtures or equivalent tests for missing targets, malformed notebooks, private support paths, cross-quantum references, and path-escaping references
+
+#### Scenario: Unlinked support fixture
+- **WHEN** code or notebook reference copying behavior changes
+- **THEN** verification MUST prove that unlinked `.py` and `.ipynb` files are not copied into generated reference artifact storage
 
 ### Requirement: Code and notebook reference documentation
-Changes that introduce or modify code and notebook references SHALL update relevant foundation, rendered documentation, and role guidance.
+Changes that introduce or modify code and notebook references SHALL update relevant foundation, rendered documentation, role guidance, and agent guidance.
 
 #### Scenario: Role docs updated
 - **WHEN** code or notebook reference behavior changes author-facing or student-facing workflows
@@ -189,6 +197,59 @@ Changes that introduce or modify code and notebook references SHALL update relev
 #### Scenario: Phase plan updated
 - **WHEN** the accepted code and notebook reference baseline changes
 - **THEN** `docs/foundation/17_rendering_execution_plan.md` or a more specific foundation document MUST be updated and kept aligned with rendered documentation
+
+#### Scenario: Agent and proposal guidance updated
+- **WHEN** code or notebook reference source-layout guidance changes
+- **THEN** `AGENTS.md` and `openspec/config.yaml` MUST stop requiring special `code/` and `notebooks/` support roots and MUST describe extension-based linked support compactly
+
+### Requirement: Rendered surface verification
+Changes that affect rendered surface discipline SHALL include contract and static-read-path verification for both visible reader content and hidden machine-only internals.
+
+#### Scenario: Default page visibility tested
+- **WHEN** rendered-surface behavior changes
+- **THEN** verification MUST prove representative default pages show authored content, navigation, generated indexes, compact resource/status labels, and deployment-neutral links
+
+#### Scenario: Metadata leakage tested
+- **WHEN** rendered-surface behavior changes
+- **THEN** verification MUST prove representative default pages do not dump raw JSON, source hashes, cache keys, artifact storage paths, browser storage paths, or verbose runtime/execution internals into the main reading flow
+
+#### Scenario: Machine data preservation tested
+- **WHEN** rendered-surface behavior changes
+- **THEN** verification MUST prove manifest-declared artifact data and artifact inspection still expose the complete accepted metadata
+
+#### Scenario: Static inspection tested
+- **WHEN** inspection surfaces are generated or changed
+- **THEN** verification MUST prove those surfaces work from the static read path without executing targets or requiring a backend
+
+### Requirement: Examples gallery verification
+Changes that add or modify repository example preview surfaces SHALL include fixture labeling, build, and static-read-path checks.
+
+#### Scenario: Gallery builds with fixtures
+- **WHEN** the examples/gallery surface changes
+- **THEN** verification MUST build the representative fixtures and prove the gallery links to their generated static entrypoints
+
+#### Scenario: Gallery labels examples as fixtures
+- **WHEN** the examples/gallery surface is rendered
+- **THEN** verification MUST prove it labels entries as fixture material and points to foundation docs or accepted specs for authority
+
+#### Scenario: Gallery static links work
+- **WHEN** the gallery is served through local static hosting or static-read-path tests
+- **THEN** links to fixture pages, support resources, referenced files, and reviewed files MUST resolve without backend routes or absolute deployment-root assumptions
+
+### Requirement: Rendered surface documentation
+Changes that introduce or modify rendered-surface discipline SHALL update foundation, rendered documentation, role guidance, and agent/proposal guidance.
+
+#### Scenario: Role docs updated
+- **WHEN** rendered-surface behavior changes author-facing, student-facing, contributor-facing, professor-facing, or agent-facing workflows
+- **THEN** separate English and Spanish role pages for contributors/collaborators, professors, students, and agents MUST be updated or explicitly marked as deferred
+
+#### Scenario: Foundation docs updated
+- **WHEN** rendered-surface discipline changes the relationship between artifact data and rendered pages
+- **THEN** `docs/foundation/06_artifact_contract.md`, `docs/foundation/15_system_overview.md`, `docs/foundation/16_documentation_surfaces.md`, or `docs/foundation/17_rendering_execution_plan.md` MUST be updated as appropriate
+
+#### Scenario: Agent and proposal guidance updated
+- **WHEN** rendered-surface discipline becomes an accepted baseline
+- **THEN** `AGENTS.md` and `openspec/config.yaml` MUST tell future agents and proposals to keep normal pages focused and use manifest-declared data or inspection surfaces for verbose internals
 
 ### Requirement: Runtime metadata verification
 Changes that affect runtime profile, execution policy, or cache metadata behavior SHALL include contract and fixture verification without running executable course code.
@@ -250,3 +311,32 @@ Changes that introduce or modify local execution SHALL update foundation, render
 - **WHEN** the accepted local execution baseline changes
 - **THEN** `docs/foundation/17_rendering_execution_plan.md` or a more specific foundation document MUST be updated and kept aligned with rendered documentation
 
+### Requirement: Reviewed output verification
+Changes that affect reviewed or frozen execution output SHALL include source, artifact, static-read-path, command, and no-execution verification.
+
+#### Scenario: Reviewed output behavior changed
+- **WHEN** reviewed output source, validation, artifact data, freezing, or rendering behavior changes
+- **THEN** verification MUST include contract tests for current reviewed output, stale reviewed output, missing reviewed files, generated-to-reviewed freezing, and artifact inspection
+
+#### Scenario: Frozen policy changed
+- **WHEN** frozen policy behavior changes
+- **THEN** verification MUST include tests proving frozen targets validate reviewed output without executing and fail when reviewed output is missing or stale
+
+#### Scenario: Static reviewed output changed
+- **WHEN** reviewed output rendering changes
+- **THEN** verification MUST include e2e/static-read-path tests proving reviewed panels and linked reviewed files work from `artifact/site/`
+
+#### Scenario: No-execution regression
+- **WHEN** reviewed/frozen output support changes
+- **THEN** verification MUST prove `raya validate`, `raya build`, `raya artifacts inspect`, `raya outputs list`, `raya outputs freeze`, and static serving do not execute targets
+
+### Requirement: Reviewed output documentation
+Changes that introduce or modify reviewed/frozen execution output SHALL update foundation, rendered documentation, operational docs, and role guidance.
+
+#### Scenario: Role docs updated
+- **WHEN** reviewed output behavior changes author-facing, student-facing, contributor-facing, or agent-facing workflows
+- **THEN** separate English and Spanish role pages for contributors/collaborators, professors, students, and agents MUST be updated or explicitly marked as deferred
+
+#### Scenario: Phase plan updated
+- **WHEN** the accepted reviewed output baseline changes
+- **THEN** `docs/foundation/17_rendering_execution_plan.md` or a more specific foundation document MUST be updated and kept aligned with rendered documentation

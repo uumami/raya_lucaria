@@ -39,6 +39,105 @@ def test_cli_run_help() -> None:
     assert "--docker" in result.stdout
 
 
+def test_cli_outputs_list_reports_reviewed_state(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    env, fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    result = run_cli("outputs", "list", str(course), env=env)
+
+    assert result.returncode == 0, result.stdout
+    assert "Output listing passed" in result.stdout
+    assert "field=frozen-script" in result.stdout
+    assert "reviewed=current" in result.stdout
+    assert "frozen=valid" in result.stdout
+    assert not fake_uv_log.exists()
+
+
+def test_cli_outputs_freeze_copies_generated_result(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    env, fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    run = run_cli("run", str(course), "cache-script", env=env)
+    before_freeze_log = fake_uv_log.read_text(encoding="utf-8")
+    freeze = run_cli("outputs", "freeze", str(course), "cache-script", env=env)
+
+    assert run.returncode == 0, run.stdout
+    assert freeze.returncode == 0, freeze.stdout
+    assert "Reviewed output frozen" in freeze.stdout
+    assert fake_uv_log.read_text(encoding="utf-8") == before_freeze_log
+    manifest = course / "course" / "_reviewed" / "execution" / "cache-script" / "reviewed.yaml"
+    reviewed_stdout = manifest.parent / "stdout.txt"
+    assert manifest.exists()
+    assert reviewed_stdout.exists()
+    assert "cache execution count" in reviewed_stdout.read_text(encoding="utf-8")
+
+    build = run_cli("build", str(course), env=env)
+    assert build.returncode == 0, build.stdout
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "Reviewed Output" in html
+    assert "cache-script" in html
+    assert (course / "artifact" / "site" / "_raya" / "reviewed" / "cache-script" / "stdout.txt").exists()
+
+
+def test_run_outputs_and_freeze_support_non_special_script_path(tmp_path: Path) -> None:
+    course = _write_natural_execution_course(tmp_path)
+    env, fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    run = run_cli("run", str(course), "course/scripts/manual_task.py", env=env)
+    listing = run_cli("outputs", "list", str(course), env=env)
+    freeze = run_cli("outputs", "freeze", str(course), "course/scripts/manual_task.py", env=env)
+
+    assert run.returncode == 0, run.stdout
+    assert listing.returncode == 0, listing.stdout
+    assert freeze.returncode == 0, freeze.stdout
+    assert "Local execution target passed" in run.stdout
+    assert "field=natural-script" in listing.stdout
+    assert "generated=succeeded" in listing.stdout
+    assert "Reviewed output frozen" in freeze.stdout
+    assert "course/scripts/manual_task.py" in fake_uv_log.read_text(encoding="utf-8")
+
+    manifest = course / "course" / "_reviewed" / "execution" / "natural-script" / "reviewed.yaml"
+    reviewed_stdout = manifest.parent / "stdout.txt"
+    assert manifest.exists()
+    assert reviewed_stdout.read_text(encoding="utf-8") == "natural execution sentinel\n"
+
+    build = run_cli("build", str(course), env=env)
+    assert build.returncode == 0, build.stdout
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'href="_raya/files/_source/scripts/manual_task.py"' in html
+    assert "Reviewed Output" in html
+
+
+def test_cli_outputs_freeze_refuses_failed_result(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    env, _fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    run = run_cli("run", str(course), "failing-script", env=env)
+    freeze = run_cli("outputs", "freeze", str(course), "failing-script", env=env)
+
+    assert run.returncode == 1
+    assert freeze.returncode == 1
+    assert "Generated execution result is not successful" in freeze.stdout
+    assert not (
+        course / "course" / "_reviewed" / "execution" / "failing-script"
+    ).exists()
+
+
+def test_cli_outputs_freeze_refuses_stale_generated_result(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    env, _fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    run = run_cli("run", str(course), "cache-script", env=env)
+    assert run.returncode == 0, run.stdout
+    task = course / "course" / "code" / "cache_task.py"
+    task.write_text(task.read_text(encoding="utf-8") + "\nprint('changed')\n", encoding="utf-8")
+    freeze = run_cli("outputs", "freeze", str(course), "cache-script", env=env)
+
+    assert freeze.returncode == 1
+    assert "Generated execution result is stale" in freeze.stdout
+    assert not (course / "course" / "_reviewed" / "execution" / "cache-script").exists()
+
+
 def test_run_dry_run_reports_plan_without_writing_artifact(tmp_path: Path) -> None:
     course = _copy_execution_fixture(tmp_path)
 
@@ -106,14 +205,75 @@ def test_run_policy_refusals_do_not_execute(tmp_path: Path) -> None:
     env, _fake_uv_log = _env_with_fake_uv(tmp_path)
 
     never = run_cli("run", str(course), "never-script", env=env)
-    frozen = run_cli("run", str(course), "frozen-script", env=env)
 
     assert never.returncode == 1
-    assert frozen.returncode == 1
     assert "Execution policy refuses local execution" in never.stdout
-    assert "Frozen execution policy" in frozen.stdout
     assert not (course / "SHOULD_NOT_EXIST_NEVER_SENTINEL").exists()
+
+
+def test_run_frozen_target_validates_reviewed_output_without_executing(
+    tmp_path: Path,
+) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    env, fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    frozen = run_cli("run", str(course), "frozen-script", env=env)
+
+    assert frozen.returncode == 0, frozen.stdout
+    assert "Frozen execution target reviewed output is current" in frozen.stdout
+    assert not fake_uv_log.exists()
     assert not (course / "SHOULD_NOT_EXIST_FROZEN_SENTINEL").exists()
+
+
+def test_run_frozen_missing_reviewed_output_fails_without_executing(
+    tmp_path: Path,
+) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    shutil.rmtree(course / "course" / "_reviewed")
+    env, fake_uv_log = _env_with_fake_uv(tmp_path)
+
+    frozen = run_cli("run", str(course), "frozen-script", env=env)
+
+    assert frozen.returncode == 1
+    assert "Frozen execution target is missing current reviewed output" in frozen.stdout
+    assert not fake_uv_log.exists()
+    assert not (course / "SHOULD_NOT_EXIST_FROZEN_SENTINEL").exists()
+
+
+def test_validate_stale_reviewed_output_fails(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    task = course / "course" / "code" / "frozen_task.py"
+    task.write_text(task.read_text(encoding="utf-8") + "\nprint('changed')\n", encoding="utf-8")
+
+    result = run_cli("validate", str(course))
+
+    assert result.returncode == 1
+    assert "Stale reviewed output metadata" in result.stdout
+    assert "source_sha256" in result.stdout
+
+
+def test_validate_missing_reviewed_file_fails(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    (course / "course" / "_reviewed" / "execution" / "frozen-script" / "stdout.txt").unlink()
+
+    result = run_cli("validate", str(course))
+
+    assert result.returncode == 1
+    assert "Reviewed output file is missing" in result.stdout
+
+
+def test_validate_escaping_reviewed_file_fails(tmp_path: Path) -> None:
+    course = _copy_execution_fixture(tmp_path)
+    manifest = course / "course" / "_reviewed" / "execution" / "frozen-script" / "reviewed.yaml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8").replace("path: stdout.txt", "path: ../stdout.txt"),
+        encoding="utf-8",
+    )
+
+    result = run_cli("validate", str(course))
+
+    assert result.returncode == 1
+    assert "Reviewed output file path must stay under its manifest directory" in result.stdout
 
 
 def test_run_failure_exits_nonzero_and_writes_logs(tmp_path: Path) -> None:
@@ -191,9 +351,10 @@ def test_run_docker_without_metadata_fails(tmp_path: Path) -> None:
         profiles.read_text(encoding="utf-8").replace(
             "    docker:\n      compose_service: dev\n",
             "",
-        ),
+        ).replace("policy: frozen", "policy: never"),
         encoding="utf-8",
     )
+    shutil.rmtree(course / "course" / "_reviewed")
 
     result = run_cli("run", str(course), "manual-script", "--docker", "--dry-run")
 
@@ -244,6 +405,73 @@ def test_artifact_inspection_checks_execution_result_files(tmp_path: Path) -> No
 def _copy_execution_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "execution-fixture"
     shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    return course
+
+
+def _write_natural_execution_course(tmp_path: Path) -> Path:
+    course = tmp_path / "natural-execution"
+    source = course / "course"
+    scripts = source / "scripts"
+    runtime = course / "runtime"
+    scripts.mkdir(parents=True)
+    runtime.mkdir(parents=True)
+    (course / "raya.yaml").write_text(
+        "\n".join(
+            [
+                "course_id: natural-execution",
+                "title: Natural Execution",
+                "description: Fixture for non-special execution paths.",
+                "language: en",
+                "source: course",
+                "artifact: artifact",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (course / "pyproject.toml").write_text(
+        "[project]\nname = \"natural-execution\"\nversion = \"0.1.0\"\n",
+        encoding="utf-8",
+    )
+    (course / "uv.lock").write_text("", encoding="utf-8")
+    (runtime / "profiles.yaml").write_text(
+        "\n".join(
+            [
+                "profiles:",
+                "  default:",
+                "    manager: uv",
+                "    python: \"3.10\"",
+                "    project: pyproject.toml",
+                "    lockfile: uv.lock",
+                "execution:",
+                "  defaults:",
+                "    policy: never",
+                "    profile: default",
+                "  references:",
+                "    - id: natural-script",
+                "      source: course/scripts/manual_task.py",
+                "      policy: manual",
+                "      profile: default",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (source / "0_index.md").write_text(
+        "---\n"
+        "id: natural-root\n"
+        "title: Natural Root\n"
+        "summary: Non-special execution fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Natural Root\n\n"
+        "Run the [manual task](scripts/manual_task.py).\n",
+        encoding="utf-8",
+    )
+    (scripts / "manual_task.py").write_text(
+        "print('natural execution sentinel')\n",
+        encoding="utf-8",
+    )
     return course
 
 

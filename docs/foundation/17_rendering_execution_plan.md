@@ -25,7 +25,8 @@ Do not batch all rendering and execution work into one proposal. Each phase shou
 - Docker plus `uv` is the reference classroom path for reproducibility.
 - Raw `venv`, system Python, Conda, remote runners, Pyodide, JupyterLite, and marimo are future adapters, not the baseline source of truth.
 - Rendering must not accidentally execute expensive or unsafe code.
-- Execution output is generated artifact data unless a future accepted contract explicitly defines reviewed frozen output as source.
+- Execution output is generated artifact data unless it is explicitly frozen into reviewed `_reviewed/` source support.
+- Normal rendered pages should stay focused. Verbose reference, runtime, cache, hash, freshness, and copied-file internals belong in manifest-declared data or static inspection surfaces.
 
 ## Layer Model
 
@@ -37,6 +38,7 @@ course source
     notebook references
     _assets/
     _official/
+    _reviewed/
   pyproject.toml
   uv.lock
   runtime/
@@ -57,16 +59,24 @@ rendering
   static outputs
         |
         v
-execution manager
-  never / manual / cache / always / frozen
+  execution manager
+  never / manual / cache / always
   uv by default
   Docker for class reproducibility
+        |
+        v
+reviewed output
+  raya outputs list
+  raya outputs freeze
+  _reviewed/ source support
+  frozen validation
         |
         v
 artifact
   site/
   data/
   assets/
+  reviewed/
   execution/
   logs/
   cache/
@@ -74,6 +84,19 @@ artifact
 ```
 
 `course/` remains the learning source tree. Runtime files such as `pyproject.toml`, `uv.lock`, Docker files, and profile files live beside `course/` because they support execution instead of defining learning order.
+
+## Surface Discipline Across Phases
+
+Each phase adds artifact data before it adds more default page display. Use these tiers:
+
+| Tier | Use |
+| --- | --- |
+| `student-default` | Course reading, navigation, indexes, local assets, selected study cues. |
+| `support-panel` | Compact resource, execution-status, reviewed-output, or study-object summaries. |
+| `inspection` | Static audit pages for professors, contributors, and agents. |
+| `machine-only` | `manifest.json`, `data/*.json`, copied files, hashes, cache keys, and future service inputs. |
+
+Code/notebook references, runtime profiles, cache keys, execution plans, and reviewed outputs may all be complete in artifact data. Default pages should show compact labels and links, not raw JSON or internal paths. Inspection pages can expose the detailed metadata without becoming course canon.
 
 ## Execution Policies
 
@@ -85,7 +108,7 @@ Future executable content should use explicit policies:
 | `manual` | Execute only when an author or student explicitly requests it. |
 | `cache` | Execute when source, inputs, runtime, or policy hashes change; otherwise reuse output. |
 | `always` | Execute every build. Use only for cheap deterministic examples. |
-| `frozen` | Reuse existing reviewed output and fail if it is missing or stale. |
+| `frozen` | Validate current reviewed source support and fail if it is missing or stale. It never executes. |
 
 Cache keys should include code, referenced input files, runtime profile, lockfile or environment hash, execution policy, and relevant renderer version. This prevents a weeks-long training job from running during normal render while still letting authors intentionally refresh it.
 
@@ -158,13 +181,16 @@ Minimum work:
 
 Accepted baseline:
 
-- Use `code/` and `notebooks/` as user-facing support directories owned by the nearest learning quantum.
+- Markdown links to `.py` and `.ipynb` files define code and notebook references. Glintstone classifies the target by extension, not by a required folder name.
+- `code/`, `notebooks/`, `scripts/`, `helpers/`, `labs/`, and similar names are ordinary author organization choices. None of them are required or reserved support roots.
 - Do not put runnable code or notebooks under `_assets/`; assets are opaque support files, while code and notebooks need semantic validation and future execution metadata.
 - Do not put code or notebooks under `_official/`; official learning objects are cards, prompts, quizzes, tasks, and similar pedagogical objects, not arbitrary runtime files.
-- Treat code and notebook files as authored source support material, not rendered navigation entries.
+- Do not put source code or notebooks under `_reviewed/`; reviewed output is frozen support produced after explicit execution and review.
+- Treat linked code and notebook files as authored source support material, not rendered navigation entries.
 - Let ordinary Markdown links reference supported files first. Add richer reference syntax only when normal links cannot express a needed behavior.
 - Validate referenced files before build and diagnose missing, unsupported, private, or path-escaping references.
-- Own-or-ancestor `code/` and `notebooks/` references are accepted; cross-quantum references are invalid until a later shared-code contract exists.
+- Own-or-ancestor `.py` and `.ipynb` references are accepted; cross-quantum references are invalid until a later shared-code contract exists.
+- Only validated, linked `.py` and `.ipynb` files are copied into generated reference storage. Unlinked scripts and notebooks remain source files and are not published by reference handling.
 - Copy referenced files into `artifact/files/` for artifact inspection and `artifact/site/_raya/files/` for browser-facing static storage.
 - Generate manifest-declared `artifact/data/references.json` so future agents, launchers, graph tools, and execution managers do not scrape rendered HTML.
 - Record page ID, source path, target, kind, format, hash, artifact path, browser path, and `not-executed` status for each reference.
@@ -178,10 +204,10 @@ course/
   1_foundations/
     1_cleaning_data/
       0_index.md
-      code/
+      scripts/
         clean_data.py
         train_model.py
-      notebooks/
+      labs/
         exploration.ipynb
       _assets/
         sample.csv
@@ -190,11 +216,13 @@ course/
           1_cleaning.yaml
 ```
 
-In this shape, `0_index.md` owns the learning quantum. `code/`,
-`notebooks/`, `_assets/`, and `_official/` support that quantum but do not
-create child pages. If a course needs a child page, it should create an ordered
-Markdown file or ordered directory instead of hiding page content inside code
-or notebook folders.
+In this shape, `0_index.md` owns the learning quantum. `scripts/`, `labs/`,
+`_assets/`, and `_official/` support that quantum but do not create child pages.
+Authors may choose names like `code/` or `notebooks/` when those names fit the
+course, but Glintstone validates the linked `.py` or `.ipynb` target by
+extension and ownership boundary. If a course needs a child page, it should
+create an ordered Markdown file or ordered directory instead of hiding page
+content inside support folders.
 
 Recommended authoring example:
 
@@ -208,8 +236,8 @@ status: ready
 # Cleaning Data
 
 Read the displayed excerpt, then download the
-[cleaning script](code/clean_data.py) or open the
-[exploration notebook](notebooks/exploration.ipynb).
+[cleaning script](scripts/clean_data.py) or open the
+[exploration notebook](labs/exploration.ipynb).
 
 The script uses [sample data](_assets/sample.csv).
 ```
@@ -236,8 +264,8 @@ artifact/
     references.json
   files/
     _source/
-      1_foundations/1_cleaning_data/code/clean_data.py
-      1_foundations/1_cleaning_data/notebooks/exploration.ipynb
+      1_foundations/1_cleaning_data/scripts/clean_data.py
+      1_foundations/1_cleaning_data/labs/exploration.ipynb
   site/
     cleaning-data/
       index.html
@@ -261,11 +289,13 @@ Suggested validation boundary:
 
 | Reference | Phase 2 behavior |
 | --- | --- |
-| `code/example.py` | Valid if it stays under the owning quantum's `code/` or an allowed ancestor `code/`. |
-| `notebooks/example.ipynb` | Valid if it is readable notebook JSON and stays under the owning quantum's `notebooks/` or an allowed ancestor `notebooks/`. |
+| `scripts/example.py` | Valid if the linked `.py` target is owned by the page's quantum or an accepted ancestor. |
+| `labs/example.ipynb` | Valid if the linked `.ipynb` target is readable notebook JSON and owned by the page's quantum or an accepted ancestor. |
+| `code/example.py` | Valid by the same `.py` ownership rule; `code/` is an ordinary folder name. |
+| `notebooks/example.ipynb` | Valid by the same `.ipynb` ownership rule; `notebooks/` is an ordinary folder name. |
 | `_assets/data.csv` | Valid asset reference through existing asset rules. |
-| `_official/...` | Invalid from rendered Markdown unless a future contract explicitly allows it. |
-| `../other_topic/code/example.py` | Prefer invalid unless the proposal accepts cross-quantum support references deliberately. |
+| `_official/...` or `_reviewed/...` | Invalid from rendered Markdown unless a future contract explicitly allows it. |
+| `../other_topic/scripts/example.py` | Invalid unless the proposal accepts cross-quantum support references deliberately. |
 | External notebook or repository URL | Link as external content; do not validate or copy in Phase 2. |
 
 The conservative default should be own-or-ancestor support references, matching
@@ -314,7 +344,7 @@ Accepted baseline:
 - Glintstone may emit manifest-declared `data/runtime.json`, `data/execution.json`, and `data/cache.json`.
 - Generated execution metadata records planned targets with status `not-executed`.
 - Cache keys are metadata derived from source hashes, declared input hashes, runtime profile metadata, lockfile hash when present, execution policy, and Raya or Glintstone schema versions.
-- Phase 3 does not define trusted frozen outputs, output logs, notebook kernels, browser execution, remote runners, or `raya run`.
+- Phase 3 does not define reviewed frozen outputs, output logs, notebook kernels, browser execution, remote runners, or `raya run`.
 
 Recommended source shape:
 
@@ -327,7 +357,7 @@ course-root/
     profiles.yaml
   course/
     0_index.md
-    code/
+    scripts/
       example.py
 ```
 
@@ -347,7 +377,7 @@ execution:
     policy: never
     profile: default
   references:
-    - source: course/code/example.py
+    - source: course/scripts/example.py
       policy: cache
       profile: default
       inputs:
@@ -375,10 +405,10 @@ Accepted baseline:
 - Script targets execute through `uv run` from the course root using the selected runtime profile metadata.
 - Notebook targets execute through Jupyter `nbconvert` under the selected `uv` profile and write a generated output notebook under the artifact root.
 - Docker plus `uv` is an explicit wrapper through `raya run --docker`; it requires profile Docker Compose service metadata and is never the default.
-- Policy behavior is enforced: `never` refuses, `manual` runs only when selected, `cache` reuses valid generated cache results unless `--refresh` is passed, `always` reruns when selected, and `frozen` refuses until a trusted-output contract exists.
+- Policy behavior is enforced: `never` refuses, `manual` runs only when selected, `cache` reuses valid generated cache results unless `--refresh` is passed, `always` reruns when selected, and `frozen` validates reviewed source support without executing.
 - Build, validate, artifact inspection, and static serving remain non-executing. They must not call `uv`, Docker, kernels, package installers, notebooks, scripts, or cache refreshes.
 - Execution results are generated artifact data. `raya run` writes logs, captured stdout/stderr, output notebooks or stdout files, cache result records, and manifest-declared `data/execution-results.json` under the artifact root.
-- Generated execution results do not become course source truth. A future frozen-output contract must define any reviewed output promotion.
+- Generated execution results do not become course source truth. They become reviewed course support only after an explicit `raya outputs freeze` step writes `_reviewed/` source files for human review and commit.
 
 Recommended command shape:
 
@@ -388,6 +418,8 @@ raya run . manual-script
 raya run . cache-script
 raya run . cache-script --refresh
 raya run . manual-script --docker --dry-run
+raya outputs list .
+raya outputs freeze . cache-script
 ```
 
 Recommended generated artifact shape after an execution run:
@@ -411,7 +443,73 @@ artifact/
       <cache-key>.json
 ```
 
-### Phase 5: Browser And Optional Runners
+### Phase 5: Reviewed And Frozen Execution Outputs
+
+Promote selected generated outputs into reviewed course support without making build or validation execute code.
+
+Minimum work:
+
+- `_reviewed/` private source support colocated with the owning quantum,
+- `raya outputs list <course>` for non-executing status inspection,
+- `raya outputs freeze <course> <target>` for copying a current successful generated result into `_reviewed/`,
+- source and artifact schemas for reviewed output metadata and files,
+- `policy: frozen` validation against reviewed output,
+- static reviewed-output panels and static read-path links,
+- tests proving stale/missing reviewed output fails before publishing.
+
+Accepted baseline:
+
+- Reviewed output lives under `<owner>/_reviewed/execution/<target>/reviewed.yaml` with reviewed files beside the manifest.
+- `_reviewed/` is private source support. It does not render as pages, navigation, ordinary assets, official objects, code references, or notebook references.
+- `raya outputs list` reads source/runtime/reviewed/generated state and reports target status without building or executing.
+- `raya outputs freeze` reads the latest successful current generated execution result, copies reviewed files into `_reviewed/`, writes source metadata, and exits without executing.
+- Reviewed output freshness is checked against the current source hash, declared input hashes, runtime profile hash, lockfile hash when present, a policy-independent review key, and reviewed file hashes.
+- `policy: frozen` means current reviewed output is required and validated. It never runs scripts, notebooks, kernels, `uv`, Docker, package installers, or cache refreshes.
+- Glintstone writes manifest-declared `data/reviewed-outputs.json`, copies reviewed files to `artifact/reviewed/`, copies browser-facing reviewed files to `artifact/site/_raya/reviewed/`, and renders compact reviewed-output panels for pages that reference current reviewed targets.
+- Artifact inspection validates reviewed output data and copied files without executing.
+- Generated results remain generated until explicitly frozen and reviewed through normal source review.
+
+Recommended source shape:
+
+```text
+course/
+  1_topic/
+    0_index.md
+    scripts/
+      train.py
+    _reviewed/
+      execution/
+        train-cache/
+          reviewed.yaml
+          stdout.txt
+```
+
+Recommended author workflow:
+
+```text
+raya run . train-cache
+raya outputs list .
+raya outputs freeze . train-cache
+# review and commit course/_reviewed/... through the normal source workflow
+```
+
+Recommended artifact shape:
+
+```text
+artifact/
+  data/
+    reviewed-outputs.json
+  reviewed/
+    train-cache/
+      stdout.txt
+  site/
+    _raya/
+      reviewed/
+        train-cache/
+          stdout.txt
+```
+
+### Phase 6: Browser And Optional Runners
 
 Add progressive execution paths after local execution is stable.
 

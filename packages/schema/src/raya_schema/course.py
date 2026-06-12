@@ -22,6 +22,7 @@ from raya_schema.references import (
     reference_format,
     resolve_course_reference,
 )
+from raya_schema.reviewed import collect_source_references, discover_reviewed_outputs
 from raya_schema.runtime import load_runtime_model
 from raya_schema.schema_loader import validator_for
 from raya_schema.yaml_io import load_yaml_file
@@ -101,7 +102,24 @@ def validate_course(course_path: str | Path) -> ValidationReport:
         content_model=content_model,
         report=report,
     )
-    load_runtime_model(root, report)
+    runtime_model = load_runtime_model(root, report)
+    references = collect_source_references(
+        course_id=course_id,
+        content_model=content_model,
+        course_root=root,
+        source_dir=source_dir,
+        runtime_model=runtime_model,
+        report=report,
+    )
+    discover_reviewed_outputs(
+        course_id=course_id,
+        course_root=root,
+        source_dir=source_dir,
+        runtime_model=runtime_model,
+        references=references,
+        report=report,
+        require_frozen=True,
+    )
 
     if report.ok:
         report.add_info(
@@ -144,8 +162,8 @@ def resolve_course_source_root(
                 path=config_path,
                 field=field_name,
                 next_action=(
-                    f"Put {field_name}/ support directories under course/ "
-                    "beside the quantum they support"
+                    "Keep authored code and notebook source support under course/ "
+                    "beside the learning quantum it supports"
                 ),
             )
             return None
@@ -348,16 +366,24 @@ def _validate_code_or_notebook_reference(
         kind=kind,
     )
     label = "notebook" if kind == "notebook" else "code"
-    support_dir = "notebooks/" if kind == "notebook" else "code/"
+    extension = ".ipynb" if kind == "notebook" else ".py"
     if reference.status == "outside":
         report.add_error(
             f"Local {label} reference escapes the authored source tree",
             path=md_path,
             field=field,
             next_action=(
-                f"Move the file under an own/ancestor {support_dir} directory "
+                "Move the file under the page's own or ancestor learning quantum "
                 "inside the authored source tree"
             ),
+        )
+        return
+    if reference.status == "unsupported":
+        report.add_error(
+            f"Local {label} reference uses an unsupported source path",
+            path=md_path,
+            field=field,
+            next_action=f"Use a linked {extension} source file",
         )
         return
     if reference.status == "blocked":
@@ -377,18 +403,18 @@ def _validate_code_or_notebook_reference(
             path=md_path,
             field=field,
             next_action=(
-                f"Move the file under an own/ancestor {support_dir} directory "
+                "Move the file under the page's own or ancestor learning quantum "
                 "or propose an explicit shared-code contract"
             ),
         )
         return
     if reference.status != "referenced":
         report.add_error(
-            f"Local {label} reference is outside supported {support_dir} roots",
+            f"Local {label} reference is outside supported ownership boundaries",
             path=md_path,
             field=field,
             next_action=(
-                f"Move the file under an own/ancestor {support_dir} directory "
+                "Move the file under the page's own or ancestor learning quantum "
                 "or update the link"
             ),
         )
@@ -400,7 +426,8 @@ def _validate_code_or_notebook_reference(
             field=field,
             next_action=(
                 f"Create {reference.target_path} or update the link to an "
-                f"existing {reference_format(kind)} file under {support_dir}"
+                f"existing {reference_format(kind)} file under the page's own "
+                "or ancestor learning quantum"
             ),
         )
         return

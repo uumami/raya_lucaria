@@ -7,4 +7,4 @@ status: ready
 
 # Missing Code Reference
 
-This page references a missing [script](code/missing.py).
+This page references a missing [script](scripts/missing.py).

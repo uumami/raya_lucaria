@@ -290,6 +290,25 @@ def rich_render_css() -> str:
   overflow-x: auto;
   padding: 0.75rem;
 }
+.raya-reviewed-output-panel,
+.raya-inspection-panel {
+  border-top: 1px solid #d8dee4;
+  margin: 1.5rem 0;
+  padding-top: 1rem;
+}
+.raya-reviewed-output-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.raya-reviewed-output-status {
+  color: #57606a;
+  font-size: 0.875rem;
+}
+.raya-reviewed-output-excerpt {
+  overflow-x: auto;
+  padding: 0.75rem;
+}
 """.strip()
     return base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"
 

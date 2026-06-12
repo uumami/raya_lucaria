@@ -23,6 +23,7 @@ from raya_schema import (
     validate_pages_index,
     validate_quanta_index,
     validate_references_index,
+    validate_reviewed_outputs_index,
     validate_runtime_index,
 )
 from raya_schema.content import ContentModel, ContentPage, resolve_course_content
@@ -44,6 +45,14 @@ from raya_schema.references import (
     reference_format,
     resolve_course_reference,
     source_reference_id,
+)
+from raya_schema.reviewed import (
+    REVIEWED_ARTIFACT_DIR,
+    REVIEWED_BROWSER_DIR,
+    ReviewedOutput,
+    discover_reviewed_outputs,
+    reviewed_outputs_by_reference,
+    reviewed_outputs_index,
 )
 from raya_schema.runtime import (
     RuntimeModel,
@@ -67,6 +76,20 @@ SOURCE_SCHEMA_VERSION = "0.1"
 STATIC_RESOURCE_DIR = "_raya"
 STATIC_ASSETS_PATH = Path(STATIC_RESOURCE_DIR) / "assets"
 STATIC_FILES_PATH = Path(STATIC_RESOURCE_DIR) / "files"
+STATIC_REVIEWED_PATH = REVIEWED_BROWSER_DIR
+STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
+SURFACE_STUDENT_DEFAULT = "student-default"
+SURFACE_SUPPORT_PANEL = "support-panel"
+SURFACE_INSPECTION = "inspection"
+SURFACE_MACHINE_ONLY = "machine-only"
+SURFACE_TIERS = frozenset(
+    {
+        SURFACE_STUDENT_DEFAULT,
+        SURFACE_SUPPORT_PANEL,
+        SURFACE_INSPECTION,
+        SURFACE_MACHINE_ONLY,
+    }
+)
 
 
 def build_course(course_path: str | Path) -> ValidationReport:
@@ -130,15 +153,19 @@ def build_course(course_path: str | Path) -> ValidationReport:
     data_dir = artifact_dir / "data"
     artifact_assets_dir = artifact_dir / "assets"
     artifact_files_dir = artifact_dir / "files"
+    artifact_reviewed_dir = artifact_dir / REVIEWED_ARTIFACT_DIR
     site_assets_dir = site_dir / STATIC_ASSETS_PATH
     site_files_dir = site_dir / STATIC_FILES_PATH
+    site_reviewed_dir = site_dir / STATIC_REVIEWED_PATH
     for directory in (
         site_dir,
         data_dir,
         artifact_assets_dir,
         artifact_files_dir,
+        artifact_reviewed_dir,
         site_assets_dir,
         site_files_dir,
+        site_reviewed_dir,
     ):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
@@ -158,6 +185,18 @@ def build_course(course_path: str | Path) -> ValidationReport:
         runtime_model,
         report,
     )
+    reviewed_outputs = discover_reviewed_outputs(
+        course_id=course_id,
+        course_root=root,
+        source_dir=source_dir,
+        runtime_model=runtime_model,
+        references=references,
+        report=report,
+        require_frozen=True,
+    )
+    if not report.ok:
+        return report
+    reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
 
     for page in pages:
@@ -175,6 +214,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
                 language=str(config["language"]),
                 official_counts=official_counts,
                 page_references=references_by_page.get(page.id, []),
+                reviewed_by_reference=reviewed_by_reference,
             ),
             encoding="utf-8",
         )
@@ -196,6 +236,12 @@ def build_course(course_path: str | Path) -> ValidationReport:
         site_files_dir,
         report,
     )
+    copied_reviewed_files = _copy_reviewed_output_files(
+        reviewed_outputs,
+        artifact_dir,
+        site_dir,
+        report,
+    )
 
     pages_index = _pages_index(course_id, pages)
     quanta_index = _quanta_index(course_id, pages)
@@ -209,7 +255,8 @@ def build_course(course_path: str | Path) -> ValidationReport:
     navigation_index = _navigation_index(course_id, content_model)
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
-    references_index = _references_index(course_id, references)
+    references_index = _references_index(course_id, references, reviewed_by_reference)
+    reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
     runtime_data = runtime_index(course_id, runtime_model)
     execution_data = execution_index(course_id, references, runtime_model)
     cache_data = cache_index(
@@ -226,9 +273,20 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
     _write_json(data_dir / "references.json", references_index, report)
+    _write_json(data_dir / "reviewed-outputs.json", reviewed_outputs_data, report)
     _write_json(data_dir / "runtime.json", runtime_data, report)
     _write_json(data_dir / "execution.json", execution_data, report)
     _write_json(data_dir / "cache.json", cache_data, report)
+    _write_inspection_surface(
+        site_dir=site_dir,
+        site_assets_dir=site_assets_dir,
+        content_model=content_model,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
+        references=references,
+        reviewed_outputs=reviewed_outputs,
+        report=report,
+    )
 
     manifest = {
         "artifact_version": ARTIFACT_VERSION,
@@ -245,6 +303,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "indices": "data/indices.json",
             "official": "data/official.json",
             "references": "data/references.json",
+            "reviewed_outputs": "data/reviewed-outputs.json",
             "runtime": "data/runtime.json",
             "execution": "data/execution.json",
             "cache": "data/cache.json",
@@ -276,6 +335,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
             report.add_info(
                 f"Copied {copied_reference_files} referenced code/notebook file(s)",
                 path=artifact_files_dir,
+            )
+        if copied_reviewed_files:
+            report.add_info(
+                f"Copied {copied_reviewed_files} reviewed output file(s)",
+                path=artifact_reviewed_dir,
             )
     return report
 
@@ -312,7 +376,7 @@ def _is_unsafe_artifact_dir(
 
 def _replace_generated_output(artifact_dir: Path, report: ValidationReport) -> None:
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    for relative in ("site", "data", "assets", "files"):
+    for relative in ("site", "data", "assets", "files", "reviewed"):
         path = artifact_dir / relative
         if path.exists():
             shutil.rmtree(path)
@@ -353,6 +417,7 @@ def _render_page(
     language: str,
     official_counts: dict[str, dict[str, int]],
     page_references: list[SourceReference],
+    reviewed_by_reference: dict[str, ReviewedOutput],
 ) -> str:
     nav_items = []
     for target in content_model.pages:
@@ -379,7 +444,7 @@ def _render_page(
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             "</head>",
-            "<body>",
+            f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}">',
             "<header>",
             f"<p>{html.escape(course_title)}</p>",
             '<nav aria-label="Course pages">',
@@ -400,7 +465,15 @@ def _render_page(
                     source_dir,
                 ),
             ),
-            _render_reference_panel(page, page_references),
+            _render_reference_panel(page, page_references, reviewed_by_reference),
+            _render_reviewed_output_panel(
+                page,
+                [
+                    reviewed_by_reference[reference.id]
+                    for reference in page_references
+                    if reference.id in reviewed_by_reference
+                ],
+            ),
             "</main>",
             sequence_nav,
             "</body>",
@@ -870,34 +943,89 @@ def _copy_reference_files(
     return copied
 
 
+def _copy_reviewed_output_files(
+    reviewed_outputs: list[ReviewedOutput],
+    artifact_dir: Path,
+    site_dir: Path,
+    report: ValidationReport,
+) -> int:
+    copied = 0
+    seen: set[tuple[Path, Path]] = set()
+    for reviewed in reviewed_outputs:
+        for reviewed_file in reviewed.files:
+            for target_path in (
+                artifact_dir / reviewed_file.artifact_path(reviewed),
+                site_dir / reviewed_file.browser_path(reviewed),
+            ):
+                key = (reviewed_file.path.resolve(), target_path.resolve())
+                if key in seen:
+                    continue
+                seen.add(key)
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(reviewed_file.path, target_path)
+                report.wrote_output(target_path)
+            copied += 1
+    return copied
+
+
 def _references_index(
     course_id: str,
     references: list[SourceReference],
+    reviewed_by_reference: dict[str, ReviewedOutput],
 ) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    for reference in references:
+        item = reference.to_index_item()
+        reviewed = reviewed_by_reference.get(reference.id)
+        if reviewed is not None:
+            execution = item.setdefault("execution", {})
+            if isinstance(execution, dict):
+                execution["reviewed_output"] = {
+                    "status": "current",
+                    "id": reviewed.id,
+                    "authority": reviewed.authority,
+                    "artifact_paths": [
+                        reviewed_file.artifact_path(reviewed)
+                        for reviewed_file in reviewed.files
+                    ],
+                    "browser_paths": [
+                        reviewed_file.browser_path(reviewed)
+                        for reviewed_file in reviewed.files
+                    ],
+                }
+        items.append(item)
     return {
         "course_id": course_id,
-        "references": [reference.to_index_item() for reference in references],
+        "references": items,
     }
 
 
 def _render_reference_panel(
     page: ContentPage,
     references: list[SourceReference],
+    reviewed_by_reference: dict[str, ReviewedOutput],
 ) -> str:
     if not references:
         return ""
-    parts = ['<section class="raya-reference-panel" aria-label="Referenced work">']
+    parts = [
+        (
+            '<section class="raya-reference-panel" '
+            f'aria-label="Referenced work" data-raya-surface="{SURFACE_SUPPORT_PANEL}">'
+        )
+    ]
     parts.append("<h2>Referenced Work</h2>")
     parts.append("<p>These files are copied for reading and download. They were not executed during build.</p>")
     parts.append("<ul>")
     for reference in references:
         href = _relative_href(page.output_path, reference.browser_path)
         label = "Notebook" if reference.kind == "notebook" else "Script"
+        reviewed = reviewed_by_reference.get(reference.id)
+        status = "reviewed output current" if reviewed is not None else "not executed"
         parts.append(f'<li class="raya-reference-item raya-reference-{html.escape(reference.kind)}">')
         parts.append(
             f'<p><strong>{label}</strong>: '
             f'<a href="{html.escape(href)}">{html.escape(Path(reference.source_rel_path).name)}</a> '
-            f'<span class="raya-reference-status">not executed</span></p>'
+            f'<span class="raya-reference-status">{html.escape(status)}</span></p>'
         )
         preview = _reference_preview(reference)
         if preview:
@@ -906,6 +1034,215 @@ def _render_reference_panel(
     parts.append("</ul>")
     parts.append("</section>")
     return "\n".join(parts)
+
+
+def _render_reviewed_output_panel(
+    page: ContentPage,
+    reviewed_outputs: list[ReviewedOutput],
+) -> str:
+    if not reviewed_outputs:
+        return ""
+    parts = [
+        (
+            '<section class="raya-reviewed-output-panel" '
+            f'aria-label="Reviewed execution output" data-raya-surface="{SURFACE_SUPPORT_PANEL}">'
+        )
+    ]
+    parts.append("<h2>Reviewed Output</h2>")
+    parts.append("<p>Reviewed course support. Build and static serving did not execute code.</p>")
+    parts.append("<ul>")
+    for reviewed in reviewed_outputs:
+        parts.append('<li class="raya-reviewed-output-item">')
+        parts.append(
+            f"<p><strong>{html.escape(reviewed.id)}</strong>: "
+            f"reviewed {html.escape(reviewed.kind)} output "
+            f'<span class="raya-reviewed-output-status">{html.escape(reviewed.status)}</span></p>'
+        )
+        parts.append("<ul>")
+        for reviewed_file in reviewed.files:
+            href = _relative_href(page.output_path, reviewed_file.browser_path(reviewed))
+            parts.append(
+                f'<li><a href="{html.escape(href)}">{html.escape(reviewed_file.rel_path)}</a> '
+                f'<span>{html.escape(reviewed_file.kind)}</span></li>'
+            )
+        parts.append("</ul>")
+        excerpt = _reviewed_output_excerpt(reviewed)
+        if excerpt:
+            parts.append(excerpt)
+        parts.append("</li>")
+    parts.append("</ul>")
+    parts.append("</section>")
+    return "\n".join(parts)
+
+
+def _write_inspection_surface(
+    *,
+    site_dir: Path,
+    site_assets_dir: Path,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    references: list[SourceReference],
+    reviewed_outputs: list[ReviewedOutput],
+    report: ValidationReport,
+) -> None:
+    output_path = site_dir / STATIC_INSPECTION_PATH
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        _render_inspection_surface(
+            site_assets_dir=site_assets_dir,
+            content_model=content_model,
+            course_title=course_title,
+            language=language,
+            references=references,
+            reviewed_outputs=reviewed_outputs,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(output_path)
+
+
+def _render_inspection_surface(
+    *,
+    site_assets_dir: Path,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    references: list[SourceReference],
+    reviewed_outputs: list[ReviewedOutput],
+) -> str:
+    stylesheet_href = _relative_href(
+        STATIC_INSPECTION_PATH.as_posix(),
+        RENDER_STYLESHEET_PATH,
+    )
+    page_items = []
+    for page in content_model.pages:
+        href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), page.output_path)
+        page_items.append(
+            "<li>"
+            f'<a href="{html.escape(href)}">{html.escape(page.title)}</a> '
+            f"<span>{html.escape(page.id)}</span>"
+            "</li>"
+        )
+
+    reference_items = []
+    for reference in references:
+        href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), reference.browser_path)
+        reference_items.append(
+            "<li>"
+            f"<strong>{html.escape(reference.kind)}</strong> "
+            f'<a href="{html.escape(href)}">{html.escape(reference.source_rel_path)}</a>'
+            "<dl>"
+            f"<dt>Reference ID</dt><dd>{html.escape(reference.id)}</dd>"
+            f"<dt>Policy</dt><dd>{html.escape(reference.execution_policy)}</dd>"
+            f"<dt>Status</dt><dd>{html.escape(reference.execution_status)}</dd>"
+            f"<dt>Profile</dt><dd>{html.escape(reference.runtime_profile or 'none')}</dd>"
+            f"<dt>SHA-256</dt><dd>{html.escape(reference.sha256)}</dd>"
+            f"<dt>Artifact path</dt><dd>{html.escape(reference.artifact_path)}</dd>"
+            f"<dt>Browser path</dt><dd>{html.escape(reference.browser_path)}</dd>"
+            "</dl>"
+            "</li>"
+        )
+
+    reviewed_items = []
+    for reviewed in reviewed_outputs:
+        file_items = []
+        for reviewed_file in reviewed.files:
+            href = _relative_href(
+                STATIC_INSPECTION_PATH.as_posix(),
+                reviewed_file.browser_path(reviewed),
+            )
+            file_items.append(
+                "<li>"
+                f'<a href="{html.escape(href)}">{html.escape(reviewed_file.rel_path)}</a> '
+                f"<span>{html.escape(reviewed_file.kind)}</span>"
+                "</li>"
+            )
+        reviewed_items.append(
+            "<li>"
+            f"<strong>{html.escape(reviewed.id)}</strong>"
+            "<dl>"
+            f"<dt>Reference ID</dt><dd>{html.escape(reviewed.reference_id)}</dd>"
+            f"<dt>Source path</dt><dd>{html.escape(reviewed.source_root_rel_path)}</dd>"
+            f"<dt>Policy</dt><dd>{html.escape(reviewed.policy)}</dd>"
+            f"<dt>Status</dt><dd>{html.escape(reviewed.status)}</dd>"
+            f"<dt>Authority</dt><dd>{html.escape(reviewed.authority)}</dd>"
+            f"<dt>Profile</dt><dd>{html.escape(reviewed.profile or 'none')}</dd>"
+            f"<dt>Review key</dt><dd>{html.escape(reviewed.review_key)}</dd>"
+            "</dl>"
+            "<ul>"
+            + "\n".join(file_items)
+            + "</ul>"
+            "</li>"
+        )
+
+    asset_items = []
+    if site_assets_dir.exists():
+        site_root = site_assets_dir.parents[1]
+        for asset_path in sorted(path for path in site_assets_dir.rglob("*") if path.is_file()):
+            browser_path = asset_path.relative_to(site_root).as_posix()
+            href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), browser_path)
+            asset_items.append(
+                f'<li><a href="{html.escape(href)}">{html.escape(browser_path)}</a></li>'
+            )
+
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Artifact Inspection - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            "</head>",
+            f'<body data-raya-surface="{SURFACE_INSPECTION}">',
+            "<main>",
+            "<h1>Artifact Inspection</h1>",
+            (
+                "<p>Surface tier: inspection. This static view is generated from "
+                "manifest-declared artifact data for professors, contributors, and agents. "
+                "Normal course pages remain the student-default surface.</p>"
+            ),
+            "<h2>Pages</h2>",
+            "<ul>",
+            "\n".join(page_items),
+            "</ul>",
+            "<h2>References</h2>",
+            "<ul>",
+            "\n".join(reference_items) if reference_items else "<li>No references.</li>",
+            "</ul>",
+            "<h2>Reviewed Outputs</h2>",
+            "<ul>",
+            "\n".join(reviewed_items) if reviewed_items else "<li>No reviewed outputs.</li>",
+            "</ul>",
+            "<h2>Browser Assets</h2>",
+            "<ul>",
+            "\n".join(asset_items) if asset_items else "<li>No browser assets.</li>",
+            "</ul>",
+            "</main>",
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _reviewed_output_excerpt(reviewed: ReviewedOutput) -> str:
+    for reviewed_file in reviewed.files:
+        if reviewed_file.kind not in {"stdout", "text", "output"}:
+            continue
+        text = reviewed_file.path.read_text(encoding="utf-8", errors="replace")
+        excerpt = "\n".join(text.splitlines()[:16])
+        if len(excerpt) > 2000:
+            excerpt = excerpt[:2000]
+        if excerpt:
+            return (
+                '<pre class="raya-reviewed-output-excerpt"><code>'
+                f"{html.escape(excerpt)}"
+                "</code></pre>"
+            )
+    return ""
 
 
 def _reference_preview(reference: SourceReference) -> str:
@@ -1058,6 +1395,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
+        validate_reviewed_outputs_index(artifact_dir / "data" / "reviewed-outputs.json"),
         validate_runtime_index(artifact_dir / "data" / "runtime.json"),
         validate_execution_index(artifact_dir / "data" / "execution.json"),
         validate_cache_index(artifact_dir / "data" / "cache.json"),

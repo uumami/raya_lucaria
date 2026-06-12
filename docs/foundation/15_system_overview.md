@@ -25,6 +25,7 @@ Raya Lucaria is an open educational framework and commons where course teams own
         | raya.yaml            |        | review, canon,       |
         | course/              |        | quality, ownership   |
         | _official/ _assets/  |        +----------------------+
+        | _reviewed/           |
         +----------+-----------+
                    |
                    | validate and build
@@ -78,6 +79,8 @@ artifact/
     navigation.json
     indices.json
     official.json
+    reviewed-outputs.json
+  reviewed/
 ```
 
 Minimum static expectations:
@@ -90,6 +93,29 @@ Minimum static expectations:
 - manifest and generated data for future services.
 
 Search, themes, graph UI, slides, offline support, and rich interactivity are future capabilities unless a current spec accepts them.
+
+## Rendered Surfaces
+
+The artifact can contain complete machine data while the normal page shows a focused student view.
+
+```text
+source course
+      |
+      v
+artifact data
+manifest.json + data/*.json + copied files
+      |
+      +--------------------+--------------------+
+      |                    |                    |
+      v                    v                    v
+student-default       support panels       inspection
+course pages          compact resource     static audit pages
+                      and status views     for professors,
+                                           contributors,
+                                           and agents
+```
+
+Rule: complete data belongs in manifest-declared artifact surfaces; default rendered pages show only what helps reading, navigation, study, resource access, and trust. Agents and dynamic services should read artifact data, not scrape normal HTML.
 
 ## Minimum Is A Floor
 
@@ -250,7 +276,7 @@ raya.yaml           site/                 notes               static host
 course/             manifest.json         study progress      local machine
 course/_official/   data/*.json           discussions         one server
 course/_assets/     generated assets      sessions            on-prem
-reviewed canon      rebuildable output    permissions         free/paid cloud
+course/_reviewed/   reviewed copies       permissions         free/paid cloud
 
 canonical           portable              scoped by           adapter layer,
 course truth        build product         user/course/role    not architecture
@@ -306,8 +332,8 @@ and durable source links use `raya:<id>` so links, official objects, future
 graph data, and future study state can survive renumbering or moves.
 
 The authored source tree is unified: rendered pages, colocated `_official/`
-study seeds, colocated `_assets/`, drafts, and partials live under the
-learning structure they support. Support directories stay private and do not
+study seeds, colocated `_assets/`, colocated `_reviewed/` execution output,
+drafts, and partials live under the learning structure they support. Support directories stay private and do not
 enter navigation, local indexes, or master indexes.
 
 ## Documentation Surfaces

@@ -38,7 +38,7 @@ Runtime profiles SHALL provide minimal, portable metadata for future execution m
 - **THEN** validation MUST fail or warn according to the accepted profile strictness and name the profile and missing lockfile
 
 ### Requirement: Execution policy metadata
-Raya Lucaria SHALL model executable intent with explicit policies before any execution engine exists.
+Raya Lucaria SHALL model executable intent with explicit policies before any execution engine exists and SHALL bind `frozen` policy to reviewed output validation once the reviewed-output contract is accepted.
 
 #### Scenario: Allowed policy values
 - **WHEN** source metadata declares an execution policy
@@ -52,9 +52,9 @@ Raya Lucaria SHALL model executable intent with explicit policies before any exe
 - **WHEN** source metadata declares policy `always`
 - **THEN** validation MUST require an explicit target-level declaration and MUST NOT infer `always` from a profile default
 
-#### Scenario: Frozen output remains metadata only
+#### Scenario: Frozen output validates reviewed support
 - **WHEN** source metadata declares policy `frozen`
-- **THEN** Phase 3 validation MUST record the policy but MUST NOT trust, execute, refresh, or publish output content without a later accepted frozen-output contract
+- **THEN** validation MUST require current reviewed output metadata for the target and MUST NOT execute, refresh, or trust generated-only output content
 
 ### Requirement: Cache key metadata
 Raya Lucaria SHALL generate cache-key metadata from declared inputs without running executable targets.
@@ -87,7 +87,7 @@ Runtime profile and cache metadata handling SHALL NOT execute scripts, notebook 
 - **THEN** it MUST NOT execute targets, resolve package environments, call Docker, call `uv`, or refresh cache entries
 
 ### Requirement: Runtime policies drive local execution
-Runtime profile and cache metadata SHALL determine whether local execution runs, reuses, or refuses an explicitly selected target.
+Runtime profile and cache metadata SHALL determine whether local execution runs, reuses, refuses, or validates an explicitly selected target.
 
 #### Scenario: Manual policy executes explicit target
 - **WHEN** a target policy is `manual` and the user explicitly selects that target with `raya run`
@@ -105,9 +105,9 @@ Runtime profile and cache metadata SHALL determine whether local execution runs,
 - **WHEN** a target policy is `never`
 - **THEN** local execution MUST refuse to run the target
 
-#### Scenario: Frozen policy deferred
+#### Scenario: Frozen policy validates reviewed output
 - **WHEN** a target policy is `frozen`
-- **THEN** local execution MUST refuse to run or trust frozen output until a future accepted frozen-output contract exists
+- **THEN** local execution MUST validate current reviewed output for the target and MUST NOT run or trust generated-only output
 
 ### Requirement: Runtime profile command construction
 Runtime profile metadata SHALL be used to construct local and Docker execution command shapes.

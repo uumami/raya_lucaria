@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from raya_schema import (
     validate_pages_index,
     validate_quanta_index,
     validate_references_index,
+    validate_reviewed_outputs_index,
     validate_runtime_index,
 )
 from raya_static import build_course
@@ -26,6 +28,7 @@ MINIMAL = ROOT / "examples" / "courses" / "minimal"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
+EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 
 
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
@@ -46,11 +49,13 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "data" / "indices.json").exists()
     assert (artifact / "data" / "official.json").exists()
     assert (artifact / "data" / "references.json").exists()
+    assert (artifact / "data" / "reviewed-outputs.json").exists()
     assert (artifact / "data" / "runtime.json").exists()
     assert (artifact / "data" / "execution.json").exists()
     assert (artifact / "data" / "cache.json").exists()
     assert (artifact / "assets").is_dir()
     assert (artifact / "files").is_dir()
+    assert (artifact / "reviewed").is_dir()
     assert artifact / "manifest.json" in report.outputs_written
 
 
@@ -70,6 +75,7 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         validate_indices_index(artifact / "data" / "indices.json"),
         validate_official_index(artifact / "data" / "official.json"),
         validate_references_index(artifact / "data" / "references.json"),
+        validate_reviewed_outputs_index(artifact / "data" / "reviewed-outputs.json"),
         validate_runtime_index(artifact / "data" / "runtime.json"),
         validate_execution_index(artifact / "data" / "execution.json"),
         validate_cache_index(artifact / "data" / "cache.json"),
@@ -309,13 +315,13 @@ def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
         for item in references["references"]
     )
     assert any(
-        item["source_path"] == "1_analysis/code/clean_data.py"
-        and item["browser_path"] == "_raya/files/_source/1_analysis/code/clean_data.py"
-        and item["artifact_path"] == "files/_source/1_analysis/code/clean_data.py"
+        item["source_path"] == "1_analysis/scripts/clean_data.py"
+        and item["browser_path"] == "_raya/files/_source/1_analysis/scripts/clean_data.py"
+        and item["artifact_path"] == "files/_source/1_analysis/scripts/clean_data.py"
         for item in references["references"]
     )
     assert (
-        artifact / "files" / "_source" / "1_analysis" / "code" / "clean_data.py"
+        artifact / "files" / "_source" / "1_analysis" / "scripts" / "clean_data.py"
     ).exists()
     assert (
         artifact
@@ -324,21 +330,52 @@ def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
         / "files"
         / "_source"
         / "1_analysis"
-        / "notebooks"
+        / "labs"
         / "exploration.ipynb"
     ).exists()
     assert 'href="_raya/files/_source/code/shared_helper.py"' in root_html
     assert 'href="_raya/files/_source/notebooks/overview.ipynb"' in root_html
-    assert 'href="../_raya/files/_source/1_analysis/code/clean_data.py"' in nested_html
+    assert 'href="../_raya/files/_source/1_analysis/scripts/clean_data.py"' in nested_html
     assert (
-        'href="../_raya/files/_source/1_analysis/notebooks/exploration.ipynb"'
+        'href="../_raya/files/_source/1_analysis/labs/exploration.ipynb"'
         in nested_html
     )
-    assert '<section class="raya-reference-panel" aria-label="Referenced work">' in root_html
+    assert not (
+        artifact / "files" / "_source" / "unlinked" / "unused_helper.py"
+    ).exists()
+    assert not (
+        artifact / "site" / "_raya" / "files" / "_source" / "unlinked" / "unused_notebook.ipynb"
+    ).exists()
+    assert '<section class="raya-reference-panel" aria-label="Referenced work"' in root_html
     assert "These files are copied for reading and download. They were not executed during build." in root_html
     assert "Reference fixture helper" in root_html
     assert "1. markdown: # Overview notebook" in root_html
     assert "ignored output" not in root_html
+    assert 'data-raya-surface="student-default"' in root_html
+    assert 'data-raya-surface="support-panel"' in root_html
+
+    visible_text = _visible_text(root_html + nested_html)
+    assert "Referenced Work" in visible_text
+    assert "Script" in visible_text
+    assert "Notebook" in visible_text
+    assert "not executed" in visible_text
+    for item in references["references"]:
+        assert item["sha256"] not in visible_text
+        assert item["artifact_path"] not in visible_text
+        assert item["browser_path"] not in visible_text
+    assert "source_path" not in visible_text
+    assert "artifact_path" not in visible_text
+    assert "browser_path" not in visible_text
+
+    inspection_html = (
+        artifact / "site" / "_raya" / "inspect" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'data-raya-surface="inspection"' in inspection_html
+    assert "Surface tier: inspection" in inspection_html
+    assert "Artifact path" in inspection_html
+    assert "Browser path" in inspection_html
+    assert references["references"][0]["sha256"] in inspection_html
+    assert 'href="../files/_source/code/shared_helper.py"' in inspection_html
 
 
 def test_runtime_fixture_builds_metadata_without_execution(tmp_path: Path) -> None:
@@ -377,8 +414,72 @@ def test_runtime_fixture_builds_metadata_without_execution(tmp_path: Path) -> No
     assert references["references"][0]["execution"]["profile"] == "default"
     assert "runtime_task.py" in html
     assert "not executed during build" in html
+    visible_text = _visible_text(html)
+    assert cache["entries"][0]["cache_key"] not in visible_text
+    assert "cache_key" not in visible_text
+    assert "runtime/profiles.yaml" not in visible_text
     assert not (course / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
     assert not (artifact / "SHOULD_NOT_EXIST_RUNTIME_SENTINEL").exists()
+
+
+def test_execution_fixture_builds_reviewed_output_panel_without_execution(
+    tmp_path: Path,
+) -> None:
+    course = _copy_execution_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    reviewed = json.loads(
+        (artifact / "data" / "reviewed-outputs.json").read_text(encoding="utf-8")
+    )
+    references = json.loads(
+        (artifact / "data" / "references.json").read_text(encoding="utf-8")
+    )
+    html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+
+    assert manifest["data"]["reviewed_outputs"] == "data/reviewed-outputs.json"
+    assert reviewed["authority"] == "reviewed-course-support"
+    outputs_by_id = {item["id"]: item for item in reviewed["outputs"]}
+    assert outputs_by_id["frozen-script"]["files"][0]["browser_path"] == (
+        "_raya/reviewed/frozen-script/stdout.txt"
+    )
+    assert outputs_by_id["demo-notebook"]["files"][0]["browser_path"] == (
+        "_raya/reviewed/demo-notebook/demo-notebook.ipynb"
+    )
+    assert any(
+        item["execution"].get("reviewed_output", {}).get("id") == "frozen-script"
+        for item in references["references"]
+    )
+    assert "Reviewed Output" in html
+    assert "frozen reviewed output fixture" in html
+    assert "reviewed output current" in html
+    visible_text = _visible_text(html)
+    assert "profile default" not in visible_text
+    assert outputs_by_id["frozen-script"]["review_key"] not in visible_text
+    assert outputs_by_id["frozen-script"]["source_sha256"] not in visible_text
+    assert "cache_key" not in visible_text
+    inspection_html = (
+        artifact / "site" / "_raya" / "inspect" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert "Review key" in inspection_html
+    assert outputs_by_id["frozen-script"]["review_key"] in inspection_html
+    assert 'href="../reviewed/frozen-script/stdout.txt"' in inspection_html
+    assert (
+        artifact / "site" / "_raya" / "reviewed" / "frozen-script" / "stdout.txt"
+    ).exists()
+    assert (
+        artifact
+        / "site"
+        / "_raya"
+        / "reviewed"
+        / "demo-notebook"
+        / "demo-notebook.ipynb"
+    ).exists()
+    assert not (course / "SHOULD_NOT_EXIST_FROZEN_SENTINEL").exists()
+    assert not (course / "execution-side-effect.txt").exists()
 
 
 def test_reference_fixture_artifact_inspection_checks_copied_files(
@@ -557,3 +658,13 @@ def _copy_runtime_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "runtime-fixture"
     shutil.copytree(RUNTIME_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     return course
+
+
+def _copy_execution_fixture(tmp_path: Path) -> Path:
+    course = tmp_path / "execution-fixture"
+    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    return course
+
+
+def _visible_text(html_text: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", html_text))
