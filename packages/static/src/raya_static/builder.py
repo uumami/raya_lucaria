@@ -148,8 +148,6 @@ def build_course(course_path: str | Path) -> ValidationReport:
     if not report.ok:
         return report
 
-    _replace_generated_output(artifact_dir, report)
-
     site_dir = artifact_dir / "site"
     data_dir = artifact_dir / "data"
     artifact_assets_dir = artifact_dir / "assets"
@@ -158,20 +156,6 @@ def build_course(course_path: str | Path) -> ValidationReport:
     site_assets_dir = site_dir / STATIC_ASSETS_PATH
     site_files_dir = site_dir / STATIC_FILES_PATH
     site_reviewed_dir = site_dir / STATIC_REVIEWED_PATH
-    for directory in (
-        site_dir,
-        data_dir,
-        artifact_assets_dir,
-        artifact_files_dir,
-        artifact_reviewed_dir,
-        site_assets_dir,
-        site_files_dir,
-        site_reviewed_dir,
-    ):
-        directory.mkdir(parents=True, exist_ok=True)
-        report.wrote_output(directory)
-    _write_rich_render_resources(site_dir, report)
-
     pages_by_source = content_model.pages_by_source
     pages_by_reference = {
         **content_model.pages_by_id,
@@ -200,6 +184,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
     math_renderer = MathRenderer()
+    rendered_pages: list[tuple[ContentPage, str]] = []
 
     for page in pages:
         rendered_page = _render_page(
@@ -219,6 +204,24 @@ def build_course(course_path: str | Path) -> ValidationReport:
         )
         if not report.ok:
             return report
+        rendered_pages.append((page, rendered_page))
+
+    _replace_generated_output(artifact_dir, report)
+    for directory in (
+        site_dir,
+        data_dir,
+        artifact_assets_dir,
+        artifact_files_dir,
+        artifact_reviewed_dir,
+        site_assets_dir,
+        site_files_dir,
+        site_reviewed_dir,
+    ):
+        directory.mkdir(parents=True, exist_ok=True)
+        report.wrote_output(directory)
+    _write_rich_render_resources(site_dir, report)
+
+    for page, rendered_page in rendered_pages:
         output_file = site_dir / page.output_path
         output_file.parent.mkdir(parents=True, exist_ok=True)
         output_file.write_text(rendered_page, encoding="utf-8")

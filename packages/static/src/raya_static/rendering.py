@@ -49,6 +49,9 @@ class _Callout:
     body: str
 
 
+_CalloutFragment = tuple[_Callout, list[Token], dict]
+
+
 class RichMarkdownRenderer:
     def __init__(
         self,
@@ -81,26 +84,17 @@ class RichMarkdownRenderer:
         if marker_used:
             prepared_body = prepared_body.replace(INDEX_MARKER, _INDEX_PLACEHOLDER)
         page_tokens = self._md.parse(prepared_body, env)
-        callout_fragments: dict[str, tuple[_Callout, list[Token], dict]] = {}
+        callout_fragments: dict[str, _CalloutFragment] = {}
         for placeholder, callout in callouts.items():
             callout_env = _new_env(self._resolve_href, collect_headings=False)
             callout_tokens = self._md.parse(callout.body, callout_env)
             callout_fragments[placeholder] = (callout, callout_tokens, callout_env)
 
-        math_items = _collect_math_items(
+        math_items = _collect_math_items_in_render_order(
             page_tokens,
+            callout_fragments,
             source_path=self._source_path,
-            counter=0,
         )
-        counter = len(math_items)
-        for _, callout_tokens, _ in callout_fragments.values():
-            new_items = _collect_math_items(
-                callout_tokens,
-                source_path=self._source_path,
-                counter=counter,
-            )
-            math_items.extend(new_items)
-            counter += len(new_items)
 
         math_result = self._math_renderer.render_many(math_items, report=self._report)
         if not self._report.ok:
@@ -110,6 +104,8 @@ class RichMarkdownRenderer:
             callout_env["raya_math_html_by_id"] = math_result.html_by_id
 
         html_fragment = self._md.renderer.render(page_tokens, self._md.options, env)
+        if not self._report.ok:
+            return ""
 
         if marker_used:
             html_fragment = html_fragment.replace(
@@ -131,6 +127,8 @@ class RichMarkdownRenderer:
                 callout_env,
             ) in callout_fragments.items()
         }
+        if not self._report.ok:
+            return ""
         html_fragment = self._replace_callout_placeholders(
             html_fragment,
             rendered_callouts,
@@ -256,10 +254,11 @@ class RichMarkdownRenderer:
         self._report.add_error(
             "Math rendering failed",
             path=self._source_path,
-            field="math",
+            field=f"math:{item_id}" if isinstance(item_id, str) else "math",
             next_action=(
                 "Check the MathJax renderer contract. "
-                "No rendered HTML was available for this math token."
+                "No rendered HTML was available for math near "
+                f"`{_math_excerpt(token.content)}`."
             ),
         )
         return ""
@@ -544,6 +543,54 @@ def _walk_tokens(tokens: list[Token]) -> Iterator[Token]:
             yield from _walk_tokens(token.children)
 
 
+def _collect_math_items_in_render_order(
+    page_tokens: list[Token],
+    callout_fragments: dict[str, _CalloutFragment],
+    *,
+    source_path: Path,
+) -> list[MathItem]:
+    items: list[MathItem] = []
+    idx = 0
+    while idx < len(page_tokens):
+        placeholder = _callout_placeholder_at(page_tokens, idx, callout_fragments)
+        if placeholder is not None:
+            _, callout_tokens, _ = callout_fragments[placeholder]
+            new_items = _collect_math_items(
+                callout_tokens,
+                source_path=source_path,
+                counter=len(items),
+            )
+            items.extend(new_items)
+            idx += 3
+            continue
+
+        new_items = _collect_math_items(
+            [page_tokens[idx]],
+            source_path=source_path,
+            counter=len(items),
+        )
+        items.extend(new_items)
+        idx += 1
+    return items
+
+
+def _callout_placeholder_at(
+    tokens: list[Token],
+    idx: int,
+    callout_fragments: dict[str, _CalloutFragment],
+) -> str | None:
+    if idx + 2 >= len(tokens):
+        return None
+    if tokens[idx].type != "paragraph_open":
+        return None
+    inline = tokens[idx + 1]
+    if inline.type != "inline" or inline.content not in callout_fragments:
+        return None
+    if tokens[idx + 2].type != "paragraph_close":
+        return None
+    return inline.content
+
+
 def _collect_math_items(
     tokens: list[Token],
     *,
@@ -565,6 +612,13 @@ def _collect_math_items(
             )
             counter += 1
     return items
+
+
+def _math_excerpt(tex: str) -> str:
+    normalized = " ".join(tex.strip().split())
+    if len(normalized) <= 80:
+        return normalized
+    return normalized[:77] + "..."
 
 
 def _extract_callouts(body: str) -> tuple[str, dict[str, _Callout]]:

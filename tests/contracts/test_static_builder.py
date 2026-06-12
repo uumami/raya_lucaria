@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 from raya_schema import (
+    ValidationReport,
     inspect_artifact,
     validate_artifact_manifest,
     validate_cache_index,
@@ -21,6 +22,8 @@ from raya_schema import (
     validate_runtime_index,
 )
 from raya_static import build_course
+from raya_static.math_renderer import MathRenderResult
+from raya_static.rendering import render_markdown_body
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -257,6 +260,99 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert '<aside class="raya-callout raya-callout-tip"' in nested_html
     assert "mjx-container" in nested_html
     assert '<span class="math inline">x_i</span>' not in nested_html
+
+
+def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "> [!NOTE]\n"
+        "> $\\newcommand{\\calloutmacro}[1]{\\mathbf{#1}}$\n\n"
+        "Later page math uses $\\calloutmacro{x}$.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "mjx-container" in html
+    assert "\\calloutmacro" not in _visible_text(html)
+
+
+def test_callout_macro_use_before_later_page_definition_fails(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "> [!NOTE]\n"
+        "> $\\latermacro{x}$\n\n"
+        "$\\newcommand{\\latermacro}[1]{\\mathbf{#1}}$\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Math rendering failed"
+        and diagnostic.field == "math:math-0"
+        and "\\latermacro{x}" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_failed_later_page_math_keeps_previous_artifact(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    first_report = build_course(course)
+    old_manifest = (course / "artifact" / "manifest.json").read_text(encoding="utf-8")
+    old_topic_html = (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8")
+    topic = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic.write_text(
+        topic.read_text(encoding="utf-8") + "\n\nLater invalid math $\\unknownmacro$.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert first_report.ok, [diagnostic.format() for diagnostic in first_report.diagnostics]
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Math rendering failed"
+        and "unknownmacro" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
+    assert (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8") == old_topic_html
+
+
+def test_missing_math_html_diagnostic_names_item_and_excerpt(tmp_path: Path) -> None:
+    report = ValidationReport(context="render-test")
+
+    html = render_markdown_body(
+        "Use $x_i$ here.",
+        generated_index="",
+        resolve_href=lambda href: href,
+        source_path=tmp_path / "source.md",
+        report=report,
+        math_renderer=_MissingMathHtmlRenderer(),
+    )
+
+    assert html == ""
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Math rendering failed"
+        and diagnostic.field == "math:math-0"
+        and "x_i" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
 
 
 def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> None:
@@ -670,3 +766,8 @@ def _copy_execution_fixture(tmp_path: Path) -> Path:
 
 def _visible_text(html_text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", html_text))
+
+
+class _MissingMathHtmlRenderer:
+    def render_many(self, items, *, report: ValidationReport) -> MathRenderResult:
+        return MathRenderResult(html_by_id={}, css="")
