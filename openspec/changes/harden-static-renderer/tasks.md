@@ -43,7 +43,7 @@
 - [x] 6.1 Add Chromium or Playwright checks proving math is visibly typeset rather than merely preserved as raw TeX text.
 - [x] 6.2 Assert that generated pages request no external renderer assets during browser checks.
 - [x] 6.3 Add desktop and mobile viewport checks for math, code, images, tables, callouts, footnotes, generated indexes, support panels, and inspection links.
-- [ ] 6.4 Run browser coverage through the Docker Compose reference workflow or document any required Docker setup change before archive.
+- [x] 6.4 Run browser coverage through the Docker Compose reference workflow or document any required Docker setup change before archive.
 
 ## 7. Documentation And Guidance
 
@@ -54,8 +54,8 @@
 
 ## 8. Verification And Archive Readiness
 
-- [ ] 8.1 Run focused contract tests for the MathJax adapter, static builder, diagnostics, artifact resources, and static read path.
-- [ ] 8.2 Run the full local Python/Raya verification path, including `./scripts/check.sh`.
-- [ ] 8.3 Run Docker verification through `./scripts/check-docker.sh` or document an explicit Docker/browser setup gap.
-- [ ] 8.4 Validate and build representative fixtures and rendered docs touched by this change.
-- [ ] 8.5 Run `openspec validate harden-static-renderer --strict`, `openspec validate --specs --strict`, and `git diff --check` before archive.
+- [x] 8.1 Run focused contract tests for the MathJax adapter, static builder, diagnostics, artifact resources, and static read path.
+- [x] 8.2 Run the full local Python/Raya verification path, including `./scripts/check.sh`.
+- [x] 8.3 Run Docker verification through `./scripts/check-docker.sh` or document an explicit Docker/browser setup gap.
+- [x] 8.4 Validate and build representative fixtures and rendered docs touched by this change.
+- [x] 8.5 Run `openspec validate harden-static-renderer --strict`, `openspec validate --specs --strict`, and `git diff --check` before archive.
