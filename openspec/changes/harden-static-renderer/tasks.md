@@ -1,10 +1,11 @@
 ## 1. Renderer Dependency Baseline
 
-- [ ] 1.1 Add failing dependency and Docker contract tests for renderer-owned Node and MathJax support.
-- [ ] 1.2 Add root `package.json` and `package-lock.json` for the renderer-only MathJax dependency.
+- [ ] 1.1 Add failing dependency and Docker contract tests for renderer-owned Node 22 and `@mathjax/src` v4 support.
+- [ ] 1.2 Add root `package.json` and `package-lock.json` for the renderer-only `@mathjax/src` v4 dependency.
 - [ ] 1.3 Ignore local Node install output such as `node_modules/` and npm cache directories.
-- [ ] 1.4 Add Node/npm to the Docker reference image without changing Python 3.10 and `uv` ownership.
-- [ ] 1.5 Update canonical verification scripts to install renderer dependencies and run the renderer self-test.
+- [ ] 1.4 Add Node 22/npm to the Docker reference image without changing Python 3.10 and `uv` ownership.
+- [ ] 1.5 Update canonical verification scripts to install renderer dependencies with `npm ci --ignore-scripts --no-audit --no-fund`.
+- [ ] 1.6 Update canonical verification scripts to run `npm run raya-render-math -- --self-test` before Python/Raya tests that need build-time math.
 
 ## 2. MathJax Adapter Implementation
 
@@ -30,10 +31,11 @@
 
 ## 5. Fixtures And Diagnostics
 
-- [ ] 5.1 Expand the representative render fixture or add a math fixture covering inline math, display math, matrices, aligned equations, cases, calculus, probability, statistics, optimization, macros, images, links, code, callouts, tables, footnotes, and nested pages.
+- [ ] 5.1 Expand the representative render fixture or add a math fixture covering inline math, display math, matrices, aligned equations, cases, calculus, probability, statistics, optimization, page-local macros, images, links, code, callouts, tables, footnotes, and nested pages.
 - [ ] 5.2 Keep all fixture content labeled as fixture material and point authority back to `docs/foundation/`.
 - [ ] 5.3 Add invalid fixture coverage for MathJax conversion errors, malformed delimiters, unsupported delimiter nesting, and missing local math support assets.
-- [ ] 5.4 Verify diagnostics identify files read, expressions or spans involved, outputs withheld, and concrete next actions.
+- [ ] 5.4 Add authoring-contract fixture coverage for inline `$...$`, display `$$` blocks on their own lines, fenced-code non-math, escaped dollar signs, page-local `\newcommand` and `\renewcommand`, and rejection of full LaTeX documents.
+- [ ] 5.5 Verify diagnostics identify files read, expressions or spans involved, outputs withheld, failure reasons, and concrete next actions.
 
 ## 6. Browser And Layout Verification
 

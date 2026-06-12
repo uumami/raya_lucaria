@@ -1,7 +1,7 @@
 # Renderer Hardening Design
 
 Date: 2026-06-12
-Status: approved direction, ready for OpenSpec proposal planning
+Status: proposed, ready for implementation review
 
 ## Context
 
@@ -59,7 +59,7 @@ The renderer should support a broad MathJax-backed TeX/LaTeX math subset for
 course notation, including common arithmetic, algebra, calculus, linear algebra,
 probability, statistics, optimization, Greek symbols, matrices, aligned
 equations, cases, operators, accents, subscripts, superscripts, fractions,
-integrals, sums, products, limits, and configured macros.
+integrals, sums, products, limits, and page-local macros.
 
 Author-facing documentation must be explicit:
 
@@ -82,6 +82,33 @@ Sources:
 - <https://docs.mathjax.org/en/latest/input/tex/index.html>
 - <https://docs.mathjax.org/en/latest/input/tex/extensions.html>
 - <https://docs.mathjax.org/en/latest/server/components.html>
+
+## Accepted Math Syntax
+
+The first renderer-hardening baseline accepts a deliberately small authoring
+surface:
+
+- Inline math uses `$...$`.
+- Display math uses `$$` blocks with opening and closing delimiters on their
+  own lines.
+- Fenced code blocks are code, not math.
+- Escaped dollar signs remain text.
+- Arbitrary full LaTeX documents are not accepted.
+
+The MathJax invocation should enable the `base`, `ams`, `newcommand`, and
+`noundefined` TeX extensions. The supported first-baseline notation includes
+common matrices, aligned equations, cases, operators, accents, fractions, sums,
+products, limits, integrals, Greek symbols, subscripts, and superscripts.
+
+Macro support is local to the rendered page or expression through MathJax
+handling of `\newcommand` and `\renewcommand`. This change does not introduce a
+course-level macro configuration file unless a later accepted proposal opens
+that contract.
+
+Unsupported or malformed syntax fails with diagnostics. Delimiter mistakes,
+nested unsupported delimiters, MathJax conversion failures, missing local
+support resources, and visible raw math leakage are publication-blocking
+failures rather than warnings.
 
 ## Failure Policy
 
@@ -126,6 +153,12 @@ The adapter may call a Node/MathJax script internally, but course code is never
 executed. Node is a renderer dependency, not a course runtime. Docker is the
 reference environment that contains the renderer dependencies. Local non-Docker
 development may work when the same dependencies are installed.
+
+The implementation baseline uses Node 22 and `@mathjax/src` v4 as renderer
+dependencies declared by root `package.json` and `package-lock.json`. Host and
+Docker verification install them with
+`npm ci --ignore-scripts --no-audit --no-fund` and verify the adapter with
+`npm run raya-render-math -- --self-test`.
 
 ### Artifact Shape
 
@@ -195,7 +228,7 @@ The change should add a representative math/rendering fixture that includes:
 - derivatives, partial derivatives, integrals, sums, products, limits,
 - probability/statistics notation,
 - optimization notation,
-- configured macros,
+- page-local macros,
 - code blocks beside math,
 - images and local assets,
 - stable `raya:` links and nested local links,
@@ -259,3 +292,5 @@ docs validation/build, and browser verification pass.
 requests, diagnostics, subprocess calls, and CSS collection.
 `packages/static/scripts/render_math.mjs` owns MathJax invocation. `rendering.py`
 only knows about `MathRenderer.render_many()` output and token replacement.
+The JavaScript side runs on Node 22 with `@mathjax/src` v4 from the repository
+root `package.json` and `package-lock.json`.
