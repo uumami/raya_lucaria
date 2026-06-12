@@ -81,6 +81,13 @@ artifact/
     official.json
     reviewed-outputs.json
   reviewed/
+  |
+  v
+raya preview
+  |
+  v
+local static review
+student pages + _raya/inspect/
 ```
 
 Minimum static expectations:
@@ -90,6 +97,7 @@ Minimum static expectations:
 - internal links,
 - accessible HTML,
 - local assets,
+- local static preview,
 - manifest and generated data for future services.
 
 Search, themes, graph UI, slides, offline support, and rich interactivity are future capabilities unless a current spec accepts them.

@@ -24,6 +24,8 @@ Some pages may show reviewed output panels. Reviewed output is course support th
 
 Static pages show a focused reading view. Internal hashes, cache keys, source paths, artifact paths, and runtime details are kept out of the normal page flow; they are for professors, contributors, agents, or tools inspecting the artifact.
 
+If a professor shares a local preview URL, it is the same generated static site served from `artifact/site/`. Opening a preview page does not run course code or notebooks. Follow explicit course instructions when computation is part of the class.
+
 Use role documentation as guidance. Use course pages and official learning objects as course material. If documentation and course material conflict, the course team and accepted OpenSpec specs or `docs/foundation/` authority decide what changes.
 
 Rendered repository documentation may be browsed as static pages, but it remains guidance about the framework. It is not the same authority surface as a course team's official course artifact.

@@ -26,6 +26,8 @@ For reviewed execution output, treat `_reviewed/execution/<target>/` as source-c
 
 For rendered surfaces, do not scrape normal HTML as authority and do not put verbose internals into default pages. Use `manifest.json`, `data/*.json`, copied files, and static `_raya/inspect/` pages for hashes, cache keys, source paths, artifact paths, runtime details, and reviewed-output freshness metadata.
 
+For rendered preview, use `raya preview <course> --dry-run` to inspect the plan or `raya preview <course>` to serve the generated static site. Preview is non-executing: it may validate, build, and serve `artifact/site/`, but it must not call `raya run`, `raya outputs freeze`, Docker execution, kernels, package installers, scripts, notebooks, runtime profiles, or cache refreshes. Rendered-surface changes need static-read-path and visual/layout checks.
+
 For repository documentation, `docs/raya.yaml` renders the live docs through `docs/render-content/`. Edit `docs/foundation/` and `docs/guides/` as the readable source, update the ordered render tree when a rendered docs page is added or reordered, and use `raya validate docs` plus `raya build docs` before relying on the static docs artifact.
 
 When updating documentation, keep English and Spanish role pages separate. Preserve English technical identifiers such as `raya`, `raya.yaml`, `source`, `course/`, `_official/`, `_assets/`, `artifact/`, `packages/static`, and `OpenSpec`.

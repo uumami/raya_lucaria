@@ -24,6 +24,8 @@ Reviewed execution output es el camino frozen con source controlado. Mantiene ar
 
 Las paginas renderizadas usan disciplina de superficie. Mantiene paginas normales enfocadas en contenido, navegacion, indices generados, panels compactos de recursos/estado y links deployment-neutral. Pon hashes, cache keys, rutas source, rutas de artifact e internos de freshness de reviewed output en `manifest.json`, `data/*.json` o paginas estaticas `_raya/inspect/`.
 
+Usa `raya preview <course>` para revisar localmente paginas estaticas generadas. Preview valida, construye, sirve `artifact/site/` y reporta el entrypoint de estudiante mas la URL `_raya/inspect/` cuando exista. Cambios de preview necesitan tests CLI, regresiones no-execution, cobertura static-read-path y asserts visuales/layout para viewports representativos desktop y mobile.
+
 La documentacion actual tambien es un curso de docs renderizable. Edita las paginas legibles en `docs/foundation/` y `docs/guides/`, manten alineado `docs/render-content/` para el orden renderizado, y trata `docs/artifact/` como output generado e ignorado. Usa `raya validate docs`, `raya build docs` y tests static-read-path cuando cambies el rendering de documentacion.
 
 Para cambios sustanciales, declara el impacto de documentacion para colaboradores, profesores, estudiantes y agentes. Si cambia la documentacion de rol, manten separadas las paginas en ingles y espanol.

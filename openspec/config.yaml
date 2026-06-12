@@ -128,6 +128,14 @@ context: |
   browser storage paths, runtime internals, or reviewed-output freshness
   internals into the default reading flow.
 
+  Rendered preview is the accepted local static review loop. `raya preview
+  <course>` validates, builds, serves generated `artifact/site/`, and reports
+  the student entrypoint plus `_raya/inspect/` URL when present. Preview must
+  not execute scripts, notebooks, kernels, `raya run`, `raya outputs freeze`,
+  Docker execution, package installers, runtime profiles, or cache refreshes.
+  Rendered-surface proposals should include static-read-path and equivalent
+  visual/layout checks for representative desktop and mobile-sized viewports.
+
   Legacy material is historical reference. Salvage principles intentionally,
   define new contracts, and test against current specs. Do not reintroduce old
   source names, renderer stacks, generated JSON shapes, examples, or workflow
@@ -158,6 +166,7 @@ rules:
     - Keep `source: course` canonical and reject source `content:`, root authored `official/`, and root authored `assets/` unless a future accepted proposal explicitly reopens the contract.
     - Make execution policies, cache invalidation, runtime profiles, and static artifact outputs testable when specs touch executable content.
     - Require no-execution behavior for validation, build, artifact inspection, static serving, and rendered previews whenever local execution behavior changes.
+    - Require preview CLI behavior, static serving, useful diagnostics, and no-execution guarantees when specs touch `raya preview` or rendered review workflows.
   design:
     - Map domain names to plain package boundaries when implementation structure matters.
     - Preserve static-only operation before adding backend, web UI, realtime, or agent features.
@@ -182,6 +191,7 @@ rules:
     - Include unified-source fixture and e2e coverage when `source: course`, `_official/`, `_assets/`, or source-tree privacy changes.
     - Include examples, invalid fixtures, contract tests, e2e/static-read-path tests, role docs, and rendered-doc updates when rendering or executable-content workflows change.
     - Include metadata-leakage assertions, static inspection coverage, and examples/gallery checks when rendered pages expose or hide generated artifact metadata.
+    - Include preview command tests, static-read-path/e2e tests, and visual/layout checks when changes touch default page layout, support panels, examples/gallery, inspection pages, deployment portability, or preview behavior.
     - Include explicit `raya run` tests, cache reuse/refresh tests, notebook output tests, Docker command-shape coverage, and no-execution regressions when local execution changes.
     - Include `raya outputs list`, `raya outputs freeze`, reviewed-output schema, stale/missing reviewed-output diagnostics, frozen-policy validation, artifact inspection, and static-read-path tests when reviewed or frozen output behavior changes.
     - Include canonical script checks, stale current-guidance scans, generated-output scans, and known-missing-work updates when hygiene changes affect repository guidance or workflow boundaries.

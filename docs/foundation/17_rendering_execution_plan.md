@@ -27,6 +27,7 @@ Do not batch all rendering and execution work into one proposal. Each phase shou
 - Rendering must not accidentally execute expensive or unsafe code.
 - Execution output is generated artifact data unless it is explicitly frozen into reviewed `_reviewed/` source support.
 - Normal rendered pages should stay focused. Verbose reference, runtime, cache, hash, freshness, and copied-file internals belong in manifest-declared data or static inspection surfaces.
+- `raya preview <course>` is the local static review loop for generated pages. It validates, builds, serves `artifact/site/`, and exposes `_raya/inspect/` without running execution targets, Docker, kernels, package installers, or cache refreshes.
 
 ## Layer Model
 
@@ -97,6 +98,8 @@ Each phase adds artifact data before it adds more default page display. Use thes
 | `machine-only` | `manifest.json`, `data/*.json`, copied files, hashes, cache keys, and future service inputs. |
 
 Code/notebook references, runtime profiles, cache keys, execution plans, and reviewed outputs may all be complete in artifact data. Default pages should show compact labels and links, not raw JSON or internal paths. Inspection pages can expose the detailed metadata without becoming course canon.
+
+Rendered-surface changes should include static-read-path or equivalent visual/layout checks for representative desktop and mobile-sized viewports. These checks protect readability and reviewability; screenshots and HTML are not machine authority.
 
 ## Execution Policies
 

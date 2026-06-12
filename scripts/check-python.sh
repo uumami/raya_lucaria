@@ -61,5 +61,6 @@ done
 run uv run raya validate docs
 run uv run raya build docs
 run uv run raya artifacts inspect docs/artifact
+run uv run raya preview examples/courses/minimal --dry-run
 
 echo "check-python: passed"

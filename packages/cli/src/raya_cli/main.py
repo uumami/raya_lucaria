@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 from raya_schema import ValidationReport, inspect_artifact, validate_course
@@ -8,6 +9,11 @@ from raya_static import build_course
 from raya_cli.course_init import init_course
 from raya_cli.execution import run_course_target
 from raya_cli.outputs import freeze_course_output, list_course_outputs
+from raya_cli.preview import (
+    DEFAULT_PREVIEW_HOST,
+    DEFAULT_PREVIEW_PORT,
+    create_preview,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,6 +36,28 @@ def main(argv: list[str] | None = None) -> int:
         help="Build a static course artifact",
     )
     build_parser.add_argument("course", help="Path to a source course")
+
+    preview_parser = subparsers.add_parser(
+        "preview",
+        help="Build and locally preview a static course artifact",
+    )
+    preview_parser.add_argument("course", help="Path to a source course")
+    preview_parser.add_argument(
+        "--host",
+        default=DEFAULT_PREVIEW_HOST,
+        help="Host interface for the local static preview server",
+    )
+    preview_parser.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_PREVIEW_PORT,
+        help="Port for the local static preview server",
+    )
+    preview_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the validate/build/serve plan without starting a server",
+    )
 
     run_parser = subparsers.add_parser(
         "run",
@@ -110,6 +138,29 @@ def main(argv: list[str] | None = None) -> int:
         report = build_course(args.course)
         _print_report(report)
         return 0 if report.ok else 1
+    if args.command == "preview":
+        handle = create_preview(
+            args.course,
+            host=args.host,
+            port=args.port,
+            dry_run=args.dry_run,
+        )
+        if not args.dry_run and handle.report.ok:
+            _print_preview_summary(handle)
+        _print_report(handle.report)
+        sys.stdout.flush()
+        if not handle.report.ok:
+            handle.close()
+            return 1
+        if args.dry_run:
+            return 0
+        try:
+            handle.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            handle.close()
+        return 0
     if args.command == "run":
         report = run_course_target(
             args.course,
@@ -200,3 +251,14 @@ def _print_report(report: ValidationReport) -> None:
         print("diagnostics:")
         for diagnostic in report.diagnostics:
             print(f"- {diagnostic.format()}")
+
+
+def _print_preview_summary(handle) -> None:
+    if handle.plan is None or handle.base_url is None:
+        return
+    print("preview:")
+    print("- status=Static preview ready")
+    print(f"- entrypoint={handle.base_url}/index.html")
+    print(f"- artifact={handle.plan.artifact_dir}")
+    if handle.plan.inspection_path.is_file():
+        print(f"- inspection={handle.base_url}/_raya/inspect/index.html")

@@ -201,6 +201,106 @@ def missing_footnote_definitions(body: str) -> list[str]:
 
 def rich_render_css() -> str:
     base = """
+* {
+  box-sizing: border-box;
+}
+body {
+  background: #f7f8fa;
+  color: #24292f;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+a {
+  color: #0969da;
+}
+img {
+  height: auto;
+  max-width: 100%;
+}
+.raya-skip-link {
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  left: 1rem;
+  padding: 0.5rem 0.75rem;
+  position: absolute;
+  top: -4rem;
+  z-index: 10;
+}
+.raya-skip-link:focus {
+  top: 1rem;
+}
+.raya-site-header {
+  background: #ffffff;
+  border-bottom: 1px solid #d8dee4;
+}
+.raya-site-header-inner,
+.raya-main,
+.raya-page-footer,
+.raya-inspection-main {
+  margin: 0 auto;
+  max-width: 76rem;
+  padding: 1rem;
+}
+.raya-course-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}
+.raya-course-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+.raya-course-nav a {
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+}
+.raya-course-nav a[aria-current="page"] {
+  border-bottom-color: #1a7f37;
+  color: #1a7f37;
+  font-weight: 700;
+}
+nav[aria-label="Breadcrumbs"] {
+  color: #57606a;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+.raya-main {
+  align-items: start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+}
+.raya-article,
+.raya-support-stack,
+.raya-inspection-main {
+  background: #ffffff;
+  border: 1px solid #d8dee4;
+  min-width: 0;
+}
+.raya-article,
+.raya-inspection-main {
+  padding: 1.25rem;
+}
+.raya-article > :first-child,
+.raya-inspection-main > :first-child {
+  margin-top: 0;
+}
+.raya-support-stack {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+.raya-page-footer {
+  color: #57606a;
+}
+.raya-page-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
 .raya-page-toc {
   border: 1px solid #d8dee4;
   margin: 1rem 0 1.5rem;
@@ -270,9 +370,8 @@ def rich_render_css() -> str:
   padding: 0.5rem 0;
 }
 .raya-reference-panel {
-  border-top: 1px solid #d8dee4;
-  margin: 1.5rem 0;
-  padding-top: 1rem;
+  min-width: 0;
+  margin: 0;
 }
 .raya-reference-panel ul {
   list-style: none;
@@ -287,14 +386,16 @@ def rich_render_css() -> str:
   font-size: 0.875rem;
 }
 .raya-reference-preview {
+  background: #f6f8fa;
+  max-width: 100%;
   overflow-x: auto;
   padding: 0.75rem;
+  white-space: pre-wrap;
 }
 .raya-reviewed-output-panel,
 .raya-inspection-panel {
-  border-top: 1px solid #d8dee4;
-  margin: 1.5rem 0;
-  padding-top: 1rem;
+  min-width: 0;
+  margin: 0;
 }
 .raya-reviewed-output-panel ul {
   list-style: none;
@@ -306,8 +407,28 @@ def rich_render_css() -> str:
   font-size: 0.875rem;
 }
 .raya-reviewed-output-excerpt {
+  background: #f6f8fa;
+  max-width: 100%;
   overflow-x: auto;
   padding: 0.75rem;
+  white-space: pre-wrap;
+}
+@media (max-width: 720px) {
+  .raya-site-header-inner,
+  .raya-main,
+  .raya-page-footer,
+  .raya-inspection-main {
+    padding: 0.75rem;
+  }
+  .raya-main {
+    display: block;
+  }
+  .raya-support-stack {
+    margin-top: 1rem;
+  }
+  .raya-course-nav {
+    display: grid;
+  }
 }
 """.strip()
     return base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"

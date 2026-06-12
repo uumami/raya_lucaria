@@ -24,6 +24,8 @@ To publish a computed result as reviewed support, first run the explicit target,
 
 Student pages should stay focused. Glintstone may show compact resource or reviewed-output panels, but detailed hashes, paths, runtime profile internals, cache keys, and freshness keys belong in artifact data or static `_raya/inspect/` pages for audit.
 
+Use `raya preview <course>` to review the generated static site locally before sharing or publishing it. Preview reports the student entrypoint and inspection page, but it does not execute scripts, notebooks, Docker, kernels, package installs, or cache refreshes. Run explicit `raya run` targets separately when computation is required.
+
 OpenSpec specs describe accepted contracts. Role documentation explains how to work with those contracts, but it does not outrank foundation docs or accepted specs.
 
 Rendered repository documentation is guidance, not course canon. It is built from `docs/raya.yaml` and remains separate from class material and official course artifacts.

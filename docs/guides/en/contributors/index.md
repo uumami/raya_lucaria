@@ -25,6 +25,8 @@ Reviewed execution output is the source-controlled frozen path. Keep reviewed fi
 
 Rendered pages use surface discipline. Keep normal pages focused on authored content, navigation, generated indexes, compact resource/status panels, and deployment-neutral links. Put verbose hashes, cache keys, source paths, artifact paths, and reviewed-output freshness internals in `manifest.json`, `data/*.json`, or static `_raya/inspect/` pages.
 
+Use `raya preview <course>` for local review of generated static pages. Preview validates, builds, serves `artifact/site/`, and reports the student entrypoint plus `_raya/inspect/` URL when present. Preview changes need CLI tests, no-execution regressions, static-read-path coverage, and visual/layout assertions for representative desktop and mobile-sized viewports.
+
 Current documentation is also a renderable docs course. Edit the readable pages under `docs/foundation/` and `docs/guides/`, keep `docs/render-content/` aligned for rendered order, and treat `docs/artifact/` as ignored generated output. Use `raya validate docs`, `raya build docs`, and static-read-path tests when changing documentation rendering behavior.
 
 For substantial changes, state the documentation impact for contributors/collaborators, professors, students, and agents. If role documentation changes, keep the English and Spanish pages separate.

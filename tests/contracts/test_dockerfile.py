@@ -18,5 +18,5 @@ def test_reference_dev_image_installs_hygiene_tools_minimally() -> None:
 
     assert "apt-get update" in normalized
     assert install is not None
-    assert {"git", "ripgrep"}.issubset(set(install.group("packages").split()))
+    assert {"chromium", "git", "ripgrep"}.issubset(set(install.group("packages").split()))
     assert "rm -rf /var/lib/apt/lists/*" in normalized

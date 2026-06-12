@@ -8,12 +8,6 @@ status: ready
 
 This document names intentional gaps so they do not become tribal knowledge or accidental requirements.
 
-## Deferred Static Workflow
-
-- `raya preview <course>` local static preview command.
-- Screenshot or visual e2e checks for rendered pages.
-- Rendered examples/gallery polish beyond fixture review.
-
 ## Deferred Pedagogy
 
 - Student-facing rendering for official cards, quizzes, prompts, and tasks.

@@ -24,6 +24,8 @@ Algunas paginas pueden mostrar panels de reviewed output. Ese output es soporte 
 
 Las paginas estaticas muestran una vista de lectura enfocada. Hashes internos, cache keys, rutas source, rutas de artifact y detalles de runtime quedan fuera del flujo normal; son para profesores, colaboradores, agentes o herramientas que inspeccionan el artifact.
 
+Si un profesor comparte una URL local de preview, es el mismo sitio estatico generado servido desde `artifact/site/`. Abrir una pagina de preview no ejecuta codigo ni notebooks del curso. Sigue instrucciones explicitas del curso cuando el computo sea parte de la clase.
+
 Usa la documentacion de rol como guia. Usa las paginas de curso y objetos oficiales de aprendizaje como material de curso. Si documentacion y material de curso entran en conflicto, el equipo de curso y la autoridad aceptada de specs OpenSpec o `docs/foundation/` deciden que cambia.
 
 La documentacion renderizada del repositorio puede leerse como paginas estaticas, pero sigue siendo guia sobre el framework. No es la misma superficie de autoridad que un artifact oficial de curso.

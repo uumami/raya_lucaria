@@ -61,6 +61,8 @@ Minimum expectations:
 - accessible HTML,
 - local assets.
 
+`raya preview <course>` is the local review workflow for this static site. It serves the generated `artifact/site/` read path and exposes the inspection URL for reviewers, but it does not make rendered HTML the authority surface and does not execute course code.
+
 Search, themes, graphs, offline support, slides, and interactive components are future capabilities, not initial requirements.
 
 ## Rendered Surface Discipline

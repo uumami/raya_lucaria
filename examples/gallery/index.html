@@ -11,69 +11,86 @@
       margin: 2rem auto;
       max-width: 56rem;
       padding: 0 1rem;
+      overflow-wrap: anywhere;
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
+    .gallery-notice {
+      border-left: 0.25rem solid #1a7f37;
+      padding-left: 1rem;
     }
-    th,
-    td {
-      border-bottom: 1px solid #d8dee4;
-      padding: 0.65rem;
-      text-align: left;
-      vertical-align: top;
+    .gallery-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+      margin: 1.5rem 0;
+    }
+    .gallery-card {
+      border: 1px solid #d8dee4;
+      padding: 1rem;
+    }
+    .gallery-card h2 {
+      font-size: 1rem;
+      margin: 0 0 0.5rem;
+    }
+    .gallery-card p {
+      margin: 0 0 0.75rem;
+    }
+    .gallery-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
     }
     code {
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    @media (max-width: 720px) {
+      body {
+        margin-top: 1rem;
+      }
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+      .gallery-links {
+        display: grid;
+      }
     }
   </style>
 </head>
 <body>
   <main>
     <h1>Raya Lucaria Example Gallery</h1>
-    <p>This page is fixture material for contributors and agents. It links to rendered examples for manual preview. Foundation docs and accepted OpenSpec specs remain the authority.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Fixture</th>
-          <th>Demonstrates</th>
-          <th>Rendered entrypoint</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>minimal</code></td>
-          <td>Minimal source course, official objects, generated indexes.</td>
-          <td><a href="../courses/minimal/artifact/site/index.html">Open minimal</a></td>
-        </tr>
-        <tr>
-          <td><code>ordered-fixture</code></td>
-          <td>Ordered navigation, appendix labels, breadcrumbs, previous/next links.</td>
-          <td><a href="../courses/ordered-fixture/artifact/site/index.html">Open ordered fixture</a></td>
-        </tr>
-        <tr>
-          <td><code>render-fixture</code></td>
-          <td>Rich static Markdown, math, callouts, footnotes, local assets.</td>
-          <td><a href="../courses/render-fixture/artifact/site/index.html">Open render fixture</a></td>
-        </tr>
-        <tr>
-          <td><code>reference-fixture</code></td>
-          <td>Code and notebook references, compact panels, copied static files.</td>
-          <td><a href="../courses/reference-fixture/artifact/site/index.html">Open reference fixture</a></td>
-        </tr>
-        <tr>
-          <td><code>runtime-fixture</code></td>
-          <td>Runtime profile and cache metadata without execution.</td>
-          <td><a href="../courses/runtime-fixture/artifact/site/index.html">Open runtime fixture</a></td>
-        </tr>
-        <tr>
-          <td><code>execution-fixture</code></td>
-          <td>Explicit execution metadata, frozen policy, reviewed output surfaces.</td>
-          <td><a href="../courses/execution-fixture/artifact/site/index.html">Open execution fixture</a></td>
-        </tr>
-      </tbody>
-    </table>
-    <p>After building fixtures, inspection pages are available under each artifact at <code>artifact/site/_raya/inspect/index.html</code>.</p>
+    <p class="gallery-notice">This page is fixture material for contributors and agents. It links to rendered examples for manual preview. Foundation docs and accepted OpenSpec specs remain the authority.</p>
+    <section class="gallery-grid" aria-label="Fixture previews">
+      <article class="gallery-card">
+        <h2><code>minimal</code></h2>
+        <p>Minimal source course, official objects, generated indexes.</p>
+        <p class="gallery-links"><a href="../courses/minimal/artifact/site/index.html">Entrypoint</a><a href="../courses/minimal/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+      <article class="gallery-card">
+        <h2><code>ordered-fixture</code></h2>
+        <p>Ordered navigation, appendix labels, breadcrumbs, previous/next links.</p>
+        <p class="gallery-links"><a href="../courses/ordered-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/ordered-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+      <article class="gallery-card">
+        <h2><code>render-fixture</code></h2>
+        <p>Rich static Markdown, math, callouts, footnotes, local assets.</p>
+        <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/render-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+      <article class="gallery-card">
+        <h2><code>reference-fixture</code></h2>
+        <p>Code and notebook references, compact panels, copied static files.</p>
+        <p class="gallery-links"><a href="../courses/reference-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/reference-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+      <article class="gallery-card">
+        <h2><code>runtime-fixture</code></h2>
+        <p>Runtime profile and cache metadata without execution.</p>
+        <p class="gallery-links"><a href="../courses/runtime-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/runtime-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+      <article class="gallery-card">
+        <h2><code>execution-fixture</code></h2>
+        <p>Explicit execution metadata, frozen policy, reviewed output surfaces.</p>
+        <p class="gallery-links"><a href="../courses/execution-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/execution-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+      </article>
+    </section>
     <p><a href="../../docs/foundation/15_system_overview.md">System overview</a> and <a href="../../docs/foundation/17_rendering_execution_plan.md">rendering and execution plan</a> describe the accepted direction.</p>
   </main>
 </body>

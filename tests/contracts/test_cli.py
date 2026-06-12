@@ -41,6 +41,7 @@ def test_cli_help() -> None:
     assert "doctor" in result.stdout
     assert "validate" in result.stdout
     assert "build" in result.stdout
+    assert "preview" in result.stdout
     assert "run" in result.stdout
     assert "outputs" in result.stdout
     assert "course" in result.stdout

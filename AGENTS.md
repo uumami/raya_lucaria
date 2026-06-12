@@ -34,12 +34,12 @@ Docker Compose is the reference development workflow. Local `uv` execution remai
 - `docker compose run --rm dev uv run raya run examples/courses/execution-fixture manual-script --dry-run` checks the local execution plan without running code.
 - `docker compose run --rm dev uv run raya outputs list examples/courses/execution-fixture` lists generated and reviewed output state without running code.
 - `docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact` inspects the generated artifact through its manifest.
+- `docker compose run --rm dev uv run raya preview examples/courses/minimal --dry-run` checks the static preview plan without starting a server.
 - `docker compose run --rm dev uv run pytest -q` runs tests through the reference container.
-- `./scripts/smoke-test.sh` validates, builds, and inspects a temporary external course copy locally and through Docker without adding course output to the repository.
 - `UV_PROJECT_ENVIRONMENT=.venv-local uv sync --python 3.10 --all-packages --dev` sets up the local non-Docker workflow.
-- `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact`, and `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q` run the local workflow.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya doctor`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya preview examples/courses/minimal --dry-run`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run`, `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact`, and `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q` run the local workflow.
 
-The current CLI baseline implements `raya --help`, `raya doctor`, `raya course init <path>`, `raya validate <course>`, `raya build <course>`, `raya run <course> <target>`, `raya outputs list <course>`, `raya outputs freeze <course> <target>`, and `raya artifacts inspect <artifact>`. Do not treat any legacy command as canonical unless current specs say so.
+The current CLI baseline implements `raya --help`, `raya doctor`, `raya course init <path>`, `raya validate <course>`, `raya build <course>`, `raya preview <course>`, `raya run <course> <target>`, `raya outputs list <course>`, `raya outputs freeze <course> <target>`, and `raya artifacts inspect <artifact>`. Do not treat any legacy command as canonical unless current specs say so.
 
 ## Coding Style & Naming Conventions
 
@@ -63,6 +63,8 @@ Reviewed execution output is source support, not generated artifact truth. Keep 
 
 Rendered pages are reader-facing views, not machine authority. Keep normal pages focused on authored content, navigation, indexes, local assets, compact resource/status panels, and deployment-neutral links. Put verbose internals such as source hashes, cache keys, source paths, artifact paths, runtime profile details, and reviewed-output freshness metadata in `manifest.json`, `data/*.json`, copied artifact files, or static `_raya/inspect/` pages.
 
+Rendered preview is a local static review workflow. `raya preview <course>` validates and builds the explicit course, serves generated `artifact/site/`, and reports the student entrypoint plus `_raya/inspect/` URL when present. `--dry-run` checks the plan without starting a server. Preview must not call `raya run`, `raya outputs freeze`, Docker execution, kernels, package installers, scripts, notebooks, runtime profiles, or cache refreshes.
+
 Course initialization creates replaceable scaffold only. It must refuse non-empty target directories and must not define required pedagogy or official course canon by accident.
 
 Use Raya Lucaria domain names consistently: Glintstone, Primeval Current, Glintstone Key, Rennala, Debate Parlor, Sellen, and Graven School are canonical concepts. Avoid carrying forward old source directory names, old generated JSON shapes, old renderer stacks, old theme systems, or old examples as architecture.
@@ -80,6 +82,10 @@ Use temporary directories for scenario tests that need throwaway courses. The ex
 Test local source links and local asset references with throwaway courses, not permanent generated outputs. Broken local references should fail validation before build writes a successful artifact.
 
 Changes to rendered HTML, browser-facing resources, deployment portability, or static site behavior should include e2e/static-read-path tests. Use representative fixture content such as `examples/courses/render-fixture`, label it as fixture material, and keep `docs/foundation/` as the authority surface.
+
+Changes to default page layout, support panels, examples/gallery, inspection pages, or preview workflow should include static-read-path, browser-driven, screenshot, or equivalent visual/layout checks across representative desktop and mobile-sized viewports.
+
+Browser-driven layout tests require a Chromium-compatible browser. The reference Docker image installs `chromium`; local host runs may use `chromium`, `google-chrome`, or `RAYA_TEST_BROWSER=/path/to/browser`.
 
 Use `examples/courses/reference-fixture` for code/notebook reference behavior. It is fixture material for copied files, rewritten links, static previews, and `references.json`; it must not become hidden pedagogy or an execution contract.
 

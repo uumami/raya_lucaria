@@ -30,6 +30,7 @@ raya --help
 raya doctor
 raya validate <course>
 raya build <course>
+raya preview <course>
 raya run <course> <target>
 raya outputs list <course>
 raya outputs freeze <course> <target>
@@ -72,6 +73,12 @@ course artifact
 
 The CLI may call package-owned behavior, but it should not own pedagogy, rendering internals, auth, study algorithms, or provider logic.
 
+## Preview Command
+
+`raya preview <course>` is the accepted local review path for generated static pages. It validates and builds the explicit source course, serves `artifact/site/` through a local static server, and prints the artifact path, student entrypoint URL, and `_raya/inspect/` URL when present.
+
+Preview must stay static. It must not run `raya run`, `raya outputs freeze`, Docker execution, kernels, package installers, scripts, notebooks, runtime profiles, or cache refreshes. Use `--dry-run` to print the validate/build/serve plan and resolved paths without starting the server.
+
 ## Execution Commands
 
 Execution commands are explicit and target-scoped:
@@ -82,7 +89,7 @@ Execution commands are explicit and target-scoped:
 - `raya outputs freeze <course> <target>` copies a current successful generated result into `_reviewed/` source support without execution.
 - `raya artifacts inspect <artifact>` reads manifest-declared artifact data without rebuilding or executing.
 
-No command except `raya run` may run scripts, notebooks, kernels, `uv`, Docker, package installers, or cache refreshes. `policy: frozen` validates current reviewed output and never executes.
+No command except `raya run` may run scripts, notebooks, kernels, `uv`, Docker, package installers, or cache refreshes. `raya preview` may validate, build, and serve static files, but it remains non-executing. `policy: frozen` validates current reviewed output and never executes.
 
 ## Diagnostics
 

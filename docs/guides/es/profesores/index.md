@@ -24,6 +24,8 @@ Para publicar un resultado calculado como soporte revisado, primero ejecuta el t
 
 Las paginas para estudiantes deben permanecer enfocadas. Glintstone puede mostrar panels compactos de recursos o reviewed output, pero hashes, rutas, detalles de runtime profile, cache keys y freshness keys pertenecen a datos de artifact o paginas estaticas `_raya/inspect/` para auditoria.
 
+Usa `raya preview <course>` para revisar localmente el sitio estatico generado antes de compartirlo o publicarlo. Preview reporta el entrypoint de estudiante y la pagina de inspeccion, pero no ejecuta scripts, notebooks, Docker, kernels, installs de paquetes ni cache refreshes. Ejecuta targets explicitos con `raya run` por separado cuando el curso requiera computo.
+
 Las specs OpenSpec describen contratos aceptados. La documentacion de rol explica como trabajar con esos contratos, pero no tiene mas autoridad que foundation docs ni specs aceptadas.
 
 La documentacion renderizada del repositorio es guia, no canon de curso. Se construye desde `docs/raya.yaml` y permanece separada del material de clase y de los artifacts oficiales de curso.

@@ -433,6 +433,18 @@ def _render_page(
         official_counts,
     )
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
+    reference_panel = _render_reference_panel(page, page_references, reviewed_by_reference)
+    reviewed_output_panel = _render_reviewed_output_panel(
+        page,
+        [
+            reviewed_by_reference[reference.id]
+            for reference in page_references
+            if reference.id in reviewed_by_reference
+        ],
+    )
+    support_panels = "\n".join(
+        panel for panel in (reference_panel, reviewed_output_panel) if panel
+    )
 
     return "\n".join(
         [
@@ -445,14 +457,18 @@ def _render_page(
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             "</head>",
             f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}">',
-            "<header>",
-            f"<p>{html.escape(course_title)}</p>",
-            '<nav aria-label="Course pages">',
+            '<a class="raya-skip-link" href="#raya-content">Skip to content</a>',
+            '<header class="raya-site-header">',
+            '<div class="raya-site-header-inner">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<nav class="raya-course-nav" aria-label="Course pages">',
             "\n".join(nav_items),
             "</nav>",
             breadcrumbs,
+            "</div>",
             "</header>",
-            "<main>",
+            '<main id="raya-content" class="raya-main">',
+            '<article class="raya-article">',
             render_markdown_body(
                 page.body,
                 generated_index=generated_index,
@@ -465,17 +481,20 @@ def _render_page(
                     source_dir,
                 ),
             ),
-            _render_reference_panel(page, page_references, reviewed_by_reference),
-            _render_reviewed_output_panel(
-                page,
-                [
-                    reviewed_by_reference[reference.id]
-                    for reference in page_references
-                    if reference.id in reviewed_by_reference
-                ],
+            "</article>",
+            (
+                '<aside class="raya-support-stack" aria-label="Resource status">'
+                f"\n{support_panels}\n"
+                "</aside>"
+                if support_panels
+                else ""
             ),
             "</main>",
-            sequence_nav,
+            (
+                f'<footer class="raya-page-footer">{sequence_nav}</footer>'
+                if sequence_nav
+                else ""
+            ),
             "</body>",
             "</html>",
             "",
@@ -1197,7 +1216,7 @@ def _render_inspection_surface(
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             "</head>",
             f'<body data-raya-surface="{SURFACE_INSPECTION}">',
-            "<main>",
+            '<main class="raya-inspection-main">',
             "<h1>Artifact Inspection</h1>",
             (
                 "<p>Surface tier: inspection. This static view is generated from "

@@ -47,6 +47,7 @@ docker compose run --rm dev uv run raya course --help
 docker compose run --rm dev uv run raya validate examples/courses/minimal
 docker compose run --rm dev uv run raya build examples/courses/minimal
 docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact
+docker compose run --rm dev uv run raya preview examples/courses/minimal --dry-run
 docker compose run --rm dev uv run pytest -q
 ./scripts/smoke-test.sh
 ```
@@ -61,6 +62,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run raya course --help
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/minimal
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/minimal
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya preview examples/courses/minimal --dry-run
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
 ```
 
@@ -72,7 +74,11 @@ Artifact inspection is read-only and manifest-centered. It validates `manifest.j
 
 Generated artifacts keep artifact-root machine surfaces separate from browser static resources. `manifest.json`, `data/*.json`, and artifact-level `assets/` are inspectable artifact surfaces; rendered pages under `site/` use `site/_raya/assets/` for browser-facing local assets.
 
-Course validation catches broken local `.md` content links under configured `content/` and missing local asset references under configured/default `assets/` before build. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored locally. Graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain future work.
+Course validation catches broken local `.md` links under the configured `source: course` authored tree and missing local asset references under colocated `_assets/` support before build. External URLs, `mailto:`, `tel:`, and fragment-only links are ignored locally. Graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain future work.
+
+Rendered preview is static and non-executing. `raya preview <course>` validates, builds, serves generated `artifact/site/`, and reports the student entrypoint plus `_raya/inspect/` URL when present. Use `--dry-run` to inspect the plan without starting a server.
+
+Browser-driven layout tests require a Chromium-compatible browser. The reference Docker image installs `chromium`; local host runs may use `chromium`, `google-chrome`, or `RAYA_TEST_BROWSER=/path/to/browser`.
 
 Course initialization creates replaceable scaffold only. It refuses non-empty target directories and must not be treated as required pedagogy or official course canon.
 

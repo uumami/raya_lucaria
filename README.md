@@ -62,6 +62,8 @@ The current local execution baseline is explicit and target-scoped. `raya run <c
 
 Reviewed execution output is source-controlled support material under colocated `_reviewed/execution/<target>/`. `raya outputs list <course>` reports generated/reviewed/frozen state. `raya outputs freeze <course> <target>` copies a current successful generated result into `_reviewed/` for human review and commit. Builds expose current reviewed outputs through `data/reviewed-outputs.json`, `artifact/reviewed/`, `artifact/site/_raya/reviewed/`, reference metadata, and compact static panels.
 
+The current rendered preview baseline is static and non-executing. `raya preview <course>` validates, builds, serves generated `artifact/site/`, and reports the student entrypoint plus `_raya/inspect/` URL when present. `--dry-run` prints the plan without starting a server. Preview does not run scripts, notebooks, Docker, kernels, package installers, runtime profiles, cache refreshes, `raya run`, or `raya outputs freeze`.
+
 ## Development Commands
 
 Canonical checks:
@@ -90,6 +92,7 @@ docker compose run --rm dev uv run raya validate examples/courses/execution-fixt
 docker compose run --rm dev uv run raya run examples/courses/execution-fixture manual-script --dry-run
 docker compose run --rm dev uv run raya outputs list examples/courses/execution-fixture
 docker compose run --rm dev uv run raya artifacts inspect examples/courses/minimal/artifact
+docker compose run --rm dev uv run raya preview examples/courses/minimal --dry-run
 docker compose run --rm dev uv run pytest -q
 ```
 
@@ -110,6 +113,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate examples/courses/executi
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya run examples/courses/execution-fixture manual-script --dry-run
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya outputs list examples/courses/execution-fixture
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect examples/courses/minimal/artifact
+UV_PROJECT_ENVIRONMENT=.venv-local uv run raya preview examples/courses/minimal --dry-run
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
 ```
 
@@ -121,7 +125,7 @@ External-course smoke test:
 
 The smoke test copies the minimal fixture into a temporary directory outside the repository, validates, builds, and inspects it locally, validates, builds, and inspects it through Docker with an explicit temporary mount, and removes the temporary files afterward.
 
-Rendered static-site behavior also has e2e/static-read-path coverage through `pytest -q tests/e2e`, using `examples/courses/render-fixture` as labeled fixture content.
+Rendered static-site and preview behavior also have e2e/static-read-path coverage through `pytest -q tests/e2e`, using labeled fixture content and examples/gallery checks. Browser-driven layout tests require a Chromium-compatible browser on the host; set `RAYA_TEST_BROWSER=/path/to/browser` if it is not on `PATH`. The reference Docker image includes Chromium for this coverage.
 
 Code/notebook reference behavior uses `examples/courses/reference-fixture` as labeled fixture content. The fixture proves static links, copied `_raya/files/` browser paths, artifact-level `files/`, and `references.json`; it does not define a pedagogy pattern or execute code.
 
