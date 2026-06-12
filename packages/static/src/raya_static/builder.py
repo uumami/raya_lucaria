@@ -4,6 +4,7 @@ import hashlib
 import html
 import json
 import os
+import re
 import shutil
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -89,7 +90,22 @@ MATH_FONT_SOURCE_DIR = (
     / "chtml"
     / "woff2"
 )
-MATH_REQUIRED_FONT_FILES = ("mjx-ncm-n.woff2",)
+MATH_FONT_URL_RE = re.compile(
+    r"""
+    url\(
+        \s*
+        (?:
+            "fonts/([A-Za-z0-9_.-]+\.woff2)"
+            |
+            'fonts/([A-Za-z0-9_.-]+\.woff2)'
+            |
+            fonts/([A-Za-z0-9_.-]+\.woff2)
+        )
+        \s*
+    \)
+    """,
+    re.VERBOSE,
+)
 SURFACE_STUDENT_DEFAULT = "student-default"
 SURFACE_SUPPORT_PANEL = "support-panel"
 SURFACE_INSPECTION = "inspection"
@@ -1458,33 +1474,21 @@ def _write_math_render_resources(
     if not css:
         return 0
 
-    if not MATH_FONT_SOURCE_DIR.is_dir():
-        report.add_error(
-            "Missing local MathJax font assets",
-            path=MATH_FONT_SOURCE_DIR,
-            field="math.fonts",
-            next_action=(
-                "Install renderer dependencies with "
-                "`npm ci --ignore-scripts --no-audit --no-fund` so "
-                "node_modules/@mathjax/mathjax-newcm-font/chtml/woff2 is available."
-            ),
-        )
-        return 0
-
-    missing_required = [
+    required_fonts = _math_font_names_from_css(css)
+    missing_fonts = [
         name
-        for name in MATH_REQUIRED_FONT_FILES
+        for name in required_fonts
         if not (MATH_FONT_SOURCE_DIR / name).is_file()
     ]
-    if missing_required:
+    if missing_fonts:
         report.add_error(
             "Missing local MathJax font assets",
             path=MATH_FONT_SOURCE_DIR,
             field="math.fonts",
             next_action=(
                 "Reinstall renderer dependencies with "
-                "`npm ci --ignore-scripts --no-audit --no-fund`. Missing font "
-                f"file(s): {', '.join(missing_required)}."
+                "`npm ci --ignore-scripts --no-audit --no-fund`. Missing CSS-referenced "
+                f"font file(s): {', '.join(missing_fonts)}."
             ),
         )
         return 0
@@ -1514,6 +1518,14 @@ def _write_math_render_resources(
         report.wrote_output(target)
         copied += 1
     return copied
+
+
+def _math_font_names_from_css(css: str) -> list[str]:
+    names: set[str] = set()
+    for match in MATH_FONT_URL_RE.finditer(css):
+        name = next(group for group in match.groups() if group is not None)
+        names.add(name)
+    return sorted(names)
 
 
 def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -> None:

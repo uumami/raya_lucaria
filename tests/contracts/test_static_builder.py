@@ -427,6 +427,42 @@ def test_render_fixture_reports_missing_local_math_font_assets(
     )
 
 
+def test_math_resource_writer_reports_css_referenced_missing_fonts(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    font_source = tmp_path / "fonts-source"
+    font_source.mkdir()
+    (font_source / "mjx-ncm-n.woff2").write_bytes(b"font")
+    monkeypatch.setattr(static_builder, "MATH_FONT_SOURCE_DIR", font_source)
+    report = ValidationReport(context="build")
+
+    copied = static_builder._write_math_render_resources(
+        tmp_path / "site",
+        [
+            (
+                "mjx-container { display: inline-block; }\n"
+                '@font-face { src: url("fonts/mjx-ncm-n.woff2"); }\n'
+                "@font-face { src: url('fonts/mjx-ncm-i.woff2'); }\n"
+                "@font-face { src: url(fonts/mjx-ncm-b.woff2); }\n"
+            )
+        ],
+        report,
+    )
+
+    assert copied == 0
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Missing local MathJax font assets"
+        and diagnostic.path == font_source
+        and "mjx-ncm-i.woff2" in (diagnostic.next_action or "")
+        and "mjx-ncm-b.woff2" in (diagnostic.next_action or "")
+        and "npm ci --ignore-scripts --no-audit --no-fund"
+        in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+
+
 def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
     course = _copy_reference_fixture(tmp_path)
 
