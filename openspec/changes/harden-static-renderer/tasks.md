@@ -10,10 +10,10 @@
 ## 2. MathJax Adapter Implementation
 
 - [x] 2.1 Create `packages/static/scripts/render_math.mjs` with a self-test and JSON stdin/stdout conversion contract.
-- [ ] 2.2 Add focused tests for the Python math-renderer adapter before implementing it.
-- [ ] 2.3 Create `packages/static/src/raya_static/math_renderer.py` with `MathItem`, `MathRenderResult`, subprocess invocation, CSS collection, and diagnostic mapping.
-- [ ] 2.4 Prove inline and display math render to MathJax output and broken math produces actionable diagnostics naming the source file and expression context.
-- [ ] 2.5 Configure MathJax with `base`, `ams`, and `newcommand` only, and add coverage that unknown macros or control sequences fail unless defined by supported page-local TeX macro syntax.
+- [x] 2.2 Add focused tests for the Python math-renderer adapter before implementing it.
+- [x] 2.3 Create `packages/static/src/raya_static/math_renderer.py` with `MathItem`, `MathRenderResult`, subprocess invocation, CSS collection, and diagnostic mapping.
+- [x] 2.4 Prove inline and display math render to MathJax output and broken math produces actionable diagnostics naming the source file and expression context.
+- [x] 2.5 Configure MathJax with `base`, `ams`, and `newcommand` only, and add coverage that unknown macros or control sequences fail unless defined by supported page-local TeX macro syntax.
 
 ## 3. Static Renderer Integration
 
