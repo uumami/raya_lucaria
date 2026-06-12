@@ -66,6 +66,7 @@ class MathRenderer:
                 input=json.dumps(payload),
                 text=True,
                 encoding="utf-8",
+                errors="replace",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 check=False,
@@ -92,10 +93,15 @@ class MathRenderer:
             return MathRenderResult(html_by_id={}, css="")
 
         if process.stdout == "":
+            message = (
+                "Math renderer process failed"
+                if process.returncode != 0
+                else "Math renderer produced no output"
+            )
             _add_item_errors(
                 report,
                 items,
-                "Math renderer produced no output",
+                message,
                 _process_next_action(process),
             )
             return MathRenderResult(html_by_id={}, css="")
@@ -199,6 +205,7 @@ def _parse_renderer_output(
         html_by_id[item_id] = html
 
     errors: list[dict[str, str]] = []
+    error_ids: set[str] = set()
     for error in raw_errors:
         if not isinstance(error, dict):
             _add_malformed_output_errors(report, items)
@@ -211,6 +218,10 @@ def _parse_renderer_output(
         if item_id not in requested_ids:
             _add_malformed_output_errors(report, items)
             return None
+        if item_id in html_by_id or item_id in error_ids:
+            _add_malformed_output_errors(report, items)
+            return None
+        error_ids.add(item_id)
         errors.append({"id": item_id, "message": message})
 
     return html_by_id, errors, css

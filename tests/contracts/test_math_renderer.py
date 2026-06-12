@@ -13,6 +13,7 @@ def _fake_renderer_script(
     tmp_path: Path,
     *,
     stdout: str | None,
+    stdout_bytes: bytes | None = None,
     stderr: str = "",
     returncode: int = 0,
     sleep_seconds: float | None = None,
@@ -30,6 +31,8 @@ def _fake_renderer_script(
         lines.append(f"sys.stderr.write({stderr!r})")
     if stdout is not None:
         lines.append(f"sys.stdout.write({stdout!r})")
+    if stdout_bytes is not None:
+        lines.append(f"sys.stdout.buffer.write({stdout_bytes!r})")
     lines.append(f"raise SystemExit({returncode})")
     script.write_text("\n".join(lines) + "\n", encoding="utf-8")
     os.chmod(script, 0o755)
@@ -337,6 +340,45 @@ def test_missing_stdout_reports_each_source_item(tmp_path: Path) -> None:
     assert result.css == ""
 
 
+def test_nonzero_empty_stdout_reports_process_failure(tmp_path: Path) -> None:
+    script = _fake_renderer_script(tmp_path, stdout=None, returncode=2)
+    report = ValidationReport(context="math")
+
+    result = MathRenderer(node=sys.executable, script=script).render_many(
+        [_source_item("first"), _source_item("second")],
+        report=report,
+    )
+
+    _assert_contract_failure_for(
+        report,
+        result.html_by_id,
+        message="Math renderer process failed",
+        fields=["math:first", "math:second"],
+    )
+    assert result.css == ""
+
+
+def test_invalid_utf8_stdout_reports_diagnostic_instead_of_raising(tmp_path: Path) -> None:
+    script = _fake_renderer_script(
+        tmp_path,
+        stdout=None,
+        stdout_bytes=b"\xff\xfe\xfa",
+    )
+    report = ValidationReport(context="math")
+
+    result = MathRenderer(node=sys.executable, script=script).render_many(
+        [_source_item("first")],
+        report=report,
+    )
+
+    assert result.html_by_id == {}
+    assert result.css == ""
+    assert not report.ok
+    assert report.diagnostics[0].message == "Math renderer returned invalid JSON"
+    assert report.diagnostics[0].field == "math:first"
+    assert report.diagnostics[0].next_action
+
+
 def test_malformed_json_shape_reports_renderer_contract_failure(tmp_path: Path) -> None:
     script = _fake_renderer_script(
         tmp_path,
@@ -469,6 +511,60 @@ def test_unknown_error_id_reports_renderer_contract_failure(tmp_path: Path) -> N
         result.html_by_id,
         message="Math renderer returned malformed output",
         fields=["math:first", "math:second"],
+    )
+    assert result.css == ""
+
+
+def test_rendered_and_error_with_same_id_reports_renderer_contract_failure(
+    tmp_path: Path,
+) -> None:
+    script = _fake_renderer_script(
+        tmp_path,
+        stdout=_renderer_payload(
+            rendered=[{"id": "first", "html": "<mjx-container>first</mjx-container>"}],
+            errors=[{"id": "first", "message": "same id appears twice"}],
+        ),
+        returncode=1,
+    )
+    report = ValidationReport(context="math")
+
+    result = MathRenderer(node=sys.executable, script=script).render_many(
+        [_source_item("first")],
+        report=report,
+    )
+
+    _assert_contract_failure_for(
+        report,
+        result.html_by_id,
+        message="Math renderer returned malformed output",
+        fields=["math:first"],
+    )
+    assert result.css == ""
+
+
+def test_duplicate_error_ids_report_renderer_contract_failure(tmp_path: Path) -> None:
+    script = _fake_renderer_script(
+        tmp_path,
+        stdout=_renderer_payload(
+            errors=[
+                {"id": "first", "message": "first failure"},
+                {"id": "first", "message": "duplicate failure"},
+            ],
+        ),
+        returncode=1,
+    )
+    report = ValidationReport(context="math")
+
+    result = MathRenderer(node=sys.executable, script=script).render_many(
+        [_source_item("first")],
+        report=report,
+    )
+
+    _assert_contract_failure_for(
+        report,
+        result.html_by_id,
+        message="Math renderer returned malformed output",
+        fields=["math:first"],
     )
     assert result.css == ""
 
