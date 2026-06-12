@@ -1,15 +1,15 @@
 ## 1. Renderer Dependency Baseline
 
-- [ ] 1.1 Add failing dependency and Docker contract tests for renderer-owned Node 22 and `@mathjax/src` v4 support.
-- [ ] 1.2 Add root `package.json` and `package-lock.json` for the renderer-only `@mathjax/src` v4 dependency.
-- [ ] 1.3 Ignore local Node install output such as `node_modules/` and npm cache directories.
-- [ ] 1.4 Add Node 22/npm to the Docker reference image without changing Python 3.10 and `uv` ownership.
-- [ ] 1.5 Update canonical verification scripts to install renderer dependencies with `npm ci --ignore-scripts --no-audit --no-fund`.
-- [ ] 1.6 Update canonical verification scripts to run `npm run raya-render-math -- --self-test` before Python/Raya tests that need build-time math.
+- [x] 1.1 Add failing dependency and Docker contract tests for renderer-owned Node 22 and `@mathjax/src` v4 support.
+- [x] 1.2 Add root `package.json` and `package-lock.json` for the renderer-only `@mathjax/src` v4 dependency.
+- [x] 1.3 Ignore local Node install output such as `node_modules/` and npm cache directories.
+- [x] 1.4 Add Node 22/npm to the Docker reference image without changing Python 3.10 and `uv` ownership.
+- [x] 1.5 Update canonical verification scripts to install renderer dependencies with `npm ci --ignore-scripts --no-audit --no-fund`.
+- [x] 1.6 Update canonical verification scripts to run `npm run raya-render-math -- --self-test` before Python/Raya tests that need build-time math.
 
 ## 2. MathJax Adapter Implementation
 
-- [ ] 2.1 Create `packages/static/scripts/render_math.mjs` with a self-test and JSON stdin/stdout conversion contract.
+- [x] 2.1 Create `packages/static/scripts/render_math.mjs` with a self-test and JSON stdin/stdout conversion contract.
 - [ ] 2.2 Add focused tests for the Python math-renderer adapter before implementing it.
 - [ ] 2.3 Create `packages/static/src/raya_static/math_renderer.py` with `MathItem`, `MathRenderResult`, subprocess invocation, CSS collection, and diagnostic mapping.
 - [ ] 2.4 Prove inline and display math render to MathJax output and broken math produces actionable diagnostics naming the source file and expression context.

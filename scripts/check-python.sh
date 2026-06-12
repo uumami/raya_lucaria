@@ -6,10 +6,15 @@ usage() {
 Usage: scripts/check-python.sh
 
 Run Python/Raya verification:
+  - npm ci --ignore-scripts --no-audit --no-fund
+  - npm run raya-render-math -- --self-test
   - uv sync --python 3.10 --all-packages --dev
   - uv run pytest -q
   - representative fixture validate/build/inspect
   - docs validate/build/inspect
+
+Node/MathJax renderer dependency installation runs before Python/Raya checks so
+build-time math rendering dependencies are ready for tests that need them.
 
 Options:
   -h, --help  Show this help text.
@@ -40,6 +45,8 @@ run() {
   "$@"
 }
 
+run npm ci --ignore-scripts --no-audit --no-fund
+run npm run raya-render-math -- --self-test
 run uv sync --python 3.10 --all-packages --dev
 run uv run pytest -q
 

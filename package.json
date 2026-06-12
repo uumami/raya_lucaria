@@ -1,0 +1,11 @@
+{
+  "name": "raya-lucaria-renderer-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "raya-render-math": "node packages/static/scripts/render_math.mjs"
+  },
+  "dependencies": {
+    "@mathjax/src": "4.0.0"
+  }
+}
