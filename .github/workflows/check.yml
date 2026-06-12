@@ -1,0 +1,44 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-check:
+    name: Host checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.9.7"
+
+      - name: Install OpenSpec
+        run: npm install -g @fission-ai/openspec@1.3.1
+
+      - name: Run canonical host check
+        run: ./scripts/check.sh
+
+  docker-check:
+    name: Docker checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Docker verification
+        run: ./scripts/check-docker.sh

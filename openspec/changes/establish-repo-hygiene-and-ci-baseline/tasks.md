@@ -14,8 +14,8 @@
 
 ## 3. CI
 
-- [ ] 3.1 Add a CI workflow that installs accepted tools and calls repository check scripts.
-- [ ] 3.2 Document any CI Docker limitation if the accepted Docker verification path cannot run in CI.
+- [x] 3.1 Add a CI workflow that installs accepted tools and calls repository check scripts.
+- [x] 3.2 Document any CI Docker limitation if the accepted Docker verification path cannot run in CI.
 
 ## 4. Current Guidance
 
