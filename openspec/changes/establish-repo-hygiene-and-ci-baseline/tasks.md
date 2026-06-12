@@ -20,6 +20,7 @@
 - [ ] 4.1 Clean stale current guidance in `README.md`, `AGENTS.md`, foundation docs, rendered docs, and OpenSpec config so commands and source layout agree with accepted contracts.
 - [ ] 4.2 Add a known-missing-work document for deferred features and intentional gaps.
 - [ ] 4.3 Update English and Spanish contributor and agent role guides for canonical checks, generated-output handling, and deferred work.
+- [ ] 4.4 Update `.gitignore` and generated-output ignore rules so artifacts, static output, caches, dependency folders, and local session output do not appear as source changes.
 
 ## 5. Verification And Archive
 
