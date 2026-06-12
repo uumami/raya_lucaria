@@ -46,6 +46,7 @@ artifact/
 
 # Local caches
 .cache/
+.superpowers/
 .uv-cache/
 .parcel-cache/
 .turbo/
