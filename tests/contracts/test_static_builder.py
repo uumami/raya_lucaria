@@ -246,9 +246,12 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert "Fixture authority remains in docs/foundation/" in _visible_text(html)
     assert "Linear Algebra Fixture" in _visible_text(html)
     assert "Probability and Statistics Fixture" in _visible_text(html)
+    assert "Macro Redefinition Fixture" in _visible_text(html)
     assert "$5 and $x$" in _visible_text(html)
     assert "\\rayaVec" not in _visible_text(html)
     assert "\\argmax" not in _visible_text(html)
+    assert "\\renewcommand" not in _visible_text(html)
+    assert "\\fixtureUnit" not in _visible_text(html)
     assert "a^2 + b^2 = c^2" not in _visible_text(html)
     assert '<span class="math inline">a^2 + b^2 = c^2</span>' not in html
     assert 'data-language="python"' in html

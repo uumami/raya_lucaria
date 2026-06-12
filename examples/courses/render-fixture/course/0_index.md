@@ -92,6 +92,23 @@ $$
 \hat{\theta} = \argmax_{\theta \in \Theta} \prod_{i=1}^{n} p(x_i\mid\theta)
 $$
 
+## Macro Redefinition Fixture
+
+This fixture demonstrates page-local macro definition and redefinition without
+making the fixture pedagogical canon:
+$\newcommand{\fixtureUnit}{\mathrm{unit}}\renewcommand{\fixtureUnit}{\mathrm{u}}$.
+
+Vectors, matrices, and redefined units should all render before publication:
+
+$$
+\rayaVec{v}_{\fixtureUnit}
+=
+\begin{bmatrix}
+2 \\
+-1
+\end{bmatrix}
+$$
+
 ```python
 def fixture_value() -> str:
     return "<rendered, not executed>"
