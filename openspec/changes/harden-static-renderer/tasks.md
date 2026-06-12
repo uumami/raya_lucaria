@@ -40,9 +40,9 @@
 
 ## 6. Browser And Layout Verification
 
-- [ ] 6.1 Add Chromium or Playwright checks proving math is visibly typeset rather than merely preserved as raw TeX text.
-- [ ] 6.2 Assert that generated pages request no external renderer assets during browser checks.
-- [ ] 6.3 Add desktop and mobile viewport checks for math, code, images, tables, callouts, footnotes, generated indexes, support panels, and inspection links.
+- [x] 6.1 Add Chromium or Playwright checks proving math is visibly typeset rather than merely preserved as raw TeX text.
+- [x] 6.2 Assert that generated pages request no external renderer assets during browser checks.
+- [x] 6.3 Add desktop and mobile viewport checks for math, code, images, tables, callouts, footnotes, generated indexes, support panels, and inspection links.
 - [ ] 6.4 Run browser coverage through the Docker Compose reference workflow or document any required Docker setup change before archive.
 
 ## 7. Documentation And Guidance

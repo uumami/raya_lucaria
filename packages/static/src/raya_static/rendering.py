@@ -483,6 +483,13 @@ nav[aria-label="Breadcrumbs"] {
   overflow-x: auto;
   padding: 0.5rem 0;
 }
+mjx-container {
+  max-width: 100%;
+}
+mjx-container[display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 .raya-reference-panel {
   min-width: 0;
   margin: 0;

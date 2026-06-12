@@ -189,6 +189,68 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
         handle.close()
 
 
+def test_render_fixture_math_is_visible_and_uses_only_local_assets(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    page.on(
+                        "request",
+                        lambda request: _record_external_request(
+                            request.url,
+                            base_url,
+                            external_requests,
+                        ),
+                    )
+                    try:
+                        page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                        _assert_no_horizontal_overflow(page)
+                        _assert_visible_mathjax_output(page, minimum=6)
+                        visible_text = page.locator("body").inner_text()
+                        assert "a^2 + b^2 = c^2" not in visible_text
+                        assert "\\rayaVec" not in visible_text
+                        assert "\\argmax" not in visible_text
+
+                        page.goto(
+                            f"{base_url}/static-path/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        _assert_visible_mathjax_output(page, minimum=2)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert external_requests == []
+
+
 @contextlib.contextmanager
 def _serve(directory: Path):
     handler = lambda *args, **kwargs: SimpleHTTPRequestHandler(  # noqa: E731
@@ -275,6 +337,20 @@ def _assert_gallery_cards_do_not_overlap(page) -> None:
     for index, first in enumerate(visible_boxes):
         for second in visible_boxes[index + 1 :]:
             assert not _boxes_overlap(first, second)
+
+
+def _assert_visible_mathjax_output(page, *, minimum: int) -> None:
+    containers = page.locator("mjx-container")
+    assert containers.count() >= minimum
+    first_box = containers.first.bounding_box()
+    assert first_box is not None
+    assert first_box["width"] > 0
+    assert first_box["height"] > 0
+
+
+def _record_external_request(url: str, base_url: str, requests: list[str]) -> None:
+    if not url.startswith(base_url):
+        requests.append(url)
 
 
 def _boxes_overlap(first: dict[str, float], second: dict[str, float]) -> bool:
