@@ -11,6 +11,8 @@ from raya_schema import ValidationReport
 
 ROOT = Path(__file__).resolve().parents[4]
 RENDER_SCRIPT = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"
+_MATHJAX_MARKER = "mjx-container"
+_DETAIL_LIMIT = 180
 
 
 @dataclass(frozen=True)
@@ -28,9 +30,15 @@ class MathRenderResult:
 
 
 class MathRenderer:
-    def __init__(self, node: str = "node", script: Path = RENDER_SCRIPT) -> None:
+    def __init__(
+        self,
+        node: str = "node",
+        script: Path = RENDER_SCRIPT,
+        timeout_seconds: float = 10.0,
+    ) -> None:
         self.node = node
         self.script = script
+        self.timeout_seconds = timeout_seconds
 
     def render_many(
         self,
@@ -41,28 +49,45 @@ class MathRenderer:
         if not items:
             return MathRenderResult(html_by_id={}, css="")
 
+        if not _validate_item_ids(items, report):
+            return MathRenderResult(html_by_id={}, css="")
+
         payload = {
             "items": [
                 {"id": item.id, "tex": item.tex, "display": item.display}
                 for item in items
             ]
         }
+        command = [self.node, str(self.script)]
 
         try:
             process = subprocess.run(
-                [self.node, str(self.script)],
+                command,
                 input=json.dumps(payload),
                 text=True,
+                encoding="utf-8",
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 check=False,
+                timeout=self.timeout_seconds,
             )
+        except subprocess.TimeoutExpired as error:
+            _add_item_errors(
+                report,
+                items,
+                "Math renderer process timed out",
+                _timeout_next_action(command, error, self.timeout_seconds),
+            )
+            return MathRenderResult(html_by_id={}, css="")
         except OSError as error:
             _add_item_errors(
                 report,
                 items,
                 "Math renderer process failed",
-                f"Check that Node and the MathJax renderer script are available: {error}",
+                (
+                    "Check that the renderer process command is available "
+                    f"({command[0]}): {_truncate(str(error))}"
+                ),
             )
             return MathRenderResult(html_by_id={}, css="")
 
@@ -82,7 +107,7 @@ class MathRenderer:
                 report,
                 items,
                 "Math renderer returned invalid JSON",
-                f"Check renderer stdout. JSON parse failed at character {error.pos}: {error.msg}.",
+                _invalid_json_next_action(process, error),
             )
             return MathRenderResult(html_by_id={}, css="")
 
@@ -133,6 +158,8 @@ def _parse_renderer_output(
         _add_malformed_output_errors(report, items)
         return None
 
+    by_id = {item.id: item for item in items}
+    requested_ids = set(by_id)
     raw_rendered = output.get("rendered")
     raw_errors = output.get("errors")
     css = output.get("css")
@@ -142,9 +169,11 @@ def _parse_renderer_output(
     if not isinstance(css, str):
         _add_malformed_output_errors(report, items)
         return None
+    if not css or _MATHJAX_MARKER not in css:
+        _add_malformed_output_errors(report, items)
+        return None
 
     html_by_id: dict[str, str] = {}
-    requested_ids = {item.id for item in items}
     for rendered in raw_rendered:
         if not isinstance(rendered, dict):
             _add_malformed_output_errors(report, items)
@@ -156,6 +185,16 @@ def _parse_renderer_output(
             return None
         if item_id not in requested_ids or item_id in html_by_id:
             _add_malformed_output_errors(report, items)
+            return None
+        if not html or _MATHJAX_MARKER not in html:
+            _add_renderer_contract_error(
+                report,
+                by_id[item_id],
+                (
+                    "Check the MathJax renderer contract. Rendered HTML must "
+                    "be non-empty MathJax output containing mjx-container."
+                ),
+            )
             return None
         html_by_id[item_id] = html
 
@@ -169,9 +208,41 @@ def _parse_renderer_output(
         if not isinstance(item_id, str) or not isinstance(message, str):
             _add_malformed_output_errors(report, items)
             return None
+        if item_id not in requested_ids:
+            _add_malformed_output_errors(report, items)
+            return None
         errors.append({"id": item_id, "message": message})
 
     return html_by_id, errors, css
+
+
+def _validate_item_ids(items: list[MathItem], report: ValidationReport) -> bool:
+    seen: set[str] = set()
+    valid = True
+    for item in items:
+        if item.id == "":
+            report.add_error(
+                "Invalid math item id",
+                path=item.source_path,
+                field="math:",
+                next_action="Assign a non-empty stable ID before invoking MathJax.",
+            )
+            valid = False
+            continue
+        if item.id in seen:
+            report.add_error(
+                "Duplicate math item id",
+                path=item.source_path,
+                field=f"math:{item.id}",
+                next_action=(
+                    "Assign unique stable math IDs before invoking MathJax. "
+                    f"The duplicate ID is {item.id}."
+                ),
+            )
+            valid = False
+            continue
+        seen.add(item.id)
+    return valid
 
 
 def _add_renderer_errors(
@@ -180,12 +251,8 @@ def _add_renderer_errors(
     errors: list[dict[str, str]],
 ) -> None:
     by_id = {item.id: item for item in items}
-    unknown_errors: list[str] = []
     for error in errors:
-        item = by_id.get(error["id"])
-        if item is None:
-            unknown_errors.append(error["message"])
-            continue
+        item = by_id[error["id"]]
         report.add_error(
             "Math rendering failed",
             path=item.source_path,
@@ -194,15 +261,6 @@ def _add_renderer_errors(
                 f"Fix the TeX for {item.id} near `{_tex_excerpt(item.tex)}`: "
                 f"{error['message']}"
             ),
-        )
-
-    if unknown_errors:
-        _add_item_errors(
-            report,
-            items,
-            "Math rendering failed",
-            "Fix renderer input or TeX. Renderer reported: "
-            + "; ".join(unknown_errors),
         )
 
 
@@ -215,6 +273,19 @@ def _add_malformed_output_errors(
         items,
         "Math renderer returned malformed output",
         "Check the MathJax renderer JSON contract for rendered, errors, and css.",
+    )
+
+
+def _add_renderer_contract_error(
+    report: ValidationReport,
+    item: MathItem,
+    next_action: str,
+) -> None:
+    report.add_error(
+        "Math renderer returned malformed output",
+        path=item.source_path,
+        field=f"math:{item.id}",
+        next_action=next_action,
     )
 
 
@@ -238,12 +309,46 @@ def _process_next_action(process: subprocess.CompletedProcess[str]) -> str:
     if process.returncode != 0:
         details.append(f"exit code {process.returncode}")
     if process.stderr.strip():
-        details.append(f"stderr: {process.stderr.strip()}")
+        details.append(f"stderr: {_truncate(process.stderr.strip())}")
     if process.stdout.strip():
-        details.append(f"stdout: {process.stdout.strip()}")
+        details.append(f"stdout: {_truncate(process.stdout.strip())}")
     if not details:
         details.append("no renderer details were reported")
     return "Check the Node MathJax renderer process: " + "; ".join(details)
+
+
+def _timeout_next_action(
+    command: list[str],
+    error: subprocess.TimeoutExpired,
+    timeout_seconds: float,
+) -> str:
+    details = [
+        f"timeout after {timeout_seconds:g}s",
+        f"command: {_truncate(' '.join(command))}",
+    ]
+    if error.stdout:
+        details.append(f"stdout: {_truncate(_decode_timeout_output(error.stdout))}")
+    if error.stderr:
+        details.append(f"stderr: {_truncate(_decode_timeout_output(error.stderr))}")
+    return "Check the MathJax renderer process: " + "; ".join(details)
+
+
+def _invalid_json_next_action(
+    process: subprocess.CompletedProcess[str],
+    error: json.JSONDecodeError,
+) -> str:
+    details = [f"JSON parse failed at character {error.pos}: {error.msg}"]
+    if process.stderr.strip():
+        details.append(f"stderr: {_truncate(process.stderr.strip())}")
+    if process.stdout.strip():
+        details.append(f"stdout: {_truncate(process.stdout.strip())}")
+    return "Check renderer stdout. " + "; ".join(details)
+
+
+def _decode_timeout_output(value: str | bytes) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value
 
 
 def _tex_excerpt(tex: str) -> str:
@@ -251,3 +356,9 @@ def _tex_excerpt(tex: str) -> str:
     if len(normalized) <= 80:
         return normalized
     return normalized[:77] + "..."
+
+
+def _truncate(value: str, limit: int = _DETAIL_LIMIT) -> str:
+    if len(value) <= limit:
+        return value
+    return value[:limit] + "...[truncated]"
