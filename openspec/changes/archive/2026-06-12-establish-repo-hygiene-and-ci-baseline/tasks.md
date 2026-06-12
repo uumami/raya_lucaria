@@ -26,7 +26,7 @@
 
 ## 5. Verification And Archive
 
-- [ ] 5.1 Run local host verification with `./scripts/check.sh`.
-- [ ] 5.2 Run Docker verification with `./scripts/check-docker.sh`.
-- [ ] 5.3 Validate the active change and current specs with OpenSpec strict validation.
-- [ ] 5.4 Archive the accepted change after implementation and sync delta specs into current specs.
+- [x] 5.1 Run local host verification with `./scripts/check.sh`.
+- [x] 5.2 Run Docker verification with `./scripts/check-docker.sh`.
+- [x] 5.3 Validate the active change and current specs with OpenSpec strict validation.
+- [x] 5.4 Archive the accepted change after implementation and sync delta specs into current specs.
