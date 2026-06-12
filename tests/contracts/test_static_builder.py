@@ -427,6 +427,30 @@ def test_render_fixture_reports_missing_local_math_font_assets(
     )
 
 
+def test_missing_math_fonts_keep_previous_artifact(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+    first_report = build_course(course)
+    old_manifest = (course / "artifact" / "manifest.json").read_text(encoding="utf-8")
+    old_page = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    missing_fonts = tmp_path / "missing-mathjax-fonts"
+    monkeypatch.setattr(static_builder, "MATH_FONT_SOURCE_DIR", missing_fonts)
+
+    report = build_course(course)
+
+    assert first_report.ok, [diagnostic.format() for diagnostic in first_report.diagnostics]
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Missing local MathJax font assets"
+        and diagnostic.path == missing_fonts
+        for diagnostic in report.diagnostics
+    )
+    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
+    assert (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8") == old_page
+
+
 def test_math_resource_writer_reports_css_referenced_missing_fonts(
     tmp_path: Path,
     monkeypatch,
@@ -437,8 +461,7 @@ def test_math_resource_writer_reports_css_referenced_missing_fonts(
     monkeypatch.setattr(static_builder, "MATH_FONT_SOURCE_DIR", font_source)
     report = ValidationReport(context="build")
 
-    copied = static_builder._write_math_render_resources(
-        tmp_path / "site",
+    resources = static_builder._prepare_math_render_resources(
         [
             (
                 "mjx-container { display: inline-block; }\n"
@@ -450,7 +473,7 @@ def test_math_resource_writer_reports_css_referenced_missing_fonts(
         report,
     )
 
-    assert copied == 0
+    assert resources.font_files == ()
     assert not report.ok
     assert any(
         diagnostic.message == "Missing local MathJax font assets"
@@ -459,6 +482,49 @@ def test_math_resource_writer_reports_css_referenced_missing_fonts(
         and "mjx-ncm-b.woff2" in (diagnostic.next_action or "")
         and "npm ci --ignore-scripts --no-audit --no-fund"
         in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_math_font_names_from_css_supports_local_url_variants() -> None:
+    report = ValidationReport(context="build")
+
+    names = static_builder._math_font_names_from_css(
+        "\n".join(
+            [
+                '@font-face { src: url("fonts/mjx-ncm-n.woff2"); }',
+                "@font-face { src: url('fonts/mjx-ncm-i.woff2?v=1#hash'); }",
+                "@font-face { src: url( ./fonts/mjx-ncm-b.woff2 ); }",
+            ]
+        ),
+        report=report,
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert names == ["mjx-ncm-b.woff2", "mjx-ncm-i.woff2", "mjx-ncm-n.woff2"]
+
+
+def test_math_font_names_from_css_rejects_nonlocal_urls() -> None:
+    report = ValidationReport(context="build")
+
+    names = static_builder._math_font_names_from_css(
+        "\n".join(
+            [
+                '@font-face { src: url("https://cdn.example/mjx-ncm-n.woff2"); }',
+                "@font-face { src: url(//cdn.example/mjx-ncm-i.woff2); }",
+                "@font-face { src: url(/fonts/mjx-ncm-b.woff2); }",
+                "@font-face { src: url(fonts/../mjx-ncm-c.woff2); }",
+            ]
+        ),
+        report=report,
+    )
+
+    assert names == []
+    assert not report.ok
+    assert len(report.diagnostics) == 4
+    assert all(
+        diagnostic.message == "Unsupported MathJax font URL"
+        and diagnostic.field == "math.fonts"
         for diagnostic in report.diagnostics
     )
 

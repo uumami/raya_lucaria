@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -90,22 +91,8 @@ MATH_FONT_SOURCE_DIR = (
     / "chtml"
     / "woff2"
 )
-MATH_FONT_URL_RE = re.compile(
-    r"""
-    url\(
-        \s*
-        (?:
-            "fonts/([A-Za-z0-9_.-]+\.woff2)"
-            |
-            'fonts/([A-Za-z0-9_.-]+\.woff2)'
-            |
-            fonts/([A-Za-z0-9_.-]+\.woff2)
-        )
-        \s*
-    \)
-    """,
-    re.VERBOSE,
-)
+MATH_CSS_URL_RE = re.compile(r"url\(\s*(?P<value>[^)]*?)\s*\)")
+MATH_FONT_NAME_RE = re.compile(r"[A-Za-z0-9_.-]+\.woff2")
 SURFACE_STUDENT_DEFAULT = "student-default"
 SURFACE_SUPPORT_PANEL = "support-panel"
 SURFACE_INSPECTION = "inspection"
@@ -118,6 +105,12 @@ SURFACE_TIERS = frozenset(
         SURFACE_MACHINE_ONLY,
     }
 )
+
+
+@dataclass(frozen=True)
+class _MathRenderResources:
+    css: str
+    font_files: tuple[Path, ...]
 
 
 def build_course(course_path: str | Path) -> ValidationReport:
@@ -233,6 +226,10 @@ def build_course(course_path: str | Path) -> ValidationReport:
             return report
         rendered_pages.append((page, rendered_page))
 
+    math_resources = _prepare_math_render_resources(math_renderer.css_chunks, report)
+    if not report.ok:
+        return report
+
     _replace_generated_output(artifact_dir, report)
     for directory in (
         site_dir,
@@ -249,7 +246,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_rich_render_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
-        math_renderer.css_chunks,
+        math_resources,
         report,
     )
     if not report.ok:
@@ -1460,21 +1457,17 @@ def _write_rich_render_resources(site_dir: Path, report: ValidationReport) -> No
     report.wrote_output(stylesheet)
 
 
-def _write_math_render_resources(
-    site_dir: Path,
+def _prepare_math_render_resources(
     css_chunks: list[str],
     report: ValidationReport,
-) -> int:
-    stylesheet = site_dir / MATH_STYLESHEET_PATH
-    stylesheet.parent.mkdir(parents=True, exist_ok=True)
+) -> _MathRenderResources:
     css = "\n".join(chunk for chunk in css_chunks if chunk.strip())
-    stylesheet.write_text(css, encoding="utf-8")
-    report.wrote_output(stylesheet)
-
     if not css:
-        return 0
+        return _MathRenderResources(css="", font_files=())
 
-    required_fonts = _math_font_names_from_css(css)
+    required_fonts = _math_font_names_from_css(css, report=report)
+    if not report.ok:
+        return _MathRenderResources(css=css, font_files=())
     missing_fonts = [
         name
         for name in required_fonts
@@ -1491,10 +1484,10 @@ def _write_math_render_resources(
                 f"font file(s): {', '.join(missing_fonts)}."
             ),
         )
-        return 0
+        return _MathRenderResources(css=css, font_files=())
 
     font_files = sorted(MATH_FONT_SOURCE_DIR.glob("*.woff2"))
-    if not font_files:
+    if required_fonts and not font_files:
         report.add_error(
             "Missing local MathJax font assets",
             path=MATH_FONT_SOURCE_DIR,
@@ -1505,13 +1498,29 @@ def _write_math_render_resources(
                 "MathJax font files were found."
             ),
         )
+        return _MathRenderResources(css=css, font_files=())
+
+    return _MathRenderResources(css=css, font_files=tuple(font_files))
+
+
+def _write_math_render_resources(
+    site_dir: Path,
+    resources: _MathRenderResources,
+    report: ValidationReport,
+) -> int:
+    stylesheet = site_dir / MATH_STYLESHEET_PATH
+    stylesheet.parent.mkdir(parents=True, exist_ok=True)
+    stylesheet.write_text(resources.css, encoding="utf-8")
+    report.wrote_output(stylesheet)
+
+    if not resources.css or not resources.font_files:
         return 0
 
     target_fonts = stylesheet.parent / "fonts"
     target_fonts.mkdir(parents=True, exist_ok=True)
     report.wrote_output(target_fonts)
     copied = 0
-    for font_file in font_files:
+    for font_file in resources.font_files:
         report.read_file(font_file)
         target = target_fonts / font_file.name
         shutil.copy2(font_file, target)
@@ -1520,12 +1529,58 @@ def _write_math_render_resources(
     return copied
 
 
-def _math_font_names_from_css(css: str) -> list[str]:
+def _math_font_names_from_css(
+    css: str,
+    *,
+    report: ValidationReport,
+) -> list[str]:
     names: set[str] = set()
-    for match in MATH_FONT_URL_RE.finditer(css):
-        name = next(group for group in match.groups() if group is not None)
-        names.add(name)
+    for match in MATH_CSS_URL_RE.finditer(css):
+        raw_url = _unquote_css_url(match.group("value"))
+        font_name = _local_math_font_name(raw_url)
+        if font_name is not None:
+            names.add(font_name)
+            continue
+        if _looks_like_math_font_url(raw_url):
+            report.add_error(
+                "Unsupported MathJax font URL",
+                path=MATH_FONT_SOURCE_DIR,
+                field="math.fonts",
+                next_action=(
+                    "MathJax font URLs must be local relative paths under "
+                    f"`fonts/`. Unsupported URL: {raw_url}."
+                ),
+            )
     return sorted(names)
+
+
+def _unquote_css_url(value: str) -> str:
+    stripped = value.strip()
+    if len(stripped) >= 2 and stripped[0] == stripped[-1] and stripped[0] in {"'", '"'}:
+        return stripped[1:-1].strip()
+    return stripped
+
+
+def _local_math_font_name(raw_url: str) -> str | None:
+    path = raw_url.split("?", 1)[0].split("#", 1)[0].strip()
+    if path.startswith("./"):
+        path = path[2:]
+    if not path.startswith("fonts/"):
+        return None
+    name = path.removeprefix("fonts/")
+    if "/" in name or not MATH_FONT_NAME_RE.fullmatch(name):
+        return None
+    return name
+
+
+def _looks_like_math_font_url(raw_url: str) -> bool:
+    path = raw_url.split("?", 1)[0].split("#", 1)[0].strip()
+    lower = path.lower()
+    return (
+        lower.startswith(("http://", "https://", "//"))
+        or path.startswith("/")
+        or ".woff2" in lower
+    )
 
 
 def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -> None:

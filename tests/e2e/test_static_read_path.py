@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import re
 import shutil
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -42,9 +43,11 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
         )
         render_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
         math_css = _fetch_text(f"{base_url}/_raya/render/math/mathjax.css")
-        math_font = _fetch_bytes(
-            f"{base_url}/_raya/render/math/fonts/mjx-ncm-n.woff2"
-        )
+        math_font_names = _local_math_font_names_from_css(math_css)
+        math_fonts = [
+            _fetch_bytes(f"{base_url}/_raya/render/math/fonts/{name}")
+            for name in math_font_names
+        ]
 
     assert "Raya Lucaria Render Fixture" in root_html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in root_html
@@ -70,7 +73,8 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert ".raya-code-block" in render_css
     assert ".math.block" in render_css
     assert "mjx-container" in math_css
-    assert len(math_font) > 0
+    assert math_font_names
+    assert all(len(font) > 0 for font in math_fonts)
 
 
 def test_reference_fixture_static_read_path_serves_referenced_files(
@@ -340,3 +344,18 @@ def _fetch_text(url: str) -> str:
 def _fetch_bytes(url: str) -> bytes:
     with urlopen(url, timeout=10) as response:
         return response.read()
+
+
+def _local_math_font_names_from_css(css: str) -> list[str]:
+    names: set[str] = set()
+    for match in re.finditer(r"url\(([^)]*)\)", css):
+        raw_url = match.group(1).strip().strip("\"'")
+        assert not raw_url.startswith(("http://", "https://", "//", "/"))
+        path = raw_url.split("?", 1)[0].split("#", 1)[0]
+        if path.startswith("./"):
+            path = path[2:]
+        if path.startswith("fonts/") and path.endswith(".woff2"):
+            name = path.removeprefix("fonts/")
+            assert "/" not in name
+            names.add(name)
+    return sorted(names)
