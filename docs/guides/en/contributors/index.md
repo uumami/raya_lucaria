@@ -9,7 +9,7 @@ status: ready
 
 Start with `docs/foundation/15_system_overview.md`, then `docs/foundation/13_truth_surfaces.md`, then the accepted OpenSpec specs for the capability you are changing.
 
-Use the Docker Compose and `uv` commands from `README.md` and `AGENTS.md` when changing code, contracts, docs, or tests. Run `./scripts/check.sh` before archive or commit, run `./scripts/check-docker.sh` when Docker behavior changes, and keep `./scripts/smoke-test.sh` for external-course smoke checks when command or course portability changes. Keep package paths, commands, schema fields, and stable IDs in English.
+Use the Docker Compose and `uv` commands from `README.md` and `AGENTS.md` when changing code, contracts, docs, or tests. Run `./scripts/check.sh` before archive or commit, run `./scripts/check-docker.sh` when Docker behavior changes, and keep `./scripts/smoke-test.sh` for external-course smoke checks when command or course portability changes. Keep deferred capabilities in `docs/foundation/18_known_missing_work.md` until an accepted OpenSpec change makes them current. Keep package paths, commands, schema fields, and stable IDs in English.
 
 When changing course validation or rendering, preserve the convention-first source model: `source: course` points at the ordered `course/` tree, ordered filenames define authoring order, frontmatter `id` defines stable identity, colocated `_official/` and `_assets/` stay private, and `navigation.json` plus `indices.json` are generated artifact data. Tests should cover source diagnostics, official object export, asset copying, artifact schemas, and static-read-path rendering.
 
