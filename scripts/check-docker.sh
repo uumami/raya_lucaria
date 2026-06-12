@@ -6,10 +6,12 @@ usage() {
 Usage: scripts/check-docker.sh
 
 Run the Docker Compose verification path:
-  docker compose run --rm dev ./scripts/check-python.sh
+  RAYA_DOCKER_USER=<caller uid:gid> docker compose run --rm dev ./scripts/check-python.sh
 
 This command verifies Python/Raya behavior inside the reference container.
 Host-only checks such as OpenSpec validation run through scripts/check.sh.
+By default, RAYA_DOCKER_USER uses the caller UID:GID; set it explicitly to
+override the Compose user.
 
 Options:
   -h, --help  Show this help text.
@@ -33,6 +35,8 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-echo "check-docker: docker compose run --rm dev ./scripts/check-python.sh"
+export RAYA_DOCKER_USER="${RAYA_DOCKER_USER:-$(id -u):$(id -g)}"
+
+echo "check-docker: RAYA_DOCKER_USER=$RAYA_DOCKER_USER docker compose run --rm dev ./scripts/check-python.sh"
 docker compose run --rm dev ./scripts/check-python.sh
 echo "check-docker: passed"

@@ -8,7 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def run_command(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
+def run_command(
+    *args: str,
+    cwd: Path = ROOT,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env.setdefault("PYTHONUNBUFFERED", "1")
     for key in tuple(env):
@@ -21,6 +25,8 @@ def run_command(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str
             env.pop(key)
     env["GIT_CONFIG_GLOBAL"] = os.devnull
     env["GIT_CONFIG_NOSYSTEM"] = "1"
+    if extra_env is not None:
+        env.update(extra_env)
     return subprocess.run(
         list(args),
         cwd=cwd,
@@ -32,10 +38,14 @@ def run_command(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str
     )
 
 
-def run_script(path: str, *args: str) -> subprocess.CompletedProcess[str]:
+def run_script(
+    path: str,
+    *args: str,
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     script = ROOT / path
     assert script.exists(), f"missing script: {path}"
-    return run_command(str(script), *args)
+    return run_command(str(script), *args, extra_env=extra_env)
 
 
 def init_git_repo(path: Path) -> None:
@@ -176,3 +186,62 @@ def test_check_docker_help_mentions_docker_compose() -> None:
     assert result.returncode == 0, result.stdout
     assert "Usage: scripts/check-docker.sh" in result.stdout
     assert "docker compose" in result.stdout
+
+
+def write_fake_docker(path: Path) -> Path:
+    bin_dir = path / "bin"
+    bin_dir.mkdir()
+    docker = bin_dir / "docker"
+    docker.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        "{\n"
+        "  printf 'RAYA_DOCKER_USER=%s\\n' \"${RAYA_DOCKER_USER-}\"\n"
+        "  printf 'ARGS=%s\\n' \"$*\"\n"
+        "} > \"$RAYA_FAKE_DOCKER_CAPTURE\"\n",
+        encoding="utf-8",
+    )
+    docker.chmod(0o755)
+    return bin_dir
+
+
+def test_check_docker_defaults_to_caller_user_for_compose_run(tmp_path: Path) -> None:
+    capture = tmp_path / "docker.env"
+    fake_bin = write_fake_docker(tmp_path)
+
+    result = run_script(
+        "scripts/check-docker.sh",
+        extra_env={
+            "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
+            "RAYA_FAKE_DOCKER_CAPTURE": str(capture),
+        },
+    )
+
+    expected_user = f"{os.getuid()}:{os.getgid()}"
+    assert result.returncode == 0, result.stdout
+    assert f"RAYA_DOCKER_USER={expected_user}" in result.stdout
+    assert capture.read_text(encoding="utf-8") == (
+        f"RAYA_DOCKER_USER={expected_user}\n"
+        "ARGS=compose run --rm dev ./scripts/check-python.sh\n"
+    )
+
+
+def test_check_docker_preserves_user_override_for_compose_run(tmp_path: Path) -> None:
+    capture = tmp_path / "docker.env"
+    fake_bin = write_fake_docker(tmp_path)
+
+    result = run_script(
+        "scripts/check-docker.sh",
+        extra_env={
+            "PATH": f"{fake_bin}{os.pathsep}{os.environ['PATH']}",
+            "RAYA_FAKE_DOCKER_CAPTURE": str(capture),
+            "RAYA_DOCKER_USER": "123:456",
+        },
+    )
+
+    assert result.returncode == 0, result.stdout
+    assert "RAYA_DOCKER_USER=123:456" in result.stdout
+    assert capture.read_text(encoding="utf-8") == (
+        "RAYA_DOCKER_USER=123:456\n"
+        "ARGS=compose run --rm dev ./scripts/check-python.sh\n"
+    )

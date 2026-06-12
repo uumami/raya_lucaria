@@ -2,6 +2,7 @@
 
 - [ ] 1.1 Add contract tests for canonical check script help output, hygiene stale-guidance detection, and generated-output pollution detection.
 - [ ] 1.2 Run the focused hygiene script tests and keep failures visible until the scripts exist.
+- [x] 1.3 Add regression coverage for `scripts/check-docker.sh` Docker user default and override behavior.
 
 ## 2. Check Scripts
 
@@ -9,6 +10,7 @@
 - [x] 2.2 Implement `scripts/check-python.sh` for Python/Raya dependency sync, tests, fixture validation/build/inspection, and docs validation/build/inspection.
 - [x] 2.3 Implement `scripts/check.sh` as the canonical host full check.
 - [x] 2.4 Implement `scripts/check-docker.sh` as the Docker Compose verification path.
+- [x] 2.5 Default `scripts/check-docker.sh` to the caller UID:GID while preserving explicit `RAYA_DOCKER_USER` overrides.
 
 ## 3. CI
 
