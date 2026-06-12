@@ -41,6 +41,10 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
             f"{base_url}/_raya/assets/_source/1_static_path/_local/local-static-path.txt"
         )
         render_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
+        math_css = _fetch_text(f"{base_url}/_raya/render/math/mathjax.css")
+        math_font = _fetch_bytes(
+            f"{base_url}/_raya/render/math/fonts/mjx-ncm-n.woff2"
+        )
 
     assert "Raya Lucaria Render Fixture" in root_html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in root_html
@@ -49,8 +53,13 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert 'src="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in root_html
+    assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in root_html
     assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
     assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
+    assert (
+        '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">'
+        in nested_html
+    )
     assert '<aside class="raya-callout raya-callout-tip"' in nested_html
     assert (
         'href="../_raya/assets/_source/1_static_path/_local/local-static-path.txt"'
@@ -60,6 +69,8 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert "Raya Lucaria render fixture colocated asset" in local_asset_text
     assert ".raya-code-block" in render_css
     assert ".math.block" in render_css
+    assert "mjx-container" in math_css
+    assert len(math_font) > 0
 
 
 def test_reference_fixture_static_read_path_serves_referenced_files(
@@ -324,3 +335,8 @@ def _serve(directory: Path):
 def _fetch_text(url: str) -> str:
     with urlopen(url, timeout=10) as response:
         return response.read().decode("utf-8")
+
+
+def _fetch_bytes(url: str) -> bytes:
+    with urlopen(url, timeout=10) as response:
+        return response.read()

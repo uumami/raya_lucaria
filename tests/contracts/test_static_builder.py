@@ -22,6 +22,7 @@ from raya_schema import (
     validate_runtime_index,
 )
 from raya_static import build_course
+from raya_static import builder as static_builder
 from raya_static.math_renderer import MathRenderResult
 from raya_static.rendering import render_markdown_body
 
@@ -227,6 +228,7 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     )
 
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
+    assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in html
     assert 'href="#rich-static-baseline"' in html
     assert 'id="duplicate-heading"' in html
@@ -254,6 +256,10 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert "<script>" not in html
 
     assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
+    assert (
+        '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">'
+        in nested_html
+    )
     assert 'href="#nested-rich-content"' in nested_html
     assert 'id="nested-duplicate"' in nested_html
     assert 'id="nested-duplicate-2"' in nested_html
@@ -386,6 +392,39 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
     assert (
         course / "artifact" / "site" / "_raya" / "render" / "rich.css"
     ).exists()
+    assert (
+        course / "artifact" / "site" / "_raya" / "render" / "math" / "mathjax.css"
+    ).exists()
+    assert (
+        course
+        / "artifact"
+        / "site"
+        / "_raya"
+        / "render"
+        / "math"
+        / "fonts"
+        / "mjx-ncm-n.woff2"
+    ).exists()
+
+
+def test_render_fixture_reports_missing_local_math_font_assets(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+    missing_fonts = tmp_path / "missing-mathjax-fonts"
+    monkeypatch.setattr(static_builder, "MATH_FONT_SOURCE_DIR", missing_fonts)
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Missing local MathJax font assets"
+        and diagnostic.path == missing_fonts
+        and "npm ci --ignore-scripts --no-audit --no-fund"
+        in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
 
 
 def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:

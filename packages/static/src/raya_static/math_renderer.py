@@ -39,6 +39,7 @@ class MathRenderer:
         self.node = node
         self.script = script
         self.timeout_seconds = timeout_seconds
+        self.css_chunks: list[str] = []
 
     def render_many(
         self,
@@ -152,6 +153,8 @@ class MathRenderer:
                 )
             return MathRenderResult(html_by_id={}, css="")
 
+        if css.strip() and css not in self.css_chunks:
+            self.css_chunks.append(css)
         return MathRenderResult(html_by_id=html_by_id, css=css)
 
 

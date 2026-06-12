@@ -65,11 +65,17 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
         local_asset = _fetch_text(
             f"{base_url}/_raya/assets/_source/_local/diagrams/static-path.txt"
         )
+        math_css = _fetch_text(f"{base_url}/_raya/render/math/mathjax.css")
+        math_font = _fetch_bytes(
+            f"{base_url}/_raya/render/math/fonts/mjx-ncm-n.woff2"
+        )
     finally:
         handle.close()
 
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert "Raya Lucaria render fixture asset" in local_asset
+    assert "mjx-container" in math_css
+    assert len(math_font) > 0
 
 
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
@@ -200,6 +206,11 @@ def _serve(directory: Path):
 def _fetch_text(url: str) -> str:
     with urlopen(url, timeout=10) as response:
         return response.read().decode("utf-8")
+
+
+def _fetch_bytes(url: str) -> bytes:
+    with urlopen(url, timeout=10) as response:
+        return response.read()
 
 
 def _browser_executable() -> Path:

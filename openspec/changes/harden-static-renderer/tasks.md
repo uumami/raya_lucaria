@@ -25,10 +25,10 @@
 
 ## 4. Artifact Resources And Static Read Path
 
-- [ ] 4.1 Write MathJax support CSS and any required local render assets under `artifact/site/_raya/render/math/`.
-- [ ] 4.2 Link local math support resources from root and nested pages with deployment-neutral relative URLs.
-- [ ] 4.3 Ensure `raya preview` serves the same pre-rendered math pages and local resources that static hosting serves.
-- [ ] 4.4 Add static-read-path tests proving generated math resources resolve without backend routes, CDNs, configured hosts, or browser-only rendering.
+- [x] 4.1 Write MathJax support CSS and any required local render assets under `artifact/site/_raya/render/math/`.
+- [x] 4.2 Link local math support resources from root and nested pages with deployment-neutral relative URLs.
+- [x] 4.3 Ensure `raya preview` serves the same pre-rendered math pages and local resources that static hosting serves.
+- [x] 4.4 Add static-read-path tests proving generated math resources resolve without backend routes, CDNs, configured hosts, or browser-only rendering.
 
 ## 5. Fixtures And Diagnostics
 

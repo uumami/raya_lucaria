@@ -72,6 +72,7 @@ from raya_static.rendering import (
 )
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 ARTIFACT_VERSION = "0.1"
 SOURCE_SCHEMA_VERSION = "0.1"
 STATIC_RESOURCE_DIR = "_raya"
@@ -79,6 +80,16 @@ STATIC_ASSETS_PATH = Path(STATIC_RESOURCE_DIR) / "assets"
 STATIC_FILES_PATH = Path(STATIC_RESOURCE_DIR) / "files"
 STATIC_REVIEWED_PATH = REVIEWED_BROWSER_DIR
 STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
+MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
+MATH_FONT_SOURCE_DIR = (
+    REPOSITORY_ROOT
+    / "node_modules"
+    / "@mathjax"
+    / "mathjax-newcm-font"
+    / "chtml"
+    / "woff2"
+)
+MATH_REQUIRED_FONT_FILES = ("mjx-ncm-n.woff2",)
 SURFACE_STUDENT_DEFAULT = "student-default"
 SURFACE_SUPPORT_PANEL = "support-panel"
 SURFACE_INSPECTION = "inspection"
@@ -220,6 +231,13 @@ def build_course(course_path: str | Path) -> ValidationReport:
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
     _write_rich_render_resources(site_dir, report)
+    copied_math_font_files = _write_math_render_resources(
+        site_dir,
+        math_renderer.css_chunks,
+        report,
+    )
+    if not report.ok:
+        return report
 
     for page, rendered_page in rendered_pages:
         output_file = site_dir / page.output_path
@@ -348,6 +366,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
                 f"Copied {copied_reviewed_files} reviewed output file(s)",
                 path=artifact_reviewed_dir,
             )
+        if copied_math_font_files:
+            report.add_info(
+                f"Copied {copied_math_font_files} MathJax font file(s)",
+                path=site_dir / MATH_STYLESHEET_PATH.parent / "fonts",
+            )
     return report
 
 
@@ -442,6 +465,10 @@ def _render_page(
         official_counts,
     )
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
+    math_stylesheet_href = _relative_href(
+        page.output_path,
+        MATH_STYLESHEET_PATH.as_posix(),
+    )
     reference_panel = _render_reference_panel(page, page_references, reviewed_by_reference)
     reviewed_output_panel = _render_reviewed_output_panel(
         page,
@@ -464,6 +491,7 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(math_stylesheet_href)}">',
             "</head>",
             f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}">',
             '<a class="raya-skip-link" href="#raya-content">Skip to content</a>',
@@ -1414,6 +1442,78 @@ def _write_rich_render_resources(site_dir: Path, report: ValidationReport) -> No
     stylesheet.parent.mkdir(parents=True, exist_ok=True)
     stylesheet.write_text(rich_render_css(), encoding="utf-8")
     report.wrote_output(stylesheet)
+
+
+def _write_math_render_resources(
+    site_dir: Path,
+    css_chunks: list[str],
+    report: ValidationReport,
+) -> int:
+    stylesheet = site_dir / MATH_STYLESHEET_PATH
+    stylesheet.parent.mkdir(parents=True, exist_ok=True)
+    css = "\n".join(chunk for chunk in css_chunks if chunk.strip())
+    stylesheet.write_text(css, encoding="utf-8")
+    report.wrote_output(stylesheet)
+
+    if not css:
+        return 0
+
+    if not MATH_FONT_SOURCE_DIR.is_dir():
+        report.add_error(
+            "Missing local MathJax font assets",
+            path=MATH_FONT_SOURCE_DIR,
+            field="math.fonts",
+            next_action=(
+                "Install renderer dependencies with "
+                "`npm ci --ignore-scripts --no-audit --no-fund` so "
+                "node_modules/@mathjax/mathjax-newcm-font/chtml/woff2 is available."
+            ),
+        )
+        return 0
+
+    missing_required = [
+        name
+        for name in MATH_REQUIRED_FONT_FILES
+        if not (MATH_FONT_SOURCE_DIR / name).is_file()
+    ]
+    if missing_required:
+        report.add_error(
+            "Missing local MathJax font assets",
+            path=MATH_FONT_SOURCE_DIR,
+            field="math.fonts",
+            next_action=(
+                "Reinstall renderer dependencies with "
+                "`npm ci --ignore-scripts --no-audit --no-fund`. Missing font "
+                f"file(s): {', '.join(missing_required)}."
+            ),
+        )
+        return 0
+
+    font_files = sorted(MATH_FONT_SOURCE_DIR.glob("*.woff2"))
+    if not font_files:
+        report.add_error(
+            "Missing local MathJax font assets",
+            path=MATH_FONT_SOURCE_DIR,
+            field="math.fonts",
+            next_action=(
+                "Reinstall renderer dependencies with "
+                "`npm ci --ignore-scripts --no-audit --no-fund`. No .woff2 "
+                "MathJax font files were found."
+            ),
+        )
+        return 0
+
+    target_fonts = stylesheet.parent / "fonts"
+    target_fonts.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(target_fonts)
+    copied = 0
+    for font_file in font_files:
+        report.read_file(font_file)
+        target = target_fonts / font_file.name
+        shutil.copy2(font_file, target)
+        report.wrote_output(target)
+        copied += 1
+    return copied
 
 
 def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -> None:
