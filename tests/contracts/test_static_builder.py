@@ -242,6 +242,12 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert "<hr />" in html
     assert "<table>" in html
     assert "mjx-container" in html
+    assert "Fixture authority remains in docs/foundation/" in _visible_text(html)
+    assert "Linear Algebra Fixture" in _visible_text(html)
+    assert "Probability and Statistics Fixture" in _visible_text(html)
+    assert "$5 and $x$" in _visible_text(html)
+    assert "\\rayaVec" not in _visible_text(html)
+    assert "\\argmax" not in _visible_text(html)
     assert "a^2 + b^2 = c^2" not in _visible_text(html)
     assert '<span class="math inline">a^2 + b^2 = c^2</span>' not in html
     assert 'data-language="python"' in html
@@ -818,6 +824,80 @@ def test_build_stops_when_footnote_definition_is_missing(tmp_path: Path) -> None
     assert any(
         diagnostic.message == "Missing footnote definition"
         and diagnostic.field == "footnote:missing-note"
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_stops_when_mathjax_expression_fails(tmp_path: Path) -> None:
+    source = ROOT / "examples" / "courses" / "invalid" / "broken-math-expression"
+    course = tmp_path / "broken-math-expression"
+    shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Math rendering failed"
+        and diagnostic.field.startswith("math:")
+        and diagnostic.path == course / "course" / "0_index.md"
+        and "unknownmacro" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_stops_when_display_math_delimiter_is_unclosed(
+    tmp_path: Path,
+) -> None:
+    source = ROOT / "examples" / "courses" / "invalid" / "unclosed-display-math"
+    course = tmp_path / "unclosed-display-math"
+    shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Malformed display math delimiter"
+        and diagnostic.field == "math:display-delimiter"
+        and diagnostic.path == course / "course" / "0_index.md"
+        and "$$" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_stops_when_full_latex_document_is_used(tmp_path: Path) -> None:
+    source = ROOT / "examples" / "courses" / "invalid" / "full-latex-document"
+    course = tmp_path / "full-latex-document"
+    shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Full LaTeX documents are not supported"
+        and diagnostic.field == "math:latex-document"
+        and diagnostic.path == course / "course" / "0_index.md"
+        and "\\documentclass" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_stops_when_math_delimiters_are_nested(tmp_path: Path) -> None:
+    source = ROOT / "examples" / "courses" / "invalid" / "nested-math-delimiters"
+    course = tmp_path / "nested-math-delimiters"
+    shutil.copytree(source, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Unsupported nested math delimiter"
+        and diagnostic.field == "math:delimiter-nesting"
+        and diagnostic.path == course / "course" / "0_index.md"
+        and "$$" in (diagnostic.next_action or "")
         for diagnostic in report.diagnostics
     )
     assert not (course / "artifact" / "manifest.json").exists()

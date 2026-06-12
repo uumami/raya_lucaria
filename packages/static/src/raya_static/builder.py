@@ -68,6 +68,9 @@ from raya_schema.yaml_io import load_yaml_file
 from raya_static.math_renderer import MathRenderer
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
+    contains_full_latex_document,
+    has_malformed_display_math_delimiters,
+    has_unsupported_nested_math_delimiters,
     missing_footnote_definitions,
     render_markdown_body,
     rich_render_css,
@@ -591,6 +594,38 @@ def _validate_rich_markdown_inputs(
     report: ValidationReport,
 ) -> None:
     for page in pages:
+        if contains_full_latex_document(page.body):
+            report.add_error(
+                "Full LaTeX documents are not supported",
+                path=page.source_path,
+                field="math:latex-document",
+                next_action=(
+                    "Remove full LaTeX document commands such as \\documentclass, "
+                    "\\begin{document}, and \\end{document}. Keep only supported "
+                    "inline `$...$` and display `$$` math expressions in Markdown."
+                ),
+            )
+        if has_unsupported_nested_math_delimiters(page.body):
+            report.add_error(
+                "Unsupported nested math delimiter",
+                path=page.source_path,
+                field="math:delimiter-nesting",
+                next_action=(
+                    "Do not nest `$...$` and `$$` delimiters. Use inline math "
+                    "with `$...$`, or put display math between standalone $$ "
+                    "delimiter lines."
+                ),
+            )
+        if has_malformed_display_math_delimiters(page.body):
+            report.add_error(
+                "Malformed display math delimiter",
+                path=page.source_path,
+                field="math:display-delimiter",
+                next_action=(
+                    "Close each display math block with a matching $$ delimiter "
+                    "on its own line, or escape dollar signs intended as text."
+                ),
+            )
         for label in missing_footnote_definitions(page.body):
             report.add_error(
                 "Missing footnote definition",

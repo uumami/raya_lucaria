@@ -1,0 +1,6 @@
+course_id: broken-math-expression
+title: Broken Math Expression
+description: Invalid fixture for MathJax conversion diagnostics.
+language: en
+source: course
+artifact: artifact

@@ -7,7 +7,7 @@ status: ready
 
 # Raya Lucaria Render Fixture
 
-This is fixture material for renderer and e2e tests. It is not canonical pedagogy or architecture truth; use docs/foundation/ for authority.
+This is fixture material for renderer and e2e tests. It is not canonical pedagogy or architecture truth. Fixture authority remains in docs/foundation/.
 
 Raya Lucaria is an open educational framework and commons. Glintstone keeps the static course path useful, Primeval Current names graph work, and Rennala names future study and mastery work.
 
@@ -41,11 +41,55 @@ This section is fixture material for the rich static renderer. It uses **strong 
 | Surface | Expected static behavior |
 | --- | --- |
 | Tables | Render semantic table cells. |
-| Math | Preserve TeX such as $a^2 + b^2 = c^2$. |
+| Math | Build-time MathJax typesets inline math such as $a^2 + b^2 = c^2$. |
 | Assets | Rewrite colocated `_assets/` references. |
 
+Page-local macros are fixture material too:
+$\newcommand{\rayaVec}[1]{\mathbf{#1}}\newcommand{\argmax}{\operatorname*{arg\,max}}$.
+
+Escaped dollar signs stay text, such as \$5 and \$x\$.
+
+## Linear Algebra Fixture
+
+Inline vectors use a page-local macro such as $\rayaVec{x}_i$.
+
 $$
-\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+\begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix}
+\rayaVec{x}
+=
+\rayaVec{x}
+$$
+
+Aligned equations stay in one display block:
+
+$$
+\begin{aligned}
+\sum_{i=1}^{n} i &= \frac{n(n+1)}{2} \\
+\lim_{n\to\infty}\frac{1}{n}\sum_{i=1}^{n} x_i &= \operatorname{E}[X]
+\end{aligned}
+$$
+
+## Probability and Statistics Fixture
+
+Piecewise, calculus, probability, statistics, and optimization notation should
+all be rendered before publication:
+
+$$
+f(x) =
+\begin{cases}
+x^2, & x \ge 0 \\
+-x, & x < 0
+\end{cases}
+$$
+
+$$
+\frac{\partial}{\partial \theta}
+\int_0^1 p(x\mid\theta)\,dx = 0,
+\qquad
+\hat{\theta} = \argmax_{\theta \in \Theta} \prod_{i=1}^{n} p(x_i\mid\theta)
 $$
 
 ```python

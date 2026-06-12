@@ -1,0 +1,6 @@
+course_id: nested-math-delimiters
+title: Nested Math Delimiters
+description: Invalid fixture for unsupported nested math delimiter diagnostics.
+language: en
+source: course
+artifact: artifact

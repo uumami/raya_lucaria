@@ -1,0 +1,6 @@
+course_id: unclosed-display-math
+title: Unclosed Display Math
+description: Invalid fixture for malformed display math delimiter diagnostics.
+language: en
+source: course
+artifact: artifact

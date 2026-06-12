@@ -32,11 +32,11 @@
 
 ## 5. Fixtures And Diagnostics
 
-- [ ] 5.1 Expand the representative render fixture or add a math fixture covering inline math, display math, matrices, aligned equations, cases, calculus, probability, statistics, optimization, page-local macros, images, links, code, callouts, tables, footnotes, and nested pages.
-- [ ] 5.2 Keep all fixture content labeled as fixture material and point authority back to `docs/foundation/`.
-- [ ] 5.3 Add invalid fixture coverage for MathJax conversion errors, malformed delimiters, unknown macros or control sequences, unsupported delimiter nesting, and missing local math support assets.
-- [ ] 5.4 Add authoring-contract fixture coverage for inline `$...$`, display `$$` blocks on their own lines, fenced-code non-math, escaped dollar signs, page-local `\newcommand` and `\renewcommand`, and rejection of full LaTeX documents.
-- [ ] 5.5 Verify diagnostics identify files read, expressions or spans involved, outputs withheld, failure reasons, and concrete next actions.
+- [x] 5.1 Expand the representative render fixture or add a math fixture covering inline math, display math, matrices, aligned equations, cases, calculus, probability, statistics, optimization, page-local macros, images, links, code, callouts, tables, footnotes, and nested pages.
+- [x] 5.2 Keep all fixture content labeled as fixture material and point authority back to `docs/foundation/`.
+- [x] 5.3 Add invalid fixture coverage for MathJax conversion errors, malformed delimiters, unknown macros or control sequences, unsupported delimiter nesting, and missing local math support assets.
+- [x] 5.4 Add authoring-contract fixture coverage for inline `$...$`, display `$$` blocks on their own lines, fenced-code non-math, escaped dollar signs, page-local `\newcommand` and `\renewcommand`, and rejection of full LaTeX documents.
+- [x] 5.5 Verify diagnostics identify files read, expressions or spans involved, outputs withheld, failure reasons, and concrete next actions.
 
 ## 6. Browser And Layout Verification
 

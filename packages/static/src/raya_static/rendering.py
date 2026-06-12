@@ -31,6 +31,12 @@ _BLOCKQUOTE_LINE_RE = re.compile(r"^\s{0,3}>\s?(.*)$")
 _FOOTNOTE_REF_RE = re.compile(r"(?<!\\)\[\^([^\]\s]+)\]")
 _FOOTNOTE_DEF_RE = re.compile(r"^\[\^([^\]\s]+)\]:", re.MULTILINE)
 _FENCE_RE = re.compile(r"^\s{0,3}(```+|~~~+)")
+_DISPLAY_DELIMITER_RE = re.compile(r"(?m)^\s*\$\$\s*$")
+_UNESCAPED_DISPLAY_SEQUENCE_RE = re.compile(r"(?<!\\)\$\$")
+_UNESCAPED_INLINE_DOLLAR_RE = re.compile(r"(?<!\\)\$(?!\$)")
+_LATEX_DOCUMENT_RE = re.compile(
+    r"\\(?:documentclass|begin\{document\}|end\{document\})"
+)
 _SLUG_UNSAFE_RE = re.compile(r"[^a-z0-9 -]")
 _SLUG_SPACE_RE = re.compile(r"\s+")
 _LANGUAGE_RE = re.compile(r"^[A-Za-z0-9_+.#-]+")
@@ -286,6 +292,25 @@ def missing_footnote_definitions(body: str) -> list[str]:
     refs = set(_FOOTNOTE_REF_RE.findall(text))
     defs = set(_FOOTNOTE_DEF_RE.findall(text))
     return sorted(ref for ref in refs - defs if ref)
+
+
+def has_malformed_display_math_delimiters(body: str) -> bool:
+    text = _without_fenced_blocks(body)
+    return len(_DISPLAY_DELIMITER_RE.findall(text)) % 2 == 1
+
+
+def contains_full_latex_document(body: str) -> bool:
+    return _LATEX_DOCUMENT_RE.search(_without_fenced_blocks(body)) is not None
+
+
+def has_unsupported_nested_math_delimiters(body: str) -> bool:
+    for line in _without_fenced_blocks(body).splitlines():
+        if _UNESCAPED_DISPLAY_SEQUENCE_RE.search(line) is None:
+            continue
+        line_without_display = _UNESCAPED_DISPLAY_SEQUENCE_RE.sub("", line)
+        if _UNESCAPED_INLINE_DOLLAR_RE.search(line_without_display) is not None:
+            return True
+    return False
 
 
 def rich_render_css() -> str:
