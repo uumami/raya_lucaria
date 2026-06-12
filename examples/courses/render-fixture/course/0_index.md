@@ -19,7 +19,7 @@ External links such as [example](https://example.com), [mail](mailto:test@exampl
 
 This section is fixture material for the rich static renderer. It uses **strong text**, *emphasis*, `inline code`, and a footnote reference.[^fixture-note]
 
-![Static path asset](_assets/diagrams/static-path.txt)
+![Static path image fixture](_assets/diagrams/static-path.svg)
 
 1. Ordered lists must render.
 2. Local content links must still resolve to the [nested page](1_static_path/0_index.md).

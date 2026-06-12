@@ -26,7 +26,7 @@ Nested pages use the same renderer support resource through relative URLs.
 | Local Markdown | [root](../0_index.md) |
 | Local asset | [local note](_assets/local-static-path.txt) |
 
-Inline math $x_i$ and display math remain static:
+Inline math $x_i$ and pre-rendered display math use the same local renderer resources:
 
 $$
 \bar{x} = \frac{1}{n}\sum_i x_i

@@ -242,6 +242,7 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert "<hr />" in html
     assert "<table>" in html
     assert "mjx-container" in html
+    assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in html
     assert "Fixture authority remains in docs/foundation/" in _visible_text(html)
     assert "Linear Algebra Fixture" in _visible_text(html)
     assert "Probability and Statistics Fixture" in _visible_text(html)
@@ -272,6 +273,8 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert '<aside class="raya-callout raya-callout-tip"' in nested_html
     assert "mjx-container" in nested_html
     assert '<span class="math inline">x_i</span>' not in nested_html
+    assert "display math remain static" not in _visible_text(nested_html)
+    assert "pre-rendered display math" in _visible_text(nested_html)
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:

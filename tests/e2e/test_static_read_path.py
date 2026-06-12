@@ -38,6 +38,9 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
         asset_text = _fetch_text(
             f"{base_url}/_raya/assets/_source/_local/diagrams/static-path.txt"
         )
+        image_svg = _fetch_text(
+            f"{base_url}/_raya/assets/_source/_local/diagrams/static-path.svg"
+        )
         local_asset_text = _fetch_text(
             f"{base_url}/_raya/assets/_source/1_static_path/_local/local-static-path.txt"
         )
@@ -54,7 +57,7 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
     assert '<aside class="raya-callout raya-callout-note"' in root_html
     assert '<section class="footnotes">' in root_html
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
-    assert 'src="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in root_html
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in root_html
     assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in root_html
     assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
@@ -69,6 +72,8 @@ def test_render_fixture_static_read_path_serves_pages_and_assets(tmp_path: Path)
         in nested_html
     )
     assert "Raya Lucaria render fixture asset" in asset_text
+    assert "<svg" in image_svg
+    assert "Static path image fixture" in image_svg
     assert "Raya Lucaria render fixture colocated asset" in local_asset_text
     assert ".raya-code-block" in render_css
     assert ".math.block" in render_css
