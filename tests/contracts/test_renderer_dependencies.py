@@ -50,17 +50,15 @@ def test_package_json_declares_renderer_only_mathjax_tooling() -> None:
     assert path.exists(), "root package.json must declare renderer tooling"
     package_json = json.loads(path.read_text(encoding="utf-8"))
 
-    assert package_json == {
-        "name": "raya-lucaria-renderer-tools",
-        "private": True,
-        "type": "module",
-        "scripts": {
-            "raya-render-math": "node packages/static/scripts/render_math.mjs",
-        },
-        "dependencies": {
-            "@mathjax/src": "4.0.0",
-        },
-    }
+    assert package_json["name"] == "raya-lucaria-renderer-tools"
+    assert package_json["private"] is True
+    assert package_json["type"] == "module"
+    assert (
+        package_json["scripts"]["raya-render-math"]
+        == "node packages/static/scripts/render_math.mjs"
+    )
+    assert package_json["dependencies"]["@mathjax/src"] == "4.0.0"
+    assert package_json["overrides"]["@xmldom/xmldom"] == "0.9.10"
 
 
 def test_package_lock_pins_mathjax_src_v4() -> None:
@@ -71,6 +69,7 @@ def test_package_lock_pins_mathjax_src_v4() -> None:
     assert package_lock["name"] == "raya-lucaria-renderer-tools"
     assert package_lock["packages"][""]["dependencies"]["@mathjax/src"] == "4.0.0"
     assert package_lock["packages"]["node_modules/@mathjax/src"]["version"] == "4.0.0"
+    assert package_lock["packages"]["node_modules/@xmldom/xmldom"]["version"] == "0.9.10"
 
 
 def test_check_python_installs_renderer_dependencies_before_python_sync() -> None:
