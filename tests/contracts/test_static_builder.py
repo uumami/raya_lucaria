@@ -199,7 +199,7 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     )
 
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
-    assert 'src="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
+    assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in root_html
     assert 'href="static-path/index.html"' in root_html
     assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
     assert (
