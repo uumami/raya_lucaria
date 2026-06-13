@@ -10,6 +10,11 @@
 
 ---
 
+## Execution Status
+
+Implemented and verified on 2026-06-12. The original task checklist below is
+preserved as the execution record and review reference.
+
 ## File Structure
 
 - Modify: `tests/e2e/test_preview_static_read_path.py`

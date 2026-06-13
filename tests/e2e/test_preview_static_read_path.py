@@ -17,6 +17,19 @@ EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
+RENDER_DEBUG_PAGE_NAMES = ("index", "static-path")
+RENDER_DEBUG_VIEWPORTS = (
+    {"width": 1280, "height": 900},
+    {"width": 390, "height": 844},
+)
+RENDER_RAW_TEX_MARKERS = (
+    "\\rayaVec",
+    "\\argmax",
+    "\\renewcommand",
+    "\\fixtureUnit",
+    "\\begin{bmatrix}",
+    "a^2 + b^2 = c^2",
+)
 
 
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
@@ -193,6 +206,10 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
 def test_render_fixture_math_is_visible_and_uses_only_local_assets(
     tmp_path: Path,
 ) -> None:
+    _run_render_fixture_math_check(tmp_path)
+
+
+def _run_render_fixture_math_check(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -201,6 +218,8 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
     browser_executable = _browser_executable()
     debug_dir_value = os.environ.get("RAYA_RENDER_DEBUG_DIR")
     debug_dir = Path(debug_dir_value) if debug_dir_value else None
+    if debug_dir is not None:
+        _reset_render_debug_dir(debug_dir)
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
@@ -216,10 +235,7 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
                 args=["--no-sandbox"],
             )
             try:
-                for viewport in (
-                    {"width": 1280, "height": 900},
-                    {"width": 390, "height": 844},
-                ):
+                for viewport in RENDER_DEBUG_VIEWPORTS:
                     page = browser.new_page(viewport=viewport)
                     page.on(
                         "request",
@@ -234,9 +250,7 @@ def test_render_fixture_math_is_visible_and_uses_only_local_assets(
                         _assert_no_horizontal_overflow(page)
                         _assert_visible_mathjax_output(page, minimum=6)
                         visible_text = page.locator("body").inner_text()
-                        assert "a^2 + b^2 = c^2" not in visible_text
-                        assert "\\rayaVec" not in visible_text
-                        assert "\\argmax" not in visible_text
+                        assert _raw_tex_markers(visible_text) == []
                         if debug_dir is not None:
                             _capture_render_debug_artifact(
                                 page,
@@ -276,69 +290,53 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from playwright.sync_api import sync_playwright
-    from raya_cli.preview import create_preview
-
-    course = tmp_path / "render-fixture"
-    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     debug_dir = tmp_path / "renderer-debug"
     monkeypatch.setenv("RAYA_RENDER_DEBUG_DIR", str(debug_dir))
-    browser_executable = _browser_executable()
 
-    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
-    external_requests: list[str] = []
-    try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
-        base_url = handle.base_url
-        assert base_url is not None
+    _run_render_fixture_math_check(tmp_path)
 
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(
-                executable_path=str(browser_executable),
-                headless=True,
-                args=["--no-sandbox"],
-            )
-            try:
-                page = browser.new_page(viewport={"width": 390, "height": 844})
-                page.on(
-                    "request",
-                    lambda request: _record_external_request(
-                        request.url,
-                        base_url,
-                        external_requests,
-                    ),
-                )
-                try:
-                    page.goto(f"{base_url}/index.html", wait_until="networkidle")
-                    _assert_no_horizontal_overflow(page)
-                    _assert_visible_mathjax_output(page, minimum=6)
-                    _capture_render_debug_artifact(
-                        page,
-                        debug_dir=debug_dir,
-                        page_name="index",
-                        viewport_name="mobile",
-                        viewport={"width": 390, "height": 844},
-                        external_requests=external_requests,
-                    )
-                finally:
-                    page.close()
-            finally:
-                browser.close()
-    finally:
-        handle.close()
+    expected_screenshots = {
+        f"{_viewport_name(viewport)}-{page_name}.png"
+        for viewport in RENDER_DEBUG_VIEWPORTS
+        for page_name in RENDER_DEBUG_PAGE_NAMES
+    }
+    actual_screenshots = {path.name for path in debug_dir.glob("*.png")}
+    assert actual_screenshots == expected_screenshots
+    for name in expected_screenshots:
+        assert (debug_dir / name).stat().st_size > 0
 
-    screenshot = debug_dir / "mobile-index.png"
     summary_path = debug_dir / "summary.json"
-    assert screenshot.is_file()
-    assert screenshot.stat().st_size > 0
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert summary["captures"][0]["page"] == "index"
-    assert summary["captures"][0]["viewport"]["name"] == "mobile"
-    assert summary["captures"][0]["mathjax_container_count"] >= 6
-    assert summary["captures"][0]["raw_tex_visible"] is False
-    assert summary["captures"][0]["horizontal_overflow"] <= 1
-    assert summary["captures"][0]["external_requests"] == []
-    assert summary["captures"][0]["screenshot"].endswith("mobile-index.png")
+    assert len(summary["captures"]) == 4
+    captured_names = {
+        Path(capture["screenshot"]).name for capture in summary["captures"]
+    }
+    assert captured_names == expected_screenshots
+    assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
+    assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
+    assert all(
+        capture["horizontal_overflow"] <= 1 for capture in summary["captures"]
+    )
+    assert all(capture["external_requests"] == [] for capture in summary["captures"])
+
+
+def test_render_fixture_debug_summary_is_reset_between_runs(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    debug_dir = tmp_path / "renderer-debug"
+    debug_dir.mkdir()
+    (debug_dir / "summary.json").write_text(
+        json.dumps({"captures": [{"page": "stale"}]}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("RAYA_RENDER_DEBUG_DIR", str(debug_dir))
+
+    _run_render_fixture_math_check(tmp_path)
+
+    summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
+    assert len(summary["captures"]) == 4
+    assert all(capture["page"] != "stale" for capture in summary["captures"])
 
 
 @contextlib.contextmanager
@@ -451,6 +449,7 @@ def _capture_render_debug_artifact(
     screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
     page.screenshot(path=str(screenshot_path), full_page=True)
     visible_text = page.locator("body").inner_text()
+    raw_tex_markers = _raw_tex_markers(visible_text)
     overflow = page.evaluate(
         "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
     )
@@ -464,10 +463,8 @@ def _capture_render_debug_artifact(
         },
         "screenshot": str(screenshot_path),
         "mathjax_container_count": page.locator("mjx-container").count(),
-        "raw_tex_visible": any(
-            token in visible_text
-            for token in ("\\rayaVec", "\\argmax", "a^2 + b^2 = c^2")
-        ),
+        "raw_tex_visible": bool(raw_tex_markers),
+        "raw_tex_markers": raw_tex_markers,
         "external_requests": sorted(set(external_requests)),
         "horizontal_overflow": overflow,
     }
@@ -481,6 +478,25 @@ def _capture_render_debug_artifact(
         json.dumps(summary, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+
+def _reset_render_debug_dir(debug_dir: Path) -> None:
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    for path in debug_dir.iterdir():
+        if path.name == "summary.json" or path.name in _render_debug_screenshot_names():
+            path.unlink()
+
+
+def _render_debug_screenshot_names() -> set[str]:
+    return {
+        f"{_viewport_name(viewport)}-{page_name}.png"
+        for viewport in RENDER_DEBUG_VIEWPORTS
+        for page_name in RENDER_DEBUG_PAGE_NAMES
+    }
+
+
+def _raw_tex_markers(visible_text: str) -> list[str]:
+    return [marker for marker in RENDER_RAW_TEX_MARKERS if marker in visible_text]
 
 
 def _viewport_name(viewport: dict[str, int]) -> str:
