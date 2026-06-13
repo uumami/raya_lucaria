@@ -14,6 +14,8 @@ Rendered courses hide source filename mechanics. Students should see clean page 
 
 Static pages may include pre-rendered math, highlighted code, tables, callouts, footnotes, heading anchors, and page contents. Math should already be typeset in the generated page and should not require a CDN, account, backend, or browser-side MathJax conversion. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
+If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
+
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Some courses include runtime metadata for future local or Docker execution. In the current static artifact, that metadata only explains intended profiles, policies, and cache keys. It does not mean the web page has already run the code.

@@ -16,6 +16,8 @@ For course content, treat source files as canonical and generated artifacts as r
 
 For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, pre-render accepted MathJax math at build time, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML, static read paths, browser-visible math, local math assets, no external renderer requests, and desktop/mobile overflow.
 
+For renderer debugging, use `RAYA_RENDER_DEBUG_DIR=/tmp/raya-render-debug UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_static_read_path.py::test_render_fixture_math_is_visible_and_uses_only_local_assets` to capture screenshots and `summary.json`. Use them as evidence for layout/math failures, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`.
+
 For code and notebook references, classify linked `.py` and `.ipynb` files by extension and own-or-ancestor quantum ownership. Treat folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` as ordinary author choices, block private or cross-quantum references, copy only validated linked files to artifact and browser-facing file surfaces, update `references.json`, and never infer execution from previews.
 
 For runtime metadata, treat `runtime/profiles.yaml`, root `pyproject.toml`, and `uv.lock` as source support outside learning order. Validate and emit runtime, execution-plan, and cache metadata, but never call `uv`, Docker, kernels, package installers, notebooks, scripts, or cache refreshes unless a later accepted execution contract explicitly says to do so.

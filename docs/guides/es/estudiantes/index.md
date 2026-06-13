@@ -14,6 +14,8 @@ Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiant
 
 Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
+Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
+
 Algunas paginas pueden incluir scripts o notebooks linkeados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Los archivos source no linkeados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.
