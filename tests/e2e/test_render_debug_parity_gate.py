@@ -52,7 +52,16 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
 
     assert report_json["ok"] is True
-    assert report_json["copied_site_dir"]
+    assert report_json["copied_site_dir"] is not None
+    copied_site_dir = Path(report_json["copied_site_dir"]).resolve()
+    original_site_dir = (course / "artifact" / "site").resolve()
+    assert copied_site_dir.is_dir()
+    assert copied_site_dir != original_site_dir
+    assert not copied_site_dir.is_relative_to(course.resolve())
+    assert (copied_site_dir / "index.html").is_file()
+    assert (
+        copied_site_dir / "_raya" / "render" / "math" / "mathjax.css"
+    ).is_file()
     assert any(check["id"] == "site:copied-site" for check in report_json["checks"])
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
@@ -197,6 +206,25 @@ def test_render_debug_parity_gate_fails_when_copied_site_lacks_math_css(
     assert "missing local MathJax CSS" in result.stderr
 
 
+def test_render_debug_parity_gate_fails_when_copied_site_lacks_math_fonts(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    copied_site = tmp_path / "copied-site"
+    shutil.copytree(site_dir, copied_site)
+    (copied_site / "_raya" / "render" / "math" / "fonts" / "fixture.woff2").unlink()
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir), str(copied_site))
+
+    assert result.returncode == 1
+    report = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
+    assert any(
+        item["path"].startswith(str(copied_site))
+        and "missing local MathJax font asset" in item["message"]
+        for item in report["diagnostics"]
+    )
+
+
 def test_render_debug_parity_gate_fails_on_screenshot_outside_debug_dir(
     tmp_path: Path,
 ) -> None:
@@ -233,7 +261,11 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
         "<html><body>static</body></html>",
         encoding="utf-8",
     )
-    (math_dir / "mathjax.css").write_text("mjx-container {}", encoding="utf-8")
+    (math_dir / "mathjax.css").write_text(
+        '@font-face { src: url("fonts/fixture.woff2"); }\n'
+        "mjx-container {}",
+        encoding="utf-8",
+    )
     (math_dir / "fonts" / "fixture.woff2").write_bytes(b"font")
 
     captures = []
