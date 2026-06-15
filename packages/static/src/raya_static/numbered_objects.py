@@ -521,13 +521,47 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
         if next_char != "(":
             cursor = label_end + 1
             continue
-        destination_end = _find_unescaped_character(line, ")", label_end + 2)
-        if destination_end == -1:
+        inline_link_end = _find_inline_link_end(line, label_end + 1)
+        if inline_link_end == -1:
             cursor = label_end + 2
             continue
-        ranges.append((start, destination_end + 1))
-        cursor = destination_end + 1
+        ranges.append((start, inline_link_end + 1))
+        cursor = inline_link_end + 1
     return ranges
+
+
+def _find_inline_link_end(line: str, open_paren: int) -> int:
+    cursor = open_paren + 1
+    paren_depth = 0
+    in_angle_destination = False
+    title_quote: str | None = None
+    while cursor < len(line):
+        char = line[cursor]
+        if _is_escaped(line, cursor):
+            cursor += 1
+            continue
+        if title_quote is not None:
+            if char == title_quote or (title_quote == ")" and char == ")"):
+                title_quote = None
+            cursor += 1
+            continue
+        if in_angle_destination:
+            if char == ">":
+                in_angle_destination = False
+            cursor += 1
+            continue
+        if char == "<":
+            in_angle_destination = True
+        elif char in {'"', "'"}:
+            title_quote = char
+        elif char == "(":
+            paren_depth += 1
+        elif char == ")":
+            if paren_depth == 0:
+                return cursor
+            paren_depth -= 1
+        cursor += 1
+    return -1
 
 
 def _find_link_label_end(line: str, label_start: int) -> int:
@@ -545,18 +579,6 @@ def _find_link_label_end(line: str, label_start: int) -> int:
             if depth == 0:
                 return cursor
         cursor += 1
-    return -1
-
-
-def _find_unescaped_character(line: str, character: str, start: int) -> int:
-    cursor = start
-    while cursor < len(line):
-        position = line.find(character, cursor)
-        if position == -1:
-            return -1
-        if not _is_escaped(line, position):
-            return position
-        cursor = position + 1
     return -1
 
 
@@ -595,7 +617,7 @@ def _position_in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool:
 
 def _looks_urlish(line: str, position: int) -> bool:
     prefix = line[:position]
-    token_start = max(prefix.rfind(" "), prefix.rfind("\t"), prefix.rfind("(")) + 1
+    token_start = max(prefix.rfind(" "), prefix.rfind("\t")) + 1
     token = prefix[token_start:]
     return "://" in token or token.endswith("/")
 
