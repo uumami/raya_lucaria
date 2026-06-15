@@ -14,9 +14,11 @@ from raya_schema.numbered_objects import (
 )
 from raya_schema.validation import ValidationReport
 from raya_static.numbered_objects import (
+    REFERENCE_RE,
     collect_numbered_object_sources,
     compute_numbered_objects_for_page,
     prepare_numbered_object_markdown,
+    render_reference_link,
 )
 
 
@@ -181,6 +183,57 @@ After text.
     assert source.body == "For a right triangle,\n\n$$a^2 + b^2 = c^2$$"
     assert source.source_path == source_path
     assert source.start_line == 5
+
+
+def test_prepare_numbered_object_markdown_preserves_indented_body_lines() -> None:
+    report = ValidationReport()
+    prepared = prepare_numbered_object_markdown(
+        """::: example {#code}
+    x = 1
+    print(x)
+:::
+""",
+        report=report,
+        source_path=Path("course/2_vectors/3_norms.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert prepared.sources[0].body == "    x = 1\n    print(x)"
+
+
+def test_prepare_numbered_object_markdown_accepts_indented_directive_fences() -> None:
+    report = ValidationReport()
+    prepared = prepare_numbered_object_markdown(
+        """   ::: theorem {#indented}
+Body.
+   :::
+""",
+        report=report,
+        source_path=Path("course/2_vectors/3_norms.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert prepared.body == "RAYA_NUMBERED_OBJECT_0\n"
+    assert prepared.sources[0].id == "indented"
+
+
+def test_reference_re_matches_shorthand_object_references() -> None:
+    assert REFERENCE_RE.search("@pythagorean").group("object_id") == "pythagorean"
+    assert REFERENCE_RE.search("@main-theorem").group("object_id") == "main-theorem"
+    assert REFERENCE_RE.search(r"\@pythagorean") is None
+    assert REFERENCE_RE.search("teacher@example.com") is None
+
+
+def test_render_reference_link_escapes_href_and_text() -> None:
+    html = render_reference_link(
+        "pythagorean",
+        'Theorem <2.3.1> "quoted"',
+        'chapter/?x="bad"&next=<tag>',
+    )
+
+    assert 'data-object-id="pythagorean"' in html
+    assert 'href="chapter/?x=&quot;bad&quot;&amp;next=&lt;tag&gt;"' in html
+    assert "Theorem &lt;2.3.1&gt; &quot;quoted&quot;" in html
 
 
 def test_collect_numbered_object_sources_returns_prepared_sources() -> None:

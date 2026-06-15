@@ -10,10 +10,12 @@ from raya_schema import ValidationReport
 from raya_schema.numbered_objects import NumberedObject, NumberedObjectConfig
 
 DIRECTIVE_OPEN_RE = re.compile(
-    r"^:::\s+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:\s+(?P<attrs>\{.*\}))?\s*$"
+    r"^ {0,3}:::\s+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:\s+(?P<attrs>\{.*\}))?\s*$"
 )
-DIRECTIVE_CLOSE_RE = re.compile(r"^:::\s*$")
-REFERENCE_RE = re.compile(r"\[([^\]]+)\]\(#(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)\)")
+DIRECTIVE_CLOSE_RE = re.compile(r"^ {0,3}:::\s*$")
+REFERENCE_RE = re.compile(
+    r"(?<![\\A-Za-z0-9._%+-])@(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)"
+)
 PLACEHOLDER_PREFIX = "RAYA_NUMBERED_OBJECT_"
 
 
@@ -154,7 +156,7 @@ def prepare_numbered_object_markdown(
                 id=attrs.get("id", ""),
                 family=family,
                 title=attrs.get("title"),
-                body="\n".join(content_lines).strip(),
+                body="\n".join(content_lines).strip("\n"),
                 source_path=source_path,
                 start_line=start_line,
             )
