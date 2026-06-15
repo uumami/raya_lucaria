@@ -85,6 +85,54 @@ def test_check_python_installs_renderer_dependencies_before_python_sync() -> Non
     assert script.index(npm_ci) < script.index(self_test) < script.index(uv_sync)
 
 
+def test_render_debug_parity_script_is_declared() -> None:
+    script = ROOT / "scripts" / "check-render-debug.sh"
+
+    assert script.exists(), "renderer parity gate script must exist"
+    content = script.read_text(encoding="utf-8")
+    assert "Usage: scripts/check-render-debug.sh" in content
+    assert "raya preview" in content
+    assert "--render-debug" in content
+    assert "summary.json" in content
+
+
+def test_render_debug_parity_script_uses_uv_python() -> None:
+    script = (ROOT / "scripts" / "check-render-debug.sh").read_text(encoding="utf-8")
+
+    assert "uv run python -" in script
+    assert "\npython -" not in script
+
+
+def test_check_python_runs_render_debug_parity_gate_after_fixture_builds() -> None:
+    script = (ROOT / "scripts" / "check-python.sh").read_text(encoding="utf-8")
+
+    render_fixture_build = 'run uv run raya build "$course"'
+    render_debug_gate = "run scripts/check-render-debug.sh"
+    docs_validate = "run uv run raya validate docs"
+
+    assert "render-debug parity gate" in script
+    assert render_debug_gate in script
+    assert script.index(render_fixture_build) < script.index(render_debug_gate)
+    assert script.index(render_debug_gate) < script.index(docs_validate)
+
+
+def test_docker_check_inherits_render_debug_parity_gate() -> None:
+    docker_script = (ROOT / "scripts" / "check-docker.sh").read_text(encoding="utf-8")
+    python_script = (ROOT / "scripts" / "check-python.sh").read_text(encoding="utf-8")
+
+    assert "./scripts/check-python.sh" in docker_script
+    assert "scripts/check-render-debug.sh" in python_script
+
+
+def test_render_debug_parity_gate_is_documented_in_command_guidance() -> None:
+    for path in (
+        ROOT / "README.md",
+        ROOT / "AGENTS.md",
+        ROOT / "openspec" / "config.yaml",
+    ):
+        assert "check-render-debug.sh" in path.read_text(encoding="utf-8")
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"

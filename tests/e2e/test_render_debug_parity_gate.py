@@ -1,0 +1,203 @@
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+SCRIPT = ROOT / "scripts" / "check-render-debug.sh"
+
+
+def run_gate(
+    *args: str,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    merged_env = {**os.environ, **(env or {})}
+    merged_env.setdefault("UV_PROJECT_ENVIRONMENT", ".venv-local")
+    return subprocess.run(
+        [str(SCRIPT), *args],
+        cwd=ROOT,
+        env=merged_env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        timeout=60,
+    )
+
+
+def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) -> None:
+    course = tmp_path / "render-fixture"
+    debug_dir = tmp_path / "debug"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    result = run_gate(
+        env={
+            "RAYA_RENDER_DEBUG_COURSE": str(course),
+            "RAYA_RENDER_DEBUG_OUTPUT_DIR": str(debug_dir),
+            "RAYA_RENDER_DEBUG_KEEP": "1",
+        },
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "check-render-debug: passed" in result.stdout
+    assert (debug_dir / "summary.json").is_file()
+    assert (debug_dir / "desktop-index.png").stat().st_size > 0
+    assert (debug_dir / "mobile-static-path.png").stat().st_size > 0
+
+
+def test_render_debug_parity_gate_fails_on_visible_raw_tex(tmp_path: Path) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["captures"][0]["raw_tex_visible"] = True
+    summary["captures"][0]["raw_tex_markers"] = ["$x^2$"]
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "visible raw TeX" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_external_requests(tmp_path: Path) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["captures"][1]["external_requests"] = ["https://cdn.example/math.css"]
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "external requests" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_missing_screenshot(tmp_path: Path) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    (debug_dir / "mobile-static-path.png").unlink()
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "missing or empty screenshot" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_horizontal_overflow(tmp_path: Path) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["captures"][2]["horizontal_overflow"] = 12
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "horizontal overflow" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_browser_side_mathjax_runtime(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    html_path = site_dir / "index.html"
+    html_path.write_text(
+        (
+            '<html><head><script src="https://cdn.jsdelivr.net/npm/mathjax/'
+            'tex-mml-chtml.js"></script></head></html>'
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "browser-side or external renderer dependency" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_local_mathjax_runtime_script(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    html_path = site_dir / "index.html"
+    html_path.write_text(
+        '<html><head><script src="_raya/render/math/tex-chtml.js"></script></head></html>',
+        encoding="utf-8",
+    )
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "browser-side or external renderer dependency" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_screenshot_outside_debug_dir(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    for capture in summary["captures"]:
+        screenshot = outside_dir / Path(capture["screenshot"]).name
+        screenshot.write_bytes(b"stale-png")
+        Path(capture["screenshot"]).unlink()
+        capture["screenshot"] = str(screenshot)
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "outside debug directory" in result.stderr
+
+
+def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    site_dir = tmp_path / "site"
+    debug_dir = tmp_path / "debug"
+    (site_dir / "static-path").mkdir(parents=True)
+    debug_dir.mkdir()
+    (site_dir / "index.html").write_text(
+        "<html><body><mjx-container></mjx-container></body></html>",
+        encoding="utf-8",
+    )
+    (site_dir / "static-path" / "index.html").write_text(
+        "<html><body>static</body></html>",
+        encoding="utf-8",
+    )
+
+    captures = []
+    for page, viewport, screenshot in (
+        ("index", "desktop", "desktop-index.png"),
+        ("index", "mobile", "mobile-index.png"),
+        ("static-path", "desktop", "desktop-static-path.png"),
+        ("static-path", "mobile", "mobile-static-path.png"),
+    ):
+        screenshot_path = debug_dir / screenshot
+        screenshot_path.write_bytes(b"png")
+        captures.append(
+            {
+                "page": page,
+                "url": f"http://127.0.0.1/{page}/index.html",
+                "viewport": {
+                    "name": viewport,
+                    "width": 1280 if viewport == "desktop" else 390,
+                    "height": 900 if viewport == "desktop" else 844,
+                },
+                "screenshot": str(screenshot_path),
+                "mathjax_container_count": 1,
+                "raw_tex_visible": False,
+                "raw_tex_markers": [],
+                "external_requests": [],
+                "horizontal_overflow": 0,
+            }
+        )
+    (debug_dir / "summary.json").write_text(
+        json.dumps({"captures": captures}),
+        encoding="utf-8",
+    )
+    return site_dir, debug_dir

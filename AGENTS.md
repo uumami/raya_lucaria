@@ -16,6 +16,7 @@ Docker Compose is the reference development workflow. Local `uv` execution remai
 
 - `./scripts/check.sh` is the canonical host archive gate.
 - `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container.
+- `./scripts/check-render-debug.sh` runs the focused render-fixture browser parity gate for screenshots, raw TeX, overflow, local MathJax resources, and external renderer requests.
 - `./scripts/smoke-test.sh` validates, builds, and inspects temporary external course copies locally and through Docker.
 - `find docs/foundation -maxdepth 1 -type f | sort` lists the surviving foundation set.
 - `rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'` catches stale renderer assumptions outside the domain-language reset boundary.
