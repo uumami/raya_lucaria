@@ -263,7 +263,11 @@ def expand_shorthand_references(
             in_display_math = not in_display_math
             expanded_lines.append(line)
             continue
-        if in_display_math or _is_indented_code_line(line):
+        if (
+            in_display_math
+            or _is_indented_code_line(line)
+            or _is_reference_definition_line(line)
+        ):
             expanded_lines.append(line)
             continue
         expanded_lines.append(
@@ -376,6 +380,18 @@ def _is_display_math_delimiter(line: str) -> bool:
 def _is_indented_code_line(line: str) -> bool:
     unquoted = _line_without_blockquote_prefix(line)
     return unquoted.startswith("    ") or unquoted.startswith("\t")
+
+
+def _is_reference_definition_line(line: str) -> bool:
+    stripped = _line_without_blockquote_prefix(line).lstrip()
+    if not stripped.startswith("["):
+        return False
+    label_end = _find_link_label_end(stripped, 0)
+    if label_end == -1:
+        return False
+    if label_end + 1 >= len(stripped) or stripped[label_end + 1] != ":":
+        return False
+    return stripped[label_end + 2 :].strip() != ""
 
 
 def _line_without_blockquote_prefix(line: str) -> str:
