@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from raya_schema.numbered_objects import (
     BUILT_IN_NUMBERED_OBJECT_FAMILIES,
@@ -12,6 +13,11 @@ from raya_schema.numbered_objects import (
     validate_numbered_objects_index,
 )
 from raya_schema.validation import ValidationReport
+from raya_static.numbered_objects import (
+    collect_numbered_object_sources,
+    compute_numbered_objects_for_page,
+    prepare_numbered_object_markdown,
+)
 
 
 def test_built_in_numbered_object_defaults_group_math_and_coursework() -> None:
@@ -139,6 +145,122 @@ def test_normalize_numbered_object_config_rejects_unknown_sequence_reference() -
 
     assert not report.ok
     assert any("claims" in issue.message and "claim" in issue.message for issue in report.issues)
+
+
+def test_prepare_numbered_object_markdown_extracts_directive_source() -> None:
+    report = ValidationReport()
+    source_path = Path("course/2_vectors/3_norms.md")
+    body = """# Norms
+
+Intro text.
+
+::: theorem {#pythagorean title="Pythagorean theorem"}
+For a right triangle,
+
+$$a^2 + b^2 = c^2$$
+:::
+
+After text.
+"""
+
+    prepared = prepare_numbered_object_markdown(
+        body,
+        report=report,
+        source_path=source_path,
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "RAYA_NUMBERED_OBJECT_0" in prepared.body
+    assert "::: theorem" not in prepared.body
+    assert len(prepared.sources) == 1
+    source = prepared.sources[0]
+    assert source.placeholder == "RAYA_NUMBERED_OBJECT_0"
+    assert source.id == "pythagorean"
+    assert source.family == "theorem"
+    assert source.title == "Pythagorean theorem"
+    assert source.body == "For a right triangle,\n\n$$a^2 + b^2 = c^2$$"
+    assert source.source_path == source_path
+    assert source.start_line == 5
+
+
+def test_collect_numbered_object_sources_returns_prepared_sources() -> None:
+    report = ValidationReport()
+    body = """::: exercise {#practice}
+Compute the norm.
+:::
+"""
+
+    sources = collect_numbered_object_sources(
+        body,
+        report=report,
+        source_path=Path("course/2_vectors/3_norms.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert [source.id for source in sources] == ["practice"]
+
+
+def test_prepare_numbered_object_markdown_rejects_nested_numbered_directives() -> None:
+    report = ValidationReport()
+    body = """::: theorem {#outer}
+Outer body.
+
+::: corollary {#inner}
+Inner body.
+:::
+
+:::
+"""
+
+    prepare_numbered_object_markdown(
+        body,
+        report=report,
+        source_path=Path("course/2_vectors/3_norms.md"),
+    )
+
+    assert not report.ok
+    assert any("nested numbered object" in issue.message for issue in report.issues)
+
+
+def test_compute_numbered_objects_for_page_uses_page_prefix_and_shared_sequences() -> None:
+    report = ValidationReport()
+    config = normalize_numbered_object_config({}, report, "raya.yaml")
+    prepared = prepare_numbered_object_markdown(
+        """::: theorem {#pythagorean title="Pythagorean theorem"}
+Body.
+:::
+
+::: corollary {#reverse}
+Reverse body.
+:::
+
+::: exercise {#practice}
+Practice body.
+:::
+""",
+        report=report,
+        source_path=Path("course/2_vectors/3_norms.md"),
+    )
+
+    objects = compute_numbered_objects_for_page(
+        prepared.sources,
+        config=config,
+        course_relative_source_path="course/2_vectors/3_norms.md",
+        page_id="norms",
+        page_title="Norms",
+        page_output_path="2_vectors/3_norms/index.html",
+        page_number_prefix="2.3",
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert [item.family for item in objects] == ["theorem", "corollary", "exercise"]
+    assert [item.sequence for item in objects] == ["theorem", "theorem", "exercise"]
+    assert [item.number for item in objects] == ["2.3.1", "2.3.2", "2.3.1"]
+    assert [item.href for item in objects] == [
+        "2_vectors/3_norms/#raya-object-pythagorean",
+        "2_vectors/3_norms/#raya-object-reverse",
+        "2_vectors/3_norms/#raya-object-practice",
+    ]
 
 
 def test_numbered_object_serializes_anchor_in_json_entry() -> None:
