@@ -102,6 +102,32 @@ def test_normalize_numbered_object_config_accepts_caption_and_equation_styles() 
     assert config.sequences["equation"].style == "equation"
 
 
+def test_normalize_numbered_object_config_rejects_non_string_numbering() -> None:
+    report = ValidationReport()
+
+    normalize_numbered_object_config(
+        {"render": {"numbered_objects": {"numbering": []}}},
+        report=report,
+        context="raya.yaml",
+    )
+
+    assert not report.ok
+    assert any("numbering" in issue.message for issue in report.issues)
+
+
+def test_normalize_numbered_object_config_rejects_non_string_style() -> None:
+    report = ValidationReport()
+
+    normalize_numbered_object_config(
+        {"render": {"numbered_objects": {"sequences": {"figure": {"style": []}}}}},
+        report=report,
+        context="raya.yaml",
+    )
+
+    assert not report.ok
+    assert any("style" in issue.message for issue in report.issues)
+
+
 def test_normalize_numbered_object_config_rejects_unknown_sequence_reference() -> None:
     report = ValidationReport()
 
@@ -311,3 +337,34 @@ def test_numbered_objects_index_validation_rejects_stale_by_id_keys(tmp_path) ->
 
     assert not report.ok
     assert any("stale" in issue.message for issue in report.issues)
+
+
+def test_numbered_objects_index_validation_rejects_non_integer_by_id_values(tmp_path) -> None:
+    for value in (False, 0.0):
+        index = build_numbered_objects_index(
+            "demo",
+            [
+                NumberedObject(
+                    id="pythagorean",
+                    family="theorem",
+                    sequence="theorem",
+                    label="Theorem",
+                    number="2.3.1",
+                    title="Pythagorean theorem",
+                    source_path="course/2_vectors/3_norms.md",
+                    page_id="norms",
+                    page_title="Norms",
+                    page_output_path="2_vectors/3_norms/index.html",
+                    href="2_vectors/3_norms/#raya-object-pythagorean",
+                    style="margin",
+                )
+            ],
+        )
+        index["by_id"]["pythagorean"] = value
+        path = tmp_path / f"numbered-objects-by-id-{type(value).__name__}.json"
+        path.write_text(json.dumps(index), encoding="utf-8")
+
+        report = validate_numbered_objects_index(path)
+
+        assert not report.ok
+        assert any("by_id" in issue.message for issue in report.issues)

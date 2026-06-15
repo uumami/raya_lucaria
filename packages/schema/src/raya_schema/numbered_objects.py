@@ -138,7 +138,7 @@ def normalize_numbered_object_config(
 
     raw_numbering = raw_config.get("numbering")
     if raw_numbering is not None:
-        if raw_numbering in NUMBERING_MODES:
+        if isinstance(raw_numbering, str) and raw_numbering in NUMBERING_MODES:
             numbering = raw_numbering
         else:
             report.add_error(
@@ -304,7 +304,7 @@ def _merge_sequences(
                 next_action="Set a reader-facing sequence label",
             )
             label = current.label
-        if style not in NUMBERED_OBJECT_STYLES:
+        if not isinstance(style, str) or style not in NUMBERED_OBJECT_STYLES:
             report.add_error(
                 f"Numbered object sequence '{sequence_id}' in {context} uses unknown style '{style}'",
                 field=f"{field}.style",
@@ -397,6 +397,27 @@ def _validate_index_shape(data: dict[str, Any], *, path: Path, report: Validatio
         )
         by_id = {}
 
+    valid_by_id: dict[str, int] = {}
+    for object_id, position in by_id.items():
+        field = f"by_id.{object_id}"
+        if not isinstance(position, int) or isinstance(position, bool):
+            report.add_error(
+                f"Numbered object by_id entry '{object_id}' must be an integer index",
+                path=path,
+                field=field,
+                next_action="Regenerate by_id using integer positions from objects",
+            )
+            continue
+        if position < 0 or position >= len(objects):
+            report.add_error(
+                f"Numbered object by_id entry '{object_id}' points outside the objects list",
+                path=path,
+                field=field,
+                next_action="Regenerate by_id using valid objects indexes",
+            )
+            continue
+        valid_by_id[object_id] = position
+
     seen_ids: set[str] = set()
     for index, item in enumerate(objects):
         field = f"objects.{index}"
@@ -419,7 +440,14 @@ def _validate_index_shape(data: dict[str, Any], *, path: Path, report: Validatio
                     next_action="Use stable unique object IDs",
                 )
             seen_ids.add(object_id)
-            if by_id.get(object_id) != index:
+            if object_id in valid_by_id and valid_by_id[object_id] != index:
+                report.add_error(
+                    f"Numbered object by_id entry for '{object_id}' must point to objects index {index}",
+                    path=path,
+                    field=f"by_id.{object_id}",
+                    next_action="Regenerate by_id from objects",
+                )
+            elif object_id not in by_id:
                 report.add_error(
                     f"Numbered object by_id entry for '{object_id}' must point to objects index {index}",
                     path=path,
