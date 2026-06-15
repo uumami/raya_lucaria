@@ -374,7 +374,8 @@ def _is_display_math_delimiter(line: str) -> bool:
 
 
 def _is_indented_code_line(line: str) -> bool:
-    return line.startswith("    ") or line.startswith("\t")
+    unquoted = _line_without_blockquote_prefix(line)
+    return unquoted.startswith("    ") or unquoted.startswith("\t")
 
 
 def _line_without_blockquote_prefix(line: str) -> str:
@@ -432,11 +433,23 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
             if label_start > 0 and line[label_start - 1] == "!"
             else label_start
         )
-        label_end = _find_unescaped_character(line, "]", label_start + 1)
+        label_end = _find_link_label_end(line, label_start)
         if label_end == -1:
             cursor = label_start + 1
             continue
-        if label_end + 1 >= len(line) or line[label_end + 1] != "(":
+        if label_end + 1 >= len(line):
+            cursor = label_end + 1
+            continue
+        next_char = line[label_end + 1]
+        if next_char == "[":
+            reference_end = _find_link_label_end(line, label_end + 1)
+            if reference_end == -1:
+                cursor = label_end + 2
+                continue
+            ranges.append((start, reference_end + 1))
+            cursor = reference_end + 1
+            continue
+        if next_char != "(":
             cursor = label_end + 1
             continue
         destination_end = _find_unescaped_character(line, ")", label_end + 2)
@@ -446,6 +459,24 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
         ranges.append((start, destination_end + 1))
         cursor = destination_end + 1
     return ranges
+
+
+def _find_link_label_end(line: str, label_start: int) -> int:
+    depth = 0
+    cursor = label_start
+    while cursor < len(line):
+        char = line[cursor]
+        if _is_escaped(line, cursor):
+            cursor += 1
+            continue
+        if char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return cursor
+        cursor += 1
+    return -1
 
 
 def _find_unescaped_character(line: str, character: str, start: int) -> int:
