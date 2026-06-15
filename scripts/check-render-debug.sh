@@ -56,13 +56,23 @@ cd "$ROOT"
 export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-.venv-local}"
 
 COURSE="${RAYA_RENDER_DEBUG_COURSE:-examples/courses/render-fixture}"
+CLEANUP_DEBUG=0
+CLEANUP_COPIED_SITE=0
+
+cleanup() {
+  if [[ "${CLEANUP_DEBUG:-0}" == "1" && -n "${DEBUG_DIR:-}" ]]; then
+    rm -rf "$DEBUG_DIR"
+  fi
+  if [[ "${CLEANUP_COPIED_SITE:-0}" == "1" && -n "${COPIED_SITE_DIR:-}" ]]; then
+    rm -rf "$COPIED_SITE_DIR"
+  fi
+}
+trap cleanup EXIT
 
 if [[ "${INSPECT_ONLY:-0}" == "1" ]]; then
   SITE_DIR="$INSPECT_SITE_DIR"
   DEBUG_DIR="$INSPECT_DEBUG_DIR"
   COPIED_SITE_DIR="$INSPECT_COPIED_SITE_DIR"
-  CLEANUP_DEBUG=0
-  CLEANUP_COPIED_SITE=0
 else
   SITE_DIR="$COURSE/artifact/site"
   if [[ -n "${RAYA_RENDER_DEBUG_OUTPUT_DIR:-}" ]]; then
@@ -84,16 +94,6 @@ else
   CLEANUP_COPIED_SITE=1
   cp -R "$SITE_DIR"/. "$COPIED_SITE_DIR"/
 fi
-
-cleanup() {
-  if [[ "${CLEANUP_DEBUG:-0}" == "1" ]]; then
-    rm -rf "$DEBUG_DIR"
-  fi
-  if [[ "${CLEANUP_COPIED_SITE:-0}" == "1" ]]; then
-    rm -rf "$COPIED_SITE_DIR"
-  fi
-}
-trap cleanup EXIT
 
 if [[ -n "${COPIED_SITE_DIR:-}" ]]; then
   if ! uv run python -m raya_cli.render_debug_report "$SITE_DIR" "$DEBUG_DIR" "$COPIED_SITE_DIR"; then
