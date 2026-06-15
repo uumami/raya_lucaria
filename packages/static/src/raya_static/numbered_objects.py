@@ -18,7 +18,9 @@ REFERENCE_RE = re.compile(
 )
 OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 FENCE_MARKER_RE = re.compile(
-    r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
+    r"^(?: {0,3}>\s?)*"
+    r"(?: {0,3}(?:[-+*]|\d+[.)])\s+)?"
+    r" {0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
 )
 FENCE_CLOSE_RE = re.compile(
     r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})[ \t]*$"
@@ -245,6 +247,7 @@ def expand_shorthand_references(
     in_fence = False
     fence_marker = ""
     in_display_math = False
+    in_reference_definition = False
 
     for line in lines:
         marker = _fence_marker(line)
@@ -263,10 +266,18 @@ def expand_shorthand_references(
             in_display_math = not in_display_math
             expanded_lines.append(line)
             continue
+        if in_reference_definition:
+            if _is_reference_definition_continuation_line(line):
+                expanded_lines.append(line)
+                continue
+            in_reference_definition = False
+        if _is_reference_definition_line(line):
+            in_reference_definition = True
+            expanded_lines.append(line)
+            continue
         if (
             in_display_math
             or _is_indented_code_line(line)
-            or _is_reference_definition_line(line)
         ):
             expanded_lines.append(line)
             continue
@@ -386,12 +397,21 @@ def _is_reference_definition_line(line: str) -> bool:
     stripped = _line_without_blockquote_prefix(line).lstrip()
     if not stripped.startswith("["):
         return False
+    if stripped.startswith("[^"):
+        return False
     label_end = _find_link_label_end(stripped, 0)
     if label_end == -1:
         return False
     if label_end + 1 >= len(stripped) or stripped[label_end + 1] != ":":
         return False
     return stripped[label_end + 2 :].strip() != ""
+
+
+def _is_reference_definition_continuation_line(line: str) -> bool:
+    stripped = _line_without_blockquote_prefix(line)
+    return bool(stripped.strip()) and (
+        stripped.startswith(" ") or stripped.startswith("\t")
+    )
 
 
 def _line_without_blockquote_prefix(line: str) -> str:

@@ -457,6 +457,71 @@ def test_expand_shorthand_references_skips_reference_definition_titles() -> None
     assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
 
 
+def test_expand_shorthand_references_allows_footnote_definition_body() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        "[^n]: See @pythagorean.",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "[^n]: See [Theorem 1.1](raya:ref/pythagorean)." in expanded
+
+
+def test_expand_shorthand_references_skips_reference_definition_title_continuation() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        '[label]: other.md\n  "see @pythagorean"\nUse @pythagorean.',
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert '[label]: other.md\n  "see @pythagorean"' in expanded
+    assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
+
+
 def test_expand_shorthand_references_skips_blockquoted_fenced_code() -> None:
     report = ValidationReport()
     obj = NumberedObject(
@@ -498,6 +563,39 @@ def test_expand_shorthand_references_skips_blockquoted_fenced_code() -> None:
     assert "> @pythagorean" in expanded
     assert "> [Theorem 1.1](raya:ref/pythagorean)" not in expanded
     assert "Use [Theorem 1.1](raya:ref/pythagorean)." in expanded
+
+
+def test_expand_shorthand_references_skips_list_item_fenced_code() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        "- ```markdown\n  @pythagorean\n  ```\nUse @pythagorean.",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "  @pythagorean" in expanded
+    assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
 
 
 def test_expand_shorthand_references_skips_math_spans_and_blocks() -> None:

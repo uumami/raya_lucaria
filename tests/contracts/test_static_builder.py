@@ -383,6 +383,38 @@ def test_fenced_directive_text_does_not_create_numbered_object(
     assert "RAYA_NUMBERED_OBJECT_" not in html
 
 
+def test_list_item_fenced_directive_text_does_not_create_numbered_object(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "- ```markdown\n"
+        "  ::: theorem {#list-phantom}\n"
+        "  Body.\n"
+        "  ```\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    visible = _visible_text(html)
+    assert "list-phantom" not in numbered_index["by_id"]
+    assert [item["id"] for item in numbered_index["objects"]] == []
+    assert "::: theorem {#list-phantom}" in visible
+    assert 'id="raya-object-list-phantom"' not in html
+    assert "RAYA_NUMBERED_OBJECT_" not in html
+
+
 def test_fenced_directive_after_nonclosing_backticks_stays_code(
     tmp_path: Path,
 ) -> None:
