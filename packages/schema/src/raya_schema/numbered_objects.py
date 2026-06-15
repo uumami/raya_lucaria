@@ -504,6 +504,14 @@ def _validate_object_entry(
             field=f"{field}.anchor",
             next_action="Regenerate anchor as raya-object-<id>",
         )
+    href = item.get("href")
+    if isinstance(href, str) and isinstance(anchor, str) and not href.endswith(f"#{anchor}"):
+        report.add_error(
+            "Numbered object href must point at its declared anchor",
+            path=path,
+            field=f"{field}.href",
+            next_action="Regenerate href so it ends with #<anchor>",
+        )
     style = item.get("style")
     if isinstance(style, str) and style and style not in NUMBERED_OBJECT_STYLES:
         report.add_error(

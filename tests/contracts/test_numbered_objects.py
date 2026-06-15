@@ -235,6 +235,36 @@ def test_numbered_objects_index_validation_rejects_non_string_title(tmp_path) ->
     assert any("title" in issue.message for issue in report.issues)
 
 
+def test_numbered_objects_index_validation_rejects_href_anchor_mismatch(tmp_path) -> None:
+    index = build_numbered_objects_index(
+        "demo",
+        [
+            NumberedObject(
+                id="bad-href",
+                family="theorem",
+                sequence="theorem",
+                label="Theorem",
+                number="1.1",
+                title=None,
+                source_path="course/1_intro/0_index.md",
+                page_id="intro",
+                page_title="Intro",
+                page_output_path="1_intro/index.html",
+                href="1_intro/#raya-object-bad-href",
+                style="margin",
+            )
+        ],
+    )
+    index["objects"][0]["href"] = "1_intro/#wrong-target"
+    path = tmp_path / "numbered-objects-bad-href.json"
+    path.write_text(json.dumps(index), encoding="utf-8")
+
+    report = validate_numbered_objects_index(path)
+
+    assert not report.ok
+    assert any("href" in issue.message and "anchor" in issue.message for issue in report.issues)
+
+
 def test_build_numbered_objects_index_accepts_positional_api() -> None:
     index = build_numbered_objects_index("demo", [])
 
