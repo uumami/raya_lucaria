@@ -429,6 +429,59 @@ def test_expand_shorthand_references_skips_bare_urlish_parenthesized_text() -> N
     assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
 
 
+def test_expand_shorthand_references_skips_known_shortcut_reference_label() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="known",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-known",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"known": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        "[label @known]: https://example.test\n\nUse [label @known].\nUse @known.",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "[label @known]: https://example.test" in expanded
+    assert "Use [label @known]." in expanded
+    assert expanded.count("[Theorem 1.1](raya:ref/known)") == 1
+
+
+def test_expand_shorthand_references_skips_unknown_object_inside_shortcut_reference_label() -> None:
+    report = ValidationReport()
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={},
+    )
+
+    expanded = expand_shorthand_references(
+        "[label @missing]: https://example.test\n\nUse [label @missing].",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "[label @missing]: https://example.test" in expanded
+    assert "Use [label @missing]." in expanded
+
+
 def test_expand_shorthand_references_skips_reference_definition_labels() -> None:
     report = ValidationReport()
     obj = NumberedObject(

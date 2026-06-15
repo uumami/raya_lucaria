@@ -243,6 +243,7 @@ def expand_shorthand_references(
     source_path: Path,
 ) -> str:
     lines = body.splitlines(keepends=True)
+    reference_definition_labels = _collect_reference_definition_labels(lines)
     expanded_lines: list[str] = []
     fence_state: _FenceState | None = None
     in_display_math = False
@@ -287,6 +288,7 @@ def expand_shorthand_references(
                 context=context,
                 report=report,
                 source_path=source_path,
+                reference_definition_labels=reference_definition_labels,
             )
         )
 
@@ -299,11 +301,15 @@ def _expand_shorthand_references_in_line(
     context: NumberedObjectRenderContext,
     report: ValidationReport,
     source_path: Path,
+    reference_definition_labels: set[str],
 ) -> str:
     protected_ranges = (
         _code_span_ranges(line)
         + _math_span_ranges(line)
-        + _markdown_link_or_image_ranges(line)
+        + _markdown_link_or_image_ranges(
+            line,
+            reference_definition_labels=reference_definition_labels,
+        )
     )
     pieces: list[str] = []
     cursor = 0
@@ -490,7 +496,11 @@ def _math_span_ranges(line: str) -> list[tuple[int, int]]:
     return ranges
 
 
-def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
+def _markdown_link_or_image_ranges(
+    line: str,
+    *,
+    reference_definition_labels: set[str],
+) -> list[tuple[int, int]]:
     ranges: list[tuple[int, int]] = []
     cursor = 0
     while cursor < len(line):
@@ -507,6 +517,10 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
             cursor = label_start + 1
             continue
         if label_end + 1 >= len(line):
+            if _normalize_reference_label(
+                line[label_start + 1 : label_end]
+            ) in reference_definition_labels:
+                ranges.append((start, label_end + 1))
             cursor = label_end + 1
             continue
         next_char = line[label_end + 1]
@@ -519,6 +533,10 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
             cursor = reference_end + 1
             continue
         if next_char != "(":
+            if _normalize_reference_label(
+                line[label_start + 1 : label_end]
+            ) in reference_definition_labels:
+                ranges.append((start, label_end + 1))
             cursor = label_end + 1
             continue
         inline_link_end = _find_inline_link_end(line, label_end + 1)
@@ -528,6 +546,33 @@ def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
         ranges.append((start, inline_link_end + 1))
         cursor = inline_link_end + 1
     return ranges
+
+
+def _collect_reference_definition_labels(lines: list[str]) -> set[str]:
+    labels: set[str] = set()
+    for line in lines:
+        label = _reference_definition_label(line)
+        if label is not None:
+            labels.add(_normalize_reference_label(label))
+    return labels
+
+
+def _reference_definition_label(line: str) -> str | None:
+    stripped = _line_without_blockquote_prefix(line).lstrip()
+    if not stripped.startswith("[") or stripped.startswith("[^"):
+        return None
+    label_end = _find_link_label_end(stripped, 0)
+    if label_end == -1:
+        return None
+    if label_end + 1 >= len(stripped) or stripped[label_end + 1] != ":":
+        return None
+    if not stripped[label_end + 2 :].strip():
+        return None
+    return stripped[1:label_end]
+
+
+def _normalize_reference_label(label: str) -> str:
+    return re.sub(r"\s+", " ", label.strip()).casefold()
 
 
 def _find_inline_link_end(line: str, open_paren: int) -> int:
