@@ -586,7 +586,7 @@ git commit -m "Document render debug parity gate"
 **Files:**
 - Modify: `docs/superpowers/plans/2026-06-15-render-debug-parity-gate.md`
 
-- [ ] **Step 1: Run focused verification**
+- [x] **Step 1: Run focused verification**
 
 Run:
 
@@ -597,7 +597,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local scripts/check-render-debug.sh
 
 Expected: all selected tests pass and the script exits 0.
 
-- [ ] **Step 2: Run host gate**
+- [x] **Step 2: Run host gate**
 
 Run:
 
@@ -607,7 +607,7 @@ Run:
 
 Expected: exit 0 with `check: passed`.
 
-- [ ] **Step 3: Run Docker gate**
+- [x] **Step 3: Run Docker gate**
 
 Run:
 
@@ -617,7 +617,7 @@ Run:
 
 Expected: exit 0 with `check-docker: passed`.
 
-- [ ] **Step 4: Request code review**
+- [x] **Step 4: Request code review**
 
 Use `superpowers:requesting-code-review` over the implementation commits after the design and plan commits. Ask the reviewer to focus on:
 
@@ -625,7 +625,7 @@ Use `superpowers:requesting-code-review` over the implementation commits after t
 Review the render-debug parity gate for script safety, deterministic diagnostics, temp directory cleanup, no browser-side MathJax dependency checks, host/Docker wiring, and role documentation drift.
 ```
 
-- [ ] **Step 5: Address review findings with TDD**
+- [x] **Step 5: Address review findings with TDD**
 
 For each accepted finding:
 
@@ -637,7 +637,7 @@ For each accepted finding:
 5. Commit the fix.
 ```
 
-- [ ] **Step 6: Update this plan with execution status**
+- [x] **Step 6: Update this plan with execution status**
 
 Append:
 
@@ -651,7 +651,7 @@ Append:
 - Code review: requested and addressed.
 ```
 
-- [ ] **Step 7: Commit the execution status**
+- [x] **Step 7: Commit the execution status**
 
 Run:
 
@@ -665,3 +665,17 @@ git commit -m "Track render debug parity gate execution"
 - Spec coverage: tasks cover the focused script, summary and screenshot assertions, browser-side MathJax runtime checks, `check-python.sh` wiring, Docker inheritance through `check-docker.sh`, role docs, host/Docker verification, and review.
 - Placeholder scan: no TBD, TODO, or open-ended implementation steps remain.
 - Type consistency: environment variable names, paths, script flags, and expected diagnostics are consistent across tasks.
+
+## Execution Status
+
+- Implemented in commits:
+  - `27ec8a8` Test render debug parity script contract
+  - `c07e845` Add render debug parity gate script
+  - `ceffdcb` Test render debug parity gate behavior
+  - `b6473f2` Document render debug parity gate
+  - `491d6dd` Harden render debug parity gate checks
+- Verification run:
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_renderer_dependencies.py tests/e2e/test_render_debug_parity_gate.py && UV_PROJECT_ENVIRONMENT=.venv-local scripts/check-render-debug.sh`: passed, `20 passed`, `check-render-debug: passed`
+  - `./scripts/check.sh`: passed, `218 passed`, `check: passed`
+  - `./scripts/check-docker.sh`: passed, `218 passed`, `check-docker: passed`
+- Code review: requested with `superpowers:requesting-code-review`; both important findings and the command-guidance drift were addressed with TDD regression coverage.
