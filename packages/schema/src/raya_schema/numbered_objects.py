@@ -451,7 +451,6 @@ def _validate_object_entry(
         "number",
         "reference_text",
         "anchor",
-        "title",
         "source_path",
         "page_id",
         "page_title",

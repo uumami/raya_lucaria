@@ -165,6 +165,43 @@ def test_numbered_objects_index_validation_requires_stable_shape(tmp_path) -> No
     assert index["by_id"]["pythagorean"] == 0
 
 
+def test_numbered_objects_index_validation_allows_untitled_objects(tmp_path) -> None:
+    index = build_numbered_objects_index(
+        "demo",
+        [
+            NumberedObject(
+                id="untitled-theorem",
+                family="theorem",
+                sequence="theorem",
+                label="Theorem",
+                number="1.1",
+                title="",
+                source_path="course/1_intro/0_index.md",
+                page_id="intro",
+                page_title="Intro",
+                page_output_path="1_intro/index.html",
+                href="1_intro/#raya-object-untitled-theorem",
+                style="margin",
+            )
+        ],
+    )
+    index["objects"][0]["title"] = None
+    path = tmp_path / "numbered-objects-null-title.json"
+    path.write_text(json.dumps(index), encoding="utf-8")
+
+    null_report = validate_numbered_objects_index(path)
+
+    assert null_report.ok
+
+    del index["objects"][0]["title"]
+    path = tmp_path / "numbered-objects-missing-title.json"
+    path.write_text(json.dumps(index), encoding="utf-8")
+
+    missing_report = validate_numbered_objects_index(path)
+
+    assert missing_report.ok
+
+
 def test_build_numbered_objects_index_accepts_positional_api() -> None:
     index = build_numbered_objects_index("demo", [])
 
