@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -262,6 +263,31 @@ def test_inspect_artifact_fails_for_missing_manifest_declared_index(tmp_path: Pa
     assert not report.ok
     assert any("Artifact data index does not exist" in item.message for item in report.diagnostics)
     assert not report.outputs_written
+
+
+def test_inspect_artifact_validates_manifest_declared_numbered_objects_index(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    artifact = course / "artifact"
+    manifest_path = artifact / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["data"]["numbered_objects"] = "data/numbered-objects.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    (artifact / "data" / "numbered-objects.json").write_text(
+        '{"version": 2, "objects": [], "by_id": {}}',
+        encoding="utf-8",
+    )
+
+    report = inspect_artifact(artifact)
+
+    assert not report.ok
+    assert any(
+        "numbered objects index version must be 1" in item.message
+        for item in report.diagnostics
+    )
 
 
 def _copy_minimal(tmp_path: Path) -> Path:

@@ -364,7 +364,7 @@ def _merge_families(
 def _validate_index_shape(data: dict[str, Any], *, path: Path, report: ValidationReport) -> None:
     if data.get("version") != NUMBERED_OBJECT_INDEX_VERSION:
         report.add_error(
-            "Numbered objects index version is unsupported",
+            f"numbered objects index version must be {NUMBERED_OBJECT_INDEX_VERSION}",
             path=path,
             field="version",
             next_action=f"Write version {NUMBERED_OBJECT_INDEX_VERSION}",

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from raya_schema.diagnostics import ValidationReport
+from raya_schema.numbered_objects import validate_numbered_objects_index
 from raya_schema.schema_loader import validator_for
 from raya_schema.yaml_io import load_yaml_file
 
@@ -67,6 +68,7 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "official": validate_official_index,
         "references": validate_references_index,
         "reviewed_outputs": validate_reviewed_outputs_index,
+        "numbered_objects": validate_numbered_objects_index,
         "runtime": validate_runtime_index,
         "execution": validate_execution_index,
         "execution_results": validate_execution_results_index,

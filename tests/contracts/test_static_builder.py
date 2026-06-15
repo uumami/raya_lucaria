@@ -14,6 +14,7 @@ from raya_schema import (
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
+    validate_numbered_objects_index,
     validate_official_index,
     validate_pages_index,
     validate_quanta_index,
@@ -53,6 +54,7 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "data" / "indices.json").exists()
     assert (artifact / "data" / "official.json").exists()
     assert (artifact / "data" / "references.json").exists()
+    assert (artifact / "data" / "numbered-objects.json").exists()
     assert (artifact / "data" / "reviewed-outputs.json").exists()
     assert (artifact / "data" / "runtime.json").exists()
     assert (artifact / "data" / "execution.json").exists()
@@ -61,6 +63,17 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "files").is_dir()
     assert (artifact / "reviewed").is_dir()
     assert artifact / "manifest.json" in report.outputs_written
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    numbered_index = json.loads(
+        (artifact / "data" / "numbered-objects.json").read_text(encoding="utf-8")
+    )
+    assert numbered_index == {
+        "version": 1,
+        "course_id": "minimal-course",
+        "objects": [],
+        "by_id": {},
+    }
+    assert manifest["data"]["numbered_objects"] == "data/numbered-objects.json"
 
 
 def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
@@ -80,6 +93,7 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         validate_official_index(artifact / "data" / "official.json"),
         validate_references_index(artifact / "data" / "references.json"),
         validate_reviewed_outputs_index(artifact / "data" / "reviewed-outputs.json"),
+        validate_numbered_objects_index(artifact / "data" / "numbered-objects.json"),
         validate_runtime_index(artifact / "data" / "runtime.json"),
         validate_execution_index(artifact / "data" / "execution.json"),
         validate_cache_index(artifact / "data" / "cache.json"),
@@ -232,7 +246,14 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
         course / "artifact" / "site" / "math-authoring" / "index.html"
     ).read_text(encoding="utf-8")
     math_authoring_visible = _visible_text(math_authoring_html)
+    numbered_index = json.loads(
+        (
+            course / "artifact" / "data" / "numbered-objects.json"
+        ).read_text(encoding="utf-8")
+    )
 
+    assert numbered_index["course_id"] == "render-fixture"
+    assert "by_id" in numbered_index
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
     assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in html

@@ -40,6 +40,12 @@ from raya_schema.links import (
     resolve_local_markdown_target,
     stable_markdown_id,
 )
+from raya_schema.numbered_objects import (
+    NumberedObject,
+    build_numbered_objects_index,
+    normalize_numbered_object_config,
+    validate_numbered_objects_index,
+)
 from raya_schema.official import discover_official_objects
 from raya_schema.references import (
     SourceReference,
@@ -132,6 +138,13 @@ def build_course(course_path: str | Path) -> ValidationReport:
         return report
 
     course_id = str(config["course_id"])
+    numbered_config = normalize_numbered_object_config(
+        config,
+        report=report,
+        context=str(config_path),
+    )
+    if not report.ok:
+        return report
     source_root = resolve_course_source_root(root=root, config=config, report=report)
     if source_root is None:
         return report
@@ -298,6 +311,12 @@ def build_course(course_path: str | Path) -> ValidationReport:
     official_index = _official_index(course_id, official_objects)
     references_index = _references_index(course_id, references, reviewed_by_reference)
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
+    all_numbered_objects: list[NumberedObject] = []
+    numbered_objects_index = build_numbered_objects_index(
+        course_id=course_id,
+        objects=all_numbered_objects,
+    )
+    _ = numbered_config
     runtime_data = runtime_index(course_id, runtime_model)
     execution_data = execution_index(course_id, references, runtime_model)
     cache_data = cache_index(
@@ -315,6 +334,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "official.json", official_index, report)
     _write_json(data_dir / "references.json", references_index, report)
     _write_json(data_dir / "reviewed-outputs.json", reviewed_outputs_data, report)
+    _write_json(data_dir / "numbered-objects.json", numbered_objects_index, report)
     _write_json(data_dir / "runtime.json", runtime_data, report)
     _write_json(data_dir / "execution.json", execution_data, report)
     _write_json(data_dir / "cache.json", cache_data, report)
@@ -345,6 +365,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "official": "data/official.json",
             "references": "data/references.json",
             "reviewed_outputs": "data/reviewed-outputs.json",
+            "numbered_objects": "data/numbered-objects.json",
             "runtime": "data/runtime.json",
             "execution": "data/execution.json",
             "cache": "data/cache.json",
@@ -1629,6 +1650,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_official_index(artifact_dir / "data" / "official.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
         validate_reviewed_outputs_index(artifact_dir / "data" / "reviewed-outputs.json"),
+        validate_numbered_objects_index(artifact_dir / "data" / "numbered-objects.json"),
         validate_runtime_index(artifact_dir / "data" / "runtime.json"),
         validate_execution_index(artifact_dir / "data" / "execution.json"),
         validate_cache_index(artifact_dir / "data" / "cache.json"),
