@@ -67,6 +67,15 @@ def test_normalize_numbered_object_config_accepts_course_overrides() -> None:
     assert config.families["checkpoint"].sequence == "exercise"
 
 
+def test_normalize_numbered_object_config_accepts_positional_api() -> None:
+    report = ValidationReport()
+
+    config = normalize_numbered_object_config({}, report, "raya.yaml")
+
+    assert report.ok
+    assert config.numbering == "page-hierarchy"
+
+
 def test_normalize_numbered_object_config_accepts_caption_and_equation_styles() -> None:
     report = ValidationReport()
     config = normalize_numbered_object_config(

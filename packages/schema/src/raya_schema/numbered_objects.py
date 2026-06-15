@@ -108,7 +108,6 @@ class NumberedObject:
 
 def normalize_numbered_object_config(
     course_config: dict[str, Any],
-    *,
     report: ValidationReport,
     context: str,
 ) -> NumberedObjectConfig:
