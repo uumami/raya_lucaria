@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from raya_cli.render_debug_report import inspect_render_debug
 from raya_schema import ValidationReport
 
 
@@ -115,7 +116,17 @@ def capture_render_debug(
         finally:
             browser.close()
 
+    inspection = inspect_render_debug(site_dir=site_root, debug_dir=debug_dir)
     report.wrote_output(debug_dir / "summary.json")
+    report.wrote_output(debug_dir / "report.json")
+    report.wrote_output(debug_dir / "index.html")
+    if not inspection["ok"]:
+        for diagnostic in inspection["diagnostics"]:
+            report.add_error(
+                diagnostic["message"],
+                path=Path(diagnostic["path"]),
+                next_action=diagnostic.get("next_action"),
+            )
     for screenshot in debug_dir.glob("*.png"):
         report.wrote_output(screenshot)
     if report.ok:
@@ -269,7 +280,10 @@ def _reset_render_debug_dir(debug_dir: Path, report: ValidationReport) -> bool:
         )
         return False
     for path in debug_dir.iterdir():
-        if path.name == "summary.json" or path.name in _render_debug_screenshot_names():
+        if (
+            path.name in {"summary.json", "report.json", "index.html"}
+            or path.name in _render_debug_screenshot_names()
+        ):
             if path.is_file() or path.is_symlink():
                 path.unlink()
                 continue
