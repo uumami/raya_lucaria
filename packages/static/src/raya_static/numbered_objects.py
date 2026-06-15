@@ -17,14 +17,11 @@ REFERENCE_RE = re.compile(
     r"(?<![\\A-Za-z0-9._%+-])@(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)"
 )
 OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
-FENCE_MARKER_RE = re.compile(
-    r"^(?: {0,3}>\s?)*"
-    r"(?: {0,3}(?:[-+*]|\d+[.)])\s+)?"
-    r" {0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
+FENCE_OPEN_RE = re.compile(
+    r"^(?P<prefix>(?: {0,3}(?:[-+*]|\d+[.)])\s+)? {0,3})"
+    r"(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
 )
-FENCE_CLOSE_RE = re.compile(
-    r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})[ \t]*$"
-)
+FENCE_CLOSE_RE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})[ \t]*$")
 PLACEHOLDER_PREFIX = "RAYA_NUMBERED_OBJECT_"
 
 
@@ -55,6 +52,12 @@ class NumberedObjectRenderItem:
 class NumberedObjectRenderContext:
     items: list[NumberedObjectRenderItem]
     objects_by_id: dict[str, NumberedObject]
+
+
+@dataclass(frozen=True)
+class _FenceState:
+    marker: str
+    close_indent_max: int
 
 
 def _parse_attrs(
@@ -144,22 +147,19 @@ def prepare_numbered_object_markdown(
     sources: list[NumberedObjectSource] = []
     lines = body.splitlines()
     index = 0
-    in_fence = False
-    fence_marker = ""
+    fence_state: _FenceState | None = None
 
     while index < len(lines):
         line = lines[index]
-        marker = _fence_marker(line)
-        if in_fence:
+        if fence_state is not None:
             output_lines.append(line)
-            if _is_closing_fence(line, fence_marker):
-                in_fence = False
-                fence_marker = ""
+            if _is_closing_fence(line, fence_state):
+                fence_state = None
             index += 1
             continue
-        if marker is not None:
-            fence_marker = marker
-            in_fence = True
+        opener = _fence_opener(line)
+        if opener is not None:
+            fence_state = opener
             output_lines.append(line)
             index += 1
             continue
@@ -244,22 +244,19 @@ def expand_shorthand_references(
 ) -> str:
     lines = body.splitlines(keepends=True)
     expanded_lines: list[str] = []
-    in_fence = False
-    fence_marker = ""
+    fence_state: _FenceState | None = None
     in_display_math = False
     in_reference_definition = False
 
     for line in lines:
-        marker = _fence_marker(line)
-        if in_fence:
+        if fence_state is not None:
             expanded_lines.append(line)
-            if _is_closing_fence(line, fence_marker):
-                in_fence = False
-                fence_marker = ""
+            if _is_closing_fence(line, fence_state):
+                fence_state = None
             continue
-        if marker is not None:
-            fence_marker = marker
-            in_fence = True
+        opener = _fence_opener(line)
+        if opener is not None:
+            fence_state = opener
             expanded_lines.append(line)
             continue
         if _is_display_math_delimiter(line):
@@ -267,7 +264,7 @@ def expand_shorthand_references(
             expanded_lines.append(line)
             continue
         if in_reference_definition:
-            if _is_reference_definition_continuation_line(line):
+            if _is_reference_definition_title_continuation_line(line):
                 expanded_lines.append(line)
                 continue
             in_reference_definition = False
@@ -342,22 +339,27 @@ def _escape_markdown_link_label(label: str) -> str:
     )
 
 
-def _fence_marker(line: str) -> str | None:
-    match = FENCE_MARKER_RE.match(line)
+def _fence_opener(line: str) -> _FenceState | None:
+    match = FENCE_OPEN_RE.match(_line_without_blockquote_prefix(line))
     if match is None:
         return None
     marker = match.group("marker")
     info = match.group("info")
     if marker.startswith("`") and "`" in info:
         return None
-    return marker
+    return _FenceState(
+        marker=marker,
+        close_indent_max=len(match.group("prefix")) + 3,
+    )
 
 
-def _is_closing_fence(line: str, opening_marker: str) -> bool:
-    match = FENCE_CLOSE_RE.match(line)
+def _is_closing_fence(line: str, fence_state: _FenceState) -> bool:
+    match = FENCE_CLOSE_RE.match(_line_without_blockquote_prefix(line))
     if match is None:
         return False
-    return _matches_closing_fence(match.group("marker"), opening_marker)
+    if len(match.group("indent")) > fence_state.close_indent_max:
+        return False
+    return _matches_closing_fence(match.group("marker"), fence_state.marker)
 
 
 def _matches_closing_fence(marker: str, opening_marker: str) -> bool:
@@ -385,7 +387,7 @@ def _validate_no_reserved_placeholder_text(
 
 
 def _is_display_math_delimiter(line: str) -> bool:
-    return _line_without_blockquote_prefix(line).strip() == "$$"
+    return _line_without_list_marker_prefix(_line_without_blockquote_prefix(line)).strip() == "$$"
 
 
 def _is_indented_code_line(line: str) -> bool:
@@ -407,11 +409,11 @@ def _is_reference_definition_line(line: str) -> bool:
     return stripped[label_end + 2 :].strip() != ""
 
 
-def _is_reference_definition_continuation_line(line: str) -> bool:
+def _is_reference_definition_title_continuation_line(line: str) -> bool:
     stripped = _line_without_blockquote_prefix(line)
-    return bool(stripped.strip()) and (
-        stripped.startswith(" ") or stripped.startswith("\t")
-    )
+    if not stripped.startswith(" ") and not stripped.startswith("\t"):
+        return False
+    return stripped.lstrip().startswith(('"', "'", "("))
 
 
 def _line_without_blockquote_prefix(line: str) -> str:
@@ -421,6 +423,13 @@ def _line_without_blockquote_prefix(line: str) -> str:
         if match is None:
             return value
         value = value[match.end() :]
+
+
+def _line_without_list_marker_prefix(line: str) -> str:
+    match = re.match(r"^(?: {0,3}(?:[-+*]|\d+[.)])\s+)?(.*)$", line)
+    if match is None:
+        return line
+    return match.group(1)
 
 
 def _code_span_ranges(line: str) -> list[tuple[int, int]]:
