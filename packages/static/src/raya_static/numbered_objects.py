@@ -581,15 +581,24 @@ def _find_inline_link_end(line: str, open_paren: int) -> int:
     cursor = open_paren + 1
     while cursor < len(line):
         if line[cursor] == ")" and not _is_escaped(line, cursor):
-            if _parse_link_destination_and_title(line[open_paren + 1 : cursor]):
+            if _parse_link_destination_and_title(
+                line[open_paren + 1 : cursor],
+                allow_empty=True,
+            ):
                 return cursor
         cursor += 1
     return -1
 
 
-def _parse_link_destination_and_title(raw: str) -> _LinkDestinationParse | None:
+def _parse_link_destination_and_title(
+    raw: str,
+    *,
+    allow_empty: bool = False,
+) -> _LinkDestinationParse | None:
     value = raw.strip()
     if not value:
+        if allow_empty:
+            return _LinkDestinationParse(has_inline_title=False)
         return None
     if value.startswith("<"):
         destination_end = _find_closing_angle_destination(value)

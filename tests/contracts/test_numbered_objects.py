@@ -370,6 +370,8 @@ def test_expand_shorthand_references_skips_existing_link_and_image_syntax() -> N
                 "[see @pythagorean][label]",
                 "![alt @pythagorean](image.png)",
                 "![alt [nested @pythagorean]](image.png)",
+                "[see @missing]()",
+                "![alt @missing]()",
                 '[link](dest(and) "title @pythagorean")',
                 '[link](dest(and) "title @missing")',
                 '[link](<dest(and)> "title @pythagorean")',
@@ -389,6 +391,8 @@ def test_expand_shorthand_references_skips_existing_link_and_image_syntax() -> N
     assert "[see @pythagorean][label]" in expanded
     assert "![alt @pythagorean](image.png)" in expanded
     assert "![alt [nested @pythagorean]](image.png)" in expanded
+    assert "[see @missing]()" in expanded
+    assert "![alt @missing]()" in expanded
     assert '[link](dest(and) "title @pythagorean")' in expanded
     assert '[link](dest(and) "title @missing")' in expanded
     assert '[link](<dest(and)> "title @pythagorean")' in expanded
