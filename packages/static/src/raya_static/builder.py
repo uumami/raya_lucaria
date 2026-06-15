@@ -74,6 +74,8 @@ from raya_schema.runtime import (
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.math_renderer import MathRenderer
 from raya_static.numbered_objects import (
+    NumberedObjectRenderContext,
+    NumberedObjectRenderItem,
     NumberedObjectSource,
     compute_numbered_objects_for_page,
     page_number_prefix_from_source_path,
@@ -127,6 +129,14 @@ SURFACE_TIERS = frozenset(
 class _MathRenderResources:
     css: str
     font_files: tuple[Path, ...]
+
+
+@dataclass(frozen=True)
+class _NumberedObjectCollection:
+    objects: list[NumberedObject]
+    objects_by_id: dict[str, NumberedObject]
+    items_by_page_id: dict[str, list[NumberedObjectRenderItem]]
+    prepared_bodies_by_page_id: dict[str, str]
 
 
 def build_course(course_path: str | Path) -> ValidationReport:
@@ -227,7 +237,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
     math_renderer = MathRenderer()
-    all_numbered_objects = _collect_numbered_objects(
+    numbered_object_collection = _collect_numbered_objects(
         course_root=root,
         source_dir=source_dir,
         pages=pages,
@@ -239,8 +249,18 @@ def build_course(course_path: str | Path) -> ValidationReport:
     rendered_pages: list[tuple[ContentPage, str]] = []
 
     for page in pages:
+        numbered_context = NumberedObjectRenderContext(
+            items=numbered_object_collection.items_by_page_id.get(page.id, []),
+            objects_by_id=numbered_object_collection.objects_by_id,
+            current_page_output_path=page.output_path,
+        )
         rendered_page = _render_page(
             page=page,
+            body=numbered_object_collection.prepared_bodies_by_page_id.get(
+                page.id,
+                page.body,
+            ),
+            numbered_objects=numbered_context,
             content_model=content_model,
             pages_by_source=pages_by_source,
             pages_by_reference=pages_by_reference,
@@ -329,7 +349,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
     numbered_objects_index = build_numbered_objects_index(
         course_id=course_id,
-        objects=all_numbered_objects,
+        objects=numbered_object_collection.objects,
     )
     runtime_data = runtime_index(course_id, runtime_model)
     execution_data = execution_index(course_id, references, runtime_model)
@@ -493,8 +513,11 @@ def _collect_numbered_objects(
     pages: list[ContentPage],
     config: NumberedObjectConfig,
     report: ValidationReport,
-) -> list[NumberedObject]:
+) -> _NumberedObjectCollection:
     objects: list[NumberedObject] = []
+    objects_by_id: dict[str, NumberedObject] = {}
+    items_by_page_id: dict[str, list[NumberedObjectRenderItem]] = {}
+    prepared_bodies_by_page_id: dict[str, str] = {}
     seen_ids: dict[str, NumberedObjectSource] = {}
 
     for page in pages:
@@ -503,6 +526,7 @@ def _collect_numbered_objects(
             report=report,
             source_path=page.source_path,
         )
+        prepared_bodies_by_page_id[page.id] = prepared.body
         if not report.ok:
             continue
 
@@ -536,26 +560,37 @@ def _collect_numbered_objects(
 
         course_relative_source_path = page.source_path.relative_to(course_root).as_posix()
         source_relative_path = page.source_path.relative_to(source_dir).as_posix()
-        objects.extend(
-            compute_numbered_objects_for_page(
-                page_sources,
-                config=config,
-                course_relative_source_path=course_relative_source_path,
-                page_id=page.id,
-                page_title=page.title,
-                page_output_path=page.output_path,
-                page_number_prefix=page_number_prefix_from_source_path(
-                    source_relative_path
-                ),
-            )
+        page_objects = compute_numbered_objects_for_page(
+            page_sources,
+            config=config,
+            course_relative_source_path=course_relative_source_path,
+            page_id=page.id,
+            page_title=page.title,
+            page_output_path=page.output_path,
+            page_number_prefix=page_number_prefix_from_source_path(
+                source_relative_path
+            ),
         )
+        objects.extend(page_objects)
+        objects_by_id.update({obj.id: obj for obj in page_objects})
+        items_by_page_id[page.id] = [
+            NumberedObjectRenderItem(source=source, object=obj)
+            for source, obj in zip(page_sources, page_objects)
+        ]
 
-    return objects
+    return _NumberedObjectCollection(
+        objects=objects,
+        objects_by_id=objects_by_id,
+        items_by_page_id=items_by_page_id,
+        prepared_bodies_by_page_id=prepared_bodies_by_page_id,
+    )
 
 
 def _render_page(
     *,
     page: ContentPage,
+    body: str,
+    numbered_objects: NumberedObjectRenderContext,
     content_model: ContentModel,
     pages_by_source: dict[Path, ContentPage],
     pages_by_reference: dict[str, ContentPage],
@@ -625,19 +660,22 @@ def _render_page(
             '<main id="raya-content" class="raya-main">',
             '<article class="raya-article">',
             render_markdown_body(
-                page.body,
+                body,
                 generated_index=generated_index,
                 resolve_href=lambda href: _resolve_markdown_href(
                     page,
                     href,
                     pages_by_source,
                     pages_by_reference,
+                    numbered_objects.objects_by_id,
                     course_root,
                     source_dir,
+                    report,
                 ),
                 source_path=page.source_path,
                 report=report,
                 math_renderer=math_renderer,
+                numbered_objects=numbered_objects,
             ),
             "</article>",
             (
@@ -665,15 +703,33 @@ def _resolve_markdown_href(
     href: str,
     pages_by_source: dict[Path, ContentPage],
     pages_by_reference: dict[str, ContentPage],
+    objects_by_id: dict[str, NumberedObject],
     course_root: Path,
     source_dir: Path,
+    report: ValidationReport,
 ) -> str:
     kind = classify_markdown_target(href)
     if kind == "ignored":
         return href
     fragment = markdown_link_fragment(href)
     if kind == "stable":
-        target_page = pages_by_reference.get(stable_markdown_id(href))
+        stable_id = stable_markdown_id(href)
+        if stable_id.startswith("ref/"):
+            object_id = stable_id[len("ref/") :]
+            obj = objects_by_id.get(object_id)
+            if obj is not None:
+                return (
+                    _relative_href(page.output_path, obj.page_output_path)
+                    + f"#raya-object-{object_id}"
+                )
+            report.add_error(
+                f"Unknown numbered object reference '{href}'",
+                path=page.source_path,
+                field=f"link:{href}",
+                next_action="Use a raya:ref link target that matches a numbered object ID",
+            )
+            return href
+        target_page = pages_by_reference.get(stable_id)
         if target_page is not None:
             return _relative_href(page.output_path, target_page.output_path) + fragment
     if kind == "content":

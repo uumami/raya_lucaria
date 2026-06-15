@@ -250,6 +250,8 @@ def _validate_markdown_source_links(
             continue
         if kind == "stable":
             stable_id = stable_markdown_id(link.target)
+            if stable_id.startswith("ref/"):
+                continue
             if stable_id not in stable_targets:
                 report.add_error(
                     "Broken stable content reference",

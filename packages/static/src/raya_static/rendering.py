@@ -17,6 +17,11 @@ from pygments.util import ClassNotFound
 from raya_schema import ValidationReport
 
 from raya_static.math_renderer import MathItem, MathRenderer
+from raya_static.numbered_objects import (
+    NumberedObjectRenderContext,
+    NumberedObjectRenderItem,
+    expand_shorthand_references,
+)
 
 
 INDEX_MARKER = "<!-- raya:index -->"
@@ -56,6 +61,7 @@ class _Callout:
 
 
 _CalloutFragment = tuple[_Callout, list[Token], dict]
+_NumberedObjectFragment = tuple[NumberedObjectRenderItem, list[Token], dict]
 
 
 class RichMarkdownRenderer:
@@ -83,7 +89,22 @@ class RichMarkdownRenderer:
         self._md.renderer.rules["math_inline"] = self._render_math
         self._md.renderer.rules["math_block"] = self._render_math
 
-    def render(self, body: str, generated_index: str = "") -> str:
+    def render(
+        self,
+        body: str,
+        generated_index: str = "",
+        *,
+        numbered_objects: NumberedObjectRenderContext | None = None,
+    ) -> str:
+        if numbered_objects is not None:
+            body = expand_shorthand_references(
+                body,
+                context=numbered_objects,
+                report=self._report,
+                source_path=self._source_path,
+            )
+            if not self._report.ok:
+                return ""
         prepared_body, callouts = _extract_callouts(body)
         env = _new_env(self._resolve_href, collect_headings=True)
         marker_used = INDEX_MARKER in prepared_body
@@ -95,10 +116,29 @@ class RichMarkdownRenderer:
             callout_env = _new_env(self._resolve_href, collect_headings=False)
             callout_tokens = self._md.parse(callout.body, callout_env)
             callout_fragments[placeholder] = (callout, callout_tokens, callout_env)
+        numbered_object_fragments: dict[str, _NumberedObjectFragment] = {}
+        if numbered_objects is not None:
+            for item in numbered_objects.items:
+                object_env = _new_env(self._resolve_href, collect_headings=False)
+                object_body = expand_shorthand_references(
+                    item.source.body,
+                    context=numbered_objects,
+                    report=self._report,
+                    source_path=item.source.source_path,
+                )
+                if not self._report.ok:
+                    return ""
+                object_tokens = self._md.parse(object_body, object_env)
+                numbered_object_fragments[item.source.placeholder] = (
+                    item,
+                    object_tokens,
+                    object_env,
+                )
 
         math_items = _collect_math_items_in_render_order(
             page_tokens,
             callout_fragments,
+            numbered_object_fragments,
             source_path=self._source_path,
         )
 
@@ -108,6 +148,8 @@ class RichMarkdownRenderer:
         env["raya_math_html_by_id"] = math_result.html_by_id
         for _, _, callout_env in callout_fragments.values():
             callout_env["raya_math_html_by_id"] = math_result.html_by_id
+        for _, _, object_env in numbered_object_fragments.values():
+            object_env["raya_math_html_by_id"] = math_result.html_by_id
 
         html_fragment = self._md.renderer.render(page_tokens, self._md.options, env)
         if not self._report.ok:
@@ -139,6 +181,21 @@ class RichMarkdownRenderer:
             html_fragment,
             rendered_callouts,
         )
+        rendered_numbered_objects = {
+            placeholder: _render_numbered_object_html(
+                self._md.renderer.render(object_tokens, self._md.options, object_env),
+                item=item,
+            )
+            for placeholder, (
+                item,
+                object_tokens,
+                object_env,
+            ) in numbered_object_fragments.items()
+        }
+        html_fragment = self._replace_numbered_object_placeholders(
+            html_fragment,
+            rendered_numbered_objects,
+        )
         toc = _render_page_toc(env["raya_headings"])
         if toc:
             return toc + "\n" + html_fragment
@@ -151,6 +208,15 @@ class RichMarkdownRenderer:
     ) -> str:
         for placeholder, callout_html in callouts.items():
             html_fragment = html_fragment.replace(f"<p>{placeholder}</p>", callout_html)
+        return html_fragment
+
+    def _replace_numbered_object_placeholders(
+        self,
+        html_fragment: str,
+        numbered_objects: dict[str, str],
+    ) -> str:
+        for placeholder, object_html in numbered_objects.items():
+            html_fragment = html_fragment.replace(f"<p>{placeholder}</p>", object_html)
         return html_fragment
 
     def _render_callout(self, callout: _Callout, inner_html: str) -> str:
@@ -278,13 +344,14 @@ def render_markdown_body(
     source_path: Path,
     report: ValidationReport,
     math_renderer: MathRenderer,
+    numbered_objects: NumberedObjectRenderContext | None = None,
 ) -> str:
     return RichMarkdownRenderer(
         resolve_href,
         source_path=source_path,
         report=report,
         math_renderer=math_renderer,
-    ).render(body, generated_index)
+    ).render(body, generated_index, numbered_objects=numbered_objects)
 
 
 def missing_footnote_definitions(body: str) -> list[str]:
@@ -578,6 +645,7 @@ def _walk_tokens(tokens: list[Token]) -> Iterator[Token]:
 def _collect_math_items_in_render_order(
     page_tokens: list[Token],
     callout_fragments: dict[str, _CalloutFragment],
+    numbered_object_fragments: dict[str, _NumberedObjectFragment],
     *,
     source_path: Path,
 ) -> list[MathItem]:
@@ -589,6 +657,21 @@ def _collect_math_items_in_render_order(
             _, callout_tokens, _ = callout_fragments[placeholder]
             new_items = _collect_math_items(
                 callout_tokens,
+                source_path=source_path,
+                counter=len(items),
+            )
+            items.extend(new_items)
+            idx += 3
+            continue
+        object_placeholder = _numbered_object_placeholder_at(
+            page_tokens,
+            idx,
+            numbered_object_fragments,
+        )
+        if object_placeholder is not None:
+            _, object_tokens, _ = numbered_object_fragments[object_placeholder]
+            new_items = _collect_math_items(
+                object_tokens,
                 source_path=source_path,
                 counter=len(items),
             )
@@ -617,6 +700,23 @@ def _callout_placeholder_at(
         return None
     inline = tokens[idx + 1]
     if inline.type != "inline" or inline.content not in callout_fragments:
+        return None
+    if tokens[idx + 2].type != "paragraph_close":
+        return None
+    return inline.content
+
+
+def _numbered_object_placeholder_at(
+    tokens: list[Token],
+    idx: int,
+    numbered_object_fragments: dict[str, _NumberedObjectFragment],
+) -> str | None:
+    if idx + 2 >= len(tokens):
+        return None
+    if tokens[idx].type != "paragraph_open":
+        return None
+    inline = tokens[idx + 1]
+    if inline.type != "inline" or inline.content not in numbered_object_fragments:
         return None
     if tokens[idx + 2].type != "paragraph_close":
         return None
@@ -723,6 +823,43 @@ def _render_page_toc(headings: list[_Heading]) -> str:
             "\n".join(items),
             "</ol>",
             "</nav>",
+        ]
+    )
+
+
+def _render_numbered_object_html(
+    rendered_body: str,
+    *,
+    item: NumberedObjectRenderItem,
+) -> str:
+    obj = item.object
+    escaped_id = html.escape(obj.id, quote=True)
+    escaped_family = html.escape(obj.family, quote=True)
+    escaped_style = html.escape(obj.style, quote=True)
+    escaped_reference = html.escape(obj.reference_text)
+    title = obj.title or ""
+    body = rendered_body.strip() or "<p></p>"
+    title_html = (
+        f'<span class="raya-numbered-object-title">{html.escape(title)}</span>'
+        if title
+        else ""
+    )
+    return "\n".join(
+        [
+            (
+                f'<section id="raya-object-{escaped_id}" '
+                f'class="raya-numbered-object raya-numbered-object--{escaped_style} '
+                f'raya-numbered-object--{escaped_family}" '
+                f'data-object-id="{escaped_id}">'
+            ),
+            '<p class="raya-numbered-object-heading">',
+            f'<span class="raya-numbered-object-reference">{escaped_reference}</span>'
+            + (f" {title_html}" if title_html else ""),
+            "</p>",
+            '<div class="raya-numbered-object-body">',
+            body,
+            "</div>",
+            "</section>",
         ]
     )
 

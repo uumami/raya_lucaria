@@ -12,11 +12,15 @@ from raya_schema.numbered_objects import (
     normalize_numbered_object_config,
     validate_numbered_objects_index,
 )
+from raya_schema.links import stable_markdown_id
 from raya_schema.validation import ValidationReport
 from raya_static.numbered_objects import (
+    NumberedObjectRenderContext,
+    NumberedObjectRenderItem,
     REFERENCE_RE,
     collect_numbered_object_sources,
     compute_numbered_objects_for_page,
+    expand_shorthand_references,
     page_number_prefix_from_source_path,
     prepare_numbered_object_markdown,
     render_reference_link,
@@ -246,6 +250,100 @@ def test_render_reference_link_escapes_href_and_text() -> None:
     assert 'data-object-id="pythagorean"' in html
     assert 'href="chapter/?x=&quot;bad&quot;&amp;next=&lt;tag&gt;"' in html
     assert "Theorem &lt;2.3.1&gt; &quot;quoted&quot;" in html
+
+
+def test_expand_shorthand_references_uses_reference_text_and_reports_unknowns() -> None:
+    report = ValidationReport()
+    source_path = Path("course/0_index.md")
+    object_source = collect_numbered_object_sources(
+        "::: theorem {#pythagorean}\nBody.\n:::\n",
+        report=report,
+        source_path=Path("course/1_math/0_index.md"),
+    )[0]
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title="Pythagorean theorem",
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[NumberedObjectRenderItem(source=object_source, object=obj)],
+        objects_by_id={"pythagorean": obj},
+        current_page_output_path="index.html",
+    )
+
+    expanded = expand_shorthand_references(
+        "Use @pythagorean and @missing.",
+        context=context,
+        report=report,
+        source_path=source_path,
+    )
+
+    assert "[Theorem 1.1](raya:ref/pythagorean)" in expanded
+    assert "@missing" in expanded
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Unknown numbered object reference '@missing'"
+        and diagnostic.path == source_path
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_expand_shorthand_references_skips_code_spans_fences_and_urlish_text() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+        current_page_output_path="index.html",
+    )
+
+    expanded = expand_shorthand_references(
+        "\n".join(
+            [
+                "Use @pythagorean.",
+                "Keep `@pythagorean` literal.",
+                "Keep https://example.test/@pythagorean literal.",
+                "```",
+                "@pythagorean",
+                "```",
+            ]
+        ),
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
+    assert "`@pythagorean`" in expanded
+    assert "https://example.test/@pythagorean" in expanded
+    assert "```\n@pythagorean\n```" in expanded
+
+
+def test_stable_markdown_id_keeps_ref_namespace() -> None:
+    assert stable_markdown_id("raya:ref/abc") == "ref/abc"
 
 
 def test_collect_numbered_object_sources_returns_prepared_sources() -> None:

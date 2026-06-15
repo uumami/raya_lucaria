@@ -163,6 +163,58 @@ def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> 
     assert objects[0]["href"].endswith("#raya-object-main")
 
 
+def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    shutil.rmtree(course / "course" / "1_unit")
+    home = course / "course" / "0_index.md"
+    home.write_text(
+        home.read_text(encoding="utf-8")
+        + "\n\n"
+        "Use @pythagorean and a [named theorem](raya:ref/pythagorean).\n",
+        encoding="utf-8",
+    )
+    math_page = course / "course" / "1_math" / "0_index.md"
+    math_page.parent.mkdir(parents=True)
+    math_page.write_text(
+        "---\n"
+        "id: math\n"
+        "title: Math\n"
+        "summary: Numbered object rendering fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Math\n\n"
+        "::: theorem {#pythagorean title=\"Pythagorean theorem\"}\n"
+        "For a right triangle, $a^2 + b^2 = c^2$.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    home_html = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    math_html = (course / "artifact" / "site" / "math" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'href="math/index.html#raya-object-pythagorean"' in home_html
+    assert "Theorem 1.1" in _visible_text(home_html)
+    assert (
+        '<a href="math/index.html#raya-object-pythagorean">named theorem</a>'
+        in home_html
+    )
+    assert 'id="raya-object-pythagorean"' in math_html
+    assert (
+        'class="raya-numbered-object raya-numbered-object--margin '
+        'raya-numbered-object--theorem"'
+        in math_html
+    )
+    assert "Pythagorean theorem" in _visible_text(math_html)
+    assert "a^2 + b^2" not in _visible_text(math_html)
+    assert "mjx-container" in math_html
+
+
 def test_build_collects_numbered_objects_from_configured_source_root(
     tmp_path: Path,
 ) -> None:

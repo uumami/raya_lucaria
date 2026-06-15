@@ -36,6 +36,19 @@ class PreparedNumberedMarkdown:
     sources: list[NumberedObjectSource]
 
 
+@dataclass(frozen=True)
+class NumberedObjectRenderItem:
+    source: NumberedObjectSource
+    object: NumberedObject
+
+
+@dataclass(frozen=True)
+class NumberedObjectRenderContext:
+    items: list[NumberedObjectRenderItem]
+    objects_by_id: dict[str, NumberedObject]
+    current_page_output_path: str
+
+
 def _parse_attrs(
     raw: str | None,
     report: ValidationReport,
@@ -180,6 +193,108 @@ def collect_numbered_object_sources(
         report=report,
         source_path=source_path,
     ).sources
+
+
+def expand_shorthand_references(
+    body: str,
+    *,
+    context: NumberedObjectRenderContext,
+    report: ValidationReport,
+    source_path: Path,
+) -> str:
+    lines = body.splitlines(keepends=True)
+    expanded_lines: list[str] = []
+    in_fence = False
+    fence_marker = ""
+
+    for line in lines:
+        stripped = line.lstrip()
+        if in_fence:
+            expanded_lines.append(line)
+            if stripped.startswith(fence_marker):
+                in_fence = False
+                fence_marker = ""
+            continue
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            fence_marker = stripped[:3]
+            in_fence = True
+            expanded_lines.append(line)
+            continue
+        expanded_lines.append(
+            _expand_shorthand_references_in_line(
+                line,
+                context=context,
+                report=report,
+                source_path=source_path,
+            )
+        )
+
+    return "".join(expanded_lines)
+
+
+def _expand_shorthand_references_in_line(
+    line: str,
+    *,
+    context: NumberedObjectRenderContext,
+    report: ValidationReport,
+    source_path: Path,
+) -> str:
+    code_spans = _code_span_ranges(line)
+    pieces: list[str] = []
+    cursor = 0
+    for match in REFERENCE_RE.finditer(line):
+        if _position_in_ranges(match.start(), code_spans) or _looks_urlish(
+            line,
+            match.start(),
+        ):
+            continue
+        object_id = match.group("object_id")
+        obj = context.objects_by_id.get(object_id)
+        if obj is None:
+            report.add_error(
+                f"Unknown numbered object reference '@{object_id}'",
+                path=source_path,
+                field=f"ref:{object_id}",
+                next_action="Use a numbered object ID defined in this course",
+            )
+            continue
+        pieces.append(line[cursor : match.start()])
+        pieces.append(f"[{obj.reference_text}](raya:ref/{object_id})")
+        cursor = match.end()
+    if not pieces:
+        return line
+    pieces.append(line[cursor:])
+    return "".join(pieces)
+
+
+def _code_span_ranges(line: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    cursor = 0
+    while cursor < len(line):
+        start = line.find("`", cursor)
+        if start == -1:
+            break
+        tick_count = 1
+        while start + tick_count < len(line) and line[start + tick_count] == "`":
+            tick_count += 1
+        marker = "`" * tick_count
+        end = line.find(marker, start + tick_count)
+        if end == -1:
+            break
+        ranges.append((start, end + tick_count))
+        cursor = end + tick_count
+    return ranges
+
+
+def _position_in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool:
+    return any(start <= position < end for start, end in ranges)
+
+
+def _looks_urlish(line: str, position: int) -> bool:
+    prefix = line[:position]
+    token_start = max(prefix.rfind(" "), prefix.rfind("\t"), prefix.rfind("(")) + 1
+    token = prefix[token_start:]
+    return "://" in token or token.endswith("/")
 
 
 def page_number_prefix_from_source_path(source_path: str) -> str:
