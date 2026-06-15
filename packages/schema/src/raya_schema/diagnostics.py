@@ -34,6 +34,10 @@ class ValidationReport:
     def ok(self) -> bool:
         return not any(item.severity == "error" for item in self.diagnostics)
 
+    @property
+    def issues(self) -> list[Diagnostic]:
+        return self.diagnostics
+
     def add_error(
         self,
         message: str,
