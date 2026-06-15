@@ -216,7 +216,9 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     assert "colocated asset" in site_local_asset.read_text(encoding="utf-8")
 
 
-def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
+def test_rich_static_fixture_renders_markdown_math_code_and_assets(
+    tmp_path: Path,
+) -> None:
     course = _copy_render_fixture(tmp_path)
 
     report = build_course(course)
@@ -226,6 +228,10 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     nested_html = (course / "artifact" / "site" / "static-path" / "index.html").read_text(
         encoding="utf-8"
     )
+    math_authoring_html = (
+        course / "artifact" / "site" / "math-authoring" / "index.html"
+    ).read_text(encoding="utf-8")
+    math_authoring_visible = _visible_text(math_authoring_html)
 
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
     assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in html
@@ -264,6 +270,7 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert 'href="#fn1"' in html
     assert "&lt;script&gt;alert('fixture')&lt;/script&gt;" in html
     assert "<script>" not in html
+    assert 'href="math-authoring/index.html"' in html
 
     assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
     assert (
@@ -278,6 +285,35 @@ def test_render_fixture_rich_markdown_baseline(tmp_path: Path) -> None:
     assert '<span class="math inline">x_i</span>' not in nested_html
     assert "display math remain static" not in _visible_text(nested_html)
     assert "pre-rendered display math" in _visible_text(nested_html)
+
+    assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in math_authoring_html
+    assert (
+        '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">'
+        in math_authoring_html
+    )
+    assert "Math Authoring Fixture" in math_authoring_visible
+    assert "Inline And Display Math" in math_authoring_visible
+    assert "Vectors And Matrices" in math_authoring_visible
+    assert "Page Local Macros" in math_authoring_visible
+    assert "Sets Logic And Functions" in math_authoring_visible
+    assert "Aligned Derivations And Optimization" in math_authoring_visible
+    assert "Theorem Like Writing With Current Markdown" in math_authoring_visible
+    assert "Macro Redefinition" in math_authoring_visible
+    assert "mjx-container" in math_authoring_html
+    assert "This theorem-like block is authored Markdown" in math_authoring_visible
+    assert "Real theorem numbering and references are planned next" in math_authoring_visible
+    for raw_marker in (
+        "\\newcommand",
+        "\\renewcommand",
+        "\\begin{bmatrix}",
+        "\\rayaVec",
+        "\\fixtureNorm",
+        "\\forall",
+        "\\label",
+        "\\ref",
+    ):
+        assert raw_marker not in math_authoring_visible
+    assert "$" not in math_authoring_visible
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:
