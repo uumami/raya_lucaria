@@ -58,6 +58,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Print the validate/build/serve plan without starting a server",
     )
+    preview_parser.add_argument(
+        "--render-debug",
+        metavar="DIR",
+        help=(
+            "Capture renderer debug screenshots and summary JSON into DIR, "
+            "then stop the preview server"
+        ),
+    )
 
     run_parser = subparsers.add_parser(
         "run",

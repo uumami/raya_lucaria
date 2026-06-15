@@ -70,6 +70,14 @@ def test_cli_outputs_help() -> None:
     assert "freeze" in result.stdout
 
 
+def test_cli_preview_help_lists_render_debug_option() -> None:
+    result = run_cli("preview", "--help")
+
+    assert result.returncode == 0
+    assert "--render-debug" in result.stdout
+    assert "renderer debug screenshots" in result.stdout
+
+
 def test_cli_doctor_framework_context() -> None:
     result = run_cli("doctor")
     assert result.returncode == 0
