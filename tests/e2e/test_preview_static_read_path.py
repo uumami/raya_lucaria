@@ -11,6 +11,7 @@ from pathlib import Path
 from urllib.request import urlopen
 
 import pytest
+from raya_cli.render_debug import capture_render_debug
 
 ROOT = Path(__file__).resolve().parents[2]
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
@@ -337,6 +338,46 @@ def test_render_fixture_debug_summary_is_reset_between_runs(
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
     assert len(summary["captures"]) == 4
     assert all(capture["page"] != "stale" for capture in summary["captures"])
+
+
+def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> None:
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    debug_dir = tmp_path / "renderer-debug"
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        result = capture_render_debug(
+            base_url=handle.base_url,
+            site_dir=course / "artifact" / "site",
+            output_dir=debug_dir,
+        )
+    finally:
+        handle.close()
+
+    assert result.ok, [diagnostic.format() for diagnostic in result.diagnostics]
+    expected_screenshots = {
+        "desktop-index.png",
+        "mobile-index.png",
+        "desktop-static-path.png",
+        "mobile-static-path.png",
+    }
+    assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
+    assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
+
+    summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
+    assert len(summary["captures"]) == 4
+    assert {
+        Path(capture["screenshot"]).name for capture in summary["captures"]
+    } == expected_screenshots
+    assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
+    assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
+    assert all(capture["external_requests"] == [] for capture in summary["captures"])
+    assert all(capture["horizontal_overflow"] <= 1 for capture in summary["captures"])
 
 
 @contextlib.contextmanager
