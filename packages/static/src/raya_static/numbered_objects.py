@@ -60,6 +60,11 @@ class _FenceState:
     close_indent_max: int
 
 
+@dataclass(frozen=True)
+class _LinkDestinationParse:
+    has_inline_title: bool
+
+
 def _parse_attrs(
     raw: str | None,
     report: ValidationReport,
@@ -405,17 +410,7 @@ def _is_indented_code_line(line: str) -> bool:
 
 
 def _is_reference_definition_line(line: str) -> bool:
-    stripped = _line_without_blockquote_prefix(line).lstrip()
-    if not stripped.startswith("["):
-        return False
-    if stripped.startswith("[^"):
-        return False
-    label_end = _find_link_label_end(stripped, 0)
-    if label_end == -1:
-        return False
-    if label_end + 1 >= len(stripped) or stripped[label_end + 1] != ":":
-        return False
-    return stripped[label_end + 2 :].strip() != ""
+    return _reference_definition_label(line) is not None
 
 
 def _reference_definition_allows_title_continuation(line: str) -> bool:
@@ -423,18 +418,10 @@ def _reference_definition_allows_title_continuation(line: str) -> bool:
     label_end = _find_link_label_end(stripped, 0)
     if label_end == -1:
         return False
-    destination_and_title = stripped[label_end + 2 :].strip()
-    if not destination_and_title:
+    parsed = _parse_link_destination_and_title(stripped[label_end + 2 :])
+    if parsed is None:
         return False
-    if destination_and_title.startswith("<"):
-        destination_end = destination_and_title.find(">")
-        if destination_end == -1:
-            return False
-        remainder = destination_and_title[destination_end + 1 :].strip()
-    else:
-        parts = destination_and_title.split(None, 1)
-        remainder = parts[1].strip() if len(parts) == 2 else ""
-    return not _starts_reference_title(remainder)
+    return not parsed.has_inline_title
 
 
 def _is_reference_definition_title_continuation_line(line: str) -> bool:
@@ -581,7 +568,7 @@ def _reference_definition_label(line: str) -> str | None:
         return None
     if label_end + 1 >= len(stripped) or stripped[label_end + 1] != ":":
         return None
-    if not stripped[label_end + 2 :].strip():
+    if _parse_link_destination_and_title(stripped[label_end + 2 :]) is None:
         return None
     return stripped[1:label_end]
 
@@ -592,34 +579,86 @@ def _normalize_reference_label(label: str) -> str:
 
 def _find_inline_link_end(line: str, open_paren: int) -> int:
     cursor = open_paren + 1
-    paren_depth = 0
-    in_angle_destination = False
-    title_quote: str | None = None
     while cursor < len(line):
-        char = line[cursor]
-        if _is_escaped(line, cursor):
+        if line[cursor] == ")" and not _is_escaped(line, cursor):
+            if _parse_link_destination_and_title(line[open_paren + 1 : cursor]):
+                return cursor
+        cursor += 1
+    return -1
+
+
+def _parse_link_destination_and_title(raw: str) -> _LinkDestinationParse | None:
+    value = raw.strip()
+    if not value:
+        return None
+    if value.startswith("<"):
+        destination_end = _find_closing_angle_destination(value)
+        if destination_end == -1:
+            return None
+    else:
+        destination_end = _find_bare_destination_end(value)
+        if destination_end == -1:
+            return None
+    remainder = value[destination_end:].strip()
+    if not remainder:
+        return _LinkDestinationParse(has_inline_title=False)
+    if _parse_link_title(remainder):
+        return _LinkDestinationParse(has_inline_title=True)
+    return None
+
+
+def _find_closing_angle_destination(value: str) -> int:
+    cursor = 1
+    while cursor < len(value):
+        char = value[cursor]
+        if char == ">" and not _is_escaped(value, cursor):
+            return cursor + 1
+        if char in {"\n", "\r"}:
+            return -1
+        cursor += 1
+    return -1
+
+
+def _find_bare_destination_end(value: str) -> int:
+    cursor = 0
+    paren_depth = 0
+    while cursor < len(value):
+        char = value[cursor]
+        if _is_escaped(value, cursor):
             cursor += 1
             continue
-        if title_quote is not None:
-            if char == title_quote or (title_quote == ")" and char == ")"):
-                title_quote = None
-            cursor += 1
-            continue
-        if in_angle_destination:
-            if char == ">":
-                in_angle_destination = False
-            cursor += 1
-            continue
+        if char.isspace():
+            break
         if char == "<":
-            in_angle_destination = True
-        elif char in {'"', "'"}:
-            title_quote = char
-        elif char == "(":
+            return -1
+        if char == "(":
             paren_depth += 1
         elif char == ")":
             if paren_depth == 0:
-                return cursor
+                break
             paren_depth -= 1
+        cursor += 1
+    if cursor == 0 or paren_depth != 0:
+        return -1
+    return cursor
+
+
+def _parse_link_title(value: str) -> bool:
+    if value.startswith('"') or value.startswith("'"):
+        delimiter = value[0]
+        close = _find_unescaped_delimiter(value, delimiter, 1)
+        return close != -1 and not value[close + 1 :].strip()
+    if value.startswith("("):
+        close = _find_unescaped_delimiter(value, ")", 1)
+        return close != -1 and not value[close + 1 :].strip()
+    return False
+
+
+def _find_unescaped_delimiter(value: str, delimiter: str, start: int) -> int:
+    cursor = start
+    while cursor < len(value):
+        if value[cursor] == delimiter and not _is_escaped(value, cursor):
+            return cursor
         cursor += 1
     return -1
 

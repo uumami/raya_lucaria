@@ -522,6 +522,50 @@ def test_expand_shorthand_references_ignores_pseudo_reference_definitions_in_cod
     assert "Use [code @missing]." in expanded
 
 
+def test_expand_shorthand_references_does_not_shield_malformed_reference_definition() -> None:
+    report = ValidationReport()
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={},
+    )
+
+    expanded = expand_shorthand_references(
+        "[label @missing]: <unterminated\n\nUse [label @missing].",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert not report.ok
+    messages = [diagnostic.message for diagnostic in report.diagnostics]
+    assert messages == [
+        "Unknown numbered object reference '@missing'",
+        "Unknown numbered object reference '@missing'",
+    ]
+    assert "[label @missing]: <unterminated" in expanded
+    assert "Use [label @missing]." in expanded
+
+
+def test_expand_shorthand_references_does_not_shield_malformed_inline_link() -> None:
+    report = ValidationReport()
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={},
+    )
+
+    expanded = expand_shorthand_references(
+        "[see @missing](bad dest)",
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert not report.ok
+    messages = [diagnostic.message for diagnostic in report.diagnostics]
+    assert messages == ["Unknown numbered object reference '@missing'"]
+    assert "[see @missing](bad dest)" in expanded
+
+
 def test_expand_shorthand_references_skips_reference_definition_labels() -> None:
     report = ValidationReport()
     obj = NumberedObject(
