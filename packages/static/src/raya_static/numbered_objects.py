@@ -285,7 +285,11 @@ def _expand_shorthand_references_in_line(
     report: ValidationReport,
     source_path: Path,
 ) -> str:
-    protected_ranges = _code_span_ranges(line) + _math_span_ranges(line)
+    protected_ranges = (
+        _code_span_ranges(line)
+        + _math_span_ranges(line)
+        + _markdown_link_or_image_ranges(line)
+    )
     pieces: list[str] = []
     cursor = 0
     for match in REFERENCE_RE.finditer(line):
@@ -414,6 +418,46 @@ def _math_span_ranges(line: str) -> list[tuple[int, int]]:
         ranges.append((start, end + 1))
         cursor = end + 1
     return ranges
+
+
+def _markdown_link_or_image_ranges(line: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    cursor = 0
+    while cursor < len(line):
+        label_start = line.find("[", cursor)
+        if label_start == -1:
+            break
+        start = (
+            label_start - 1
+            if label_start > 0 and line[label_start - 1] == "!"
+            else label_start
+        )
+        label_end = _find_unescaped_character(line, "]", label_start + 1)
+        if label_end == -1:
+            cursor = label_start + 1
+            continue
+        if label_end + 1 >= len(line) or line[label_end + 1] != "(":
+            cursor = label_end + 1
+            continue
+        destination_end = _find_unescaped_character(line, ")", label_end + 2)
+        if destination_end == -1:
+            cursor = label_end + 2
+            continue
+        ranges.append((start, destination_end + 1))
+        cursor = destination_end + 1
+    return ranges
+
+
+def _find_unescaped_character(line: str, character: str, start: int) -> int:
+    cursor = start
+    while cursor < len(line):
+        position = line.find(character, cursor)
+        if position == -1:
+            return -1
+        if not _is_escaped(line, position):
+            return position
+        cursor = position + 1
+    return -1
 
 
 def _find_unescaped_single_dollar(line: str, start: int) -> int:

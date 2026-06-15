@@ -228,12 +228,12 @@ def test_shorthand_reference_escapes_configured_label_markdown(
         "  numbered_objects:\n"
         "    sequences:\n"
         "      bracketed:\n"
-        "        label: Th]eorem\n"
+        "        label: Th[e\\or]em\n"
         "        style: margin\n"
         "    families:\n"
         "      bracketed:\n"
         "        sequence: bracketed\n"
-        "        label: Th]eorem\n",
+        "        label: Th[e\\or]em\n",
         encoding="utf-8",
     )
     home = course / "course" / "0_index.md"
@@ -263,8 +263,8 @@ def test_shorthand_reference_escapes_configured_label_markdown(
     html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
     visible = _visible_text(html)
     assert 'href="math/index.html#raya-object-bracketed-result"' in html
-    assert ">Th]eorem 1.1</a>" in html
-    assert "Th]eorem 1.1" in visible
+    assert ">Th[e\\or]em 1.1</a>" in html
+    assert "Th[e\\or]em 1.1" in visible
     assert "raya:ref/bracketed-result" not in visible
 
 

@@ -340,6 +340,50 @@ def test_expand_shorthand_references_skips_code_spans_fences_and_urlish_text() -
     assert "```\n@pythagorean\n```" in expanded
 
 
+def test_expand_shorthand_references_skips_existing_link_and_image_syntax() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        "\n".join(
+            [
+                "[see @pythagorean](other.md)",
+                "[see](raya:@pythagorean)",
+                "![alt @pythagorean](image.png)",
+                "[explicit](raya:ref/pythagorean)",
+                "Use @pythagorean.",
+            ]
+        ),
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "[see @pythagorean](other.md)" in expanded
+    assert "[see](raya:@pythagorean)" in expanded
+    assert "![alt @pythagorean](image.png)" in expanded
+    assert "[explicit](raya:ref/pythagorean)" in expanded
+    assert expanded.count("[Theorem 1.1](raya:ref/pythagorean)") == 1
+
+
 def test_expand_shorthand_references_skips_blockquoted_fenced_code() -> None:
     report = ValidationReport()
     obj = NumberedObject(
