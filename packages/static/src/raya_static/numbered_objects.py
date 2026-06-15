@@ -246,7 +246,7 @@ def expand_shorthand_references(
     expanded_lines: list[str] = []
     fence_state: _FenceState | None = None
     in_display_math = False
-    in_reference_definition = False
+    reference_title_continuation_allowed = False
 
     for line in lines:
         if fence_state is not None:
@@ -263,13 +263,16 @@ def expand_shorthand_references(
             in_display_math = not in_display_math
             expanded_lines.append(line)
             continue
-        if in_reference_definition:
+        if reference_title_continuation_allowed:
             if _is_reference_definition_title_continuation_line(line):
                 expanded_lines.append(line)
+                reference_title_continuation_allowed = False
                 continue
-            in_reference_definition = False
+            reference_title_continuation_allowed = False
         if _is_reference_definition_line(line):
-            in_reference_definition = True
+            reference_title_continuation_allowed = (
+                _reference_definition_allows_title_continuation(line)
+            )
             expanded_lines.append(line)
             continue
         if (
@@ -409,11 +412,32 @@ def _is_reference_definition_line(line: str) -> bool:
     return stripped[label_end + 2 :].strip() != ""
 
 
+def _reference_definition_allows_title_continuation(line: str) -> bool:
+    stripped = _line_without_blockquote_prefix(line).lstrip()
+    label_end = _find_link_label_end(stripped, 0)
+    if label_end == -1:
+        return False
+    destination_and_title = stripped[label_end + 2 :].strip()
+    if not destination_and_title:
+        return False
+    if destination_and_title.startswith("<"):
+        destination_end = destination_and_title.find(">")
+        if destination_end == -1:
+            return False
+        remainder = destination_and_title[destination_end + 1 :].strip()
+    else:
+        parts = destination_and_title.split(None, 1)
+        remainder = parts[1].strip() if len(parts) == 2 else ""
+    return not _starts_reference_title(remainder)
+
+
 def _is_reference_definition_title_continuation_line(line: str) -> bool:
     stripped = _line_without_blockquote_prefix(line)
-    if not stripped.startswith(" ") and not stripped.startswith("\t"):
-        return False
-    return stripped.lstrip().startswith(('"', "'", "("))
+    return _starts_reference_title(stripped.lstrip())
+
+
+def _starts_reference_title(value: str) -> bool:
+    return value.startswith(('"', "'", "("))
 
 
 def _line_without_blockquote_prefix(line: str) -> str:
