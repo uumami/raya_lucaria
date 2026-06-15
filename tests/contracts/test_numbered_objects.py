@@ -277,7 +277,6 @@ def test_expand_shorthand_references_uses_reference_text_and_reports_unknowns() 
     context = NumberedObjectRenderContext(
         items=[NumberedObjectRenderItem(source=object_source, object=obj)],
         objects_by_id={"pythagorean": obj},
-        current_page_output_path="index.html",
     )
 
     expanded = expand_shorthand_references(
@@ -316,7 +315,6 @@ def test_expand_shorthand_references_skips_code_spans_fences_and_urlish_text() -
     context = NumberedObjectRenderContext(
         items=[],
         objects_by_id={"pythagorean": obj},
-        current_page_output_path="index.html",
     )
 
     expanded = expand_shorthand_references(
@@ -340,6 +338,49 @@ def test_expand_shorthand_references_skips_code_spans_fences_and_urlish_text() -
     assert "`@pythagorean`" in expanded
     assert "https://example.test/@pythagorean" in expanded
     assert "```\n@pythagorean\n```" in expanded
+
+
+def test_expand_shorthand_references_skips_blockquoted_fenced_code() -> None:
+    report = ValidationReport()
+    obj = NumberedObject(
+        id="pythagorean",
+        family="theorem",
+        sequence="theorem",
+        label="Theorem",
+        number="1.1",
+        title=None,
+        source_path="course/1_math/0_index.md",
+        page_id="math",
+        page_title="Math",
+        page_output_path="1_math/index.html",
+        href="1_math/#raya-object-pythagorean",
+        style="margin",
+    )
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={"pythagorean": obj},
+    )
+
+    expanded = expand_shorthand_references(
+        "\n".join(
+            [
+                "> [!NOTE]",
+                "> ```",
+                "> @pythagorean",
+                "> ```",
+                "",
+                "Use @pythagorean.",
+            ]
+        ),
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert "> @pythagorean" in expanded
+    assert "> [Theorem 1.1](raya:ref/pythagorean)" not in expanded
+    assert "Use [Theorem 1.1](raya:ref/pythagorean)." in expanded
 
 
 def test_stable_markdown_id_keeps_ref_namespace() -> None:

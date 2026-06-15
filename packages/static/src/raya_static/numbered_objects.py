@@ -16,6 +16,8 @@ DIRECTIVE_CLOSE_RE = re.compile(r"^ {0,3}:::\s*$")
 REFERENCE_RE = re.compile(
     r"(?<![\\A-Za-z0-9._%+-])@(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)"
 )
+OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
+FENCE_MARKER_RE = re.compile(r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})")
 PLACEHOLDER_PREFIX = "RAYA_NUMBERED_OBJECT_"
 
 
@@ -46,7 +48,6 @@ class NumberedObjectRenderItem:
 class NumberedObjectRenderContext:
     items: list[NumberedObjectRenderItem]
     objects_by_id: dict[str, NumberedObject]
-    current_page_output_path: str
 
 
 def _parse_attrs(
@@ -107,6 +108,16 @@ def _parse_attrs(
             path=source_path,
             field=f"line:{line_number}",
             next_action="Add an id attribute such as {#pythagorean}",
+        )
+    elif OBJECT_ID_RE.fullmatch(attrs["id"]) is None:
+        report.add_error(
+            f"Invalid numbered object ID '{attrs['id']}'",
+            path=source_path,
+            field=f"line:{line_number}",
+            next_action=(
+                "Use an ID that starts with a letter and contains only letters, "
+                "digits, underscores, or hyphens, such as {#pythagorean}"
+            ),
         )
     return attrs
 
@@ -208,15 +219,15 @@ def expand_shorthand_references(
     fence_marker = ""
 
     for line in lines:
-        stripped = line.lstrip()
+        marker = _fence_marker(line)
         if in_fence:
             expanded_lines.append(line)
-            if stripped.startswith(fence_marker):
+            if marker is not None and _matches_closing_fence(marker, fence_marker):
                 in_fence = False
                 fence_marker = ""
             continue
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            fence_marker = stripped[:3]
+        if marker is not None:
+            fence_marker = marker
             in_fence = True
             expanded_lines.append(line)
             continue
@@ -265,6 +276,17 @@ def _expand_shorthand_references_in_line(
         return line
     pieces.append(line[cursor:])
     return "".join(pieces)
+
+
+def _fence_marker(line: str) -> str | None:
+    match = FENCE_MARKER_RE.match(line)
+    if match is None:
+        return None
+    return match.group("marker")
+
+
+def _matches_closing_fence(marker: str, opening_marker: str) -> bool:
+    return marker[0] == opening_marker[0] and len(marker) >= len(opening_marker)
 
 
 def _code_span_ranges(line: str) -> list[tuple[int, int]]:

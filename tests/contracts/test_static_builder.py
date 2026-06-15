@@ -247,6 +247,56 @@ def test_adjacent_numbered_objects_render_as_separate_sections(tmp_path: Path) -
     assert "RAYA_NUMBERED_OBJECT_" not in _visible_text(html)
 
 
+def test_build_rejects_invalid_numbered_object_id(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#bad/id}\n"
+        "Invalid ID body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Invalid numbered object ID 'bad/id'"
+        and diagnostic.path == index
+        and diagnostic.field == "line:7"
+        and "{#pythagorean}" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_rejects_unknown_explicit_numbered_object_reference(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "See [missing theorem](raya:ref/missing-theorem).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message
+        == "Unknown numbered object reference 'raya:ref/missing-theorem'"
+        and diagnostic.path == index
+        and diagnostic.field == "link:raya:ref/missing-theorem"
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
 def test_build_collects_numbered_objects_from_configured_source_root(
     tmp_path: Path,
 ) -> None:

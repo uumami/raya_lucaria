@@ -107,10 +107,7 @@ def stable_markdown_id(target: str) -> str:
     value = stripped[len("raya:") :]
     value = value.split("#", 1)[0]
     value = value.split("?", 1)[0]
-    stable_id = unquote(value.strip())
-    if stable_id.startswith("ref/"):
-        return stable_id
-    return stable_id
+    return unquote(value.strip())
 
 
 def resolve_local_markdown_target(

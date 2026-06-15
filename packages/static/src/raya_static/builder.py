@@ -252,7 +252,6 @@ def build_course(course_path: str | Path) -> ValidationReport:
         numbered_context = NumberedObjectRenderContext(
             items=numbered_object_collection.items_by_page_id.get(page.id, []),
             objects_by_id=numbered_object_collection.objects_by_id,
-            current_page_output_path=page.output_path,
         )
         rendered_page = _render_page(
             page=page,
