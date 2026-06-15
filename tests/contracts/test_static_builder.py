@@ -215,6 +215,38 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     assert "mjx-container" in math_html
 
 
+def test_adjacent_numbered_objects_render_as_separate_sections(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#first-adjacent title=\"First adjacent theorem\"}\n"
+        "First body.\n"
+        ":::\n"
+        "::: theorem {#second-adjacent title=\"Second adjacent theorem\"}\n"
+        "Second body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert html.count('<section id="raya-object-') == 2
+    assert 'id="raya-object-first-adjacent"' in html
+    assert 'id="raya-object-second-adjacent"' in html
+    assert (
+        html.count(
+            'class="raya-numbered-object raya-numbered-object--margin '
+            'raya-numbered-object--theorem"'
+        )
+        == 2
+    )
+    assert "RAYA_NUMBERED_OBJECT_" not in _visible_text(html)
+
+
 def test_build_collects_numbered_objects_from_configured_source_root(
     tmp_path: Path,
 ) -> None:

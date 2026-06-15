@@ -162,7 +162,7 @@ def prepare_numbered_object_markdown(
             )
 
         placeholder = f"{PLACEHOLDER_PREFIX}{len(sources)}"
-        output_lines.append(placeholder)
+        output_lines.extend(["", placeholder, ""])
         sources.append(
             NumberedObjectSource(
                 placeholder=placeholder,

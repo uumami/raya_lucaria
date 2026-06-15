@@ -218,7 +218,7 @@ Body.
     )
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    assert prepared.body == "RAYA_NUMBERED_OBJECT_0\n"
+    assert prepared.body == "\nRAYA_NUMBERED_OBJECT_0\n\n"
     assert prepared.sources[0].id == "indented"
 
 
