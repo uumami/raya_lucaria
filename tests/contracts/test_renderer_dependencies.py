@@ -161,6 +161,53 @@ def test_render_debug_report_module_and_guidance_are_declared() -> None:
         assert "index.html" in text
 
 
+def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
+    professor_paths = (
+        ROOT / "docs" / "guides" / "en" / "professors" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "profesores" / "index.md",
+    )
+    student_paths = (
+        ROOT / "docs" / "guides" / "en" / "students" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "estudiantes" / "index.md",
+    )
+    contributor_paths = (
+        ROOT / "docs" / "guides" / "en" / "contributors" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "colaboradores" / "index.md",
+    )
+    agent_paths = (
+        ROOT / "docs" / "guides" / "en" / "agents" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "agentes" / "index.md",
+    )
+
+    for path in professor_paths:
+        text = path.read_text(encoding="utf-8")
+        assert "2_math_authoring/0_index.md" in text
+        assert "\\begin{bmatrix}" in text
+        assert "\\newcommand" in text
+        assert "\\renewcommand" in text
+        assert "theorem" in text.lower()
+
+    for path in student_paths:
+        text = path.read_text(encoding="utf-8")
+        assert "\\begin{bmatrix}" in text
+        assert "unknown macro" in text or "macro desconocida" in text
+        assert "browser-side MathJax" in text
+
+    for path in contributor_paths:
+        text = path.read_text(encoding="utf-8")
+        assert "2_math_authoring/0_index.md" in text
+        assert "scripts/check-render-debug.sh" in text
+        assert "report.json" in text
+        assert "theorem" in text.lower()
+
+    for path in agent_paths:
+        text = path.read_text(encoding="utf-8")
+        assert "2_math_authoring/0_index.md" in text
+        assert "artifact/" in text
+        assert "raw" in text.lower() and "TeX" in text
+        assert "theorem" in text.lower()
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"
