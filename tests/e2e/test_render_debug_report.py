@@ -42,6 +42,92 @@ def test_copy_static_site_rejects_destination_under_source(tmp_path: Path) -> No
         copy_static_site(source, source / "copied")
 
 
+def test_inspection_fails_on_copied_site_raw_visible_tex(tmp_path: Path) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html>
+          <body>
+            <main><p>Clean generated page.</p></main>
+          </body>
+        </html>
+        """,
+    )
+    copied_site = tmp_path / "copied-site"
+    copied_site.mkdir()
+    (copied_site / "index.html").write_text(
+        """
+        <!doctype html>
+        <html>
+          <body>
+            <main>
+              <p>Visible math leaked as $x^2$ in body text.</p>
+              <code>$y^2$ is only a code sample.</code>
+            </main>
+          </body>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(
+        site_dir=site_dir,
+        debug_dir=debug_dir,
+        copied_site_dir=copied_site,
+    )
+
+    raw_tex_diagnostics = [
+        diagnostic
+        for diagnostic in report["diagnostics"]
+        if "raw visible TeX" in diagnostic["message"]
+    ]
+    assert report["ok"] is False
+    assert raw_tex_diagnostics
+    assert all(str(copied_site) in diagnostic["path"] for diagnostic in raw_tex_diagnostics)
+    assert any("$x^2$" in diagnostic["message"] for diagnostic in raw_tex_diagnostics)
+    assert all("$y^2$" not in diagnostic["message"] for diagnostic in raw_tex_diagnostics)
+
+
+def test_inspection_fails_on_real_blocked_renderer_resource(tmp_path: Path) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html>
+          <head>
+            <script src="https://cdn.jsdelivr.net/npm/mathjax/tex-chtml.js"></script>
+          </head>
+          <body><main><p>Renderer dependency fixture.</p></main></body>
+        </html>
+        """,
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    assert report["ok"] is False
+    assert any(
+        "browser-side or external renderer dependency" in diagnostic["message"]
+        for diagnostic in report["diagnostics"]
+    )
+
+
+def test_copy_static_site_rejects_destination_containing_source(tmp_path: Path) -> None:
+    work = tmp_path / "work"
+    source = work / "site"
+    source.mkdir(parents=True)
+    sentinel = work / "sentinel.txt"
+    (source / "index.html").write_text("<html></html>", encoding="utf-8")
+    sentinel.write_text("keep", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="destination must not contain source"):
+        copy_static_site(source, work)
+
+    assert source.is_dir()
+    assert (source / "index.html").is_file()
+    assert sentinel.read_text(encoding="utf-8") == "keep"
+
+
 def _write_debug_fixture(
     tmp_path: Path,
     index_html: str,

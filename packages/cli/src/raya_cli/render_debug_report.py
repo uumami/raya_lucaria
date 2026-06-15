@@ -11,6 +11,15 @@ from typing import Any
 
 
 RENDER_DEBUG_VIEWPORT_NAMES = ("desktop", "mobile")
+RENDER_RAW_TEX_MARKERS = (
+    "\\rayaVec",
+    "\\argmax",
+    "\\renewcommand",
+    "\\fixtureUnit",
+    "\\begin{bmatrix}",
+    "a^2 + b^2 = c^2",
+)
+SUPPORT_TEXT_TAGS = {"script", "style", "code", "pre", "kbd", "samp", "textarea"}
 BLOCKED_RENDERER_FRAGMENTS = (
     "mathjax.js",
     "tex-chtml",
@@ -67,6 +76,8 @@ def inspect_render_debug(
 def copy_static_site(site_dir: str | Path, destination: str | Path) -> Path:
     source = Path(site_dir)
     target = Path(destination)
+    if not source.is_dir():
+        raise ValueError("static site source must be an existing directory")
     source_resolved = source.resolve()
     target_resolved = target.resolve()
     if target_resolved == source_resolved:
@@ -77,6 +88,12 @@ def copy_static_site(site_dir: str | Path, destination: str | Path) -> Path:
         pass
     else:
         raise ValueError("static site copy destination must not be inside source")
+    try:
+        source_resolved.relative_to(target_resolved)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("static site copy destination must not contain source")
     if target.exists():
         shutil.rmtree(target)
     shutil.copytree(source, target)
@@ -326,6 +343,23 @@ def _inspect_static_site(
             ),
             details={"failures": failures},
         )
+        raw_tex_markers = _raw_tex_markers_from_text(_visible_text_from_html(text))
+        _add_check(
+            report,
+            check_id=f"{check_prefix}:raw-tex:{_relative_id(site_dir, html_path)}",
+            status="fail" if raw_tex_markers else "pass",
+            path=html_path,
+            message=(
+                f"raw visible TeX in {html_path}: {raw_tex_markers}"
+                if raw_tex_markers
+                else f"no raw visible TeX in {html_path}"
+            ),
+            next_action=(
+                "Inspect generated HTML and fix build-time math diagnostics."
+                if raw_tex_markers
+                else None
+            ),
+        )
 
     if math_present:
         _inspect_local_mathjax_resources(site_dir, report, context=context)
@@ -483,6 +517,57 @@ class _RendererResourceParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._in_inline_script:
             self.resource_values.append(data)
+
+
+def _visible_text_from_html(text: str) -> str:
+    parser = _VisibleTextParser()
+    parser.feed(text)
+    parser.close()
+    return " ".join(parser.text_parts)
+
+
+class _VisibleTextParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.text_parts: list[str] = []
+        self._support_depth = 0
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],  # noqa: ARG002
+    ) -> None:
+        if tag.lower() in SUPPORT_TEXT_TAGS:
+            self._support_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in SUPPORT_TEXT_TAGS and self._support_depth > 0:
+            self._support_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._support_depth == 0:
+            self.text_parts.append(data)
+
+
+def _raw_tex_markers_from_text(visible_text: str) -> list[str]:
+    markers: list[str] = []
+    for marker in RENDER_RAW_TEX_MARKERS:
+        if marker in visible_text:
+            markers.append(marker)
+    dollar_pattern = r"(?<!\\)(\${1,2})(?!\s)([^$\n]{1,200}?)(?<!\s)\1"
+    for match in re.finditer(dollar_pattern, visible_text):
+        candidate = match.group(0)
+        if _looks_like_math_payload(match.group(2)) and candidate not in markers:
+            markers.append(candidate)
+    for match in re.finditer(r"\\[A-Za-z]+(?=[\s{(\[])", visible_text):
+        candidate = match.group(0)
+        if candidate not in markers:
+            markers.append(candidate)
+    return markers
+
+
+def _looks_like_math_payload(payload: str) -> bool:
+    return bool(re.search(r"[\\^_={}]", payload))
 
 
 def _expected_page_names(site_dir: Path) -> list[str]:
