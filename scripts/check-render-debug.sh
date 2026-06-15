@@ -69,6 +69,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
+fail_with_report() {
+  CLEANUP_DEBUG=0
+  CLEANUP_COPIED_SITE=0
+  echo "check-render-debug: debug report $DEBUG_DIR/index.html" >&2
+  exit 1
+}
+
 if [[ "${INSPECT_ONLY:-0}" == "1" ]]; then
   SITE_DIR="$INSPECT_SITE_DIR"
   DEBUG_DIR="$INSPECT_DEBUG_DIR"
@@ -93,17 +100,18 @@ else
   COPIED_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/raya-render-site-copy.XXXXXX")"
   CLEANUP_COPIED_SITE=1
   cp -R "$SITE_DIR"/. "$COPIED_SITE_DIR"/
+  if [[ -n "${RAYA_RENDER_DEBUG_BREAK_COPIED_SITE:-}" ]]; then
+    rm -f "$COPIED_SITE_DIR/_raya/render/math/mathjax.css"
+  fi
 fi
 
 if [[ -n "${COPIED_SITE_DIR:-}" ]]; then
   if ! uv run python -m raya_cli.render_debug_report "$SITE_DIR" "$DEBUG_DIR" "$COPIED_SITE_DIR"; then
-    echo "check-render-debug: debug report $DEBUG_DIR/index.html" >&2
-    exit 1
+    fail_with_report
   fi
 else
   if ! uv run python -m raya_cli.render_debug_report "$SITE_DIR" "$DEBUG_DIR"; then
-    echo "check-render-debug: debug report $DEBUG_DIR/index.html" >&2
-    exit 1
+    fail_with_report
   fi
 fi
 

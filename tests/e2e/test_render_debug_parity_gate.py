@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -175,6 +176,39 @@ def test_render_debug_parity_gate_report_is_written_on_failure(tmp_path: Path) -
         "missing or empty screenshot" in item["message"]
         for item in report["diagnostics"]
     )
+
+
+def test_render_debug_parity_gate_preserves_default_temp_report_on_failure(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    result = run_gate(
+        env={
+            "RAYA_RENDER_DEBUG_COURSE": str(course),
+            "RAYA_RENDER_DEBUG_BREAK_COPIED_SITE": "1",
+        },
+    )
+
+    assert result.returncode == 1
+    match = re.search(r"check-render-debug: debug report (?P<path>.+)", result.stderr)
+    assert match is not None, result.stderr
+    report_path = Path(match.group("path"))
+    assert report_path.is_file()
+    report_json_path = report_path.with_name("report.json")
+    assert report_json_path.is_file()
+    report = json.loads(report_json_path.read_text(encoding="utf-8"))
+    assert report["ok"] is False
+    assert any(
+        "missing local MathJax CSS" in item["message"]
+        or "raya-render-site-copy" in item["path"]
+        for item in report["diagnostics"]
+    )
+    copied_site_dir = report.get("copied_site_dir")
+    shutil.rmtree(report_path.parent, ignore_errors=True)
+    if isinstance(copied_site_dir, str):
+        shutil.rmtree(copied_site_dir, ignore_errors=True)
 
 
 def test_render_debug_parity_gate_fails_on_horizontal_overflow(tmp_path: Path) -> None:
