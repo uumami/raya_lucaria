@@ -96,6 +96,13 @@ def test_render_debug_parity_script_is_declared() -> None:
     assert "summary.json" in content
 
 
+def test_render_debug_parity_script_uses_uv_python() -> None:
+    script = (ROOT / "scripts" / "check-render-debug.sh").read_text(encoding="utf-8")
+
+    assert "uv run python -" in script
+    assert "\npython -" not in script
+
+
 def test_check_python_runs_render_debug_parity_gate_after_fixture_builds() -> None:
     script = (ROOT / "scripts" / "check-python.sh").read_text(encoding="utf-8")
 

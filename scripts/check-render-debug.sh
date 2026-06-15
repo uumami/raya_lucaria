@@ -82,7 +82,7 @@ else
   uv run raya preview "$COURSE" --port 0 --render-debug "$DEBUG_DIR"
 fi
 
-python - "$SITE_DIR" "$DEBUG_DIR" <<'PY'
+uv run python - "$SITE_DIR" "$DEBUG_DIR" <<'PY'
 from __future__ import annotations
 
 import json
