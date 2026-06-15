@@ -11,6 +11,7 @@ Run Python/Raya verification:
   - uv sync --python 3.10 --all-packages --dev
   - uv run pytest -q
   - representative fixture validate/build/inspect
+  - render-debug parity gate for the render fixture
   - docs validate/build/inspect
 
 Node/MathJax renderer dependency installation runs before Python/Raya checks so
@@ -64,6 +65,8 @@ for course in "${courses[@]}"; do
   run uv run raya build "$course"
   run uv run raya artifacts inspect "$course/artifact"
 done
+
+run scripts/check-render-debug.sh
 
 run uv run raya validate docs
 run uv run raya build docs
