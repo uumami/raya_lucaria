@@ -15,9 +15,9 @@ BUILT_IN_NUMBERED_OBJECT_SEQUENCES: dict[str, dict[str, str]] = {
     "example": {"label": "Example", "style": "margin"},
     "exercise": {"label": "Exercise", "style": "banded"},
     "assignment": {"label": "Assignment", "style": "banded"},
-    "figure": {"label": "Figure", "style": "margin"},
-    "table": {"label": "Table", "style": "margin"},
-    "equation": {"label": "Equation", "style": "margin"},
+    "figure": {"label": "Figure", "style": "caption"},
+    "table": {"label": "Table", "style": "caption"},
+    "equation": {"label": "Equation", "style": "equation"},
 }
 
 BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
@@ -69,7 +69,7 @@ class NumberedObject:
     sequence: str
     label: str
     number: str
-    title: str
+    title: str | None
     source_path: str
     page_id: str
     page_title: str
@@ -85,7 +85,7 @@ class NumberedObject:
     def anchor(self) -> str:
         return f"raya-object-{self.id}"
 
-    def to_json(self) -> dict[str, str]:
+    def to_json(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "family": self.family,
@@ -103,7 +103,7 @@ class NumberedObject:
             "style": self.style,
         }
 
-    def to_index_entry(self) -> dict[str, str]:
+    def to_index_entry(self) -> dict[str, Any]:
         return self.to_json()
 
 
@@ -466,6 +466,14 @@ def _validate_object_entry(
                 field=f"{field}.{key}",
                 next_action="Regenerate numbered objects index from validated course content",
             )
+    title = item.get("title")
+    if title is not None and not isinstance(title, str):
+        report.add_error(
+            "Numbered object entry title must be a string or null when present",
+            path=path,
+            field=f"{field}.title",
+            next_action="Use a string title, null, or omit title for untitled objects",
+        )
     label = item.get("label")
     number = item.get("number")
     reference_text = item.get("reference_text")

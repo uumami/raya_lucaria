@@ -34,6 +34,9 @@ def test_built_in_numbered_object_defaults_group_math_and_coursework() -> None:
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["equation"]["sequence"] == "equation"
     assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["theorem"]["style"] == "margin"
     assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["assignment"]["style"] == "banded"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["figure"]["style"] == "caption"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["table"]["style"] == "caption"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["equation"]["style"] == "equation"
     assert NUMBERED_OBJECT_INDEX_PATH == "data/numbered-objects.json"
 
 
@@ -200,6 +203,36 @@ def test_numbered_objects_index_validation_allows_untitled_objects(tmp_path) -> 
     missing_report = validate_numbered_objects_index(path)
 
     assert missing_report.ok
+
+
+def test_numbered_objects_index_validation_rejects_non_string_title(tmp_path) -> None:
+    index = build_numbered_objects_index(
+        "demo",
+        [
+            NumberedObject(
+                id="bad-title",
+                family="theorem",
+                sequence="theorem",
+                label="Theorem",
+                number="1.1",
+                title=None,
+                source_path="course/1_intro/0_index.md",
+                page_id="intro",
+                page_title="Intro",
+                page_output_path="1_intro/index.html",
+                href="1_intro/#raya-object-bad-title",
+                style="margin",
+            )
+        ],
+    )
+    index["objects"][0]["title"] = []
+    path = tmp_path / "numbered-objects-bad-title.json"
+    path.write_text(json.dumps(index), encoding="utf-8")
+
+    report = validate_numbered_objects_index(path)
+
+    assert not report.ok
+    assert any("title" in issue.message for issue in report.issues)
 
 
 def test_build_numbered_objects_index_accepts_positional_api() -> None:
