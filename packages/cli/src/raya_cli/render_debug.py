@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -33,7 +34,8 @@ def capture_render_debug(
     report = ValidationReport(context="preview")
     site_root = Path(site_dir)
     debug_dir = Path(output_dir)
-    _reset_render_debug_dir(debug_dir)
+    if not _reset_render_debug_dir(debug_dir, report):
+        return report
 
     browser_executable = _browser_executable(report)
     if browser_executable is None:
@@ -52,16 +54,27 @@ def capture_render_debug(
         )
         return report
 
-    external_requests: list[str] = []
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(
-            executable_path=str(browser_executable),
-            headless=True,
-            args=["--no-sandbox"],
-        )
+        try:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+        except Exception as exc:
+            report.add_error(
+                "Could not launch Chromium-compatible browser",
+                path=browser_executable,
+                next_action=(
+                    "Use the reference Docker workflow or set "
+                    f"RAYA_TEST_BROWSER to a working Chromium executable ({exc})"
+                ),
+            )
+            return report
         try:
             for viewport in RENDER_DEBUG_VIEWPORTS:
                 for page_name in _available_page_names(site_root):
+                    external_requests: list[str] = []
                     page = browser.new_page(viewport=viewport)
                     page.on(
                         "request",
@@ -72,18 +85,33 @@ def capture_render_debug(
                         ),
                     )
                     try:
-                        capture = _capture_render_debug_artifact(
-                            page,
-                            page_url=_page_url(base_url, page_name),
-                            debug_dir=debug_dir,
-                            page_name=page_name,
-                            viewport_name=viewport_name(viewport),
-                            viewport=viewport,
-                            external_requests=external_requests,
-                        )
+                        try:
+                            capture = _capture_render_debug_artifact(
+                                page,
+                                page_url=_page_url(base_url, page_name),
+                                debug_dir=debug_dir,
+                                page_name=page_name,
+                                viewport_name=viewport_name(viewport),
+                                viewport=viewport,
+                                external_requests=external_requests,
+                            )
+                        except Exception as exc:
+                            report.add_error(
+                                "Renderer debug browser inspection failed",
+                                path=debug_dir,
+                                field=_page_url(base_url, page_name),
+                                next_action=(
+                                    "Inspect the generated site, browser path, "
+                                    f"and render debug output directory ({exc})"
+                                ),
+                            )
+                            continue
                         _add_capture_diagnostics(report, debug_dir, capture)
                     finally:
-                        page.close()
+                        try:
+                            page.close()
+                        except Exception:
+                            pass
         finally:
             browser.close()
 
@@ -160,7 +188,7 @@ def _capture_render_debug_artifact(
     page.goto(page_url, wait_until="networkidle")
     screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
     page.screenshot(path=str(screenshot_path), full_page=True)
-    visible_text = page.locator("body").inner_text()
+    visible_text = _visible_non_code_text(page)
     raw_tex_markers = raw_tex_markers_from_text(visible_text)
     overflow = page.evaluate(
         "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
@@ -182,6 +210,17 @@ def _capture_render_debug_artifact(
     }
     _append_summary(debug_dir / "summary.json", capture)
     return capture
+
+
+def _visible_non_code_text(page: Any) -> str:
+    return page.evaluate(
+        """() => {
+            const clone = document.body.cloneNode(true);
+            clone.querySelectorAll('code, pre, kbd, samp, script, style, textarea')
+              .forEach((node) => node.remove());
+            return clone.innerText || '';
+        }"""
+    )
 
 
 def _append_summary(summary_path: Path, capture: dict[str, object]) -> None:
@@ -219,11 +258,31 @@ def _add_capture_diagnostics(
         )
 
 
-def _reset_render_debug_dir(debug_dir: Path) -> None:
-    debug_dir.mkdir(parents=True, exist_ok=True)
+def _reset_render_debug_dir(debug_dir: Path, report: ValidationReport) -> bool:
+    try:
+        debug_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        report.add_error(
+            "Renderer debug output directory cannot be created",
+            path=debug_dir,
+            next_action=f"Choose a writable --render-debug directory ({exc})",
+        )
+        return False
     for path in debug_dir.iterdir():
         if path.name == "summary.json" or path.name in _render_debug_screenshot_names():
-            path.unlink()
+            if path.is_file() or path.is_symlink():
+                path.unlink()
+                continue
+            report.add_error(
+                "Renderer debug output path blocks screenshot cleanup",
+                path=path,
+                next_action=(
+                    "Remove the blocking directory or choose a fresh "
+                    "--render-debug directory"
+                ),
+            )
+            return False
+    return True
 
 
 def _render_debug_screenshot_names() -> set[str]:
@@ -235,7 +294,24 @@ def _render_debug_screenshot_names() -> set[str]:
 
 
 def raw_tex_markers_from_text(visible_text: str) -> list[str]:
-    return [marker for marker in RENDER_RAW_TEX_MARKERS if marker in visible_text]
+    markers: list[str] = []
+    for marker in RENDER_RAW_TEX_MARKERS:
+        if marker in visible_text:
+            markers.append(marker)
+    dollar_pattern = r"(?<!\\)(\${1,2})(?!\s)([^$\n]{1,200}?)(?<!\s)\1"
+    for match in re.finditer(dollar_pattern, visible_text):
+        candidate = match.group(0)
+        if _looks_like_math_payload(match.group(2)) and candidate not in markers:
+            markers.append(candidate)
+    for match in re.finditer(r"\\[A-Za-z]+(?=[\s{(\[])", visible_text):
+        candidate = match.group(0)
+        if candidate not in markers:
+            markers.append(candidate)
+    return markers
+
+
+def _looks_like_math_payload(payload: str) -> bool:
+    return bool(re.search(r"[\\^_={}]", payload))
 
 
 def viewport_name(viewport: dict[str, int]) -> str:

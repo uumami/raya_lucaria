@@ -376,6 +376,66 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
     assert all(capture["horizontal_overflow"] <= 1 for capture in summary["captures"])
 
 
+def test_capture_render_debug_fails_on_visible_raw_tex(tmp_path: Path) -> None:
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "index.html").write_text(
+        "<!doctype html><html><body><main>$x^2$ and \\badMacro{y}</main></body></html>",
+        encoding="utf-8",
+    )
+    debug_dir = tmp_path / "renderer-debug"
+
+    with _serve(site) as base_url:
+        result = capture_render_debug(
+            base_url=base_url,
+            site_dir=site,
+            output_dir=debug_dir,
+        )
+
+    assert not result.ok
+    assert any(
+        "Renderer debug found visible raw TeX" in diagnostic.message
+        for diagnostic in result.diagnostics
+    )
+    summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
+    markers = {
+        marker
+        for capture in summary["captures"]
+        for marker in capture["raw_tex_markers"]
+    }
+    assert "$x^2$" in markers
+    assert "\\badMacro" in markers
+
+
+def test_capture_render_debug_reports_invalid_browser_executable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "index.html").write_text(
+        "<!doctype html><html><body><main>No math here.</main></body></html>",
+        encoding="utf-8",
+    )
+    fake_browser = tmp_path / "not-browser"
+    fake_browser.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake_browser.chmod(0o755)
+    monkeypatch.setenv("RAYA_TEST_BROWSER", str(fake_browser))
+
+    with _serve(site) as base_url:
+        result = capture_render_debug(
+            base_url=base_url,
+            site_dir=site,
+            output_dir=tmp_path / "renderer-debug",
+        )
+
+    assert not result.ok
+    assert any(
+        "Could not launch Chromium-compatible browser" in diagnostic.message
+        for diagnostic in result.diagnostics
+    )
+
+
 @contextlib.contextmanager
 def _serve(directory: Path):
     handler = lambda *args, **kwargs: SimpleHTTPRequestHandler(  # noqa: E731
