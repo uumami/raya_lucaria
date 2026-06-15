@@ -305,12 +305,22 @@ def _expand_shorthand_references_in_line(
             )
             continue
         pieces.append(line[cursor : match.start()])
-        pieces.append(f"[{obj.reference_text}](raya:ref/{object_id})")
+        pieces.append(
+            f"[{_escape_markdown_link_label(obj.reference_text)}](raya:ref/{object_id})"
+        )
         cursor = match.end()
     if not pieces:
         return line
     pieces.append(line[cursor:])
     return "".join(pieces)
+
+
+def _escape_markdown_link_label(label: str) -> str:
+    return (
+        label.replace("\\", "\\\\")
+        .replace("[", "\\[")
+        .replace("]", "\\]")
+    )
 
 
 def _fence_marker(line: str) -> str | None:

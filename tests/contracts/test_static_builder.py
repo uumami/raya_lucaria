@@ -215,6 +215,59 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     assert "mjx-container" in math_html
 
 
+def test_shorthand_reference_escapes_configured_label_markdown(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    shutil.rmtree(course / "course" / "1_unit")
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        + "\n"
+        "render:\n"
+        "  numbered_objects:\n"
+        "    sequences:\n"
+        "      bracketed:\n"
+        "        label: Th]eorem\n"
+        "        style: margin\n"
+        "    families:\n"
+        "      bracketed:\n"
+        "        sequence: bracketed\n"
+        "        label: Th]eorem\n",
+        encoding="utf-8",
+    )
+    home = course / "course" / "0_index.md"
+    home.write_text(
+        home.read_text(encoding="utf-8") + "\n\nUse @bracketed-result.\n",
+        encoding="utf-8",
+    )
+    math_page = course / "course" / "1_math" / "0_index.md"
+    math_page.parent.mkdir(parents=True)
+    math_page.write_text(
+        "---\n"
+        "id: math\n"
+        "title: Math\n"
+        "summary: Numbered object rendering fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Math\n\n"
+        "::: bracketed {#bracketed-result title=\"Bracketed result\"}\n"
+        "Body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    visible = _visible_text(html)
+    assert 'href="math/index.html#raya-object-bracketed-result"' in html
+    assert ">Th]eorem 1.1</a>" in html
+    assert "Th]eorem 1.1" in visible
+    assert "raya:ref/bracketed-result" not in visible
+
+
 def test_adjacent_numbered_objects_render_as_separate_sections(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
