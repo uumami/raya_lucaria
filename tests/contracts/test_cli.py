@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -9,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
+RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 
 
 def run_cli(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
@@ -32,6 +34,7 @@ def run_cli(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
+        timeout=30,
     )
 
 
@@ -115,6 +118,31 @@ def test_cli_build_success(tmp_path: Path) -> None:
     assert "Course artifact build passed" in result.stdout
     assert "outputs written:" in result.stdout
     assert (course / "artifact" / "manifest.json").exists()
+
+
+def test_cli_preview_render_debug_writes_artifacts_and_exits(tmp_path: Path) -> None:
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    debug_dir = tmp_path / "renderer-debug"
+
+    result = run_cli(
+        "preview",
+        str(course),
+        "--port",
+        "0",
+        "--render-debug",
+        str(debug_dir),
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "render_debug=" in result.stdout
+    assert str(debug_dir) in result.stdout
+    assert (debug_dir / "desktop-index.png").stat().st_size > 0
+    assert (debug_dir / "mobile-index.png").stat().st_size > 0
+    summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
+    assert len(summary["captures"]) == 4
+    assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
+    assert all(capture["external_requests"] == [] for capture in summary["captures"])
 
 
 def test_cli_build_failure(tmp_path: Path) -> None:

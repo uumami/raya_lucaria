@@ -14,6 +14,7 @@ from raya_cli.preview import (
     DEFAULT_PREVIEW_PORT,
     create_preview,
 )
+from raya_cli.render_debug import capture_render_debug
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -154,14 +155,29 @@ def main(argv: list[str] | None = None) -> int:
             dry_run=args.dry_run,
         )
         if not args.dry_run and handle.report.ok:
-            _print_preview_summary(handle)
+            _print_preview_summary(handle, render_debug_dir=args.render_debug)
         _print_report(handle.report)
         sys.stdout.flush()
         if not handle.report.ok:
             handle.close()
             return 1
         if args.dry_run:
+            handle.close()
             return 0
+        if args.render_debug:
+            if handle.base_url is None or handle.plan is None:
+                handle.close()
+                return 1
+            try:
+                debug_report = capture_render_debug(
+                    base_url=handle.base_url,
+                    site_dir=handle.plan.site_dir,
+                    output_dir=args.render_debug,
+                )
+                _print_report(debug_report)
+                return 0 if debug_report.ok else 1
+            finally:
+                handle.close()
         try:
             handle.serve_forever()
         except KeyboardInterrupt:
@@ -261,7 +277,7 @@ def _print_report(report: ValidationReport) -> None:
             print(f"- {diagnostic.format()}")
 
 
-def _print_preview_summary(handle) -> None:
+def _print_preview_summary(handle, *, render_debug_dir: str | None = None) -> None:
     if handle.plan is None or handle.base_url is None:
         return
     print("preview:")
@@ -270,3 +286,5 @@ def _print_preview_summary(handle) -> None:
     print(f"- artifact={handle.plan.artifact_dir}")
     if handle.plan.inspection_path.is_file():
         print(f"- inspection={handle.base_url}/_raya/inspect/index.html")
+    if render_debug_dir is not None:
+        print(f"- render_debug={render_debug_dir}")
