@@ -198,7 +198,7 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
         handle.close()
 
 
-def test_render_fixture_math_is_visible_and_uses_only_local_assets(
+def test_render_fixture_math_renders_in_browser_without_external_requests(
     tmp_path: Path,
 ) -> None:
     _run_render_fixture_math_check(tmp_path)
@@ -251,6 +251,19 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
                         )
                         _assert_no_horizontal_overflow(page)
                         _assert_visible_mathjax_output(page, minimum=2)
+
+                        page.goto(
+                            f"{base_url}/math-authoring/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        _assert_visible_mathjax_output(page, minimum=7)
+                        math_authoring_text = page.locator("body").inner_text()
+                        assert raw_tex_markers_from_text(math_authoring_text) == []
+                        assert (
+                            "Real theorem numbering and references are planned next"
+                            in math_authoring_text
+                        )
                     finally:
                         page.close()
             finally:
@@ -291,7 +304,7 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
 
     summary_path = debug_dir / "summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == 4
+    assert len(summary["captures"]) == len(expected_screenshots)
     captured_names = {
         Path(capture["screenshot"]).name for capture in summary["captures"]
     }
@@ -332,7 +345,9 @@ def test_render_fixture_debug_summary_is_reset_between_runs(
 
     assert result.ok, [diagnostic.format() for diagnostic in result.diagnostics]
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == 4
+    assert len(summary["captures"]) == len(RENDER_DEBUG_VIEWPORTS) * len(
+        RENDER_DEBUG_PAGE_NAMES
+    )
     assert all(capture["page"] != "stale" for capture in summary["captures"])
 
 
@@ -361,12 +376,14 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "mobile-index.png",
         "desktop-static-path.png",
         "mobile-static-path.png",
+        "desktop-math-authoring.png",
+        "mobile-math-authoring.png",
     }
     assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
     assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
 
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == 4
+    assert len(summary["captures"]) == len(expected_screenshots)
     assert {
         Path(capture["screenshot"]).name for capture in summary["captures"]
     } == expected_screenshots
@@ -386,6 +403,8 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "capture:index:mobile",
         "capture:static-path:desktop",
         "capture:static-path:mobile",
+        "capture:math-authoring:desktop",
+        "capture:math-authoring:mobile",
     }
     assert report_json["diagnostics"] == []
     assert "Render Debug Inspection Report" in report_html

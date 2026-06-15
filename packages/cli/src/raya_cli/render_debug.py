@@ -11,7 +11,7 @@ from raya_cli.render_debug_report import inspect_render_debug
 from raya_schema import ValidationReport
 
 
-RENDER_DEBUG_PAGE_NAMES = ("index", "static-path")
+RENDER_DEBUG_PAGE_NAMES = ("index", "static-path", "math-authoring")
 RENDER_DEBUG_VIEWPORTS = (
     {"width": 1280, "height": 900},
     {"width": 390, "height": 844},
@@ -142,6 +142,8 @@ def _available_page_names(site_root: Path) -> list[str]:
     page_names = ["index"]
     if (site_root / "static-path" / "index.html").is_file():
         page_names.append("static-path")
+    if (site_root / "math-authoring" / "index.html").is_file():
+        page_names.append("math-authoring")
     return page_names
 
 
