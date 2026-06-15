@@ -62,6 +62,21 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     assert (
         copied_site_dir / "_raya" / "render" / "math" / "mathjax.css"
     ).is_file()
+    assert (copied_site_dir / "index.html").read_text(
+        encoding="utf-8"
+    ) == (original_site_dir / "index.html").read_text(encoding="utf-8")
+    assert (
+        copied_site_dir / "_raya" / "render" / "math" / "mathjax.css"
+    ).read_text(encoding="utf-8") == (
+        original_site_dir / "_raya" / "render" / "math" / "mathjax.css"
+    ).read_text(
+        encoding="utf-8"
+    )
+    assert (
+        copied_site_dir / "_raya" / "render" / "math" / "fonts" / "fixture.woff2"
+    ).read_bytes() == (
+        original_site_dir / "_raya" / "render" / "math" / "fonts" / "fixture.woff2"
+    ).read_bytes()
     assert any(check["id"] == "site:copied-site" for check in report_json["checks"])
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
