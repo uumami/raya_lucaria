@@ -5,6 +5,7 @@ import html
 import json
 import re
 import shutil
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -66,9 +67,17 @@ def inspect_render_debug(
 def copy_static_site(site_dir: str | Path, destination: str | Path) -> Path:
     source = Path(site_dir)
     target = Path(destination)
+    source_resolved = source.resolve()
+    target_resolved = target.resolve()
+    if target_resolved == source_resolved:
+        raise ValueError("static site copy destination must differ from source")
+    try:
+        target_resolved.relative_to(source_resolved)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("static site copy destination must not be inside source")
     if target.exists():
-        if target.resolve() == source.resolve():
-            raise ValueError("static site copy destination must differ from source")
         shutil.rmtree(target)
     shutil.copytree(source, target)
     return target
@@ -303,7 +312,7 @@ def _inspect_static_site(
         text = html_path.read_text(encoding="utf-8")
         text_lower = text.lower()
         math_present = math_present or "<mjx-container" in text_lower
-        failures = _blocked_renderer_failures(text_lower, html_path)
+        failures = _blocked_renderer_failures(text, html_path)
         _add_check(
             report,
             check_id=f"{check_prefix}:renderer:{_relative_id(site_dir, html_path)}",
@@ -421,18 +430,59 @@ def _mathjax_font_failures(css: str, css_path: Path) -> list[str]:
     return failures
 
 
-def _blocked_renderer_failures(text_lower: str, html_path: Path) -> list[str]:
-    failures = [
-        f"browser-side or external renderer dependency {fragment!r} in {html_path}"
-        for fragment in BLOCKED_RENDERER_FRAGMENTS
-        if fragment in text_lower
-    ]
-    if LOCAL_MATHJAX_SCRIPT_RE.search(text_lower):
-        failures.append(
-            "browser-side or external renderer dependency "
-            f"'_raya/render/math/*.js' in {html_path}"
-        )
+def _blocked_renderer_failures(text: str, html_path: Path) -> list[str]:
+    parser = _RendererResourceParser()
+    parser.feed(text)
+    parser.close()
+    candidates = parser.resource_values
+    failures: list[str] = []
+    for candidate in candidates:
+        candidate_lower = candidate.lower()
+        for fragment in BLOCKED_RENDERER_FRAGMENTS:
+            if fragment in candidate_lower:
+                failures.append(
+                    "browser-side or external renderer dependency "
+                    f"{fragment!r} in {html_path}"
+                )
+        if LOCAL_MATHJAX_SCRIPT_RE.search(candidate_lower):
+            failures.append(
+                "browser-side or external renderer dependency "
+                f"'_raya/render/math/*.js' in {html_path}"
+            )
     return failures
+
+
+class _RendererResourceParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.resource_values: list[str] = []
+        self._in_inline_script = False
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        attributes = {name.lower(): value or "" for name, value in attrs}
+        tag_lower = tag.lower()
+        if tag_lower == "script":
+            src = attributes.get("src")
+            if src:
+                self.resource_values.append(src)
+                return
+            self._in_inline_script = True
+        elif tag_lower == "link":
+            href = attributes.get("href")
+            if href:
+                self.resource_values.append(href)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "script":
+            self._in_inline_script = False
+
+    def handle_data(self, data: str) -> None:
+        if self._in_inline_script:
+            self.resource_values.append(data)
 
 
 def _expected_page_names(site_dir: Path) -> list[str]:
