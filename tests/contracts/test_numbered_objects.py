@@ -17,6 +17,7 @@ from raya_static.numbered_objects import (
     REFERENCE_RE,
     collect_numbered_object_sources,
     compute_numbered_objects_for_page,
+    page_number_prefix_from_source_path,
     prepare_numbered_object_markdown,
     render_reference_link,
 )
@@ -215,6 +216,17 @@ Body.
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert prepared.body == "RAYA_NUMBERED_OBJECT_0\n"
     assert prepared.sources[0].id == "indented"
+
+
+def test_page_number_prefix_from_source_path_uses_ordered_path_parts() -> None:
+    assert (
+        page_number_prefix_from_source_path("course/2_vectors/3_norms/0_index.md")
+        == "2.3"
+    )
+    assert (
+        page_number_prefix_from_source_path("lessons/02-vectors/003_norms/index.md")
+        == "02.003"
+    )
 
 
 def test_reference_re_matches_shorthand_object_references() -> None:

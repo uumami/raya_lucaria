@@ -163,6 +163,155 @@ def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> 
     assert objects[0]["href"].endswith("#raya-object-main")
 
 
+def test_build_collects_numbered_objects_from_configured_source_root(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    shutil.move(str(course / "course"), str(course / "lessons"))
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        .replace("course_id: minimal-course", "course_id: numbered-demo")
+        .replace("source: course", "source: lessons"),
+        encoding="utf-8",
+    )
+    parent = course / "lessons" / "2_vectors" / "0_index.md"
+    parent.parent.mkdir(parents=True)
+    parent.write_text(
+        "---\n"
+        "id: vectors\n"
+        "title: Vectors\n"
+        "summary: Parent fixture page.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vectors\n",
+        encoding="utf-8",
+    )
+    page = course / "lessons" / "2_vectors" / "3_norms" / "0_index.md"
+    page.parent.mkdir(parents=True)
+    page.write_text(
+        "---\n"
+        "id: vector-norms\n"
+        "title: Vector Norms\n"
+        "summary: Numbered object fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vector Norms\n\n"
+        "::: theorem {#main}\n"
+        "Main theorem body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    first = numbered_index["objects"][0]
+    assert first["source_path"] == "lessons/2_vectors/3_norms/0_index.md"
+    assert first["number"] == "2.3.1"
+
+
+def test_build_rejects_duplicate_numbered_object_ids_across_pages(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    first = course / "course" / "1_unit" / "0_index.md"
+    first.write_text(
+        first.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#reused}\n"
+        "First body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    second = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    second.write_text(
+        second.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: exercise {#reused}\n"
+        "Second body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Duplicate numbered object ID 'reused'"
+        and diagnostic.path == second
+        and diagnostic.field == "line:7"
+        and "line:9" in (diagnostic.next_action or "")
+        and str(first) in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_build_rejects_unknown_numbered_object_family_without_crashing(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: unsupported {#mystery}\n"
+        "Mystery body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Unknown numbered object family 'unsupported'"
+        and diagnostic.path == index
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_numbered_object_collection_failure_keeps_existing_artifact(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    first_report = build_course(course)
+    numbered_index = course / "artifact" / "data" / "numbered-objects.json"
+    old_numbered_index = numbered_index.read_text(encoding="utf-8")
+    old_manifest = (course / "artifact" / "manifest.json").read_text(encoding="utf-8")
+    stale = course / "artifact" / "site" / "stale-numbered-marker.html"
+    stale.write_text("keep", encoding="utf-8")
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#broken}\n"
+        "Broken body.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert first_report.ok, [
+        diagnostic.format() for diagnostic in first_report.diagnostics
+    ]
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Numbered object directive is missing a closing ::: line"
+        for diagnostic in report.diagnostics
+    )
+    assert numbered_index.read_text(encoding="utf-8") == old_numbered_index
+    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
+    assert stale.read_text(encoding="utf-8") == "keep"
+
+
 def test_generated_html_is_escaped_and_static_linked(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     extra = course / "course" / "2_escape.md"

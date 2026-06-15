@@ -74,6 +74,7 @@ from raya_schema.runtime import (
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.math_renderer import MathRenderer
 from raya_static.numbered_objects import (
+    NumberedObjectSource,
     compute_numbered_objects_for_page,
     page_number_prefix_from_source_path,
     prepare_numbered_object_markdown,
@@ -227,6 +228,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     references_by_page = _references_by_page(references)
     math_renderer = MathRenderer()
     all_numbered_objects = _collect_numbered_objects(
+        course_root=root,
         pages=pages,
         config=numbered_config,
         report=report,
@@ -485,12 +487,13 @@ def _copy_source_assets(
 
 def _collect_numbered_objects(
     *,
+    course_root: Path,
     pages: list[ContentPage],
     config: NumberedObjectConfig,
     report: ValidationReport,
 ) -> list[NumberedObject]:
     objects: list[NumberedObject] = []
-    seen_ids: dict[str, Path] = {}
+    seen_ids: dict[str, NumberedObjectSource] = {}
 
     for page in pages:
         prepared = prepare_numbered_object_markdown(
@@ -512,20 +515,24 @@ def _collect_numbered_objects(
                 )
                 continue
             if source.id in seen_ids:
+                first_source = seen_ids[source.id]
                 report.add_error(
                     f"Duplicate numbered object ID '{source.id}'",
                     path=source.source_path,
                     field=f"line:{source.start_line}",
-                    next_action=f"Use a unique ID; first seen in {seen_ids[source.id]}",
+                    next_action=(
+                        "Use a unique ID; first seen in "
+                        f"{first_source.source_path} line:{first_source.start_line}"
+                    ),
                 )
                 continue
-            seen_ids[source.id] = source.source_path
+            seen_ids[source.id] = source
             page_sources.append(source)
 
         if not report.ok:
             continue
 
-        course_relative_source_path = (Path("course") / page.rel_path).as_posix()
+        course_relative_source_path = page.source_path.relative_to(course_root).as_posix()
         objects.extend(
             compute_numbered_objects_for_page(
                 page_sources,
