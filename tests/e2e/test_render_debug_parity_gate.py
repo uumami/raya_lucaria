@@ -72,11 +72,24 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     ).read_text(
         encoding="utf-8"
     )
-    assert (
-        copied_site_dir / "_raya" / "render" / "math" / "fonts" / "fixture.woff2"
-    ).read_bytes() == (
-        original_site_dir / "_raya" / "render" / "math" / "fonts" / "fixture.woff2"
-    ).read_bytes()
+    copied_fonts = sorted(
+        path.relative_to(copied_site_dir)
+        for path in (copied_site_dir / "_raya" / "render" / "math" / "fonts").glob(
+            "*.woff2"
+        )
+    )
+    original_fonts = sorted(
+        path.relative_to(original_site_dir)
+        for path in (original_site_dir / "_raya" / "render" / "math" / "fonts").glob(
+            "*.woff2"
+        )
+    )
+    assert copied_fonts == original_fonts
+    assert copied_fonts
+    for font_path in copied_fonts:
+        assert (copied_site_dir / font_path).read_bytes() == (
+            original_site_dir / font_path
+        ).read_bytes()
     assert any(check["id"] == "site:copied-site" for check in report_json["checks"])
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
