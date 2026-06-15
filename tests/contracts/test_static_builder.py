@@ -303,13 +303,17 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
     assert "Real theorem numbering and references are planned next" in math_authoring_visible
     assert "$10" in math_authoring_visible
+    assert "$" not in math_authoring_visible.replace("$10", "")
     for raw_marker in (
         "\\newcommand",
         "\\renewcommand",
         "\\begin{bmatrix}",
         "\\rayaVec",
         "\\fixtureNorm",
+        "\\mathbb",
         "\\forall",
+        "\\int",
+        "\\frac",
         "\\label",
         "\\ref",
     ):
