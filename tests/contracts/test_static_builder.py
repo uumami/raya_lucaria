@@ -366,6 +366,90 @@ def test_fenced_directive_after_nonclosing_backticks_stays_code(
     assert "RAYA_NUMBERED_OBJECT_" not in html
 
 
+def test_invalid_backtick_fence_opener_does_not_hide_numbered_directive(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "``` info `bad`\n"
+        "::: theorem {#still-real title=\"Still real\"}\n"
+        "Still real body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "still-real" in numbered_index["by_id"]
+    assert 'id="raya-object-still-real"' in html
+    assert "Still real" in _visible_text(html)
+    assert "Still real body." in _visible_text(html)
+
+
+def test_authored_numbered_object_placeholder_prefix_is_rejected(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "RAYA_NUMBERED_OBJECT_0\n\n"
+        "::: theorem {#real-placeholder-test}\n"
+        "Real object body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Reserved numbered object placeholder text"
+        and diagnostic.path == index
+        and diagnostic.field == "line:7"
+        and "Remove or reword" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
+def test_numbered_object_body_placeholder_prefix_is_rejected(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#body-placeholder-test}\n"
+        "RAYA_NUMBERED_OBJECT_0\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Reserved numbered object placeholder text"
+        and diagnostic.path == index
+        and diagnostic.field == "line:8"
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
 def test_explicit_reference_to_fenced_directive_text_fails(
     tmp_path: Path,
 ) -> None:

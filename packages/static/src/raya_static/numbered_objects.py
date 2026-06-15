@@ -17,7 +17,9 @@ REFERENCE_RE = re.compile(
     r"(?<![\\A-Za-z0-9._%+-])@(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)"
 )
 OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
-FENCE_MARKER_RE = re.compile(r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})")
+FENCE_MARKER_RE = re.compile(
+    r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
+)
 FENCE_CLOSE_RE = re.compile(
     r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})[ \t]*$"
 )
@@ -131,6 +133,11 @@ def prepare_numbered_object_markdown(
     report: ValidationReport,
     source_path: Path,
 ) -> PreparedNumberedMarkdown:
+    _validate_no_reserved_placeholder_text(
+        body,
+        report=report,
+        source_path=source_path,
+    )
     output_lines: list[str] = []
     sources: list[NumberedObjectSource] = []
     lines = body.splitlines()
@@ -310,7 +317,11 @@ def _fence_marker(line: str) -> str | None:
     match = FENCE_MARKER_RE.match(line)
     if match is None:
         return None
-    return match.group("marker")
+    marker = match.group("marker")
+    info = match.group("info")
+    if marker.startswith("`") and "`" in info:
+        return None
+    return marker
 
 
 def _is_closing_fence(line: str, opening_marker: str) -> bool:
@@ -322,6 +333,26 @@ def _is_closing_fence(line: str, opening_marker: str) -> bool:
 
 def _matches_closing_fence(marker: str, opening_marker: str) -> bool:
     return marker[0] == opening_marker[0] and len(marker) >= len(opening_marker)
+
+
+def _validate_no_reserved_placeholder_text(
+    body: str,
+    *,
+    report: ValidationReport,
+    source_path: Path,
+) -> None:
+    for line_number, line in enumerate(body.splitlines(), start=1):
+        if PLACEHOLDER_PREFIX not in line:
+            continue
+        report.add_error(
+            "Reserved numbered object placeholder text",
+            path=source_path,
+            field=f"line:{line_number}",
+            next_action=(
+                f"Remove or reword text containing '{PLACEHOLDER_PREFIX}'; "
+                "that prefix is reserved for generated numbered object placeholders."
+            ),
+        )
 
 
 def _is_display_math_delimiter(line: str) -> bool:
