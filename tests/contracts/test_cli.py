@@ -7,6 +7,8 @@ import sys
 import shutil
 from pathlib import Path
 
+from raya_cli.render_debug import RENDER_DEBUG_PAGE_NAMES, RENDER_DEBUG_VIEWPORTS, viewport_name
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
@@ -137,10 +139,18 @@ def test_cli_preview_render_debug_writes_artifacts_and_exits(tmp_path: Path) -> 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "render_debug=" in result.stdout
     assert str(debug_dir) in result.stdout
-    assert (debug_dir / "desktop-index.png").stat().st_size > 0
-    assert (debug_dir / "mobile-index.png").stat().st_size > 0
+    expected_screenshots = {
+        f"{viewport_name(viewport)}-{page_name}.png"
+        for viewport in RENDER_DEBUG_VIEWPORTS
+        for page_name in RENDER_DEBUG_PAGE_NAMES
+    }
+    assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
+    assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == 4
+    assert len(summary["captures"]) == len(expected_screenshots)
+    assert {
+        Path(capture["screenshot"]).name for capture in summary["captures"]
+    } == expected_screenshots
     assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
 
