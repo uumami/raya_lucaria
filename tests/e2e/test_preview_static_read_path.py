@@ -375,6 +375,23 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
     assert all(capture["horizontal_overflow"] <= 1 for capture in summary["captures"])
 
+    report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
+    report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
+
+    assert report_json["ok"] is True
+    assert report_json["summary_path"].endswith("summary.json")
+    assert report_json["html_report_path"].endswith("index.html")
+    assert {check["id"] for check in report_json["checks"]} >= {
+        "capture:index:desktop",
+        "capture:index:mobile",
+        "capture:static-path:desktop",
+        "capture:static-path:mobile",
+    }
+    assert report_json["diagnostics"] == []
+    assert "Render Debug Inspection Report" in report_html
+    assert 'href="desktop-index.png"' in report_html
+    assert 'href="mobile-static-path.png"' in report_html
+
 
 def test_capture_render_debug_fails_on_visible_raw_tex(tmp_path: Path) -> None:
     site = tmp_path / "site"
