@@ -302,6 +302,7 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "mjx-container" in math_authoring_html
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
     assert "Real theorem numbering and references are planned next" in math_authoring_visible
+    assert "$10" in math_authoring_visible
     for raw_marker in (
         "\\newcommand",
         "\\renewcommand",
@@ -313,7 +314,6 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
         "\\ref",
     ):
         assert raw_marker not in math_authoring_visible
-    assert "$" not in math_authoring_visible
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:

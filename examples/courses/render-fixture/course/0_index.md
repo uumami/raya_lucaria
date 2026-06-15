@@ -13,6 +13,8 @@ Raya Lucaria is an open educational framework and commons. Glintstone keeps the 
 
 Read the [static path page](raya:static-path) and inspect the [static path note](_assets/diagrams/static-path.txt).
 
+Read the [math authoring fixture](2_math_authoring/0_index.md) for current build-time MathJax authoring patterns.
+
 External links such as [example](https://example.com), [mail](mailto:test@example.com), [phone](tel:123), and [fragment](#fixture) are present so render tests can prove they are not rewritten as local assets.
 
 ## Rich Static Baseline

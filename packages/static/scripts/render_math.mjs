@@ -3,6 +3,7 @@ import { liteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
 import { RegisterHTMLHandler } from "@mathjax/src/js/handlers/html.js";
 import { TeX } from "@mathjax/src/js/input/tex.js";
 import { CHTML } from "@mathjax/src/js/output/chtml.js";
+import "@mathjax/src/mjs/util/asyncLoad/esm.js";
 import "@mathjax/src/js/input/tex/base/BaseConfiguration.js";
 import "@mathjax/src/js/input/tex/ams/AmsConfiguration.js";
 import "@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js";
@@ -53,7 +54,7 @@ function normalizeItem(item, index) {
   return item;
 }
 
-function renderPayload(payload) {
+async function renderPayload(payload) {
   if (typeof payload !== "object" || payload === null || !Array.isArray(payload.items)) {
     throw new Error('input must be a JSON object with an "items" array');
   }
@@ -66,7 +67,7 @@ function renderPayload(payload) {
     let item;
     try {
       item = normalizeItem(rawItem, index);
-      const node = renderer.document.convert(item.tex, { display: item.display });
+      const node = await renderer.document.convertPromise(item.tex, { display: item.display });
       const html = renderer.adaptor.outerHTML(node);
       const mathJaxError = extractMathJaxError(html);
       if (mathJaxError !== null) {
@@ -106,7 +107,7 @@ async function runJsonMode() {
   let output;
   try {
     const input = await readStdin();
-    output = renderPayload(JSON.parse(input));
+    output = await renderPayload(JSON.parse(input));
   } catch (error) {
     output = {
       rendered: [],
@@ -132,8 +133,8 @@ function assertSelfTest(condition, message) {
   }
 }
 
-function runSelfTest() {
-  const valid = renderPayload({
+async function runSelfTest() {
+  const valid = await renderPayload({
     items: [
       { id: "display", tex: "\\int_0^1 x^2 dx", display: true },
       { id: "macro-definition", tex: "\\newcommand{\\vect}[1]{\\mathbf{#1}}", display: false },
@@ -146,7 +147,7 @@ function runSelfTest() {
   assertSelfTest(valid.rendered[2].html.includes("MathJax"), "expected MathJax HTML output");
   assertSelfTest(valid.css.length > 0, "expected MathJax CSS output");
 
-  const invalid = renderPayload({
+  const invalid = await renderPayload({
     items: [{ id: "bad", tex: "\\unknownmacro", display: false }],
   });
   assertSelfTest(invalid.errors.length === 1, "expected unknown control sequence to fail");
@@ -159,7 +160,7 @@ function runSelfTest() {
 async function main() {
   const args = process.argv.slice(2);
   if (args.length === 1 && args[0] === "--self-test") {
-    runSelfTest();
+    await runSelfTest();
     return;
   }
   if (args.length > 0) {
