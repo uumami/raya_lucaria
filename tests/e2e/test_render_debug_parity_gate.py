@@ -80,6 +80,48 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     assert "Copied site:" in report_html
 
 
+def test_render_debug_parity_gate_inspects_explicit_copied_site_contents(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    copied_site = tmp_path / "copied-site"
+    shutil.copytree(site_dir, copied_site)
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir), str(copied_site))
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
+    assert report["ok"] is True
+    assert Path(report["copied_site_dir"]).resolve() == copied_site.resolve()
+    assert any(check["id"] == "site:copied-site" for check in report["checks"])
+
+    assert copied_site.is_dir()
+    assert copied_site.resolve() != site_dir.resolve()
+    assert not copied_site.resolve().is_relative_to(site_dir.resolve())
+    assert (copied_site / "index.html").read_text(encoding="utf-8") == (
+        site_dir / "index.html"
+    ).read_text(encoding="utf-8")
+    assert (
+        copied_site / "_raya" / "render" / "math" / "mathjax.css"
+    ).read_text(encoding="utf-8") == (
+        site_dir / "_raya" / "render" / "math" / "mathjax.css"
+    ).read_text(encoding="utf-8")
+    original_fonts = {
+        path.relative_to(site_dir): path
+        for path in site_dir.rglob("*.woff2")
+        if path.is_file()
+    }
+    copied_fonts = {
+        path.relative_to(copied_site): path
+        for path in copied_site.rglob("*.woff2")
+        if path.is_file()
+    }
+    assert original_fonts
+    assert set(copied_fonts) == set(original_fonts)
+    for relative_path, original_font in original_fonts.items():
+        assert copied_fonts[relative_path].read_bytes() == original_font.read_bytes()
+
+
 def test_render_debug_parity_gate_fails_on_visible_raw_tex(tmp_path: Path) -> None:
     site_dir, debug_dir = write_debug_fixture(tmp_path)
     summary_path = debug_dir / "summary.json"
