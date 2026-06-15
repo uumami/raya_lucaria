@@ -879,3 +879,27 @@ git commit -m "Track render debug inspection parity execution"
 - Spec coverage: tasks cover report JSON, report HTML, failure report generation, copied external static-site inspection, no browser-side MathJax runtime checks, no CDN/external renderer checks, local MathJax CSS/font checks, focused script output, command guidance, role docs, host/Docker verification, and review.
 - Placeholder scan: no unresolved placeholder markers or open-ended implementation steps remain.
 - Type consistency: the plan consistently uses `inspect_render_debug`, `report.json`, `index.html`, `copied_site_dir`, `checks`, and `diagnostics`.
+
+## Execution Status
+
+- Implemented in commits:
+  - `d68810f` Test render debug report artifacts
+  - `eb02258` Add render debug inspection report
+  - `a0974a3` Harden render debug report inspection
+  - `59b6eb4` Harden render debug report parity checks
+  - `b1ef872` Test render debug copied site report parity
+  - `60abff1` Harden render debug copied site tests
+  - `b63edc2` Verify render debug copied site contents
+  - `27e2709` Compare render debug copied fonts
+  - `ac8b647` Add copied static parity to render debug gate
+  - `b6bda65` Restore render debug copied site assertions
+  - `68dac35` Install render debug cleanup trap early
+  - `7cbe2ce` Document render debug inspection report
+  - `596d41d` Update render debug script module contract
+  - `eb45c1a` Preserve render debug failure reports
+- Verification run:
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_render_debug_parity_gate.py tests/e2e/test_preview_static_read_path.py tests/contracts/test_renderer_dependencies.py`: passed, 38 tests
+  - `UV_PROJECT_ENVIRONMENT=.venv-local scripts/check-render-debug.sh`: passed
+  - `./scripts/check.sh`: passed, 230 tests
+  - `./scripts/check-docker.sh`: passed, 229 tests
+- Code review: requested; one Important finding about preserving failure reports was addressed in `eb45c1a` and re-reviewed as approved.
