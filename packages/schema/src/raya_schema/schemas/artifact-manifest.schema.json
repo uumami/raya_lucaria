@@ -81,6 +81,10 @@
           "type": "string",
           "minLength": 1
         },
+        "numbered_objects": {
+          "type": "string",
+          "minLength": 1
+        },
         "runtime": {
           "type": "string",
           "minLength": 1

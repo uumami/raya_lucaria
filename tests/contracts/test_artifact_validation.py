@@ -66,6 +66,38 @@ def test_invalid_artifact_manifest(tmp_path: Path) -> None:
     assert any("required" in item.message for item in report.diagnostics)
 
 
+def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        """{
+  "artifact_version": "0.1",
+  "course_id": "minimal-course",
+  "course_version_id": "fixture",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "source_schema_version": "0.1",
+  "static_site_root": "site",
+  "data": {
+    "pages": "data/pages.json",
+    "quanta": "data/quanta.json",
+    "links": "data/links.json",
+    "navigation": "data/navigation.json",
+    "indices": "data/indices.json",
+    "official": "data/official.json",
+    "numbered_objects": []
+  }
+}
+""",
+        encoding="utf-8",
+    )
+
+    report = validate_artifact_manifest(manifest)
+
+    assert not report.ok
+    assert any("data.numbered_objects" in item.field for item in report.diagnostics)
+
+
 def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
     pages = tmp_path / "pages.json"
     pages.write_text(
