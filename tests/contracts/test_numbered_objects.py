@@ -482,6 +482,46 @@ def test_expand_shorthand_references_skips_unknown_object_inside_shortcut_refere
     assert "Use [label @missing]." in expanded
 
 
+def test_expand_shorthand_references_ignores_pseudo_reference_definitions_in_code_and_math() -> None:
+    report = ValidationReport()
+    context = NumberedObjectRenderContext(
+        items=[],
+        objects_by_id={},
+    )
+
+    expanded = expand_shorthand_references(
+        "\n".join(
+            [
+                "```",
+                "[fenced @missing]: https://example.test",
+                "```",
+                "$$",
+                "[math @missing]: https://example.test",
+                "$$",
+                "    [code @missing]: https://example.test",
+                "",
+                "Use [fenced @missing].",
+                "Use [math @missing].",
+                "Use [code @missing].",
+            ]
+        ),
+        context=context,
+        report=report,
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert not report.ok
+    messages = [diagnostic.message for diagnostic in report.diagnostics]
+    assert messages == [
+        "Unknown numbered object reference '@missing'",
+        "Unknown numbered object reference '@missing'",
+        "Unknown numbered object reference '@missing'",
+    ]
+    assert "Use [fenced @missing]." in expanded
+    assert "Use [math @missing]." in expanded
+    assert "Use [code @missing]." in expanded
+
+
 def test_expand_shorthand_references_skips_reference_definition_labels() -> None:
     report = ValidationReport()
     obj = NumberedObject(

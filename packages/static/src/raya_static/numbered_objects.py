@@ -550,7 +550,22 @@ def _markdown_link_or_image_ranges(
 
 def _collect_reference_definition_labels(lines: list[str]) -> set[str]:
     labels: set[str] = set()
+    fence_state: _FenceState | None = None
+    in_display_math = False
     for line in lines:
+        if fence_state is not None:
+            if _is_closing_fence(line, fence_state):
+                fence_state = None
+            continue
+        opener = _fence_opener(line)
+        if opener is not None:
+            fence_state = opener
+            continue
+        if _is_display_math_delimiter(line):
+            in_display_math = not in_display_math
+            continue
+        if in_display_math or _is_indented_code_line(line):
+            continue
         label = _reference_definition_label(line)
         if label is not None:
             labels.add(_normalize_reference_label(label))
