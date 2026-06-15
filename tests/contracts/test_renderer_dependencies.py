@@ -133,6 +133,32 @@ def test_render_debug_parity_gate_is_documented_in_command_guidance() -> None:
         assert "check-render-debug.sh" in path.read_text(encoding="utf-8")
 
 
+def test_render_debug_report_module_and_guidance_are_declared() -> None:
+    module = ROOT / "packages" / "cli" / "src" / "raya_cli" / "render_debug_report.py"
+    script = (ROOT / "scripts" / "check-render-debug.sh").read_text(encoding="utf-8")
+
+    assert module.exists()
+    module_text = module.read_text(encoding="utf-8")
+    assert "inspect_render_debug" in module_text
+    assert "report.json" in module_text
+    assert "index.html" in module_text
+    assert "copied_site_dir" in module_text
+    assert "python -m raya_cli.render_debug_report" in script
+
+    for path in (
+        ROOT / "README.md",
+        ROOT / "AGENTS.md",
+        ROOT / "openspec" / "config.yaml",
+        ROOT / "docs" / "guides" / "en" / "contributors" / "index.md",
+        ROOT / "docs" / "guides" / "en" / "agents" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "colaboradores" / "index.md",
+        ROOT / "docs" / "guides" / "es" / "agentes" / "index.md",
+    ):
+        text = path.read_text(encoding="utf-8")
+        assert "report.json" in text
+        assert "index.html" in text
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"
