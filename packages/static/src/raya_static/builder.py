@@ -42,6 +42,7 @@ from raya_schema.links import (
 )
 from raya_schema.numbered_objects import (
     NumberedObject,
+    NumberedObjectConfig,
     build_numbered_objects_index,
     normalize_numbered_object_config,
     validate_numbered_objects_index,
@@ -72,6 +73,11 @@ from raya_schema.runtime import (
 )
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.math_renderer import MathRenderer
+from raya_static.numbered_objects import (
+    compute_numbered_objects_for_page,
+    page_number_prefix_from_source_path,
+    prepare_numbered_object_markdown,
+)
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
     contains_full_latex_document,
@@ -220,6 +226,13 @@ def build_course(course_path: str | Path) -> ValidationReport:
     reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
     math_renderer = MathRenderer()
+    all_numbered_objects = _collect_numbered_objects(
+        pages=pages,
+        config=numbered_config,
+        report=report,
+    )
+    if not report.ok:
+        return report
     rendered_pages: list[tuple[ContentPage, str]] = []
 
     for page in pages:
@@ -311,12 +324,10 @@ def build_course(course_path: str | Path) -> ValidationReport:
     official_index = _official_index(course_id, official_objects)
     references_index = _references_index(course_id, references, reviewed_by_reference)
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
-    all_numbered_objects: list[NumberedObject] = []
     numbered_objects_index = build_numbered_objects_index(
         course_id=course_id,
         objects=all_numbered_objects,
     )
-    _ = numbered_config
     runtime_data = runtime_index(course_id, runtime_model)
     execution_data = execution_index(course_id, references, runtime_model)
     cache_data = cache_index(
@@ -470,6 +481,66 @@ def _copy_source_assets(
         report.wrote_output(target_path)
         copied += 1
     return copied
+
+
+def _collect_numbered_objects(
+    *,
+    pages: list[ContentPage],
+    config: NumberedObjectConfig,
+    report: ValidationReport,
+) -> list[NumberedObject]:
+    objects: list[NumberedObject] = []
+    seen_ids: dict[str, Path] = {}
+
+    for page in pages:
+        prepared = prepare_numbered_object_markdown(
+            page.body,
+            report=report,
+            source_path=page.source_path,
+        )
+        if not report.ok:
+            continue
+
+        page_sources = []
+        for source in prepared.sources:
+            if source.family not in config.families:
+                report.add_error(
+                    f"Unknown numbered object family '{source.family}'",
+                    path=source.source_path,
+                    field=f"line:{source.start_line}",
+                    next_action="Use a built-in numbered object family or define it under render.numbered_objects.families",
+                )
+                continue
+            if source.id in seen_ids:
+                report.add_error(
+                    f"Duplicate numbered object ID '{source.id}'",
+                    path=source.source_path,
+                    field=f"line:{source.start_line}",
+                    next_action=f"Use a unique ID; first seen in {seen_ids[source.id]}",
+                )
+                continue
+            seen_ids[source.id] = source.source_path
+            page_sources.append(source)
+
+        if not report.ok:
+            continue
+
+        course_relative_source_path = (Path("course") / page.rel_path).as_posix()
+        objects.extend(
+            compute_numbered_objects_for_page(
+                page_sources,
+                config=config,
+                course_relative_source_path=course_relative_source_path,
+                page_id=page.id,
+                page_title=page.title,
+                page_output_path=page.output_path,
+                page_number_prefix=page_number_prefix_from_source_path(
+                    course_relative_source_path
+                ),
+            )
+        )
+
+    return objects
 
 
 def _render_page(

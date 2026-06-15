@@ -103,6 +103,66 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         ]
 
 
+def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            "course_id: minimal-course",
+            "course_id: numbered-demo",
+        ),
+        encoding="utf-8",
+    )
+    parent = course / "course" / "2_vectors" / "0_index.md"
+    parent.parent.mkdir(parents=True)
+    parent.write_text(
+        "---\n"
+        "id: vectors\n"
+        "title: Vectors\n"
+        "summary: Parent fixture page.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vectors\n",
+        encoding="utf-8",
+    )
+    page = course / "course" / "2_vectors" / "3_norms" / "0_index.md"
+    page.parent.mkdir(parents=True)
+    page.write_text(
+        "---\n"
+        "id: vector-norms\n"
+        "title: Vector Norms\n"
+        "summary: Numbered object fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vector Norms\n\n"
+        "::: theorem {#main title=\"Main theorem\"}\n"
+        "Main theorem body.\n"
+        ":::\n\n"
+        "::: corollary {#consequence}\n"
+        "Consequence body.\n"
+        ":::\n\n"
+        "::: exercise {#practice}\n"
+        "Practice body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    objects = numbered_index["objects"]
+    assert numbered_index["course_id"] == "numbered-demo"
+    assert numbered_index["by_id"] == {"main": 0, "consequence": 1, "practice": 2}
+    assert [item["id"] for item in objects] == ["main", "consequence", "practice"]
+    assert [item["number"] for item in objects] == ["2.3.1", "2.3.2", "2.3.1"]
+    assert objects[0]["href"].endswith("#raya-object-main")
+
+
 def test_generated_html_is_escaped_and_static_linked(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     extra = course / "course" / "2_escape.md"

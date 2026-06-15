@@ -182,6 +182,18 @@ def collect_numbered_object_sources(
     ).sources
 
 
+def page_number_prefix_from_source_path(source_path: str) -> str:
+    parts: list[str] = []
+    for part in Path(source_path).parts:
+        if part in {"course", "0_index.md", "index.md"}:
+            continue
+        stem = Path(part).stem
+        match = re.match(r"^(\d+)(?:_|-|$)", stem)
+        if match:
+            parts.append(match.group(1))
+    return ".".join(parts)
+
+
 def compute_numbered_objects_for_page(
     sources: list[NumberedObjectSource],
     *,
