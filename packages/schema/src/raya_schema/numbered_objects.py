@@ -7,7 +7,7 @@ from typing import Any
 from raya_schema.diagnostics import ValidationReport
 from raya_schema.yaml_io import load_yaml_file
 
-NUMBERED_OBJECT_INDEX_PATH = Path("data") / "numbered-objects.json"
+NUMBERED_OBJECT_INDEX_PATH = "data/numbered-objects.json"
 NUMBERED_OBJECT_INDEX_VERSION = 1
 
 BUILT_IN_NUMBERED_OBJECT_SEQUENCES: dict[str, dict[str, str]] = {
@@ -32,12 +32,13 @@ BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
     "assignment": {"sequence": "assignment", "label": "Assignment"},
     "project": {"sequence": "assignment", "label": "Project"},
     "exam": {"sequence": "assignment", "label": "Exam"},
+    "task": {"sequence": "assignment", "label": "Task"},
     "figure": {"sequence": "figure", "label": "Figure"},
     "table": {"sequence": "table", "label": "Table"},
     "equation": {"sequence": "equation", "label": "Equation"},
 }
 
-NUMBERED_OBJECT_STYLES = {"margin", "banded"}
+NUMBERED_OBJECT_STYLES = {"margin", "banded", "caption", "equation"}
 NUMBERING_MODES = {"page-hierarchy"}
 
 
@@ -79,7 +80,11 @@ class NumberedObject:
     def reference_text(self) -> str:
         return f"{self.label} {self.number}".strip()
 
-    def to_index_entry(self) -> dict[str, str]:
+    @property
+    def anchor(self) -> str:
+        return f"raya-object-{self.id}"
+
+    def to_json(self) -> dict[str, str]:
         return {
             "id": self.id,
             "family": self.family,
@@ -87,6 +92,7 @@ class NumberedObject:
             "label": self.label,
             "number": self.number,
             "reference_text": self.reference_text,
+            "anchor": self.anchor,
             "title": self.title,
             "source_path": self.source_path,
             "page_id": self.page_id,
@@ -95,6 +101,9 @@ class NumberedObject:
             "href": self.href,
             "style": self.style,
         }
+
+    def to_index_entry(self) -> dict[str, str]:
+        return self.to_json()
 
 
 def normalize_numbered_object_config(
@@ -178,11 +187,10 @@ def normalize_numbered_object_config(
 
 
 def build_numbered_objects_index(
-    *,
     course_id: str,
     objects: list[NumberedObject],
 ) -> dict[str, Any]:
-    entries = [item.to_index_entry() for item in objects]
+    entries = [item.to_json() for item in objects]
     return {
         "version": NUMBERED_OBJECT_INDEX_VERSION,
         "course_id": course_id,
@@ -300,7 +308,7 @@ def _merge_sequences(
             report.add_error(
                 f"Numbered object sequence '{sequence_id}' in {context} uses unknown style '{style}'",
                 field=f"{field}.style",
-                next_action="Use margin or banded",
+                next_action="Use margin, banded, caption, or equation",
             )
             style = current.style
         sequences[sequence_id] = NumberedObjectSequence(label=label, style=style)
@@ -418,6 +426,14 @@ def _validate_index_shape(data: dict[str, Any], *, path: Path, report: Validatio
                     field=f"by_id.{object_id}",
                     next_action="Regenerate by_id from objects",
                 )
+    for object_id in by_id:
+        if object_id not in seen_ids:
+            report.add_error(
+                f"Numbered object by_id entry '{object_id}' has no matching object",
+                path=path,
+                field=f"by_id.{object_id}",
+                next_action="Remove stale by_id entries or regenerate by_id from objects",
+            )
 
 
 def _validate_object_entry(
@@ -434,6 +450,7 @@ def _validate_object_entry(
         "label",
         "number",
         "reference_text",
+        "anchor",
         "title",
         "source_path",
         "page_id",
@@ -466,11 +483,25 @@ def _validate_object_entry(
             field=f"{field}.reference_text",
             next_action="Regenerate reference_text from label and number",
         )
+    object_id = item.get("id")
+    anchor = item.get("anchor")
+    if (
+        isinstance(object_id, str)
+        and object_id
+        and isinstance(anchor, str)
+        and anchor != f"raya-object-{object_id}"
+    ):
+        report.add_error(
+            "Numbered object anchor must match id",
+            path=path,
+            field=f"{field}.anchor",
+            next_action="Regenerate anchor as raya-object-<id>",
+        )
     style = item.get("style")
     if isinstance(style, str) and style and style not in NUMBERED_OBJECT_STYLES:
         report.add_error(
             f"Numbered object entry uses unknown style '{style}'",
             path=path,
             field=f"{field}.style",
-            next_action="Use margin or banded",
+            next_action="Use margin, banded, caption, or equation",
         )
