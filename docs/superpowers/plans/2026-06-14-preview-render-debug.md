@@ -856,3 +856,21 @@ git commit -m "Track preview render debug execution"
 - Spec coverage: Tasks cover CLI option, browser capture helper, preview integration, stale debug reset, role docs, focused verification, host/Docker gates, and code review.
 - Placeholder scan: no incomplete implementation markers or unspecified steps remain.
 - Type consistency: the plan uses `capture_render_debug(base_url=..., site_dir=..., output_dir=...) -> ValidationReport` consistently across tests and CLI wiring.
+
+## Execution Status
+
+- Implemented in commits:
+  - `edb458f` Expose preview render debug option
+  - `3893520` Add preview render debug capture helper
+  - `495bd32` Run render debug from preview
+  - `63f4726` Share renderer debug test helpers
+  - `c91c446` Document preview render debug workflow
+  - `01e2e82` Harden preview render debug diagnostics
+- Verification run:
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_cli.py::test_cli_preview_help_lists_render_debug_option tests/contracts/test_cli.py::test_cli_preview_render_debug_writes_artifacts_and_exits tests/e2e/test_preview_static_read_path.py::test_capture_render_debug_writes_screenshots_and_summary tests/e2e/test_preview_static_read_path.py::test_capture_render_debug_fails_on_visible_raw_tex tests/e2e/test_preview_static_read_path.py::test_capture_render_debug_reports_invalid_browser_executable tests/e2e/test_preview_static_read_path.py::test_render_fixture_debug_artifacts_are_written_when_enabled tests/e2e/test_preview_static_read_path.py::test_render_fixture_debug_summary_is_reset_between_runs tests/e2e/test_preview_static_read_path.py::test_render_fixture_math_is_visible_and_uses_only_local_assets`: passed, `8 passed in 32.29s`
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build examples/courses/render-fixture`: passed
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate docs`: passed
+  - `UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build docs`: passed
+  - `./scripts/check.sh`: passed, `205 passed in 89.59s`, `check: passed`
+  - `./scripts/check-docker.sh`: passed, `205 passed in 131.97s`, `check-docker: passed`
+- Code review: requested over `d8c9470..c91c446`; Important and Minor findings were addressed in `01e2e82`.
