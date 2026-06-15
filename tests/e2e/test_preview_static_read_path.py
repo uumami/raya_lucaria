@@ -11,26 +11,20 @@ from pathlib import Path
 from urllib.request import urlopen
 
 import pytest
-from raya_cli.render_debug import capture_render_debug
+from raya_cli.render_debug import (
+    RENDER_DEBUG_PAGE_NAMES,
+    RENDER_DEBUG_VIEWPORTS,
+    capture_render_debug,
+    raw_tex_markers_from_text,
+    record_external_request,
+    viewport_name,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
-RENDER_DEBUG_PAGE_NAMES = ("index", "static-path")
-RENDER_DEBUG_VIEWPORTS = (
-    {"width": 1280, "height": 900},
-    {"width": 390, "height": 844},
-)
-RENDER_RAW_TEX_MARKERS = (
-    "\\rayaVec",
-    "\\argmax",
-    "\\renewcommand",
-    "\\fixtureUnit",
-    "\\begin{bmatrix}",
-    "a^2 + b^2 = c^2",
-)
 
 
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
@@ -219,8 +213,6 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
     browser_executable = _browser_executable()
     debug_dir_value = os.environ.get("RAYA_RENDER_DEBUG_DIR")
     debug_dir = Path(debug_dir_value) if debug_dir_value else None
-    if debug_dir is not None:
-        _reset_render_debug_dir(debug_dir)
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
@@ -240,7 +232,7 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
                     page = browser.new_page(viewport=viewport)
                     page.on(
                         "request",
-                        lambda request: _record_external_request(
+                        lambda request: record_external_request(
                             request.url,
                             base_url,
                             external_requests,
@@ -251,16 +243,7 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
                         _assert_no_horizontal_overflow(page)
                         _assert_visible_mathjax_output(page, minimum=6)
                         visible_text = page.locator("body").inner_text()
-                        assert _raw_tex_markers(visible_text) == []
-                        if debug_dir is not None:
-                            _capture_render_debug_artifact(
-                                page,
-                                debug_dir=debug_dir,
-                                page_name="index",
-                                viewport_name=_viewport_name(viewport),
-                                viewport=viewport,
-                                external_requests=external_requests,
-                            )
+                        assert raw_tex_markers_from_text(visible_text) == []
 
                         page.goto(
                             f"{base_url}/static-path/index.html",
@@ -268,19 +251,19 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
                         )
                         _assert_no_horizontal_overflow(page)
                         _assert_visible_mathjax_output(page, minimum=2)
-                        if debug_dir is not None:
-                            _capture_render_debug_artifact(
-                                page,
-                                debug_dir=debug_dir,
-                                page_name="static-path",
-                                viewport_name=_viewport_name(viewport),
-                                viewport=viewport,
-                                external_requests=external_requests,
-                            )
                     finally:
                         page.close()
             finally:
                 browser.close()
+        if debug_dir is not None:
+            debug_report = capture_render_debug(
+                base_url=base_url,
+                site_dir=course / "artifact" / "site",
+                output_dir=debug_dir,
+            )
+            assert debug_report.ok, [
+                diagnostic.format() for diagnostic in debug_report.diagnostics
+            ]
     finally:
         handle.close()
 
@@ -297,7 +280,7 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
     _run_render_fixture_math_check(tmp_path)
 
     expected_screenshots = {
-        f"{_viewport_name(viewport)}-{page_name}.png"
+        f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
         for page_name in RENDER_DEBUG_PAGE_NAMES
     }
@@ -323,18 +306,31 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
 
 def test_render_fixture_debug_summary_is_reset_between_runs(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     debug_dir = tmp_path / "renderer-debug"
     debug_dir.mkdir()
     (debug_dir / "summary.json").write_text(
         json.dumps({"captures": [{"page": "stale"}]}) + "\n",
         encoding="utf-8",
     )
-    monkeypatch.setenv("RAYA_RENDER_DEBUG_DIR", str(debug_dir))
 
-    _run_render_fixture_math_check(tmp_path)
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        result = capture_render_debug(
+            base_url=handle.base_url,
+            site_dir=course / "artifact" / "site",
+            output_dir=debug_dir,
+        )
+    finally:
+        handle.close()
 
+    assert result.ok, [diagnostic.format() for diagnostic in result.diagnostics]
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
     assert len(summary["captures"]) == 4
     assert all(capture["page"] != "stale" for capture in summary["captures"])
@@ -475,80 +471,6 @@ def _assert_visible_mathjax_output(page, *, minimum: int) -> None:
     assert first_box is not None
     assert first_box["width"] > 0
     assert first_box["height"] > 0
-
-
-def _capture_render_debug_artifact(
-    page,
-    *,
-    debug_dir: Path,
-    page_name: str,
-    viewport_name: str,
-    viewport: dict[str, int],
-    external_requests: list[str],
-) -> None:
-    debug_dir.mkdir(parents=True, exist_ok=True)
-    screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
-    page.screenshot(path=str(screenshot_path), full_page=True)
-    visible_text = page.locator("body").inner_text()
-    raw_tex_markers = _raw_tex_markers(visible_text)
-    overflow = page.evaluate(
-        "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
-    )
-    capture = {
-        "page": page_name,
-        "url": page.url,
-        "viewport": {
-            "name": viewport_name,
-            "width": viewport["width"],
-            "height": viewport["height"],
-        },
-        "screenshot": str(screenshot_path),
-        "mathjax_container_count": page.locator("mjx-container").count(),
-        "raw_tex_visible": bool(raw_tex_markers),
-        "raw_tex_markers": raw_tex_markers,
-        "external_requests": sorted(set(external_requests)),
-        "horizontal_overflow": overflow,
-    }
-    summary_path = debug_dir / "summary.json"
-    if summary_path.exists():
-        summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    else:
-        summary = {"captures": []}
-    summary["captures"].append(capture)
-    summary_path.write_text(
-        json.dumps(summary, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-
-
-def _reset_render_debug_dir(debug_dir: Path) -> None:
-    debug_dir.mkdir(parents=True, exist_ok=True)
-    for path in debug_dir.iterdir():
-        if path.name == "summary.json" or path.name in _render_debug_screenshot_names():
-            path.unlink()
-
-
-def _render_debug_screenshot_names() -> set[str]:
-    return {
-        f"{_viewport_name(viewport)}-{page_name}.png"
-        for viewport in RENDER_DEBUG_VIEWPORTS
-        for page_name in RENDER_DEBUG_PAGE_NAMES
-    }
-
-
-def _raw_tex_markers(visible_text: str) -> list[str]:
-    return [marker for marker in RENDER_RAW_TEX_MARKERS if marker in visible_text]
-
-
-def _viewport_name(viewport: dict[str, int]) -> str:
-    if viewport["width"] <= 720:
-        return "mobile"
-    return "desktop"
-
-
-def _record_external_request(url: str, base_url: str, requests: list[str]) -> None:
-    if not url.startswith(base_url):
-        requests.append(url)
 
 
 def _boxes_overlap(first: dict[str, float], second: dict[str, float]) -> bool:

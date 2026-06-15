@@ -65,7 +65,7 @@ def capture_render_debug(
                     page = browser.new_page(viewport=viewport)
                     page.on(
                         "request",
-                        lambda request: _record_external_request(
+                        lambda request: record_external_request(
                             request.url,
                             base_url,
                             external_requests,
@@ -77,7 +77,7 @@ def capture_render_debug(
                             page_url=_page_url(base_url, page_name),
                             debug_dir=debug_dir,
                             page_name=page_name,
-                            viewport_name=_viewport_name(viewport),
+                            viewport_name=viewport_name(viewport),
                             viewport=viewport,
                             external_requests=external_requests,
                         )
@@ -161,7 +161,7 @@ def _capture_render_debug_artifact(
     screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
     page.screenshot(path=str(screenshot_path), full_page=True)
     visible_text = page.locator("body").inner_text()
-    raw_tex_markers = _raw_tex_markers(visible_text)
+    raw_tex_markers = raw_tex_markers_from_text(visible_text)
     overflow = page.evaluate(
         "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
     )
@@ -228,22 +228,22 @@ def _reset_render_debug_dir(debug_dir: Path) -> None:
 
 def _render_debug_screenshot_names() -> set[str]:
     return {
-        f"{_viewport_name(viewport)}-{page_name}.png"
+        f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
         for page_name in RENDER_DEBUG_PAGE_NAMES
     }
 
 
-def _raw_tex_markers(visible_text: str) -> list[str]:
+def raw_tex_markers_from_text(visible_text: str) -> list[str]:
     return [marker for marker in RENDER_RAW_TEX_MARKERS if marker in visible_text]
 
 
-def _viewport_name(viewport: dict[str, int]) -> str:
+def viewport_name(viewport: dict[str, int]) -> str:
     if viewport["width"] <= 720:
         return "mobile"
     return "desktop"
 
 
-def _record_external_request(url: str, base_url: str, requests: list[str]) -> None:
+def record_external_request(url: str, base_url: str, requests: list[str]) -> None:
     if not url.startswith(base_url):
         requests.append(url)
