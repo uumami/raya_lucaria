@@ -18,6 +18,9 @@ REFERENCE_RE = re.compile(
 )
 OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 FENCE_MARKER_RE = re.compile(r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})")
+FENCE_CLOSE_RE = re.compile(
+    r"^(?: {0,3}>\s?)* {0,3}(?P<marker>`{3,}|~{3,})[ \t]*$"
+)
 PLACEHOLDER_PREFIX = "RAYA_NUMBERED_OBJECT_"
 
 
@@ -140,7 +143,7 @@ def prepare_numbered_object_markdown(
         marker = _fence_marker(line)
         if in_fence:
             output_lines.append(line)
-            if marker is not None and _matches_closing_fence(marker, fence_marker):
+            if _is_closing_fence(line, fence_marker):
                 in_fence = False
                 fence_marker = ""
             index += 1
@@ -240,7 +243,7 @@ def expand_shorthand_references(
         marker = _fence_marker(line)
         if in_fence:
             expanded_lines.append(line)
-            if marker is not None and _matches_closing_fence(marker, fence_marker):
+            if _is_closing_fence(line, fence_marker):
                 in_fence = False
                 fence_marker = ""
             continue
@@ -308,6 +311,13 @@ def _fence_marker(line: str) -> str | None:
     if match is None:
         return None
     return match.group("marker")
+
+
+def _is_closing_fence(line: str, opening_marker: str) -> bool:
+    match = FENCE_CLOSE_RE.match(line)
+    if match is None:
+        return False
+    return _matches_closing_fence(match.group("marker"), opening_marker)
 
 
 def _matches_closing_fence(marker: str, opening_marker: str) -> bool:
