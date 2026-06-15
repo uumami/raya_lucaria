@@ -23,6 +23,7 @@ BUILT_IN_NUMBERED_OBJECT_SEQUENCES: dict[str, dict[str, str]] = {
 BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
     "theorem": {"sequence": "theorem", "label": "Theorem"},
     "lemma": {"sequence": "theorem", "label": "Lemma"},
+    "proposition": {"sequence": "theorem", "label": "Proposition"},
     "corollary": {"sequence": "theorem", "label": "Corollary"},
     "definition": {"sequence": "theorem", "label": "Definition"},
     "example": {"sequence": "example", "label": "Example"},

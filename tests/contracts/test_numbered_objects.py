@@ -17,6 +17,7 @@ from raya_schema.validation import ValidationReport
 def test_built_in_numbered_object_defaults_group_math_and_coursework() -> None:
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["theorem"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["lemma"]["sequence"] == "theorem"
+    assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["proposition"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["corollary"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["definition"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["example"]["sequence"] == "example"
