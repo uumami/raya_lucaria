@@ -119,6 +119,43 @@ def test_render_debug_parity_gate_fails_on_browser_side_mathjax_runtime(
     assert "browser-side or external renderer dependency" in result.stderr
 
 
+def test_render_debug_parity_gate_fails_on_local_mathjax_runtime_script(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    html_path = site_dir / "index.html"
+    html_path.write_text(
+        '<html><head><script src="_raya/render/math/tex-chtml.js"></script></head></html>',
+        encoding="utf-8",
+    )
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "browser-side or external renderer dependency" in result.stderr
+
+
+def test_render_debug_parity_gate_fails_on_screenshot_outside_debug_dir(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    outside_dir = tmp_path / "outside"
+    outside_dir.mkdir()
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    for capture in summary["captures"]:
+        screenshot = outside_dir / Path(capture["screenshot"]).name
+        screenshot.write_bytes(b"stale-png")
+        Path(capture["screenshot"]).unlink()
+        capture["screenshot"] = str(screenshot)
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir))
+
+    assert result.returncode == 1
+    assert "outside debug directory" in result.stderr
+
+
 def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
     site_dir = tmp_path / "site"
     debug_dir = tmp_path / "debug"

@@ -86,6 +86,7 @@ uv run python - "$SITE_DIR" "$DEBUG_DIR" <<'PY'
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -151,12 +152,25 @@ for key, screenshot_name in expected.items():
     if capture is None:
         fail(f"missing expected capture page={key[0]} viewport={key[1]}")
         continue
+    screenshot = debug_dir / screenshot_name
     screenshot_value = capture.get("screenshot")
-    screenshot = Path(str(screenshot_value)) if screenshot_value else debug_dir / screenshot_name
-    if not screenshot.is_absolute():
-        screenshot = debug_dir / screenshot
-    if screenshot.name != screenshot_name:
-        fail(f"unexpected screenshot for page={key[0]} viewport={key[1]}: {screenshot}")
+    if screenshot_value:
+        declared_screenshot = Path(str(screenshot_value))
+        if not declared_screenshot.is_absolute():
+            declared_screenshot = debug_dir / declared_screenshot
+        declared_screenshot = declared_screenshot.resolve()
+        try:
+            declared_screenshot.relative_to(debug_dir.resolve())
+        except ValueError:
+            fail(
+                "screenshot path is outside debug directory "
+                f"for page={key[0]} viewport={key[1]}: {declared_screenshot}"
+            )
+        if declared_screenshot.name != screenshot_name:
+            fail(
+                "unexpected screenshot for "
+                f"page={key[0]} viewport={key[1]}: {declared_screenshot}"
+            )
     if not screenshot.is_file() or screenshot.stat().st_size <= 0:
         fail(f"missing or empty screenshot {screenshot}")
 
@@ -165,8 +179,12 @@ if not html_paths:
     fail(f"no generated HTML found under {site_dir}")
 
 blocked_fragments = (
-    "MathJax.js",
+    "mathjax.js",
+    "tex-chtml",
+    "tex-svg",
+    "mml-chtml",
     "tex-mml-chtml",
+    "startup.js",
     "cdn.jsdelivr.net",
     "unpkg.com",
     "cdnjs.cloudflare.com",
@@ -176,9 +194,12 @@ blocked_fragments = (
 )
 for html_path in html_paths:
     text = html_path.read_text(encoding="utf-8")
+    text_lower = text.lower()
     for fragment in blocked_fragments:
-        if fragment in text:
+        if fragment in text_lower:
             fail(f"browser-side or external renderer dependency {fragment!r} in {html_path}")
+    if re.search(r"_raya/render/math/[^\"')\s>]+\.js\b", text_lower):
+        fail(f"browser-side or external renderer dependency '_raya/render/math/*.js' in {html_path}")
 
 if errors:
     for error in errors:

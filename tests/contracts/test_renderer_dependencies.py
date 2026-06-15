@@ -124,6 +124,15 @@ def test_docker_check_inherits_render_debug_parity_gate() -> None:
     assert "scripts/check-render-debug.sh" in python_script
 
 
+def test_render_debug_parity_gate_is_documented_in_command_guidance() -> None:
+    for path in (
+        ROOT / "README.md",
+        ROOT / "AGENTS.md",
+        ROOT / "openspec" / "config.yaml",
+    ):
+        assert "check-render-debug.sh" in path.read_text(encoding="utf-8")
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"
