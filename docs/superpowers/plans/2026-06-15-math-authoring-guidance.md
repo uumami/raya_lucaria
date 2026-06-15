@@ -734,3 +734,61 @@ git commit -m "Track math authoring guidance execution"
 - Spec coverage: tasks cover a dedicated fixture page, current valid math examples, role docs in English and Spanish, student reporting guidance, contributor/agent diagnostics, render-debug/static parity, and the theorem/proof next-loop boundary.
 - Template scan: no unresolved implementation template values remain in the plan.
 - Type consistency: the plan consistently uses `math-authoring`, `2_math_authoring/0_index.md`, `report.json`, `index.html`, and `scripts/check-render-debug.sh`.
+
+## Execution Status
+
+Implementation commits from `git log --oneline --reverse b83d9b0..HEAD` before this status commit:
+
+```text
+f0e570a Plan math authoring guidance
+4f3bc42 Test math authoring fixture rendering
+ed8bfd1 Add math authoring render fixture
+17e1c5f Tighten math authoring raw TeX guard
+330f25a Cover math authoring fixture in render debug
+4cfe93b Test math authoring role guidance
+d8f2851 Document math authoring guidance in English
+79f41e8 Document math authoring guidance in Spanish
+17462e1 Fix render debug CLI capture contract
+```
+
+Focused pytest:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py tests/contracts/test_renderer_dependencies.py tests/e2e/test_preview_static_read_path.py
+```
+
+Result: `57 passed in 102.44s (0:01:42)`.
+
+Direct render-debug gate:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-local scripts/check-render-debug.sh
+```
+
+Result: `render-debug-report: passed (34 check(s), report=/tmp/raya-render-debug.ui092f/index.html)` and `check-render-debug: passed`.
+
+Host archive gate:
+
+```bash
+./scripts/check.sh
+```
+
+Result: `231 passed in 226.44s (0:03:46)` and `check: passed`.
+
+Docker archive gate:
+
+```bash
+./scripts/check-docker.sh
+```
+
+Result: `231 passed in 375.13s (0:06:15)` and `check-docker: passed`.
+
+Final code review:
+
+```text
+Reviewed b83d9b0..17462e1.
+Critical: None found.
+Important: None found.
+Minor: None found.
+Assessment: ready to merge/push.
+```
