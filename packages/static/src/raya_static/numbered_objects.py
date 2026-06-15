@@ -132,9 +132,26 @@ def prepare_numbered_object_markdown(
     sources: list[NumberedObjectSource] = []
     lines = body.splitlines()
     index = 0
+    in_fence = False
+    fence_marker = ""
 
     while index < len(lines):
         line = lines[index]
+        marker = _fence_marker(line)
+        if in_fence:
+            output_lines.append(line)
+            if marker is not None and _matches_closing_fence(marker, fence_marker):
+                in_fence = False
+                fence_marker = ""
+            index += 1
+            continue
+        if marker is not None:
+            fence_marker = marker
+            in_fence = True
+            output_lines.append(line)
+            index += 1
+            continue
+
         opened = DIRECTIVE_OPEN_RE.match(line)
         if opened is None:
             output_lines.append(line)
@@ -217,6 +234,7 @@ def expand_shorthand_references(
     expanded_lines: list[str] = []
     in_fence = False
     fence_marker = ""
+    in_display_math = False
 
     for line in lines:
         marker = _fence_marker(line)
@@ -229,6 +247,13 @@ def expand_shorthand_references(
         if marker is not None:
             fence_marker = marker
             in_fence = True
+            expanded_lines.append(line)
+            continue
+        if _is_display_math_delimiter(line):
+            in_display_math = not in_display_math
+            expanded_lines.append(line)
+            continue
+        if in_display_math or _is_indented_code_line(line):
             expanded_lines.append(line)
             continue
         expanded_lines.append(
@@ -250,11 +275,11 @@ def _expand_shorthand_references_in_line(
     report: ValidationReport,
     source_path: Path,
 ) -> str:
-    code_spans = _code_span_ranges(line)
+    protected_ranges = _code_span_ranges(line) + _math_span_ranges(line)
     pieces: list[str] = []
     cursor = 0
     for match in REFERENCE_RE.finditer(line):
-        if _position_in_ranges(match.start(), code_spans) or _looks_urlish(
+        if _position_in_ranges(match.start(), protected_ranges) or _looks_urlish(
             line,
             match.start(),
         ):
@@ -289,6 +314,23 @@ def _matches_closing_fence(marker: str, opening_marker: str) -> bool:
     return marker[0] == opening_marker[0] and len(marker) >= len(opening_marker)
 
 
+def _is_display_math_delimiter(line: str) -> bool:
+    return _line_without_blockquote_prefix(line).strip() == "$$"
+
+
+def _is_indented_code_line(line: str) -> bool:
+    return line.startswith("    ") or line.startswith("\t")
+
+
+def _line_without_blockquote_prefix(line: str) -> str:
+    value = line
+    while True:
+        match = re.match(r"^ {0,3}>\s?", value)
+        if match is None:
+            return value
+        value = value[match.end() :]
+
+
 def _code_span_ranges(line: str) -> list[tuple[int, int]]:
     ranges: list[tuple[int, int]] = []
     cursor = 0
@@ -306,6 +348,50 @@ def _code_span_ranges(line: str) -> list[tuple[int, int]]:
         ranges.append((start, end + tick_count))
         cursor = end + tick_count
     return ranges
+
+
+def _math_span_ranges(line: str) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    cursor = 0
+    while cursor < len(line):
+        start = _find_unescaped_single_dollar(line, cursor)
+        if start == -1:
+            break
+        end = _find_unescaped_single_dollar(line, start + 1)
+        if end == -1:
+            break
+        ranges.append((start, end + 1))
+        cursor = end + 1
+    return ranges
+
+
+def _find_unescaped_single_dollar(line: str, start: int) -> int:
+    cursor = start
+    while cursor < len(line):
+        position = line.find("$", cursor)
+        if position == -1:
+            return -1
+        if _is_escaped(line, position) or _is_double_dollar(line, position):
+            cursor = position + 1
+            continue
+        return position
+    return -1
+
+
+def _is_escaped(line: str, position: int) -> bool:
+    backslashes = 0
+    cursor = position - 1
+    while cursor >= 0 and line[cursor] == "\\":
+        backslashes += 1
+        cursor -= 1
+    return backslashes % 2 == 1
+
+
+def _is_double_dollar(line: str, position: int) -> bool:
+    return (
+        (position > 0 and line[position - 1] == "$")
+        or (position + 1 < len(line) and line[position + 1] == "$")
+    )
 
 
 def _position_in_ranges(position: int, ranges: list[tuple[int, int]]) -> bool:

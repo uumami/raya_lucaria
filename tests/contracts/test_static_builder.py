@@ -297,6 +297,67 @@ def test_build_rejects_unknown_explicit_numbered_object_reference(
     assert not (course / "artifact" / "manifest.json").exists()
 
 
+def test_fenced_directive_text_does_not_create_numbered_object(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "```markdown\n"
+        "::: theorem {#sample}\n"
+        "Code sample body.\n"
+        ":::\n"
+        "```\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "sample" not in numbered_index["by_id"]
+    assert [item["id"] for item in numbered_index["objects"]] == []
+    assert "::: theorem {#sample}" in _visible_text(html)
+    assert "Code sample body." in _visible_text(html)
+    assert 'id="raya-object-sample"' not in html
+    assert "RAYA_NUMBERED_OBJECT_" not in html
+
+
+def test_explicit_reference_to_fenced_directive_text_fails(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "```markdown\n"
+        "::: theorem {#sample}\n"
+        "Code sample body.\n"
+        ":::\n"
+        "```\n\n"
+        "See [sample theorem](raya:ref/sample).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Unknown numbered object reference 'raya:ref/sample'"
+        and diagnostic.path == index
+        for diagnostic in report.diagnostics
+    )
+    assert not (course / "artifact" / "manifest.json").exists()
+
+
 def test_build_collects_numbered_objects_from_configured_source_root(
     tmp_path: Path,
 ) -> None:
