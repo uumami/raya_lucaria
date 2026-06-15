@@ -5,6 +5,7 @@ import html
 import json
 import re
 import shutil
+import sys
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -67,6 +68,13 @@ def inspect_render_debug(
     _inspect_static_site(site_root, report, context="site")
     if copied_site_root is not None:
         _inspect_copied_site(site_root, copied_site_root, report)
+        _add_check(
+            report,
+            check_id="site:copied-site",
+            status="pass",
+            path=copied_site_root,
+            message=f"copied-site parity inspected at {copied_site_root}",
+        )
 
     report["ok"] = not report["diagnostics"]
     write_render_debug_report(debug_root, report)
@@ -623,6 +631,12 @@ def _add_check(
 def _render_html_report(report: dict[str, Any]) -> str:
     status = "PASS" if report.get("ok") else "FAIL"
     check_rows = "\n".join(_render_check_row(check) for check in report["checks"])
+    copied_site = report.get("copied_site_dir")
+    copied_site_line = (
+        f"  <p>Copied site: <code>{html.escape(str(copied_site))}</code></p>\n"
+        if copied_site
+        else ""
+    )
     diagnostics = report["diagnostics"]
     diagnostic_items = "\n".join(
         "<li><code>{check}</code> {message} <span>{path}</span></li>".format(
@@ -657,6 +671,7 @@ def _render_html_report(report: dict[str, Any]) -> str:
   <h1>Render Debug Inspection Report</h1>
   <p class="status {html.escape(status.lower())}">Status: {html.escape(status)}</p>
   <p>Site: <code>{html.escape(str(report["site_dir"]))}</code></p>
+{copied_site_line.rstrip()}
   <p>Summary: <code>{html.escape(str(report["summary_path"]))}</code></p>
   <h2>Screenshots</h2>
   <div class="screenshots">
@@ -736,7 +751,8 @@ def main(argv: list[str] | None = None) -> int:
     for diagnostic in report["diagnostics"]:
         print(
             "render-debug-report: ERROR: "
-            f"{diagnostic['message']} ({diagnostic['path']})"
+            f"{diagnostic['message']} ({diagnostic['path']})",
+            file=sys.stderr,
         )
     return 1
 
