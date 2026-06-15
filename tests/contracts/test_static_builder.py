@@ -216,6 +216,47 @@ def test_build_collects_numbered_objects_from_configured_source_root(
     assert first["number"] == "2.3.1"
 
 
+def test_numbered_object_prefix_ignores_digit_prefixed_source_root(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    shutil.move(str(course / "course"), str(course / "2026_lessons"))
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        .replace("course_id: minimal-course", "course_id: numbered-demo")
+        .replace("source: course", "source: 2026_lessons"),
+        encoding="utf-8",
+    )
+    page = course / "2026_lessons" / "2_vectors" / "0_index.md"
+    page.parent.mkdir(parents=True)
+    page.write_text(
+        "---\n"
+        "id: vectors\n"
+        "title: Vectors\n"
+        "summary: Numbered object fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vectors\n\n"
+        "::: theorem {#main}\n"
+        "Main theorem body.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    first = numbered_index["objects"][0]
+    assert first["source_path"] == "2026_lessons/2_vectors/0_index.md"
+    assert first["number"] == "2.1"
+
+
 def test_build_rejects_duplicate_numbered_object_ids_across_pages(
     tmp_path: Path,
 ) -> None:

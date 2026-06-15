@@ -229,6 +229,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     math_renderer = MathRenderer()
     all_numbered_objects = _collect_numbered_objects(
         course_root=root,
+        source_dir=source_dir,
         pages=pages,
         config=numbered_config,
         report=report,
@@ -488,6 +489,7 @@ def _copy_source_assets(
 def _collect_numbered_objects(
     *,
     course_root: Path,
+    source_dir: Path,
     pages: list[ContentPage],
     config: NumberedObjectConfig,
     report: ValidationReport,
@@ -533,6 +535,7 @@ def _collect_numbered_objects(
             continue
 
         course_relative_source_path = page.source_path.relative_to(course_root).as_posix()
+        source_relative_path = page.source_path.relative_to(source_dir).as_posix()
         objects.extend(
             compute_numbered_objects_for_page(
                 page_sources,
@@ -542,7 +545,7 @@ def _collect_numbered_objects(
                 page_title=page.title,
                 page_output_path=page.output_path,
                 page_number_prefix=page_number_prefix_from_source_path(
-                    course_relative_source_path
+                    source_relative_path
                 ),
             )
         )
