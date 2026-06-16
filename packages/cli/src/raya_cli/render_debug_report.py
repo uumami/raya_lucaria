@@ -584,6 +584,10 @@ def _expected_page_names(site_dir: Path) -> list[str]:
         page_names.append("static-path")
     if (site_dir / "math-authoring" / "index.html").is_file():
         page_names.append("math-authoring")
+    if (site_dir / "numbered-objects" / "index.html").is_file():
+        page_names.append("numbered-objects")
+    elif (site_dir / "3_numbered_objects" / "index.html").is_file():
+        page_names.append("3_numbered_objects")
     return page_names
 
 

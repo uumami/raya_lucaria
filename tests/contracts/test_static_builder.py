@@ -895,6 +895,12 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     math_authoring_html = (
         course / "artifact" / "site" / "math-authoring" / "index.html"
     ).read_text(encoding="utf-8")
+    numbered_objects_html_path = (
+        course / "artifact" / "site" / "numbered-objects" / "index.html"
+    )
+    assert numbered_objects_html_path.exists()
+    numbered_objects_html = numbered_objects_html_path.read_text(encoding="utf-8")
+    numbered_objects_visible = _visible_text(numbered_objects_html)
     math_authoring_visible = _visible_text(math_authoring_html)
     numbered_index = json.loads(
         (
@@ -904,6 +910,16 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
 
     assert numbered_index["course_id"] == "render-fixture"
     assert "by_id" in numbered_index
+    assert set(numbered_index["by_id"]) >= {
+        "main-theorem",
+        "vector-corollary",
+        "basis-definition",
+        "matrix-equation",
+        "fixture-figure",
+        "fixture-table",
+        "practice-problem",
+        "homework-one",
+    }
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
     assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in html
@@ -989,6 +1005,28 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
         "\\ref",
     ):
         assert raw_marker not in math_authoring_visible
+
+    assert "Theorem 3.1" in numbered_objects_visible
+    assert "Corollary 3.2" in numbered_objects_visible
+    assert "Definition 3.3" in numbered_objects_visible
+    assert "Equation 3.1" in numbered_objects_visible
+    assert "Figure 3.1" in numbered_objects_visible
+    assert "Table 3.1" in numbered_objects_visible
+    assert "Problem 3.1" in numbered_objects_visible
+    assert "Activity 3.1" in numbered_objects_visible
+    assert "Fixture theorem" in numbered_objects_visible
+    assert "Basis" in numbered_objects_visible
+    assert "Homework fixture" in numbered_objects_visible
+    assert 'class="raya-numbered-object raya-numbered-object--margin ' in numbered_objects_html
+    assert 'class="raya-numbered-object raya-numbered-object--banded ' in numbered_objects_html
+    assert 'class="raya-numbered-object raya-numbered-object--caption ' in numbered_objects_html
+    assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html
+    assert "raya-numbered-object-reference" in numbered_objects_html
+    assert "raya-numbered-object-title" in numbered_objects_html
+    assert "<script" not in numbered_objects_html
+    assert re.search(r"<script[^>]+MathJax", numbered_objects_html) is None
+    assert "\\begin{bmatrix}" not in numbered_objects_visible
+    assert "mjx-container" in numbered_objects_html
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:

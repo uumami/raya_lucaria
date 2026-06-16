@@ -542,6 +542,69 @@ nav[aria-label="Breadcrumbs"] {
 .raya-callout-caution {
   border-left-color: #bf8700;
 }
+.raya-numbered-object {
+  border: 1px solid #d8dee4;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+.raya-numbered-object-heading {
+  align-items: baseline;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d8dee4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+}
+.raya-numbered-object-reference {
+  color: #1a7f37;
+  font-weight: 700;
+}
+.raya-numbered-object-title {
+  color: #24292f;
+  font-weight: 700;
+}
+.raya-numbered-object-body {
+  padding: 0.85rem;
+}
+.raya-numbered-object-body > :first-child {
+  margin-top: 0;
+}
+.raya-numbered-object-body > :last-child {
+  margin-bottom: 0;
+}
+.raya-numbered-object--margin {
+  border-left: 0.35rem solid #1a7f37;
+}
+.raya-numbered-object--banded {
+  border-color: #d0d7de;
+  border-top: 0.35rem solid #0969da;
+}
+.raya-numbered-object--banded .raya-numbered-object-heading {
+  background: #ddf4ff;
+}
+.raya-numbered-object--caption {
+  border-color: #d0d7de;
+}
+.raya-numbered-object--caption .raya-numbered-object-heading {
+  background: #ffffff;
+  border-bottom: 0;
+  border-top: 1px solid #d8dee4;
+}
+.raya-numbered-object--caption .raya-numbered-object-body {
+  background: #f6f8fa;
+}
+.raya-numbered-object--equation {
+  border-color: #d0d7de;
+}
+.raya-numbered-object--equation .raya-numbered-object-heading {
+  justify-content: center;
+}
+.raya-numbered-object--equation .raya-numbered-object-body {
+  overflow-x: auto;
+  text-align: center;
+}
 .math.inline {
   white-space: nowrap;
 }
@@ -616,6 +679,12 @@ mjx-container[display="true"] {
   }
   .raya-course-nav {
     display: grid;
+  }
+  .raya-numbered-object-heading {
+    display: block;
+  }
+  .raya-numbered-object-title {
+    display: block;
   }
 }
 """.strip()

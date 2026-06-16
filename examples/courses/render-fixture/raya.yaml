@@ -10,3 +10,14 @@ hierarchy:
       label: Section
     - key: topic
       label: Topic
+render:
+  numbered_objects:
+    numbering: page-hierarchy
+    sequences:
+      assignment:
+        label: Activity
+        style: banded
+    families:
+      homework:
+        sequence: assignment
+        label: Activity

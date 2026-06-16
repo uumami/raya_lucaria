@@ -204,6 +204,102 @@ def test_render_fixture_math_renders_in_browser_without_external_requests(
     _run_render_fixture_math_check(tmp_path)
 
 
+def test_render_fixture_numbered_objects_are_static_and_local(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.on(
+                    "request",
+                    lambda request: record_external_request(
+                        request.url,
+                        base_url,
+                        external_requests,
+                    ),
+                )
+                try:
+                    page.goto(
+                        f"{base_url}/numbered-objects/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    _assert_visible_mathjax_output(page, minimum=3)
+                    probe = page.evaluate(
+                        """() => {
+                            const objectNodes = Array.from(
+                              document.querySelectorAll('.raya-numbered-object')
+                            );
+                            const refNodes = Array.from(
+                              document.querySelectorAll('a[href*="raya-object-"]')
+                            );
+                            return {
+                              ids: objectNodes.map((node) => node.dataset.objectId),
+                              text: document.body.innerText,
+                              classes: objectNodes.map((node) => node.className),
+                              refs: refNodes.map((node) => ({
+                                text: node.innerText,
+                                href: node.getAttribute('href'),
+                              })),
+                              mathJaxScripts: Array.from(document.scripts)
+                                .map((script) => script.src || script.textContent || '')
+                                .filter((value) => value.includes('MathJax')),
+                              visibleRawTex: document.body.innerText.includes('\\\\begin{bmatrix}'),
+                              mathjaxContainers: document.querySelectorAll('mjx-container').length,
+                            };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert set(probe["ids"]) >= {
+        "main-theorem",
+        "vector-corollary",
+        "basis-definition",
+        "matrix-equation",
+        "fixture-figure",
+        "fixture-table",
+        "practice-problem",
+        "homework-one",
+    }
+    assert "Theorem 3.1" in probe["text"]
+    assert "Activity 3.1" in probe["text"]
+    assert any(
+        ref["href"] and "#raya-object-main-theorem" in ref["href"]
+        for ref in probe["refs"]
+    )
+    assert any("raya-numbered-object--banded" in value for value in probe["classes"])
+    assert any("raya-numbered-object--caption" in value for value in probe["classes"])
+    assert any("raya-numbered-object--equation" in value for value in probe["classes"])
+    assert probe["mathJaxScripts"] == []
+    assert probe["visibleRawTex"] is False
+    assert probe["mathjaxContainers"] >= 3
+    assert external_requests == []
+
+
 def _run_render_fixture_math_check(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -378,6 +474,8 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "mobile-static-path.png",
         "desktop-math-authoring.png",
         "mobile-math-authoring.png",
+        "desktop-numbered-objects.png",
+        "mobile-numbered-objects.png",
     }
     assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
     assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
@@ -405,6 +503,8 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "capture:static-path:mobile",
         "capture:math-authoring:desktop",
         "capture:math-authoring:mobile",
+        "capture:numbered-objects:desktop",
+        "capture:numbered-objects:mobile",
     }
     assert report_json["diagnostics"] == []
     assert "Render Debug Inspection Report" in report_html
