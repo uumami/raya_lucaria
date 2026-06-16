@@ -210,33 +210,59 @@ def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
 
 def test_role_docs_cover_numbered_objects_and_references() -> None:
     required = {
-        "docs/guides/en/professors/index.md": ["::: theorem", "@", "raya:ref/"],
-        "docs/guides/en/students/index.md": ["Theorem", "Figure", "references"],
+        "docs/guides/en/professors/index.md": [
+            "::: theorem",
+            "`@id` shorthand",
+            "`raya:ref/id`",
+            "Do not write LaTeX `\\label` or `\\ref`",
+        ],
+        "docs/guides/en/students/index.md": [
+            "`Theorem 2.3.1`",
+            "`Figure 2.3.1`",
+            "labels, anchors, and references",
+            "static links",
+        ],
         "docs/guides/en/contributors/index.md": [
-            "numbered_objects",
+            "render.numbered_objects",
+            "`@id` shorthand references",
+            "`raya:ref/id` explicit references",
             "data/numbered-objects.json",
+            "anchors, hrefs, and reference text",
             "no browser-side MathJax",
         ],
         "docs/guides/en/agents/index.md": [
-            "numbered object",
-            "raya:ref/",
+            "`@id` shorthand references",
+            "`raya:ref/id` explicit references",
             "data/numbered-objects.json",
+            "rendered page anchor",
+            "instead of looking for LaTeX `\\label` or `\\ref` support",
         ],
-        "docs/guides/es/profesores/index.md": ["::: theorem", "@", "raya:ref/"],
+        "docs/guides/es/profesores/index.md": [
+            "::: theorem",
+            "shorthand `@id`",
+            "links `raya:ref/id`",
+            "No escribas `\\label` o `\\ref` de LaTeX",
+        ],
         "docs/guides/es/estudiantes/index.md": [
-            "Teorema",
-            "Figura",
-            "referencias",
+            "`Teorema 2.3.1`",
+            "`Figura 2.3.1`",
+            "anchors y referencias",
+            "links estaticos",
         ],
         "docs/guides/es/colaboradores/index.md": [
-            "numbered_objects",
+            "render.numbered_objects",
+            "referencias shorthand `@id`",
+            "referencias explicitas `raya:ref/id`",
             "data/numbered-objects.json",
+            "anchors, hrefs y reference text",
             "MathJax en el navegador",
         ],
         "docs/guides/es/agentes/index.md": [
-            "objeto numerado",
-            "raya:ref/",
+            "referencias shorthand `@id`",
+            "referencias explicitas `raya:ref/id`",
             "data/numbered-objects.json",
+            "anchor renderizado",
+            "en vez de buscar soporte LaTeX `\\label` o `\\ref`",
         ],
     }
     for relative_path, needles in required.items():

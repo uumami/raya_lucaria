@@ -78,6 +78,7 @@ artifact/
     links.json
     navigation.json
     indices.json
+    numbered-objects.json
     official.json
     reviewed-outputs.json
   reviewed/
