@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from raya_schema.diagnostics import ValidationReport
+from raya_schema.links import iter_unfenced_markdown_lines
 from raya_schema.yaml_io import load_yaml_file
 
 NUMBERED_OBJECT_INDEX_PATH = "data/numbered-objects.json"
@@ -47,11 +48,6 @@ NUMBERED_OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 NUMBERED_OBJECT_DIRECTIVE_OPEN_RE = re.compile(
     r"^ {0,3}:::\s+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:\s+(?P<attrs>\{.*\}))?\s*$"
 )
-FENCE_OPEN_RE = re.compile(
-    r"^(?P<prefix>(?: {0,3}(?:[-+*]|\d+[.)])\s+)? {0,3})"
-    r"(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
-)
-FENCE_CLOSE_RE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})[ \t]*$")
 
 
 @dataclass(frozen=True)
@@ -125,32 +121,15 @@ class NumberedObjectSourceReference:
     line_number: int
 
 
-@dataclass(frozen=True)
-class _FenceState:
-    marker: str
-    close_indent_max: int
-
-
 def collect_numbered_object_source_references(
     body: str,
     *,
     source_path: Path,
 ) -> list[NumberedObjectSourceReference]:
     references: list[NumberedObjectSourceReference] = []
-    fence_state: _FenceState | None = None
 
-    for line_number, line in enumerate(body.splitlines(), start=1):
-        if fence_state is not None:
-            if _is_closing_fence(line, fence_state):
-                fence_state = None
-            continue
-
-        opener = _fence_opener(line)
-        if opener is not None:
-            fence_state = opener
-            continue
-
-        directive = NUMBERED_OBJECT_DIRECTIVE_OPEN_RE.match(line)
+    for line in iter_unfenced_markdown_lines(body):
+        directive = NUMBERED_OBJECT_DIRECTIVE_OPEN_RE.match(line.text.rstrip("\n"))
         if directive is None:
             continue
 
@@ -161,7 +140,7 @@ def collect_numbered_object_source_references(
             NumberedObjectSourceReference(
                 id=object_id,
                 source_path=source_path,
-                line_number=line_number,
+                line_number=line.number,
             )
         )
 
@@ -345,39 +324,6 @@ def _numbered_object_id_from_attrs(raw: str | None) -> str | None:
         if NUMBERED_OBJECT_ID_RE.fullmatch(object_id) is not None:
             return object_id
     return None
-
-
-def _fence_opener(line: str) -> _FenceState | None:
-    match = FENCE_OPEN_RE.match(_line_without_blockquote_prefix(line))
-    if match is None:
-        return None
-    marker = match.group("marker")
-    info = match.group("info")
-    if marker.startswith("`") and "`" in info:
-        return None
-    return _FenceState(
-        marker=marker,
-        close_indent_max=len(match.group("prefix")) + 3,
-    )
-
-
-def _is_closing_fence(line: str, fence_state: _FenceState) -> bool:
-    match = FENCE_CLOSE_RE.match(_line_without_blockquote_prefix(line))
-    if match is None:
-        return False
-    if len(match.group("indent")) > fence_state.close_indent_max:
-        return False
-    marker = match.group("marker")
-    return marker[0] == fence_state.marker[0] and len(marker) >= len(fence_state.marker)
-
-
-def _line_without_blockquote_prefix(line: str) -> str:
-    value = line
-    while True:
-        match = re.match(r"^ {0,3}>\s?", value)
-        if match is None:
-            return value
-        value = value[match.end() :]
 
 
 def _merge_sequences(

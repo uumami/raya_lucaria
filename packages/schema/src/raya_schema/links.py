@@ -9,6 +9,11 @@ from raya_schema.references import reference_kind_for_path
 
 
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+FENCE_OPEN_RE = re.compile(
+    r"^(?P<prefix>(?: {0,3}(?:[-+*]|\d+[.)])\s+)? {0,3})"
+    r"(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
+)
+FENCE_CLOSE_RE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})[ \t]*$")
 
 
 @dataclass(frozen=True)
@@ -22,6 +27,13 @@ class MarkdownLink:
 
 
 @dataclass(frozen=True)
+class MarkdownSourceLine:
+    text: str
+    start: int
+    number: int
+
+
+@dataclass(frozen=True)
 class AssetReference:
     kind: str
     target_path: Path
@@ -30,42 +42,63 @@ class AssetReference:
     blocked_segment: str | None = None
 
 
-def extract_markdown_links(text: str) -> list[MarkdownLink]:
-    links: list[MarkdownLink] = []
+@dataclass(frozen=True)
+class _FenceState:
+    marker: str
+    close_indent_max: int
+
+
+def iter_unfenced_markdown_lines(text: str) -> list[MarkdownSourceLine]:
+    lines: list[MarkdownSourceLine] = []
     cursor = 0
-    in_fence = False
+    line_number = 1
+    fence_state: _FenceState | None = None
+
     for raw_line in text.splitlines(keepends=True):
-        stripped = raw_line.lstrip()
-        if stripped.startswith("```") or stripped.startswith("~~~"):
-            in_fence = not in_fence
+        if fence_state is not None:
+            if _is_closing_fence(raw_line.rstrip("\n"), fence_state):
+                fence_state = None
             cursor += len(raw_line)
-            continue
-        if in_fence:
-            cursor += len(raw_line)
+            line_number += 1
             continue
 
-        line_text = raw_line.rstrip("\n")
-        for match in MARKDOWN_LINK_RE.finditer(line_text):
-            absolute_start = cursor + match.start()
-            absolute_end = cursor + match.end()
-            line = text.count("\n", 0, absolute_start) + 1
-            previous_newline = text.rfind("\n", 0, absolute_start)
-            column = (
-                absolute_start + 1
-                if previous_newline == -1
-                else absolute_start - previous_newline
+        opener = _fence_opener(raw_line.rstrip("\n"))
+        if opener is not None:
+            fence_state = opener
+            cursor += len(raw_line)
+            line_number += 1
+            continue
+
+        lines.append(
+            MarkdownSourceLine(
+                text=raw_line,
+                start=cursor,
+                number=line_number,
             )
+        )
+        cursor += len(raw_line)
+        line_number += 1
+
+    return lines
+
+
+def extract_markdown_links(text: str) -> list[MarkdownLink]:
+    links: list[MarkdownLink] = []
+    for source_line in iter_unfenced_markdown_lines(text):
+        line_text = source_line.text.rstrip("\n")
+        for match in MARKDOWN_LINK_RE.finditer(line_text):
+            absolute_start = source_line.start + match.start()
+            absolute_end = source_line.start + match.end()
             links.append(
                 MarkdownLink(
                     label=match.group(1),
                     target=match.group(2).strip(),
                     start=absolute_start,
                     end=absolute_end,
-                    line=line,
-                    column=column,
+                    line=source_line.number,
+                    column=match.start() + 1,
                 )
             )
-        cursor += len(raw_line)
     return links
 
 
@@ -213,3 +246,36 @@ def _target_without_optional_title(target: str) -> str:
     if target.startswith("<") and ">" in target:
         return target[1 : target.find(">")]
     return target
+
+
+def _fence_opener(line: str) -> _FenceState | None:
+    match = FENCE_OPEN_RE.match(_line_without_blockquote_prefix(line))
+    if match is None:
+        return None
+    marker = match.group("marker")
+    info = match.group("info")
+    if marker.startswith("`") and "`" in info:
+        return None
+    return _FenceState(
+        marker=marker,
+        close_indent_max=len(match.group("prefix")) + 3,
+    )
+
+
+def _is_closing_fence(line: str, fence_state: _FenceState) -> bool:
+    match = FENCE_CLOSE_RE.match(_line_without_blockquote_prefix(line))
+    if match is None:
+        return False
+    if len(match.group("indent")) > fence_state.close_indent_max:
+        return False
+    marker = match.group("marker")
+    return marker[0] == fence_state.marker[0] and len(marker) >= len(fence_state.marker)
+
+
+def _line_without_blockquote_prefix(line: str) -> str:
+    value = line
+    while True:
+        match = re.match(r"^ {0,3}>\s?", value)
+        if match is None:
+            return value
+        value = value[match.end() :]

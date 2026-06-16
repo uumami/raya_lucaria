@@ -9,6 +9,7 @@ from raya_schema.numbered_objects import (
     NUMBERED_OBJECT_INDEX_PATH,
     NumberedObject,
     build_numbered_objects_index,
+    collect_numbered_object_source_references,
     normalize_numbered_object_config,
     validate_numbered_objects_index,
 )
@@ -220,6 +221,36 @@ Body.
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert prepared.body == "\nRAYA_NUMBERED_OBJECT_0\n\n"
     assert prepared.sources[0].id == "indented"
+
+
+def test_collect_numbered_object_source_references_ignores_fenced_directive_text() -> None:
+    references = collect_numbered_object_source_references(
+        "\n".join(
+            [
+                "```markdown",
+                "::: theorem {#simple}",
+                "Simple code sample.",
+                "```",
+                "",
+                "- ```markdown",
+                "  ::: theorem {#list}",
+                "  List code sample.",
+                "  ```",
+                "",
+                "> ```markdown",
+                "> ::: theorem {#quote}",
+                "> Quote code sample.",
+                "> ```",
+                "",
+                "::: theorem {#real}",
+                "Real body.",
+                ":::",
+            ]
+        ),
+        source_path=Path("course/0_index.md"),
+    )
+
+    assert [reference.id for reference in references] == ["real"]
 
 
 def test_page_number_prefix_from_source_path_uses_ordered_path_parts() -> None:

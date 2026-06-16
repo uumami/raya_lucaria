@@ -318,6 +318,32 @@ def test_markdown_links_inside_fenced_code_are_not_validated(tmp_path: Path) -> 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
 
+@pytest.mark.parametrize(
+    "fenced_markdown",
+    [
+        "```markdown\nSee [sample theorem](raya:ref/sample).\n```\n",
+        "- ```markdown\n  See [sample theorem](raya:ref/sample).\n  ```\n",
+        "> ```markdown\n> See [sample theorem](raya:ref/sample).\n> ```\n",
+    ],
+)
+def test_explicit_numbered_refs_inside_fenced_code_are_not_validated(
+    tmp_path: Path,
+    fenced_markdown: str,
+) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n# Root\n\n"
+        + fenced_markdown,
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
 def test_root_colocated_asset_reference_validates_and_reads_asset(tmp_path: Path) -> None:
     _write_valid_config(tmp_path)
     source = tmp_path / "course"
