@@ -22,6 +22,7 @@ from raya_static.numbered_objects import (
     NumberedObjectRenderItem,
     expand_shorthand_references,
 )
+from raya_static.proofs import ProofRenderContext, ProofRenderItem
 
 
 INDEX_MARKER = "<!-- raya:index -->"
@@ -62,6 +63,7 @@ class _Callout:
 
 _CalloutFragment = tuple[_Callout, list[Token], dict]
 _NumberedObjectFragment = tuple[NumberedObjectRenderItem, list[Token], dict]
+_ProofFragment = tuple[ProofRenderItem, list[Token], dict]
 
 
 class RichMarkdownRenderer:
@@ -95,6 +97,7 @@ class RichMarkdownRenderer:
         generated_index: str = "",
         *,
         numbered_objects: NumberedObjectRenderContext | None = None,
+        proofs: ProofRenderContext | None = None,
     ) -> str:
         if numbered_objects is not None:
             body = expand_shorthand_references(
@@ -134,11 +137,34 @@ class RichMarkdownRenderer:
                     object_tokens,
                     object_env,
                 )
+        proof_fragments: dict[str, _ProofFragment] = {}
+        if proofs is not None:
+            proof_reference_context = NumberedObjectRenderContext(
+                items=[],
+                objects_by_id=proofs.objects_by_id,
+            )
+            for item in proofs.items:
+                proof_env = _new_env(self._resolve_href, collect_headings=False)
+                proof_body = expand_shorthand_references(
+                    item.source.body,
+                    context=proof_reference_context,
+                    report=self._report,
+                    source_path=item.source.source_path,
+                )
+                if not self._report.ok:
+                    return ""
+                proof_tokens = self._md.parse(proof_body, proof_env)
+                proof_fragments[item.source.placeholder] = (
+                    item,
+                    proof_tokens,
+                    proof_env,
+                )
 
         math_items = _collect_math_items_in_render_order(
             page_tokens,
             callout_fragments,
             numbered_object_fragments,
+            proof_fragments,
             source_path=self._source_path,
         )
 
@@ -150,6 +176,8 @@ class RichMarkdownRenderer:
             callout_env["raya_math_html_by_id"] = math_result.html_by_id
         for _, _, object_env in numbered_object_fragments.values():
             object_env["raya_math_html_by_id"] = math_result.html_by_id
+        for _, _, proof_env in proof_fragments.values():
+            proof_env["raya_math_html_by_id"] = math_result.html_by_id
 
         html_fragment = self._md.renderer.render(page_tokens, self._md.options, env)
         if not self._report.ok:
@@ -196,6 +224,21 @@ class RichMarkdownRenderer:
             html_fragment,
             rendered_numbered_objects,
         )
+        rendered_proofs = {
+            placeholder: _render_proof_html(
+                self._md.renderer.render(proof_tokens, self._md.options, proof_env),
+                item=item,
+            )
+            for placeholder, (
+                item,
+                proof_tokens,
+                proof_env,
+            ) in proof_fragments.items()
+        }
+        html_fragment = self._replace_proof_placeholders(
+            html_fragment,
+            rendered_proofs,
+        )
         toc = _render_page_toc(env["raya_headings"])
         if toc:
             return toc + "\n" + html_fragment
@@ -217,6 +260,15 @@ class RichMarkdownRenderer:
     ) -> str:
         for placeholder, object_html in numbered_objects.items():
             html_fragment = html_fragment.replace(f"<p>{placeholder}</p>", object_html)
+        return html_fragment
+
+    def _replace_proof_placeholders(
+        self,
+        html_fragment: str,
+        proofs: dict[str, str],
+    ) -> str:
+        for placeholder, proof_html in proofs.items():
+            html_fragment = html_fragment.replace(f"<p>{placeholder}</p>", proof_html)
         return html_fragment
 
     def _render_callout(self, callout: _Callout, inner_html: str) -> str:
@@ -345,13 +397,19 @@ def render_markdown_body(
     report: ValidationReport,
     math_renderer: MathRenderer,
     numbered_objects: NumberedObjectRenderContext | None = None,
+    proofs: ProofRenderContext | None = None,
 ) -> str:
     return RichMarkdownRenderer(
         resolve_href,
         source_path=source_path,
         report=report,
         math_renderer=math_renderer,
-    ).render(body, generated_index, numbered_objects=numbered_objects)
+    ).render(
+        body,
+        generated_index,
+        numbered_objects=numbered_objects,
+        proofs=proofs,
+    )
 
 
 def missing_footnote_definitions(body: str) -> list[str]:
@@ -605,6 +663,36 @@ nav[aria-label="Breadcrumbs"] {
   overflow-x: auto;
   text-align: center;
 }
+.raya-proof {
+  border-left: 3px solid #57606a;
+  margin: 1.25rem 0;
+  padding: 0.2rem 0 0.2rem 1rem;
+}
+.raya-proof-heading {
+  color: #24292f;
+  font-weight: 650;
+  margin: 0 0 0.55rem;
+}
+.raya-proof-reference {
+  font-style: italic;
+}
+.raya-proof-title {
+  color: #57606a;
+  font-weight: 500;
+}
+.raya-proof-body {
+  overflow-x: auto;
+}
+.raya-proof-body > :first-child {
+  margin-top: 0;
+}
+.raya-proof-body > :last-child {
+  margin-bottom: 0;
+}
+.raya-proof-qed {
+  float: right;
+  margin-left: 0.75rem;
+}
 .math.inline {
   white-space: nowrap;
 }
@@ -715,6 +803,7 @@ def _collect_math_items_in_render_order(
     page_tokens: list[Token],
     callout_fragments: dict[str, _CalloutFragment],
     numbered_object_fragments: dict[str, _NumberedObjectFragment],
+    proof_fragments: dict[str, _ProofFragment],
     *,
     source_path: Path,
 ) -> list[MathItem]:
@@ -741,6 +830,21 @@ def _collect_math_items_in_render_order(
             _, object_tokens, _ = numbered_object_fragments[object_placeholder]
             new_items = _collect_math_items(
                 object_tokens,
+                source_path=source_path,
+                counter=len(items),
+            )
+            items.extend(new_items)
+            idx += 3
+            continue
+        proof_placeholder = _proof_placeholder_at(
+            page_tokens,
+            idx,
+            proof_fragments,
+        )
+        if proof_placeholder is not None:
+            _, proof_tokens, _ = proof_fragments[proof_placeholder]
+            new_items = _collect_math_items(
+                proof_tokens,
                 source_path=source_path,
                 counter=len(items),
             )
@@ -786,6 +890,23 @@ def _numbered_object_placeholder_at(
         return None
     inline = tokens[idx + 1]
     if inline.type != "inline" or inline.content not in numbered_object_fragments:
+        return None
+    if tokens[idx + 2].type != "paragraph_close":
+        return None
+    return inline.content
+
+
+def _proof_placeholder_at(
+    tokens: list[Token],
+    idx: int,
+    proof_fragments: dict[str, _ProofFragment],
+) -> str | None:
+    if idx + 2 >= len(tokens):
+        return None
+    if tokens[idx].type != "paragraph_open":
+        return None
+    inline = tokens[idx + 1]
+    if inline.type != "inline" or inline.content not in proof_fragments:
         return None
     if tokens[idx + 2].type != "paragraph_close":
         return None
@@ -927,6 +1048,41 @@ def _render_numbered_object_html(
             "</p>",
             '<div class="raya-numbered-object-body">',
             body,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_proof_html(
+    rendered_body: str,
+    *,
+    item: ProofRenderItem,
+) -> str:
+    proof_id = item.source.id
+    id_html = (
+        f' id="raya-proof-{html.escape(proof_id, quote=True)}"' if proof_id else ""
+    )
+    reference = "Proof"
+    if item.target is not None:
+        reference = f"Proof of {item.target.reference_text}"
+    title = item.source.title or ""
+    title_html = (
+        f'<span class="raya-proof-title">{html.escape(title)}</span>'
+        if title
+        else ""
+    )
+    body = rendered_body.strip() or "<p></p>"
+    return "\n".join(
+        [
+            f'<section{id_html} class="raya-proof">',
+            '<p class="raya-proof-heading">',
+            f'<span class="raya-proof-reference">{html.escape(reference)}</span>'
+            + (f" {title_html}" if title_html else ""),
+            "</p>",
+            '<div class="raya-proof-body">',
+            body,
+            '<span class="raya-proof-qed" aria-hidden="true">&#x25A1;</span>',
             "</div>",
             "</section>",
         ]

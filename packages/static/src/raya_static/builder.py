@@ -81,6 +81,11 @@ from raya_static.numbered_objects import (
     page_number_prefix_from_source_path,
     prepare_numbered_object_markdown,
 )
+from raya_static.proofs import (
+    ProofRenderContext,
+    ProofRenderItem,
+    prepare_proof_markdown,
+)
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
     contains_full_latex_document,
@@ -136,6 +141,12 @@ class _NumberedObjectCollection:
     objects: list[NumberedObject]
     objects_by_id: dict[str, NumberedObject]
     items_by_page_id: dict[str, list[NumberedObjectRenderItem]]
+    prepared_bodies_by_page_id: dict[str, str]
+
+
+@dataclass(frozen=True)
+class _ProofCollection:
+    items_by_page_id: dict[str, list[ProofRenderItem]]
     prepared_bodies_by_page_id: dict[str, str]
 
 
@@ -246,6 +257,14 @@ def build_course(course_path: str | Path) -> ValidationReport:
     )
     if not report.ok:
         return report
+    proof_collection = _collect_proofs(
+        pages=pages,
+        prepared_bodies_by_page_id=numbered_object_collection.prepared_bodies_by_page_id,
+        objects_by_id=numbered_object_collection.objects_by_id,
+        report=report,
+    )
+    if not report.ok:
+        return report
     rendered_pages: list[tuple[ContentPage, str]] = []
 
     for page in pages:
@@ -253,13 +272,21 @@ def build_course(course_path: str | Path) -> ValidationReport:
             items=numbered_object_collection.items_by_page_id.get(page.id, []),
             objects_by_id=numbered_object_collection.objects_by_id,
         )
+        proof_context = ProofRenderContext(
+            items=proof_collection.items_by_page_id.get(page.id, []),
+            objects_by_id=numbered_object_collection.objects_by_id,
+        )
         rendered_page = _render_page(
             page=page,
-            body=numbered_object_collection.prepared_bodies_by_page_id.get(
+            body=proof_collection.prepared_bodies_by_page_id.get(
                 page.id,
-                page.body,
+                numbered_object_collection.prepared_bodies_by_page_id.get(
+                    page.id,
+                    page.body,
+                ),
             ),
             numbered_objects=numbered_context,
+            proofs=proof_context,
             content_model=content_model,
             pages_by_source=pages_by_source,
             pages_by_reference=pages_by_reference,
@@ -584,11 +611,54 @@ def _collect_numbered_objects(
     )
 
 
+def _collect_proofs(
+    *,
+    pages: list[ContentPage],
+    prepared_bodies_by_page_id: dict[str, str],
+    objects_by_id: dict[str, NumberedObject],
+    report: ValidationReport,
+) -> _ProofCollection:
+    items_by_page_id: dict[str, list[ProofRenderItem]] = {}
+    proof_prepared_bodies_by_page_id: dict[str, str] = {}
+
+    for page in pages:
+        prepared = prepare_proof_markdown(
+            prepared_bodies_by_page_id.get(page.id, page.body),
+            report=report,
+            source_path=page.source_path,
+        )
+        proof_prepared_bodies_by_page_id[page.id] = prepared.body
+        if not report.ok:
+            continue
+
+        page_items: list[ProofRenderItem] = []
+        for source in prepared.sources:
+            target = None
+            if source.of_id:
+                target = objects_by_id.get(source.of_id)
+                if target is None:
+                    report.add_error(
+                        f"Unknown proof target '{source.of_id}'",
+                        path=source.source_path,
+                        field=f"line:{source.start_line}",
+                        next_action='Use of="object-id" with an existing numbered object ID',
+                    )
+                    continue
+            page_items.append(ProofRenderItem(source=source, target=target))
+        items_by_page_id[page.id] = page_items
+
+    return _ProofCollection(
+        items_by_page_id=items_by_page_id,
+        prepared_bodies_by_page_id=proof_prepared_bodies_by_page_id,
+    )
+
+
 def _render_page(
     *,
     page: ContentPage,
     body: str,
     numbered_objects: NumberedObjectRenderContext,
+    proofs: ProofRenderContext,
     content_model: ContentModel,
     pages_by_source: dict[Path, ContentPage],
     pages_by_reference: dict[str, ContentPage],
@@ -674,6 +744,7 @@ def _render_page(
                 report=report,
                 math_renderer=math_renderer,
                 numbered_objects=numbered_objects,
+                proofs=proofs,
             ),
             "</article>",
             (

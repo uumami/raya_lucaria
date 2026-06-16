@@ -288,6 +288,98 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     assert "mjx-container" in math_html
 
 
+def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    course.joinpath("raya.yaml").write_text(
+        course.joinpath("raya.yaml")
+        .read_text(encoding="utf-8")
+        .replace(
+            "source: course",
+            "source: course\nrender:\n  numbered_objects:\n    scheme: section",
+        )
+        .replace("course_id: minimal-course", "course_id: proof-demo"),
+        encoding="utf-8",
+    )
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: proof-demo",
+                "title: Proof Demo",
+                "summary: Proof rendering fixture.",
+                "status: ready",
+                "---",
+                "",
+                "# Proof Demo",
+                "",
+                '::: theorem {#main-theorem title="Fixture theorem"}',
+                "For every vector $v$, $v=v$.",
+                ":::",
+                "",
+                '::: proof {#proof-main of="main-theorem" title="Identity"}',
+                "The vector identity follows from $v-v=0$.",
+                ":::",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    visible = _visible_text(html)
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "Proof of Theorem 1" in visible
+    assert "Identity" in visible
+    assert "raya-proof" in html
+    assert 'id="raya-proof-proof-main"' in html
+    assert "mjx-container" in html
+    assert "proof-main" not in numbered_index["by_id"]
+    assert list(numbered_index["by_id"]) == ["main-theorem"]
+    assert 'class="raya-proof"' in html
+    assert '<span class="raya-proof-reference">Proof of Theorem 1</span>' in html
+    assert '<span class="raya-proof-title">Identity</span>' in html
+    assert '<span class="raya-proof-qed" aria-hidden="true">&#x25A1;</span>' in html
+    assert "RAYA_PROOF_" not in visible
+    assert "\\(" not in visible
+
+
+def test_build_rejects_unknown_proof_target(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: proof-demo\n"
+        "title: Proof Demo\n"
+        "summary: Proof rendering fixture.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Proof Demo\n\n"
+        "::: proof {of=\"missing-theorem\"}\n"
+        "No target.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(item for item in report.diagnostics if item.severity == "error")
+    assert diagnostic.message == "Unknown proof target 'missing-theorem'"
+    assert diagnostic.field == "line:4"
+    assert (
+        diagnostic.next_action
+        == 'Use of="object-id" with an existing numbered object ID'
+    )
+
+
 def test_shorthand_reference_escapes_configured_label_markdown(
     tmp_path: Path,
 ) -> None:
