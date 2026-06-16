@@ -20,7 +20,7 @@ Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y pru
 
 Las paginas de curso pueden incluir objetos numerados y referencias estaticas. Un resultado puede aparecer como `Teorema 2.3.1`, una imagen como `Figura 2.3.1`, y el trabajo de practica como referencia de homework, problem, activity o assignment. Estos numeros, etiquetas, anchors y referencias se generan durante el build y se publican como links estaticos; tu browser no deberia calcularlos ni cargar un servicio vivo de referencias.
 
-El contenido numerado aparece como labels y links estaticos, por ejemplo `Theorem 3.1`, `Figure 3.1` o `Activity 3.3`. Los encabezados de prueba como `Proof of Activity 3.3` se generan durante build; el browser no calcula referencias.
+El contenido numerado aparece como etiquetas y enlaces estaticos, por ejemplo `Theorem 3.1`, `Figure 3.1` o `Activity 3.3`. Los encabezados de prueba como `Proof of Activity 3.3` se generan durante build; el browser no calcula referencias.
 
 Los encabezados de prueba renderizados nombran el objeto que se esta probando, y la matematica dentro de la prueba debe aparecer ya compuesta durante el build. La pagina no deberia necesitar un request de browser-side MathJax para mostrar la prueba. Si ves sintaxis source cruda o TeX crudo en vez de una prueba renderizada, reportalo al equipo del curso con la URL o titulo de la pagina.
 

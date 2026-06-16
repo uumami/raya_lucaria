@@ -18,7 +18,7 @@ Para notacion comun de curso, prefiere macros pequenas locales a la pagina como 
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.
 
-Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con fenced directives e IDs estables:
+Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con directivas fenced e IDs estables:
 
 ```markdown
 ::: theorem {#compactness title="Compactness Criterion"}
@@ -46,7 +46,7 @@ Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 
 Theorem y corollary pueden compartir una secuencia de theorem; equation, figure, table, problem, homework y assignment pueden compartir o separar secuencias segun la configuracion. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
 
-Usa el patron de numbered-content matrix al revisar un curso: incluye objetos theorem-like, equation, figure/table y practice con IDs estables. Los diagnosticos de build deben apuntar al source file y linea para IDs incorrectos, referencias desconocidas, directives malformadas y proof targets que no existen.
+Usa el patron de numbered-content matrix al revisar un curso: incluye objetos tipo teorema, equation, figure/table y practica con IDs estables. Los diagnosticos de build deben apuntar al archivo source y linea para IDs incorrectos, referencias desconocidas, directivas malformadas y objetivos de prueba que no existen.
 
 Los bloques de prueba pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; la prueba se renderiza como entorno estatico y no crea otro objeto numerado.
 
