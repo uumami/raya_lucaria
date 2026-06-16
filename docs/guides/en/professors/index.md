@@ -44,7 +44,7 @@ Use [the compactness criterion](raya:ref/compactness) in your proof.
 :::
 ```
 
-Theorem and corollary may share a theorem sequence; equation, figure, table, problem, homework, and assignment families can share or separate sequences by configuration. Use `@id` shorthand or `raya:ref/id` links for source references. Do not write LaTeX `\label` or `\ref` expecting Raya cross-references.
+Theorem, corollary, and built-in `remark` objects may share a theorem-family sequence. The default reader presentation uses `scannable` for theorem-like objects, examples, exercises, and assignments; figures and tables keep `caption` presentation, and equations keep `equation` presentation. The course-level customization surface lives in `raya.yaml` under `render.numbered_objects`; page/section style overrides are future work. Use `@id` shorthand or `raya:ref/id` links for source references. Do not write LaTeX `\label` or `\ref` expecting Raya cross-references.
 
 Use the numbered-content matrix pattern when checking a course: include theorem-like, equation, figure/table, and practice objects with stable IDs. Build diagnostics should point to the source file and line for bad IDs, unknown references, malformed directives, and proof targets that do not exist.
 

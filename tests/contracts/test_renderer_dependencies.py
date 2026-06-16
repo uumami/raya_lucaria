@@ -209,9 +209,26 @@ def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
 
 
 def test_role_docs_cover_numbered_objects_and_references() -> None:
+    foundation = (ROOT / "docs/foundation/17_rendering_execution_plan.md").read_text(
+        encoding="utf-8"
+    )
+    for needle in [
+        "`remark`",
+        "`scannable`",
+        "course-level",
+        "page/section",
+    ]:
+        assert needle in foundation, f"foundation rendering plan must mention {needle}"
+
     required = {
         "docs/guides/en/professors/index.md": [
             "::: theorem",
+            "`remark`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
+            "course-level",
+            "page/section",
             "`@id` shorthand",
             "`raya:ref/id`",
             "Do not write LaTeX `\\label` or `\\ref`",
@@ -219,11 +236,19 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
         "docs/guides/en/students/index.md": [
             "`Theorem 2.3.1`",
             "`Figure 2.3.1`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
             "labels, anchors, and references",
             "static links",
         ],
         "docs/guides/en/contributors/index.md": [
             "render.numbered_objects",
+            "`remark`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
+            "reader-ux",
             "`@id` shorthand references",
             "`raya:ref/id` explicit references",
             "data/numbered-objects.json",
@@ -234,11 +259,21 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "`@id` shorthand references",
             "`raya:ref/id` explicit references",
             "data/numbered-objects.json",
+            "reader-ux",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
             "rendered page anchor",
             "instead of looking for LaTeX `\\label` or `\\ref` support",
         ],
         "docs/guides/es/profesores/index.md": [
             "::: theorem",
+            "`remark`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
+            "nivel de curso",
+            "pagina/seccion",
             "shorthand `@id`",
             "links `raya:ref/id`",
             "No escribas `\\label` o `\\ref` de LaTeX",
@@ -246,11 +281,19 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
         "docs/guides/es/estudiantes/index.md": [
             "`Teorema 2.3.1`",
             "`Figura 2.3.1`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
             "anchors y referencias",
             "links estaticos",
         ],
         "docs/guides/es/colaboradores/index.md": [
             "render.numbered_objects",
+            "`remark`",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
+            "reader-ux",
             "referencias shorthand `@id`",
             "referencias explicitas `raya:ref/id`",
             "data/numbered-objects.json",
@@ -261,6 +304,10 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "referencias shorthand `@id`",
             "referencias explicitas `raya:ref/id`",
             "data/numbered-objects.json",
+            "reader-ux",
+            "`scannable`",
+            "`caption`",
+            "`equation`",
             "ancla renderizada",
             "en vez de buscar soporte LaTeX `\\label` o `\\ref`",
         ],

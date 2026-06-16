@@ -44,7 +44,7 @@ Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 :::
 ```
 
-Theorem y corollary pueden compartir una secuencia de theorem; equation, figure, table, problem, homework y assignment pueden compartir o separar secuencias segun la configuracion. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
+Theorem, corollary y el objeto incorporado `remark` pueden compartir una secuencia de familia theorem. La presentacion lectora default usa `scannable` para objetos tipo teorema, examples, exercises y assignments; figures y tables conservan presentacion `caption`, y equations conservan presentacion `equation`. La personalizacion a nivel de curso vive en `raya.yaml` bajo `render.numbered_objects`; los overrides por pagina/seccion son trabajo futuro. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
 
 Usa el patron de numbered-content matrix al revisar un curso: incluye objetos tipo teorema, equation, figure/table y practica con IDs estables. Los diagnosticos de build deben apuntar al archivo source y linea para IDs incorrectos, referencias desconocidas, directivas malformadas y objetivos de prueba que no existen.
 

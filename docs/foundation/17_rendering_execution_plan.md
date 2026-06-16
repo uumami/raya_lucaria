@@ -151,7 +151,13 @@ Accepted baseline:
 - Numbered objects render at build time from fenced `:::` directives and
   `render.numbered_objects` configuration. Theorem, corollary, equation,
   figure, table, problem, homework, and assignment families may share or use
-  separate sequences according to course configuration. Course-global shorthand
+  separate sequences according to course configuration. `remark` is also a
+  built-in theorem-family object. The default reader presentation uses the
+  `scannable` style for theorem, example, exercise, and assignment sequences;
+  figure and table keep `caption` presentation, and equation keeps `equation`
+  presentation. The course-level customization surface remains current through
+  `render.numbered_objects` sequence and family overrides in `raya.yaml`;
+  page/section style overrides are future work. Course-global shorthand
   references such as `@compactness` and explicit links such as
   `raya:ref/compactness` resolve to static labels, anchors, hrefs, and
   manifest-declared `data/numbered-objects.json` entries.
