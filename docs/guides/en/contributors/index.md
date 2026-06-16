@@ -23,6 +23,11 @@ When changing numbered content behavior, keep CLI/build diagnostics and `data/nu
 
 Proof blocks are static render surfaces, not numbered-index records. They may resolve `of` against any numbered object family, render a proof heading and body, and remain absent from `data/numbered-objects.json`.
 
+Build-time static environments are separate from numbered objects. Preserve
+`proof`, `solution`, `hint`, and `answer` as rendered blocks whose optional `of`
+target resolves against `data/numbered-objects.json`; do not add them to the
+numbered index or require browser-side reference resolution.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

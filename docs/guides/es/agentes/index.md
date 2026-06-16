@@ -26,6 +26,11 @@ Para fallas de contenido numerado, compara en este orden: la directiva en la fue
 
 Para bloques de prueba, valida objetivos `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Las pruebas se renderizan como entornos estaticos y no deben aparecer como registros del index numerado.
 
+Para fallas de entornos estaticos, inspecciona la directiva en la fuente, el
+diagnostico de build, el registro objetivo en `data/numbered-objects.json`, el
+encabezado/ancla renderizado y la evidencia de render-debug del fixture
+`reader-ux`.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

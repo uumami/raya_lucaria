@@ -22,6 +22,12 @@ Cuando cambies comportamiento de contenido numerado, manten los diagnosticos CLI
 
 Los bloques de prueba son superficies de render estatico, no registros del index numerado. Pueden resolver `of` contra cualquier familia de objeto numerado, renderizar un encabezado y cuerpo de prueba, y permanecer ausentes de `data/numbered-objects.json`.
 
+Los entornos estaticos estan separados de los objetos numerados. Preserva
+`proof`, `solution`, `hint` y `answer` como bloques renderizados durante el
+build cuyo objetivo opcional `of` se resuelve contra
+`data/numbered-objects.json`; no los agregues al index numerado ni exijas un
+resolver de referencias en el navegador.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

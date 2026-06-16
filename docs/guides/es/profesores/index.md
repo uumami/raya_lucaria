@@ -50,6 +50,12 @@ Usa el patron de matriz de contenido numerado al revisar un curso: incluye objet
 
 Los bloques de prueba pueden apuntar a teoremas, tareas, problemas, figuras, tablas, ecuaciones, definiciones y actividades mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; la prueba se renderiza como entorno estatico y no crea otro objeto numerado.
 
+Usa entornos estaticos para apoyo alrededor de objetos numerados. `proof`,
+`solution`, `hint` y `answer` se renderizan durante el build y pueden usar
+`of="object-id"` para apuntar a un teorema, problema, actividad, tarea,
+asignacion, figura, tabla o ecuacion; no son objetos numerados y no crean
+registros en `data/numbered-objects.json`.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

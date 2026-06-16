@@ -50,6 +50,12 @@ Use the numbered-content matrix pattern when checking a course: include theorem-
 
 Proof blocks can point to theorems, homework, problems, figures, tables, equations, definitions, and activities while keeping each object independently numbered. Use `of` to name the numbered object being proved; the proof renders as a static environment and does not create another numbered object.
 
+Use static environments for support around numbered objects. `proof`,
+`solution`, `hint`, and `answer` render during build and may use
+`of="object-id"` to target a theorem, problem, activity, homework, assignment,
+figure, table, or equation. They are not numbered objects and do not create
+records in `data/numbered-objects.json`.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

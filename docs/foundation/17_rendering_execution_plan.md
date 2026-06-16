@@ -166,6 +166,14 @@ Accepted baseline:
   receive static HTML, labels, anchors, and links; they do not run a client-side
   numbering or reference resolver.
 - Proof blocks use `::: proof {of="object-id"}` and render statically as proof environments. They may target any numbered object family, including theorems, definitions, equations, figures, tables, problems, homework, and activities. Proofs are not numbered objects and do not appear in `data/numbered-objects.json`.
+- Static environments are current build-time rendering behavior. `proof`,
+  `solution`, `hint`, and `answer` use fenced directives, may carry stable
+  IDs, and may target a numbered object with `of="object-id"`. They render
+  static headings such as `Solution of Problem 3.1`, `Hint for Activity 4.1`,
+  and `Answer to Homework 5.1`, but they do not appear in
+  `data/numbered-objects.json`. Unknown targets, malformed attributes,
+  duplicate static-environment IDs, and collisions with numbered object IDs
+  fail build with source diagnostics.
 - Numbered objects participate in render-debug inspection. Debug screenshots,
   copied static-site parity checks, raw TeX checks, overflow checks, and
   inspection pages should make numbered labels, anchors, hrefs, and reference

@@ -24,6 +24,11 @@ El contenido numerado aparece como etiquetas y enlaces estaticos, por ejemplo `T
 
 Los encabezados de prueba renderizados nombran el objeto que se esta probando, y la matematica dentro de la prueba debe aparecer ya compuesta durante el build. La pagina no deberia necesitar un request de browser-side MathJax para mostrar la prueba. Si ves sintaxis de fuente cruda o TeX crudo en vez de una prueba renderizada, reportalo al equipo del curso con la URL o titulo de la pagina.
 
+Las pruebas, soluciones, pistas y respuestas deben aparecer como contenido
+estatico del curso. Cuando nombran un teorema, problema, actividad, tarea,
+figura, tabla o ecuacion, ese encabezado ya debe estar resuelto antes de que la
+pagina llegue al navegador.
+
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.
