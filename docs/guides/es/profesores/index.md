@@ -35,12 +35,12 @@ R(f)=\mathbb{E}[\ell(f(X),Y)]
 $$
 :::
 
-::: figure {#pipeline title="Training Pipeline"}
-![Pipeline](_assets/pipeline.png)
+::: figure {#pipeline title="Flujo de entrenamiento"}
+![Flujo](_assets/pipeline.png)
 :::
 
-::: homework {#hw-compactness title="Homework"}
-Use [the compactness criterion](raya:ref/compactness) in your proof.
+::: homework {#hw-compactness title="Tarea"}
+Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 :::
 ```
 

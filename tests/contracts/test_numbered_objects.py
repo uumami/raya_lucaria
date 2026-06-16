@@ -259,8 +259,16 @@ def test_page_number_prefix_from_source_path_uses_ordered_path_parts() -> None:
         == "2.3"
     )
     assert (
-        page_number_prefix_from_source_path("lessons/02-vectors/003_norms/index.md")
-        == "02.003"
+        page_number_prefix_from_source_path("lessons/02_vectors/003_norms/index.md")
+        == "2.3"
+    )
+    assert (
+        page_number_prefix_from_source_path("course/A_reference/1_topic/0_index.md")
+        == "A.1"
+    )
+    assert (
+        page_number_prefix_from_source_path("course/A_reference/1_formula_sheet.md")
+        == "A.1"
     )
 
 

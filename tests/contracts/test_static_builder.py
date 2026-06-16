@@ -163,6 +163,79 @@ def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> 
     assert objects[0]["href"].endswith("#raya-object-main")
 
 
+def test_build_numbers_objects_with_display_labels_not_raw_prefixes(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    shutil.rmtree(course / "course" / "1_unit")
+    vectors_index = course / "course" / "2_vectors" / "0_index.md"
+    vectors_index.parent.mkdir(parents=True)
+    vectors_index.write_text(
+        "---\n"
+        "id: vectors\n"
+        "title: Vectors\n"
+        "summary: Vector section fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Vectors\n",
+        encoding="utf-8",
+    )
+    main_page = course / "course" / "2_vectors" / "3_norms" / "0_index.md"
+    main_page.parent.mkdir(parents=True)
+    main_page.write_text(
+        "---\n"
+        "id: padded-norms\n"
+        "title: Padded Norms\n"
+        "summary: Padded source prefix fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Padded Norms\n\n"
+        "::: theorem {#padded-theorem}\n"
+        "Padded prefixes should not appear in reader-facing object numbers.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    appendix_index = course / "course" / "A_reference" / "0_index.md"
+    appendix_index.parent.mkdir(parents=True)
+    appendix_index.write_text(
+        "---\n"
+        "id: appendix-reference\n"
+        "title: Appendix Reference\n"
+        "summary: Appendix section fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Appendix Reference\n",
+        encoding="utf-8",
+    )
+    appendix_page = course / "course" / "A_reference" / "1_topic" / "0_index.md"
+    appendix_page.parent.mkdir(parents=True)
+    appendix_page.write_text(
+        "---\n"
+        "id: appendix-topic\n"
+        "title: Appendix Topic\n"
+        "summary: Appendix object numbering fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Appendix Topic\n\n"
+        "::: theorem {#appendix-theorem}\n"
+        "Appendix labels should remain visible in object numbers.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    by_id = {obj["id"]: obj for obj in numbered_index["objects"]}
+    assert by_id["padded-theorem"]["number"] == "2.3.1"
+    assert by_id["appendix-theorem"]["number"] == "A.1.1"
+
+
 def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     shutil.rmtree(course / "course" / "1_unit")

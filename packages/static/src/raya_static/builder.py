@@ -566,9 +566,8 @@ def _collect_numbered_objects(
             page_id=page.id,
             page_title=page.title,
             page_output_path=page.output_path,
-            page_number_prefix=page_number_prefix_from_source_path(
-                source_relative_path
-            ),
+            page_number_prefix=page.display_label
+            or page_number_prefix_from_source_path(source_relative_path),
         )
         objects.extend(page_objects)
         objects_by_id.update({obj.id: obj for obj in page_objects})

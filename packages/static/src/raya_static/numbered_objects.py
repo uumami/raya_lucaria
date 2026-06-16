@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from raya_schema import ValidationReport
+from raya_schema.content import parse_ordered_name
 from raya_schema.numbered_objects import NumberedObject, NumberedObjectConfig
 
 DIRECTIVE_OPEN_RE = re.compile(
@@ -731,15 +732,20 @@ def _looks_urlish(line: str, position: int) -> bool:
 
 
 def page_number_prefix_from_source_path(source_path: str) -> str:
-    parts: list[str] = []
-    for part in Path(source_path).parts:
-        if part in {"course", "0_index.md", "index.md"}:
-            continue
-        stem = Path(part).stem
-        match = re.match(r"^(\d+)(?:_|-|$)", stem)
-        if match:
-            parts.append(match.group(1))
-    return ".".join(parts)
+    path = Path(source_path)
+    labels: list[str] = []
+    for part in path.parts[:-1]:
+        ordered = parse_ordered_name(part)
+        if ordered is not None:
+            labels.append(ordered.label)
+
+    ordered_file = parse_ordered_name(path.stem)
+    if (
+        ordered_file is not None
+        and (ordered_file.order != 0 or ordered_file.slug != "index")
+    ):
+        labels.append(ordered_file.label)
+    return ".".join(labels)
 
 
 def compute_numbered_objects_for_page(
