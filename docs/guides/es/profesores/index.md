@@ -1,24 +1,24 @@
 ---
 id: docs-guides-es-profesores
 title: Profesores
-summary: Guia para poseer source de curso, material oficial, revision y publicacion.
+summary: Guia para poseer fuente de curso, material oficial, revision y publicacion.
 status: ready
 ---
 # Profesores
 
-Los equipos de curso poseen el source del curso, el material oficial, la revision y las decisiones de publicacion. Empieza con `docs/foundation/05_course_contract.md`, `docs/foundation/04_ownership_permissions.md` y `docs/foundation/03_pedagogy.md`.
+Los equipos de curso poseen la fuente del curso, el material oficial, la revision y las decisiones de publicacion. Empieza con `docs/foundation/05_course_contract.md`, `docs/foundation/04_ownership_permissions.md` y `docs/foundation/03_pedagogy.md`.
 
 Los ejemplos son fixtures salvo que un equipo de curso los acepte explicitamente como material de curso. Cards, quizzes, prompts, ejemplos, tareas, examenes y proyectos oficiales deben seguir distinguiendose de material personal, compartido y generado.
 
-El source del curso usa `source: course` y orden visible dentro de `course/`: `0_index.md`, `1_foundations/`, `2_practice/` y `A_reference/`. Escribe las introducciones manuales en `0_index.md`; Glintstone renderiza indices de hijos y conteos de estudio desde summaries y objetos oficiales sin sobrescribir el source. Pon objetos oficiales de aprendizaje bajo `_official/` junto al tema que apoyan, y assets locales del tema bajo `_assets/`. Usa `id` estable en frontmatter y links `raya:<id>` para referencias que deben sobrevivir renumeracion o movimientos.
+La fuente del curso usa `source: course` y orden visible dentro de `course/`: `0_index.md`, `1_foundations/`, `2_practice/` y `A_reference/`. Escribe las introducciones manuales en `0_index.md`; Glintstone renderiza indices de hijos y conteos de estudio desde resumenes y objetos oficiales sin sobrescribir la fuente. Pon objetos oficiales de aprendizaje bajo `_official/` junto al tema que apoyan, y assets locales del tema bajo `_assets/`. Usa `id` estable en frontmatter y enlaces `raya:<id>` para referencias que deben sobrevivir renumeracion o movimientos.
 
 Las paginas de curso pueden usar el baseline rich static aceptado: tablas, math MathJax en build, codigo mostrado, callouts, footnotes, heading anchors y tablas de contenido generadas por pagina. Escribe math inline con delimitadores de dolar y math display con delimitadores de doble dolar en lineas propias. Usa `\newcommand` o `\renewcommand` locales a la pagina para macros soportadas. Documentos LaTeX completos, delimitadores malformados, delimitadores anidados no soportados y macros desconocidas fallan antes de publicar. Los bloques de codigo solo se muestran en esta fase, raw HTML se escapa y los archivos de soporte renderizados se generan bajo `artifact/site/_raya/`.
 
-Para notacion comun de curso, prefiere macros pequenas locales a la pagina como `\newcommand{\rayaVec}[1]{\mathbf{#1}}` y usalas consistentemente despues de definirlas. Matrices como `\begin{bmatrix} ... \end{bmatrix}`, ecuaciones alineadas, cases, derivadas, integrales, notacion de probabilidad, notacion de optimizacion y `\renewcommand` para ajustes locales de pagina estan cubiertas por fixtures. Mantiene las definiciones de macros cerca de la pagina que las usa para que los diagnosticos apunten al source relevante.
+Para notacion comun de curso, prefiere macros pequenas locales a la pagina como `\newcommand{\rayaVec}[1]{\mathbf{#1}}` y usalas consistentemente despues de definirlas. Matrices como `\begin{bmatrix} ... \end{bmatrix}`, ecuaciones alineadas, casos, derivadas, integrales, notacion de probabilidad, notacion de optimizacion y `\renewcommand` para ajustes locales de pagina estan cubiertas por fixtures. Mantiene las definiciones de macros cerca de la pagina que las usa para que los diagnosticos apunten a la fuente relevante.
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.
 
-Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con directivas fenced e IDs estables:
+Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con directivas fenced e IDs duraderos:
 
 ```markdown
 ::: theorem {#compactness title="Compactness Criterion"}
@@ -44,11 +44,11 @@ Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 :::
 ```
 
-Theorem, corollary y el objeto incorporado `remark` pueden compartir una secuencia de familia theorem. La presentacion lectora default usa `scannable` para objetos tipo teorema, examples, exercises y assignments; figures y tables conservan presentacion `caption`, y equations conservan presentacion `equation`. La personalizacion a nivel de curso vive en `raya.yaml` bajo `render.numbered_objects`; los overrides por pagina/seccion son trabajo futuro. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
+Theorem, corollary y el objeto incorporado `remark` pueden compartir una secuencia de familia theorem. La presentacion lectora predeterminada usa `scannable` para objetos tipo teorema, ejemplos, ejercicios y tareas; figuras y tablas conservan presentacion `caption`, y ecuaciones conservan presentacion `equation`. La personalizacion a nivel de curso vive en `raya.yaml` bajo `render.numbered_objects`; los ajustes por pagina/seccion son trabajo futuro. Usa la forma abreviada `@id` o enlaces `raya:ref/id` para referencias en la fuente. No escribas `\label` o `\ref` de LaTeX esperando referencias cruzadas de Raya.
 
-Usa el patron de numbered-content matrix al revisar un curso: incluye objetos tipo teorema, equation, figure/table y practica con IDs estables. Los diagnosticos de build deben apuntar al archivo source y linea para IDs incorrectos, referencias desconocidas, directivas malformadas y objetivos de prueba que no existen.
+Usa el patron de matriz de contenido numerado al revisar un curso: incluye objetos tipo teorema, ecuacion, figura/tabla y practica con IDs duraderos. Los diagnosticos de build deben apuntar al archivo fuente y linea para IDs incorrectos, referencias desconocidas, directivas malformadas y objetivos de prueba que no existen.
 
-Los bloques de prueba pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; la prueba se renderiza como entorno estatico y no crea otro objeto numerado.
+Los bloques de prueba pueden apuntar a teoremas, tareas, problemas, figuras, tablas, ecuaciones, definiciones y actividades mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; la prueba se renderiza como entorno estatico y no crea otro objeto numerado.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
@@ -67,9 +67,9 @@ Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum
 
 Los cursos pueden declarar runtime metadata con `pyproject.toml`, `uv.lock` y `runtime/profiles.yaml` en la raiz. Esto ayuda a que futura ejecucion local o con Docker sea reproducible, pero el build actual solo registra perfiles, policies y cache keys; no ejecuta codigo, instala paquetes, refresca caches ni confia en outputs de notebooks.
 
-Cuando un curso requiere computo real, usa targets explicitos. `raya run <course> <target>` ejecuta un script o notebook validado; `--dry-run` muestra el plan, `--refresh` vuelve a correr trabajo con policy `cache`, y `--docker` usa el servicio de clase declarado. Logs y outputs generados permanecen bajo `artifact/` y no deben confundirse con source revisado del curso ni respuestas oficiales.
+Cuando un curso requiere computo real, usa objetivos explicitos. `raya run <course> <target>` ejecuta un script o notebook validado; `--dry-run` muestra el plan, `--refresh` vuelve a correr trabajo con policy `cache`, y `--docker` usa el servicio de clase declarado. Logs y outputs generados permanecen bajo `artifact/` y no deben confundirse con fuente revisada del curso ni respuestas oficiales.
 
-Para publicar un resultado calculado como soporte revisado, primero ejecuta el target explicito, despues inspeccionalo con `raya outputs list <course>`, y despues usa `raya outputs freeze <course> <target>`. Freeze copia el resultado generado exitoso y current hacia `_reviewed/execution/<target>/` junto al quantum que lo posee. Revisa y commitea esos archivos como source normal del curso. Usa `policy: frozen` solo cuando ese output revisado deba ser requerido y validado sin volver a ejecutar codigo.
+Para publicar un resultado calculado como soporte revisado, primero ejecuta el objetivo explicito, despues inspeccionalo con `raya outputs list <course>`, y despues usa `raya outputs freeze <course> <target>`. Freeze copia el resultado generado exitoso y vigente hacia `_reviewed/execution/<target>/` junto al quantum que lo posee. Revisa y commitea esos archivos como fuente normal del curso. Usa `policy: frozen` solo cuando ese output revisado deba ser requerido y validado sin volver a ejecutar codigo.
 
 Las paginas para estudiantes deben permanecer enfocadas. Glintstone puede mostrar panels compactos de recursos o reviewed output, pero hashes, rutas, detalles de runtime profile, cache keys y freshness keys pertenecen a datos de artifact o paginas estaticas `_raya/inspect/` para auditoria.
 
