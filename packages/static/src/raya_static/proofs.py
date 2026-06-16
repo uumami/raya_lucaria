@@ -23,7 +23,9 @@ STATIC_ENVIRONMENT_OPEN_RE = re.compile(
     rf"^ {{0,3}}:::[ \t]+(?P<kind>{_STATIC_ENVIRONMENT_KIND_PATTERN})"
     r"(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$"
 )
-PROOF_OPEN_RE = STATIC_ENVIRONMENT_OPEN_RE
+PROOF_OPEN_RE = re.compile(
+    r"^ {0,3}:::[ \t]+proof(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$"
+)
 
 
 def is_static_environment_directive_open(line: str) -> bool:
@@ -31,8 +33,7 @@ def is_static_environment_directive_open(line: str) -> bool:
 
 
 def is_proof_directive_open(line: str) -> bool:
-    opened = STATIC_ENVIRONMENT_OPEN_RE.match(line)
-    return opened is not None and opened.group("kind") == "proof"
+    return PROOF_OPEN_RE.match(line) is not None
 
 
 @dataclass(frozen=True)
@@ -287,7 +288,7 @@ def _validate_no_reserved_placeholder_text(
     for line_number, line in enumerate(body.splitlines(), start=1):
         if PLACEHOLDER_PREFIX in line:
             report.add_error(
-                "Reserved proof placeholder text",
+                "Reserved static environment placeholder text",
                 path=source_path,
                 field=f"line:{line_number}",
                 next_action=f"Remove text that starts with {PLACEHOLDER_PREFIX}",

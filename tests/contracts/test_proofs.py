@@ -4,6 +4,7 @@ from raya_schema import ValidationReport
 from raya_static.numbered_objects import prepare_numbered_object_markdown
 from raya_static.proofs import (
     PLACEHOLDER_PREFIX,
+    PROOF_OPEN_RE,
     STATIC_ENVIRONMENT_KINDS,
     is_static_environment_directive_open,
     prepare_proof_markdown,
@@ -126,6 +127,11 @@ def test_static_environment_opener_detects_all_static_environment_kinds() -> Non
     assert is_static_environment_directive_open("::: hint   ")
     assert is_static_environment_directive_open("::: answer")
     assert not is_static_environment_directive_open("::: theorem {#main}")
+
+
+def test_proof_open_re_remains_proof_only() -> None:
+    assert PROOF_OPEN_RE.match("::: proof") is not None
+    assert PROOF_OPEN_RE.match("::: solution") is None
 
 
 def test_numbered_object_parser_leaves_proof_blocks_for_proof_parser() -> None:
@@ -343,5 +349,5 @@ def test_authored_proof_placeholder_prefix_is_rejected() -> None:
 
     assert not report.ok
     diagnostic = report.diagnostics[0]
-    assert diagnostic.message == "Reserved proof placeholder text"
+    assert diagnostic.message == "Reserved static environment placeholder text"
     assert diagnostic.next_action == f"Remove text that starts with {PLACEHOLDER_PREFIX}"
