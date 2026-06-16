@@ -895,6 +895,9 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     math_authoring_html = (
         course / "artifact" / "site" / "math-authoring" / "index.html"
     ).read_text(encoding="utf-8")
+    rich_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
     numbered_objects_html_path = (
         course / "artifact" / "site" / "numbered-objects" / "index.html"
     )
@@ -920,6 +923,8 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
         "practice-problem",
         "homework-one",
     }
+    main_theorem = numbered_index["objects"][numbered_index["by_id"]["main-theorem"]]
+    assert main_theorem["href"] == "numbered-objects/#raya-object-main-theorem"
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
     assert '<link rel="stylesheet" href="_raya/render/math/mathjax.css">' in html
     assert '<nav class="raya-page-toc" aria-label="Page contents">' in html
@@ -1023,6 +1028,9 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html
     assert "raya-numbered-object-reference" in numbered_objects_html
     assert "raya-numbered-object-title" in numbered_objects_html
+    assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}" in rich_css
+    assert ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}" in rich_css
+    assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n  overflow: hidden;\n}" not in rich_css
     assert "<script" not in numbered_objects_html
     assert re.search(r"<script[^>]+MathJax", numbered_objects_html) is None
     assert "\\begin{bmatrix}" not in numbered_objects_visible

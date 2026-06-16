@@ -14,11 +14,13 @@ import pytest
 from raya_cli.render_debug import (
     RENDER_DEBUG_PAGE_NAMES,
     RENDER_DEBUG_VIEWPORTS,
+    _reset_render_debug_dir,
     capture_render_debug,
     raw_tex_markers_from_text,
     record_external_request,
     viewport_name,
 )
+from raya_schema import ValidationReport
 
 ROOT = Path(__file__).resolve().parents[2]
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
@@ -288,8 +290,7 @@ def test_render_fixture_numbered_objects_are_static_and_local(
     assert "Theorem 3.1" in probe["text"]
     assert "Activity 3.1" in probe["text"]
     assert any(
-        ref["href"] and "#raya-object-main-theorem" in ref["href"]
-        for ref in probe["refs"]
+        ref["href"] == "index.html#raya-object-main-theorem" for ref in probe["refs"]
     )
     assert any("raya-numbered-object--banded" in value for value in probe["classes"])
     assert any("raya-numbered-object--caption" in value for value in probe["classes"])
@@ -298,6 +299,26 @@ def test_render_fixture_numbered_objects_are_static_and_local(
     assert probe["visibleRawTex"] is False
     assert probe["mathjaxContainers"] >= 3
     assert external_requests == []
+
+
+def test_render_debug_cleanup_removes_stale_fallback_numbered_object_screenshots(
+    tmp_path: Path,
+) -> None:
+    debug_dir = tmp_path / "renderer-debug"
+    debug_dir.mkdir()
+    stale_fallback = debug_dir / "desktop-3_numbered_objects.png"
+    stale_current = debug_dir / "desktop-numbered-objects.png"
+    unrelated = debug_dir / "keep.txt"
+    stale_fallback.write_bytes(b"stale fallback")
+    stale_current.write_bytes(b"stale current")
+    unrelated.write_text("keep\n", encoding="utf-8")
+    report = ValidationReport(context="preview")
+
+    assert _reset_render_debug_dir(debug_dir, report)
+
+    assert not stale_fallback.exists()
+    assert not stale_current.exists()
+    assert unrelated.exists()
 
 
 def _run_render_fixture_math_check(tmp_path: Path) -> None:

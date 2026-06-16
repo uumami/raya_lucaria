@@ -17,6 +17,7 @@ RENDER_DEBUG_PAGE_NAMES = (
     "math-authoring",
     "numbered-objects",
 )
+_RENDER_DEBUG_CLEANUP_PAGE_NAMES = RENDER_DEBUG_PAGE_NAMES + ("3_numbered_objects",)
 RENDER_DEBUG_VIEWPORTS = (
     {"width": 1280, "height": 900},
     {"width": 390, "height": 844},
@@ -314,7 +315,7 @@ def _render_debug_screenshot_names() -> set[str]:
     return {
         f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
-        for page_name in RENDER_DEBUG_PAGE_NAMES
+        for page_name in _RENDER_DEBUG_CLEANUP_PAGE_NAMES
     }
 
 

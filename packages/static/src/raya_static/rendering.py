@@ -545,7 +545,6 @@ nav[aria-label="Breadcrumbs"] {
 .raya-numbered-object {
   border: 1px solid #d8dee4;
   margin: 1.25rem 0;
-  overflow: hidden;
 }
 .raya-numbered-object-heading {
   align-items: baseline;
@@ -566,6 +565,7 @@ nav[aria-label="Breadcrumbs"] {
   font-weight: 700;
 }
 .raya-numbered-object-body {
+  overflow-x: auto;
   padding: 0.85rem;
 }
 .raya-numbered-object-body > :first-child {
