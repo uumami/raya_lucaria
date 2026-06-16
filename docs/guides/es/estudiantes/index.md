@@ -23,11 +23,11 @@ Las paginas de curso pueden incluir objetos numerados y referencias estaticas. U
 Los bloques de proof muestran en el heading renderizado que objeto se esta probando, y la math dentro del proof se renderiza durante el build. La pagina no deberia necesitar un request de MathJax en el browser para mostrar el proof.
 
 ```markdown
-::: theorem {#teorema-principal title="Teorema de ejemplo"}
+::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
 :::
 
-::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+::: proof {#proof-main of="main-theorem" title="Identidad"}
 La igualdad se verifica componente por componente:
 $$
 I\vect{v}=\vect{v}.

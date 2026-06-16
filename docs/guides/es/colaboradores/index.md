@@ -21,11 +21,11 @@ El soporte de objetos numerados es comportamiento actual del renderer. Preserva 
 Los bloques de proof son superficies de render estatico, no registros del index numerado. Pueden resolver `of` contra cualquier familia de objeto numerado, renderizar un heading y body de proof, y permanecer ausentes de `data/numbered-objects.json`.
 
 ```markdown
-::: theorem {#teorema-principal title="Teorema de ejemplo"}
+::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
 :::
 
-::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+::: proof {#proof-main of="main-theorem" title="Identidad"}
 La igualdad se verifica componente por componente:
 $$
 I\vect{v}=\vect{v}.

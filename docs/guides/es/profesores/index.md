@@ -49,11 +49,11 @@ Theorem y corollary pueden compartir una secuencia de theorem; equation, figure,
 Los bloques de proof pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; el proof se renderiza como entorno estatico y no crea otro objeto numerado.
 
 ```markdown
-::: theorem {#teorema-principal title="Teorema de ejemplo"}
+::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
 :::
 
-::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+::: proof {#proof-main of="main-theorem" title="Identidad"}
 La igualdad se verifica componente por componente:
 $$
 I\vect{v}=\vect{v}.

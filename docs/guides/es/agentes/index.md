@@ -25,11 +25,11 @@ Para diagnosticos de objeto numerado, compara la directive source, el anchor ren
 Para bloques de proof, valida targets `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Los proofs se renderizan como entornos estaticos y no deben aparecer como registros del index numerado.
 
 ```markdown
-::: theorem {#teorema-principal title="Teorema de ejemplo"}
+::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
 :::
 
-::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+::: proof {#proof-main of="main-theorem" title="Identidad"}
 La igualdad se verifica componente por componente:
 $$
 I\vect{v}=\vect{v}.
