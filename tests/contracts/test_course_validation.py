@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from raya_schema import validate_course
+from raya_schema.numbered_objects import collect_numbered_object_source_references
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -66,6 +67,35 @@ def test_explicit_numbered_object_reference_accepts_matching_directive(
 
     report = validate_course(course)
 
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
+def test_crlf_fenced_code_does_not_hide_real_numbered_ref_after_fence(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    index = course / "course" / "0_index.md"
+    body = (
+        index.read_text(encoding="utf-8")
+        + "\r\n\r\n"
+        + "```markdown\r\n"
+        + "::: theorem {#sample}\r\n"
+        + "Fenced sample.\r\n"
+        + "```\r\n\r\n"
+        + "::: theorem {#real-crlf}\r\n"
+        + "Real CRLF theorem.\r\n"
+        + ":::\r\n\r\n"
+        + "See [real theorem](raya:ref/real-crlf).\r\n"
+    )
+    index.write_text(body, encoding="utf-8", newline="")
+
+    references = collect_numbered_object_source_references(
+        body,
+        source_path=index,
+    )
+    report = validate_course(course)
+
+    assert [reference.id for reference in references] == ["real-crlf"]
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
 

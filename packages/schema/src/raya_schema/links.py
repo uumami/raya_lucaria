@@ -55,14 +55,15 @@ def iter_unfenced_markdown_lines(text: str) -> list[MarkdownSourceLine]:
     fence_state: _FenceState | None = None
 
     for raw_line in text.splitlines(keepends=True):
+        fence_line = raw_line.rstrip("\r\n")
         if fence_state is not None:
-            if _is_closing_fence(raw_line.rstrip("\n"), fence_state):
+            if _is_closing_fence(fence_line, fence_state):
                 fence_state = None
             cursor += len(raw_line)
             line_number += 1
             continue
 
-        opener = _fence_opener(raw_line.rstrip("\n"))
+        opener = _fence_opener(fence_line)
         if opener is not None:
             fence_state = opener
             cursor += len(raw_line)
