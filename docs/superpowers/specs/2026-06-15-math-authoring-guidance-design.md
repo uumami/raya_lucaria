@@ -1,10 +1,12 @@
 # Math Authoring Guidance Design
 
+> **Supersession note:** The theorem/proof/numbered-object status in this June 15 math-authoring design captured the pre-numbered-object baseline. Current behavior is superseded by `docs/superpowers/specs/2026-06-15-numbered-objects-cross-references-design.md`, `docs/superpowers/specs/2026-06-16-proof-blocks-design.md`, and `docs/superpowers/plans/2026-06-16-proof-blocks.md`.
+
 ## Goal
 
 Strengthen the current build-time MathJax authoring surface by adding a dedicated math authoring fixture page, role-specific English and Spanish guidance, and tests that keep those surfaces aligned.
 
-This loop documents and tests the math behavior that is already accepted in the Glintstone baseline. It does not add new renderer semantics. Real theorem/proof functionality is the definite next loop unless discovery finds a blocker.
+This loop documents and tests the math behavior that was already accepted in the Glintstone baseline on June 15. It did not add new renderer semantics; its theorem/proof handoff language has since been superseded by the numbered-object and proof-block design docs listed above.
 
 ## Context
 
@@ -31,7 +33,7 @@ The gap is guidance. Professors, students, contributors, and agents need clearer
   - functions/maps,
   - norms and inner products,
   - sequences and limits,
-  - theorem-like writing patterns using current Markdown.
+  - historical theorem-like Markdown patterns from the pre-numbered-object baseline.
 - Update role docs in English and Spanish:
   - professors/profesores: current valid authoring patterns,
   - students/estudiantes: how rendered math should appear and what to report,
@@ -45,12 +47,12 @@ The gap is guidance. Professors, students, contributors, and agents need clearer
 - No new renderer package behavior.
 - No browser-side MathJax dependency.
 - No external renderer or CDN requests.
-- No theorem engine in this loop.
-- No automatic theorem numbering.
-- No theorem/proof environments.
-- No equation or theorem label registry.
-- No `\label` or `\ref` support.
-- No theorem index or cross-reference rendering.
+- No theorem engine in this June 15 math-authoring loop; later status is superseded by the numbered-object and proof-block docs listed above.
+- No automatic theorem numbering in this June 15 math-authoring loop.
+- No theorem/proof environments in this June 15 math-authoring loop.
+- No equation or theorem label registry in this June 15 math-authoring loop.
+- No `\label` or `\ref` support in this June 15 math-authoring loop.
+- No theorem index or cross-reference rendering in this June 15 math-authoring loop.
 - No OpenSpec change in this loop unless the user explicitly switches workflows.
 
 ## Fixture Design
@@ -74,12 +76,12 @@ Recommended page sections:
 - `Page Local Macros`
 - `Sets Logic And Functions`
 - `Aligned Derivations And Optimization`
-- `Theorem Like Writing With Current Markdown`
+- `Theorem Like Writing With Current Markdown` as historical pre-numbered-object fixture context
 - `Macro Redefinition`
 
 The page should contain only valid examples. Invalid examples belong in tests and contributor/agent diagnostics, not in professor/student copyable guidance.
 
-The theorem-like section should use current Markdown patterns such as headings, callouts, prose labels, and displayed equations. It may show authored labels like `Theorem`, `Definition`, `Lemma`, `Example`, and `Proof` as plain prose or headings. It must state or imply that automatic numbering and cross-references are not current behavior.
+The theorem-like section captured the pre-numbered-object fixture context using Markdown patterns such as headings, callouts, prose labels, and displayed equations. Current theorem, proof, numbered-object, and reference behavior is superseded by the June 15 numbered-object design and the June 16 proof-block design/plan.
 
 ## Role Documentation Design
 
@@ -90,7 +92,7 @@ Add concise authoring guidance for valid math patterns. Emphasize:
 - define macros before use,
 - keep macros page-local,
 - use display delimiter lines for larger expressions,
-- use current Markdown for theorem-like writing until theorem support lands,
+- point current theorem/proof/numbered-object guidance to the superseding docs listed at the top of this historical design,
 - report or fix raw TeX leakage before publishing.
 
 ### Students / Estudiantes
@@ -119,13 +121,13 @@ Add agent workflow guidance. Emphasize:
 - use render-debug reports as evidence,
 - verify no raw visible TeX and no external renderer requests,
 - preserve English technical identifiers in Spanish docs,
-- treat theorem/proof functionality as the next design loop, not current behavior.
+- point theorem/proof/numbered-object status to the superseding docs listed at the top of this historical design.
 
 Spanish pages should keep the existing ASCII/no-accent style. Technical identifiers stay in English.
 
-## Theorem Handoff
+## Superseded Theorem Handoff
 
-The next Superpowers loop should design real theorem/proof functionality unless discovery finds a blocker.
+This handoff was completed and superseded by the numbered-object and proof-block docs listed at the top of this historical design.
 
 Candidate next-loop scope:
 
@@ -139,7 +141,7 @@ Candidate next-loop scope:
 - theorem index or inspection data if accepted,
 - diagnostics for duplicate labels, missing references, and unsupported LaTeX theorem environments.
 
-This loop should explicitly document that those capabilities are next, not current behavior.
+This historical loop should not be used as current theorem/proof/numbered-object guidance.
 
 ## Testing Design
 
@@ -147,7 +149,7 @@ Add or extend tests so they fail if the fixture/docs drift from the accepted con
 
 - Static builder or e2e test confirms the new fixture page renders and includes MathJax CHTML.
 - Visible text assertions confirm current fixture examples do not leak raw TeX markers such as `\newcommand`, `\renewcommand`, `\begin{bmatrix}`, selected authoring macro names, or dollar-delimited math.
-- Contract test confirms role docs mention current accepted math patterns and the theorem-support next loop.
+- Contract test confirms role docs mention accepted math patterns and point theorem/proof/numbered-object status at the superseding docs.
 - Existing render-debug tests continue to confirm local preview/static parity, no browser-side MathJax conversion, no external renderer requests, local MathJax CSS/fonts, copied static-site parity, screenshots, `report.json`, and `index.html`.
 
 ## Verification Plan
@@ -168,7 +170,7 @@ Full verification should include:
 
 ## Risks And Mitigations
 
-- **Risk: docs imply theorem functionality exists now.** Mitigation: explicitly state theorem/proof engine work is next, while current pages use Markdown patterns only.
+- **Risk: historical docs imply stale theorem/proof status.** Mitigation: explicitly point theorem/proof/numbered-object status to the superseding design and plan docs.
 - **Risk: fixture becomes accidental pedagogy.** Mitigation: keep fixture authority labels and avoid course-teaching language.
 - **Risk: Spanish pages drift in style.** Mitigation: keep ASCII style and English technical identifiers.
 - **Risk: examples exceed the supported MathJax subset.** Mitigation: use only accepted `base`, `ams`, and `newcommand` patterns and lock them with focused tests.

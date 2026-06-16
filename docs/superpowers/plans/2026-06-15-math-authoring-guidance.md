@@ -1,8 +1,10 @@
 # Math Authoring Guidance Implementation Plan
 
+> **Supersession note:** The theorem/proof/numbered-object status in this June 15 math-authoring plan captured the pre-numbered-object baseline. Current behavior is superseded by `docs/superpowers/specs/2026-06-15-numbered-objects-cross-references-design.md`, `docs/superpowers/specs/2026-06-16-proof-blocks-design.md`, and `docs/superpowers/plans/2026-06-16-proof-blocks.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a dedicated math authoring fixture page, role-specific guidance, and tests that lock current build-time MathJax authoring patterns while explicitly handing real theorem/proof functionality to the next loop.
+**Goal:** Add a dedicated math authoring fixture page, role-specific guidance, and tests that lock current build-time MathJax authoring patterns. The theorem/proof handoff language in this historical plan has since been superseded by the numbered-object and proof-block design docs listed above.
 
 **Architecture:** Keep renderer behavior unchanged. Add source fixture content under `examples/courses/render-fixture/course/`, update role docs in separate English and Spanish pages, and lock both surfaces through existing static-builder/e2e/contract tests. The fixture demonstrates only valid current MathJax/Markdown patterns; invalid examples stay in tests and diagnostic guidance.
 
@@ -71,7 +73,7 @@ Then after the existing nested-page assertions, add:
     assert "Macro Redefinition" in math_authoring_visible
     assert "mjx-container" in math_authoring_html
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
-    assert "Real theorem numbering and references are planned next" in math_authoring_visible
+    assert "This historical fixture text captured the pre-numbered-object baseline" in math_authoring_visible
     for raw_marker in (
         "\\newcommand",
         "\\renewcommand",
@@ -213,7 +215,7 @@ $$
 
 ## Theorem Like Writing With Current Markdown
 
-Theorem-like writing currently uses Markdown structure, prose labels, callouts, and display math. Real theorem numbering and references are planned next, not current renderer behavior.
+This historical fixture section captured the pre-numbered-object baseline. Current theorem, proof, numbered-object, and reference behavior is superseded by the June 15 numbered-object design and the June 16 proof-block design/plan.
 
 > [!NOTE]
 > **Theorem.** This theorem-like block is authored Markdown. It is not an automatic theorem environment.
@@ -230,7 +232,7 @@ $$
 (a+b)(a+b) = a^2 + ab + ba + b^2.
 $$
 
-The labels `Theorem` and `Proof` are authored text in this baseline.
+This baseline wording was superseded once numbered objects and proof blocks landed.
 
 ## Macro Redefinition
 
@@ -302,7 +304,7 @@ In `tests/e2e/test_preview_static_read_path.py`, inside `_run_render_fixture_mat
                         _assert_visible_mathjax_output(page, minimum=7)
                         math_authoring_text = page.locator("body").inner_text()
                         assert raw_tex_markers_from_text(math_authoring_text) == []
-                        assert "Real theorem numbering and references are planned next" in math_authoring_text
+                        assert "This historical fixture text captured the pre-numbered-object baseline" in math_authoring_text
 ```
 
 - [ ] **Step 2: Extend expected render-debug screenshots**
@@ -492,7 +494,7 @@ In `docs/guides/en/professors/index.md`, after the paragraph that starts `For co
 ```markdown
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the current fixture reference for copyable build-time MathJax patterns. It covers inline and display math, `\begin{bmatrix}` matrices, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, and optimization notation. Define macros before use, keep them page-local, and use `$$` delimiter lines for larger expressions.
 
-Until the next theorem/proof feature lands, write theorem-like material with current Markdown: headings, prose labels such as `Theorem` and `Proof`, callouts when useful, and display math inside those sections. Automatic theorem numbering, equation labels, `\label`, `\ref`, and theorem indexes are planned next, not current behavior.
+For current theorem/proof/numbered-object behavior, follow the superseding numbered-object and proof-block design docs listed at the top of this historical plan.
 ```
 
 - [ ] **Step 2: Update student guidance**
@@ -510,7 +512,7 @@ In `docs/guides/en/contributors/index.md`, after the paragraph that starts `Rich
 ```markdown
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when changing math rendering or authoring guidance. It is the fixture target for current valid examples: `\begin{bmatrix}`, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, optimization notation, and theorem-like Markdown. Keep invalid math examples in tests so professor and student docs remain copyable.
 
-Theorem/proof functionality is the next renderer design loop unless discovery finds a blocker. Do not imply current support for automatic theorem numbering, theorem labels, equation labels, `\label`, `\ref`, cross-references, or theorem indexes until that loop accepts and implements them.
+For current theorem/proof/numbered-object behavior, follow the superseding numbered-object and proof-block design docs listed at the top of this historical plan.
 ```
 
 - [ ] **Step 4: Update agent guidance**
@@ -518,7 +520,7 @@ Theorem/proof functionality is the next renderer design loop unless discovery fi
 In `docs/guides/en/agents/index.md`, after the paragraph that starts `For rich static rendering`, add:
 
 ```markdown
-For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. Treat theorem/proof functionality as the next design loop: current theorem-like content is authored Markdown, not automatic numbering, labels, `\label`, `\ref`, cross-references, or theorem indexes.
+For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. For current theorem/proof/numbered-object behavior, follow the superseding numbered-object and proof-block design docs listed at the top of this historical plan.
 ```
 
 - [ ] **Step 5: Run the role-doc contract**
@@ -574,7 +576,7 @@ In `docs/guides/es/colaboradores/index.md`, after the paragraph that starts `El 
 ```markdown
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando cambies rendering de math o guia de autoria. Es el fixture target para ejemplos validos actuales: `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas, notacion de optimizacion y Markdown tipo theorem. Mantiene ejemplos invalidos de math en tests para que docs de profesores y estudiantes sigan siendo copiables.
 
-La funcionalidad de theorems/proofs es el siguiente loop de diseno del renderer salvo que discovery encuentre un blocker. No impliques soporte actual para numeracion automatica de theorems, labels de theorems, labels de ecuaciones, `\label`, `\ref`, cross-references o indices de theorems hasta que ese loop los acepte e implemente.
+Para comportamiento actual de theorems/proofs/numbered objects, sigue los docs superseding de numbered objects y proof blocks listados al inicio de este plan historico.
 ```
 
 - [ ] **Step 4: Update agent guidance in Spanish**
@@ -582,7 +584,7 @@ La funcionalidad de theorems/proofs es el siguiente loop de diseno del renderer 
 In `docs/guides/es/agentes/index.md`, after the paragraph that starts `Para rich static rendering`, add:
 
 ```markdown
-Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como fixture source enfocado. Verifica paginas source en vez de archivos generados bajo `artifact/`, y usa evidencia de render-debug para confirmar que no hay TeX crudo visible, conversion browser-side MathJax ni requests externos del renderer. Trata la funcionalidad de theorems/proofs como el siguiente loop de diseno: el contenido tipo theorem actual es Markdown autoria, no numeracion automatica, labels, `\label`, `\ref`, cross-references ni indices de theorems.
+Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como fixture source enfocado. Verifica paginas source en vez de archivos generados bajo `artifact/`, y usa evidencia de render-debug para confirmar que no hay TeX crudo visible, conversion browser-side MathJax ni requests externos del renderer. Para comportamiento actual de theorems/proofs/numbered objects, sigue los docs superseding de numbered objects y proof blocks listados al inicio de este plan historico.
 ```
 
 - [ ] **Step 5: Run the role-doc contract**
