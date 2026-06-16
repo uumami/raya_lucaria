@@ -29,6 +29,23 @@ def test_prepare_proof_markdown_extracts_plain_proof() -> None:
     assert source.start_line == 3
 
 
+def test_prepare_proof_markdown_extracts_plain_proof_with_trailing_spaces() -> None:
+    report = _report()
+    prepared = prepare_proof_markdown(
+        "::: proof   \nUse induction.\n:::\n",
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert report.ok
+    assert len(prepared.sources) == 1
+    source = prepared.sources[0]
+    assert source.id is None
+    assert source.of_id is None
+    assert source.title is None
+    assert source.body == "Use induction."
+
+
 def test_prepare_proof_markdown_extracts_id_target_and_title() -> None:
     report = _report()
     prepared = prepare_proof_markdown(

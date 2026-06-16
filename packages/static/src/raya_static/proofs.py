@@ -17,7 +17,7 @@ from raya_static.numbered_objects import (
 )
 
 PLACEHOLDER_PREFIX = "RAYA_PROOF_"
-PROOF_OPEN_RE = re.compile(r"^ {0,3}:::\s+proof(?:\s+(?P<attrs>.*))?\s*$")
+PROOF_OPEN_RE = re.compile(r"^ {0,3}:::[ \t]+proof(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$")
 
 
 def is_proof_directive_open(line: str) -> bool:
