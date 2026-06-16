@@ -14,11 +14,11 @@
 
 ## File Structure
 
-- Create `examples/courses/render-fixture/course/2_math_authoring/0_index.md`: fixture-only page for accepted math authoring patterns and theorem-like current Markdown patterns.
+- Create `examples/courses/render-fixture/course/2_math_authoring/0_index.md`: fixture-only page for accepted math authoring patterns; theorem/proof status in this historical plan is superseded by the numbered-object and proof-block docs listed above.
 - Modify `examples/courses/render-fixture/course/0_index.md`: add a local link to the new fixture page so generated navigation and static-read-path tests can reach it.
 - Modify `tests/contracts/test_static_builder.py`: assert the new fixture page builds, renders MathJax CHTML, and does not leak raw TeX markers in visible text.
 - Modify `tests/e2e/test_preview_static_read_path.py`: include the new fixture page in browser/render-debug checks where static-read-path coverage is already exercised.
-- Modify `tests/contracts/test_renderer_dependencies.py`: add a role-doc guidance contract for current math examples and the theorem-support next loop.
+- Modify `tests/contracts/test_renderer_dependencies.py`: add a role-doc guidance contract for current math examples; the old theorem-support handoff language is superseded by the numbered-object and proof-block docs listed above.
 - Modify role docs:
   - `docs/guides/en/professors/index.md`
   - `docs/guides/en/students/index.md`
