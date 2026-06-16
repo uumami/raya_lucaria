@@ -1139,7 +1139,7 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     assert "colocated asset" in site_local_asset.read_text(encoding="utf-8")
 
 
-def test_rich_static_fixture_renders_markdown_math_code_and_assets(
+def test_render_fixture_builds_rich_static_pages(
     tmp_path: Path,
 ) -> None:
     course = _copy_render_fixture(tmp_path)
@@ -1182,6 +1182,25 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
         "practice-problem",
         "homework-one",
     }
+    expected_numbered_ids = {
+        "main-theorem",
+        "vector-corollary",
+        "basis-definition",
+        "matrix-equation",
+        "fixture-figure",
+        "fixture-table",
+        "practice-problem",
+        "homework-one",
+        "activity-one",
+        "assignment-one",
+    }
+    assert set(numbered_index["by_id"]) >= expected_numbered_ids
+    by_id = {item["id"]: item for item in numbered_index["objects"]}
+    assert by_id["activity-one"]["family"] == "activity"
+    assert by_id["activity-one"]["label"] == "Activity"
+    assert by_id["assignment-one"]["family"] == "assignment"
+    assert by_id["assignment-one"]["label"] == "Activity"
+    assert by_id["assignment-one"]["sequence"] == "assignment"
     main_theorem = numbered_index["objects"][numbered_index["by_id"]["main-theorem"]]
     assert main_theorem["href"] == "numbered-objects/#raya-object-main-theorem"
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
@@ -1282,12 +1301,15 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "Table 3.1" in numbered_objects_visible
     assert "Problem 3.1" in numbered_objects_visible
     assert "Activity 3.1" in numbered_objects_visible
+    assert "Activity 3.2" in numbered_objects_visible
+    assert "Activity 3.3" in numbered_objects_visible
     assert "Fixture theorem" in numbered_objects_visible
     assert "Basis" in numbered_objects_visible
     assert "Homework fixture" in numbered_objects_visible
     assert "Proof of Theorem 3.1" in numbered_objects_visible
     assert "Fixture proof" in numbered_objects_visible
     assert "Proof of Activity 3.1" in numbered_objects_visible
+    assert "Proof of Activity 3.3" in numbered_objects_visible
     assert "Solution sketch" in numbered_objects_visible
     assert 'class="raya-numbered-object raya-numbered-object--margin ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--banded ' in numbered_objects_html

@@ -292,11 +292,31 @@ def test_render_fixture_numbered_objects_are_static_and_local(
         "practice-problem",
         "homework-one",
     }
+    assert set(probe["ids"]) >= {
+        "main-theorem",
+        "vector-corollary",
+        "basis-definition",
+        "matrix-equation",
+        "fixture-figure",
+        "fixture-table",
+        "practice-problem",
+        "homework-one",
+        "activity-one",
+        "assignment-one",
+    }
     assert "Theorem 3.1" in probe["text"]
     assert "Activity 3.1" in probe["text"]
+    assert "Activity 3.2" in probe["text"]
+    assert "Activity 3.3" in probe["text"]
     assert any(
         ref["href"] == "index.html#raya-object-main-theorem" for ref in probe["refs"]
     )
+    assert any(
+        ref["href"] == "index.html#raya-object-assignment-one"
+        and ref["text"] == "Activity 3.3"
+        for ref in probe["refs"]
+    )
+    assert "Proof of Activity 3.3" in probe["text"]
     assert any("raya-numbered-object--banded" in value for value in probe["classes"])
     assert any("raya-numbered-object--caption" in value for value in probe["classes"])
     assert any("raya-numbered-object--equation" in value for value in probe["classes"])

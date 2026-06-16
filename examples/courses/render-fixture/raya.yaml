@@ -21,3 +21,9 @@ render:
       homework:
         sequence: assignment
         label: Activity
+      activity:
+        sequence: assignment
+        label: Activity
+      assignment:
+        sequence: assignment
+        label: Activity

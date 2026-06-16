@@ -5,7 +5,7 @@ title: Numbered Objects
 
 # Numbered Objects
 
-This fixture references @main-theorem, @vector-corollary, @basis-definition, @matrix-equation, @fixture-figure, @fixture-table, @practice-problem, and @homework-one from one course-global shorthand sentence.
+This fixture references @main-theorem, @vector-corollary, @basis-definition, @matrix-equation, @fixture-figure, @fixture-table, @practice-problem, @homework-one, @activity-one, and @assignment-one from one course-global shorthand sentence.
 
 ::: theorem {#main-theorem title="Fixture theorem"}
 Let $\newcommand{\vect}[1]{\mathbf{#1}}A = \begin{bmatrix}1 & 0 \\ 0 & 1\end{bmatrix}$ and $\vec{x} = \begin{bmatrix}x_1 \\ x_2\end{bmatrix}$. Then $A\vec{x} = \vec{x}$.
@@ -56,7 +56,22 @@ Use @matrix-equation to explain why the identity matrix preserves $\vec{x}$.
 Review [the theorem](raya:ref/main-theorem), @fixture-figure, and @fixture-table before writing a short solution.
 :::
 
+::: activity {#activity-one title="Activity fixture"}
+Compare @practice-problem with [the homework](raya:ref/homework-one), then record
+one invariant preserved by @matrix-equation.
+:::
+
+::: assignment {#assignment-one title="Assignment fixture"}
+Use @activity-one and @main-theorem to write a two-line explanation for the
+identity matrix case.
+:::
+
 ::: proof {of="homework-one" title="Solution sketch"}
 The reviewed structure is the same static page surface as theorem references:
 the proof can point to homework while homework keeps its own numbered identity.
+:::
+
+::: proof {of="assignment-one" title="Solution sketch"}
+The assignment reduces to the matrix equality in @matrix-equation, so its
+numbered target stays a practice object while the proof remains unnumbered.
 :::
