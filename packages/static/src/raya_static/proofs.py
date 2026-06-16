@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import shlex
 import re
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,17 +16,29 @@ from raya_static.numbered_objects import (
     _is_closing_fence,
 )
 
-PLACEHOLDER_PREFIX = "RAYA_PROOF_"
-PROOF_OPEN_RE = re.compile(r"^ {0,3}:::[ \t]+proof(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$")
+STATIC_ENVIRONMENT_KINDS = ("proof", "solution", "hint", "answer")
+_STATIC_ENVIRONMENT_KIND_PATTERN = "|".join(STATIC_ENVIRONMENT_KINDS)
+PLACEHOLDER_PREFIX = "RAYA_STATIC_ENVIRONMENT_"
+STATIC_ENVIRONMENT_OPEN_RE = re.compile(
+    rf"^ {{0,3}}:::[ \t]+(?P<kind>{_STATIC_ENVIRONMENT_KIND_PATTERN})"
+    r"(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$"
+)
+PROOF_OPEN_RE = STATIC_ENVIRONMENT_OPEN_RE
+
+
+def is_static_environment_directive_open(line: str) -> bool:
+    return STATIC_ENVIRONMENT_OPEN_RE.match(line) is not None
 
 
 def is_proof_directive_open(line: str) -> bool:
-    return PROOF_OPEN_RE.match(line) is not None
+    opened = STATIC_ENVIRONMENT_OPEN_RE.match(line)
+    return opened is not None and opened.group("kind") == "proof"
 
 
 @dataclass(frozen=True)
-class ProofSource:
+class StaticEnvironmentSource:
     placeholder: str
+    kind: str
     id: str | None
     of_id: str | None
     title: str | None
@@ -35,33 +47,45 @@ class ProofSource:
     start_line: int
 
 
+ProofSource = StaticEnvironmentSource
+
+
 @dataclass(frozen=True)
-class PreparedProofMarkdown:
+class PreparedStaticEnvironmentMarkdown:
     body: str
-    sources: list[ProofSource]
+    sources: list[StaticEnvironmentSource]
+
+
+PreparedProofMarkdown = PreparedStaticEnvironmentMarkdown
 
 
 @dataclass(frozen=True)
-class ProofRenderItem:
-    source: ProofSource
+class StaticEnvironmentRenderItem:
+    source: StaticEnvironmentSource
     target: NumberedObject | None
 
 
+ProofRenderItem = StaticEnvironmentRenderItem
+
+
 @dataclass(frozen=True)
-class ProofRenderContext:
-    items: list[ProofRenderItem]
+class StaticEnvironmentRenderContext:
+    items: list[StaticEnvironmentRenderItem]
     objects_by_id: dict[str, NumberedObject]
 
 
-def prepare_proof_markdown(
+ProofRenderContext = StaticEnvironmentRenderContext
+
+
+def prepare_static_environment_markdown(
     body: str,
     *,
     report: ValidationReport,
     source_path: Path,
-) -> PreparedProofMarkdown:
+) -> PreparedStaticEnvironmentMarkdown:
     _validate_no_reserved_placeholder_text(body, report=report, source_path=source_path)
     output_lines: list[str] = []
-    sources: list[ProofSource] = []
+    sources: list[StaticEnvironmentSource] = []
     lines = body.splitlines()
     index = 0
     fence_state: _FenceState | None = None
@@ -82,18 +106,20 @@ def prepare_proof_markdown(
             index += 1
             continue
 
-        proof_opened = PROOF_OPEN_RE.match(line)
-        if proof_opened is None:
+        environment_opened = STATIC_ENVIRONMENT_OPEN_RE.match(line)
+        if environment_opened is None:
             output_lines.append(line)
             index += 1
             continue
 
         start_line = index + 1
+        kind = environment_opened.group("kind")
         attrs = _parse_attrs(
-            proof_opened.group("attrs"),
+            environment_opened.group("attrs"),
             report,
             source_path,
             start_line,
+            kind=kind,
         )
         content_lines: list[str] = []
         index += 1
@@ -117,11 +143,12 @@ def prepare_proof_markdown(
                 continue
 
             if DIRECTIVE_OPEN_RE.match(current):
+                label = _kind_label(kind)
                 report.add_error(
-                    "Proof directive contains nested directive",
+                    f"{label} directive contains nested directive",
                     path=source_path,
                     field=f"line:{index + 1}",
-                    next_action="Close the proof before starting another directive block",
+                    next_action=f"Close the {kind} before starting another directive block",
                 )
             if DIRECTIVE_CLOSE_RE.match(current):
                 closed = True
@@ -131,18 +158,20 @@ def prepare_proof_markdown(
             index += 1
 
         if not closed:
+            label = _kind_label(kind)
             report.add_error(
-                "Proof directive is missing a closing ::: line",
+                f"{label} directive is missing a closing ::: line",
                 path=source_path,
                 field=f"line:{start_line}",
-                next_action="Add a closing ::: line after the proof body",
+                next_action=f"Add a closing ::: line after the {kind} body",
             )
 
         placeholder = f"{PLACEHOLDER_PREFIX}{len(sources)}"
         output_lines.extend(["", placeholder, ""])
         sources.append(
-            ProofSource(
+            StaticEnvironmentSource(
                 placeholder=placeholder,
+                kind=kind,
                 id=attrs.get("id"),
                 of_id=attrs.get("of"),
                 title=attrs.get("title"),
@@ -153,9 +182,22 @@ def prepare_proof_markdown(
         )
 
     trailing_newline = "\n" if body.endswith("\n") else ""
-    return PreparedProofMarkdown(
+    return PreparedStaticEnvironmentMarkdown(
         body="\n".join(output_lines) + trailing_newline,
         sources=sources,
+    )
+
+
+def prepare_proof_markdown(
+    body: str,
+    *,
+    report: ValidationReport,
+    source_path: Path,
+) -> PreparedProofMarkdown:
+    return prepare_static_environment_markdown(
+        body,
+        report=report,
+        source_path=source_path,
     )
 
 
@@ -164,23 +206,26 @@ def _parse_attrs(
     report: ValidationReport,
     source_path: Path,
     line_number: int,
+    *,
+    kind: str,
 ) -> dict[str, str]:
     if raw is None:
         return {}
+    label = _kind_label(kind)
     stripped = raw.strip()
     if not stripped.startswith("{") or not stripped.endswith("}"):
         report.add_error(
-            "Proof directive attributes must use braces",
+            f"{label} directive attributes must use braces",
             path=source_path,
             field=f"line:{line_number}",
-            next_action='Use attributes such as {#proof-id of="theorem-id"}',
+            next_action=f'Use attributes such as {{#{kind}-id of="theorem-id"}}',
         )
         return {}
     try:
         tokens = shlex.split(stripped[1:-1])
     except ValueError as error:
         report.add_error(
-            f"Could not parse proof attributes: {error}",
+            f"Could not parse {kind} attributes: {error}",
             path=source_path,
             field=f"line:{line_number}",
             next_action='Use shell-style quoted attributes, for example of="main-theorem"',
@@ -194,7 +239,7 @@ def _parse_attrs(
             continue
         if "=" not in token:
             report.add_error(
-                f"Unknown proof attribute '{token}'",
+                f"Unknown {kind} attribute '{token}'",
                 path=source_path,
                 field=f"line:{line_number}",
                 next_action='Use #id, of="object-id", or title="Optional title"',
@@ -203,7 +248,7 @@ def _parse_attrs(
         key, value = token.split("=", 1)
         if key not in {"of", "title"}:
             report.add_error(
-                f"Unknown proof attribute '{key}'",
+                f"Unknown {kind} attribute '{key}'",
                 path=source_path,
                 field=f"line:{line_number}",
                 next_action='Use #id, of="object-id", or title="Optional title"',
@@ -216,7 +261,7 @@ def _parse_attrs(
             continue
         value = attrs[attr_name]
         if OBJECT_ID_RE.fullmatch(value) is None:
-            noun = "proof ID" if attr_name == "id" else "proof target ID"
+            noun = f"{kind} ID" if attr_name == "id" else f"{kind} target ID"
             report.add_error(
                 f"Invalid {noun} '{value}'",
                 path=source_path,
@@ -227,6 +272,10 @@ def _parse_attrs(
                 ),
             )
     return attrs
+
+
+def _kind_label(kind: str) -> str:
+    return kind.capitalize()
 
 
 def _validate_no_reserved_placeholder_text(

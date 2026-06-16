@@ -2,7 +2,13 @@ from pathlib import Path
 
 from raya_schema import ValidationReport
 from raya_static.numbered_objects import prepare_numbered_object_markdown
-from raya_static.proofs import PLACEHOLDER_PREFIX, prepare_proof_markdown
+from raya_static.proofs import (
+    PLACEHOLDER_PREFIX,
+    STATIC_ENVIRONMENT_KINDS,
+    is_static_environment_directive_open,
+    prepare_proof_markdown,
+    prepare_static_environment_markdown,
+)
 
 
 def _report() -> ValidationReport:
@@ -60,6 +66,66 @@ def test_prepare_proof_markdown_extracts_id_target_and_title() -> None:
     assert source.of_id == "main-theorem"
     assert source.title == "Key steps"
     assert source.body == "Done."
+
+
+def test_prepare_static_environment_markdown_extracts_solution_hint_and_answer() -> None:
+    report = _report()
+    prepared = prepare_static_environment_markdown(
+        '::: solution {#solution-one of="problem-one" title="Normal equations"}\n'
+        "Solve $Ax=b$.\n"
+        ":::\n\n"
+        '::: hint {#hint-one of="problem-one"}\n'
+        "Start with the residual.\n"
+        ":::\n\n"
+        "::: answer\n"
+        "$x=0$.\n"
+        ":::\n",
+        report=report,
+        source_path=Path("course/4_reader_ux/0_index.md"),
+    )
+
+    assert report.ok
+    assert STATIC_ENVIRONMENT_KINDS == ("proof", "solution", "hint", "answer")
+    assert [source.kind for source in prepared.sources] == [
+        "solution",
+        "hint",
+        "answer",
+    ]
+    assert prepared.sources[0].placeholder == f"{PLACEHOLDER_PREFIX}0"
+    assert prepared.sources[0].id == "solution-one"
+    assert prepared.sources[0].of_id == "problem-one"
+    assert prepared.sources[0].title == "Normal equations"
+    assert prepared.sources[0].body == "Solve $Ax=b$."
+    assert prepared.sources[1].id == "hint-one"
+    assert prepared.sources[1].of_id == "problem-one"
+    assert prepared.sources[1].title is None
+    assert prepared.sources[2].id is None
+    assert prepared.sources[2].of_id is None
+    assert prepared.sources[2].title is None
+    assert prepared.body.count(PLACEHOLDER_PREFIX) == 3
+
+
+def test_prepare_proof_markdown_remains_compatible_wrapper() -> None:
+    report = _report()
+    prepared = prepare_proof_markdown(
+        '::: proof {#proof-main of="main-theorem" title="Key steps"}\nDone.\n:::\n',
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert report.ok
+    assert prepared.sources[0].kind == "proof"
+    assert prepared.sources[0].id == "proof-main"
+    assert prepared.sources[0].of_id == "main-theorem"
+    assert prepared.sources[0].title == "Key steps"
+
+
+def test_static_environment_opener_detects_all_static_environment_kinds() -> None:
+    assert is_static_environment_directive_open("::: proof")
+    assert is_static_environment_directive_open('::: solution {of="problem"}')
+    assert is_static_environment_directive_open("::: hint   ")
+    assert is_static_environment_directive_open("::: answer")
+    assert not is_static_environment_directive_open("::: theorem {#main}")
 
 
 def test_numbered_object_parser_leaves_proof_blocks_for_proof_parser() -> None:
@@ -278,4 +344,4 @@ def test_authored_proof_placeholder_prefix_is_rejected() -> None:
     assert not report.ok
     diagnostic = report.diagnostics[0]
     assert diagnostic.message == "Reserved proof placeholder text"
-    assert diagnostic.next_action == "Remove text that starts with RAYA_PROOF_"
+    assert diagnostic.next_action == f"Remove text that starts with {PLACEHOLDER_PREFIX}"
