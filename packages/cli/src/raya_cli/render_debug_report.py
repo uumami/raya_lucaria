@@ -74,6 +74,7 @@ def inspect_render_debug(
         required=_captures_need_numbered_index(captures),
     )
     _inspect_numbered_content(captures, numbered_index, report)
+    _inspect_static_environment_content(captures, report)
     _inspect_static_site(site_root, report, context="site")
     if copied_site_root is not None:
         _inspect_copied_site(site_root, copied_site_root, report)
@@ -494,6 +495,80 @@ def _numbered_evidence_items(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
     return [item for item in value if isinstance(item, dict)]
+
+
+def _inspect_static_environment_content(
+    captures: list[dict[str, Any]],
+    report: dict[str, Any],
+) -> None:
+    reader_ux = _preferred_capture(captures, "reader-ux")
+    if reader_ux is None:
+        return
+    screenshot = Path(str(reader_ux.get("screenshot", "")))
+    has_hint = _page_text_contains(reader_ux, "Hint for Activity 4.1")
+    has_solution = _page_text_contains(reader_ux, "Solution of Activity 4.1")
+    has_answer = _page_text_contains(reader_ux, "Answer to Activity 4.1")
+    _add_check(
+        report,
+        check_id="static-environment:reader-ux:hint",
+        status="pass" if has_hint else "fail",
+        path=screenshot,
+        message="Reader UX render-debug evidence includes targeted hint",
+        next_action=(
+            "Regenerate render debug capture artifacts for reader-ux."
+            if not has_hint
+            else None
+        ),
+    )
+    _add_check(
+        report,
+        check_id="static-environment:reader-ux:solution",
+        status="pass" if has_solution else "fail",
+        path=screenshot,
+        message="Reader UX render-debug evidence includes targeted solution",
+        next_action=(
+            "Regenerate render debug capture artifacts for reader-ux."
+            if not has_solution
+            else None
+        ),
+    )
+    _add_check(
+        report,
+        check_id="static-environment:reader-ux:answer",
+        status="pass" if has_answer else "fail",
+        path=screenshot,
+        message="Reader UX render-debug evidence includes targeted answer",
+        next_action=(
+            "Regenerate render debug capture artifacts for reader-ux."
+            if not has_answer
+            else None
+        ),
+    )
+
+
+def _preferred_capture(
+    captures: list[dict[str, Any]],
+    page_name: str,
+) -> dict[str, Any] | None:
+    matching = [capture for capture in captures if capture.get("page") == page_name]
+    for capture in matching:
+        viewport = capture.get("viewport")
+        if isinstance(viewport, dict) and viewport.get("name") == "desktop":
+            return capture
+    return matching[0] if matching else None
+
+
+def _page_text_contains(capture: dict[str, Any], text: str) -> bool:
+    static_environments = capture.get("staticEnvironments")
+    if not isinstance(static_environments, list):
+        return False
+    for item in static_environments:
+        if not isinstance(item, dict):
+            continue
+        haystack = " ".join(str(item.get(key, "")) for key in ("heading", "text"))
+        if text in haystack:
+            return True
+    return False
 
 
 def _inspect_static_site(

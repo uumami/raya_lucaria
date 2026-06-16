@@ -1547,6 +1547,21 @@ def test_render_fixture_builds_rich_static_pages(
         "reader-facing fixture material",
     ):
         assert expected_text in reader_ux_visible
+    assert "Hint for Activity 4.1" in reader_ux_visible
+    assert "Solution of Activity 4.1" in reader_ux_visible
+    assert "Answer to Activity 4.1" in reader_ux_visible
+    assert "Standalone Hint" not in reader_ux_visible
+    assert (
+        "Use the residual formula before expanding the matrix product."
+        in reader_ux_visible
+    )
+    assert (
+        "The residual vector is orthogonal to the direction vector."
+        in reader_ux_visible
+    )
+    assert "raya-static-environment--hint" in reader_ux_html
+    assert "raya-static-environment--solution" in reader_ux_html
+    assert "raya-static-environment--answer" in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--scannable ' in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--caption ' in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in reader_ux_html

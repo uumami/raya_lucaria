@@ -237,6 +237,7 @@ def _capture_render_debug_artifact(
         "external_requests": sorted(set(external_requests)),
         "horizontal_overflow": overflow,
         "numbered_content": _numbered_content_evidence(page),
+        "staticEnvironments": _static_environment_evidence(page),
     }
     _append_summary(debug_dir / "summary.json", capture)
     return capture
@@ -290,6 +291,21 @@ def _numbered_content_evidence(page: Any) -> dict[str, object]:
                 };
               });
             return {objects, references, proofs};
+        }"""
+    )
+
+
+def _static_environment_evidence(page: Any) -> list[dict[str, str]]:
+    return page.evaluate(
+        """() => {
+            const staticEnvironments = Array.from(document.querySelectorAll('.raya-static-environment'))
+              .map((node) => ({
+                id: node.id || '',
+                className: node.className || '',
+                heading: node.querySelector('.raya-static-environment-heading')?.innerText || '',
+                text: node.innerText || '',
+              }));
+            return staticEnvironments;
         }"""
     )
 

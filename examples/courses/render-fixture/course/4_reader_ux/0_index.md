@@ -124,6 +124,32 @@ changing its direction does not change the projection line. Then compare your
 calculation with @orthogonal-example.
 :::
 
+::: hint {#hint-orthogonal-activity of="orthogonal-activity"}
+Use the residual formula before expanding the matrix product.
+:::
+
+::: solution {#solution-orthogonal-activity of="orthogonal-activity" title="Matrix check"}
+The residual vector is
+
+$$
+\begin{bmatrix}2\\3\end{bmatrix}
+-
+\begin{bmatrix}2\\0\end{bmatrix}
+=
+\begin{bmatrix}0\\3\end{bmatrix},
+$$
+
+so the inner product with $u=\begin{bmatrix}1\\0\end{bmatrix}$ is $0$.
+:::
+
+::: answer {#answer-orthogonal-activity of="orthogonal-activity"}
+The residual vector is orthogonal to the direction vector.
+:::
+
+::: hint
+Standalone hints can support reading without creating a numbered object.
+:::
+
 ::: proof {of="orthogonal-activity" title="Solution sketch of Activity 4.1"}
 Replacing $u$ by $cu$ changes both $\ip{v}{u}$ and $\ip{u}{u}$ by matching
 factors, so the scalar multiple still points along the same line. The residual

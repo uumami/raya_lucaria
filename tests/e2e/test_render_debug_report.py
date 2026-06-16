@@ -159,7 +159,33 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         "</body></html>",
         encoding="utf-8",
     )
-    for name in ("desktop-index.png", "mobile-index.png"):
+    reader_ux = site / "reader-ux"
+    reader_ux.mkdir()
+    (reader_ux / "index.html").write_text(
+        "<!doctype html><html><body>"
+        '<aside class="raya-static-environment raya-static-environment--hint" '
+        'id="raya-static-environment-hint-orthogonal-activity">'
+        '<div class="raya-static-environment-heading">Hint for Activity 4.1</div>'
+        "<p>Use the residual formula before expanding the matrix product.</p>"
+        "</aside>"
+        '<aside class="raya-static-environment raya-static-environment--solution" '
+        'id="raya-static-environment-solution-orthogonal-activity">'
+        '<div class="raya-static-environment-heading">Solution of Activity 4.1</div>'
+        "</aside>"
+        '<aside class="raya-static-environment raya-static-environment--answer" '
+        'id="raya-static-environment-answer-orthogonal-activity">'
+        '<div class="raya-static-environment-heading">Answer to Activity 4.1</div>'
+        "<p>The residual vector is orthogonal to the direction vector.</p>"
+        "</aside>"
+        "</body></html>",
+        encoding="utf-8",
+    )
+    for name in (
+        "desktop-index.png",
+        "mobile-index.png",
+        "desktop-reader-ux.png",
+        "mobile-reader-ux.png",
+    ):
         (debug / name).write_bytes(b"png")
     (debug / "summary.json").write_text(
         json.dumps(
@@ -195,6 +221,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                                 }
                             ],
                         },
+                        "staticEnvironments": [],
                     },
                     {
                         "page": "index",
@@ -211,6 +238,83 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                             "references": [],
                             "proofs": [],
                         },
+                        "staticEnvironments": [],
+                    },
+                    {
+                        "page": "reader-ux",
+                        "url": "http://127.0.0.1/reader-ux/",
+                        "viewport": {"name": "desktop", "width": 1280, "height": 900},
+                        "screenshot": str(debug / "desktop-reader-ux.png"),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [],
+                            "references": [],
+                            "proofs": [],
+                        },
+                        "staticEnvironments": [
+                            {
+                                "id": "raya-static-environment-hint-orthogonal-activity",
+                                "className": (
+                                    "raya-static-environment "
+                                    "raya-static-environment--hint"
+                                ),
+                                "heading": "Hint for Activity 4.1",
+                                "text": (
+                                    "Hint for Activity 4.1\n"
+                                    "Use the residual formula before expanding "
+                                    "the matrix product."
+                                ),
+                            },
+                            {
+                                "id": (
+                                    "raya-static-environment-"
+                                    "solution-orthogonal-activity"
+                                ),
+                                "className": (
+                                    "raya-static-environment "
+                                    "raya-static-environment--solution"
+                                ),
+                                "heading": "Solution of Activity 4.1",
+                                "text": "Solution of Activity 4.1",
+                            },
+                            {
+                                "id": (
+                                    "raya-static-environment-"
+                                    "answer-orthogonal-activity"
+                                ),
+                                "className": (
+                                    "raya-static-environment "
+                                    "raya-static-environment--answer"
+                                ),
+                                "heading": "Answer to Activity 4.1",
+                                "text": (
+                                    "Answer to Activity 4.1\n"
+                                    "The residual vector is orthogonal to the "
+                                    "direction vector."
+                                ),
+                            },
+                        ],
+                    },
+                    {
+                        "page": "reader-ux",
+                        "url": "http://127.0.0.1/reader-ux/",
+                        "viewport": {"name": "mobile", "width": 390, "height": 844},
+                        "screenshot": str(debug / "mobile-reader-ux.png"),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [],
+                            "references": [],
+                            "proofs": [],
+                        },
+                        "staticEnvironments": [],
                     },
                 ]
             }
@@ -234,6 +338,11 @@ def test_render_debug_report_enriches_numbered_content_from_index(
             "target_text": "Theorem 1",
         }
     ]
+    assert {check["id"] for check in report["checks"]} >= {
+        "static-environment:reader-ux:hint",
+        "static-environment:reader-ux:solution",
+        "static-environment:reader-ux:answer",
+    }
     assert "Theorem 1" in (debug / "index.html").read_text(encoding="utf-8")
 
 

@@ -389,6 +389,11 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
                               mathjaxContainers: document.querySelectorAll('mjx-container').length,
                               proofTexts: Array.from(document.querySelectorAll('.raya-proof'))
                                 .map((node) => node.innerText),
+                              staticEnvironmentCount: document.querySelectorAll('.raya-static-environment').length,
+                              staticEnvironmentTexts: Array.from(document.querySelectorAll('.raya-static-environment'))
+                                .map((node) => node.innerText),
+                              staticEnvironmentIds: Array.from(document.querySelectorAll('.raya-static-environment[id]'))
+                                .map((node) => node.id),
                             };
                         }"""
                     )
@@ -432,6 +437,28 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
     assert probe["mathjaxContainers"] >= 6
     assert any("Proof of Proposition 4.2" in text for text in probe["proofTexts"])
     assert any("Solution sketch of Activity 4.1" in text for text in probe["proofTexts"])
+    assert probe["staticEnvironmentCount"] >= 4
+    assert "raya-static-environment-hint-orthogonal-activity" in probe[
+        "staticEnvironmentIds"
+    ]
+    assert "raya-static-environment-solution-orthogonal-activity" in probe[
+        "staticEnvironmentIds"
+    ]
+    assert "raya-static-environment-answer-orthogonal-activity" in probe[
+        "staticEnvironmentIds"
+    ]
+    static_environment_text = " ".join(probe["staticEnvironmentTexts"])
+    assert "Hint for Activity 4.1" in static_environment_text
+    assert "Solution of Activity 4.1" in static_environment_text
+    assert "Answer to Activity 4.1" in static_environment_text
+    assert (
+        "Use the residual formula before expanding the matrix product."
+        in static_environment_text
+    )
+    assert (
+        "The residual vector is orthogonal to the direction vector."
+        in static_environment_text
+    )
     assert external_requests == []
 
 
@@ -683,6 +710,12 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "Proposition 4.2",
         "Activity 4.1",
     }
+    static_environments = reader_capture["staticEnvironments"]
+    assert {item["id"] for item in static_environments} >= {
+        "raya-static-environment-hint-orthogonal-activity",
+        "raya-static-environment-solution-orthogonal-activity",
+        "raya-static-environment-answer-orthogonal-activity",
+    }
 
     report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
@@ -703,6 +736,9 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "capture:reader-ux:mobile",
         "numbered-content:reader-ux:desktop",
         "numbered-content:reader-ux:mobile",
+        "static-environment:reader-ux:hint",
+        "static-environment:reader-ux:solution",
+        "static-environment:reader-ux:answer",
     }
     assert report_json["diagnostics"] == []
     assert "Render Debug Inspection Report" in report_html
