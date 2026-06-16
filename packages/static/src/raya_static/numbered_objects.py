@@ -13,6 +13,9 @@ from raya_schema.numbered_objects import NumberedObject, NumberedObjectConfig
 DIRECTIVE_OPEN_RE = re.compile(
     r"^ {0,3}:::\s+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:\s+(?P<attrs>\{.*\}))?\s*$"
 )
+NUMBERED_OBJECT_OPEN_RE = re.compile(
+    r"^ {0,3}:::[ \t]+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:[ \t]+(?P<attrs>\S.*?))?[ \t]*$"
+)
 DIRECTIVE_CLOSE_RE = re.compile(r"^ {0,3}:::\s*$")
 REFERENCE_RE = re.compile(
     r"(?<![\\A-Za-z0-9._%+-])@(?P<object_id>[A-Za-z][A-Za-z0-9_-]*)"
@@ -191,7 +194,7 @@ def prepare_numbered_object_markdown(
                     break
             continue
 
-        opened = DIRECTIVE_OPEN_RE.match(line)
+        opened = NUMBERED_OBJECT_OPEN_RE.match(line)
         if opened is None:
             output_lines.append(line)
             index += 1

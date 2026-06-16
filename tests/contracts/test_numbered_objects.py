@@ -155,6 +155,66 @@ def test_normalize_numbered_object_config_rejects_unknown_sequence_reference() -
     assert any("claims" in issue.message and "claim" in issue.message for issue in report.issues)
 
 
+def test_numbered_object_config_rejects_family_sequence_with_precise_field() -> None:
+    report = ValidationReport(context="test")
+    config = {
+        "course_id": "demo",
+        "render": {
+            "numbered_objects": {
+                "families": {
+                    "activity": {
+                        "sequence": "missing-practice",
+                        "label": "Activity",
+                    }
+                }
+            }
+        },
+    }
+
+    normalize_numbered_object_config(config, report=report, context="raya.yaml")
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert (
+        diagnostic.message
+        == "Numbered object family 'activity' references unknown sequence "
+        "'missing-practice' in raya.yaml"
+    )
+    assert diagnostic.field == "render.numbered_objects.families.activity.sequence"
+    assert (
+        diagnostic.next_action
+        == "Define the sequence under render.numbered_objects.sequences or use a built-in sequence"
+    )
+
+
+def test_numbered_object_config_rejects_unknown_style_with_precise_field() -> None:
+    report = ValidationReport(context="test")
+    config = {
+        "course_id": "demo",
+        "render": {
+            "numbered_objects": {
+                "sequences": {
+                    "practice": {
+                        "label": "Practice",
+                        "style": "poster",
+                    }
+                }
+            }
+        },
+    }
+
+    normalize_numbered_object_config(config, report=report, context="raya.yaml")
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert (
+        diagnostic.message
+        == "Numbered object sequence 'practice' in raya.yaml uses unknown style 'poster'"
+    )
+    assert diagnostic.field == "render.numbered_objects.sequences.practice.style"
+    assert diagnostic.next_action == "Use margin, banded, caption, or equation"
+
+
 def test_prepare_numbered_object_markdown_extracts_directive_source() -> None:
     report = ValidationReport()
     source_path = Path("course/2_vectors/3_norms.md")

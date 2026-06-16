@@ -411,6 +411,36 @@ def test_build_reports_malformed_proof_before_numbered_body_directives(
     assert diagnostic.field == "line:4"
 
 
+def test_build_reports_malformed_numbered_object_attrs_before_body_directives(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: malformed-numbered\n"
+        "title: Malformed Numbered\n"
+        "---\n"
+        "\n"
+        '::: theorem #bad-main title="Bad"\n'
+        "This malformed theorem body should not hide the opener diagnostic.\n"
+        "::: corollary {#not-real}\n"
+        "Nested-looking content remains body text after the opener error.\n"
+        ":::\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(item for item in report.diagnostics if item.severity == "error")
+    assert diagnostic.message == "Numbered object directive attributes must use braces"
+    assert diagnostic.path == page.resolve()
+    assert diagnostic.field == "line:2"
+    assert diagnostic.next_action == 'Use attributes such as {#object-id title="Optional title"}'
+
+
 def test_build_rejects_duplicate_proof_ids(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     page = course / "course" / "0_index.md"
