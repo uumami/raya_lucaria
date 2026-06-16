@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -41,6 +43,15 @@ BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
 
 NUMBERED_OBJECT_STYLES = {"margin", "banded", "caption", "equation"}
 NUMBERING_MODES = {"page-hierarchy"}
+NUMBERED_OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
+NUMBERED_OBJECT_DIRECTIVE_OPEN_RE = re.compile(
+    r"^ {0,3}:::\s+(?P<family>[A-Za-z][A-Za-z0-9_-]*)(?:\s+(?P<attrs>\{.*\}))?\s*$"
+)
+FENCE_OPEN_RE = re.compile(
+    r"^(?P<prefix>(?: {0,3}(?:[-+*]|\d+[.)])\s+)? {0,3})"
+    r"(?P<marker>`{3,}|~{3,})(?P<info>.*)$"
+)
+FENCE_CLOSE_RE = re.compile(r"^(?P<indent> *)(?P<marker>`{3,}|~{3,})[ \t]*$")
 
 
 @dataclass(frozen=True)
@@ -105,6 +116,56 @@ class NumberedObject:
 
     def to_index_entry(self) -> dict[str, Any]:
         return self.to_json()
+
+
+@dataclass(frozen=True)
+class NumberedObjectSourceReference:
+    id: str
+    source_path: Path
+    line_number: int
+
+
+@dataclass(frozen=True)
+class _FenceState:
+    marker: str
+    close_indent_max: int
+
+
+def collect_numbered_object_source_references(
+    body: str,
+    *,
+    source_path: Path,
+) -> list[NumberedObjectSourceReference]:
+    references: list[NumberedObjectSourceReference] = []
+    fence_state: _FenceState | None = None
+
+    for line_number, line in enumerate(body.splitlines(), start=1):
+        if fence_state is not None:
+            if _is_closing_fence(line, fence_state):
+                fence_state = None
+            continue
+
+        opener = _fence_opener(line)
+        if opener is not None:
+            fence_state = opener
+            continue
+
+        directive = NUMBERED_OBJECT_DIRECTIVE_OPEN_RE.match(line)
+        if directive is None:
+            continue
+
+        object_id = _numbered_object_id_from_attrs(directive.group("attrs"))
+        if object_id is None:
+            continue
+        references.append(
+            NumberedObjectSourceReference(
+                id=object_id,
+                source_path=source_path,
+                line_number=line_number,
+            )
+        )
+
+    return references
 
 
 def normalize_numbered_object_config(
@@ -265,6 +326,58 @@ def _numbered_objects_config(
         )
         return None
     return raw_config
+
+
+def _numbered_object_id_from_attrs(raw: str | None) -> str | None:
+    if raw is None:
+        return None
+    stripped = raw.strip()
+    if not stripped.startswith("{") or not stripped.endswith("}"):
+        return None
+    try:
+        tokens = shlex.split(stripped[1:-1])
+    except ValueError:
+        return None
+    for token in tokens:
+        if not token.startswith("#"):
+            continue
+        object_id = token[1:]
+        if NUMBERED_OBJECT_ID_RE.fullmatch(object_id) is not None:
+            return object_id
+    return None
+
+
+def _fence_opener(line: str) -> _FenceState | None:
+    match = FENCE_OPEN_RE.match(_line_without_blockquote_prefix(line))
+    if match is None:
+        return None
+    marker = match.group("marker")
+    info = match.group("info")
+    if marker.startswith("`") and "`" in info:
+        return None
+    return _FenceState(
+        marker=marker,
+        close_indent_max=len(match.group("prefix")) + 3,
+    )
+
+
+def _is_closing_fence(line: str, fence_state: _FenceState) -> bool:
+    match = FENCE_CLOSE_RE.match(_line_without_blockquote_prefix(line))
+    if match is None:
+        return False
+    if len(match.group("indent")) > fence_state.close_indent_max:
+        return False
+    marker = match.group("marker")
+    return marker[0] == fence_state.marker[0] and len(marker) >= len(fence_state.marker)
+
+
+def _line_without_blockquote_prefix(line: str) -> str:
+    value = line
+    while True:
+        match = re.match(r"^ {0,3}>\s?", value)
+        if match is None:
+            return value
+        value = value[match.end() :]
 
 
 def _merge_sequences(

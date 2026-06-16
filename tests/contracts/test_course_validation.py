@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,51 @@ def test_minimal_fixture_validates() -> None:
     report = validate_course(MINIMAL)
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert MINIMAL / "raya.yaml" in report.files_read
+
+
+def test_unknown_explicit_numbered_object_reference_fails_validation(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "See [missing theorem](raya:ref/missing-theorem).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message
+        == "Unknown numbered object reference 'raya:ref/missing-theorem'"
+        and diagnostic.path == index
+        and diagnostic.field == "link:raya:ref/missing-theorem"
+        and "matches a numbered object ID" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_explicit_numbered_object_reference_accepts_matching_directive(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8")
+        + "\n\n"
+        "::: theorem {#known-theorem}\n"
+        "Known theorem body.\n"
+        ":::\n\n"
+        "See [known theorem](raya:ref/known-theorem).\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
 
 def test_missing_source_directory_fails(tmp_path: Path) -> None:
@@ -710,6 +756,12 @@ def _write_valid_config(path: Path) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _copy_minimal_course(tmp_path: Path) -> Path:
+    destination = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, destination)
+    return destination
 
 
 def _write_notebook(path: Path, *, title: str) -> None:

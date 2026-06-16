@@ -16,6 +16,7 @@ from raya_schema.links import (
     resolve_local_markdown_target,
     stable_markdown_id,
 )
+from raya_schema.numbered_objects import collect_numbered_object_source_references
 from raya_schema.official import discover_official_objects
 from raya_schema.references import (
     notebook_validation_error,
@@ -84,6 +85,14 @@ def validate_course(course_path: str | Path) -> ValidationReport:
         config=config,
         report=report,
     )
+    numbered_object_ids = {
+        reference.id
+        for page in content_model.pages
+        for reference in collect_numbered_object_source_references(
+            page.body,
+            source_path=page.source_path,
+        )
+    }
     for page in content_model.pages:
         _validate_markdown_source_links(
             md_path=page.source_path,
@@ -92,6 +101,7 @@ def validate_course(course_path: str | Path) -> ValidationReport:
             source_dir=source_dir,
             pages_by_source=content_model.pages_by_source,
             stable_targets=set(content_model.pages_by_id) | set(content_model.pages_by_alias),
+            numbered_object_ids=numbered_object_ids,
             report=report,
         )
 
@@ -242,6 +252,7 @@ def _validate_markdown_source_links(
     source_dir: Path,
     pages_by_source: dict[Path, Any],
     stable_targets: set[str],
+    numbered_object_ids: set[str],
     report: ValidationReport,
 ) -> None:
     for link in extract_markdown_links(body):
@@ -251,6 +262,16 @@ def _validate_markdown_source_links(
         if kind == "stable":
             stable_id = stable_markdown_id(link.target)
             if stable_id.startswith("ref/"):
+                numbered_object_id = stable_id.removeprefix("ref/")
+                if numbered_object_id not in numbered_object_ids:
+                    report.add_error(
+                        f"Unknown numbered object reference '{link.target}'",
+                        path=md_path,
+                        field=f"link:{link.target}",
+                        next_action=(
+                            "Use a raya:ref link target that matches a numbered object ID"
+                        ),
+                    )
                 continue
             if stable_id not in stable_targets:
                 report.add_error(
