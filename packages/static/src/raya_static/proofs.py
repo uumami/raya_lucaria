@@ -20,6 +20,10 @@ PLACEHOLDER_PREFIX = "RAYA_PROOF_"
 PROOF_OPEN_RE = re.compile(r"^ {0,3}:::\s+proof(?:\s+(?P<attrs>.*))?\s*$")
 
 
+def is_proof_directive_open(line: str) -> bool:
+    return PROOF_OPEN_RE.match(line) is not None
+
+
 @dataclass(frozen=True)
 class ProofSource:
     placeholder: str

@@ -382,6 +382,35 @@ def test_build_rejects_unknown_proof_target(tmp_path: Path) -> None:
     )
 
 
+def test_build_reports_malformed_proof_before_numbered_body_directives(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: proof-demo\n"
+        "title: Proof Demo\n"
+        "summary: Proof rendering fixture.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Proof Demo\n\n"
+        '::: proof of="main-theorem"\n'
+        "::: theorem\n"
+        "This should remain proof body text for proof diagnostics.\n"
+        ":::\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(item for item in report.diagnostics if item.severity == "error")
+    assert diagnostic.message == "Proof directive attributes must use braces"
+    assert diagnostic.field == "line:4"
+
+
 def test_build_rejects_duplicate_proof_ids(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     page = course / "course" / "0_index.md"

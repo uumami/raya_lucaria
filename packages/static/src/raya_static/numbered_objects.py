@@ -154,6 +154,7 @@ def prepare_numbered_object_markdown(
     lines = body.splitlines()
     index = 0
     fence_state: _FenceState | None = None
+    from raya_static.proofs import is_proof_directive_open
 
     while index < len(lines):
         line = lines[index]
@@ -170,15 +171,7 @@ def prepare_numbered_object_markdown(
             index += 1
             continue
 
-        opened = DIRECTIVE_OPEN_RE.match(line)
-        if opened is None:
-            output_lines.append(line)
-            index += 1
-            continue
-
-        start_line = index + 1
-        family = opened.group("family")
-        if family == "proof":
+        if is_proof_directive_open(line):
             output_lines.append(line)
             index += 1
             proof_fence_state: _FenceState | None = None
@@ -197,6 +190,15 @@ def prepare_numbered_object_markdown(
                 if DIRECTIVE_CLOSE_RE.match(current):
                     break
             continue
+
+        opened = DIRECTIVE_OPEN_RE.match(line)
+        if opened is None:
+            output_lines.append(line)
+            index += 1
+            continue
+
+        start_line = index + 1
+        family = opened.group("family")
         attrs = _parse_attrs(opened.group("attrs"), report, source_path, start_line)
         content_lines: list[str] = []
         index += 1

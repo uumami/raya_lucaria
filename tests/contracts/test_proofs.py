@@ -82,6 +82,28 @@ def test_numbered_object_parser_skips_fenced_directive_text_inside_proof() -> No
     assert "Real theorem." not in prepared.body
 
 
+def test_numbered_object_parser_leaves_malformed_proof_for_proof_parser() -> None:
+    report = _report()
+    prepared = prepare_numbered_object_markdown(
+        '::: proof of="main-theorem"\n'
+        "::: theorem {#not-real}\n"
+        "Not real.\n"
+        ":::\n"
+        ":::\n"
+        "\n"
+        "::: theorem {#real}\n"
+        "Real theorem.\n"
+        ":::\n",
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert report.ok
+    assert [source.id for source in prepared.sources] == ["real"]
+    assert "not-real" in prepared.body
+    assert "Real theorem." not in prepared.body
+
+
 def test_prepare_proof_markdown_rejects_invalid_id() -> None:
     report = _report()
     prepare_proof_markdown(
