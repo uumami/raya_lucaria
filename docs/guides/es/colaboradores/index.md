@@ -18,7 +18,7 @@ Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando 
 
 El soporte de objetos numerados es comportamiento actual del renderer. Preserva el modelo de configuracion `render.numbered_objects` para numbering, sequences y families; valida fenced directives, IDs estables de objeto, referencias shorthand `@id` y referencias explicitas `raya:ref/id`; y emite el index `data/numbered-objects.json` declarado en manifest con object IDs, labels, numbers, source paths, page output paths, anchors, hrefs y reference text. Las paginas estaticas deben renderizar labels y links sin requests externos del renderer o CDN y sin MathJax en el navegador ni resolver de referencias en el browser. Fixtures y checks debug deben cubrir theorem, corollary, equation, figure, table, problem, homework y assignment cuando cambie el contrato.
 
-Los bloques de proof son superficies de render estatico, no registros del index numerado. Pueden resolver `of` contra cualquier familia de objeto numerado, renderizar un heading y body de proof, y permanecer ausentes de `data/numbered-objects.json`.
+Los bloques de proof son superficies de render estatico, no registros del index numerado. Pueden resolver `of` contra cualquier familia de objeto numerado, renderizar un encabezado y cuerpo de proof, y permanecer ausentes de `data/numbered-objects.json`.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

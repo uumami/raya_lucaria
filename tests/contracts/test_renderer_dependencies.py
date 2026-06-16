@@ -272,21 +272,31 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
 
 
 def test_role_docs_cover_proof_blocks() -> None:
-    required = [
+    authoring_docs = [
         Path("docs/guides/en/professors/index.md"),
-        Path("docs/guides/en/students/index.md"),
         Path("docs/guides/en/contributors/index.md"),
         Path("docs/guides/en/agents/index.md"),
         Path("docs/guides/es/profesores/index.md"),
-        Path("docs/guides/es/estudiantes/index.md"),
         Path("docs/guides/es/colaboradores/index.md"),
         Path("docs/guides/es/agentes/index.md"),
     ]
 
-    for path in required:
+    for path in authoring_docs:
         text = path.read_text(encoding="utf-8")
         assert "::: proof" in text, path
         assert 'of="' in text, path
+
+    en_students = Path("docs/guides/en/students/index.md").read_text(encoding="utf-8")
+    assert "proof headings" in en_students
+    assert "browser-side MathJax" in en_students
+    assert "::: proof" not in en_students
+
+    es_students = Path("docs/guides/es/estudiantes/index.md").read_text(
+        encoding="utf-8"
+    )
+    assert "encabezados" in es_students
+    assert "browser-side MathJax" in es_students
+    assert "::: proof" not in es_students
 
 
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:

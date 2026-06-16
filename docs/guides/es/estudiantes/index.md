@@ -20,20 +20,7 @@ Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y pro
 
 Las paginas de curso pueden incluir objetos numerados y referencias estaticas. Un resultado puede aparecer como `Teorema 2.3.1`, una imagen como `Figura 2.3.1`, y el trabajo de practica como referencia de homework, problem, activity o assignment. Estos numeros, etiquetas, anchors y referencias se generan durante el build y se publican como links estaticos; tu browser no deberia calcularlos ni cargar un servicio vivo de referencias.
 
-Los bloques de proof muestran en el heading renderizado que objeto se esta probando, y la math dentro del proof se renderiza durante el build. La pagina no deberia necesitar un request de MathJax en el browser para mostrar el proof.
-
-```markdown
-::: theorem {#main-theorem title="Teorema de ejemplo"}
-Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
-:::
-
-::: proof {#proof-main of="main-theorem" title="Identidad"}
-La igualdad se verifica componente por componente:
-$$
-I\vect{v}=\vect{v}.
-$$
-:::
-```
+Los encabezados de proof renderizados nombran el objeto que se esta probando, y la math dentro del proof debe aparecer ya compuesta durante el build. La pagina no deberia necesitar un request de browser-side MathJax para mostrar el proof. Si ves sintaxis source cruda o TeX crudo en vez de un proof renderizado, reportalo al equipo del curso con la URL o titulo de la pagina.
 
 Algunas paginas pueden incluir scripts o notebooks linkeados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Los archivos source no linkeados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
