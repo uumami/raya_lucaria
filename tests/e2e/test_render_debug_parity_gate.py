@@ -107,9 +107,12 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
         for check in reader_checks
     )
     assert {check["id"] for check in report_json["checks"]} >= {
-        "static-environment:reader-ux:hint",
-        "static-environment:reader-ux:solution",
-        "static-environment:reader-ux:answer",
+        "static-environment:reader-ux:desktop:hint",
+        "static-environment:reader-ux:desktop:solution",
+        "static-environment:reader-ux:desktop:answer",
+        "static-environment:reader-ux:mobile:hint",
+        "static-environment:reader-ux:mobile:solution",
+        "static-environment:reader-ux:mobile:answer",
     }
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html

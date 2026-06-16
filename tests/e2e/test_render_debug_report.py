@@ -166,7 +166,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         '<aside class="raya-static-environment raya-static-environment--hint" '
         'id="raya-static-environment-hint-orthogonal-activity">'
         '<div class="raya-static-environment-heading">Hint for Activity 4.1</div>'
-        "<p>Use the residual formula before expanding the matrix product.</p>"
+        "<p>Compare the projection formula before expanding the matrix product.</p>"
         "</aside>"
         '<aside class="raya-static-environment raya-static-environment--solution" '
         'id="raya-static-environment-solution-orthogonal-activity">'
@@ -180,6 +180,32 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         "</body></html>",
         encoding="utf-8",
     )
+    static_environments = [
+        {
+            "id": "raya-static-environment-hint-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--hint",
+            "heading": "Hint for Activity 4.1",
+            "text": (
+                "Hint for Activity 4.1\n"
+                "Compare the projection formula before expanding the matrix product."
+            ),
+        },
+        {
+            "id": "raya-static-environment-solution-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--solution",
+            "heading": "Solution of Activity 4.1",
+            "text": "Solution of Activity 4.1",
+        },
+        {
+            "id": "raya-static-environment-answer-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--answer",
+            "heading": "Answer to Activity 4.1",
+            "text": (
+                "Answer to Activity 4.1\n"
+                "The residual vector is orthogonal to the direction vector."
+            ),
+        },
+    ]
     for name in (
         "desktop-index.png",
         "mobile-index.png",
@@ -255,49 +281,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                             "references": [],
                             "proofs": [],
                         },
-                        "staticEnvironments": [
-                            {
-                                "id": "raya-static-environment-hint-orthogonal-activity",
-                                "className": (
-                                    "raya-static-environment "
-                                    "raya-static-environment--hint"
-                                ),
-                                "heading": "Hint for Activity 4.1",
-                                "text": (
-                                    "Hint for Activity 4.1\n"
-                                    "Use the residual formula before expanding "
-                                    "the matrix product."
-                                ),
-                            },
-                            {
-                                "id": (
-                                    "raya-static-environment-"
-                                    "solution-orthogonal-activity"
-                                ),
-                                "className": (
-                                    "raya-static-environment "
-                                    "raya-static-environment--solution"
-                                ),
-                                "heading": "Solution of Activity 4.1",
-                                "text": "Solution of Activity 4.1",
-                            },
-                            {
-                                "id": (
-                                    "raya-static-environment-"
-                                    "answer-orthogonal-activity"
-                                ),
-                                "className": (
-                                    "raya-static-environment "
-                                    "raya-static-environment--answer"
-                                ),
-                                "heading": "Answer to Activity 4.1",
-                                "text": (
-                                    "Answer to Activity 4.1\n"
-                                    "The residual vector is orthogonal to the "
-                                    "direction vector."
-                                ),
-                            },
-                        ],
+                        "staticEnvironments": static_environments,
                     },
                     {
                         "page": "reader-ux",
@@ -314,7 +298,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                             "references": [],
                             "proofs": [],
                         },
-                        "staticEnvironments": [],
+                        "staticEnvironments": static_environments,
                     },
                 ]
             }
@@ -339,11 +323,111 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         }
     ]
     assert {check["id"] for check in report["checks"]} >= {
-        "static-environment:reader-ux:hint",
-        "static-environment:reader-ux:solution",
-        "static-environment:reader-ux:answer",
+        "static-environment:reader-ux:desktop:hint",
+        "static-environment:reader-ux:desktop:solution",
+        "static-environment:reader-ux:desktop:answer",
+        "static-environment:reader-ux:mobile:hint",
+        "static-environment:reader-ux:mobile:solution",
+        "static-environment:reader-ux:mobile:answer",
     }
     assert "Theorem 1" in (debug / "index.html").read_text(encoding="utf-8")
+
+
+def test_render_debug_report_fails_when_mobile_static_environment_class_is_missing(
+    tmp_path: Path,
+) -> None:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
+    reader_ux = site / "reader-ux"
+    reader_ux.mkdir()
+    (reader_ux / "index.html").write_text(
+        "<!doctype html><html><body>Reader UX</body></html>",
+        encoding="utf-8",
+    )
+    static_environments = [
+        {
+            "id": "raya-static-environment-hint-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--hint",
+            "heading": "Hint for Activity 4.1",
+            "text": (
+                "Hint for Activity 4.1\n"
+                "Compare the projection formula before expanding the matrix product."
+            ),
+        },
+        {
+            "id": "raya-static-environment-solution-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--solution",
+            "heading": "Solution of Activity 4.1",
+            "text": "Solution of Activity 4.1",
+        },
+        {
+            "id": "raya-static-environment-answer-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--answer",
+            "heading": "Answer to Activity 4.1",
+            "text": (
+                "Answer to Activity 4.1\n"
+                "The residual vector is orthogonal to the direction vector."
+            ),
+        },
+    ]
+    mobile_static_environments = [
+        item.copy() for item in static_environments
+    ]
+    mobile_static_environments[2]["className"] = "raya-static-environment"
+    for name in (
+        "desktop-index.png",
+        "mobile-index.png",
+        "desktop-reader-ux.png",
+        "mobile-reader-ux.png",
+    ):
+        (debug / name).write_bytes(b"png")
+    captures = []
+    for page, viewport, screenshot, evidence in (
+        ("index", "desktop", "desktop-index.png", []),
+        ("index", "mobile", "mobile-index.png", []),
+        ("reader-ux", "desktop", "desktop-reader-ux.png", static_environments),
+        ("reader-ux", "mobile", "mobile-reader-ux.png", mobile_static_environments),
+    ):
+        captures.append(
+            {
+                "page": page,
+                "url": f"http://127.0.0.1/{page}/",
+                "viewport": {
+                    "name": viewport,
+                    "width": 1280 if viewport == "desktop" else 390,
+                    "height": 900 if viewport == "desktop" else 844,
+                },
+                "screenshot": str(debug / screenshot),
+                "mathjax_container_count": 0,
+                "raw_tex_visible": False,
+                "raw_tex_markers": [],
+                "external_requests": [],
+                "horizontal_overflow": 0,
+                "numbered_content": {"objects": [], "references": [], "proofs": []},
+                "staticEnvironments": evidence,
+            }
+        )
+    (debug / "summary.json").write_text(
+        json.dumps({"captures": captures}),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    answer_check = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "static-environment:reader-ux:mobile:answer"
+    )
+    assert answer_check["status"] == "fail"
+    assert any(
+        "raya-static-environment--answer" in failure
+        for failure in answer_check["details"]["failures"]
+    )
 
 
 def test_render_debug_report_fails_when_capture_lacks_numbered_content(

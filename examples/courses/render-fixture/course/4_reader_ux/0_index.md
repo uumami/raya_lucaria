@@ -125,11 +125,37 @@ calculation with @orthogonal-example.
 :::
 
 ::: hint {#hint-orthogonal-activity of="orthogonal-activity"}
-Use the residual formula before expanding the matrix product.
+Compare the projection formula for $u$ and $cu$ before expanding the matrix product.
 :::
 
 ::: solution {#solution-orthogonal-activity of="orthogonal-activity" title="Matrix check"}
-The residual vector is
+Take
+
+$$
+u=
+\begin{bmatrix}1\\0\end{bmatrix},
+\qquad
+2u=
+\begin{bmatrix}2\\0\end{bmatrix},
+\qquad
+v=
+\begin{bmatrix}2\\3\end{bmatrix}.
+$$
+
+The projection onto the scaled direction is
+
+$$
+\orthproj_{2u}(v)
+=
+\frac{\ip{v}{2u}}{\ip{2u}{2u}}(2u)
+=
+\frac{4}{4}
+\begin{bmatrix}2\\0\end{bmatrix}
+=
+\begin{bmatrix}2\\0\end{bmatrix},
+$$
+
+the same parallel component as $\orthproj_u(v)$. The residual vector is
 
 $$
 \begin{bmatrix}2\\3\end{bmatrix}
@@ -139,11 +165,12 @@ $$
 \begin{bmatrix}0\\3\end{bmatrix},
 $$
 
-so the inner product with $u=\begin{bmatrix}1\\0\end{bmatrix}$ is $0$.
+so the inner product with either direction vector is $0$.
 :::
 
 ::: answer {#answer-orthogonal-activity of="orthogonal-activity"}
-The residual vector is orthogonal to the direction vector.
+Scaling $u$ by a nonzero constant changes the parameterization, not the
+projection line. The residual vector is orthogonal to the direction vector.
 :::
 
 ::: hint

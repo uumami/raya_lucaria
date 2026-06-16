@@ -451,10 +451,7 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
     assert "Hint for Activity 4.1" in static_environment_text
     assert "Solution of Activity 4.1" in static_environment_text
     assert "Answer to Activity 4.1" in static_environment_text
-    assert (
-        "Use the residual formula before expanding the matrix product."
-        in static_environment_text
-    )
+    assert "before expanding the matrix product." in static_environment_text
     assert (
         "The residual vector is orthogonal to the direction vector."
         in static_environment_text
@@ -716,6 +713,18 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "raya-static-environment-solution-orthogonal-activity",
         "raya-static-environment-answer-orthogonal-activity",
     }
+    mobile_reader_capture = next(
+        capture
+        for capture in summary["captures"]
+        if capture["page"] == "reader-ux"
+        and capture["viewport"]["name"] == "mobile"
+    )
+    mobile_static_environments = mobile_reader_capture["staticEnvironments"]
+    assert {item["id"] for item in mobile_static_environments} >= {
+        "raya-static-environment-hint-orthogonal-activity",
+        "raya-static-environment-solution-orthogonal-activity",
+        "raya-static-environment-answer-orthogonal-activity",
+    }
 
     report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
@@ -736,9 +745,12 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "capture:reader-ux:mobile",
         "numbered-content:reader-ux:desktop",
         "numbered-content:reader-ux:mobile",
-        "static-environment:reader-ux:hint",
-        "static-environment:reader-ux:solution",
-        "static-environment:reader-ux:answer",
+        "static-environment:reader-ux:desktop:hint",
+        "static-environment:reader-ux:desktop:solution",
+        "static-environment:reader-ux:desktop:answer",
+        "static-environment:reader-ux:mobile:hint",
+        "static-environment:reader-ux:mobile:solution",
+        "static-environment:reader-ux:mobile:answer",
     }
     assert report_json["diagnostics"] == []
     assert "Render Debug Inspection Report" in report_html
