@@ -635,14 +635,23 @@ def _collect_static_environments(
             if source.id:
                 first_source = seen_ids.get(source.id)
                 if first_source is not None:
-                    report.add_error(
-                        f"Duplicate static environment ID '{source.id}'",
-                        path=source.source_path,
-                        field=f"line:{source.start_line}",
-                        next_action=(
+                    if source.kind == "proof":
+                        message = f"Duplicate proof ID '{source.id}'"
+                        next_action = (
+                            "Use a unique proof ID; first seen in "
+                            f"{first_source.source_path} line:{first_source.start_line}"
+                        )
+                    else:
+                        message = f"Duplicate static environment ID '{source.id}'"
+                        next_action = (
                             "Use a unique static environment ID; first seen in "
                             f"{first_source.source_path} line:{first_source.start_line}"
-                        ),
+                        )
+                    report.add_error(
+                        message,
+                        path=source.source_path,
+                        field=f"line:{source.start_line}",
+                        next_action=next_action,
                     )
                     continue
                 if source.id in objects_by_id:
@@ -661,7 +670,7 @@ def _collect_static_environments(
                     report.add_error(
                         f"Unknown {source.kind} target '{source.of_id}'",
                         path=source.source_path,
-                        field=f"line:{_static_environment_builder_line(source)}",
+                        field=f"line:{source.start_line}",
                         next_action='Use of="object-id" with an existing numbered object ID',
                     )
                     continue
@@ -672,12 +681,6 @@ def _collect_static_environments(
         items_by_page_id=items_by_page_id,
         prepared_bodies_by_page_id=static_environment_prepared_bodies_by_page_id,
     )
-
-
-def _static_environment_builder_line(source: StaticEnvironmentSource) -> int:
-    if source.kind == "proof":
-        return source.start_line
-    return source.start_line + 3
 
 
 def _render_page(

@@ -487,7 +487,7 @@ def test_static_environment_rejects_unknown_target(tmp_path: Path) -> None:
         for item in report.diagnostics
         if item.message == "Unknown solution target 'missing-problem'"
     )
-    assert diagnostic.field == "line:6"
+    assert diagnostic.field == "line:3"
     assert diagnostic.next_action == 'Use of="object-id" with an existing numbered object ID'
 
 
