@@ -17,6 +17,8 @@ Read the [math authoring fixture](2_math_authoring/0_index.md) for current build
 
 Read the [numbered object fixture](3_numbered_objects/0_index.md) for theorem-like blocks, figures, tables, equations, problems, homework, and references.
 
+Read the [reader UX fixture](4_reader_ux/0_index.md) for a realistic course-note flow using scannable numbered content.
+
 External links such as [example](https://example.com), [mail](mailto:test@example.com), [phone](tel:123), and [fragment](#fixture) are present so render tests can prove they are not rewritten as local assets.
 
 ## Rich Static Baseline

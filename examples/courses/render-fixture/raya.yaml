@@ -16,7 +16,7 @@ render:
     sequences:
       assignment:
         label: Activity
-        style: banded
+        style: scannable
     families:
       homework:
         sequence: assignment

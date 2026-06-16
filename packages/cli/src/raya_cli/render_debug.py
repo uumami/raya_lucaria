@@ -16,6 +16,7 @@ RENDER_DEBUG_PAGE_NAMES = (
     "static-path",
     "math-authoring",
     "numbered-objects",
+    "reader-ux",
 )
 _RENDER_DEBUG_CLEANUP_PAGE_NAMES = RENDER_DEBUG_PAGE_NAMES + ("3_numbered_objects",)
 RENDER_DEBUG_VIEWPORTS = (
@@ -27,6 +28,9 @@ RENDER_RAW_TEX_MARKERS = (
     "\\argmax",
     "\\renewcommand",
     "\\fixtureUnit",
+    "\\vect",
+    "\\ip",
+    "\\orthproj",
     "\\begin{bmatrix}",
     "a^2 + b^2 = c^2",
 )
@@ -154,6 +158,8 @@ def _available_page_names(site_root: Path) -> list[str]:
         page_names.append("numbered-objects")
     elif (site_root / "3_numbered_objects" / "index.html").is_file():
         page_names.append("3_numbered_objects")
+    if (site_root / "reader-ux" / "index.html").is_file():
+        page_names.append("reader-ux")
     return page_names
 
 
@@ -256,6 +262,7 @@ def _numbered_content_evidence(page: Any) -> dict[str, object]:
                 family: Array.from(node.classList)
                   .find((name) => name.startsWith('raya-numbered-object--') &&
                     !['raya-numbered-object--margin', 'raya-numbered-object--banded',
+                      'raya-numbered-object--scannable',
                       'raya-numbered-object--caption', 'raya-numbered-object--equation']
                       .includes(name))
                   ?.replace('raya-numbered-object--', '') || '',

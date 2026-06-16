@@ -17,6 +17,9 @@ RENDER_RAW_TEX_MARKERS = (
     "\\argmax",
     "\\renewcommand",
     "\\fixtureUnit",
+    "\\vect",
+    "\\ip",
+    "\\orthproj",
     "\\begin{bmatrix}",
     "a^2 + b^2 = c^2",
 )
@@ -775,6 +778,8 @@ def _expected_page_names(site_dir: Path) -> list[str]:
         page_names.append("numbered-objects")
     elif (site_dir / "3_numbered_objects" / "index.html").is_file():
         page_names.append("3_numbered_objects")
+    if (site_dir / "reader-ux" / "index.html").is_file():
+        page_names.append("reader-ux")
     return page_names
 
 

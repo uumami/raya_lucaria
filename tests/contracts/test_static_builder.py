@@ -1219,6 +1219,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert numbered_objects_html_path.exists()
     numbered_objects_html = numbered_objects_html_path.read_text(encoding="utf-8")
     numbered_objects_visible = _visible_text(numbered_objects_html)
+    reader_ux_html_path = course / "artifact" / "site" / "reader-ux" / "index.html"
+    assert reader_ux_html_path.exists()
+    reader_ux_html = reader_ux_html_path.read_text(encoding="utf-8")
+    reader_ux_visible = _visible_text(reader_ux_html)
     math_authoring_visible = _visible_text(math_authoring_html)
     numbered_index = json.loads(
         (
@@ -1249,6 +1253,15 @@ def test_render_fixture_builds_rich_static_pages(
         "homework-one",
         "activity-one",
         "assignment-one",
+        "orthogonal-definition",
+        "orthogonal-proposition",
+        "orthogonal-remark",
+        "orthogonal-example",
+        "orthogonal-equation",
+        "orthogonal-figure",
+        "orthogonal-table",
+        "orthogonal-problem",
+        "orthogonal-activity",
     }
     assert set(numbered_index["by_id"]) >= expected_numbered_ids
     by_id = {item["id"]: item for item in numbered_index["objects"]}
@@ -1257,6 +1270,12 @@ def test_render_fixture_builds_rich_static_pages(
     assert by_id["assignment-one"]["family"] == "assignment"
     assert by_id["assignment-one"]["label"] == "Activity"
     assert by_id["assignment-one"]["sequence"] == "assignment"
+    assert by_id["assignment-one"]["style"] == "scannable"
+    assert by_id["orthogonal-remark"]["family"] == "remark"
+    assert by_id["orthogonal-remark"]["style"] == "scannable"
+    assert by_id["orthogonal-activity"]["style"] == "scannable"
+    assert by_id["orthogonal-figure"]["style"] == "caption"
+    assert by_id["orthogonal-equation"]["style"] == "equation"
     main_theorem = numbered_index["objects"][numbered_index["by_id"]["main-theorem"]]
     assert main_theorem["href"] == "numbered-objects/#raya-object-main-theorem"
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
@@ -1297,6 +1316,7 @@ def test_render_fixture_builds_rich_static_pages(
     assert "&lt;script&gt;alert('fixture')&lt;/script&gt;" in html
     assert "<script>" not in html
     assert 'href="math-authoring/index.html"' in html
+    assert 'href="reader-ux/index.html"' in html
 
     assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
     assert (
@@ -1370,7 +1390,6 @@ def test_render_fixture_builds_rich_static_pages(
     assert "Proof of Activity 3.3" in numbered_objects_visible
     assert "Solution sketch" in numbered_objects_visible
     assert 'class="raya-numbered-object raya-numbered-object--scannable ' in numbered_objects_html
-    assert 'class="raya-numbered-object raya-numbered-object--banded ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--caption ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html
     assert 'class="raya-proof"' in numbered_objects_html
@@ -1385,6 +1404,24 @@ def test_render_fixture_builds_rich_static_pages(
     assert re.search(r"<script[^>]+MathJax", numbered_objects_html) is None
     assert "\\begin{bmatrix}" not in numbered_objects_visible
     assert "mjx-container" in numbered_objects_html
+
+    for expected_text in (
+        "Reader UX Fixture",
+        "Remark 4.4",
+        "Example 4.1",
+        "Problem 4.1",
+        "Activity 4.1",
+        "Proof of Proposition 4.2",
+        "Solution sketch of Activity 4.1",
+        "reader-facing fixture material",
+    ):
+        assert expected_text in reader_ux_visible
+    assert 'class="raya-numbered-object raya-numbered-object--scannable ' in reader_ux_html
+    assert 'class="raya-numbered-object raya-numbered-object--caption ' in reader_ux_html
+    assert 'class="raya-numbered-object raya-numbered-object--equation ' in reader_ux_html
+    assert "raya-numbered-object-badge" in reader_ux_html
+    assert "mjx-container" in reader_ux_html
+    assert "\\begin{bmatrix}" not in reader_ux_visible
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:

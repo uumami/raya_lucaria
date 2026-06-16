@@ -317,7 +317,7 @@ def test_render_fixture_numbered_objects_are_static_and_local(
         for ref in probe["refs"]
     )
     assert "Proof of Activity 3.3" in probe["text"]
-    assert any("raya-numbered-object--banded" in value for value in probe["classes"])
+    assert any("raya-numbered-object--scannable" in value for value in probe["classes"])
     assert any("raya-numbered-object--caption" in value for value in probe["classes"])
     assert any("raya-numbered-object--equation" in value for value in probe["classes"])
     assert probe["mathJaxScripts"] == []
@@ -327,6 +327,111 @@ def test_render_fixture_numbered_objects_are_static_and_local(
     assert "Proof of Theorem 3.1" in probe["proofHeading"]
     assert probe["proofHasMath"]
     assert "raya-proof-proof-main" in probe["proofIds"]
+    assert external_requests == []
+
+
+def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.on(
+                    "request",
+                    lambda request: record_external_request(
+                        request.url,
+                        base_url,
+                        external_requests,
+                    ),
+                )
+                try:
+                    page.goto(f"{base_url}/reader-ux/", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    _assert_visible_mathjax_output(page, minimum=6)
+                    probe = page.evaluate(
+                        """() => {
+                            const bodyText = document.body.innerText;
+                            const objectNodes = Array.from(
+                              document.querySelectorAll('.raya-numbered-object')
+                            );
+                            return {
+                              ids: objectNodes.map((node) => node.dataset.objectId),
+                              text: bodyText,
+                              classes: objectNodes.map((node) => node.className),
+                              hasBadge: Boolean(document.querySelector('.raya-numbered-object-badge')),
+                              hasCaptionStyle: Boolean(document.querySelector('.raya-numbered-object--caption')),
+                              hasEquation: Boolean(document.querySelector('.raya-numbered-object--equation')),
+                              mathJaxScripts: Array.from(document.scripts)
+                                .map((script) => script.src || script.textContent || '')
+                                .filter((value) => value.includes('MathJax')),
+                              visibleRawTex: bodyText.includes('\\\\begin{bmatrix}')
+                                || bodyText.includes('\\\\orthproj')
+                                || bodyText.includes('$$'),
+                              mathjaxContainers: document.querySelectorAll('mjx-container').length,
+                              proofTexts: Array.from(document.querySelectorAll('.raya-proof'))
+                                .map((node) => node.innerText),
+                            };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert set(probe["ids"]) >= {
+        "orthogonal-definition",
+        "orthogonal-proposition",
+        "orthogonal-remark",
+        "orthogonal-example",
+        "orthogonal-equation",
+        "orthogonal-figure",
+        "orthogonal-table",
+        "orthogonal-problem",
+        "orthogonal-activity",
+    }
+    for expected_text in (
+        "Reader UX Fixture",
+        "Remark 4.4",
+        "Example 4.1",
+        "Problem 4.1",
+        "Activity 4.1",
+        "Proof of Proposition 4.2",
+        "Solution sketch of Activity 4.1",
+        "reader-facing fixture material",
+    ):
+        assert expected_text in probe["text"]
+    assert any("raya-numbered-object--scannable" in value for value in probe["classes"])
+    assert any("raya-numbered-object--caption" in value for value in probe["classes"])
+    assert any("raya-numbered-object--equation" in value for value in probe["classes"])
+    assert probe["hasBadge"] is True
+    assert probe["hasCaptionStyle"] is True
+    assert probe["hasEquation"] is True
+    assert probe["mathJaxScripts"] == []
+    assert probe["visibleRawTex"] is False
+    assert probe["mathjaxContainers"] >= 6
+    assert any("Proof of Proposition 4.2" in text for text in probe["proofTexts"])
+    assert any("Solution sketch of Activity 4.1" in text for text in probe["proofTexts"])
     assert external_requests == []
 
 
@@ -528,6 +633,8 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "mobile-math-authoring.png",
         "desktop-numbered-objects.png",
         "mobile-numbered-objects.png",
+        "desktop-reader-ux.png",
+        "mobile-reader-ux.png",
     }
     assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
     assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
@@ -561,6 +668,21 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         and ref["href"].endswith("#raya-object-assignment-one")
         for ref in evidence["references"]
     )
+    reader_capture = next(
+        capture
+        for capture in summary["captures"]
+        if capture["page"] == "reader-ux"
+        and capture["viewport"]["name"] == "desktop"
+    )
+    reader_evidence = reader_capture["numbered_content"]
+    assert {item["id"] for item in reader_evidence["objects"]} >= {
+        "orthogonal-remark",
+        "orthogonal-activity",
+    }
+    assert {item["target_text"] for item in reader_evidence["proofs"]} >= {
+        "Proposition 4.2",
+        "Activity 4.1",
+    }
 
     report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
@@ -577,11 +699,16 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "capture:math-authoring:mobile",
         "capture:numbered-objects:desktop",
         "capture:numbered-objects:mobile",
+        "capture:reader-ux:desktop",
+        "capture:reader-ux:mobile",
+        "numbered-content:reader-ux:desktop",
+        "numbered-content:reader-ux:mobile",
     }
     assert report_json["diagnostics"] == []
     assert "Render Debug Inspection Report" in report_html
     assert 'href="desktop-index.png"' in report_html
     assert 'href="mobile-static-path.png"' in report_html
+    assert 'href="desktop-reader-ux.png"' in report_html
 
 
 def test_capture_render_debug_fails_on_visible_raw_tex(tmp_path: Path) -> None:

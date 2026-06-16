@@ -49,6 +49,8 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     assert (debug_dir / "summary.json").is_file()
     assert (debug_dir / "desktop-index.png").stat().st_size > 0
     assert (debug_dir / "mobile-static-path.png").stat().st_size > 0
+    assert (debug_dir / "desktop-reader-ux.png").stat().st_size > 0
+    assert (debug_dir / "mobile-reader-ux.png").stat().st_size > 0
     report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
 
@@ -88,8 +90,25 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
         and check["details"]["proof_count"] >= 3
         for check in numbered_checks
     )
+    assert any(
+        check["id"] == "capture:reader-ux:desktop"
+        and check["status"] == "pass"
+        for check in report_json["checks"]
+    )
+    reader_checks = [
+        check
+        for check in report_json["checks"]
+        if check["id"].startswith("numbered-content:reader-ux:")
+    ]
+    assert reader_checks
+    assert any(
+        check["details"]["object_count"] >= 9
+        and check["details"]["proof_count"] >= 2
+        for check in reader_checks
+    )
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
+    assert "reader-ux" in report_html
 
 
 def test_render_debug_parity_gate_inspects_explicit_copied_site_contents(
