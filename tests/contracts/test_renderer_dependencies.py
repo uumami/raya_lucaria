@@ -261,7 +261,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "referencias shorthand `@id`",
             "referencias explicitas `raya:ref/id`",
             "data/numbered-objects.json",
-            "anchor renderizado",
+            "ancla renderizada",
             "en vez de buscar soporte LaTeX `\\label` o `\\ref`",
         ],
     }
