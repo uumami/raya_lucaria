@@ -46,6 +46,8 @@ Use [the compactness criterion](raya:ref/compactness) in your proof.
 
 Theorem and corollary may share a theorem sequence; equation, figure, table, problem, homework, and assignment families can share or separate sequences by configuration. Use `@id` shorthand or `raya:ref/id` links for source references. Do not write LaTeX `\label` or `\ref` expecting Raya cross-references.
 
+Use the numbered-content matrix pattern when checking a course: include theorem-like, equation, figure/table, and practice objects with stable IDs. Build diagnostics should point to the source file and line for bad IDs, unknown references, malformed directives, and proof targets that do not exist.
+
 Proof blocks can point to theorems, homework, problems, figures, tables, equations, definitions, and activities while keeping each object independently numbered. Use `of` to name the numbered object being proved; the proof renders as a static environment and does not create another numbered object.
 
 ```markdown

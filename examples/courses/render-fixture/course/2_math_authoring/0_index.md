@@ -115,6 +115,9 @@ Proof blocks are rendered statically in the numbered object fixture page. They c
 point to theorems, homework, or other numbered course objects while keeping math
 pre-rendered at build time.
 
+Render-debug evidence should confirm that numbered content and math are static,
+local, and free of browser-side MathJax conversion.
+
 ## Macro Redefinition
 
 Page-local redefinition is accepted when it remains local to the page:

@@ -22,6 +22,8 @@ Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites l
 
 Para diagnosticos de objeto numerado, compara la directive source, el anchor renderizado de la pagina, el href estatico, el texto visible de referencia y la entrada en `data/numbered-objects.json`. Incluye casos de la familia theorem cuando fallen labels o secuencias compartidas. Usa la ruta render-debug para capturar screenshots y output de inspeccion, pero conserva el contrato machine-readable en datos declarados por el manifest en vez de HTML scrapeado.
 
+Para fallas de contenido numerado, compara en este orden: la directive source, el diagnostico de build, `data/numbered-objects.json`, el anchor/link renderizado y la evidencia de render-debug.
+
 Para bloques de prueba, valida objetivos `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Las pruebas se renderizan como entornos estaticos y no deben aparecer como registros del index numerado.
 
 ```markdown

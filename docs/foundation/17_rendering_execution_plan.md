@@ -164,6 +164,11 @@ Accepted baseline:
   copied static-site parity checks, raw TeX checks, overflow checks, and
   inspection pages should make numbered labels, anchors, hrefs, and reference
   text reviewable without treating screenshots or HTML as machine authority.
+  Numbered content diagnostics are a current renderer quality pillar. CLI/build
+  diagnostics and `data/numbered-objects.json` remain authoritative; render-debug
+  adds screenshots, report JSON, and inspection HTML as evidence for labels,
+  anchors, references, proof targets, raw TeX leakage, external requests, and
+  browser-side MathJax absence.
 - Raw HTML is escaped by default.
 - Browser-facing renderer support files live under `artifact/site/_raya/` and use deployment-neutral relative URLs.
 

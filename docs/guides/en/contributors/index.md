@@ -19,6 +19,8 @@ Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when ch
 
 Numbered object support is current renderer behavior. Preserve the `render.numbered_objects` config model for numbering, sequences, and families; validate fenced directives, stable object IDs, `@id` shorthand references, and `raya:ref/id` explicit references; and emit the manifest-declared `data/numbered-objects.json` index with object IDs, labels, numbers, source paths, page output paths, anchors, hrefs, and reference text. Static pages must render labels and links without external renderer or CDN requests and with no browser-side MathJax or browser-side reference resolver. Fixture and debug checks should cover theorem, corollary, equation, figure, table, problem, homework, and assignment family behavior where the contract changes.
 
+When changing numbered content behavior, keep CLI/build diagnostics and `data/numbered-objects.json` authoritative. Render-debug may summarize objects, references, proof headings, and screenshots, but it is evidence for inspection, not a replacement data contract.
+
 Proof blocks are static render surfaces, not numbered-index records. They may resolve `of` against any numbered object family, render a proof heading and body, and remain absent from `data/numbered-objects.json`.
 
 ```markdown

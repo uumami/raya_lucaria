@@ -7,6 +7,9 @@ title: Numbered Objects
 
 This fixture references @main-theorem, @vector-corollary, @basis-definition, @matrix-equation, @fixture-figure, @fixture-table, @practice-problem, @homework-one, @activity-one, and @assignment-one from one course-global shorthand sentence.
 
+This numbered-content matrix is fixture material for labels, references, proofs,
+and render-debug evidence.
+
 ::: theorem {#main-theorem title="Fixture theorem"}
 Let $\newcommand{\vect}[1]{\mathbf{#1}}A = \begin{bmatrix}1 & 0 \\ 0 & 1\end{bmatrix}$ and $\vec{x} = \begin{bmatrix}x_1 \\ x_2\end{bmatrix}$. Then $A\vec{x} = \vec{x}$.
 :::

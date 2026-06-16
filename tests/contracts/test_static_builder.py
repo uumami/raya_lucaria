@@ -1276,6 +1276,7 @@ def test_render_fixture_builds_rich_static_pages(
     assert "@id shorthand references" in math_authoring_visible
     assert "raya:ref/id" in math_authoring_visible
     assert "numbered object fixture page" in math_authoring_visible
+    assert "render-debug evidence" in math_authoring_visible.lower()
     assert "$10" in math_authoring_visible
     assert "$" not in math_authoring_visible.replace("$10", "")
     for raw_marker in (
@@ -1303,6 +1304,7 @@ def test_render_fixture_builds_rich_static_pages(
     assert "Activity 3.1" in numbered_objects_visible
     assert "Activity 3.2" in numbered_objects_visible
     assert "Activity 3.3" in numbered_objects_visible
+    assert "numbered-content matrix" in numbered_objects_visible.lower()
     assert "Fixture theorem" in numbered_objects_visible
     assert "Basis" in numbered_objects_visible
     assert "Homework fixture" in numbered_objects_visible

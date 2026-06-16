@@ -22,6 +22,8 @@ For renderer debugging, use `scripts/check-render-debug.sh` when you need the fo
 
 For numbered object diagnostics, compare the source directive, rendered page anchor, static href, visible reference text, and `data/numbered-objects.json` entry. Include theorem family cases when labels or shared sequences regress. Use the render-debug route to capture screenshots and inspection output, but keep the machine contract in manifest-declared data rather than scraped HTML.
 
+For numbered-content failures, compare five surfaces in order: the source directive, the build diagnostic, `data/numbered-objects.json`, the rendered anchor/link text, and render-debug screenshots/report details.
+
 For proof blocks, validate `of` targets against `data/numbered-objects.json`; do not introduce LaTeX `\label`, `\ref`, `\begin{proof}`, or browser-side MathJax. Proofs render as static environments and should not appear as numbered-index records.
 
 ```markdown
