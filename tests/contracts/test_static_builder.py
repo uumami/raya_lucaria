@@ -605,11 +605,13 @@ def test_adjacent_numbered_objects_render_as_separate_sections(tmp_path: Path) -
     assert 'id="raya-object-second-adjacent"' in html
     assert (
         html.count(
-            'class="raya-numbered-object raya-numbered-object--margin '
+            'class="raya-numbered-object raya-numbered-object--scannable '
             'raya-numbered-object--theorem"'
         )
         == 2
     )
+    assert html.count('class="raya-numbered-object-layout"') == 2
+    assert html.count('class="raya-numbered-object-badge" aria-hidden="true"') == 2
     assert "RAYA_NUMBERED_OBJECT_" not in _visible_text(html)
 
 
