@@ -237,6 +237,131 @@ def test_render_debug_report_enriches_numbered_content_from_index(
     assert "Theorem 1" in (debug / "index.html").read_text(encoding="utf-8")
 
 
+def test_render_debug_report_fails_when_capture_lacks_numbered_content(
+    tmp_path: Path,
+) -> None:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
+    screenshot = debug / "desktop-index.png"
+    screenshot.write_bytes(b"png")
+    (debug / "summary.json").write_text(
+        json.dumps(
+            {
+                "captures": [
+                    {
+                        "page": "index",
+                        "url": "http://127.0.0.1/index.html",
+                        "viewport": {"name": "desktop", "width": 1280, "height": 900},
+                        "screenshot": str(screenshot),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    numbered_check = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "numbered-content:index:desktop"
+    )
+    assert numbered_check["status"] == "fail"
+    assert "missing numbered content evidence" in numbered_check["message"]
+    assert (
+        numbered_check["next_action"]
+        == "Regenerate render debug capture artifacts."
+    )
+    assert any(
+        diagnostic["check_id"] == "numbered-content:index:desktop"
+        and "missing numbered content evidence" in diagnostic["message"]
+        for diagnostic in report["diagnostics"]
+    )
+
+
+def test_render_debug_report_requires_numbered_index_for_proof_enrichment(
+    tmp_path: Path,
+) -> None:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
+    for name in ("desktop-index.png", "mobile-index.png"):
+        (debug / name).write_bytes(b"png")
+    (debug / "summary.json").write_text(
+        json.dumps(
+            {
+                "captures": [
+                    {
+                        "page": "index",
+                        "url": "http://127.0.0.1/index.html",
+                        "viewport": {"name": "desktop", "width": 1280, "height": 900},
+                        "screenshot": str(debug / "desktop-index.png"),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [],
+                            "references": [],
+                            "proofs": [
+                                {
+                                    "id": "raya-proof-proof-main",
+                                    "heading": "Proof of Theorem 1.",
+                                    "target_text": "Theorem 1",
+                                    "target_id": "",
+                                }
+                            ],
+                        },
+                    },
+                    {
+                        "page": "index",
+                        "url": "http://127.0.0.1/index.html",
+                        "viewport": {"name": "mobile", "width": 390, "height": 844},
+                        "screenshot": str(debug / "mobile-index.png"),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [],
+                            "references": [],
+                            "proofs": [],
+                        },
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    index_check = next(
+        check for check in report["checks"] if check["id"] == "numbered-content:index"
+    )
+    assert index_check["status"] == "fail"
+    assert "data/numbered-objects.json is missing" in index_check["message"]
+    assert (
+        index_check["next_action"]
+        == "Rebuild the static site so data/numbered-objects.json exists."
+    )
+
+
 def test_copy_static_site_rejects_destination_containing_source(tmp_path: Path) -> None:
     work = tmp_path / "work"
     source = work / "site"
@@ -285,6 +410,7 @@ def _write_debug_fixture(
                 "raw_tex_markers": [],
                 "external_requests": [],
                 "horizontal_overflow": 0,
+                "numbered_content": {"objects": [], "references": [], "proofs": []},
             }
         )
     (debug_dir / "summary.json").write_text(

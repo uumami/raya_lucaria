@@ -65,7 +65,11 @@ def inspect_render_debug(
     summary = _read_summary(summary_path, report)
     captures = _capture_items(summary, summary_path, report)
     _inspect_captures(site_root, debug_root, captures, report)
-    numbered_index = _read_numbered_index(site_root, report)
+    numbered_index = _read_numbered_index(
+        site_root,
+        report,
+        required=_captures_need_numbered_index(captures),
+    )
     _inspect_numbered_content(captures, numbered_index, report)
     _inspect_static_site(site_root, report, context="site")
     if copied_site_root is not None:
@@ -308,9 +312,25 @@ def _capture_failures(
     return failures
 
 
-def _read_numbered_index(site_dir: Path, report: dict[str, Any]) -> dict[str, Any]:
-    index_path = site_dir / "data" / "numbered-objects.json"
+def _read_numbered_index(
+    site_dir: Path,
+    report: dict[str, Any],
+    *,
+    required: bool,
+) -> dict[str, Any]:
+    index_path = _numbered_index_path(site_dir)
     if not index_path.exists():
+        if required:
+            _add_check(
+                report,
+                check_id="numbered-content:index",
+                status="fail",
+                path=index_path,
+                message=f"data/numbered-objects.json is missing at {index_path}",
+                next_action=(
+                    "Rebuild the static site so data/numbered-objects.json exists."
+                ),
+            )
         return {"objects": [], "by_reference_text": {}}
     try:
         numbered_index = json.loads(index_path.read_text(encoding="utf-8"))
@@ -353,6 +373,27 @@ def _read_numbered_index(site_dir: Path, report: dict[str, Any]) -> dict[str, An
     return {"objects": objects, "by_reference_text": by_reference_text}
 
 
+def _numbered_index_path(site_dir: Path) -> Path:
+    site_data_path = site_dir / "data" / "numbered-objects.json"
+    if site_data_path.exists():
+        return site_data_path
+    artifact_data_path = site_dir.parent / "data" / "numbered-objects.json"
+    if artifact_data_path.exists():
+        return artifact_data_path
+    return site_data_path
+
+
+def _captures_need_numbered_index(captures: list[dict[str, Any]]) -> bool:
+    for capture in captures:
+        numbered_content = capture.get("numbered_content")
+        if not isinstance(numbered_content, dict):
+            continue
+        proofs = _numbered_evidence_items(numbered_content.get("proofs"))
+        if any(proof.get("target_text") for proof in proofs):
+            return True
+    return False
+
+
 def _inspect_numbered_content(
     captures: list[dict[str, Any]],
     numbered_index: dict[str, Any],
@@ -363,13 +404,24 @@ def _inspect_numbered_content(
         by_reference_text = {}
 
     for capture in captures:
-        numbered_content = capture.get("numbered_content")
-        if not isinstance(numbered_content, dict):
-            continue
         page = capture.get("page")
         viewport = capture.get("viewport")
         viewport_name = viewport.get("name") if isinstance(viewport, dict) else None
         if not isinstance(page, str) or not isinstance(viewport_name, str):
+            continue
+        numbered_content = capture.get("numbered_content")
+        if not isinstance(numbered_content, dict):
+            _add_check(
+                report,
+                check_id=f"numbered-content:{page}:{viewport_name}",
+                status="fail",
+                path=Path(str(capture.get("screenshot", ""))),
+                message=(
+                    f"missing numbered content evidence for page={page!r} "
+                    f"viewport={viewport_name!r}"
+                ),
+                next_action="Regenerate render debug capture artifacts.",
+            )
             continue
 
         objects = _numbered_evidence_items(numbered_content.get("objects"))
