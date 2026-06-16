@@ -318,7 +318,7 @@ def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
                 ":::",
                 "",
                 '::: proof {#proof-main of="main-theorem" title="Identity"}',
-                "The vector identity follows from $v-v=0$.",
+                "Use @main-theorem. The vector identity follows from $v-v=0$.",
                 ":::",
             ]
         )
@@ -338,8 +338,10 @@ def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
     )
     assert "Proof of Theorem 1" in visible
     assert "Identity" in visible
+    assert "Use Theorem 1" in visible
     assert "raya-proof" in html
     assert 'id="raya-proof-proof-main"' in html
+    assert 'href="index.html#raya-object-main-theorem"' in html
     assert "mjx-container" in html
     assert "proof-main" not in numbered_index["by_id"]
     assert list(numbered_index["by_id"]) == ["main-theorem"]
@@ -377,6 +379,39 @@ def test_build_rejects_unknown_proof_target(tmp_path: Path) -> None:
     assert (
         diagnostic.next_action
         == 'Use of="object-id" with an existing numbered object ID'
+    )
+
+
+def test_build_rejects_duplicate_proof_ids(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: proof-demo\n"
+        "title: Proof Demo\n"
+        "summary: Proof rendering fixture.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Proof Demo\n\n"
+        "::: proof {#same}\n"
+        "First proof.\n"
+        ":::\n\n"
+        "::: proof {#same}\n"
+        "Second proof.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(item for item in report.diagnostics if item.severity == "error")
+    assert diagnostic.message == "Duplicate proof ID 'same'"
+    assert diagnostic.path == page
+    assert diagnostic.field == "line:8"
+    assert (
+        diagnostic.next_action
+        == f"Use a unique proof ID; first seen in {page} line:4"
     )
 
 

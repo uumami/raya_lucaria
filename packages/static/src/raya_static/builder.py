@@ -84,6 +84,7 @@ from raya_static.numbered_objects import (
 from raya_static.proofs import (
     ProofRenderContext,
     ProofRenderItem,
+    ProofSource,
     prepare_proof_markdown,
 )
 from raya_static.rendering import (
@@ -620,6 +621,7 @@ def _collect_proofs(
 ) -> _ProofCollection:
     items_by_page_id: dict[str, list[ProofRenderItem]] = {}
     proof_prepared_bodies_by_page_id: dict[str, str] = {}
+    seen_ids: dict[str, ProofSource] = {}
 
     for page in pages:
         prepared = prepare_proof_markdown(
@@ -633,6 +635,20 @@ def _collect_proofs(
 
         page_items: list[ProofRenderItem] = []
         for source in prepared.sources:
+            if source.id:
+                first_source = seen_ids.get(source.id)
+                if first_source is not None:
+                    report.add_error(
+                        f"Duplicate proof ID '{source.id}'",
+                        path=source.source_path,
+                        field=f"line:{source.start_line}",
+                        next_action=(
+                            "Use a unique proof ID; first seen in "
+                            f"{first_source.source_path} line:{first_source.start_line}"
+                        ),
+                    )
+                    continue
+                seen_ids[source.id] = source
             target = None
             if source.of_id:
                 target = objects_by_id.get(source.of_id)
