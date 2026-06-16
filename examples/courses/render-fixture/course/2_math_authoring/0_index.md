@@ -92,9 +92,9 @@ x^2, & x \ge 0 \\
 \end{cases}
 $$
 
-## Theorem Like Writing With Current Markdown
+## Numbered Objects And Math Authoring
 
-Theorem-like writing currently uses Markdown structure, prose labels, callouts, and display math. Real theorem numbering and references are planned next, not current renderer behavior.
+Math authoring remains build-time MathJax: inline math, display math, and page-local macros are rendered before the static page is served. Numbered objects and references are current renderer behavior through fenced directives, `@id` shorthand references, and explicit `raya:ref/id` references. Detailed directive examples live on the [numbered object fixture page](../3_numbered_objects/0_index.md). Raya source references do not use LaTeX label/ref commands.
 
 > [!NOTE]
 > **Theorem.** This theorem-like block is authored Markdown. It is not an automatic theorem environment.

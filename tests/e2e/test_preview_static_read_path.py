@@ -378,9 +378,11 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
                         math_authoring_text = page.locator("body").inner_text()
                         assert raw_tex_markers_from_text(math_authoring_text) == []
                         assert (
-                            "Real theorem numbering and references are planned next"
+                            "Numbered objects and references are current renderer behavior"
                             in math_authoring_text
                         )
+                        assert "@id shorthand references" in math_authoring_text
+                        assert "raya:ref/id" in math_authoring_text
                     finally:
                         page.close()
             finally:

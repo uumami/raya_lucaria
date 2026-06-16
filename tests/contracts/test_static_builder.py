@@ -989,11 +989,14 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "Page Local Macros" in math_authoring_visible
     assert "Sets Logic And Functions" in math_authoring_visible
     assert "Aligned Derivations And Optimization" in math_authoring_visible
-    assert "Theorem Like Writing With Current Markdown" in math_authoring_visible
+    assert "Numbered Objects And Math Authoring" in math_authoring_visible
     assert "Macro Redefinition" in math_authoring_visible
     assert "mjx-container" in math_authoring_html
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
-    assert "Real theorem numbering and references are planned next" in math_authoring_visible
+    assert "Numbered objects and references are current renderer behavior" in math_authoring_visible
+    assert "@id shorthand references" in math_authoring_visible
+    assert "raya:ref/id" in math_authoring_visible
+    assert "numbered object fixture page" in math_authoring_visible
     assert "$10" in math_authoring_visible
     assert "$" not in math_authoring_visible.replace("$10", "")
     for raw_marker in (
