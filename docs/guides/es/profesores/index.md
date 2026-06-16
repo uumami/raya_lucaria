@@ -46,6 +46,21 @@ Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 
 Theorem y corollary pueden compartir una secuencia de theorem; equation, figure, table, problem, homework y assignment pueden compartir o separar secuencias segun la configuracion. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
 
+Los bloques de proof pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; el proof se renderiza como entorno estatico y no crea otro objeto numerado.
+
+```markdown
+::: theorem {#teorema-principal title="Teorema de ejemplo"}
+Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
+:::
+
+::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+La igualdad se verifica componente por componente:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 
 Los cursos pueden declarar runtime metadata con `pyproject.toml`, `uv.lock` y `runtime/profiles.yaml` en la raiz. Esto ayuda a que futura ejecucion local o con Docker sea reproducible, pero el build actual solo registra perfiles, policies y cache keys; no ejecuta codigo, instala paquetes, refresca caches ni confia en outputs de notebooks.

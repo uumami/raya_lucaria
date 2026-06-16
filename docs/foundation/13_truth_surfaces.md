@@ -55,6 +55,8 @@ cross-reference links. Manifest-declared `data/numbered-objects.json` is the
 machine-readable artifact truth for object IDs, numbers, source paths, output
 paths, anchors, hrefs, and reference text.
 
+- Proof rendering is a browser-facing static surface derived from authored Markdown and the numbered-object index. The authored page and `data/numbered-objects.json` remain the authority for object IDs; rendered proof headings are inspection surfaces.
+
 ## What May Be Deleted
 
 On a from-zero reset, it is acceptable to delete:

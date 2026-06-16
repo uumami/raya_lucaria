@@ -159,6 +159,7 @@ Accepted baseline:
   no-external-renderer-request discipline as build-time math. Browser pages
   receive static HTML, labels, anchors, and links; they do not run a client-side
   numbering or reference resolver.
+- Proof blocks use `::: proof {of="object-id"}` and render statically as proof environments. They may target any numbered object family, including theorems, definitions, equations, figures, tables, problems, homework, and activities. Proofs are not numbered objects and do not appear in `data/numbered-objects.json`.
 - Numbered objects participate in render-debug inspection. Debug screenshots,
   copied static-site parity checks, raw TeX checks, overflow checks, and
   inspection pages should make numbered labels, anchors, hrefs, and reference

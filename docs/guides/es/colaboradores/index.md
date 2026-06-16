@@ -18,6 +18,21 @@ Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando 
 
 El soporte de objetos numerados es comportamiento actual del renderer. Preserva el modelo de configuracion `render.numbered_objects` para numbering, sequences y families; valida fenced directives, IDs estables de objeto, referencias shorthand `@id` y referencias explicitas `raya:ref/id`; y emite el index `data/numbered-objects.json` declarado en manifest con object IDs, labels, numbers, source paths, page output paths, anchors, hrefs y reference text. Las paginas estaticas deben renderizar labels y links sin requests externos del renderer o CDN y sin MathJax en el navegador ni resolver de referencias en el browser. Fixtures y checks debug deben cubrir theorem, corollary, equation, figure, table, problem, homework y assignment cuando cambie el contrato.
 
+Los bloques de proof son superficies de render estatico, no registros del index numerado. Pueden resolver `of` contra cualquier familia de objeto numerado, renderizar un heading y body de proof, y permanecer ausentes de `data/numbered-objects.json`.
+
+```markdown
+::: theorem {#teorema-principal title="Teorema de ejemplo"}
+Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
+:::
+
+::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+La igualdad se verifica componente por componente:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Antes de cambiar comportamiento del renderizador, ejecuta la compuerta enfocada con `scripts/check-render-debug.sh`. Construye y previsualiza `examples/courses/render-fixture`, captura evidencia desktop/mobile y falla si hay TeX crudo visible, requests externos del renderizador, screenshots faltantes, overflow o dependencias MathJax ejecutadas en el browser. El gate escribe `report.json` e `index.html` junto a los screenshots. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del copied site. Para una regresion de un curso especifico, usa `raya preview <course> --render-debug /tmp/raya-render-debug`. Trata esos archivos solo como evidencia local; no los confirmes en git ni los trates como autoridad del artifact.
 
 Las referencias de codigo y notebooks son soporte source estatico en el baseline actual. Valida archivos `.py` y `.ipynb` linkeados por extension y por pertenencia al quantum propio o a un ancestro aceptado, no por nombres de directorio requeridos. Copia solo archivos linkeados y validados a `artifact/files/` y `artifact/site/_raya/files/`, mantiene `references.json` como superficie de datos, y conserva el estado `not-executed` hasta que una propuesta de ejecucion acepte runtimes y caches.

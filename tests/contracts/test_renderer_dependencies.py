@@ -271,6 +271,24 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             assert needle in text, f"{relative_path} must mention {needle}"
 
 
+def test_role_docs_cover_proof_blocks() -> None:
+    required = [
+        Path("docs/guides/en/professors/index.md"),
+        Path("docs/guides/en/students/index.md"),
+        Path("docs/guides/en/contributors/index.md"),
+        Path("docs/guides/en/agents/index.md"),
+        Path("docs/guides/es/profesores/index.md"),
+        Path("docs/guides/es/estudiantes/index.md"),
+        Path("docs/guides/es/colaboradores/index.md"),
+        Path("docs/guides/es/agentes/index.md"),
+    ]
+
+    for path in required:
+        text = path.read_text(encoding="utf-8")
+        assert "::: proof" in text, path
+        assert 'of="' in text, path
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"

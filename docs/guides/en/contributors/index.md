@@ -19,6 +19,21 @@ Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when ch
 
 Numbered object support is current renderer behavior. Preserve the `render.numbered_objects` config model for numbering, sequences, and families; validate fenced directives, stable object IDs, `@id` shorthand references, and `raya:ref/id` explicit references; and emit the manifest-declared `data/numbered-objects.json` index with object IDs, labels, numbers, source paths, page output paths, anchors, hrefs, and reference text. Static pages must render labels and links without external renderer or CDN requests and with no browser-side MathJax or browser-side reference resolver. Fixture and debug checks should cover theorem, corollary, equation, figure, table, problem, homework, and assignment family behavior where the contract changes.
 
+Proof blocks are static render surfaces, not numbered-index records. They may resolve `of` against any numbered object family, render a proof heading and body, and remain absent from `data/numbered-objects.json`.
+
+```markdown
+::: theorem {#main-theorem title="Fixture theorem"}
+For every vector $\vect{v}$, the identity map returns $\vect{v}$.
+:::
+
+::: proof {#proof-main of="main-theorem" title="Identity"}
+The equality follows component by component:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Before changing renderer behavior, run the focused parity gate with `scripts/check-render-debug.sh`. It builds and previews `examples/courses/render-fixture`, captures desktop/mobile render-debug artifacts, and fails on visible raw TeX, external renderer requests, missing screenshots, overflow, or browser-side MathJax runtime dependencies. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. For an individual course regression, use `raya preview <course> --render-debug /tmp/raya-render-debug`. Treat those files as local evidence only; do not commit them and do not treat them as artifact authority.
 
 Code and notebook references are static source support in the current baseline. Validate linked `.py` and `.ipynb` files by extension and own-or-ancestor quantum ownership, not by required folder names. Copy only validated linked files to manifest-declared `artifact/files/` and `artifact/site/_raya/files/`, keep `references.json` machine-readable, and preserve the `not-executed` status until an execution proposal accepts runtimes and caches.

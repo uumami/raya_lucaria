@@ -22,6 +22,21 @@ Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites l
 
 Para diagnosticos de objeto numerado, compara la directive source, el anchor renderizado de la pagina, el href estatico, el texto visible de referencia y la entrada en `data/numbered-objects.json`. Incluye casos de la familia theorem cuando fallen labels o secuencias compartidas. Usa la ruta render-debug para capturar screenshots y output de inspeccion, pero conserva el contrato machine-readable en datos declarados por el manifest en vez de HTML scrapeado.
 
+Para bloques de proof, valida targets `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Los proofs se renderizan como entornos estaticos y no deben aparecer como registros del index numerado.
+
+```markdown
+::: theorem {#teorema-principal title="Teorema de ejemplo"}
+Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
+:::
+
+::: proof {#prueba-principal of="teorema-principal" title="Identidad"}
+La igualdad se verifica componente por componente:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Para referencias de codigo y notebooks, clasifica archivos `.py` y `.ipynb` linkeados por extension y por pertenencia al quantum propio o a un ancestro aceptado. Trata nombres como `scripts/`, `labs/`, `code/` y `notebooks/` como elecciones ordinarias de autoria, bloquea referencias privadas o cross-quantum, copia solo archivos linkeados y validados a superficies de artifact y de browser, actualiza `references.json`, y nunca infieras ejecucion desde previews.
 
 Para runtime metadata, trata `runtime/profiles.yaml`, `pyproject.toml` y `uv.lock` en la raiz como soporte source fuera del orden de aprendizaje. Valida y emite metadata de runtime, execution plan y cache, pero nunca llames `uv`, Docker, kernels, package installers, notebooks, scripts ni cache refreshes salvo que un contrato de ejecucion aceptado posterior lo diga explicitamente.

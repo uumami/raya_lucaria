@@ -46,6 +46,21 @@ Use [the compactness criterion](raya:ref/compactness) in your proof.
 
 Theorem and corollary may share a theorem sequence; equation, figure, table, problem, homework, and assignment families can share or separate sequences by configuration. Use `@id` shorthand or `raya:ref/id` links for source references. Do not write LaTeX `\label` or `\ref` expecting Raya cross-references.
 
+Proof blocks can point to theorems, homework, problems, figures, tables, equations, definitions, and activities while keeping each object independently numbered. Use `of` to name the numbered object being proved; the proof renders as a static environment and does not create another numbered object.
+
+```markdown
+::: theorem {#main-theorem title="Fixture theorem"}
+For every vector $\vect{v}$, the identity map returns $\vect{v}$.
+:::
+
+::: proof {#proof-main of="main-theorem" title="Identity"}
+The equality follows component by component:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 
 Courses may declare runtime metadata with root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml`. This helps future local or Docker execution stay reproducible, but the current build only records profiles, policies, and cache keys; it does not run code, install packages, refresh caches, or trust notebook outputs.

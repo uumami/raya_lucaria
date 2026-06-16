@@ -22,6 +22,21 @@ For renderer debugging, use `scripts/check-render-debug.sh` when you need the fo
 
 For numbered object diagnostics, compare the source directive, rendered page anchor, static href, visible reference text, and `data/numbered-objects.json` entry. Include theorem family cases when labels or shared sequences regress. Use the render-debug route to capture screenshots and inspection output, but keep the machine contract in manifest-declared data rather than scraped HTML.
 
+For proof blocks, validate `of` targets against `data/numbered-objects.json`; do not introduce LaTeX `\label`, `\ref`, `\begin{proof}`, or browser-side MathJax. Proofs render as static environments and should not appear as numbered-index records.
+
+```markdown
+::: theorem {#main-theorem title="Fixture theorem"}
+For every vector $\vect{v}$, the identity map returns $\vect{v}$.
+:::
+
+::: proof {#proof-main of="main-theorem" title="Identity"}
+The equality follows component by component:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 For code and notebook references, classify linked `.py` and `.ipynb` files by extension and own-or-ancestor quantum ownership. Treat folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` as ordinary author choices, block private or cross-quantum references, copy only validated linked files to artifact and browser-facing file surfaces, update `references.json`, and never infer execution from previews.
 
 For runtime metadata, treat `runtime/profiles.yaml`, root `pyproject.toml`, and `uv.lock` as source support outside learning order. Validate and emit runtime, execution-plan, and cache metadata, but never call `uv`, Docker, kernels, package installers, notebooks, scripts, or cache refreshes unless a later accepted execution contract explicitly says to do so.

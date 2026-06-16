@@ -20,6 +20,21 @@ Rendered matrices, vectors, set notation, theorem-like notes, and proofs should 
 
 Course pages may include numbered objects and static references. A result might appear as `Theorem 2.3.1`, an image as `Figure 2.3.1`, and practice work as a homework, problem, activity, or assignment reference. These numbers, labels, anchors, and references are generated during build and published as static links; your browser should not need to calculate them or load a live reference service.
 
+Proof blocks show which object is being proved in the rendered heading, and any math inside the proof is rendered at build time. The page should not need a browser MathJax request to display the proof.
+
+```markdown
+::: theorem {#main-theorem title="Fixture theorem"}
+For every vector $\vect{v}$, the identity map returns $\vect{v}$.
+:::
+
+::: proof {#proof-main of="main-theorem" title="Identity"}
+The equality follows component by component:
+$$
+I\vect{v}=\vect{v}.
+$$
+:::
+```
+
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Some courses include runtime metadata for future local or Docker execution. In the current static artifact, that metadata only explains intended profiles, policies, and cache keys. It does not mean the web page has already run the code.
