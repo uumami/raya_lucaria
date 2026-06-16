@@ -181,10 +181,19 @@ def prepare_numbered_object_markdown(
         if family == "proof":
             output_lines.append(line)
             index += 1
+            proof_fence_state: _FenceState | None = None
             while index < len(lines):
                 current = lines[index]
                 output_lines.append(current)
                 index += 1
+                if proof_fence_state is not None:
+                    if _is_closing_fence(current, proof_fence_state):
+                        proof_fence_state = None
+                    continue
+                proof_fence_opener = _fence_opener(current)
+                if proof_fence_opener is not None:
+                    proof_fence_state = proof_fence_opener
+                    continue
                 if DIRECTIVE_CLOSE_RE.match(current):
                     break
             continue
