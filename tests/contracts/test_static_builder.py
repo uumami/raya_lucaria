@@ -279,13 +279,67 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     )
     assert 'id="raya-object-pythagorean"' in math_html
     assert (
-        'class="raya-numbered-object raya-numbered-object--margin '
+        'class="raya-numbered-object raya-numbered-object--scannable '
         'raya-numbered-object--theorem"'
         in math_html
     )
+    assert 'class="raya-numbered-object-layout"' in math_html
+    assert 'class="raya-numbered-object-badge" aria-hidden="true"' in math_html
+    assert 'class="raya-numbered-object-badge-label">Theorem</span>' in math_html
+    assert 'class="raya-numbered-object-badge-number">1.1</span>' in math_html
     assert "Pythagorean theorem" in _visible_text(math_html)
     assert "a^2 + b^2" not in _visible_text(math_html)
     assert "mjx-container" in math_html
+
+
+def test_numbered_objects_default_scannable_keeps_caption_and_equation_styles(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: style-demo\n"
+        "title: Style Demo\n"
+        "summary: Numbered object style fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Style Demo\n\n"
+        "::: remark {#reader-remark title=\"Reader note\"}\n"
+        "A remark should use the scannable reader style.\n"
+        ":::\n\n"
+        "::: figure {#reader-figure title=\"Reader figure\"}\n"
+        "![Figure asset](_assets/style-demo.txt)\n"
+        ":::\n\n"
+        "::: equation {#reader-equation}\n"
+        "$$\n"
+        "x + y = y + x\n"
+        "$$\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    assets = course / "course" / "_assets"
+    assets.mkdir(exist_ok=True)
+    (assets / "style-demo.txt").write_text("style fixture\n", encoding="utf-8")
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    by_id = {item["id"]: item for item in numbered_index["objects"]}
+    assert by_id["reader-remark"]["style"] == "scannable"
+    assert by_id["reader-figure"]["style"] == "caption"
+    assert by_id["reader-equation"]["style"] == "equation"
+    assert "Remark 1" in _visible_text(html)
+    assert 'raya-numbered-object--remark' in html
+    assert 'raya-numbered-object--scannable' in html
+    assert 'raya-numbered-object--caption' in html
+    assert 'raya-numbered-object--equation' in html
 
 
 def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
@@ -1313,7 +1367,7 @@ def test_render_fixture_builds_rich_static_pages(
     assert "Proof of Activity 3.1" in numbered_objects_visible
     assert "Proof of Activity 3.3" in numbered_objects_visible
     assert "Solution sketch" in numbered_objects_visible
-    assert 'class="raya-numbered-object raya-numbered-object--margin ' in numbered_objects_html
+    assert 'class="raya-numbered-object raya-numbered-object--scannable ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--banded ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--caption ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html

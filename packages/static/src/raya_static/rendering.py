@@ -663,6 +663,38 @@ nav[aria-label="Breadcrumbs"] {
   overflow-x: auto;
   text-align: center;
 }
+.raya-numbered-object--scannable {
+  border-left: 0;
+}
+.raya-numbered-object-layout {
+  display: grid;
+  gap: 0;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+}
+.raya-numbered-object-badge {
+  align-content: start;
+  background: #f6f8fa;
+  border-right: 1px solid #d8dee4;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem;
+}
+.raya-numbered-object-badge-label {
+  color: #1a7f37;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.raya-numbered-object-badge-number {
+  color: #24292f;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.raya-numbered-object-content {
+  min-width: 0;
+}
 .raya-proof {
   border-left: 3px solid #57606a;
   margin: 1.25rem 0;
@@ -773,6 +805,13 @@ mjx-container[display="true"] {
   }
   .raya-numbered-object-title {
     display: block;
+  }
+  .raya-numbered-object-layout {
+    display: block;
+  }
+  .raya-numbered-object-badge {
+    border-bottom: 1px solid #d8dee4;
+    border-right: 0;
   }
 }
 """.strip()
@@ -1027,6 +1066,8 @@ def _render_numbered_object_html(
     escaped_family = html.escape(obj.family, quote=True)
     escaped_style = html.escape(obj.style, quote=True)
     escaped_reference = html.escape(obj.reference_text)
+    escaped_label = html.escape(obj.label)
+    escaped_number = html.escape(obj.number)
     title = obj.title or ""
     body = rendered_body.strip() or "<p></p>"
     title_html = (
@@ -1034,14 +1075,43 @@ def _render_numbered_object_html(
         if title
         else ""
     )
+    opening = (
+        f'<section id="raya-object-{escaped_id}" '
+        f'class="raya-numbered-object raya-numbered-object--{escaped_style} '
+        f'raya-numbered-object--{escaped_family}" '
+        f'data-object-id="{escaped_id}">'
+    )
+    if obj.style == "scannable":
+        return "\n".join(
+            [
+                opening,
+                '<div class="raya-numbered-object-layout">',
+                '<div class="raya-numbered-object-badge" aria-hidden="true">',
+                (
+                    f'<span class="raya-numbered-object-badge-label">'
+                    f"{escaped_label}</span>"
+                ),
+                (
+                    f'<span class="raya-numbered-object-badge-number">'
+                    f"{escaped_number}</span>"
+                ),
+                "</div>",
+                '<div class="raya-numbered-object-content">',
+                '<p class="raya-numbered-object-heading">',
+                f'<span class="raya-numbered-object-reference">{escaped_reference}</span>'
+                + (f" {title_html}" if title_html else ""),
+                "</p>",
+                '<div class="raya-numbered-object-body">',
+                body,
+                "</div>",
+                "</div>",
+                "</div>",
+                "</section>",
+            ]
+        )
     return "\n".join(
         [
-            (
-                f'<section id="raya-object-{escaped_id}" '
-                f'class="raya-numbered-object raya-numbered-object--{escaped_style} '
-                f'raya-numbered-object--{escaped_family}" '
-                f'data-object-id="{escaped_id}">'
-            ),
+            opening,
             '<p class="raya-numbered-object-heading">',
             f'<span class="raya-numbered-object-reference">{escaped_reference}</span>'
             + (f" {title_html}" if title_html else ""),
