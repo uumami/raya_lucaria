@@ -34,6 +34,8 @@ def test_built_in_numbered_object_defaults_group_math_and_coursework() -> None:
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["proposition"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["corollary"]["sequence"] == "theorem"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["definition"]["sequence"] == "theorem"
+    assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["remark"]["sequence"] == "theorem"
+    assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["remark"]["label"] == "Remark"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["example"]["sequence"] == "example"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["exercise"]["sequence"] == "exercise"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["problem"]["sequence"] == "exercise"
@@ -46,8 +48,10 @@ def test_built_in_numbered_object_defaults_group_math_and_coursework() -> None:
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["figure"]["sequence"] == "figure"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["table"]["sequence"] == "table"
     assert BUILT_IN_NUMBERED_OBJECT_FAMILIES["equation"]["sequence"] == "equation"
-    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["theorem"]["style"] == "margin"
-    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["assignment"]["style"] == "banded"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["theorem"]["style"] == "scannable"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["example"]["style"] == "scannable"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["exercise"]["style"] == "scannable"
+    assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["assignment"]["style"] == "scannable"
     assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["figure"]["style"] == "caption"
     assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["table"]["style"] == "caption"
     assert BUILT_IN_NUMBERED_OBJECT_SEQUENCES["equation"]["style"] == "equation"
@@ -62,7 +66,7 @@ def test_normalize_numbered_object_config_accepts_course_overrides() -> None:
                 "numbered_objects": {
                     "numbering": "page-hierarchy",
                     "sequences": {
-                        "assignment": {"label": "Activity", "style": "margin"},
+                        "assignment": {"label": "Activity", "style": "scannable"},
                         "lab": {"label": "Lab", "style": "banded"},
                     },
                     "families": {
@@ -79,7 +83,7 @@ def test_normalize_numbered_object_config_accepts_course_overrides() -> None:
     assert report.ok
     assert config.numbering == "page-hierarchy"
     assert config.sequences["assignment"].label == "Activity"
-    assert config.sequences["assignment"].style == "margin"
+    assert config.sequences["assignment"].style == "scannable"
     assert config.sequences["lab"].label == "Lab"
     assert config.families["lab"].sequence == "lab"
     assert config.families["checkpoint"].sequence == "exercise"
@@ -212,7 +216,7 @@ def test_numbered_object_config_rejects_unknown_style_with_precise_field() -> No
         == "Numbered object sequence 'practice' in raya.yaml uses unknown style 'poster'"
     )
     assert diagnostic.field == "render.numbered_objects.sequences.practice.style"
-    assert diagnostic.next_action == "Use margin, banded, caption, or equation"
+    assert diagnostic.next_action == "Use scannable, margin, banded, caption, or equation"
 
 
 def test_prepare_numbered_object_markdown_extracts_directive_source() -> None:

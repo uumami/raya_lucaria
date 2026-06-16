@@ -14,10 +14,10 @@ NUMBERED_OBJECT_INDEX_PATH = "data/numbered-objects.json"
 NUMBERED_OBJECT_INDEX_VERSION = 1
 
 BUILT_IN_NUMBERED_OBJECT_SEQUENCES: dict[str, dict[str, str]] = {
-    "theorem": {"label": "Theorem", "style": "margin"},
-    "example": {"label": "Example", "style": "margin"},
-    "exercise": {"label": "Exercise", "style": "banded"},
-    "assignment": {"label": "Assignment", "style": "banded"},
+    "theorem": {"label": "Theorem", "style": "scannable"},
+    "example": {"label": "Example", "style": "scannable"},
+    "exercise": {"label": "Exercise", "style": "scannable"},
+    "assignment": {"label": "Assignment", "style": "scannable"},
     "figure": {"label": "Figure", "style": "caption"},
     "table": {"label": "Table", "style": "caption"},
     "equation": {"label": "Equation", "style": "equation"},
@@ -29,6 +29,7 @@ BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
     "proposition": {"sequence": "theorem", "label": "Proposition"},
     "corollary": {"sequence": "theorem", "label": "Corollary"},
     "definition": {"sequence": "theorem", "label": "Definition"},
+    "remark": {"sequence": "theorem", "label": "Remark"},
     "example": {"sequence": "example", "label": "Example"},
     "exercise": {"sequence": "exercise", "label": "Exercise"},
     "problem": {"sequence": "exercise", "label": "Problem"},
@@ -42,7 +43,7 @@ BUILT_IN_NUMBERED_OBJECT_FAMILIES: dict[str, dict[str, str]] = {
     "equation": {"sequence": "equation", "label": "Equation"},
 }
 
-NUMBERED_OBJECT_STYLES = {"margin", "banded", "caption", "equation"}
+NUMBERED_OBJECT_STYLES = {"scannable", "margin", "banded", "caption", "equation"}
 NUMBERING_MODES = {"page-hierarchy"}
 NUMBERED_OBJECT_ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
 NUMBERED_OBJECT_DIRECTIVE_OPEN_RE = re.compile(
@@ -367,7 +368,7 @@ def _merge_sequences(
             report.add_error(
                 f"Numbered object sequence '{sequence_id}' in {context} uses unknown style '{style}'",
                 field=f"{field}.style",
-                next_action="Use margin, banded, caption, or equation",
+                next_action="Use scannable, margin, banded, caption, or equation",
             )
             style = current.style
         sequences[sequence_id] = NumberedObjectSequence(label=label, style=style)
@@ -605,5 +606,5 @@ def _validate_object_entry(
             f"Numbered object entry uses unknown style '{style}'",
             path=path,
             field=f"{field}.style",
-            next_action="Use margin, banded, caption, or equation",
+            next_action="Use scannable, margin, banded, caption, or equation",
         )
