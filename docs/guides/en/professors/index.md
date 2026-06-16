@@ -18,7 +18,33 @@ For common course notation, prefer small page-local macros such as `\newcommand{
 
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the current fixture reference for copyable build-time MathJax patterns. It covers inline and display math, `\begin{bmatrix}` matrices, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, and optimization notation. Define macros before use, keep them page-local, and use `$$` delimiter lines for larger expressions.
 
-Until the next theorem/proof feature lands, write theorem-like material with current Markdown: headings, prose labels such as `Theorem` and `Proof`, callouts when useful, and display math inside those sections. Automatic theorem numbering, equation labels, `\label`, `\ref`, and theorem indexes are planned next, not current behavior.
+Numbered objects are current build-time behavior. Configure family and sequence behavior in `raya.yaml` with `render.numbered_objects.numbering`, `render.numbered_objects.sequences`, and `render.numbered_objects.families`, then author objects with fenced directives and stable IDs:
+
+```markdown
+::: theorem {#compactness title="Compactness Criterion"}
+Every open cover has a finite subcover.
+:::
+
+::: corollary {#finite-subcover}
+This follows from @compactness.
+:::
+
+::: equation {#risk}
+$$
+R(f)=\mathbb{E}[\ell(f(X),Y)]
+$$
+:::
+
+::: figure {#pipeline title="Training Pipeline"}
+![Pipeline](_assets/pipeline.png)
+:::
+
+::: homework {#hw-compactness title="Homework"}
+Use [the compactness criterion](raya:ref/compactness) in your proof.
+:::
+```
+
+Theorem and corollary may share a theorem sequence; equation, figure, table, problem, homework, and assignment families can share or separate sequences by configuration. Use `@id` shorthand or `raya:ref/id` links for source references. Do not write LaTeX `\label` or `\ref` expecting Raya cross-references.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

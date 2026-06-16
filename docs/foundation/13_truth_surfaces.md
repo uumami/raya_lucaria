@@ -48,6 +48,13 @@ Role documentation for contributors/collaborators, professors, students, and age
 
 Documentation should remain readable as plain files. Rendered documentation can exercise Glintstone, but rendered output is a generated artifact and not a higher authority surface.
 
+For numbered objects, authored fenced directives and `raya.yaml`
+`render.numbered_objects` configuration are source authoring truth. Rendered
+pages are reader-facing views that show labels, numbers, anchors, and static
+cross-reference links. Manifest-declared `data/numbered-objects.json` is the
+machine-readable artifact truth for object IDs, numbers, source paths, output
+paths, anchors, hrefs, and reference text.
+
 ## What May Be Deleted
 
 On a from-zero reset, it is acceptable to delete:

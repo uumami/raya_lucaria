@@ -18,6 +18,8 @@ Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro d
 
 Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y proofs deben aparecer como texto normal del curso mas math compuesta. Si ves `\begin{bmatrix}` crudo, una macro desconocida, math visible con delimitadores de dolar, o una pagina que pide cargar browser-side MathJax, reportalo al equipo del curso con la URL o titulo de la pagina.
 
+Las paginas de curso pueden incluir objetos numerados y referencias estaticas. Un resultado puede aparecer como `Teorema 2.3.1`, una imagen como `Figura 2.3.1`, y el trabajo de practica como referencia de homework, problem, activity o assignment. Estos numeros, etiquetas, anchors y referencias se generan durante el build y se publican como links estaticos; tu browser no deberia calcularlos ni cargar un servicio vivo de referencias.
+
 Algunas paginas pueden incluir scripts o notebooks linkeados. Se copian como archivos legibles y pueden mostrar previews de source, pero el build estatico los etiqueta como `not-executed`. Los archivos source no linkeados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.

@@ -20,6 +20,7 @@ artifact/
     links.json
     navigation.json
     indices.json
+    numbered-objects.json
     official.json
     reviewed-outputs.json
   assets/
@@ -41,6 +42,7 @@ It should include:
 - generated timestamp,
 - source schema version,
 - page/quanta/link/navigation/index data locations,
+- numbered object index location,
 - official learning-object indexes,
 - reviewed execution output indexes,
 - static site root,
@@ -106,6 +108,7 @@ Generated data should make the course legible to future domains:
 - official cards/quizzes/prompts,
 - task lists,
 - citation/source map,
+- numbered object map,
 - quanta tree,
 - asset map.
 - reviewed output map.
@@ -113,6 +116,12 @@ Generated data should make the course legible to future domains:
 Generated data is not canonical course truth. It can always be rebuilt from source.
 
 Navigation and generated index data should expose clean URLs, hierarchy labels, breadcrumbs, previous/next relationships, child entries, summaries, appendices/anexos, and official study-object counts. Dynamic services read these data products through `manifest.json`; they do not scrape rendered HTML as authority.
+
+Numbered object data is manifest-declared as `data/numbered-objects.json`.
+It records object IDs, families, labels, numbers, optional titles, source
+paths, page output paths, rendered anchors, deployment-neutral hrefs, and
+reference text. Rendered pages use this data to show static labels and links,
+while agents and future services use the JSON index instead of scraping HTML.
 
 ## Study Seed Data
 

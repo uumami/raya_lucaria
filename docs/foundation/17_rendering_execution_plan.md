@@ -148,6 +148,21 @@ Accepted baseline:
 - Footnotes render on the same page. A missing footnote definition is a build diagnostic naming the source page and label.
 - Heading anchors are page-local conveniences derived from heading text. Duplicate anchors receive suffixes. Durable identity remains frontmatter `id` plus `raya:<id>` links.
 - Pages with enough section headings get a generated page table of contents. The table of contents and generated indexes are output, not source edits.
+- Numbered objects render at build time from fenced `:::` directives and
+  `render.numbered_objects` configuration. Theorem, corollary, equation,
+  figure, table, problem, homework, and assignment families may share or use
+  separate sequences according to course configuration. Course-global shorthand
+  references such as `@compactness` and explicit links such as
+  `raya:ref/compactness` resolve to static labels, anchors, hrefs, and
+  manifest-declared `data/numbered-objects.json` entries.
+- Numbered object rendering follows the same no-CDN, no-browser-MathJax,
+  no-external-renderer-request discipline as build-time math. Browser pages
+  receive static HTML, labels, anchors, and links; they do not run a client-side
+  numbering or reference resolver.
+- Numbered objects participate in render-debug inspection. Debug screenshots,
+  copied static-site parity checks, raw TeX checks, overflow checks, and
+  inspection pages should make numbered labels, anchors, hrefs, and reference
+  text reviewable without treating screenshots or HTML as machine authority.
 - Raw HTML is escaped by default.
 - Browser-facing renderer support files live under `artifact/site/_raya/` and use deployment-neutral relative URLs.
 

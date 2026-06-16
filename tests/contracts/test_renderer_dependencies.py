@@ -208,6 +208,43 @@ def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
         assert "theorem" in text.lower()
 
 
+def test_role_docs_cover_numbered_objects_and_references() -> None:
+    required = {
+        "docs/guides/en/professors/index.md": ["::: theorem", "@", "raya:ref/"],
+        "docs/guides/en/students/index.md": ["Theorem", "Figure", "references"],
+        "docs/guides/en/contributors/index.md": [
+            "numbered_objects",
+            "data/numbered-objects.json",
+            "no browser-side MathJax",
+        ],
+        "docs/guides/en/agents/index.md": [
+            "numbered object",
+            "raya:ref/",
+            "data/numbered-objects.json",
+        ],
+        "docs/guides/es/profesores/index.md": ["::: theorem", "@", "raya:ref/"],
+        "docs/guides/es/estudiantes/index.md": [
+            "Teorema",
+            "Figura",
+            "referencias",
+        ],
+        "docs/guides/es/colaboradores/index.md": [
+            "numbered_objects",
+            "data/numbered-objects.json",
+            "MathJax en el navegador",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "objeto numerado",
+            "raya:ref/",
+            "data/numbered-objects.json",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_renderer_script_path_and_npm_cache_are_owned_by_repo_contract() -> None:
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
     script = ROOT / "packages" / "static" / "scripts" / "render_math.mjs"

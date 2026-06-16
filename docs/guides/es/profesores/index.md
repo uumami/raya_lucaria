@@ -18,7 +18,33 @@ Para notacion comun de curso, prefiere macros pequenas locales a la pagina como 
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.
 
-Hasta que llegue la siguiente feature de theorems/proofs, escribe material tipo theorem con Markdown actual: headings, etiquetas en prosa como `Theorem` y `Proof`, callouts cuando ayuden, y math display dentro de esas secciones. Numeracion automatica de theorems, labels de ecuaciones, `\label`, `\ref` e indices de theorems estan planeados para el siguiente loop, no son comportamiento actual.
+Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con fenced directives e IDs estables:
+
+```markdown
+::: theorem {#compactness title="Compactness Criterion"}
+Every open cover has a finite subcover.
+:::
+
+::: corollary {#finite-subcover}
+This follows from @compactness.
+:::
+
+::: equation {#risk}
+$$
+R(f)=\mathbb{E}[\ell(f(X),Y)]
+$$
+:::
+
+::: figure {#pipeline title="Training Pipeline"}
+![Pipeline](_assets/pipeline.png)
+:::
+
+::: homework {#hw-compactness title="Homework"}
+Use [the compactness criterion](raya:ref/compactness) in your proof.
+:::
+```
+
+Theorem y corollary pueden compartir una secuencia de theorem; equation, figure, table, problem, homework y assignment pueden compartir o separar secuencias segun la configuracion. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 

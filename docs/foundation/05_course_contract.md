@@ -54,6 +54,33 @@ Initial required ideas:
 
 Configuration should be simple enough for a professor, student, or coding agent to edit safely.
 
+`raya.yaml` may configure build-time numbered objects under
+`render.numbered_objects`. `render.numbered_objects.numbering` selects the
+course numbering style, `render.numbered_objects.sequences` defines shared or
+separate counters, and `render.numbered_objects.families` maps author-facing
+families to labels and sequence behavior.
+
+Markdown source supports fenced `:::` directives for numbered objects. Authors
+give each object a stable page-local or course-unique ID with directive
+attributes, and may add a title:
+
+```markdown
+::: theorem {#compactness title="Compactness Criterion"}
+Every open cover has a finite subcover.
+:::
+
+Use @compactness later, or write [the result](raya:ref/compactness).
+```
+
+Accepted object families include theorem-style, display, and practice objects.
+At a high level, theorem and corollary can share a theorem sequence; equation
+can use its own equation sequence; figure and table can use their own visual
+sequences; problem, homework, and assignment can share or separate practice
+sequences according to `render.numbered_objects.sequences` and family
+configuration. Source references use shorthand `@id` or explicit
+`raya:ref/id`. Do not imply LaTeX `\label` or `\ref` support for source
+references.
+
 ## Learning Quanta
 
 Directories and pages are semantic learning quanta. They are not only filesystem organization.
@@ -169,6 +196,7 @@ A course must be validated before build. Validation should check at least:
 - duplicate stable IDs or aliases,
 - broken internal links,
 - broken `raya:` stable references,
+- invalid numbered object directives or `@id` / `raya:ref/id` references,
 - missing local or colocated assets,
 - missing, stale, or escaping reviewed execution output files,
 - `policy: frozen` targets without current reviewed output,
