@@ -65,6 +65,8 @@ def inspect_render_debug(
     summary = _read_summary(summary_path, report)
     captures = _capture_items(summary, summary_path, report)
     _inspect_captures(site_root, debug_root, captures, report)
+    numbered_index = _read_numbered_index(site_root, report)
+    _inspect_numbered_content(captures, numbered_index, report)
     _inspect_static_site(site_root, report, context="site")
     if copied_site_root is not None:
         _inspect_copied_site(site_root, copied_site_root, report)
@@ -304,6 +306,117 @@ def _capture_failures(
             f"page={page!r} viewport={viewport_name!r}"
         )
     return failures
+
+
+def _read_numbered_index(site_dir: Path, report: dict[str, Any]) -> dict[str, Any]:
+    index_path = site_dir / "data" / "numbered-objects.json"
+    if not index_path.exists():
+        return {"objects": [], "by_reference_text": {}}
+    try:
+        numbered_index = json.loads(index_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        _add_check(
+            report,
+            check_id="numbered-content:index",
+            status="fail",
+            path=index_path,
+            message=f"missing or malformed numbered object index at {index_path}: {exc}",
+            next_action="Rebuild the static site so data/numbered-objects.json is valid.",
+        )
+        return {"objects": [], "by_reference_text": {}}
+
+    objects = numbered_index.get("objects")
+    if not isinstance(objects, list):
+        _add_check(
+            report,
+            check_id="numbered-content:index",
+            status="fail",
+            path=index_path,
+            message=f"numbered object index must contain an objects list at {index_path}",
+            next_action="Rebuild the static site so data/numbered-objects.json is valid.",
+        )
+        return {"objects": [], "by_reference_text": {}}
+
+    by_reference_text = {
+        item["reference_text"]: item
+        for item in objects
+        if isinstance(item, dict) and isinstance(item.get("reference_text"), str)
+    }
+    _add_check(
+        report,
+        check_id="numbered-content:index",
+        status="pass",
+        path=index_path,
+        message=f"numbered object index contains {len(objects)} object(s)",
+        details={"object_count": len(objects)},
+    )
+    return {"objects": objects, "by_reference_text": by_reference_text}
+
+
+def _inspect_numbered_content(
+    captures: list[dict[str, Any]],
+    numbered_index: dict[str, Any],
+    report: dict[str, Any],
+) -> None:
+    by_reference_text = numbered_index.get("by_reference_text")
+    if not isinstance(by_reference_text, dict):
+        by_reference_text = {}
+
+    for capture in captures:
+        numbered_content = capture.get("numbered_content")
+        if not isinstance(numbered_content, dict):
+            continue
+        page = capture.get("page")
+        viewport = capture.get("viewport")
+        viewport_name = viewport.get("name") if isinstance(viewport, dict) else None
+        if not isinstance(page, str) or not isinstance(viewport_name, str):
+            continue
+
+        objects = _numbered_evidence_items(numbered_content.get("objects"))
+        references = _numbered_evidence_items(numbered_content.get("references"))
+        proofs = _numbered_evidence_items(numbered_content.get("proofs"))
+        proof_targets = []
+        for proof in proofs:
+            target_text = proof.get("target_text")
+            target = (
+                by_reference_text.get(target_text)
+                if isinstance(target_text, str)
+                else None
+            )
+            proof_targets.append(
+                {
+                    "proof_id": str(proof.get("id", "")),
+                    "target_id": (
+                        str(target.get("id", ""))
+                        if isinstance(target, dict)
+                        else str(proof.get("target_id", ""))
+                    ),
+                    "target_text": target_text or "",
+                }
+            )
+
+        _add_check(
+            report,
+            check_id=f"numbered-content:{page}:{viewport_name}",
+            status="pass",
+            path=Path(str(capture.get("screenshot", ""))),
+            message=(
+                f"numbered content evidence for page={page!r} "
+                f"viewport={viewport_name!r}"
+            ),
+            details={
+                "object_count": len(objects),
+                "reference_count": len(references),
+                "proof_count": len(proofs),
+                "proof_targets": proof_targets,
+            },
+        )
+
+
+def _numbered_evidence_items(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [item for item in value if isinstance(item, dict)]
 
 
 def _inspect_static_site(
@@ -685,7 +798,7 @@ def _render_html_report(report: dict[str, Any]) -> str:
   </div>
   <h2>Checks</h2>
   <table>
-    <thead><tr><th>ID</th><th>Status</th><th>Path</th><th>Message</th></tr></thead>
+    <thead><tr><th>ID</th><th>Status</th><th>Path</th><th>Message</th><th>Details</th></tr></thead>
     <tbody>
 {check_rows}
     </tbody>
@@ -700,12 +813,21 @@ def _render_html_report(report: dict[str, Any]) -> str:
 
 
 def _render_check_row(check: dict[str, Any]) -> str:
+    details = check.get("details")
+    details_html = ""
+    if details:
+        details_html = (
+            "<pre>"
+            + html.escape(json.dumps(details, indent=2, sort_keys=True))
+            + "</pre>"
+        )
     return (
         "      <tr>"
         f"<td><code>{html.escape(str(check['id']))}</code></td>"
         f"<td>{html.escape(str(check['status']))}</td>"
         f"<td><code>{html.escape(str(check['path']))}</code></td>"
         f"<td>{html.escape(str(check['message']))}</td>"
+        f"<td>{details_html}</td>"
         "</tr>"
     )
 

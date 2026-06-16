@@ -77,6 +77,17 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
         and check["status"] == "pass"
         for check in report_json["checks"]
     )
+    numbered_checks = [
+        check
+        for check in report_json["checks"]
+        if check["id"].startswith("numbered-content:numbered-objects:")
+    ]
+    assert numbered_checks
+    assert any(
+        check["details"]["object_count"] >= 10
+        and check["details"]["proof_count"] >= 3
+        for check in numbered_checks
+    )
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
 

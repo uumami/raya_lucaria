@@ -541,6 +541,26 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
     assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
     assert all(capture["horizontal_overflow"] <= 1 for capture in summary["captures"])
+    numbered_capture = next(
+        capture
+        for capture in summary["captures"]
+        if capture["page"] == "numbered-objects"
+        and capture["viewport"]["name"] == "desktop"
+    )
+    evidence = numbered_capture["numbered_content"]
+    assert {item["id"] for item in evidence["objects"]} >= {
+        "main-theorem",
+        "assignment-one",
+    }
+    assert {item["target_text"] for item in evidence["proofs"]} >= {
+        "Theorem 3.1",
+        "Activity 3.3",
+    }
+    assert any(
+        ref["text"] == "Activity 3.3"
+        and ref["href"].endswith("#raya-object-assignment-one")
+        for ref in evidence["references"]
+    )
 
     report_json = json.loads((debug_dir / "report.json").read_text(encoding="utf-8"))
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")

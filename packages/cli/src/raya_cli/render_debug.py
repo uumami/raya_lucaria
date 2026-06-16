@@ -230,6 +230,7 @@ def _capture_render_debug_artifact(
         "raw_tex_markers": raw_tex_markers,
         "external_requests": sorted(set(external_requests)),
         "horizontal_overflow": overflow,
+        "numbered_content": _numbered_content_evidence(page),
     }
     _append_summary(debug_dir / "summary.json", capture)
     return capture
@@ -242,6 +243,46 @@ def _visible_non_code_text(page: Any) -> str:
             clone.querySelectorAll('code, pre, kbd, samp, script, style, textarea')
               .forEach((node) => node.remove());
             return clone.innerText || '';
+        }"""
+    )
+
+
+def _numbered_content_evidence(page: Any) -> dict[str, object]:
+    return page.evaluate(
+        """() => {
+            const objects = Array.from(document.querySelectorAll('.raya-numbered-object'))
+              .map((node) => ({
+                id: node.getAttribute('data-object-id') || '',
+                family: Array.from(node.classList)
+                  .find((name) => name.startsWith('raya-numbered-object--') &&
+                    !['raya-numbered-object--margin', 'raya-numbered-object--banded',
+                      'raya-numbered-object--caption', 'raya-numbered-object--equation']
+                      .includes(name))
+                  ?.replace('raya-numbered-object--', '') || '',
+                anchor: node.id || '',
+                label: node.querySelector('.raya-numbered-object-reference')?.innerText || '',
+                title: node.querySelector('.raya-numbered-object-title')?.innerText || '',
+                text: node.innerText || '',
+              }));
+            const references = Array.from(document.querySelectorAll('a[href*="raya-object-"]'))
+              .map((node) => ({
+                text: node.innerText || '',
+                href: node.getAttribute('href') || '',
+              }));
+            const proofs = Array.from(document.querySelectorAll('.raya-proof'))
+              .map((node) => {
+                const reference = node.querySelector('.raya-proof-reference')?.innerText || '';
+                const targetText = reference.startsWith('Proof of ')
+                  ? reference.slice('Proof of '.length).replace(/\\.$/, '')
+                  : '';
+                return {
+                  id: node.id || '',
+                  heading: node.querySelector('.raya-proof-heading')?.innerText || '',
+                  target_text: targetText,
+                  target_id: '',
+                };
+              });
+            return {objects, references, proofs};
         }"""
     )
 
