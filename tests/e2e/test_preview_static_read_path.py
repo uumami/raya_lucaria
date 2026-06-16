@@ -451,6 +451,10 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
     assert "Hint for Activity 4.1" in static_environment_text
     assert "Solution of Activity 4.1" in static_environment_text
     assert "Answer to Activity 4.1" in static_environment_text
+    assert (
+        "Scaling the direction vector changes the projection coefficient"
+        in static_environment_text
+    )
     assert "before expanding the matrix product." in static_environment_text
     assert (
         "The residual vector is orthogonal to the direction vector."

@@ -8,6 +8,124 @@ import pytest
 from raya_cli.render_debug_report import copy_static_site, inspect_render_debug
 
 
+SOLUTION_BODY_EVIDENCE = "Scaling the direction vector changes the projection coefficient"
+
+
+def _reader_static_environments(*, solution_text: str | None = None) -> list[dict[str, str]]:
+    return [
+        {
+            "id": "raya-static-environment-hint-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--hint",
+            "heading": "Hint for Activity 4.1",
+            "text": (
+                "Hint for Activity 4.1\n"
+                "Compare the projection formula before expanding the matrix product."
+            ),
+        },
+        {
+            "id": "raya-static-environment-solution-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--solution",
+            "heading": "Solution of Activity 4.1",
+            "text": solution_text
+            if solution_text is not None
+            else (
+                "Solution of Activity 4.1\n"
+                f"{SOLUTION_BODY_EVIDENCE} while the projection line stays fixed."
+            ),
+        },
+        {
+            "id": "raya-static-environment-answer-orthogonal-activity",
+            "className": "raya-static-environment raya-static-environment--answer",
+            "heading": "Answer to Activity 4.1",
+            "text": (
+                "Answer to Activity 4.1\n"
+                "The residual vector is orthogonal to the direction vector."
+            ),
+        },
+    ]
+
+
+def _write_reader_ux_report_fixture(
+    tmp_path: Path,
+    reader_captures: list[dict[str, object]],
+) -> tuple[Path, Path]:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
+    reader_ux = site / "reader-ux"
+    reader_ux.mkdir()
+    (reader_ux / "index.html").write_text(
+        "<!doctype html><html><body>Reader UX</body></html>",
+        encoding="utf-8",
+    )
+    captures: list[dict[str, object]] = []
+    for viewport in ("desktop", "mobile"):
+        screenshot = debug / f"{viewport}-index.png"
+        screenshot.write_bytes(b"png")
+        captures.append(
+            {
+                "page": "index",
+                "url": "http://127.0.0.1/index.html",
+                "viewport": {
+                    "name": viewport,
+                    "width": 1280 if viewport == "desktop" else 390,
+                    "height": 900 if viewport == "desktop" else 844,
+                },
+                "screenshot": str(screenshot),
+                "mathjax_container_count": 0,
+                "raw_tex_visible": False,
+                "raw_tex_markers": [],
+                "external_requests": [],
+                "horizontal_overflow": 0,
+                "numbered_content": {"objects": [], "references": [], "proofs": []},
+                "staticEnvironments": [],
+            }
+        )
+    for capture in reader_captures:
+        screenshot = Path(str(capture["screenshot"]))
+        screenshot.write_bytes(b"png")
+        captures.append(capture)
+    (debug / "summary.json").write_text(
+        json.dumps({"captures": captures}),
+        encoding="utf-8",
+    )
+    return site, debug
+
+
+def _reader_capture(
+    debug: Path,
+    viewport: str,
+    *,
+    include_static_environments: bool = True,
+    static_environments: list[dict[str, str]] | None = None,
+) -> dict[str, object]:
+    capture: dict[str, object] = {
+        "page": "reader-ux",
+        "url": "http://127.0.0.1/reader-ux/",
+        "viewport": {
+            "name": viewport,
+            "width": 1280 if viewport == "desktop" else 390,
+            "height": 900 if viewport == "desktop" else 844,
+        },
+        "screenshot": str(debug / f"{viewport}-reader-ux.png"),
+        "mathjax_container_count": 0,
+        "raw_tex_visible": False,
+        "raw_tex_markers": [],
+        "external_requests": [],
+        "horizontal_overflow": 0,
+        "numbered_content": {"objects": [], "references": [], "proofs": []},
+    }
+    if include_static_environments:
+        capture["staticEnvironments"] = (
+            static_environments
+            if static_environments is not None
+            else _reader_static_environments()
+        )
+    return capture
+
+
 def test_inspection_ignores_blocked_renderer_terms_in_prose_and_code(
     tmp_path: Path,
 ) -> None:
@@ -171,6 +289,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         '<aside class="raya-static-environment raya-static-environment--solution" '
         'id="raya-static-environment-solution-orthogonal-activity">'
         '<div class="raya-static-environment-heading">Solution of Activity 4.1</div>'
+        f"<p>{SOLUTION_BODY_EVIDENCE} while the projection line stays fixed.</p>"
         "</aside>"
         '<aside class="raya-static-environment raya-static-environment--answer" '
         'id="raya-static-environment-answer-orthogonal-activity">'
@@ -180,32 +299,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         "</body></html>",
         encoding="utf-8",
     )
-    static_environments = [
-        {
-            "id": "raya-static-environment-hint-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--hint",
-            "heading": "Hint for Activity 4.1",
-            "text": (
-                "Hint for Activity 4.1\n"
-                "Compare the projection formula before expanding the matrix product."
-            ),
-        },
-        {
-            "id": "raya-static-environment-solution-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--solution",
-            "heading": "Solution of Activity 4.1",
-            "text": "Solution of Activity 4.1",
-        },
-        {
-            "id": "raya-static-environment-answer-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--answer",
-            "heading": "Answer to Activity 4.1",
-            "text": (
-                "Answer to Activity 4.1\n"
-                "The residual vector is orthogonal to the direction vector."
-            ),
-        },
-    ]
+    static_environments = _reader_static_environments()
     for name in (
         "desktop-index.png",
         "mobile-index.png",
@@ -347,32 +441,7 @@ def test_render_debug_report_fails_when_mobile_static_environment_class_is_missi
         "<!doctype html><html><body>Reader UX</body></html>",
         encoding="utf-8",
     )
-    static_environments = [
-        {
-            "id": "raya-static-environment-hint-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--hint",
-            "heading": "Hint for Activity 4.1",
-            "text": (
-                "Hint for Activity 4.1\n"
-                "Compare the projection formula before expanding the matrix product."
-            ),
-        },
-        {
-            "id": "raya-static-environment-solution-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--solution",
-            "heading": "Solution of Activity 4.1",
-            "text": "Solution of Activity 4.1",
-        },
-        {
-            "id": "raya-static-environment-answer-orthogonal-activity",
-            "className": "raya-static-environment raya-static-environment--answer",
-            "heading": "Answer to Activity 4.1",
-            "text": (
-                "Answer to Activity 4.1\n"
-                "The residual vector is orthogonal to the direction vector."
-            ),
-        },
-    ]
+    static_environments = _reader_static_environments()
     mobile_static_environments = [
         item.copy() for item in static_environments
     ]
@@ -427,6 +496,110 @@ def test_render_debug_report_fails_when_mobile_static_environment_class_is_missi
     assert any(
         "raya-static-environment--answer" in failure
         for failure in answer_check["details"]["failures"]
+    )
+
+
+def test_render_debug_report_fails_when_reader_ux_viewport_capture_is_missing(
+    tmp_path: Path,
+) -> None:
+    debug = tmp_path / "debug"
+    site, debug = _write_reader_ux_report_fixture(
+        tmp_path,
+        [_reader_capture(debug, "desktop")],
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    mobile_hint = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "static-environment:reader-ux:mobile:hint"
+    )
+    assert mobile_hint["status"] == "fail"
+    assert mobile_hint["details"]["failures"] == ["missing reader-ux mobile capture"]
+
+
+def test_render_debug_report_fails_when_reader_ux_static_environments_are_empty(
+    tmp_path: Path,
+) -> None:
+    debug = tmp_path / "debug"
+    site, debug = _write_reader_ux_report_fixture(
+        tmp_path,
+        [
+            _reader_capture(debug, "desktop"),
+            _reader_capture(debug, "mobile", static_environments=[]),
+        ],
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    mobile_solution = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "static-environment:reader-ux:mobile:solution"
+    )
+    assert mobile_solution["status"] == "fail"
+    assert mobile_solution["details"]["failures"] == [
+        "missing static environment id "
+        "'raya-static-environment-solution-orthogonal-activity'"
+    ]
+
+
+def test_render_debug_report_fails_when_reader_ux_static_environments_are_missing(
+    tmp_path: Path,
+) -> None:
+    debug = tmp_path / "debug"
+    site, debug = _write_reader_ux_report_fixture(
+        tmp_path,
+        [
+            _reader_capture(debug, "desktop"),
+            _reader_capture(debug, "mobile", include_static_environments=False),
+        ],
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    mobile_answer = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "static-environment:reader-ux:mobile:answer"
+    )
+    assert mobile_answer["status"] == "fail"
+    assert mobile_answer["details"]["failures"] == [
+        "missing staticEnvironments evidence"
+    ]
+
+
+def test_render_debug_report_fails_when_solution_body_evidence_is_missing(
+    tmp_path: Path,
+) -> None:
+    debug = tmp_path / "debug"
+    heading_only = _reader_static_environments(
+        solution_text="Solution of Activity 4.1"
+    )
+    site, debug = _write_reader_ux_report_fixture(
+        tmp_path,
+        [
+            _reader_capture(debug, "desktop"),
+            _reader_capture(debug, "mobile", static_environments=heading_only),
+        ],
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    mobile_solution = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "static-environment:reader-ux:mobile:solution"
+    )
+    assert mobile_solution["status"] == "fail"
+    assert any(
+        SOLUTION_BODY_EVIDENCE in failure
+        for failure in mobile_solution["details"]["failures"]
     )
 
 

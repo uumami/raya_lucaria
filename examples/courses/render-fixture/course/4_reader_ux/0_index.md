@@ -142,7 +142,8 @@ v=
 \begin{bmatrix}2\\3\end{bmatrix}.
 $$
 
-The projection onto the scaled direction is
+Scaling the direction vector changes the projection coefficient while the
+projection line stays fixed. The projection onto the scaled direction is
 
 $$
 \orthproj_{2u}(v)

@@ -1552,6 +1552,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert "Answer to Activity 4.1" in reader_ux_visible
     assert "Standalone Hint" not in reader_ux_visible
     assert (
+        "Scaling the direction vector changes the projection coefficient"
+        in reader_ux_visible
+    )
+    assert (
         "before expanding the matrix product."
         in reader_ux_visible
     )

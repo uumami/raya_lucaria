@@ -54,7 +54,7 @@ READER_UX_STATIC_ENVIRONMENTS = {
         "id": "raya-static-environment-solution-orthogonal-activity",
         "class": "raya-static-environment--solution",
         "heading": "Solution of Activity 4.1",
-        "text": "Solution of Activity 4.1",
+        "text": "Scaling the direction vector changes the projection coefficient",
     },
     "answer": {
         "id": "raya-static-environment-answer-orthogonal-activity",
