@@ -157,7 +157,7 @@ def prepare_numbered_object_markdown(
     lines = body.splitlines()
     index = 0
     fence_state: _FenceState | None = None
-    from raya_static.proofs import is_proof_directive_open
+    from raya_static.proofs import is_static_environment_directive_open
 
     while index < len(lines):
         line = lines[index]
@@ -174,21 +174,21 @@ def prepare_numbered_object_markdown(
             index += 1
             continue
 
-        if is_proof_directive_open(line):
+        if is_static_environment_directive_open(line):
             output_lines.append(line)
             index += 1
-            proof_fence_state: _FenceState | None = None
+            static_env_fence_state: _FenceState | None = None
             while index < len(lines):
                 current = lines[index]
                 output_lines.append(current)
                 index += 1
-                if proof_fence_state is not None:
-                    if _is_closing_fence(current, proof_fence_state):
-                        proof_fence_state = None
+                if static_env_fence_state is not None:
+                    if _is_closing_fence(current, static_env_fence_state):
+                        static_env_fence_state = None
                     continue
-                proof_fence_opener = _fence_opener(current)
-                if proof_fence_opener is not None:
-                    proof_fence_state = proof_fence_opener
+                static_env_fence_opener = _fence_opener(current)
+                if static_env_fence_opener is not None:
+                    static_env_fence_state = static_env_fence_opener
                     continue
                 if DIRECTIVE_CLOSE_RE.match(current):
                     break

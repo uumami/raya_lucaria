@@ -22,7 +22,7 @@ from raya_static.numbered_objects import (
     NumberedObjectRenderItem,
     expand_shorthand_references,
 )
-from raya_static.proofs import ProofRenderContext, ProofRenderItem
+from raya_static.proofs import StaticEnvironmentRenderContext, StaticEnvironmentRenderItem
 
 
 INDEX_MARKER = "<!-- raya:index -->"
@@ -63,7 +63,7 @@ class _Callout:
 
 _CalloutFragment = tuple[_Callout, list[Token], dict]
 _NumberedObjectFragment = tuple[NumberedObjectRenderItem, list[Token], dict]
-_ProofFragment = tuple[ProofRenderItem, list[Token], dict]
+_ProofFragment = tuple[StaticEnvironmentRenderItem, list[Token], dict]
 
 
 class RichMarkdownRenderer:
@@ -97,7 +97,7 @@ class RichMarkdownRenderer:
         generated_index: str = "",
         *,
         numbered_objects: NumberedObjectRenderContext | None = None,
-        proofs: ProofRenderContext | None = None,
+        proofs: StaticEnvironmentRenderContext | None = None,
     ) -> str:
         if numbered_objects is not None:
             body = expand_shorthand_references(
@@ -225,7 +225,7 @@ class RichMarkdownRenderer:
             rendered_numbered_objects,
         )
         rendered_proofs = {
-            placeholder: _render_proof_html(
+            placeholder: _render_static_environment_html(
                 self._md.renderer.render(proof_tokens, self._md.options, proof_env),
                 item=item,
             )
@@ -397,7 +397,7 @@ def render_markdown_body(
     report: ValidationReport,
     math_renderer: MathRenderer,
     numbered_objects: NumberedObjectRenderContext | None = None,
-    proofs: ProofRenderContext | None = None,
+    proofs: StaticEnvironmentRenderContext | None = None,
 ) -> str:
     return RichMarkdownRenderer(
         resolve_href,
@@ -724,6 +724,45 @@ nav[aria-label="Breadcrumbs"] {
 .raya-proof-qed {
   float: right;
   margin-left: 0.75rem;
+}
+.raya-static-environment {
+  border: 1px solid #d8dee4;
+  border-left-width: 4px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+}
+.raya-static-environment--solution {
+  border-left-color: #1a7f37;
+}
+.raya-static-environment--hint {
+  border-left-color: #9a6700;
+}
+.raya-static-environment--answer {
+  border-left-color: #0969da;
+}
+.raya-static-environment-heading {
+  background: #f6f8fa;
+  border-bottom: 1px solid #d8dee4;
+  font-weight: 650;
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+}
+.raya-static-environment-reference {
+  color: #24292f;
+}
+.raya-static-environment-title {
+  color: #57606a;
+  font-weight: 500;
+}
+.raya-static-environment-body {
+  overflow-x: auto;
+  padding: 0.85rem;
+}
+.raya-static-environment-body > :first-child {
+  margin-top: 0;
+}
+.raya-static-environment-body > :last-child {
+  margin-bottom: 0;
 }
 .math.inline {
   white-space: nowrap;
@@ -1124,35 +1163,80 @@ def _render_numbered_object_html(
     )
 
 
-def _render_proof_html(
+def _static_environment_reference(item: StaticEnvironmentRenderItem) -> str:
+    kind = item.source.kind
+    label = {
+        "proof": "Proof",
+        "solution": "Solution",
+        "hint": "Hint",
+        "answer": "Answer",
+    }[kind]
+    if item.target is None:
+        return label
+    if kind == "hint":
+        return f"Hint for {item.target.reference_text}"
+    if kind == "answer":
+        return f"Answer to {item.target.reference_text}"
+    return f"{label} of {item.target.reference_text}"
+
+
+def _render_static_environment_html(
     rendered_body: str,
     *,
-    item: ProofRenderItem,
+    item: StaticEnvironmentRenderItem,
 ) -> str:
-    proof_id = item.source.id
-    id_html = (
-        f' id="raya-proof-{html.escape(proof_id, quote=True)}"' if proof_id else ""
-    )
-    reference = "Proof"
-    if item.target is not None:
-        reference = f"Proof of {item.target.reference_text}"
+    env_id = item.source.id
+    kind = item.source.kind
+    reference = _static_environment_reference(item)
     title = item.source.title or ""
+    body = rendered_body.strip() or "<p></p>"
+    if kind == "proof":
+        id_html = (
+            f' id="raya-proof-{html.escape(env_id, quote=True)}"' if env_id else ""
+        )
+        title_html = (
+            f'<span class="raya-proof-title">{html.escape(title)}</span>'
+            if title
+            else ""
+        )
+        return "\n".join(
+            [
+                f'<section{id_html} class="raya-proof">',
+                '<p class="raya-proof-heading">',
+                f'<span class="raya-proof-reference">{html.escape(reference)}</span>'
+                + (f" {title_html}" if title_html else ""),
+                "</p>",
+                '<div class="raya-proof-body">',
+                body,
+                '<span class="raya-proof-qed" aria-hidden="true">&#x25A1;</span>',
+                "</div>",
+                "</section>",
+            ]
+        )
+
+    escaped_kind = html.escape(kind, quote=True)
+    id_html = (
+        f' id="raya-static-environment-{html.escape(env_id, quote=True)}"'
+        if env_id
+        else ""
+    )
     title_html = (
-        f'<span class="raya-proof-title">{html.escape(title)}</span>'
+        f'<span class="raya-static-environment-title">{html.escape(title)}</span>'
         if title
         else ""
     )
-    body = rendered_body.strip() or "<p></p>"
     return "\n".join(
         [
-            f'<section{id_html} class="raya-proof">',
-            '<p class="raya-proof-heading">',
-            f'<span class="raya-proof-reference">{html.escape(reference)}</span>'
+            (
+                f'<section{id_html} class="raya-static-environment '
+                f'raya-static-environment--{escaped_kind}">'
+            ),
+            '<p class="raya-static-environment-heading">',
+            f'<span class="raya-static-environment-reference">{html.escape(reference)}</span>'
             + (f" {title_html}" if title_html else ""),
             "</p>",
-            '<div class="raya-proof-body">',
+            '<div class="raya-static-environment-body">',
             body,
-            '<span class="raya-proof-qed" aria-hidden="true">&#x25A1;</span>',
             "</div>",
             "</section>",
         ]

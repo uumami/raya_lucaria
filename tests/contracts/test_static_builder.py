@@ -400,11 +400,142 @@ def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
     assert "proof-main" not in numbered_index["by_id"]
     assert list(numbered_index["by_id"]) == ["main-theorem"]
     assert 'class="raya-proof"' in html
+    assert "raya-static-environment--proof" not in html
     assert '<span class="raya-proof-reference">Proof of Theorem 1</span>' in html
     assert '<span class="raya-proof-title">Identity</span>' in html
     assert '<span class="raya-proof-qed" aria-hidden="true">&#x25A1;</span>' in html
     assert "RAYA_PROOF_" not in visible
     assert "\\(" not in visible
+
+
+def test_static_environments_render_targeted_headings_and_stay_out_of_numbered_index(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: static-environments\n"
+        "title: Static Environments\n"
+        "summary: Static environment fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Static Environments\n\n"
+        "::: problem {#residual-problem title=\"Residual check\"}\n"
+        "Find the residual.\n"
+        ":::\n\n"
+        "::: hint {#hint-residual of=\"residual-problem\"}\n"
+        "Use @residual-problem and compute $v-p$.\n"
+        ":::\n\n"
+        "::: solution {#solution-residual of=\"residual-problem\" title=\"Worked residual\"}\n"
+        "$$v-p=\\begin{bmatrix}0\\\\3\\end{bmatrix}.$$\n"
+        ":::\n\n"
+        "::: answer {#answer-residual of=\"residual-problem\"}\n"
+        "The residual is orthogonal to $u$.\n"
+        ":::\n\n"
+        "::: hint\n"
+        "Standalone hint.\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    visible = _visible_text(html)
+    numbered_index = json.loads(
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    ids = {item["id"] for item in numbered_index["objects"]}
+    assert ids == {"residual-problem"}
+    assert "Hint for Problem 1" in visible
+    assert "Solution of Problem 1" in visible
+    assert "Worked residual" in visible
+    assert "Answer to Problem 1" in visible
+    assert "Hint Standalone hint." in visible
+    assert 'id="raya-static-environment-hint-residual"' in html
+    assert 'id="raya-static-environment-solution-residual"' in html
+    assert 'id="raya-static-environment-answer-residual"' in html
+    assert "raya-static-environment--hint" in html
+    assert "raya-static-environment--solution" in html
+    assert "raya-static-environment--answer" in html
+    assert "raya-numbered-object--hint" not in html
+    assert "raya-numbered-object--solution" not in html
+    assert "raya-numbered-object--answer" not in html
+    assert "\\begin{bmatrix}" not in visible
+    assert "mjx-container" in html
+
+
+def test_static_environment_rejects_unknown_target(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\nid: bad-static-target\ntitle: Bad Static Target\n---\n"
+        "# Bad Static Target\n\n"
+        "::: solution {of=\"missing-problem\"}\nNo target.\n:::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(
+        item
+        for item in report.diagnostics
+        if item.message == "Unknown solution target 'missing-problem'"
+    )
+    assert diagnostic.field == "line:6"
+    assert diagnostic.next_action == 'Use of="object-id" with an existing numbered object ID'
+
+
+def test_static_environment_ids_cannot_collide_with_numbered_objects(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\nid: static-id-collision\ntitle: Static ID Collision\n---\n"
+        "# Static ID Collision\n\n"
+        "::: problem {#same}\nProblem.\n:::\n\n"
+        "::: hint {#same}\nHint.\n:::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(
+        item
+        for item in report.diagnostics
+        if item.message
+        == "Static environment ID 'same' collides with a numbered object ID"
+    )
+    assert diagnostic.next_action == "Use a unique static environment ID"
+
+
+def test_static_environment_rejects_duplicate_ids(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\nid: duplicate-static-id\ntitle: Duplicate Static ID\n---\n"
+        "# Duplicate Static ID\n\n"
+        "::: hint {#same-hint}\nFirst.\n:::\n\n"
+        "::: answer {#same-hint}\nSecond.\n:::\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    diagnostic = next(
+        item
+        for item in report.diagnostics
+        if item.message == "Duplicate static environment ID 'same-hint'"
+    )
+    assert "first seen in" in diagnostic.next_action
 
 
 def test_build_rejects_unknown_proof_target(tmp_path: Path) -> None:

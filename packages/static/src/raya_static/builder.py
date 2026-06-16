@@ -82,10 +82,10 @@ from raya_static.numbered_objects import (
     prepare_numbered_object_markdown,
 )
 from raya_static.proofs import (
-    ProofRenderContext,
-    ProofRenderItem,
-    ProofSource,
-    prepare_proof_markdown,
+    StaticEnvironmentRenderContext,
+    StaticEnvironmentRenderItem,
+    StaticEnvironmentSource,
+    prepare_static_environment_markdown,
 )
 from raya_static.rendering import (
     RENDER_STYLESHEET_PATH,
@@ -146,8 +146,8 @@ class _NumberedObjectCollection:
 
 
 @dataclass(frozen=True)
-class _ProofCollection:
-    items_by_page_id: dict[str, list[ProofRenderItem]]
+class _StaticEnvironmentCollection:
+    items_by_page_id: dict[str, list[StaticEnvironmentRenderItem]]
     prepared_bodies_by_page_id: dict[str, str]
 
 
@@ -258,7 +258,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     )
     if not report.ok:
         return report
-    proof_collection = _collect_proofs(
+    static_environment_collection = _collect_static_environments(
         pages=pages,
         prepared_bodies_by_page_id=numbered_object_collection.prepared_bodies_by_page_id,
         objects_by_id=numbered_object_collection.objects_by_id,
@@ -273,21 +273,18 @@ def build_course(course_path: str | Path) -> ValidationReport:
             items=numbered_object_collection.items_by_page_id.get(page.id, []),
             objects_by_id=numbered_object_collection.objects_by_id,
         )
-        proof_context = ProofRenderContext(
-            items=proof_collection.items_by_page_id.get(page.id, []),
+        static_environment_context = StaticEnvironmentRenderContext(
+            items=static_environment_collection.items_by_page_id.get(page.id, []),
             objects_by_id=numbered_object_collection.objects_by_id,
         )
         rendered_page = _render_page(
             page=page,
-            body=proof_collection.prepared_bodies_by_page_id.get(
+            body=static_environment_collection.prepared_bodies_by_page_id.get(
                 page.id,
-                numbered_object_collection.prepared_bodies_by_page_id.get(
-                    page.id,
-                    page.body,
-                ),
+                page.body,
             ),
             numbered_objects=numbered_context,
-            proofs=proof_context,
+            proofs=static_environment_context,
             content_model=content_model,
             pages_by_source=pages_by_source,
             pages_by_reference=pages_by_reference,
@@ -612,40 +609,48 @@ def _collect_numbered_objects(
     )
 
 
-def _collect_proofs(
+def _collect_static_environments(
     *,
     pages: list[ContentPage],
     prepared_bodies_by_page_id: dict[str, str],
     objects_by_id: dict[str, NumberedObject],
     report: ValidationReport,
-) -> _ProofCollection:
-    items_by_page_id: dict[str, list[ProofRenderItem]] = {}
-    proof_prepared_bodies_by_page_id: dict[str, str] = {}
-    seen_ids: dict[str, ProofSource] = {}
+) -> _StaticEnvironmentCollection:
+    items_by_page_id: dict[str, list[StaticEnvironmentRenderItem]] = {}
+    static_environment_prepared_bodies_by_page_id: dict[str, str] = {}
+    seen_ids: dict[str, StaticEnvironmentSource] = {}
 
     for page in pages:
-        prepared = prepare_proof_markdown(
+        prepared = prepare_static_environment_markdown(
             prepared_bodies_by_page_id.get(page.id, page.body),
             report=report,
             source_path=page.source_path,
         )
-        proof_prepared_bodies_by_page_id[page.id] = prepared.body
+        static_environment_prepared_bodies_by_page_id[page.id] = prepared.body
         if not report.ok:
             continue
 
-        page_items: list[ProofRenderItem] = []
+        page_items: list[StaticEnvironmentRenderItem] = []
         for source in prepared.sources:
             if source.id:
                 first_source = seen_ids.get(source.id)
                 if first_source is not None:
                     report.add_error(
-                        f"Duplicate proof ID '{source.id}'",
+                        f"Duplicate static environment ID '{source.id}'",
                         path=source.source_path,
                         field=f"line:{source.start_line}",
                         next_action=(
-                            "Use a unique proof ID; first seen in "
+                            "Use a unique static environment ID; first seen in "
                             f"{first_source.source_path} line:{first_source.start_line}"
                         ),
+                    )
+                    continue
+                if source.id in objects_by_id:
+                    report.add_error(
+                        f"Static environment ID '{source.id}' collides with a numbered object ID",
+                        path=source.source_path,
+                        field=f"line:{source.start_line}",
+                        next_action="Use a unique static environment ID",
                     )
                     continue
                 seen_ids[source.id] = source
@@ -654,19 +659,25 @@ def _collect_proofs(
                 target = objects_by_id.get(source.of_id)
                 if target is None:
                     report.add_error(
-                        f"Unknown proof target '{source.of_id}'",
+                        f"Unknown {source.kind} target '{source.of_id}'",
                         path=source.source_path,
-                        field=f"line:{source.start_line}",
+                        field=f"line:{_static_environment_builder_line(source)}",
                         next_action='Use of="object-id" with an existing numbered object ID',
                     )
                     continue
-            page_items.append(ProofRenderItem(source=source, target=target))
+            page_items.append(StaticEnvironmentRenderItem(source=source, target=target))
         items_by_page_id[page.id] = page_items
 
-    return _ProofCollection(
+    return _StaticEnvironmentCollection(
         items_by_page_id=items_by_page_id,
-        prepared_bodies_by_page_id=proof_prepared_bodies_by_page_id,
+        prepared_bodies_by_page_id=static_environment_prepared_bodies_by_page_id,
     )
+
+
+def _static_environment_builder_line(source: StaticEnvironmentSource) -> int:
+    if source.kind == "proof":
+        return source.start_line
+    return source.start_line + 3
 
 
 def _render_page(
@@ -674,7 +685,7 @@ def _render_page(
     page: ContentPage,
     body: str,
     numbered_objects: NumberedObjectRenderContext,
-    proofs: ProofRenderContext,
+    proofs: StaticEnvironmentRenderContext,
     content_model: ContentModel,
     pages_by_source: dict[Path, ContentPage],
     pages_by_reference: dict[str, ContentPage],
