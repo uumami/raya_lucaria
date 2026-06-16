@@ -178,6 +178,16 @@ def prepare_numbered_object_markdown(
 
         start_line = index + 1
         family = opened.group("family")
+        if family == "proof":
+            output_lines.append(line)
+            index += 1
+            while index < len(lines):
+                current = lines[index]
+                output_lines.append(current)
+                index += 1
+                if DIRECTIVE_CLOSE_RE.match(current):
+                    break
+            continue
         attrs = _parse_attrs(opened.group("attrs"), report, source_path, start_line)
         content_lines: list[str] = []
         index += 1
