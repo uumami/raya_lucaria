@@ -1467,7 +1467,7 @@ def test_build_numbered_objects_index_accepts_positional_api() -> None:
 
 def test_numbered_objects_index_validation_accepts_all_supported_styles(tmp_path) -> None:
     objects = []
-    for style in ("margin", "banded", "caption", "equation"):
+    for style in ("scannable", "margin", "banded", "caption", "equation"):
         objects.append(
             NumberedObject(
                 id=f"{style}-item",
