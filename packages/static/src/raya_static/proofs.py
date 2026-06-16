@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shlex
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from raya_static.numbered_objects import (
 )
 
 PLACEHOLDER_PREFIX = "RAYA_PROOF_"
+PROOF_OPEN_RE = re.compile(r"^ {0,3}:::\s+proof(?:\s+(?P<attrs>.*))?\s*$")
 
 
 @dataclass(frozen=True)
@@ -76,14 +78,19 @@ def prepare_proof_markdown(
             index += 1
             continue
 
-        opened = DIRECTIVE_OPEN_RE.match(line)
-        if opened is None or opened.group("family") != "proof":
+        proof_opened = PROOF_OPEN_RE.match(line)
+        if proof_opened is None:
             output_lines.append(line)
             index += 1
             continue
 
         start_line = index + 1
-        attrs = _parse_attrs(opened.group("attrs"), report, source_path, start_line)
+        attrs = _parse_attrs(
+            proof_opened.group("attrs"),
+            report,
+            source_path,
+            start_line,
+        )
         content_lines: list[str] = []
         index += 1
         closed = False
@@ -201,8 +208,10 @@ def _parse_attrs(
         attrs[key] = value
 
     for attr_name in ("id", "of"):
-        value = attrs.get(attr_name)
-        if value and OBJECT_ID_RE.fullmatch(value) is None:
+        if attr_name not in attrs:
+            continue
+        value = attrs[attr_name]
+        if OBJECT_ID_RE.fullmatch(value) is None:
             noun = "proof ID" if attr_name == "id" else "proof target ID"
             report.add_error(
                 f"Invalid {noun} '{value}'",

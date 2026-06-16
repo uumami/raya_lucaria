@@ -97,6 +97,64 @@ def test_prepare_proof_markdown_rejects_invalid_id() -> None:
     assert diagnostic.next_action.startswith("Use an ID that starts with a letter")
 
 
+def test_prepare_proof_markdown_rejects_braceless_attributes() -> None:
+    report = _report()
+    prepared = prepare_proof_markdown(
+        '::: proof of="main-theorem"\nText.\n:::\n',
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert diagnostic.message == "Proof directive attributes must use braces"
+    assert diagnostic.field == "line:1"
+    assert diagnostic.next_action == 'Use attributes such as {#proof-id of="theorem-id"}'
+    assert len(prepared.sources) == 1
+
+
+def test_prepare_proof_markdown_rejects_unterminated_attribute_braces() -> None:
+    report = _report()
+    prepare_proof_markdown(
+        "::: proof {#proof-main\nText.\n:::\n",
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert diagnostic.message == "Proof directive attributes must use braces"
+    assert diagnostic.field == "line:1"
+
+
+def test_prepare_proof_markdown_rejects_empty_id() -> None:
+    report = _report()
+    prepare_proof_markdown(
+        "::: proof {#}\nText.\n:::\n",
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert diagnostic.message == "Invalid proof ID ''"
+    assert diagnostic.field == "line:1"
+
+
+def test_prepare_proof_markdown_rejects_empty_target_id() -> None:
+    report = _report()
+    prepare_proof_markdown(
+        '::: proof {of=""}\nText.\n:::\n',
+        report=report,
+        source_path=Path("course/3_numbered_objects/0_index.md"),
+    )
+
+    assert not report.ok
+    diagnostic = report.diagnostics[0]
+    assert diagnostic.message == "Invalid proof target ID ''"
+    assert diagnostic.field == "line:1"
+
+
 def test_prepare_proof_markdown_rejects_unknown_attribute() -> None:
     report = _report()
     prepare_proof_markdown(
