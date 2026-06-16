@@ -428,6 +428,7 @@ def _inspect_numbered_content(
         references = _numbered_evidence_items(numbered_content.get("references"))
         proofs = _numbered_evidence_items(numbered_content.get("proofs"))
         proof_targets = []
+        failures = []
         for proof in proofs:
             target_text = proof.get("target_text")
             target = (
@@ -435,6 +436,12 @@ def _inspect_numbered_content(
                 if isinstance(target_text, str)
                 else None
             )
+            if isinstance(target_text, str) and target_text and target is None:
+                failures.append(
+                    "proof target text "
+                    f"{target_text!r} could not be resolved from "
+                    "data/numbered-objects.json"
+                )
             proof_targets.append(
                 {
                     "proof_id": str(proof.get("id", "")),
@@ -450,17 +457,28 @@ def _inspect_numbered_content(
         _add_check(
             report,
             check_id=f"numbered-content:{page}:{viewport_name}",
-            status="pass",
+            status="fail" if failures else "pass",
             path=Path(str(capture.get("screenshot", ""))),
             message=(
-                f"numbered content evidence for page={page!r} "
-                f"viewport={viewport_name!r}"
+                "numbered content proof target inspection failed for "
+                f"page={page!r} viewport={viewport_name!r}"
+                if failures
+                else (
+                    f"numbered content evidence for page={page!r} "
+                    f"viewport={viewport_name!r}"
+                )
+            ),
+            next_action=(
+                "Rebuild the static site and regenerate render debug capture artifacts."
+                if failures
+                else None
             ),
             details={
                 "object_count": len(objects),
                 "reference_count": len(references),
                 "proof_count": len(proofs),
                 "proof_targets": proof_targets,
+                "failures": failures,
             },
         )
 

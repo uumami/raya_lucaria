@@ -362,6 +362,101 @@ def test_render_debug_report_requires_numbered_index_for_proof_enrichment(
     )
 
 
+def test_render_debug_report_fails_when_proof_target_text_is_not_in_index(
+    tmp_path: Path,
+) -> None:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    data = site / "data"
+    data.mkdir()
+    (data / "numbered-objects.json").write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "course_id": "debug-demo",
+                "objects": [
+                    {
+                        "id": "main-theorem",
+                        "family": "theorem",
+                        "sequence": "theorem",
+                        "label": "Theorem",
+                        "number": "1",
+                        "reference_text": "Theorem 1",
+                        "anchor": "raya-object-main-theorem",
+                        "title": "Main",
+                        "source_path": "course/0_index.md",
+                        "page_id": "index",
+                        "page_title": "Index",
+                        "page_output_path": "index.html",
+                        "href": "#raya-object-main-theorem",
+                        "style": "margin",
+                    }
+                ],
+                "by_id": {"main-theorem": 0},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
+    screenshot = debug / "desktop-index.png"
+    screenshot.write_bytes(b"png")
+    (debug / "summary.json").write_text(
+        json.dumps(
+            {
+                "captures": [
+                    {
+                        "page": "index",
+                        "url": "http://127.0.0.1/index.html",
+                        "viewport": {"name": "desktop", "width": 1280, "height": 900},
+                        "screenshot": str(screenshot),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [],
+                            "references": [],
+                            "proofs": [
+                                {
+                                    "id": "raya-proof-proof-main",
+                                    "heading": "Proof of Theorem 99.",
+                                    "target_text": "Theorem 99",
+                                    "target_id": "",
+                                }
+                            ],
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    numbered_check = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "numbered-content:index:desktop"
+    )
+    assert numbered_check["status"] == "fail"
+    assert any(
+        "proof target text 'Theorem 99' could not be resolved from data/numbered-objects.json"
+        in failure
+        for failure in numbered_check["details"]["failures"]
+    )
+    assert any(
+        diagnostic["check_id"] == "numbered-content:index:desktop"
+        and "proof target text 'Theorem 99' could not be resolved"
+        in diagnostic["message"]
+        for diagnostic in report["diagnostics"]
+    )
+
+
 def test_copy_static_site_rejects_destination_containing_source(tmp_path: Path) -> None:
     work = tmp_path / "work"
     source = work / "site"

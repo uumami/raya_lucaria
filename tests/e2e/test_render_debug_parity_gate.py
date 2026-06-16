@@ -392,6 +392,7 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
                 "raw_tex_markers": [],
                 "external_requests": [],
                 "horizontal_overflow": 0,
+                "numbered_content": {"objects": [], "references": [], "proofs": []},
             }
         )
     (debug_dir / "summary.json").write_text(
