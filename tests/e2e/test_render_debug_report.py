@@ -362,6 +362,69 @@ def test_render_debug_report_requires_numbered_index_for_proof_enrichment(
     )
 
 
+def test_render_debug_report_fails_when_numbered_index_is_missing_for_objects(
+    tmp_path: Path,
+) -> None:
+    site = tmp_path / "site"
+    debug = tmp_path / "debug"
+    site.mkdir()
+    debug.mkdir()
+    (site / "index.html").write_text(
+        '<!doctype html><html><body><section class="raya-numbered-object" '
+        'id="raya-object-main-theorem" data-object-id="main-theorem">'
+        '<span class="raya-numbered-object-reference">Theorem 1</span>'
+        '</section><p><a href="#raya-object-main-theorem">Theorem 1</a></p>'
+        "</body></html>",
+        encoding="utf-8",
+    )
+    (debug / "desktop-index.png").write_bytes(b"png")
+    (debug / "summary.json").write_text(
+        json.dumps(
+            {
+                "captures": [
+                    {
+                        "page": "index",
+                        "url": "http://127.0.0.1/index.html",
+                        "viewport": {"name": "desktop", "width": 1280, "height": 900},
+                        "screenshot": str(debug / "desktop-index.png"),
+                        "mathjax_container_count": 0,
+                        "raw_tex_visible": False,
+                        "raw_tex_markers": [],
+                        "external_requests": [],
+                        "horizontal_overflow": 0,
+                        "numbered_content": {
+                            "objects": [
+                                {
+                                    "id": "main-theorem",
+                                    "reference_text": "Theorem 1",
+                                    "href": "#raya-object-main-theorem",
+                                }
+                            ],
+                            "references": [
+                                {
+                                    "text": "Theorem 1",
+                                    "href": "#raya-object-main-theorem",
+                                }
+                            ],
+                            "proofs": [],
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site, debug_dir=debug)
+
+    assert report["ok"] is False
+    index_check = next(
+        check for check in report["checks"] if check["id"] == "numbered-content:index"
+    )
+    assert index_check["status"] == "fail"
+    assert "data/numbered-objects.json is missing" in index_check["message"]
+
+
 def test_render_debug_report_fails_when_proof_target_text_is_not_in_index(
     tmp_path: Path,
 ) -> None:

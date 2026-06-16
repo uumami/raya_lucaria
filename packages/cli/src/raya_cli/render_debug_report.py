@@ -388,6 +388,10 @@ def _captures_need_numbered_index(captures: list[dict[str, Any]]) -> bool:
         numbered_content = capture.get("numbered_content")
         if not isinstance(numbered_content, dict):
             continue
+        objects = _numbered_evidence_items(numbered_content.get("objects"))
+        references = _numbered_evidence_items(numbered_content.get("references"))
+        if objects or references:
+            return True
         proofs = _numbered_evidence_items(numbered_content.get("proofs"))
         if any(proof.get("target_text") for proof in proofs):
             return True
