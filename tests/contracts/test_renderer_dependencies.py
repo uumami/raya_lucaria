@@ -227,6 +227,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
     required = {
         "docs/guides/en/professors/index.md": [
             "::: theorem",
+            "::: problem",
             "`remark`",
             "`scannable`",
             "`solution`",
@@ -238,6 +239,9 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "page/section",
             "not numbered objects",
             "any numbered object",
+            '::: hint {#hint-',
+            '::: solution {#solution-',
+            '::: answer {#answer-',
             "`@id` shorthand",
             "`raya:ref/id`",
             "Do not write LaTeX `\\label` or `\\ref`",
@@ -279,6 +283,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
         ],
         "docs/guides/es/profesores/index.md": [
             "::: theorem",
+            "::: problem",
             "`remark`",
             "`scannable`",
             "`solution`",
@@ -290,6 +295,9 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "pagina/seccion",
             "no son objetos numerados",
             "cualquier objeto numerado",
+            '::: hint {#hint-',
+            '::: solution {#solution-',
+            '::: answer {#answer-',
             "forma abreviada `@id`",
             "enlaces `raya:ref/id`",
             "referencias cruzadas de Raya",

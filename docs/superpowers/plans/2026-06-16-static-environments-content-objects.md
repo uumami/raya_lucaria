@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10, `pytest`, Playwright/Chromium e2e tests, Raya schema/static/CLI packages, Markdown fixture content, build-time MathJax resources.
 
+**Completion note:** Implemented on branch `new_rayalucaria`.
+Verification included focused contracts/e2e tests,
+`./scripts/check-render-debug.sh`, `./scripts/check.sh`, and
+`./scripts/check-docker.sh`.
+
 ---
 
 ## File Structure

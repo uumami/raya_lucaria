@@ -68,7 +68,35 @@ $$
 I\vect{v}=\vect{v}.
 $$
 :::
+
+::: problem {#matrix-practice title="Practica de matrices"}
+Calcula $A\vect{x}$ para
+$$
+A=\begin{bmatrix}1&2\\0&1\end{bmatrix},
+\qquad
+\vect{x}=\begin{bmatrix}x_1\\x_2\end{bmatrix}.
+$$
+:::
+
+::: hint {#hint-matrix-practice of="matrix-practice" title="Inicio"}
+Multiplica una fila a la vez.
+:::
+
+::: solution {#solution-matrix-practice of="matrix-practice" title="Solucion desarrollada"}
+El producto es
+$$
+A\vect{x}=\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}.
+$$
+:::
+
+::: answer {#answer-matrix-practice of="matrix-practice"}
+$\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}$
+:::
 ```
+
+Los bloques `hint`, `solution` y `answer` anteriores apoyan
+`matrix-practice`; se renderizan en la pagina pero no crean registros en
+`data/numbered-objects.json`.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 

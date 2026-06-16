@@ -68,7 +68,35 @@ $$
 I\vect{v}=\vect{v}.
 $$
 :::
+
+::: problem {#matrix-practice title="Matrix practice"}
+Compute $A\vect{x}$ for
+$$
+A=\begin{bmatrix}1&2\\0&1\end{bmatrix},
+\qquad
+\vect{x}=\begin{bmatrix}x_1\\x_2\end{bmatrix}.
+$$
+:::
+
+::: hint {#hint-matrix-practice of="matrix-practice" title="Start"}
+Multiply one row at a time.
+:::
+
+::: solution {#solution-matrix-practice of="matrix-practice" title="Worked solution"}
+The product is
+$$
+A\vect{x}=\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}.
+$$
+:::
+
+::: answer {#answer-matrix-practice of="matrix-practice"}
+$\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}$
+:::
 ```
+
+The `hint`, `solution`, and `answer` blocks above support
+`matrix-practice`; they render on the page but do not create records in
+`data/numbered-objects.json`.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 
