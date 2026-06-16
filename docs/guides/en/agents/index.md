@@ -27,8 +27,9 @@ For numbered-content failures, compare five surfaces in order: the source direct
 For proof blocks, validate `of` targets against `data/numbered-objects.json`; do not introduce LaTeX `\label`, `\ref`, `\begin{proof}`, or browser-side MathJax. Proofs render as static environments and should not appear as numbered-index records.
 
 For static-environment failures, inspect the source directive, the build
-diagnostic, the target record in `data/numbered-objects.json`, the rendered
-heading/anchor, and render-debug evidence from the `reader-ux` fixture.
+diagnostic, the target record in `data/numbered-objects.json` when `of` is present,
+the rendered heading/anchor, and render-debug evidence from the `reader-ux`
+fixture.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

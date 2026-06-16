@@ -237,6 +237,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "course-level",
             "page/section",
             "not numbered objects",
+            "any numbered object",
             "`@id` shorthand",
             "`raya:ref/id`",
             "Do not write LaTeX `\\label` or `\\ref`",
@@ -273,6 +274,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "`caption`",
             "`equation`",
             "rendered page anchor",
+            "when `of` is present",
             "instead of looking for LaTeX `\\label` or `\\ref` support",
         ],
         "docs/guides/es/profesores/index.md": [
@@ -287,6 +289,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "nivel de curso",
             "pagina/seccion",
             "no son objetos numerados",
+            "cualquier objeto numerado",
             "forma abreviada `@id`",
             "enlaces `raya:ref/id`",
             "referencias cruzadas de Raya",
@@ -324,6 +327,7 @@ def test_role_docs_cover_numbered_objects_and_references() -> None:
             "`caption`",
             "`equation`",
             "ancla renderizada",
+            "si `of` esta presente",
             "en vez de buscar soporte LaTeX `\\label` o `\\ref`",
         ],
     }

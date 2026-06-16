@@ -52,9 +52,10 @@ Los bloques de prueba pueden apuntar a teoremas, tareas, problemas, figuras, tab
 
 Usa entornos estaticos para apoyo alrededor de objetos numerados. `proof`,
 `solution`, `hint` y `answer` se renderizan durante el build y pueden usar
-`of="object-id"` para apuntar a un teorema, problema, actividad, tarea,
-asignacion, figura, tabla o ecuacion; no son objetos numerados y no crean
-registros en `data/numbered-objects.json`.
+`of="object-id"` para apuntar a cualquier objeto numerado, incluidos objetos
+tipo teorema, objetos de practica, figuras, tablas, ecuaciones y familias
+configuradas del curso; no son objetos numerados y no crean registros en
+`data/numbered-objects.json`.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

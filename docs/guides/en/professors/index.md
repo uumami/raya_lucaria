@@ -52,9 +52,10 @@ Proof blocks can point to theorems, homework, problems, figures, tables, equatio
 
 Use static environments for support around numbered objects. `proof`,
 `solution`, `hint`, and `answer` render during build and may use
-`of="object-id"` to target a theorem, problem, activity, homework, assignment,
-figure, table, or equation. They are not numbered objects and do not create
-records in `data/numbered-objects.json`.
+`of="object-id"` to target any numbered object, including theorem-like objects,
+practice objects, figures, tables, equations, and configured course families.
+They are not numbered objects and do not create records in
+`data/numbered-objects.json`.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
