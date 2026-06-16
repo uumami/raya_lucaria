@@ -558,7 +558,7 @@ In `docs/guides/es/profesores/index.md`, after the paragraph that starts `Para n
 ```markdown
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.
 
-Hasta que llegue la siguiente feature de theorems/proofs, escribe material tipo theorem con Markdown actual: headings, etiquetas en prosa como `Theorem` y `Proof`, callouts cuando ayuden, y math display dentro de esas secciones. Numeracion automatica de theorems, labels de ecuaciones, `\label`, `\ref` e indices de theorems estan planeados para el siguiente loop, no son comportamiento actual.
+Nota de supersesion: esta guia de Junio 15 describia el baseline anterior. El soporte actual para objetos numerados y proof blocks esta en `docs/superpowers/specs/2026-06-15-numbered-objects-cross-references-design.md`, `docs/superpowers/specs/2026-06-16-proof-blocks-design.md` y `docs/superpowers/plans/2026-06-16-proof-blocks.md`.
 ```
 
 - [ ] **Step 2: Update student guidance in Spanish**
