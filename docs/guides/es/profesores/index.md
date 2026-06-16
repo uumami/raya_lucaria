@@ -46,7 +46,7 @@ Usa [el criterio de compacidad](raya:ref/compactness) en tu demostracion.
 
 Theorem y corollary pueden compartir una secuencia de theorem; equation, figure, table, problem, homework y assignment pueden compartir o separar secuencias segun la configuracion. Usa shorthand `@id` o links `raya:ref/id` para referencias source. No escribas `\label` o `\ref` de LaTeX esperando cross-references de Raya.
 
-Los bloques de proof pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; el proof se renderiza como entorno estatico y no crea otro objeto numerado.
+Los bloques de prueba pueden apuntar a theorems, homework, problems, figures, tables, equations, definitions y activities mientras cada objeto conserva su numeracion independiente. Usa `of` para nombrar el objeto numerado que se esta probando; la prueba se renderiza como entorno estatico y no crea otro objeto numerado.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
