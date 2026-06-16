@@ -267,6 +267,11 @@ def test_render_fixture_numbered_objects_are_static_and_local(
                                 .filter((value) => value.includes('MathJax')),
                               visibleRawTex: document.body.innerText.includes('\\\\begin{bmatrix}'),
                               mathjaxContainers: document.querySelectorAll('mjx-container').length,
+                              proofCount: document.querySelectorAll('.raya-proof').length,
+                              proofHeading: document.querySelector('.raya-proof-heading')?.textContent || '',
+                              proofHasMath: Boolean(document.querySelector('.raya-proof mjx-container')),
+                              proofIds: Array.from(document.querySelectorAll('.raya-proof[id]'))
+                                .map((node) => node.id),
                             };
                         }"""
                     )
@@ -298,6 +303,10 @@ def test_render_fixture_numbered_objects_are_static_and_local(
     assert probe["mathJaxScripts"] == []
     assert probe["visibleRawTex"] is False
     assert probe["mathjaxContainers"] >= 3
+    assert probe["proofCount"] >= 2
+    assert "Proof of Theorem 3.1" in probe["proofHeading"]
+    assert probe["proofHasMath"]
+    assert "raya-proof-proof-main" in probe["proofIds"]
     assert external_requests == []
 
 

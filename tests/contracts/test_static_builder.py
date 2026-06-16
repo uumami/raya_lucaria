@@ -1193,6 +1193,7 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "Macro Redefinition" in math_authoring_visible
     assert "mjx-container" in math_authoring_html
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
+    assert "Proof blocks are rendered statically" in math_authoring_visible
     assert "Numbered objects and references are current renderer behavior" in math_authoring_visible
     assert "@id shorthand references" in math_authoring_visible
     assert "raya:ref/id" in math_authoring_visible
@@ -1225,12 +1226,19 @@ def test_rich_static_fixture_renders_markdown_math_code_and_assets(
     assert "Fixture theorem" in numbered_objects_visible
     assert "Basis" in numbered_objects_visible
     assert "Homework fixture" in numbered_objects_visible
+    assert "Proof of Theorem 3.1" in numbered_objects_visible
+    assert "Fixture proof" in numbered_objects_visible
+    assert "Proof of Activity 3.1" in numbered_objects_visible
+    assert "Solution sketch" in numbered_objects_visible
     assert 'class="raya-numbered-object raya-numbered-object--margin ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--banded ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--caption ' in numbered_objects_html
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html
+    assert 'class="raya-proof"' in numbered_objects_html
+    assert 'id="raya-proof-proof-main"' in numbered_objects_html
     assert "raya-numbered-object-reference" in numbered_objects_html
     assert "raya-numbered-object-title" in numbered_objects_html
+    assert "RAYA_PROOF_" not in numbered_objects_visible
     assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}" in rich_css
     assert ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}" in rich_css
     assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n  overflow: hidden;\n}" not in rich_css

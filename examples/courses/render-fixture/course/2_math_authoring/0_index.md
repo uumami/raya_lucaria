@@ -111,7 +111,9 @@ $$
 (a+b)(a+b) = a^2 + ab + ba + b^2.
 $$
 
-The labels `Theorem` and `Proof` are authored text in this baseline.
+Proof blocks are rendered statically in the numbered object fixture page. They can
+point to theorems, homework, or other numbered course objects while keeping math
+pre-rendered at build time.
 
 ## Macro Redefinition
 
