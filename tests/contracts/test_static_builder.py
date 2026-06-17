@@ -1531,6 +1531,12 @@ def test_render_fixture_builds_rich_static_pages(
     assert reader_ux_html_path.exists()
     reader_ux_html = reader_ux_html_path.read_text(encoding="utf-8")
     reader_ux_visible = _visible_text(reader_ux_html)
+    authoring_matrix_html_path = (
+        course / "artifact" / "site" / "authoring-matrix" / "index.html"
+    )
+    assert authoring_matrix_html_path.exists()
+    authoring_matrix_html = authoring_matrix_html_path.read_text(encoding="utf-8")
+    authoring_matrix_visible = _visible_text(authoring_matrix_html)
     math_authoring_visible = _visible_text(math_authoring_html)
     numbered_index = json.loads(
         (
@@ -1570,6 +1576,11 @@ def test_render_fixture_builds_rich_static_pages(
         "orthogonal-table",
         "orthogonal-problem",
         "orthogonal-activity",
+        "authoring-theorem",
+        "authoring-equation",
+        "authoring-figure",
+        "authoring-table",
+        "authoring-activity",
     }
     assert set(numbered_index["by_id"]) >= expected_numbered_ids
     by_id = {item["id"]: item for item in numbered_index["objects"]}
@@ -1584,6 +1595,13 @@ def test_render_fixture_builds_rich_static_pages(
     assert by_id["orthogonal-activity"]["style"] == "scannable"
     assert by_id["orthogonal-figure"]["style"] == "caption"
     assert by_id["orthogonal-equation"]["style"] == "equation"
+    assert by_id["authoring-theorem"]["href"] == (
+        "authoring-matrix/#raya-object-authoring-theorem"
+    )
+    assert by_id["authoring-theorem"]["style"] == "scannable"
+    assert by_id["authoring-equation"]["style"] == "equation"
+    assert by_id["authoring-figure"]["style"] == "caption"
+    assert by_id["authoring-activity"]["label"] == "Activity"
     main_theorem = numbered_index["objects"][numbered_index["by_id"]["main-theorem"]]
     assert main_theorem["href"] == "numbered-objects/#raya-object-main-theorem"
     assert '<link rel="stylesheet" href="_raya/render/rich.css">' in html
@@ -1749,6 +1767,41 @@ def test_render_fixture_builds_rich_static_pages(
     assert "raya-numbered-object-badge" in reader_ux_html
     assert "mjx-container" in reader_ux_html
     assert "\\begin{bmatrix}" not in reader_ux_visible
+
+    for expected_text in (
+        "Authoring Matrix Fixture",
+        "Theorem 5.1",
+        "Equation 5.1",
+        "Figure 5.1",
+        "Table 5.1",
+        "Activity 5.1",
+        "Proof of Theorem 5.1",
+        "Hint for Activity 5.1",
+        "Solution of Activity 5.1",
+        "Answer to Activity 5.1",
+        "combined authoring matrix",
+    ):
+        assert expected_text in authoring_matrix_visible
+    assert 'data-raya-skin="practice-lab"' in authoring_matrix_html
+    assert 'class="raya-numbered-object raya-numbered-object--scannable ' in (
+        authoring_matrix_html
+    )
+    assert 'class="raya-numbered-object raya-numbered-object--caption ' in (
+        authoring_matrix_html
+    )
+    assert 'class="raya-numbered-object raya-numbered-object--equation ' in (
+        authoring_matrix_html
+    )
+    assert "raya-static-environment--hint" in authoring_matrix_html
+    assert "raya-static-environment--solution" in authoring_matrix_html
+    assert "raya-static-environment--answer" in authoring_matrix_html
+    assert "raya-numbered-object-reference" in authoring_matrix_html
+    assert 'src="../_raya/assets/_source/_local/diagrams/static-path.svg"' in (
+        authoring_matrix_html
+    )
+    assert "mjx-container" in authoring_matrix_html
+    assert "@authoring-theorem" not in authoring_matrix_visible
+    assert "\\begin{bmatrix}" not in authoring_matrix_visible
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:
