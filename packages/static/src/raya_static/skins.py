@@ -376,7 +376,10 @@ def _validate_contrast(
                 ),
                 path=path,
                 field=f"tokens.color.{foreground}",
-                next_action="Choose colors with at least 4.5:1 contrast.",
+                next_action=(
+                    f"Choose colors for tokens.color.{foreground} and "
+                    f"tokens.color.{background} with at least 4.5:1 contrast."
+                ),
             )
 
 

@@ -136,9 +136,15 @@ def test_build_applies_nearest_section_skin_to_descendant_pages(
     )
     _write_test_skin(course / "skins" / "warm-academic.yaml", "warm-academic")
     _write_test_skin(course / "skins" / "practice-lab.yaml", "practice-lab")
+    _write_test_skin(course / "skins" / "topic-lab.yaml", "topic-lab")
     selector = course / "course" / "1_unit" / "_raya" / "skin.yaml"
     selector.parent.mkdir(parents=True)
     selector.write_text("render:\n  skin: practice-lab\n", encoding="utf-8")
+    topic_selector = (
+        course / "course" / "1_unit" / "1_topic" / "_raya" / "skin.yaml"
+    )
+    topic_selector.parent.mkdir(parents=True)
+    topic_selector.write_text("render:\n  skin: topic-lab\n", encoding="utf-8")
 
     report = build_course(course)
 
@@ -154,7 +160,7 @@ def test_build_applies_nearest_section_skin_to_descendant_pages(
     ).read_text(encoding="utf-8")
     assert 'data-raya-skin="warm-academic"' in root_html
     assert 'data-raya-skin="practice-lab"' in unit_html
-    assert 'data-raya-skin="practice-lab"' in topic_html
+    assert 'data-raya-skin="topic-lab"' in topic_html
 
 
 def test_build_fails_for_unknown_course_skin(tmp_path: Path) -> None:
@@ -240,7 +246,9 @@ def test_build_fails_for_low_contrast_skin(tmp_path: Path) -> None:
 
     assert not report.ok
     assert any(
-        "contrast" in diagnostic.format().lower()
+        "Skin contrast for text on page is too low" in diagnostic.format()
+        and "tokens.color.text" in diagnostic.format()
+        and "tokens.color.page" in diagnostic.format()
         for diagnostic in report.diagnostics
     )
 

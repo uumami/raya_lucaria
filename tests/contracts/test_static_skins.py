@@ -91,6 +91,82 @@ def test_invalid_utf8_skin_yaml_reports_error_without_raising(
     )
 
 
+def test_low_contrast_skin_profile_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "low-contrast.yaml"
+    skin_path.write_text(
+        _skin_yaml("low-contrast").replace(
+            'text: "#1f2328"',
+            'text: "#ffffff"',
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "low-contrast"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "low-contrast" not in context.profiles
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message.startswith("Skin contrast for text on page is too low")
+        and diagnostic.field == "tokens.color.text"
+        and diagnostic.path == skin_path
+        and "tokens.color.text" in diagnostic.next_action
+        and "tokens.color.page" in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_malformed_color_reports_token_error_without_contrast_crash(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "bad-color.yaml"
+    skin_path.write_text(
+        _skin_yaml("bad-color").replace(
+            'page: "#ffffff"',
+            'page: "white"',
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "bad-color"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "bad-color" not in context.profiles
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message == "Skin color token 'page' must be a 6-digit hex color"
+        and diagnostic.field == "tokens.color.page"
+        and diagnostic.path == skin_path
+        for diagnostic in report.diagnostics
+    )
+    assert not any(
+        "contrast" in diagnostic.message.lower()
+        for diagnostic in report.diagnostics
+    )
+
+
 def test_nearest_section_selector_resolution(tmp_path: Path) -> None:
     source_root = tmp_path / "course"
     parent = source_root / "1_parent"
