@@ -89,6 +89,73 @@ def test_invalid_skin_profile_id_reports_error_and_is_not_loaded(
     )
 
 
+def test_duplicate_skin_profile_id_reports_error_and_keeps_original(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / f"{DEFAULT_SKIN_ID}.yaml"
+    skin_path.write_text(
+        _skin_yaml(DEFAULT_SKIN_ID),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": DEFAULT_SKIN_ID}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert context.profiles[DEFAULT_SKIN_ID].name == "Raya Default"
+    assert context.profiles[DEFAULT_SKIN_ID].source_path is None
+    assert any(
+        diagnostic.message == f"Duplicate skin profile ID '{DEFAULT_SKIN_ID}'"
+        and diagnostic.field == "id"
+        and diagnostic.path == skin_path
+        and "unique skin profile ID" in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_skin_profile_filename_id_mismatch_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "filename-skin.yaml"
+    skin_path.write_text(
+        _skin_yaml("profile-skin"),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "profile-skin"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "profile-skin" not in context.profiles
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message
+        == "Skin profile ID 'profile-skin' must match filename 'filename-skin'"
+        and diagnostic.field == "id"
+        and diagnostic.path == skin_path
+        and "match" in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
+
+
 def test_skin_profile_rejects_unsupported_css_fields(tmp_path: Path) -> None:
     course = tmp_path
     source_root = course / "course"
@@ -155,6 +222,81 @@ def test_skin_profile_rejects_extra_token_keys(tmp_path: Path) -> None:
     assert any(
         diagnostic.message == "Skin token group contains unsupported key 'custom'"
         and diagnostic.field == "tokens.color.custom"
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_invalid_skin_profile_density_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "dense-skin.yaml"
+    skin_path.write_text(
+        _skin_yaml("dense-skin").replace(
+            "  density: comfortable\n",
+            "  density: dense\n",
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "dense-skin"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "dense-skin" not in context.profiles
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message == "Skin profile density is invalid"
+        and diagnostic.field == "tokens.density"
+        and diagnostic.path == skin_path
+        and "comfortable" in diagnostic.next_action
+        and "compact" in diagnostic.next_action
+        and "spacious" in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_unsupported_skin_profile_font_stack_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "font-skin.yaml"
+    skin_path.write_text(
+        _skin_yaml("font-skin").replace(
+            '    body: "system-ui"\n',
+            '    body: "Georgia, serif"\n',
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "font-skin"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "font-skin" not in context.profiles
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message == "Skin font token 'body' is not supported"
+        and diagnostic.field == "tokens.font.body"
+        and diagnostic.path == skin_path
+        and "system-ui" in diagnostic.next_action
+        and "ui-monospace" in diagnostic.next_action
         for diagnostic in report.diagnostics
     )
 
@@ -286,6 +428,71 @@ def test_nearest_section_selector_resolution(tmp_path: Path) -> None:
     )
 
     assert skin_id_for_source_path(page, context) == "child-skin"
+
+
+def test_section_selector_missing_render_skin_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    section = source_root / "1_section"
+    selector_dir = section / "_raya"
+    selector_dir.mkdir(parents=True)
+    (section / "0_index.md").write_text("# Section\n", encoding="utf-8")
+    selector_path = selector_dir / "skin.yaml"
+    selector_path.write_text("render: {}\n", encoding="utf-8")
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert context.section_selectors == ()
+    assert any(
+        diagnostic.message == "Section skin selector is missing render.skin"
+        and diagnostic.field == "render.skin"
+        and diagnostic.path == selector_path
+        and "render.skin" in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_section_selector_unknown_render_skin_reports_error_and_is_not_loaded(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    section = source_root / "1_section"
+    selector_dir = section / "_raya"
+    selector_dir.mkdir(parents=True)
+    (section / "0_index.md").write_text("# Section\n", encoding="utf-8")
+    selector_path = selector_dir / "skin.yaml"
+    selector_path.write_text(
+        "render:\n"
+        "  skin: missing-skin\n",
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert context.section_selectors == ()
+    assert any(
+        diagnostic.message == "Unknown render skin 'missing-skin'"
+        and diagnostic.field == "render.skin"
+        and diagnostic.path == selector_path
+        and "Use one of:" in diagnostic.next_action
+        and DEFAULT_SKIN_ID in diagnostic.next_action
+        for diagnostic in report.diagnostics
+    )
 
 
 def test_render_skin_css_is_deterministic_and_writes_token_variables() -> None:
