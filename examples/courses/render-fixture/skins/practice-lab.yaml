@@ -1,0 +1,19 @@
+id: practice-lab
+name: Practice Lab
+tokens:
+  color:
+    page: "#ffffff"
+    surface: "#fff8c5"
+    text: "#1f2328"
+    muted: "#57606a"
+    accent: "#8250df"
+    accent_soft: "#fbefff"
+    border: "#d0d7de"
+    success: "#1a7f37"
+    warning: "#9a6700"
+    danger: "#cf222e"
+  font:
+    body: "system-ui"
+    heading: "system-ui"
+    mono: "ui-monospace"
+  density: comfortable

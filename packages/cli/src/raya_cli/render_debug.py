@@ -225,6 +225,9 @@ def _capture_render_debug_artifact(
     capture = {
         "page": page_name,
         "url": page.url,
+        "skin": page.evaluate(
+            '() => document.body ? document.body.getAttribute("data-raya-skin") : null'
+        ),
         "viewport": {
             "name": viewport_name,
             "width": viewport["width"],

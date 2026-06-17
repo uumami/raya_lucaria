@@ -11,6 +11,7 @@ hierarchy:
     - key: topic
       label: Topic
 render:
+  skin: warm-academic
   numbered_objects:
     numbering: page-hierarchy
     sequences:

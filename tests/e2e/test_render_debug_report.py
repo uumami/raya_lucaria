@@ -53,6 +53,7 @@ def _write_reader_ux_report_fixture(
     debug = tmp_path / "debug"
     site.mkdir()
     debug.mkdir()
+    _write_skin_css(site)
     (site / "index.html").write_text("<!doctype html><html></html>", encoding="utf-8")
     reader_ux = site / "reader-ux"
     reader_ux.mkdir()
@@ -79,6 +80,7 @@ def _write_reader_ux_report_fixture(
                 "raw_tex_markers": [],
                 "external_requests": [],
                 "horizontal_overflow": 0,
+                "skin": "warm-academic",
                 "numbered_content": {"objects": [], "references": [], "proofs": []},
                 "staticEnvironments": [],
             }
@@ -115,6 +117,7 @@ def _reader_capture(
         "raw_tex_markers": [],
         "external_requests": [],
         "horizontal_overflow": 0,
+        "skin": "practice-lab",
         "numbered_content": {"objects": [], "references": [], "proofs": []},
     }
     if include_static_environments:
@@ -149,6 +152,67 @@ def test_inspection_ignores_blocked_renderer_terms_in_prose_and_code(
 
     assert report["ok"] is True, report["diagnostics"]
     assert report["diagnostics"] == []
+
+
+def test_render_debug_report_passes_when_skin_css_and_capture_skin_exist(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html>
+          <body data-raya-skin="practice-lab">
+            <main><p>Skin evidence fixture.</p></main>
+          </body>
+        </html>
+        """,
+        skin="practice-lab",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    assert report["ok"] is True, report["diagnostics"]
+    skin_checks = {
+        check["id"]: check["status"]
+        for check in report["checks"]
+        if check["id"].startswith("site:skin")
+        or check["id"].startswith("capture-skin:")
+    }
+    assert skin_checks == {
+        "site:skin:css": "pass",
+        "capture-skin:index:desktop": "pass",
+        "capture-skin:index:mobile": "pass",
+    }
+
+
+def test_render_debug_report_fails_when_capture_skin_is_missing(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html>
+          <body>
+            <main><p>Missing skin evidence fixture.</p></main>
+          </body>
+        </html>
+        """,
+        skin="",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    assert report["ok"] is False
+    skin_check = next(
+        check
+        for check in report["checks"]
+        if check["id"] == "capture-skin:index:desktop"
+    )
+    assert skin_check["status"] == "fail"
+    assert "missing active skin" in skin_check["message"]
+    assert "http://127.0.0.1/index.html" in skin_check["message"]
 
 
 def test_copy_static_site_rejects_destination_under_source(tmp_path: Path) -> None:
@@ -237,6 +301,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
     debug = tmp_path / "debug"
     site.mkdir()
     debug.mkdir()
+    _write_skin_css(site)
     data = site / "data"
     data.mkdir()
     (data / "numbered-objects.json").write_text(
@@ -321,6 +386,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                         "raw_tex_markers": [],
                         "external_requests": [],
                         "horizontal_overflow": 0,
+                        "skin": "warm-academic",
                         "numbered_content": {
                             "objects": [
                                 {
@@ -353,6 +419,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                         "raw_tex_markers": [],
                         "external_requests": [],
                         "horizontal_overflow": 0,
+                        "skin": "warm-academic",
                         "numbered_content": {
                             "objects": [],
                             "references": [],
@@ -370,6 +437,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                         "raw_tex_markers": [],
                         "external_requests": [],
                         "horizontal_overflow": 0,
+                        "skin": "practice-lab",
                         "numbered_content": {
                             "objects": [],
                             "references": [],
@@ -387,6 +455,7 @@ def test_render_debug_report_enriches_numbered_content_from_index(
                         "raw_tex_markers": [],
                         "external_requests": [],
                         "horizontal_overflow": 0,
+                        "skin": "practice-lab",
                         "numbered_content": {
                             "objects": [],
                             "references": [],
@@ -905,11 +974,14 @@ def test_copy_static_site_rejects_destination_containing_source(tmp_path: Path) 
 def _write_debug_fixture(
     tmp_path: Path,
     index_html: str,
+    *,
+    skin: str = "warm-academic",
 ) -> tuple[Path, Path]:
     site_dir = tmp_path / "site"
     debug_dir = tmp_path / "debug"
     site_dir.mkdir()
     debug_dir.mkdir()
+    _write_skin_css(site_dir)
     (site_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     captures = []
@@ -934,6 +1006,7 @@ def _write_debug_fixture(
                 "raw_tex_markers": [],
                 "external_requests": [],
                 "horizontal_overflow": 0,
+                "skin": skin,
                 "numbered_content": {"objects": [], "references": [], "proofs": []},
             }
         )
@@ -942,3 +1015,13 @@ def _write_debug_fixture(
         encoding="utf-8",
     )
     return site_dir, debug_dir
+
+
+def _write_skin_css(site_dir: Path) -> None:
+    skin_css = site_dir / "_raya" / "render" / "skin.css"
+    skin_css.parent.mkdir(parents=True, exist_ok=True)
+    skin_css.write_text(
+        '[data-raya-skin="warm-academic"] { --raya-color-page: #ffffff; }\n'
+        '[data-raya-skin="practice-lab"] { --raya-color-page: #ffffff; }\n',
+        encoding="utf-8",
+    )

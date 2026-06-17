@@ -88,6 +88,7 @@ def inspect_render_debug(
     summary = _read_summary(summary_path, report)
     captures = _capture_items(summary, summary_path, report)
     _inspect_captures(site_root, debug_root, captures, report)
+    _inspect_capture_skins(captures, report)
     numbered_index = _read_numbered_index(
         site_root,
         report,
@@ -334,6 +335,39 @@ def _capture_failures(
             f"page={page!r} viewport={viewport_name!r}"
         )
     return failures
+
+
+def _inspect_capture_skins(
+    captures: list[dict[str, Any]],
+    report: dict[str, Any],
+) -> None:
+    for capture in captures:
+        page = capture.get("page")
+        viewport = capture.get("viewport")
+        viewport_name = viewport.get("name") if isinstance(viewport, dict) else None
+        if not isinstance(page, str) or not isinstance(viewport_name, str):
+            continue
+        skin = capture.get("skin")
+        skin_id = skin.strip() if isinstance(skin, str) else ""
+        page_url = str(capture.get("url") or page)
+        screenshot = Path(str(capture.get("screenshot", "")))
+        _add_check(
+            report,
+            check_id=f"capture-skin:{page}:{viewport_name}",
+            status="pass" if skin_id else "fail",
+            path=screenshot,
+            message=(
+                f"active skin {skin_id!r} captured for page {page_url}"
+                if skin_id
+                else f"missing active skin for page {page_url}"
+            ),
+            next_action=(
+                "Regenerate render debug capture artifacts after rebuilding the site."
+                if not skin_id
+                else None
+            ),
+            details={"skin": skin_id, "page_url": page_url},
+        )
 
 
 def _read_numbered_index(
@@ -602,6 +636,7 @@ def _inspect_static_site(
     *,
     context: str,
 ) -> None:
+    _inspect_skin_css(site_dir, report, context=context)
     html_paths = sorted(site_dir.rglob("*.html")) if site_dir.is_dir() else []
     check_prefix = f"{context}:html"
     if not html_paths:
@@ -661,6 +696,33 @@ def _inspect_static_site(
 
     if math_present:
         _inspect_local_mathjax_resources(site_dir, report, context=context)
+
+
+def _inspect_skin_css(
+    site_dir: Path,
+    report: dict[str, Any],
+    *,
+    context: str,
+) -> None:
+    css_path = site_dir / "_raya" / "render" / "skin.css"
+    if not css_path.is_file() or css_path.stat().st_size <= 0:
+        _add_check(
+            report,
+            check_id=f"{context}:skin:css",
+            status="fail",
+            path=css_path,
+            message=f"missing or empty local skin.css at {css_path}",
+            next_action="Rebuild the artifact so skin.css is copied under _raya/render/.",
+        )
+        return
+    _add_check(
+        report,
+        check_id=f"{context}:skin:css",
+        status="pass",
+        path=css_path,
+        message=f"local skin.css exists at {css_path}",
+        details={"bytes": css_path.stat().st_size},
+    )
 
 
 def _inspect_copied_site(

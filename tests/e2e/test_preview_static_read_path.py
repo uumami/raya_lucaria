@@ -93,6 +93,27 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
     assert all(len(font) > 0 for font in math_fonts)
 
 
+def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
+    from raya_static.builder import build_course
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    index_html = (site / "index.html").read_text(encoding="utf-8")
+    reader_html = (site / "reader-ux" / "index.html").read_text(encoding="utf-8")
+    skin_css = (site / "_raya" / "render" / "skin.css").read_text(encoding="utf-8")
+
+    assert 'data-raya-skin="warm-academic"' in index_html
+    assert 'data-raya-skin="practice-lab"' in reader_html
+    assert '[data-raya-skin="warm-academic"]' in skin_css
+    assert '[data-raya-skin="practice-lab"]' in skin_css
+    assert "_raya/render/skin.css" in index_html
+    assert "../_raya/render/skin.css" in reader_html
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:
