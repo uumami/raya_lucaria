@@ -12,6 +12,10 @@ This page is foundation truth for learning intent. It does not make every princi
 
 The core phrases for this contract are cognitive load, retrieval practice,
 spaced practice, self-explanation, and universal design.
+The full learning-science surface also includes coherence, signaling, and
+segmenting; interleaving; worked examples; fading; metacognition; calibration;
+motivation; autonomy; relevance; belonging; accessibility; and the Static HTML
+Boundary.
 
 ## Status Labels
 

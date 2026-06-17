@@ -238,10 +238,22 @@ def test_learning_science_foundation_pages_are_rendered() -> None:
     contract_text = contract.read_text(encoding="utf-8")
     for needle in (
         "cognitive load",
+        "coherence, signaling, and segmenting",
         "retrieval practice",
         "spaced practice",
+        "interleaving",
+        "worked examples",
+        "fading",
         "self-explanation",
+        "metacognition",
+        "calibration",
+        "motivation",
+        "autonomy",
+        "relevance",
+        "belonging",
         "universal design",
+        "accessibility",
+        "Static HTML Boundary",
     ):
         assert needle in learning_text
     for needle in (
@@ -252,6 +264,11 @@ def test_learning_science_foundation_pages_are_rendered() -> None:
         "right learning rail",
         "no personal progress",
         "no browser-side MathJax",
+        "no external CSS, font, script, renderer, or CDN requests",
+        "no hidden schema change",
+        "raw `summary` or `status`",
+        "Related practice index",
+        "Personal progress, analytics, adaptive review, spaced queues",
     ):
         assert needle in contract_text
 
