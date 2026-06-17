@@ -480,9 +480,10 @@ img {
 .raya-inspection-main {
   margin: 0 auto;
   max-width: 76rem;
-  padding: 1rem;
+  padding: var(--raya-space-page);
 }
 .raya-course-title {
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.875rem;
   font-weight: 700;
   margin: 0 0 0.75rem;
@@ -509,7 +510,7 @@ nav[aria-label="Breadcrumbs"] {
 .raya-main {
   align-items: start;
   display: grid;
-  gap: 1.5rem;
+  gap: var(--raya-space-block);
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
 }
 .raya-article,
@@ -521,7 +522,7 @@ nav[aria-label="Breadcrumbs"] {
 }
 .raya-article,
 .raya-inspection-main {
-  padding: 1.25rem;
+  padding: var(--raya-space-panel);
 }
 .raya-article > :first-child,
 .raya-inspection-main > :first-child {
@@ -529,8 +530,8 @@ nav[aria-label="Breadcrumbs"] {
 }
 .raya-support-stack {
   display: grid;
-  gap: 1rem;
-  padding: 1rem;
+  gap: var(--raya-space-block);
+  padding: var(--raya-space-panel);
 }
 .raya-page-footer {
   color: var(--raya-color-muted);
@@ -566,11 +567,12 @@ nav[aria-label="Breadcrumbs"] {
   background: #24292f;
   color: #ffffff;
   display: inline-block;
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-family: var(--raya-font-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.8125rem;
   padding: 0.25rem 0.5rem;
 }
 .raya-code-block pre {
+  font-family: var(--raya-font-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
   margin: 0;
   overflow-x: auto;
   padding: 0.85rem 1rem;
@@ -609,6 +611,7 @@ nav[aria-label="Breadcrumbs"] {
   background: #f6f8fa;
   border-bottom: 1px solid #d8dee4;
   display: flex;
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   flex-wrap: wrap;
   gap: 0.35rem 0.5rem;
   margin: 0;
@@ -702,6 +705,7 @@ nav[aria-label="Breadcrumbs"] {
 }
 .raya-proof-heading {
   color: var(--raya-color-text);
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 650;
   margin: 0 0 0.55rem;
 }
@@ -743,6 +747,7 @@ nav[aria-label="Breadcrumbs"] {
 .raya-static-environment-heading {
   background: #f6f8fa;
   border-bottom: 1px solid #d8dee4;
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 650;
   margin: 0;
   padding: 0.6rem 0.85rem;

@@ -24,6 +24,8 @@ REQUIRED_COLOR_TOKENS = (
     "danger",
 )
 REQUIRED_FONT_TOKENS = ("body", "heading", "mono")
+ALLOWED_PROFILE_FIELDS = frozenset({"id", "name", "tokens"})
+ALLOWED_TOKEN_GROUPS = frozenset({"color", "font", "density"})
 ALLOWED_DENSITIES = frozenset({"comfortable", "compact", "spacious"})
 ALLOWED_FONT_STACKS = frozenset(
     {
@@ -34,6 +36,26 @@ ALLOWED_FONT_STACKS = frozenset(
         "monospace",
     }
 )
+DENSITY_SPACING = {
+    "compact": {
+        "page": "0.75rem",
+        "panel": "0.75rem",
+        "block": "0.85rem",
+        "inline": "0.5rem",
+    },
+    "comfortable": {
+        "page": "1rem",
+        "panel": "1rem",
+        "block": "1rem",
+        "inline": "0.75rem",
+    },
+    "spacious": {
+        "page": "1.5rem",
+        "panel": "1.25rem",
+        "block": "1.5rem",
+        "inline": "1rem",
+    },
+}
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 SKIN_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -98,8 +120,12 @@ def load_skin_context(
     profiles = dict(BUILT_IN_SKINS)
     _load_course_skin_profiles(course_root, profiles, report)
 
-    default_skin_id = _course_default_skin_id(course_config)
-    if not _valid_skin_id(default_skin_id):
+    default_skin_id = _course_default_skin_id(
+        course_config,
+        path=course_root / "raya.yaml",
+        report=report,
+    )
+    if default_skin_id != DEFAULT_SKIN_ID and not _valid_skin_id(default_skin_id):
         _report_invalid_skin_id(
             report,
             default_skin_id,
@@ -129,12 +155,25 @@ def load_skin_context(
     )
 
 
-def _course_default_skin_id(course_config: dict[str, Any]) -> str:
+def _course_default_skin_id(
+    course_config: dict[str, Any],
+    *,
+    path: Path,
+    report: ValidationReport,
+) -> str:
     render = course_config.get("render")
     if not isinstance(render, dict):
         return DEFAULT_SKIN_ID
+    if "skin" not in render:
+        return DEFAULT_SKIN_ID
     skin_id = render.get("skin")
     if not isinstance(skin_id, str) or not skin_id.strip():
+        report.add_error(
+            "render.skin must be a non-empty string",
+            path=path,
+            field="render.skin",
+            next_action="Set render.skin to a skin profile ID such as warm-academic.",
+        )
         return DEFAULT_SKIN_ID
     return skin_id
 
@@ -193,6 +232,14 @@ def _parse_skin_profile(
             next_action="Define id, name, and tokens in the skin YAML file",
         )
         return None
+    _validate_allowed_keys(
+        raw,
+        allowed=ALLOWED_PROFILE_FIELDS,
+        path=path,
+        field_prefix="",
+        label="Skin profile",
+        report=report,
+    )
 
     skin_id = raw.get("id")
     if not isinstance(skin_id, str) or not skin_id.strip():
@@ -234,6 +281,14 @@ def _parse_skin_profile(
             next_action="Define tokens.color, tokens.font, and tokens.density",
         )
         return None
+    _validate_allowed_keys(
+        tokens,
+        allowed=ALLOWED_TOKEN_GROUPS,
+        path=path,
+        field_prefix="tokens",
+        label="Skin profile tokens",
+        report=report,
+    )
 
     colors = _required_string_map(
         tokens.get("color"),
@@ -296,6 +351,15 @@ def _required_string_map(
             next_action=f"Define required keys: {', '.join(required)}",
         )
         return {}
+    allowed = frozenset(required)
+    _validate_allowed_keys(
+        raw,
+        allowed=allowed,
+        path=path,
+        field_prefix=field,
+        label="Skin token group",
+        report=report,
+    )
 
     values: dict[str, str] = {}
     for key in required:
@@ -311,6 +375,36 @@ def _required_string_map(
             continue
         values[key] = value
     return values
+
+
+def _validate_allowed_keys(
+    raw: dict[Any, Any],
+    *,
+    allowed: frozenset[str],
+    path: Path,
+    field_prefix: str,
+    label: str,
+    report: ValidationReport,
+) -> None:
+    for key in sorted(raw, key=str):
+        if key in allowed:
+            continue
+        field = f"{field_prefix}.{key}" if field_prefix else str(key)
+        if label == "Skin token group":
+            message = f"{label} contains unsupported key '{key}'"
+        elif label == "Skin profile tokens":
+            message = f"{label} contain unsupported field '{key}'"
+        else:
+            message = f"{label} contains unsupported field '{key}'"
+        report.add_error(
+            message,
+            path=path,
+            field=field,
+            next_action=(
+                "Remove this field. V1 skins only support semantic tokens, "
+                "not arbitrary CSS or extra style fields."
+            ),
+        )
 
 
 def _validate_colors(
@@ -544,6 +638,8 @@ def render_skin_css(context: SkinContext) -> str:
         for key in REQUIRED_FONT_TOKENS:
             lines.append(f"  --raya-font-{key}: {profile.fonts[key]};")
         lines.append(f"  --raya-density: {profile.density};")
+        for key, value in DENSITY_SPACING[profile.density].items():
+            lines.append(f"  --raya-space-{key}: {value};")
         lines.append("}")
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks) + "\n"

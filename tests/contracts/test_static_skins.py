@@ -12,6 +12,7 @@ from raya_static.skins import (
     render_skin_css,
     skin_id_for_source_path,
 )
+from raya_static.rendering import rich_render_css
 
 
 def test_unknown_default_skin_reports_error_and_falls_back(
@@ -32,6 +33,29 @@ def test_unknown_default_skin_reports_error_and_falls_back(
     assert context.default_skin_id == DEFAULT_SKIN_ID
     assert any(
         diagnostic.message == "Unknown render skin 'missing-skin'"
+        and diagnostic.field == "render.skin"
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_invalid_default_skin_type_reports_error(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": 123}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert context.default_skin_id == DEFAULT_SKIN_ID
+    assert any(
+        diagnostic.message == "render.skin must be a non-empty string"
         and diagnostic.field == "render.skin"
         for diagnostic in report.diagnostics
     )
@@ -61,6 +85,76 @@ def test_invalid_skin_profile_id_reports_error_and_is_not_loaded(
     assert "Bad_Skin" not in context.profiles
     assert any(
         diagnostic.field == "id" and "Invalid skin ID" in diagnostic.message
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_skin_profile_rejects_unsupported_css_fields(tmp_path: Path) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "unsupported.yaml"
+    skin_path.write_text(
+        _skin_yaml("unsupported").replace(
+            "tokens:\n",
+            'css: "body { color: red; }"\n'
+            "tokens:\n"
+            '  css: "body { color: red; }"\n',
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "unsupported"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "unsupported" not in context.profiles
+    assert any(
+        diagnostic.message == "Skin profile contains unsupported field 'css'"
+        and diagnostic.field == "css"
+        for diagnostic in report.diagnostics
+    )
+    assert any(
+        diagnostic.message == "Skin profile tokens contain unsupported field 'css'"
+        and diagnostic.field == "tokens.css"
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_skin_profile_rejects_extra_token_keys(tmp_path: Path) -> None:
+    course = tmp_path
+    source_root = course / "course"
+    source_root.mkdir()
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    skin_path = skins_dir / "extra-token.yaml"
+    skin_path.write_text(
+        _skin_yaml("extra-token").replace(
+            '    danger: "#cf222e"\n',
+            '    danger: "#cf222e"\n'
+            '    custom: "#000000"\n',
+        ),
+        encoding="utf-8",
+    )
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        course,
+        {"render": {"skin": "extra-token"}},
+        source_root=source_root,
+        report=report,
+    )
+
+    assert "extra-token" not in context.profiles
+    assert any(
+        diagnostic.message == "Skin token group contains unsupported key 'custom'"
+        and diagnostic.field == "tokens.color.custom"
         for diagnostic in report.diagnostics
     )
 
@@ -212,7 +306,50 @@ def test_render_skin_css_is_deterministic_and_writes_token_variables() -> None:
     assert "--raya-color-page: #ffffff;" in css
     assert "--raya-color-accent: #111111;" in css
     assert "--raya-font-body: system-ui;" in css
+    assert "--raya-font-heading: system-ui;" in css
+    assert "--raya-font-mono: ui-monospace;" in css
     assert "--raya-density: comfortable;" in css
+    assert "--raya-space-page: 1rem;" in css
+
+
+def test_render_skin_css_maps_density_to_spacing_variables() -> None:
+    context = SkinContext(
+        default_skin_id=DEFAULT_SKIN_ID,
+        profiles={
+            "compact-skin": SkinProfile(
+                id="compact-skin",
+                name="Compact Skin",
+                colors=_profile("compact-skin", accent="#111111").colors,
+                fonts=_profile("compact-skin", accent="#111111").fonts,
+                density="compact",
+            ),
+            "spacious-skin": SkinProfile(
+                id="spacious-skin",
+                name="Spacious Skin",
+                colors=_profile("spacious-skin", accent="#111111").colors,
+                fonts=_profile("spacious-skin", accent="#111111").fonts,
+                density="spacious",
+            ),
+        },
+        section_selectors=(),
+    )
+
+    css = render_skin_css(context)
+
+    assert '[data-raya-skin="compact-skin"]' in css
+    assert "--raya-space-page: 0.75rem;" in css
+    assert "--raya-space-block: 0.85rem;" in css
+    assert "--raya-space-page: 1.5rem;" in css
+    assert "--raya-space-block: 1.5rem;" in css
+
+
+def test_rich_render_css_consumes_font_and_density_tokens() -> None:
+    css = rich_render_css()
+
+    assert "font-family: var(--raya-font-heading)" in css
+    assert "font-family: var(--raya-font-mono)" in css
+    assert "padding: var(--raya-space-page)" in css
+    assert "gap: var(--raya-space-block)" in css
 
 
 def _skin_yaml(skin_id: str) -> str:
