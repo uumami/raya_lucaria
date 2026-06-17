@@ -26,6 +26,12 @@ local reading preference stored by your browser for that static site; it changes
 the page font for easier reading but does not change course content, grading,
 links, or authority labels.
 
+The current course shell is a static reading aid. Use the course map for
+orientation, the main article for the lesson, the learning rail for page
+contents and nearby course context, and static next links to keep moving through
+the course. The page may show `OpenDyslexic` and other local reading controls,
+but it does not store or show personal progress.
+
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 
 Rendered matrices, vectors, set notation, theorem-like notes, and proofs should appear as normal course text plus typeset math. If you see raw `\begin{bmatrix}`, an unknown macro, visible dollar-delimited math, or a page asking your browser to load browser-side MathJax, report it to the course team with the page URL or title.

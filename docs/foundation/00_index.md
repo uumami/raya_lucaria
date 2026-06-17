@@ -31,6 +31,8 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [Documentation Surfaces](16_documentation_surfaces.md) -- role documentation, language pages, and rendered-doc boundaries.
 - [Rendering And Execution Plan](17_rendering_execution_plan.md) -- phase plan for rich rendering, executable code, notebooks, runtime profiles, caching, examples, tests, and documentation.
 - [Known Missing Work](18_known_missing_work.md) -- deferred capabilities and intentional gaps.
+- [Learning Science Principles](19_learning_science_principles.md) -- evidence-backed learning principles for static and future study experiences.
+- [Learning Renderer Contract](20_learning_renderer_contract.md) -- current, planned, and future static renderer behavior derived from learning science.
 
 ## Reset Rule
 

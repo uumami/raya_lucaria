@@ -280,6 +280,65 @@ def test_role_docs_cover_skin_profiles_and_style_guide() -> None:
         )
 
 
+def test_role_docs_cover_learning_science_course_shell() -> None:
+    required = {
+        "docs/guides/en/professors/index.md": [
+            "learning-science",
+            "course shell",
+            "retrieval practice",
+            "prerequisites",
+        ],
+        "docs/guides/en/contributors/index.md": [
+            "learning renderer contract",
+            "current",
+            "planned",
+            "future",
+            "no browser-side MathJax",
+        ],
+        "docs/guides/en/students/index.md": [
+            "course map",
+            "learning rail",
+            "OpenDyslexic",
+            "personal progress",
+        ],
+        "docs/guides/en/agents/index.md": [
+            "course shell",
+            "right learning rail",
+            "no inferred goals",
+            "render-debug",
+        ],
+        "docs/guides/es/profesores/index.md": [
+            "ciencia del aprendizaje",
+            "estructura del curso",
+            "practica de recuperacion",
+            "prerrequisitos",
+        ],
+        "docs/guides/es/colaboradores/index.md": [
+            "contrato del renderizador de aprendizaje",
+            "current",
+            "planned",
+            "future",
+            "MathJax",
+        ],
+        "docs/guides/es/estudiantes/index.md": [
+            "mapa del curso",
+            "riel de aprendizaje",
+            "OpenDyslexic",
+            "progreso personal",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "estructura del curso",
+            "riel derecho",
+            "metas inferidas",
+            "render-debug",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
     professor_paths = (
         ROOT / "docs" / "guides" / "en" / "professors" / "index.md",

@@ -47,6 +47,15 @@ Build-time static environments are separate from numbered objects. Preserve
 target resolves against `data/numbered-objects.json`; do not add them to the
 numbered index or require browser-side reference resolution.
 
+The learning renderer contract divides course shell behavior into `current`,
+`planned`, and `future` categories. Current renderer work may use existing
+navigation, authored content, local assets, build-time MathJax, page metadata,
+and stable prerequisites. Planned work needs accepted source and artifact data.
+Future work such as personal progress, analytics, adaptive review, and spaced
+queues needs dynamic study state outside the static renderer. Preserve the
+rules: no browser-side MathJax, no external assets, no inferred goals, and no
+related practice invented from prose.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

@@ -48,6 +48,16 @@ build cuyo objetivo opcional `of` se resuelve contra
 `data/numbered-objects.json`; no los agregues al index numerado ni exijas un
 resolver de referencias en el navegador.
 
+El contrato del renderizador de aprendizaje divide la estructura del curso en
+categorias `current`, `planned` y `future`. El trabajo `current` puede usar
+navegacion existente, contenido de autoria, assets locales, MathJax en build,
+metadata de pagina y prerrequisitos estables. El trabajo `planned` necesita
+datos aceptados de fuente y artifact. El trabajo `future`, como progreso
+personal, analiticas, repaso adaptativo y colas espaciadas, necesita estado
+dinamico de estudio fuera del renderizador estatico. Conserva las reglas: sin
+MathJax en el browser, sin assets externos, sin metas inferidas y sin practica
+relacionada inventada desde la prosa.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

@@ -226,3 +226,39 @@ def test_current_documentation_render_content_points_to_real_docs() -> None:
     assert (
         render_content / "2_guides" / "1_en" / "1_contributors" / "0_index.md"
     ).resolve() == (DOCS_ROOT / "guides" / "en" / "contributors" / "index.md").resolve()
+
+
+def test_learning_science_foundation_pages_are_rendered() -> None:
+    learning = DOCS_ROOT / "foundation" / "19_learning_science_principles.md"
+    contract = DOCS_ROOT / "foundation" / "20_learning_renderer_contract.md"
+    assert learning.exists()
+    assert contract.exists()
+
+    learning_text = learning.read_text(encoding="utf-8")
+    contract_text = contract.read_text(encoding="utf-8")
+    for needle in (
+        "cognitive load",
+        "retrieval practice",
+        "spaced practice",
+        "self-explanation",
+        "universal design",
+    ):
+        assert needle in learning_text
+    for needle in (
+        "`current`",
+        "`planned`",
+        "`future`",
+        "course shell",
+        "right learning rail",
+        "no personal progress",
+        "no browser-side MathJax",
+    ):
+        assert needle in contract_text
+
+    index = (DOCS_ROOT / "foundation" / "00_index.md").read_text(encoding="utf-8")
+    assert "19_learning_science_principles.md" in index
+    assert "20_learning_renderer_contract.md" in index
+
+    render_content = DOCS_ROOT / "render-content" / "1_foundation"
+    assert (render_content / "19_learning_science_principles.md").resolve() == learning.resolve()
+    assert (render_content / "20_learning_renderer_contract.md").resolve() == contract.resolve()
