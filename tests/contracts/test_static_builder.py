@@ -124,6 +124,39 @@ def test_build_applies_course_skin_to_pages_and_writes_skin_css(
     assert '[data-raya-skin="warm-academic"]' in skin_css.read_text(encoding="utf-8")
 
 
+def test_build_applies_nearest_section_skin_to_descendant_pages(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        + "\nrender:\n  skin: warm-academic\n",
+        encoding="utf-8",
+    )
+    _write_test_skin(course / "skins" / "warm-academic.yaml", "warm-academic")
+    _write_test_skin(course / "skins" / "practice-lab.yaml", "practice-lab")
+    selector = course / "course" / "1_unit" / "_raya" / "skin.yaml"
+    selector.parent.mkdir(parents=True)
+    selector.write_text("render:\n  skin: practice-lab\n", encoding="utf-8")
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    root_html = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    unit_html = (course / "artifact" / "site" / "unit" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    topic_html = (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'data-raya-skin="warm-academic"' in root_html
+    assert 'data-raya-skin="practice-lab"' in unit_html
+    assert 'data-raya-skin="practice-lab"' in topic_html
+
+
 def test_build_fails_for_unknown_course_skin(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     config = course / "raya.yaml"
@@ -139,6 +172,77 @@ def test_build_fails_for_unknown_course_skin(tmp_path: Path) -> None:
     messages = [diagnostic.format() for diagnostic in report.diagnostics]
     assert any("Unknown render skin 'missing-skin'" in message for message in messages)
     assert any("render.skin" in message for message in messages)
+
+
+def test_build_fails_for_invalid_skin_color(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    (course / "raya.yaml").write_text(
+        (course / "raya.yaml").read_text(encoding="utf-8")
+        + "\nrender:\n  skin: broken\n",
+        encoding="utf-8",
+    )
+    _write_test_skin(course / "skins" / "broken.yaml", "broken")
+    skin_path = course / "skins" / "broken.yaml"
+    skin_path.write_text(
+        skin_path.read_text(encoding="utf-8").replace(
+            'page: "#ffffff"',
+            'page: "white"',
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        "tokens.color.page" in diagnostic.format()
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_build_fails_for_section_skin_selector_without_section_index(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _write_test_skin(course / "skins" / "practice-lab.yaml", "practice-lab")
+    selector = course / "course" / "orphan" / "_raya" / "skin.yaml"
+    selector.parent.mkdir(parents=True)
+    selector.write_text("render:\n  skin: practice-lab\n", encoding="utf-8")
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        "_raya/skin.yaml must live beside a section 0_index.md"
+        in diagnostic.format()
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_build_fails_for_low_contrast_skin(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    (course / "raya.yaml").write_text(
+        (course / "raya.yaml").read_text(encoding="utf-8")
+        + "\nrender:\n  skin: low-contrast\n",
+        encoding="utf-8",
+    )
+    _write_test_skin(course / "skins" / "low-contrast.yaml", "low-contrast")
+    skin_path = course / "skins" / "low-contrast.yaml"
+    skin_path.write_text(
+        skin_path.read_text(encoding="utf-8").replace(
+            'text: "#1f2328"',
+            'text: "#ffffff"',
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert any(
+        "contrast" in diagnostic.format().lower()
+        for diagnostic in report.diagnostics
+    )
 
 
 def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
@@ -2348,6 +2452,32 @@ def _copy_execution_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "execution-fixture"
     shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     return course
+
+
+def _write_test_skin(path: Path, skin_id: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"id: {skin_id}\n"
+        f"name: {skin_id}\n"
+        "tokens:\n"
+        "  color:\n"
+        '    page: "#ffffff"\n'
+        '    surface: "#f6f8fa"\n'
+        '    text: "#1f2328"\n'
+        '    muted: "#57606a"\n'
+        '    accent: "#0969da"\n'
+        '    accent_soft: "#ddf4ff"\n'
+        '    border: "#d0d7de"\n'
+        '    success: "#1a7f37"\n'
+        '    warning: "#9a6700"\n'
+        '    danger: "#cf222e"\n'
+        "  font:\n"
+        '    body: "system-ui"\n'
+        '    heading: "system-ui"\n'
+        '    mono: "ui-monospace"\n'
+        "  density: comfortable\n",
+        encoding="utf-8",
+    )
 
 
 def _visible_text(html_text: str) -> str:

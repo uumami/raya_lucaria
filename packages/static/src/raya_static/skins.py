@@ -250,6 +250,7 @@ def _parse_skin_profile(
         report=report,
     )
     _validate_colors(colors, path=path, report=report)
+    _validate_contrast(colors, path=path, report=report)
     _validate_fonts(fonts, path=path, report=report)
 
     density = tokens.get("density")
@@ -328,6 +329,57 @@ def _validate_colors(
             )
 
 
+def _relative_luminance(hex_color: str) -> float:
+    value = hex_color.lstrip("#")
+    channels = [int(value[index : index + 2], 16) / 255 for index in (0, 2, 4)]
+    linear = [
+        channel / 12.92
+        if channel <= 0.03928
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast_ratio(first: str, second: str) -> float:
+    first_lum = _relative_luminance(first)
+    second_lum = _relative_luminance(second)
+    lighter = max(first_lum, second_lum)
+    darker = min(first_lum, second_lum)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def _validate_contrast(
+    colors: dict[str, str],
+    *,
+    path: Path,
+    report: ValidationReport,
+) -> None:
+    pairs = (
+        ("text", "page"),
+        ("accent", "page"),
+        ("text", "accent_soft"),
+    )
+    for foreground, background in pairs:
+        if foreground not in colors or background not in colors:
+            continue
+        if not HEX_COLOR_RE.match(colors[foreground]) or not HEX_COLOR_RE.match(
+            colors[background]
+        ):
+            continue
+        ratio = _contrast_ratio(colors[foreground], colors[background])
+        if ratio < 4.5:
+            report.add_error(
+                (
+                    f"Skin contrast for {foreground} on {background} is too low "
+                    f"({ratio:.2f}:1)"
+                ),
+                path=path,
+                field=f"tokens.color.{foreground}",
+                next_action="Choose colors with at least 4.5:1 contrast.",
+            )
+
+
 def _validate_fonts(
     fonts: dict[str, str],
     *,
@@ -375,7 +427,7 @@ def _load_section_skin_selectors(
         section_dir = path.parent.parent
         if not (section_dir / "0_index.md").is_file():
             report.add_error(
-                "Section skin selector must be beside a section 0_index.md",
+                "_raya/skin.yaml must live beside a section 0_index.md",
                 path=path,
                 next_action="Move _raya/skin.yaml under a section directory",
             )
