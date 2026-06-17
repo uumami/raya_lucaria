@@ -35,6 +35,7 @@ ALLOWED_FONT_STACKS = frozenset(
     }
 )
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+SKIN_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
 
 @dataclass(frozen=True)
@@ -98,7 +99,15 @@ def load_skin_context(
     _load_course_skin_profiles(course_root, profiles, report)
 
     default_skin_id = _course_default_skin_id(course_config)
-    if default_skin_id not in profiles:
+    if not _valid_skin_id(default_skin_id):
+        _report_invalid_skin_id(
+            report,
+            default_skin_id,
+            path=course_root / "raya.yaml",
+            field="render.skin",
+        )
+        default_skin_id = DEFAULT_SKIN_ID
+    elif default_skin_id not in profiles:
         _report_unknown_skin(
             report,
             default_skin_id,
@@ -106,6 +115,7 @@ def load_skin_context(
             field="render.skin",
             profiles=profiles,
         )
+        default_skin_id = DEFAULT_SKIN_ID
 
     selectors = _load_section_skin_selectors(
         source_root,
@@ -142,6 +152,13 @@ def _load_course_skin_profiles(
         report.read_file(path)
         try:
             raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError) as exc:
+            report.add_error(
+                "Unable to read skin profile YAML",
+                path=path,
+                next_action=f"Check that the file exists and is valid UTF-8: {exc}",
+            )
+            continue
         except yaml.YAMLError as exc:
             report.add_error(
                 "Invalid skin profile YAML",
@@ -185,6 +202,9 @@ def _parse_skin_profile(
             field="id",
             next_action="Set id to the skin filename stem",
         )
+        return None
+    if not _valid_skin_id(skin_id):
+        _report_invalid_skin_id(report, skin_id, path=path, field="id")
         return None
     if skin_id != path.stem:
         report.add_error(
@@ -337,6 +357,13 @@ def _load_section_skin_selectors(
         report.read_file(path)
         try:
             raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError) as exc:
+            report.add_error(
+                "Unable to read section skin selector YAML",
+                path=path,
+                next_action=f"Check that the file exists and is valid UTF-8: {exc}",
+            )
+            continue
         except yaml.YAMLError as exc:
             report.add_error(
                 "Invalid section skin selector YAML",
@@ -362,6 +389,9 @@ def _load_section_skin_selectors(
                 field="render.skin",
                 next_action="Set render.skin to a known skin profile ID",
             )
+            continue
+        if not _valid_skin_id(skin_id):
+            _report_invalid_skin_id(report, skin_id, path=path, field="render.skin")
             continue
         if skin_id not in profiles:
             _report_unknown_skin(
@@ -392,6 +422,25 @@ def _selector_skin_id(raw: Any) -> str | None:
     if not isinstance(skin_id, str) or not skin_id.strip():
         return None
     return skin_id
+
+
+def _valid_skin_id(skin_id: str) -> bool:
+    return bool(SKIN_ID_RE.match(skin_id))
+
+
+def _report_invalid_skin_id(
+    report: ValidationReport,
+    skin_id: str,
+    *,
+    path: Path,
+    field: str,
+) -> None:
+    report.add_error(
+        f"Invalid skin ID '{skin_id}'",
+        path=path,
+        field=field,
+        next_action="Use lowercase letters, numbers, and hyphens; start with a letter or number",
+    )
 
 
 def _report_unknown_skin(
