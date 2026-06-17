@@ -96,6 +96,13 @@ from raya_static.rendering import (
     render_markdown_body,
     rich_render_css,
 )
+from raya_static.skins import (
+    SKIN_STYLESHEET_PATH,
+    SkinContext,
+    load_skin_context,
+    render_skin_css,
+    skin_id_for_source_path,
+)
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
@@ -212,6 +219,14 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _validate_rich_markdown_inputs(pages, report)
     if not report.ok:
         return report
+    skin_context = load_skin_context(
+        root,
+        config,
+        source_root=source_dir,
+        report=report,
+    )
+    if not report.ok:
+        return report
 
     site_dir = artifact_dir / "site"
     data_dir = artifact_dir / "data"
@@ -297,6 +312,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             reviewed_by_reference=reviewed_by_reference,
             report=report,
             math_renderer=math_renderer,
+            skin_context=skin_context,
         )
         if not report.ok:
             return report
@@ -319,7 +335,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     ):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
-    _write_rich_render_resources(site_dir, report)
+    _write_rich_render_resources(site_dir, report, skin_context=skin_context)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -701,6 +717,7 @@ def _render_page(
     reviewed_by_reference: dict[str, ReviewedOutput],
     report: ValidationReport,
     math_renderer: MathRenderer,
+    skin_context: SkinContext,
 ) -> str:
     nav_items = []
     for target in content_model.pages:
@@ -716,6 +733,8 @@ def _render_page(
         official_counts,
     )
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
+    skin_id = skin_id_for_source_path(page.source_path, skin_context)
+    skin_stylesheet_href = _relative_href(page.output_path, SKIN_STYLESHEET_PATH)
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -742,9 +761,13 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(math_stylesheet_href)}">',
             "</head>",
-            f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}">',
+            (
+                f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}" '
+                f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
+            ),
             '<a class="raya-skip-link" href="#raya-content">Skip to content</a>',
             '<header class="raya-site-header">',
             '<div class="raya-site-header-inner">',
@@ -1479,6 +1502,10 @@ def _render_inspection_surface(
         STATIC_INSPECTION_PATH.as_posix(),
         RENDER_STYLESHEET_PATH,
     )
+    skin_stylesheet_href = _relative_href(
+        STATIC_INSPECTION_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
     page_items = []
     for page in content_model.pages:
         href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), page.output_path)
@@ -1559,8 +1586,9 @@ def _render_inspection_surface(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Artifact Inspection - {html.escape(course_title)}</title>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             "</head>",
-            f'<body data-raya-surface="{SURFACE_INSPECTION}">',
+            f'<body data-raya-surface="{SURFACE_INSPECTION}" data-raya-skin="raya-default">',
             '<main class="raya-inspection-main">',
             "<h1>Artifact Inspection</h1>",
             (
@@ -1742,11 +1770,20 @@ def _write_json(path: Path, data: dict[str, Any], report: ValidationReport) -> N
     report.wrote_output(path)
 
 
-def _write_rich_render_resources(site_dir: Path, report: ValidationReport) -> None:
+def _write_rich_render_resources(
+    site_dir: Path,
+    report: ValidationReport,
+    *,
+    skin_context: SkinContext,
+) -> None:
     stylesheet = site_dir / RENDER_STYLESHEET_PATH
     stylesheet.parent.mkdir(parents=True, exist_ok=True)
     stylesheet.write_text(rich_render_css(), encoding="utf-8")
     report.wrote_output(stylesheet)
+    skin_stylesheet = site_dir / SKIN_STYLESHEET_PATH
+    skin_stylesheet.parent.mkdir(parents=True, exist_ok=True)
+    skin_stylesheet.write_text(render_skin_css(skin_context), encoding="utf-8")
+    report.wrote_output(skin_stylesheet)
 
 
 def _prepare_math_render_resources(

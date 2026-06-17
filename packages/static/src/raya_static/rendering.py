@@ -444,15 +444,15 @@ def rich_render_css() -> str:
   box-sizing: border-box;
 }
 body {
-  background: #f7f8fa;
-  color: #24292f;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--raya-color-page);
+  color: var(--raya-color-text);
+  font-family: var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
   margin: 0;
   overflow-wrap: anywhere;
 }
 a {
-  color: #0969da;
+  color: var(--raya-color-accent);
 }
 img {
   height: auto;
@@ -471,8 +471,8 @@ img {
   top: 1rem;
 }
 .raya-site-header {
-  background: #ffffff;
-  border-bottom: 1px solid #d8dee4;
+  background: var(--raya-color-surface);
+  border-bottom: 1px solid var(--raya-color-border);
 }
 .raya-site-header-inner,
 .raya-main,
@@ -497,12 +497,12 @@ img {
   text-decoration: none;
 }
 .raya-course-nav a[aria-current="page"] {
-  border-bottom-color: #1a7f37;
-  color: #1a7f37;
+  border-bottom-color: var(--raya-color-success);
+  color: var(--raya-color-success);
   font-weight: 700;
 }
 nav[aria-label="Breadcrumbs"] {
-  color: #57606a;
+  color: var(--raya-color-muted);
   font-size: 0.875rem;
   margin-top: 0.75rem;
 }
@@ -515,8 +515,8 @@ nav[aria-label="Breadcrumbs"] {
 .raya-article,
 .raya-support-stack,
 .raya-inspection-main {
-  background: #ffffff;
-  border: 1px solid #d8dee4;
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
   min-width: 0;
 }
 .raya-article,
@@ -533,7 +533,7 @@ nav[aria-label="Breadcrumbs"] {
   padding: 1rem;
 }
 .raya-page-footer {
-  color: #57606a;
+  color: var(--raya-color-muted);
 }
 .raya-page-footer nav {
   display: flex;
@@ -615,11 +615,11 @@ nav[aria-label="Breadcrumbs"] {
   padding: 0.65rem 0.85rem;
 }
 .raya-numbered-object-reference {
-  color: #1a7f37;
+  color: var(--raya-color-success);
   font-weight: 700;
 }
 .raya-numbered-object-title {
-  color: #24292f;
+  color: var(--raya-color-text);
   font-weight: 700;
 }
 .raya-numbered-object-body {
@@ -680,14 +680,14 @@ nav[aria-label="Breadcrumbs"] {
   padding: 0.85rem;
 }
 .raya-numbered-object-badge-label {
-  color: #1a7f37;
+  color: var(--raya-color-success);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
 }
 .raya-numbered-object-badge-number {
-  color: #24292f;
+  color: var(--raya-color-text);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.2;
@@ -701,7 +701,7 @@ nav[aria-label="Breadcrumbs"] {
   padding: 0.2rem 0 0.2rem 1rem;
 }
 .raya-proof-heading {
-  color: #24292f;
+  color: var(--raya-color-text);
   font-weight: 650;
   margin: 0 0 0.55rem;
 }
@@ -709,7 +709,7 @@ nav[aria-label="Breadcrumbs"] {
   font-style: italic;
 }
 .raya-proof-title {
-  color: #57606a;
+  color: var(--raya-color-muted);
   font-weight: 500;
 }
 .raya-proof-body {
@@ -748,10 +748,10 @@ nav[aria-label="Breadcrumbs"] {
   padding: 0.6rem 0.85rem;
 }
 .raya-static-environment-reference {
-  color: #24292f;
+  color: var(--raya-color-text);
 }
 .raya-static-environment-title {
-  color: #57606a;
+  color: var(--raya-color-muted);
   font-weight: 500;
 }
 .raya-static-environment-body {
@@ -792,7 +792,7 @@ mjx-container[display="true"] {
   margin: 0 0 1rem;
 }
 .raya-reference-status {
-  color: #57606a;
+  color: var(--raya-color-muted);
   font-size: 0.875rem;
 }
 .raya-reference-preview {
@@ -813,7 +813,7 @@ mjx-container[display="true"] {
   padding: 0;
 }
 .raya-reviewed-output-status {
-  color: #57606a;
+  color: var(--raya-color-muted);
   font-size: 0.875rem;
 }
 .raya-reviewed-output-excerpt {
