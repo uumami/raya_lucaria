@@ -891,12 +891,23 @@ mjx-container[display="true"] {
 }
 @media (max-width: 900px) {
   .raya-learning-shell {
-    display: block;
+    grid-template-columns: minmax(0, 1fr);
   }
   .raya-course-map,
   .raya-learning-rail {
     margin-bottom: 1rem;
+    max-height: 14rem;
+    overflow: auto;
     position: static;
+  }
+  .raya-course-map {
+    order: 1;
+  }
+  .raya-learning-rail {
+    order: 2;
+  }
+  .raya-main-article {
+    order: 3;
   }
   .raya-learning-rail {
     margin-top: 1rem;

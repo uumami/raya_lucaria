@@ -234,10 +234,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                     try:
                         page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
                         _assert_no_horizontal_overflow(page)
-                        assert page.locator("header.raya-top-command-bar").bounding_box()
-                        assert page.locator("nav.raya-course-map").bounding_box()
-                        assert page.locator("article.raya-main-article").bounding_box()
-                        assert page.locator("aside.raya-learning-rail").bounding_box()
+                        _assert_intersects_viewport(page, "header.raya-top-command-bar")
+                        _assert_intersects_viewport(page, "nav.raya-course-map")
+                        _assert_intersects_viewport(page, "article.raya-main-article")
+                        _assert_intersects_viewport(page, "aside.raya-learning-rail")
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
                         page.keyboard.press("Tab")
                         focused = page.evaluate("() => document.activeElement && document.activeElement.className")
@@ -1087,6 +1087,18 @@ def _assert_no_horizontal_overflow(page) -> None:
         "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
     )
     assert overflow <= 1
+
+
+def _assert_intersects_viewport(page, selector: str) -> None:
+    box = page.locator(selector).bounding_box()
+    assert box is not None, f"{selector} did not render"
+    viewport = page.evaluate(
+        "() => ({ width: window.innerWidth, height: window.innerHeight })"
+    )
+    assert box["x"] + box["width"] > 0, f"{selector} is left of the viewport: {box}"
+    assert box["x"] < viewport["width"], f"{selector} is right of the viewport: {box}"
+    assert box["y"] + box["height"] > 0, f"{selector} is above the viewport: {box}"
+    assert box["y"] < viewport["height"], f"{selector} is below the viewport: {box}"
 
 
 def _assert_no_overlap(page, first_selector: str, second_selector: str) -> None:
