@@ -183,6 +183,17 @@ Accepted baseline:
   adds screenshots, report JSON, and inspection HTML as evidence for labels,
   anchors, references, proof targets, raw TeX leakage, external requests, and
   browser-side MathJax absence.
+- Skin profiles are current build-time rendering behavior. A course may select
+  a default skin with `render.skin` in `raya.yaml`; course-local profiles live
+  under root `skins/`; section selectors live at `course/**/_raya/skin.yaml`
+  beside a section `0_index.md` and inherit to descendants; the selector file
+  name is `_raya/skin.yaml`. Skins define validated semantic tokens for color,
+  font, and density. They generate local `_raya/render/skin.css` variables and
+  `data-raya-skin` page attributes, but
+  they do not change content order, object IDs, references, artifact data,
+  execution behavior, or source authority. V1 forbids arbitrary CSS, external
+  fonts, CDN requests, and browser-side skin resolution. In short, there are
+  no external fonts and no external skin resolver.
 - Raw HTML is escaped by default.
 - Browser-facing renderer support files live under `artifact/site/_raya/` and use deployment-neutral relative URLs.
 

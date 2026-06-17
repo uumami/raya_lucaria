@@ -15,6 +15,14 @@ When changing course validation or rendering, preserve the convention-first sour
 
 Rich static rendering is Glintstone-owned. Keep parser, highlighter, and MathJax libraries behind the `packages/static` boundary; source contracts should describe supported authoring behavior, not library internals. Accepted math uses inline dollar math, display dollar-delimiter blocks, page-local macros, local `site/_raya/render/math/` support resources, strict diagnostics, and no browser-only renderer dependency. Renderer changes need representative fixtures, invalid diagnostics when applicable, contract tests, e2e/static-read-path tests, Chromium visible-math/no-external-request checks, desktop/mobile overflow checks, and role documentation updates.
 
+Skin profile changes must preserve token validation and generated static output.
+Course and section skins define semantic tokens, emit `_raya/render/skin.css`,
+and mark pages with `data-raya-skin`. The generated CSS file is `skin.css`
+under the renderer support path. The rule is no arbitrary CSS, no external
+fonts, no CDN requests, and no browser-side skin resolution. Cover skin changes
+with render-debug evidence when generated CSS, page attributes, local resources,
+or visual layout can regress.
+
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when changing math rendering or authoring guidance. It is the fixture target for current valid examples: `\begin{bmatrix}`, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, optimization notation, and numbered object Markdown. Keep invalid math examples in tests so professor and student docs remain copyable.
 
 Numbered object support is current renderer behavior. Preserve the `render.numbered_objects` config model for numbering plus course-level sequence and family overrides; validate fenced directives, stable object IDs, `@id` shorthand references, and `raya:ref/id` explicit references; and emit the manifest-declared `data/numbered-objects.json` index with object IDs, labels, numbers, source paths, page output paths, anchors, hrefs, and reference text. Preserve built-in `remark` support and the default reader presentation: theorem-like, example, exercise, and assignment sequences use `scannable`, figures and tables use `caption`, and equations use `equation`. Static pages must render labels and links without external renderer or CDN requests and with no browser-side MathJax or browser-side reference resolver. Fixture and debug checks should cover remark plus the reader-ux fixture when the numbered-content reader experience changes.

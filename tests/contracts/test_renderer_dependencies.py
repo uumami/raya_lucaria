@@ -161,6 +161,77 @@ def test_render_debug_report_module_and_guidance_are_declared() -> None:
         assert "index.html" in text
 
 
+def test_role_docs_cover_skin_profiles_and_style_guide() -> None:
+    foundation = (ROOT / "docs/foundation/17_rendering_execution_plan.md").read_text(
+        encoding="utf-8"
+    )
+    for needle in (
+        "`render.skin`",
+        "`skins/`",
+        "`_raya/skin.yaml`",
+        "semantic tokens",
+        "no external fonts",
+    ):
+        assert needle in foundation
+
+    required = {
+        "docs/guides/en/professors/index.md": [
+            "`render.skin`",
+            "`skins/`",
+            "`_raya/skin.yaml`",
+            "section",
+            "contrast",
+            "no external fonts",
+        ],
+        "docs/guides/en/contributors/index.md": [
+            "semantic tokens",
+            "`skin.css`",
+            "no arbitrary CSS",
+            "render-debug",
+        ],
+        "docs/guides/en/students/index.md": [
+            "visual presentation",
+            "does not change",
+            "links",
+        ],
+        "docs/guides/en/agents/index.md": [
+            "`data-raya-skin`",
+            "`skin.css`",
+            "`_raya/skin.yaml`",
+            "render-debug",
+        ],
+        "docs/guides/es/profesores/index.md": [
+            "`render.skin`",
+            "`skins/`",
+            "`_raya/skin.yaml`",
+            "seccion",
+            "contraste",
+            "fuentes externas",
+        ],
+        "docs/guides/es/colaboradores/index.md": [
+            "tokens semanticos",
+            "`skin.css`",
+            "CSS arbitrario",
+            "render-debug",
+        ],
+        "docs/guides/es/estudiantes/index.md": [
+            "presentacion visual",
+            "no cambia",
+            "enlaces",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "`data-raya-skin`",
+            "`skin.css`",
+            "`_raya/skin.yaml`",
+            "render-debug",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
     professor_paths = (
         ROOT / "docs" / "guides" / "en" / "professors" / "index.md",

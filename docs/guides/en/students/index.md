@@ -14,6 +14,11 @@ Rendered courses hide source filename mechanics. Students should see clean page 
 
 Static pages may include pre-rendered math, highlighted code, tables, callouts, footnotes, heading anchors, and page contents. Math should already be typeset in the generated page and should not require a CDN, account, backend, or browser-side MathJax conversion. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
+Some courses use skins for visual presentation or to emphasize a unit, lab,
+appendix, practice section, or review section. A skin does not change source
+authority, labels, links, official/generated status, assignments, or what work
+the course asks you to complete.
+
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 
 Rendered matrices, vectors, set notation, theorem-like notes, and proofs should appear as normal course text plus typeset math. If you see raw `\begin{bmatrix}`, an unknown macro, visible dollar-delimited math, or a page asking your browser to load browser-side MathJax, report it to the course team with the page URL or title.

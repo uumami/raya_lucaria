@@ -14,6 +14,14 @@ Cuando cambies validacion o rendering de cursos, preserva el modelo convention-f
 
 El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y MathJax detras de `packages/static`; los contratos de fuente deben describir comportamiento de autoria, no detalles internos de librerias. La math aceptada usa math inline con delimitadores de dolar, bloques display con delimitadores de doble dolar en lineas propias, macros locales por pagina, recursos locales bajo `site/_raya/render/math/`, diagnosticos estrictos y ninguna dependencia de renderer solo en browser. Cambios de renderer necesitan fixtures representativos, diagnosticos invalidos cuando aplique, tests de contrato, tests e2e/static-read-path, checks Chromium de math visible/sin requests externos, checks de overflow desktop/mobile y actualizaciones de documentacion de rol.
 
+Los cambios de skin deben preservar validacion de tokens semanticos y output
+estatico generado. Las skins de curso y seccion emiten `_raya/render/skin.css`
+y marcan paginas con `data-raya-skin`. El archivo CSS generado es `skin.css`
+bajo la ruta de soporte del renderer. La regla es no CSS arbitrario, no fuentes
+externas, no requests CDN y no resolver de skin en el browser. Cubre cambios de
+skin con evidencia render-debug cuando puedan fallar CSS generado, atributos de
+pagina, recursos locales o layout visual.
+
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando cambies rendering de math o guia de autoria. Es el fixture target para ejemplos validos actuales: `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas, notacion de optimizacion y Markdown de objetos numerados. Mantiene ejemplos invalidos de math en tests para que docs de profesores y estudiantes sigan siendo copiables.
 
 El soporte de objetos numerados es comportamiento actual del renderer. Preserva el modelo de configuracion `render.numbered_objects` para numeracion y ajustes de secuencias/familias a nivel de curso; valida directivas fenced, IDs duraderos de objeto, referencias abreviadas `@id` y referencias explicitas `raya:ref/id`; y emite el index `data/numbered-objects.json` declarado en manifest con IDs de objeto, etiquetas, numeros, rutas de fuente, rutas de salida de pagina, anchors, hrefs y texto de referencia. Preserva el soporte incorporado de `remark` y la presentacion lectora predeterminada: secuencias tipo teorema, ejemplo, ejercicio y tarea usan `scannable`, figuras y tablas usan `caption`, y ecuaciones usan `equation`. Las paginas estaticas deben renderizar etiquetas y enlaces sin requests externos del renderer o CDN y sin MathJax en el navegador ni resolver de referencias en el browser. Fixtures y checks debug deben cubrir `remark` y el fixture reader-ux cuando cambie la experiencia lectora de contenido numerado.

@@ -14,6 +14,11 @@ Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiant
 
 Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
+Algunos cursos usan skins para presentacion visual o para enfatizar una unidad,
+lab, apendice, seccion de practica o seccion de repaso. Una skin no cambia la
+autoridad de fuente, etiquetas, enlaces, estado oficial/generado, tareas ni el
+trabajo que el curso te pide completar.
+
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
 Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y pruebas deben aparecer como texto normal del curso mas matematica compuesta. Si ves `\begin{bmatrix}` crudo, una macro desconocida, matematica visible con delimitadores de dolar, o una pagina que pide cargar browser-side MathJax, reportalo al equipo del curso con la URL o titulo de la pagina.

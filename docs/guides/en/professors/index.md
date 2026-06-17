@@ -98,6 +98,35 @@ The `hint`, `solution`, and `answer` blocks above support
 `matrix-practice`; they render on the page but do not create records in
 `data/numbered-objects.json`.
 
+Use course skins for visual identity and section skins to emphasize units,
+labs, appendices, practice sections, or review sections.
+
+```yaml
+render:
+  skin: warm-academic
+```
+
+```text
+skins/
+  warm-academic.yaml
+  practice-lab.yaml
+course/
+  2_practice/
+    0_index.md
+    _raya/
+      skin.yaml
+```
+
+```yaml
+render:
+  skin: practice-lab
+```
+
+Skin files define semantic color, font, and density tokens. Keep contrast high,
+avoid external fonts, and do not use skins to change course content, links, or
+numbered object identity. The source fields are `render.skin`, `skins/`, and
+`_raya/skin.yaml`; there are no external fonts in the accepted static contract.
+
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 
 Courses may declare runtime metadata with root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml`. This helps future local or Docker execution stay reproducible, but the current build only records profiles, policies, and cache keys; it does not run code, install packages, refresh caches, or trust notebook outputs.

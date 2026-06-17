@@ -98,6 +98,35 @@ Los bloques `hint`, `solution` y `answer` anteriores apoyan
 `matrix-practice`; se renderizan en la pagina pero no crean registros en
 `data/numbered-objects.json`.
 
+Usa skins de curso para identidad visual y skins de seccion para enfatizar
+unidades, labs, apendices, secciones de practica o secciones de repaso.
+
+```yaml
+render:
+  skin: warm-academic
+```
+
+```text
+skins/
+  warm-academic.yaml
+  practice-lab.yaml
+course/
+  2_practice/
+    0_index.md
+    _raya/
+      skin.yaml
+```
+
+```yaml
+render:
+  skin: practice-lab
+```
+
+Los archivos de skin definen tokens semanticos de color, font y densidad.
+Mantiene alto el contraste, evita fuentes externas, y no uses skins para
+cambiar contenido del curso, enlaces ni identidad de objetos numerados. Los
+campos de fuente son `render.skin`, `skins/` y `_raya/skin.yaml`.
+
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 
 Los cursos pueden declarar runtime metadata con `pyproject.toml`, `uv.lock` y `runtime/profiles.yaml` en la raiz. Esto ayuda a que futura ejecucion local o con Docker sea reproducible, pero el build actual solo registra perfiles, policies y cache keys; no ejecuta codigo, instala paquetes, refresca caches ni confia en outputs de notebooks.
