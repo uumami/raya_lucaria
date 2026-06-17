@@ -172,6 +172,49 @@ def test_check_hygiene_rejects_tracked_generated_course_artifact(
     assert "examples/courses/minimal/artifact/site/index.html" in result.stdout
 
 
+def test_check_hygiene_rejects_untracked_render_debug_output(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    debug_dir = fixture / "tmp" / "raya-render-debug.sample"
+    debug_dir.mkdir(parents=True)
+    (debug_dir / "report.json").write_text("{}\n", encoding="utf-8")
+    (debug_dir / "desktop-index.png").write_bytes(b"png")
+
+    init_git_repo(fixture)
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode != 0
+    assert "generated output appears as untracked source" in result.stdout
+    assert "tmp/raya-render-debug.sample/report.json" in result.stdout
+
+
+def test_check_hygiene_allows_authored_png_assets(tmp_path: Path) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    asset = (
+        fixture
+        / "examples"
+        / "courses"
+        / "demo"
+        / "course"
+        / "_assets"
+        / "diagram.png"
+    )
+    asset.parent.mkdir(parents=True)
+    asset.write_bytes(b"png")
+
+    init_git_repo(fixture)
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode == 0, result.stdout
+
+
 def test_check_help_mentions_python_check_script() -> None:
     result = run_script("scripts/check.sh", "--help")
 

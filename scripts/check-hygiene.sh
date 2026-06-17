@@ -182,7 +182,7 @@ check_incomplete_markers() {
 }
 
 generated_path_pattern() {
-  printf '%s' '(^|/)(artifact|site|_site|dist|build|coverage|htmlcov|node_modules|__pycache__|\.pytest_cache|\.ruff_cache|\.mypy_cache|\.tox|\.nox|\.hypothesis|\.superpowers|\.uv-cache|\.cache)(/|$)'
+  printf '%s' '(^|/)(artifact|site|_site|dist|build|coverage|htmlcov|node_modules|__pycache__|\.pytest_cache|\.ruff_cache|\.mypy_cache|\.tox|\.nox|\.hypothesis|\.superpowers|\.uv-cache|\.cache|raya-render-debug[^/]*|render-debug)(/|$)'
 }
 
 check_git_available() {
@@ -226,7 +226,7 @@ check_untracked_generated_outputs() {
   set +e
   output="$(
     git status --porcelain --untracked-files=all |
-      sed -n 's/^\?\? //p' |
+      sed -n 's/^?? //p' |
       rg "$(generated_path_pattern)" 2>&1
   )"
   status=$?

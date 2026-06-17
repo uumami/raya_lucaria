@@ -39,6 +39,12 @@ site/
 artifact/
 **/artifact/
 
+# Local render-debug evidence
+raya-render-debug*/
+**/raya-render-debug*/
+render-debug/
+**/render-debug/
+
 # Local configuration and secrets
 .env
 .env.*
