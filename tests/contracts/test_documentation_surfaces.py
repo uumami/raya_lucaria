@@ -237,25 +237,28 @@ def test_learning_science_foundation_pages_are_rendered() -> None:
     learning_text = learning.read_text(encoding="utf-8")
     contract_text = contract.read_text(encoding="utf-8")
     for needle in (
-        "cognitive load",
-        "coherence, signaling, and segmenting",
-        "retrieval practice",
-        "spaced practice",
-        "interleaving",
-        "worked examples",
-        "fading",
-        "self-explanation",
-        "metacognition",
-        "calibration",
-        "motivation",
-        "autonomy",
-        "relevance",
-        "belonging",
-        "universal design",
-        "accessibility",
-        "Static HTML Boundary",
+        "## Cognitive Load",
+        "## Coherence, Signaling, And Segmenting",
+        "## Retrieval Practice",
+        "## Spaced Practice And Interleaving",
+        "## Worked Examples And Fading",
+        "## Self-Explanation",
+        "## Metacognition And Calibration",
+        "## Motivation, Autonomy, Relevance, And Belonging",
+        "## Universal Design And Accessibility",
+        "## Static HTML Boundary",
+        "reduce extraneous load",
+        "authored checkpoint prompts",
+        "Current static pages can ask calibration questions",
+        "meaningful choice",
+        "semantic HTML",
     ):
         assert needle in learning_text
+    for inventory in (
+        "The core phrases for this contract are",
+        "The full learning-science surface also includes",
+    ):
+        assert inventory not in learning_text
     for needle in (
         "`current`",
         "`planned`",
