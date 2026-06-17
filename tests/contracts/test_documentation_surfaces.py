@@ -102,12 +102,14 @@ def test_guidance_surfaces_allow_user_selected_superpowers_renderer_loops() -> N
         ],
         "docs/guides/es/colaboradores/index.md": [
             "Superpowers",
-            "OpenSpec remains available",
+            "OpenSpec sigue disponible",
+            "documentos de diseno y plan de Superpowers versionados",
             "superficies afectadas de foundation, rol, test y contrato",
         ],
         "docs/guides/es/agentes/index.md": [
             "Superpowers",
-            "OpenSpec remains available",
+            "OpenSpec sigue disponible",
+            "documentos de diseno y plan de Superpowers versionados",
             "superficies afectadas de foundation, rol, test y contrato",
         ],
     }
