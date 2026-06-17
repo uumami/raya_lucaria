@@ -1521,6 +1521,30 @@ def test_render_fixture_builds_rich_static_pages(
     rich_css = (
         course / "artifact" / "site" / "_raya" / "render" / "rich.css"
     ).read_text(encoding="utf-8")
+    site_dir = course / "artifact" / "site"
+    accessibility_css = (
+        site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic.css"
+    )
+    accessibility_js = (
+        site_dir
+        / "_raya"
+        / "render"
+        / "accessibility"
+        / "open-dyslexic-toggle.js"
+    )
+    accessibility_font = (
+        site_dir
+        / "_raya"
+        / "render"
+        / "accessibility"
+        / "fonts"
+        / "OpenDyslexic-Regular.woff"
+    )
+    assert accessibility_css.is_file()
+    assert accessibility_js.is_file()
+    assert accessibility_font.is_file()
+    assert "OpenDyslexic" in accessibility_css.read_text(encoding="utf-8")
+    assert "localStorage" in accessibility_js.read_text(encoding="utf-8")
     numbered_objects_html_path = (
         course / "artifact" / "site" / "numbered-objects" / "index.html"
     )
@@ -1726,7 +1750,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}" in rich_css
     assert ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}" in rich_css
     assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n  overflow: hidden;\n}" not in rich_css
-    assert "<script" not in numbered_objects_html
+    assert (
+        '<script src="../_raya/render/accessibility/open-dyslexic-toggle.js" defer></script>'
+        in numbered_objects_html
+    )
     assert re.search(r"<script[^>]+MathJax", numbered_objects_html) is None
     assert "\\begin{bmatrix}" not in numbered_objects_visible
     assert "mjx-container" in numbered_objects_html

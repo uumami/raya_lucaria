@@ -72,6 +72,12 @@ from raya_schema.runtime import (
     runtime_index,
 )
 from raya_schema.yaml_io import load_yaml_file
+from raya_static.accessibility import (
+    ACCESSIBILITY_RESOURCE_PATH,
+    OPEN_DYSLEXIC_CSS_NAME,
+    OPEN_DYSLEXIC_JS_NAME,
+    open_dyslexic_resources,
+)
 from raya_static.math_renderer import MathRenderer
 from raya_static.numbered_objects import (
     NumberedObjectRenderContext,
@@ -735,6 +741,14 @@ def _render_page(
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
     skin_id = skin_id_for_source_path(page.source_path, skin_context)
     skin_stylesheet_href = _relative_href(page.output_path, SKIN_STYLESHEET_PATH)
+    accessibility_css_href = _relative_href(
+        page.output_path,
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        page.output_path,
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+    )
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -762,6 +776,7 @@ def _render_page(
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
             f'<link rel="stylesheet" href="{html.escape(math_stylesheet_href)}">',
             "</head>",
             (
@@ -772,6 +787,10 @@ def _render_page(
             '<header class="raya-site-header">',
             '<div class="raya-site-header-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            (
+                '<button class="raya-font-toggle" type="button" '
+                'aria-pressed="false">OpenDyslexic</button>'
+            ),
             '<nav class="raya-course-nav" aria-label="Course pages">',
             "\n".join(nav_items),
             "</nav>",
@@ -813,6 +832,7 @@ def _render_page(
                 if sequence_nav
                 else ""
             ),
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
@@ -1784,6 +1804,30 @@ def _write_rich_render_resources(
     skin_stylesheet.parent.mkdir(parents=True, exist_ok=True)
     skin_stylesheet.write_text(render_skin_css(skin_context), encoding="utf-8")
     report.wrote_output(skin_stylesheet)
+    accessibility = open_dyslexic_resources()
+    accessibility_dir = site_dir / ACCESSIBILITY_RESOURCE_PATH
+    accessibility_dir.mkdir(parents=True, exist_ok=True)
+    css_path = accessibility_dir / OPEN_DYSLEXIC_CSS_NAME
+    js_path = accessibility_dir / OPEN_DYSLEXIC_JS_NAME
+    font_dir = accessibility_dir / "fonts"
+    font_dir.mkdir(parents=True, exist_ok=True)
+    font_path = font_dir / accessibility.font_name
+    if not accessibility.source_font.is_file():
+        report.add_error(
+            "Missing local OpenDyslexic font asset",
+            path=accessibility.source_font,
+            next_action=(
+                "Add the local OpenDyslexic font under "
+                "packages/static/assets/accessibility/open-dyslexic/"
+            ),
+        )
+        return
+    css_path.write_text(accessibility.css, encoding="utf-8")
+    js_path.write_text(accessibility.javascript, encoding="utf-8")
+    shutil.copy2(accessibility.source_font, font_path)
+    report.wrote_output(css_path)
+    report.wrote_output(js_path)
+    report.wrote_output(font_path)
 
 
 def _prepare_math_render_resources(
