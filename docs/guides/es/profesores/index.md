@@ -137,7 +137,7 @@ seccion y sus descendientes:
 
 ```yaml
 render:
-  skin: practice-lab
+  skin: warm-academic
 ```
 
 Los archivos de skin definen tokens semanticos de color, font y densidad.

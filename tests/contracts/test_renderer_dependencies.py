@@ -245,6 +245,9 @@ def test_role_docs_cover_skin_profiles_and_style_guide() -> None:
         text = (ROOT / relative_path).read_text(encoding="utf-8")
         for needle in professor_profile_needles:
             assert needle in text, f"{relative_path} must include profile {needle}"
+        assert "skin: practice-lab" not in text or "id: practice-lab" in text, (
+            f"{relative_path} must define practice-lab before selecting it"
+        )
 
 
 def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:

@@ -137,7 +137,7 @@ descendants:
 
 ```yaml
 render:
-  skin: practice-lab
+  skin: warm-academic
 ```
 
 Skin files define semantic color, font, and density tokens. Keep contrast high,
