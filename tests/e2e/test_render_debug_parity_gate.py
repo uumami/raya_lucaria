@@ -333,6 +333,20 @@ def test_render_debug_parity_gate_fails_when_copied_site_lacks_math_css(
     assert "missing local MathJax CSS" in result.stderr
 
 
+def test_render_debug_parity_gate_fails_when_copied_site_lacks_skin_css(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = write_debug_fixture(tmp_path)
+    copied_site = tmp_path / "copied-site"
+    shutil.copytree(site_dir, copied_site)
+    (copied_site / "_raya" / "render" / "skin.css").unlink()
+
+    result = run_gate("--inspect-only", str(site_dir), str(debug_dir), str(copied_site))
+
+    assert result.returncode == 1
+    assert "missing or empty local skin.css" in result.stderr
+
+
 def test_render_debug_parity_gate_fails_when_copied_site_lacks_math_fonts(
     tmp_path: Path,
 ) -> None:
@@ -377,6 +391,8 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
     site_dir = tmp_path / "site"
     debug_dir = tmp_path / "debug"
     (site_dir / "static-path").mkdir(parents=True)
+    render_dir = site_dir / "_raya" / "render"
+    render_dir.mkdir(parents=True)
     math_dir = site_dir / "_raya" / "render" / "math"
     (math_dir / "fonts").mkdir(parents=True)
     debug_dir.mkdir()
@@ -394,6 +410,10 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
         encoding="utf-8",
     )
     (math_dir / "fonts" / "fixture.woff2").write_bytes(b"font")
+    (render_dir / "skin.css").write_text(
+        '[data-raya-skin="warm-academic"] { --raya-color-page: #ffffff; }\n',
+        encoding="utf-8",
+    )
 
     captures = []
     for page, viewport, screenshot in (
@@ -419,6 +439,7 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
                 "raw_tex_markers": [],
                 "external_requests": [],
                 "horizontal_overflow": 0,
+                "skin": "warm-academic",
                 "numbered_content": {"objects": [], "references": [], "proofs": []},
             }
         )
