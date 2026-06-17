@@ -76,6 +76,71 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert manifest["data"]["numbered_objects"] == "data/numbered-objects.json"
 
 
+def test_build_applies_course_skin_to_pages_and_writes_skin_css(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        + "\nrender:\n  skin: warm-academic\n",
+        encoding="utf-8",
+    )
+    skins_dir = course / "skins"
+    skins_dir.mkdir()
+    (skins_dir / "warm-academic.yaml").write_text(
+        "id: warm-academic\n"
+        "name: Warm Academic\n"
+        "tokens:\n"
+        "  color:\n"
+        '    page: "#ffffff"\n'
+        '    surface: "#f6f8fa"\n'
+        '    text: "#1f2328"\n'
+        '    muted: "#57606a"\n'
+        '    accent: "#0969da"\n'
+        '    accent_soft: "#ddf4ff"\n'
+        '    border: "#d0d7de"\n'
+        '    success: "#1a7f37"\n'
+        '    warning: "#9a6700"\n'
+        '    danger: "#cf222e"\n'
+        "  font:\n"
+        '    body: "system-ui"\n'
+        '    heading: "system-ui"\n'
+        '    mono: "ui-monospace"\n'
+        "  density: comfortable\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    index_html = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    skin_css = course / "artifact" / "site" / "_raya" / "render" / "skin.css"
+    assert 'data-raya-skin="warm-academic"' in index_html
+    assert '<link rel="stylesheet" href="_raya/render/skin.css">' in index_html
+    assert skin_css.exists()
+    assert '[data-raya-skin="warm-academic"]' in skin_css.read_text(encoding="utf-8")
+
+
+def test_build_fails_for_unknown_course_skin(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8")
+        + "\nrender:\n  skin: missing-skin\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    messages = [diagnostic.format() for diagnostic in report.diagnostics]
+    assert any("Unknown render skin 'missing-skin'" in message for message in messages)
+    assert any("render.skin" in message for message in messages)
+
+
 def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     artifact = course / "artifact"
