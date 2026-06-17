@@ -192,6 +192,58 @@ def test_check_hygiene_rejects_untracked_render_debug_output(
     assert "tmp/raya-render-debug.sample/report.json" in result.stdout
 
 
+def test_check_hygiene_rejects_ignored_render_debug_sample_output(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    (fixture / ".gitignore").write_text(
+        "raya-render-debug*/\n"
+        "**/raya-render-debug*/\n"
+        "render-debug/\n"
+        "**/render-debug/\n",
+        encoding="utf-8",
+    )
+    debug_dir = fixture / "tmp" / "raya-render-debug.sample"
+    debug_dir.mkdir(parents=True)
+    (debug_dir / "report.json").write_text("{}\n", encoding="utf-8")
+
+    init_git_repo(fixture)
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode != 0
+    assert "ignored render-debug outputs" in result.stdout
+    assert "tmp/raya-render-debug.sample" in result.stdout
+
+
+def test_check_hygiene_rejects_ignored_render_debug_output(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    (fixture / ".gitignore").write_text(
+        "raya-render-debug*/\n"
+        "**/raya-render-debug*/\n"
+        "render-debug/\n"
+        "**/render-debug/\n",
+        encoding="utf-8",
+    )
+    debug_dir = fixture / "render-debug"
+    debug_dir.mkdir()
+    (debug_dir / "index.html").write_text("<html></html>\n", encoding="utf-8")
+
+    init_git_repo(fixture)
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode != 0
+    assert "ignored render-debug outputs" in result.stdout
+    assert "render-debug" in result.stdout
+
+
 def test_check_hygiene_allows_authored_png_assets(tmp_path: Path) -> None:
     fixture = tmp_path / "repo"
     fixture.mkdir()

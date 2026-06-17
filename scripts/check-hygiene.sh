@@ -185,6 +185,10 @@ generated_path_pattern() {
   printf '%s' '(^|/)(artifact|site|_site|dist|build|coverage|htmlcov|node_modules|__pycache__|\.pytest_cache|\.ruff_cache|\.mypy_cache|\.tox|\.nox|\.hypothesis|\.superpowers|\.uv-cache|\.cache|raya-render-debug[^/]*|render-debug)(/|$)'
 }
 
+render_debug_path_pattern() {
+  printf '%s' '(^|/)(raya-render-debug[^/]*|render-debug)(/|$)'
+}
+
 check_git_available() {
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "FAILED: $ROOT is not a git worktree"
@@ -248,6 +252,36 @@ check_untracked_generated_outputs() {
   return 1
 }
 
+check_ignored_render_debug_outputs() {
+  check_git_available || return 1
+
+  local output
+  local status
+  set +e
+  output="$(
+    git status --porcelain --ignored=matching --untracked-files=all |
+      sed -n 's/^!! //p' |
+      rg "$(render_debug_path_pattern)" 2>&1
+  )"
+  status=$?
+  set -e
+
+  if [[ "$status" -eq 0 ]]; then
+    echo "FAILED: ignored render-debug outputs"
+    echo "$output"
+    return 1
+  fi
+
+  if [[ "$status" -eq 1 ]]; then
+    echo "passed: ignored render-debug outputs"
+    return 0
+  fi
+
+  echo "FAILED: ignored render-debug outputs scan could not run"
+  echo "$output"
+  return 1
+}
+
 check_gallery_fixture_label() {
   if [[ ! -e examples/gallery && ! -e examples/gallery/index.html ]]; then
     echo "passed: examples gallery fixture authority label (not present)"
@@ -273,6 +307,7 @@ run_check "stale renderer stack guidance" check_stale_renderer_guidance
 run_check "current spec/doc incomplete markers" check_incomplete_markers
 run_check "tracked generated outputs" check_tracked_generated_outputs
 run_check "untracked generated outputs" check_untracked_generated_outputs
+run_check "ignored render-debug outputs" check_ignored_render_debug_outputs
 run_check "examples gallery fixture label" check_gallery_fixture_label
 
 if [[ "$failures" -ne 0 ]]; then
