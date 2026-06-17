@@ -118,8 +118,18 @@ def test_guidance_surfaces_allow_user_selected_superpowers_renderer_loops() -> N
         ],
         "docs/guides/en/contributors/index.md": ["Superpowers", "OpenSpec remains available"],
         "docs/guides/en/agents/index.md": ["Superpowers", "OpenSpec remains available"],
-        "docs/guides/es/colaboradores/index.md": ["Superpowers", "OpenSpec remains available"],
-        "docs/guides/es/agentes/index.md": ["Superpowers", "OpenSpec remains available"],
+        "docs/guides/es/colaboradores/index.md": [
+            "Superpowers",
+            "OpenSpec sigue disponible",
+            "documentos de diseno y plan de Superpowers versionados",
+            "superficies afectadas de foundation, rol, test y contrato",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "Superpowers",
+            "OpenSpec sigue disponible",
+            "documentos de diseno y plan de Superpowers versionados",
+            "superficies afectadas de foundation, rol, test y contrato",
+        ],
     }
     for relative_path, needles in required.items():
         text = (ROOT / relative_path).read_text(encoding="utf-8")
@@ -168,7 +178,7 @@ OpenSpec remains available for future contract changes. When a user explicitly s
 In `docs/guides/en/contributors/index.md` and `docs/guides/en/agents/index.md`, add a short workflow paragraph using the same terms. In Spanish pages, use:
 
 ```markdown
-OpenSpec sigue disponible para cambios futuros de contrato. Cuando la persona usuaria selecciona explicitamente un flujo Superpowers, los documentos de diseno y plan de Superpowers confirmados pueden guiar ese ciclo, pero `docs/foundation/` sigue siendo la fuente superior de verdad inicial.
+OpenSpec sigue disponible para cambios futuros de contrato. Cuando la persona usuaria selecciona explicitamente un flujo Superpowers, los documentos de diseno y plan de Superpowers versionados pueden guiar ese ciclo, pero `docs/foundation/` sigue siendo la fuente superior de verdad inicial y la implementacion debe actualizar las superficies afectadas de foundation, rol, test y contrato.
 ```
 
 - [ ] **Step 5: Run test until it passes**
