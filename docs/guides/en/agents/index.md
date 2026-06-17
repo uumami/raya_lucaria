@@ -27,6 +27,12 @@ problem. Do not infer skin state from screenshots alone; compare the source
 selector, loaded profile, diagnostics, `skin.css`, `data-raya-skin`, and
 render-debug report.
 
+For the `OpenDyslexic` reader toggle, verify the generated static assets under
+`_raya/render/accessibility/`, the local font file, the local toggle script,
+and static parity between preview and copied deployment. Treat any external font
+request as a regression; the toggle may use a local script, but it must not
+introduce browser-side MathJax or an external renderer.
+
 For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. Numbered object support is current behavior: inspect fenced directives, stable IDs, rendered anchors, `@id` shorthand references, `raya:ref/id` explicit references, and the manifest-declared `data/numbered-objects.json` index instead of looking for LaTeX `\label` or `\ref` support.
 
 When a rendering issue crosses math, numbered objects, skins, references, static environments, and local assets, inspect `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` first, then move to the specialized fixture page for the failing surface.

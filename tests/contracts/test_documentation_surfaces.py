@@ -61,6 +61,42 @@ def test_role_documentation_uses_separate_english_and_spanish_pages() -> None:
     assert not (GUIDES / "es" / "contributors" / "index.md").exists()
 
 
+def test_role_documentation_covers_renderer_skins_and_accessibility() -> None:
+    needles = {
+        "docs/guides/en/professors/index.md": ["render.skin", "skins/", "eva-unit-02"],
+        "docs/guides/en/contributors/index.md": [
+            "semantic tokens",
+            "arbitrary CSS",
+            "no CDN",
+        ],
+        "docs/guides/en/students/index.md": ["OpenDyslexic", "reading preference"],
+        "docs/guides/en/agents/index.md": [
+            "OpenDyslexic",
+            "external font",
+            "static parity",
+        ],
+        "docs/guides/es/profesores/index.md": ["render.skin", "skins/", "eva-unit-02"],
+        "docs/guides/es/colaboradores/index.md": [
+            "tokens semanticos",
+            "CSS arbitrario",
+            "CDN",
+        ],
+        "docs/guides/es/estudiantes/index.md": [
+            "OpenDyslexic",
+            "preferencia de lectura",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "OpenDyslexic",
+            "fuente externa",
+            "paridad estatica",
+        ],
+    }
+    for relative_path, expected in needles.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in expected:
+            assert needle in text
+
+
 def test_rendered_documentation_fixture_is_labeled_and_separate() -> None:
     assert DOCS_FIXTURE.exists()
     assert DOCS_FIXTURE.relative_to(ROOT).parts[:2] == ("examples", "docs")

@@ -27,6 +27,13 @@ CSS generado o activacion de pagina renderizada. No infieras estado de skin solo
 desde screenshots; compara el selector fuente, perfil cargado, diagnosticos,
 `skin.css`, `data-raya-skin` y reporte render-debug.
 
+Para el toggle lector `OpenDyslexic`, verifica los assets estaticos generados
+bajo `_raya/render/accessibility/`, el archivo local de fuente, el script local
+del toggle y la paridad estatica entre preview y despliegue copiado. Trata
+cualquier request de fuente externa como regresion; el toggle puede usar un
+script local, pero no debe introducir MathJax en el browser ni un renderer
+externo.
+
 Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como fixture de fuente enfocado. Verifica paginas de fuente en vez de archivos generados bajo `artifact/`, y usa evidencia de render-debug para confirmar que no hay TeX crudo visible, conversion browser-side MathJax ni requests externos del renderer. El soporte de objeto numerado es comportamiento actual: inspecciona directivas fenced, IDs duraderos, anclas renderizadas, referencias abreviadas `@id`, referencias explicitas `raya:ref/id` y el index `data/numbered-objects.json` declarado en manifest en vez de buscar soporte LaTeX `\label` o `\ref`.
 
 Cuando un problema de rendering cruce math, objetos numerados, skins, referencias, entornos estaticos y assets locales, inspecciona primero `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md`, despues pasa a la pagina fixture especializada de la superficie que falla.

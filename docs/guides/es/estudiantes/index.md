@@ -21,6 +21,11 @@ trabajo que el curso te pide completar. Si dos secciones se ven diferentes, usa
 el titulo de pagina, enlaces y etiquetas como significado del curso; la skin solo
 es enfasis visual.
 
+Las paginas renderizadas pueden incluir un boton `OpenDyslexic` en la parte
+superior. Es una preferencia de lectura local que guarda tu navegador para ese
+sitio estatico; cambia la fuente de la pagina para facilitar lectura, pero no
+cambia contenido, evaluacion, enlaces ni etiquetas de autoridad.
+
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
 Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y pruebas deben aparecer como texto normal del curso mas matematica compuesta. Si ves `\begin{bmatrix}` crudo, una macro desconocida, matematica visible con delimitadores de dolar, o una pagina que pide cargar browser-side MathJax, reportalo al equipo del curso con la URL o titulo de la pagina.

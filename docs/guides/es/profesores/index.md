@@ -148,6 +148,9 @@ Los archivos de skin definen tokens semanticos de color, font y densidad.
 Mantiene alto el contraste, evita fuentes externas, y no uses skins para
 cambiar contenido del curso, enlaces ni identidad de objetos numerados. Los
 campos de fuente son `render.skin`, `skins/` y `_raya/skin.yaml`.
+El render fixture usa `eva-unit-02` como ejemplo de skin predeterminada legible;
+copia ese patron cuando quieras una identidad visual mas fuerte sin bajar
+contraste ni cambiar el significado del curso.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 
