@@ -1802,6 +1802,9 @@ def test_render_fixture_builds_rich_static_pages(
     assert "mjx-container" in authoring_matrix_html
     assert "@authoring-theorem" not in authoring_matrix_visible
     assert "\\begin{bmatrix}" not in authoring_matrix_visible
+    assert "\\vect" not in authoring_matrix_visible
+    assert "\\mat" not in authoring_matrix_visible
+    assert "\\norm" not in authoring_matrix_visible
 
 
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:

@@ -20,9 +20,11 @@ $\newcommand{\mat}[1]{\mathbf{#1}}\newcommand{\vect}[1]{\mathbf{#1}}\newcommand{
 
 ::: theorem {#authoring-theorem title="Matrix norm fixture"}
 Let
+
 $$
 \mat{I}=\begin{bmatrix}1&0\\0&1\end{bmatrix}
 $$
+
 and let $\vect{x}\in\mathbb{R}^2$. Then $\mat{I}\vect{x}=\vect{x}$ and
 $\norm{\mat{I}\vect{x}}=\norm{\vect{x}}$.
 :::
