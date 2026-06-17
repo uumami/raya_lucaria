@@ -21,7 +21,11 @@ Para depurar skins, inspecciona superficies en este orden: el selector en
 de build, `_raya/render/skin.css` generado, el atributo renderizado
 `data-raya-skin` de la pagina, el nombre de archivo `skin.css` y el reporte
 render-debug. No infieras autoridad de fuente desde la presentacion visual ni
-desde HTML scrapeado.
+desde HTML scrapeado. Cuando aparezca un problema de skin, primero clasifica si
+la fuente es un problema de selector, un problema de tokens de perfil, output
+CSS generado o activacion de pagina renderizada. No infieras estado de skin solo
+desde screenshots; compara el selector fuente, perfil cargado, diagnosticos,
+`skin.css`, `data-raya-skin` y reporte render-debug.
 
 Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como fixture de fuente enfocado. Verifica paginas de fuente en vez de archivos generados bajo `artifact/`, y usa evidencia de render-debug para confirmar que no hay TeX crudo visible, conversion browser-side MathJax ni requests externos del renderer. El soporte de objeto numerado es comportamiento actual: inspecciona directivas fenced, IDs duraderos, anclas renderizadas, referencias abreviadas `@id`, referencias explicitas `raya:ref/id` y el index `data/numbered-objects.json` declarado en manifest en vez de buscar soporte LaTeX `\label` o `\ref`.
 

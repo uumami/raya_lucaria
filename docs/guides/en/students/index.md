@@ -17,7 +17,9 @@ Static pages may include pre-rendered math, highlighted code, tables, callouts, 
 Some courses use skins for visual presentation or to emphasize a unit, lab,
 appendix, practice section, or review section. A skin does not change source
 authority, labels, links, official/generated status, assignments, or what work
-the course asks you to complete.
+the course asks you to complete. If two sections look different, use the page
+title, links, and labels as the source of course meaning; the skin is only
+visual emphasis.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 

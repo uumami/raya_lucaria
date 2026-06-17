@@ -20,7 +20,12 @@ For skin debugging, inspect surfaces in order: the selector in `raya.yaml` or
 `_raya/skin.yaml`, the selected skin file, build diagnostics, generated
 `_raya/render/skin.css`, the `skin.css` file name, the rendered
 `data-raya-skin` page attribute, and the render-debug report. Do not infer
-source authority from visual presentation or scraped HTML.
+source authority from visual presentation or scraped HTML. When a skin issue
+appears, first classify whether the source is a selector problem, a
+profile-token problem, generated CSS output, or a rendered-page activation
+problem. Do not infer skin state from screenshots alone; compare the source
+selector, loaded profile, diagnostics, `skin.css`, `data-raya-skin`, and
+render-debug report.
 
 For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. Numbered object support is current behavior: inspect fenced directives, stable IDs, rendered anchors, `@id` shorthand references, `raya:ref/id` explicit references, and the manifest-declared `data/numbered-objects.json` index instead of looking for LaTeX `\label` or `\ref` support.
 

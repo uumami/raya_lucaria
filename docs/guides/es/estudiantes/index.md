@@ -17,7 +17,9 @@ Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, tab
 Algunos cursos usan skins para presentacion visual o para enfatizar una unidad,
 lab, apendice, seccion de practica o seccion de repaso. Una skin no cambia la
 autoridad de fuente, etiquetas, enlaces, estado oficial/generado, tareas ni el
-trabajo que el curso te pide completar.
+trabajo que el curso te pide completar. Si dos secciones se ven diferentes, usa
+el titulo de pagina, enlaces y etiquetas como significado del curso; la skin solo
+es enfasis visual.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 

@@ -188,7 +188,14 @@ Accepted baseline:
   under root `skins/`; section selectors live at `course/**/_raya/skin.yaml`
   beside a section `0_index.md` and inherit to descendants; the selector file
   name is `_raya/skin.yaml`. Skins define validated semantic tokens for color,
-  font, and density. They generate local `_raya/render/skin.css` variables and
+  font, and density. Skin IDs use lowercase letters, digits, and hyphens. A
+  course-local skin file name must match its `id`; for example
+  `skins/warm-academic.yaml` contains `id: warm-academic`. `render.skin` and
+  `_raya/skin.yaml` select profiles; selector files do not define token values.
+  V1 skin tokens are semantic: color tokens `page`, `surface`, `text`, `muted`,
+  `accent`, `accent_soft`, `border`, `success`, `warning`, and `danger`; font
+  tokens `body`, `heading`, and `mono`; and density `comfortable`, `compact`, or
+  `spacious`. They generate local `_raya/render/skin.css` variables and
   `data-raya-skin` page attributes, but
   they do not change content order, object IDs, references, artifact data,
   execution behavior, or source authority. V1 forbids arbitrary CSS, external
