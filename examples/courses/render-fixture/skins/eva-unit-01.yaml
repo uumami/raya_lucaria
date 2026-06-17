@@ -1,0 +1,19 @@
+id: eva-unit-01
+name: Eva Unit 01
+tokens:
+  color:
+    page: "#fbf8ff"
+    surface: "#ffffff"
+    text: "#201a28"
+    muted: "#5b5364"
+    accent: "#5b2a86"
+    accent_soft: "#e8f8d8"
+    border: "#d4c2e4"
+    success: "#357a22"
+    warning: "#8a6500"
+    danger: "#b3261e"
+  font:
+    body: "system-ui"
+    heading: "system-ui"
+    mono: "ui-monospace"
+  density: comfortable

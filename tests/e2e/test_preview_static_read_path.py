@@ -108,8 +108,17 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         assert base_url is not None
         index_url = f"{base_url}/index.html"
         reader_url = f"{base_url}/reader-ux/index.html"
+        authoring_url = f"{base_url}/authoring-matrix/index.html"
         index_html = _fetch_text(index_url)
         reader_html = _fetch_text(reader_url)
+        authoring_html = _fetch_text(authoring_url)
+        rich_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
+        accessibility_css = _fetch_text(
+            f"{base_url}/_raya/render/accessibility/open-dyslexic.css"
+        )
+        accessibility_js = _fetch_text(
+            f"{base_url}/_raya/render/accessibility/open-dyslexic-toggle.js"
+        )
         index_skin_css = _fetch_stylesheet_containing(
             index_url,
             index_html,
@@ -123,10 +132,25 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     finally:
         handle.close()
 
-    assert 'data-raya-skin="warm-academic"' in index_html
+    assert 'data-raya-skin="eva-unit-02"' in index_html
     assert 'data-raya-skin="practice-lab"' in reader_html
-    assert '[data-raya-skin="warm-academic"]' in index_skin_css
+    assert 'data-raya-skin="practice-lab"' in authoring_html
+    assert '[data-raya-skin="eva-unit-02"]' in index_skin_css
+    assert '[data-raya-skin="eva-unit-01"]' in index_skin_css
+    assert '[data-raya-skin="eva-unit-03"]' in index_skin_css
+    assert '[data-raya-skin="ghost-in-the-shell"]' in index_skin_css
     assert '[data-raya-skin="practice-lab"]' in reader_skin_css
+    assert '<button class="raya-font-toggle"' in index_html
+    assert 'aria-pressed="false"' in index_html
+    assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
+    assert 'src="_raya/render/accessibility/open-dyslexic-toggle.js"' in index_html
+    assert "@font-face" in accessibility_css
+    assert "OpenDyslexic" in accessibility_css
+    assert "localStorage" in accessibility_js
+    assert "data-raya-open-dyslexic" in accessibility_js
+    assert "max-width: 96rem" in rich_css
+    assert "grid-template-columns: minmax(0, 4fr) minmax(18rem, 1fr)" in rich_css
+    assert "@media (max-width: 720px)" in rich_css
 
 
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(

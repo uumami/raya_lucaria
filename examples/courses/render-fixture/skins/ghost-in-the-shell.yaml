@@ -1,0 +1,19 @@
+id: ghost-in-the-shell
+name: Ghost In The Shell
+tokens:
+  color:
+    page: "#f4fbfb"
+    surface: "#ffffff"
+    text: "#162425"
+    muted: "#526466"
+    accent: "#006d77"
+    accent_soft: "#d8f3f0"
+    border: "#b8d7d9"
+    success: "#247348"
+    warning: "#8a6200"
+    danger: "#b3261e"
+  font:
+    body: "system-ui"
+    heading: "system-ui"
+    mono: "ui-monospace"
+  density: comfortable

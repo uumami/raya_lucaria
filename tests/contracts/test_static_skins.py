@@ -38,6 +38,33 @@ def test_unknown_default_skin_reports_error_and_falls_back(
     )
 
 
+def test_render_fixture_uses_eva_unit_02_default_and_emits_new_skin_selectors() -> None:
+    import yaml
+
+    fixture = Path("examples/courses/render-fixture")
+    config = yaml.safe_load((fixture / "raya.yaml").read_text(encoding="utf-8"))
+    report = ValidationReport(context="skin-test")
+
+    context = load_skin_context(
+        fixture,
+        config,
+        source_root=fixture / "course",
+        report=report,
+    )
+    css = render_skin_css(context)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert context.default_skin_id == "eva-unit-02"
+    for skin_id in (
+        "eva-unit-02",
+        "eva-unit-01",
+        "eva-unit-03",
+        "ghost-in-the-shell",
+    ):
+        assert f'[data-raya-skin="{skin_id}"]' in css
+    assert "--raya-color-accent: #b5121b;" in css
+
+
 def test_invalid_default_skin_type_reports_error(
     tmp_path: Path,
 ) -> None:
