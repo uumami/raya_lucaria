@@ -18,6 +18,8 @@ Para notacion comun de curso, prefiere macros pequenas locales a la pagina como 
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.
 
+Usa `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` cuando quieras una pagina fuente compacta que combine macros de math, contenido numerado, referencias, entornos estaticos, assets locales y una skin de seccion.
+
 Los objetos numerados son comportamiento actual en build. Configura familias y secuencias en `raya.yaml` con `render.numbered_objects.numbering`, `render.numbered_objects.sequences` y `render.numbered_objects.families`, y despues escribe objetos con directivas fenced e IDs duraderos:
 
 ```markdown

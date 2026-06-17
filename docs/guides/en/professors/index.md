@@ -18,6 +18,8 @@ For common course notation, prefer small page-local macros such as `\newcommand{
 
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the current fixture reference for copyable build-time MathJax patterns. It covers inline and display math, `\begin{bmatrix}` matrices, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, and optimization notation. Define macros before use, keep them page-local, and use `$$` delimiter lines for larger expressions.
 
+Use `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` when you want one compact source page that combines math macros, numbered content, references, static environments, local assets, and a section skin.
+
 Numbered objects are current build-time behavior. Configure family and sequence behavior in `raya.yaml` with `render.numbered_objects.numbering`, `render.numbered_objects.sequences`, and `render.numbered_objects.families`, then author objects with fenced directives and stable IDs:
 
 ```markdown
