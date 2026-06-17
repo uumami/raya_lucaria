@@ -3,10 +3,40 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import zipfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_static_wheel_includes_open_dyslexic_font_resource(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            "uv",
+            "build",
+            "--package",
+            "raya-static",
+            "--wheel",
+            "--out-dir",
+            str(tmp_path),
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    wheels = sorted(tmp_path.glob("raya_static-*.whl"))
+    assert len(wheels) == 1
+    with zipfile.ZipFile(wheels[0]) as wheel:
+        names = set(wheel.namelist())
+    assert (
+        "raya_static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff"
+        in names
+    )
 
 
 def run_npm_renderer(

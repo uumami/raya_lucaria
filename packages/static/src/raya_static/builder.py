@@ -9,6 +9,7 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -1815,16 +1816,17 @@ def _write_rich_render_resources(
     if not accessibility.source_font.is_file():
         report.add_error(
             "Missing local OpenDyslexic font asset",
-            path=accessibility.source_font,
+            path=Path(str(accessibility.source_font)),
             next_action=(
                 "Add the local OpenDyslexic font under "
-                "packages/static/assets/accessibility/open-dyslexic/"
+                "packages/static/src/raya_static/assets/accessibility/open-dyslexic/"
             ),
         )
         return
     css_path.write_text(accessibility.css, encoding="utf-8")
     js_path.write_text(accessibility.javascript, encoding="utf-8")
-    shutil.copy2(accessibility.source_font, font_path)
+    with resources.as_file(accessibility.source_font) as source_font:
+        shutil.copy2(source_font, font_path)
     report.wrote_output(css_path)
     report.wrote_output(js_path)
     report.wrote_output(font_path)

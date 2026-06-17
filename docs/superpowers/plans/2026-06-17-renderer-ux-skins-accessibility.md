@@ -20,7 +20,7 @@
 - Modify `packages/static/src/raya_static/rendering.py`: widen desktop layout and improve tokenized borders/surfaces.
 - Modify `packages/static/src/raya_static/builder.py`: link accessibility resources, render the header toggle, and write local accessibility resources.
 - Create `packages/static/src/raya_static/accessibility.py`: constants and static CSS/JS helpers for OpenDyslexic resources.
-- Add local font assets under `packages/static/assets/accessibility/open-dyslexic/`.
+- Add local font assets under `packages/static/src/raya_static/assets/accessibility/open-dyslexic/`.
 - Modify `tests/contracts/test_static_skins.py`: assert new skin CSS selectors and default fixture skin behavior.
 - Modify `tests/contracts/test_static_builder.py`: assert generated accessibility files are present in render fixture artifacts.
 - Modify `tests/e2e/test_preview_static_read_path.py`: assert local static links, toggle markup, wider desktop CSS, and section override preservation.
@@ -407,7 +407,7 @@ git commit -m "Widen rendered desktop layout"
 **Files:**
 - Create: `packages/static/src/raya_static/accessibility.py`
 - Modify: `packages/static/src/raya_static/builder.py`
-- Add: `packages/static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff2`
+- Add: `packages/static/src/raya_static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff`
 - Test: `tests/contracts/test_static_builder.py`
 - Test: `tests/e2e/test_preview_static_read_path.py`
 
@@ -430,7 +430,7 @@ Add assertions to `test_render_fixture_builds_rich_static_pages` in `tests/contr
         / "render"
         / "accessibility"
         / "fonts"
-        / "OpenDyslexic-Regular.woff2"
+        / "OpenDyslexic-Regular.woff"
     )
     assert accessibility_css.is_file()
     assert accessibility_js.is_file()
@@ -461,19 +461,19 @@ dpkg-deb -x fonts-opendyslexic_*.deb extracted
 find extracted -type f \( -iname '*Regular*.otf' -o -iname '*Regular*.ttf' \) -print
 ```
 
-Convert the regular font to WOFF2 if a converter is available:
+Convert the regular font to WOFF if a converter is available:
 
 ```bash
-fonttools ttLib.woff2 compress extracted/path/to/OpenDyslexic-Regular.otf
+fonttools ttLib.woff compress extracted/path/to/OpenDyslexic-Regular.otf
 ```
 
 Copy the resulting file to:
 
 ```text
-packages/static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff2
+packages/static/src/raya_static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff
 ```
 
-If no WOFF2 converter is available, use the package's regular `.otf` file and update the CSS/test file name consistently to `OpenDyslexic-Regular.otf`.
+If no WOFF converter is available, use the package's regular `.otf` file and update the CSS/test file name consistently to `OpenDyslexic-Regular.otf`.
 
 - [ ] **Step 4: Create accessibility helper module**
 
@@ -483,19 +483,17 @@ Create `packages/static/src/raya_static/accessibility.py`:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from importlib import resources
+from importlib.abc import Traversable
 
 
 ACCESSIBILITY_RESOURCE_PATH = "_raya/render/accessibility"
 OPEN_DYSLEXIC_CSS_NAME = "open-dyslexic.css"
 OPEN_DYSLEXIC_JS_NAME = "open-dyslexic-toggle.js"
-OPEN_DYSLEXIC_FONT_NAME = "OpenDyslexic-Regular.woff2"
-OPEN_DYSLEXIC_SOURCE_FONT = (
-    Path(__file__).resolve().parents[2]
-    / "assets"
-    / "accessibility"
-    / "open-dyslexic"
-    / OPEN_DYSLEXIC_FONT_NAME
+OPEN_DYSLEXIC_FONT_NAME = "OpenDyslexic-Regular.woff"
+OPEN_DYSLEXIC_RESOURCE_PACKAGE = "raya_static"
+OPEN_DYSLEXIC_RESOURCE_PATH = (
+    "assets/accessibility/open-dyslexic/" + OPEN_DYSLEXIC_FONT_NAME
 )
 
 
@@ -503,14 +501,14 @@ OPEN_DYSLEXIC_SOURCE_FONT = (
 class AccessibilityResources:
     css: str
     javascript: str
-    source_font: Path
+    source_font: Traversable
     font_name: str
 
 
 def open_dyslexic_resources() -> AccessibilityResources:
     css = f'''@font-face {{
   font-family: "OpenDyslexic";
-  src: url("fonts/{OPEN_DYSLEXIC_FONT_NAME}") format("woff2");
+  src: url("fonts/{OPEN_DYSLEXIC_FONT_NAME}") format("woff");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -546,15 +544,33 @@ def open_dyslexic_resources() -> AccessibilityResources:
   const storageKey = "raya:open-dyslexic";
   const activeValue = "true";
 
+  function storedPreference() {
+    try {
+      return localStorage.getItem(storageKey) === activeValue;
+    } catch {
+      return false;
+    }
+  }
+
+  function storePreference(enabled) {
+    try {
+      localStorage.setItem(storageKey, enabled ? activeValue : "false");
+    } catch {
+      return;
+    }
+  }
+
   function apply(enabled) {
-    document.documentElement.dataset.rayaOpenDyslexic = enabled ? "true" : "false";
+    document.documentElement.setAttribute(
+      "data-raya-open-dyslexic",
+      enabled ? "true" : "false"
+    );
     document.querySelectorAll(".raya-font-toggle").forEach((button) => {
       button.setAttribute("aria-pressed", enabled ? "true" : "false");
     });
   }
 
-  const initial = localStorage.getItem(storageKey) === activeValue;
-  apply(initial);
+  apply(storedPreference());
 
   document.addEventListener("click", (event) => {
     const button = event.target.closest(".raya-font-toggle");
@@ -562,7 +578,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
       return;
     }
     const enabled = button.getAttribute("aria-pressed") !== "true";
-    localStorage.setItem(storageKey, enabled ? activeValue : "false");
+    storePreference(enabled);
     apply(enabled);
   });
 })();
@@ -570,7 +586,9 @@ def open_dyslexic_resources() -> AccessibilityResources:
     return AccessibilityResources(
         css=css,
         javascript=javascript,
-        source_font=OPEN_DYSLEXIC_SOURCE_FONT,
+        source_font=resources.files(OPEN_DYSLEXIC_RESOURCE_PACKAGE).joinpath(
+            OPEN_DYSLEXIC_RESOURCE_PATH
+        ),
         font_name=OPEN_DYSLEXIC_FONT_NAME,
     )
 ```
@@ -639,12 +657,13 @@ In `_write_rich_render_resources`, after writing `skin.css`, add:
         report.add_error(
             "Missing local OpenDyslexic font asset",
             path=accessibility.source_font,
-            next_action="Add the local OpenDyslexic font under packages/static/assets/accessibility/open-dyslexic/",
+            next_action="Add the local OpenDyslexic font under packages/static/src/raya_static/assets/accessibility/open-dyslexic/",
         )
         return
     css_path.write_text(accessibility.css, encoding="utf-8")
     js_path.write_text(accessibility.javascript, encoding="utf-8")
-    shutil.copy2(accessibility.source_font, font_path)
+    with resources.as_file(accessibility.source_font) as source_font:
+        shutil.copy2(source_font, font_path)
     report.wrote_output(css_path)
     report.wrote_output(js_path)
     report.wrote_output(font_path)
@@ -667,7 +686,7 @@ Expected: PASS.
 Run:
 
 ```bash
-git add packages/static/src/raya_static/accessibility.py packages/static/src/raya_static/builder.py packages/static/assets/accessibility/open-dyslexic tests/contracts/test_static_builder.py tests/e2e/test_preview_static_read_path.py
+git add packages/static/src/raya_static/accessibility.py packages/static/src/raya_static/builder.py packages/static/src/raya_static/assets/accessibility/open-dyslexic tests/contracts/test_static_builder.py tests/e2e/test_preview_static_read_path.py
 git commit -m "Add local OpenDyslexic toggle"
 ```
 

@@ -1834,6 +1834,32 @@ def test_render_fixture_builds_rich_static_pages(
     assert "\\norm" not in authoring_matrix_visible
 
 
+def test_open_dyslexic_resource_is_packaged_and_storage_safe() -> None:
+    from importlib import resources
+
+    from raya_static.accessibility import (
+        OPEN_DYSLEXIC_RESOURCE_PACKAGE,
+        OPEN_DYSLEXIC_RESOURCE_PATH,
+        open_dyslexic_resources,
+    )
+
+    font = resources.files(OPEN_DYSLEXIC_RESOURCE_PACKAGE).joinpath(
+        OPEN_DYSLEXIC_RESOURCE_PATH
+    )
+    accessibility = open_dyslexic_resources()
+
+    assert font.is_file()
+    assert accessibility.source_font.is_file()
+    assert font.read_bytes() == accessibility.source_font.read_bytes()
+    assert "try {" in accessibility.javascript
+    assert "catch" in accessibility.javascript
+    assert "localStorage" in accessibility.javascript
+    assert "MathJax" not in accessibility.javascript
+    assert "tex-chtml" not in accessibility.javascript
+    assert "http://" not in accessibility.javascript
+    assert "https://" not in accessibility.javascript
+
+
 def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"

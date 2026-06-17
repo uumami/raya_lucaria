@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from importlib import resources
+from importlib.abc import Traversable
 
 
 ACCESSIBILITY_RESOURCE_PATH = "_raya/render/accessibility"
 OPEN_DYSLEXIC_CSS_NAME = "open-dyslexic.css"
 OPEN_DYSLEXIC_JS_NAME = "open-dyslexic-toggle.js"
 OPEN_DYSLEXIC_FONT_NAME = "OpenDyslexic-Regular.woff"
-OPEN_DYSLEXIC_SOURCE_FONT = (
-    Path(__file__).resolve().parents[2]
-    / "assets"
-    / "accessibility"
-    / "open-dyslexic"
-    / OPEN_DYSLEXIC_FONT_NAME
+OPEN_DYSLEXIC_RESOURCE_PACKAGE = "raya_static"
+OPEN_DYSLEXIC_RESOURCE_PATH = (
+    "assets/accessibility/open-dyslexic/" + OPEN_DYSLEXIC_FONT_NAME
 )
 
 
@@ -21,7 +19,7 @@ OPEN_DYSLEXIC_SOURCE_FONT = (
 class AccessibilityResources:
     css: str
     javascript: str
-    source_font: Path
+    source_font: Traversable
     font_name: str
 
 
@@ -64,6 +62,22 @@ def open_dyslexic_resources() -> AccessibilityResources:
   const storageKey = "raya:open-dyslexic";
   const activeValue = "true";
 
+  function storedPreference() {
+    try {
+      return localStorage.getItem(storageKey) === activeValue;
+    } catch {
+      return false;
+    }
+  }
+
+  function storePreference(enabled) {
+    try {
+      localStorage.setItem(storageKey, enabled ? activeValue : "false");
+    } catch {
+      return;
+    }
+  }
+
   function apply(enabled) {
     document.documentElement.setAttribute(
       "data-raya-open-dyslexic",
@@ -74,8 +88,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
     });
   }
 
-  const initial = localStorage.getItem(storageKey) === activeValue;
-  apply(initial);
+  apply(storedPreference());
 
   document.addEventListener("click", (event) => {
     const button = event.target.closest(".raya-font-toggle");
@@ -83,7 +96,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
       return;
     }
     const enabled = button.getAttribute("aria-pressed") !== "true";
-    localStorage.setItem(storageKey, enabled ? activeValue : "false");
+    storePreference(enabled);
     apply(enabled);
   });
 })();
@@ -91,6 +104,8 @@ def open_dyslexic_resources() -> AccessibilityResources:
     return AccessibilityResources(
         css=css,
         javascript=javascript,
-        source_font=OPEN_DYSLEXIC_SOURCE_FONT,
+        source_font=resources.files(OPEN_DYSLEXIC_RESOURCE_PACKAGE).joinpath(
+            OPEN_DYSLEXIC_RESOURCE_PATH
+        ),
         font_name=OPEN_DYSLEXIC_FONT_NAME,
     )
