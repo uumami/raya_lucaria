@@ -778,9 +778,10 @@ def _render_page(
         numbered_objects=numbered_objects,
         proofs=proofs,
     )
+    article_html, toc_html = _extract_page_toc(article_html)
     learning_rail = _render_learning_rail(
         page,
-        article_html,
+        toc_html,
         content_model,
         support_panels,
     )
@@ -855,7 +856,7 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
 
 def _render_learning_rail(
     page: ContentPage,
-    rendered_article_html: str,
+    toc_html: str,
     content_model: ContentModel,
     support_panels: str,
 ) -> str:
@@ -865,7 +866,7 @@ def _render_learning_rail(
         _render_estimated_time_rail(page),
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
-        _render_page_contents_rail(rendered_article_html),
+        _render_page_contents_rail(toc_html),
         _render_sequence_rail(page, content_model),
         support_panels,
     ]
@@ -894,15 +895,24 @@ def _render_rail_panel(class_name: str, title: str, body: str) -> str:
     )
 
 
-def _render_page_contents_rail(rendered_article_html: str) -> str:
+def _extract_page_toc(rendered_article_html: str) -> tuple[str, str]:
     match = re.search(
         r'<nav class="raya-page-toc" aria-label="Page contents">.*?</nav>',
         rendered_article_html,
         flags=re.DOTALL,
     )
     if match is None:
+        return rendered_article_html, ""
+    article_without_toc = (
+        rendered_article_html[: match.start()] + rendered_article_html[match.end() :]
+    )
+    return article_without_toc, match.group(0)
+
+
+def _render_page_contents_rail(toc_html: str) -> str:
+    if not toc_html:
         return ""
-    return _render_rail_panel("raya-page-contents", "Page contents", match.group(0))
+    return _render_rail_panel("raya-page-contents", "Page contents", toc_html)
 
 
 def _render_page_summary_rail(page: ContentPage) -> str:

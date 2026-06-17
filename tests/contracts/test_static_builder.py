@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 from raya_schema import (
     ValidationReport,
@@ -22,7 +23,6 @@ from raya_schema import (
     validate_reviewed_outputs_index,
     validate_runtime_index,
 )
-from raya_schema import content as schema_content
 from raya_static import build_course
 from raya_static import builder as static_builder
 from raya_static.math_renderer import MathRenderResult
@@ -1856,36 +1856,36 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
     assert 'href="../index.html"' in html
+    root_html = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    toc = '<nav class="raya-page-toc" aria-label="Page contents">'
+    assert root_html.count(toc) == 1
+    assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
 
 
 def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning(
-    tmp_path: Path,
-    monkeypatch,
 ) -> None:
-    course = _copy_render_fixture(tmp_path)
-    reader = course / "course" / "4_reader_ux" / "0_index.md"
-    reader.write_text(
-        reader.read_text(encoding="utf-8").replace(
-            "prerequisites:\n  - render-root\n",
-            "prerequisites:\n  - render-root\n  - missing-page-id\n",
-        ),
-        encoding="utf-8",
+    page = SimpleNamespace(
+        output_path="reader-ux/index.html",
+        prerequisites=("render-root", "missing-page-id"),
     )
-    monkeypatch.setattr(
-        schema_content,
-        "_validate_prerequisites",
-        lambda model, report: None,
+    content_model = SimpleNamespace(
+        pages_by_id={
+            "render-root": SimpleNamespace(
+                output_path="index.html",
+                nav_title="Raya Lucaria Render Fixture",
+                title="Render Fixture",
+            )
+        }
     )
 
-    report = build_course(course)
+    html = static_builder._render_prerequisites_rail(page, content_model)
 
-    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
-        encoding="utf-8"
-    )
     assert "Raya Lucaria Render Fixture" in html
+    assert 'href="../index.html"' in html
     assert "missing-page-id" not in html
     assert "unresolved prerequisite" not in _visible_text(html).lower()
 
