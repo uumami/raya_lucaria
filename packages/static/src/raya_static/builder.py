@@ -825,6 +825,7 @@ def _render_top_command_bar(course_title: str) -> str:
     return "\n".join(
         [
             '<header class="raya-top-command-bar">',
+            '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
             '<div class="raya-course-tools" aria-label="Course tools">',
             (
@@ -832,6 +833,7 @@ def _render_top_command_bar(course_title: str) -> str:
                 'aria-label="Toggle OpenDyslexic font" '
                 'aria-pressed="false">OpenDyslexic</button>'
             ),
+            "</div>",
             "</div>",
             "</header>",
         ]

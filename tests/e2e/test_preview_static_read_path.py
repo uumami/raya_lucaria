@@ -148,9 +148,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "OpenDyslexic" in accessibility_css
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
-    assert "max-width: 96rem" in rich_css
-    assert "grid-template-columns: minmax(0, 4fr) minmax(18rem, 1fr)" in rich_css
-    assert "@media (max-width: 720px)" in rich_css
+    assert "max-width: 110rem" in rich_css
+    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem)" in rich_css
+    assert "@media (max-width: 900px)" in rich_css
 
 
 def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
@@ -208,6 +208,48 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     assert "OpenDyslexic" in after["bodyFont"]
 
 
+def test_render_fixture_learning_shell_layout_and_accessibility(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator("header.raya-top-command-bar").bounding_box()
+                        assert page.locator("nav.raya-course-map").bounding_box()
+                        assert page.locator("article.raya-main-article").bounding_box()
+                        assert page.locator("aside.raya-learning-rail").bounding_box()
+                        assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
+                        page.keyboard.press("Tab")
+                        focused = page.evaluate("() => document.activeElement && document.activeElement.className")
+                        assert "raya-skip-link" in focused or "raya-font-toggle" in focused
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:
@@ -227,21 +269,21 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     finally:
         handle.close()
 
-    assert '<header class="raya-site-header">' in root_html
-    assert '<main id="raya-content" class="raya-main">' in root_html
-    assert '<article class="raya-article">' in root_html
-    assert '<aside class="raya-support-stack" aria-label="Resource status">' in root_html
-    assert root_html.index('<article class="raya-article">') < root_html.index(
-        '<aside class="raya-support-stack"'
+    assert '<header class="raya-top-command-bar">' in root_html
+    assert '<main id="raya-content" class="raya-learning-shell">' in root_html
+    assert '<article class="raya-main-article">' in root_html
+    assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
+    assert root_html.index('<article class="raya-main-article">') < root_html.index(
+        '<aside class="raya-learning-rail"'
     )
     assert "SHA-256" not in root_html
     assert "Source path" not in root_html
     assert "SHA-256" in inspection_html
     assert "Artifact path" in inspection_html
     assert '<main class="raya-inspection-main">' in inspection_html
-    assert ".raya-main" in css
+    assert ".raya-learning-shell" in css
     assert "grid-template-columns" in css
-    assert "@media (max-width: 720px)" in css
+    assert "@media (max-width: 900px)" in css
     assert "overflow-wrap: anywhere" in css
 
 
@@ -290,8 +332,8 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
                             _assert_no_horizontal_overflow(page)
                             _assert_no_overlap(
                                 page,
-                                "article.raya-article",
-                                "aside.raya-support-stack",
+                                "article.raya-main-article",
+                                "aside.raya-learning-rail",
                             )
 
                             page.goto(

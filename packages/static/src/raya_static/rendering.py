@@ -458,6 +458,10 @@ img {
   height: auto;
   max-width: 100%;
 }
+:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-skip-link {
   background: #ffffff;
   border: 1px solid #d8dee4;
@@ -470,70 +474,125 @@ img {
 .raya-skip-link:focus {
   top: 1rem;
 }
-.raya-site-header {
+.raya-top-command-bar {
   background: var(--raya-color-surface);
   border-bottom: 1px solid var(--raya-color-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
-.raya-site-header-inner,
-.raya-main,
+.raya-top-command-bar-inner,
+.raya-learning-shell,
 .raya-page-footer,
 .raya-inspection-main {
   margin: 0 auto;
-  max-width: 96rem;
+  max-width: 110rem;
   padding: var(--raya-space-page);
+}
+.raya-top-command-bar-inner {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
 }
 .raya-course-title {
   font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.875rem;
   font-weight: 700;
+  margin: 0;
+}
+.raya-font-toggle {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-accent);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+}
+.raya-font-toggle:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-learning-shell {
+  align-items: start;
+  display: grid;
+  gap: calc(var(--raya-space-block) * 1.25);
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem);
+}
+.raya-course-map,
+.raya-main-article,
+.raya-learning-rail,
+.raya-inspection-main {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  min-width: 0;
+}
+.raya-course-map,
+.raya-learning-rail {
+  position: sticky;
+  top: 5rem;
+}
+.raya-course-map,
+.raya-main-article,
+.raya-learning-rail,
+.raya-inspection-main {
+  padding: var(--raya-space-panel);
+}
+.raya-region-title,
+.raya-rail-title {
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
   margin: 0 0 0.75rem;
 }
-.raya-course-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
+.raya-course-map ol,
+.raya-learning-rail ul {
+  margin: 0;
+  padding-left: 1.25rem;
 }
-.raya-course-nav a {
-  border-bottom: 2px solid transparent;
+.raya-course-map a {
+  border-left: 3px solid transparent;
+  display: block;
+  padding: 0.25rem 0 0.25rem 0.5rem;
   text-decoration: none;
 }
-.raya-course-nav a[aria-current="page"] {
-  border-bottom-color: var(--raya-color-success);
+.raya-course-map a[aria-current="page"] {
+  border-left-color: var(--raya-color-success);
   color: var(--raya-color-success);
   font-weight: 700;
 }
 nav[aria-label="Breadcrumbs"] {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
-  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
 }
-.raya-main {
-  align-items: start;
-  display: grid;
-  gap: calc(var(--raya-space-block) * 1.25);
-  grid-template-columns: minmax(0, 4fr) minmax(18rem, 1fr);
-}
-.raya-article,
-.raya-support-stack,
-.raya-inspection-main {
-  background: var(--raya-color-surface);
-  border: 1px solid var(--raya-color-border);
-  border-radius: 0.375rem;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-  min-width: 0;
-}
-.raya-article,
-.raya-inspection-main {
-  padding: var(--raya-space-panel);
-}
-.raya-article > :first-child,
+.raya-main-article > :first-child,
 .raya-inspection-main > :first-child {
   margin-top: 0;
 }
-.raya-support-stack {
+.raya-learning-rail {
   display: grid;
   gap: var(--raya-space-block);
-  padding: var(--raya-space-panel);
+}
+.raya-rail-panel {
+  border-bottom: 1px solid var(--raya-color-border);
+  padding-bottom: var(--raya-space-block);
+}
+.raya-rail-panel:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.raya-status-chip {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
 }
 .raya-page-footer {
   color: var(--raya-color-muted);
@@ -830,26 +889,35 @@ mjx-container[display="true"] {
   padding: 0.75rem;
   white-space: pre-wrap;
 }
-@media (max-width: 720px) {
-  .raya-site-header-inner,
-  .raya-main,
+@media (max-width: 900px) {
+  .raya-learning-shell {
+    display: block;
+  }
+  .raya-course-map,
+  .raya-learning-rail {
+    margin-bottom: 1rem;
+    position: static;
+  }
+  .raya-learning-rail {
+    margin-top: 1rem;
+  }
+}
+@media (max-width: 520px) {
+  .raya-top-command-bar-inner,
+  .raya-learning-shell,
   .raya-page-footer,
   .raya-inspection-main {
     padding: 0.75rem;
   }
-  .raya-main {
-    display: block;
+  .raya-top-command-bar-inner {
+    align-items: stretch;
+    display: grid;
   }
-  .raya-support-stack {
-    margin-top: 1rem;
-  }
-  .raya-article,
-  .raya-support-stack,
+  .raya-course-map,
+  .raya-main-article,
+  .raya-learning-rail,
   .raya-inspection-main {
     border-radius: 0.25rem;
-  }
-  .raya-course-nav {
-    display: grid;
   }
   .raya-numbered-object-heading {
     display: block;

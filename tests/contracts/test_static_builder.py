@@ -1866,6 +1866,30 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "personal progress" not in _visible_text(html).lower()
 
 
+def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    css = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
+    for selector in (
+        ".raya-top-command-bar",
+        ".raya-learning-shell",
+        ".raya-course-map",
+        ".raya-main-article",
+        ".raya-learning-rail",
+        ".raya-rail-panel",
+        ".raya-status-chip",
+        ".raya-font-toggle:focus-visible",
+    ):
+        assert selector in css
+    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem);" in css
+    assert "@media (max-width: 900px)" in css
+
+
 def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning(
 ) -> None:
     page = SimpleNamespace(
