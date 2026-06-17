@@ -186,6 +186,39 @@ def test_render_debug_report_passes_when_skin_css_and_capture_skin_exist(
     }
 
 
+def test_render_debug_report_fails_when_capture_skin_selector_is_missing(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html>
+          <body data-raya-skin="practice-lab">
+            <main><p>Skin selector mismatch fixture.</p></main>
+          </body>
+        </html>
+        """,
+        skin="practice-lab",
+        skin_css='[data-raya-skin="warm-academic"] { --raya-color-page: #ffffff; }\n',
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    assert report["ok"] is False
+    skin_checks = {
+        check["id"]: check
+        for check in report["checks"]
+        if check["id"].startswith("capture-skin:index:")
+    }
+    assert skin_checks["capture-skin:index:desktop"]["status"] == "fail"
+    assert skin_checks["capture-skin:index:mobile"]["status"] == "fail"
+    assert "practice-lab" in skin_checks["capture-skin:index:desktop"]["message"]
+    assert "[data-raya-skin=\"practice-lab\"]" in skin_checks[
+        "capture-skin:index:desktop"
+    ]["message"]
+
+
 def test_render_debug_report_fails_when_capture_skin_is_missing(
     tmp_path: Path,
 ) -> None:
@@ -205,14 +238,20 @@ def test_render_debug_report_fails_when_capture_skin_is_missing(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     assert report["ok"] is False
-    skin_check = next(
-        check
+    skin_checks = {
+        check["id"]: check
         for check in report["checks"]
-        if check["id"] == "capture-skin:index:desktop"
-    )
-    assert skin_check["status"] == "fail"
-    assert "missing active skin" in skin_check["message"]
-    assert "http://127.0.0.1/index.html" in skin_check["message"]
+        if check["id"].startswith("capture-skin:index:")
+    }
+    assert skin_checks["capture-skin:index:desktop"]["status"] == "fail"
+    assert skin_checks["capture-skin:index:mobile"]["status"] == "fail"
+    assert "missing active skin" in skin_checks[
+        "capture-skin:index:desktop"
+    ]["message"]
+    assert "missing active skin" in skin_checks["capture-skin:index:mobile"]["message"]
+    assert "http://127.0.0.1/index.html" in skin_checks[
+        "capture-skin:index:desktop"
+    ]["message"]
 
 
 def test_copy_static_site_rejects_destination_under_source(tmp_path: Path) -> None:
@@ -976,12 +1015,13 @@ def _write_debug_fixture(
     index_html: str,
     *,
     skin: str = "warm-academic",
+    skin_css: str | None = None,
 ) -> tuple[Path, Path]:
     site_dir = tmp_path / "site"
     debug_dir = tmp_path / "debug"
     site_dir.mkdir()
     debug_dir.mkdir()
-    _write_skin_css(site_dir)
+    _write_skin_css(site_dir, css=skin_css)
     (site_dir / "index.html").write_text(index_html, encoding="utf-8")
 
     captures = []
@@ -1017,11 +1057,15 @@ def _write_debug_fixture(
     return site_dir, debug_dir
 
 
-def _write_skin_css(site_dir: Path) -> None:
+def _write_skin_css(site_dir: Path, *, css: str | None = None) -> None:
     skin_css = site_dir / "_raya" / "render" / "skin.css"
     skin_css.parent.mkdir(parents=True, exist_ok=True)
     skin_css.write_text(
-        '[data-raya-skin="warm-academic"] { --raya-color-page: #ffffff; }\n'
-        '[data-raya-skin="practice-lab"] { --raya-color-page: #ffffff; }\n',
+        css
+        if css is not None
+        else (
+            '[data-raya-skin="warm-academic"] { --raya-color-page: #ffffff; }\n'
+            '[data-raya-skin="practice-lab"] { --raya-color-page: #ffffff; }\n'
+        ),
         encoding="utf-8",
     )

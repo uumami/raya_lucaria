@@ -88,7 +88,7 @@ def inspect_render_debug(
     summary = _read_summary(summary_path, report)
     captures = _capture_items(summary, summary_path, report)
     _inspect_captures(site_root, debug_root, captures, report)
-    _inspect_capture_skins(captures, report)
+    _inspect_capture_skins(site_root, captures, report, context="site")
     numbered_index = _read_numbered_index(
         site_root,
         report,
@@ -99,6 +99,12 @@ def inspect_render_debug(
     _inspect_static_site(site_root, report, context="site")
     if copied_site_root is not None:
         _inspect_copied_site(site_root, copied_site_root, report)
+        _inspect_capture_skins(
+            copied_site_root,
+            captures,
+            report,
+            context="copied-site",
+        )
         _add_check(
             report,
             check_id="site:copied-site",
@@ -338,9 +344,14 @@ def _capture_failures(
 
 
 def _inspect_capture_skins(
+    site_dir: Path,
     captures: list[dict[str, Any]],
     report: dict[str, Any],
+    *,
+    context: str,
 ) -> None:
+    css_path = site_dir / "_raya" / "render" / "skin.css"
+    css = css_path.read_text(encoding="utf-8") if css_path.is_file() else ""
     for capture in captures:
         page = capture.get("page")
         viewport = capture.get("viewport")
@@ -349,25 +360,46 @@ def _inspect_capture_skins(
             continue
         skin = capture.get("skin")
         skin_id = skin.strip() if isinstance(skin, str) else ""
+        expected_selector = _skin_selector_for_id(skin_id) if skin_id else ""
         page_url = str(capture.get("url") or page)
         screenshot = Path(str(capture.get("screenshot", "")))
+        failures = []
+        if not skin_id:
+            failures.append(f"missing active skin for page {page_url}")
+        elif expected_selector not in css:
+            failures.append(
+                f"skin.css at {css_path} does not define selector "
+                f"{expected_selector!r} for captured skin {skin_id!r}"
+            )
+        check_prefix = "" if context == "site" else f"{context}:"
         _add_check(
             report,
-            check_id=f"capture-skin:{page}:{viewport_name}",
-            status="pass" if skin_id else "fail",
+            check_id=f"{check_prefix}capture-skin:{page}:{viewport_name}",
+            status="fail" if failures else "pass",
             path=screenshot,
             message=(
-                f"active skin {skin_id!r} captured for page {page_url}"
-                if skin_id
-                else f"missing active skin for page {page_url}"
+                f"active skin {skin_id!r} captured for page {page_url} "
+                f"and selector {expected_selector!r} exists in {css_path}"
+                if not failures
+                else "; ".join(failures)
             ),
             next_action=(
                 "Regenerate render debug capture artifacts after rebuilding the site."
-                if not skin_id
+                if failures
                 else None
             ),
-            details={"skin": skin_id, "page_url": page_url},
+            details={
+                "skin": skin_id,
+                "page_url": page_url,
+                "skin_css": str(css_path),
+                "expected_selector": expected_selector,
+                "failures": failures,
+            },
         )
+
+
+def _skin_selector_for_id(skin_id: str) -> str:
+    return f'[data-raya-skin="{skin_id}"]'
 
 
 def _read_numbered_index(

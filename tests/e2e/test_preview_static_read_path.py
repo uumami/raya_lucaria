@@ -6,8 +6,10 @@ import os
 import re
 import shutil
 import threading
+from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urljoin
 from urllib.request import urlopen
 
 import pytest
@@ -94,24 +96,37 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
 
 
 def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
-    from raya_static.builder import build_course
+    from raya_cli.preview import create_preview
 
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
-    report = build_course(course)
 
-    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    site = course / "artifact" / "site"
-    index_html = (site / "index.html").read_text(encoding="utf-8")
-    reader_html = (site / "reader-ux" / "index.html").read_text(encoding="utf-8")
-    skin_css = (site / "_raya" / "render" / "skin.css").read_text(encoding="utf-8")
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+        index_url = f"{base_url}/index.html"
+        reader_url = f"{base_url}/reader-ux/index.html"
+        index_html = _fetch_text(index_url)
+        reader_html = _fetch_text(reader_url)
+        index_skin_css = _fetch_stylesheet_containing(
+            index_url,
+            index_html,
+            "_raya/render/skin.css",
+        )
+        reader_skin_css = _fetch_stylesheet_containing(
+            reader_url,
+            reader_html,
+            "_raya/render/skin.css",
+        )
+    finally:
+        handle.close()
 
     assert 'data-raya-skin="warm-academic"' in index_html
     assert 'data-raya-skin="practice-lab"' in reader_html
-    assert '[data-raya-skin="warm-academic"]' in skin_css
-    assert '[data-raya-skin="practice-lab"]' in skin_css
-    assert "_raya/render/skin.css" in index_html
-    assert "../_raya/render/skin.css" in reader_html
+    assert '[data-raya-skin="warm-academic"]' in index_skin_css
+    assert '[data-raya-skin="practice-lab"]' in reader_skin_css
 
 
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
@@ -870,6 +885,45 @@ def _fetch_text(url: str) -> str:
 def _fetch_bytes(url: str) -> bytes:
     with urlopen(url, timeout=10) as response:
         return response.read()
+
+
+def _fetch_stylesheet_containing(page_url: str, html: str, href_part: str) -> str:
+    stylesheet_urls = [
+        urljoin(page_url, href)
+        for href in _stylesheet_hrefs(html)
+        if href_part in href
+    ]
+    assert stylesheet_urls, html
+    return _fetch_text(stylesheet_urls[0])
+
+
+def _stylesheet_hrefs(html: str) -> list[str]:
+    parser = _StylesheetParser()
+    parser.feed(html)
+    parser.close()
+    return parser.hrefs
+
+
+class _StylesheetParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.hrefs: list[str] = []
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        if tag.lower() != "link":
+            return
+        attributes = {name.lower(): value or "" for name, value in attrs}
+        rel_values = {
+            value.lower()
+            for value in attributes.get("rel", "").split()
+        }
+        href = attributes.get("href", "")
+        if "stylesheet" in rel_values and href:
+            self.hrefs.append(href)
 
 
 def _local_math_font_names_from_css(css: str) -> list[str]:
