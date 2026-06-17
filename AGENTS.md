@@ -16,7 +16,8 @@ Docker Compose is the reference development workflow. Local `uv` execution remai
 
 - `./scripts/check.sh` is the canonical host archive gate.
 - `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container.
-- `./scripts/check-render-debug.sh` runs the focused render-fixture browser parity gate for screenshots, raw TeX, overflow, local MathJax resources, and external renderer requests. It writes `report.json` and `index.html` in the debug output directory and checks copied static-site parity.
+- Run `./scripts/check.sh` and `./scripts/check-docker.sh` sequentially, not concurrently. Both paths prepare local Node/MathJax dependencies through `scripts/check-python.sh`; if the verification lock reports another Raya verification is preparing dependencies, wait for that process to finish and rerun the command.
+- `./scripts/check-render-debug.sh` runs the focused render-fixture browser parity gate for screenshots, raw TeX, overflow, local MathJax resources, and external renderer requests. It writes `report.json` and `index.html` in the debug output directory and checks copied static-site parity. Treat render-debug files as local evidence only; do not commit them.
 - `./scripts/smoke-test.sh` validates, builds, and inspects temporary external course copies locally and through Docker.
 - `find docs/foundation -maxdepth 1 -type f | sort` lists the surviving foundation set.
 - `rg -n "Eleventy|Tailwind|Pagefind" docs/foundation -g '!14_domain_language.md'` catches stale renderer assumptions outside the domain-language reset boundary.

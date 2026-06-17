@@ -75,7 +75,7 @@ Canonical checks:
 ./scripts/smoke-test.sh
 ```
 
-`./scripts/check.sh` is the host archive gate. `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container. `./scripts/check-render-debug.sh` runs the focused render-fixture browser parity gate for screenshots, raw TeX, overflow, local MathJax resources, and external renderer requests. It writes `report.json` and `index.html` in the debug output directory and checks copied static-site parity. `./scripts/smoke-test.sh` validates, builds, and inspects temporary external courses locally and through Docker.
+`./scripts/check.sh` is the host archive gate. `./scripts/check-docker.sh` runs the Python/Raya verification path inside the reference container. Run them sequentially, not at the same time: both prepare local Node/MathJax dependencies through `scripts/check-python.sh`, and that setup is protected by a fail-fast repository lock. If a check reports that another Raya verification is preparing dependencies, wait for the active check to finish and rerun the command. `./scripts/check-render-debug.sh` runs the focused render-fixture browser parity gate for screenshots, raw TeX, overflow, local MathJax resources, and external renderer requests. It writes `report.json` and `index.html` in the debug output directory and checks copied static-site parity. Treat render-debug files as local evidence only; do not commit them. `./scripts/smoke-test.sh` validates, builds, and inspects temporary external courses locally and through Docker.
 
 Reference Docker workflow:
 
