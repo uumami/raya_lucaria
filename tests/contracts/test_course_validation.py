@@ -25,6 +25,36 @@ def test_minimal_fixture_validates() -> None:
     assert MINIMAL / "raya.yaml" in report.files_read
 
 
+@pytest.mark.parametrize("skin_value", ["", "   ", 123])
+def test_invalid_render_skin_value_fails_course_validation(
+    tmp_path: Path,
+    skin_value: object,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    config_path = course / "raya.yaml"
+    if isinstance(skin_value, str):
+        skin_yaml = f'"{skin_value}"'
+    else:
+        skin_yaml = str(skin_value)
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8")
+        + "\n"
+        + "render:\n"
+        + f"  skin: {skin_yaml}\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "render.skin must be a non-empty string"
+        and diagnostic.path == config_path
+        and diagnostic.field == "render.skin"
+        for diagnostic in report.diagnostics
+    )
+
+
 def test_unknown_explicit_numbered_object_reference_fails_validation(
     tmp_path: Path,
 ) -> None:

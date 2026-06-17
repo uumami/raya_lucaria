@@ -55,6 +55,7 @@ def validate_course(course_path: str | Path) -> ValidationReport:
         return report
 
     _validate_schema(config, "raya-course.schema.json", config_path, report)
+    _validate_render_config(config, config_path, report)
 
     source_root = resolve_course_source_root(root=root, config=config, report=report)
     if source_root is None:
@@ -241,6 +242,34 @@ def _validate_schema(
             path=path,
             field=".".join(str(part) for part in error.absolute_path) or None,
             next_action="Update the file to match the schema",
+        )
+
+
+def _validate_render_config(
+    config: dict[str, Any],
+    config_path: Path,
+    report: ValidationReport,
+) -> None:
+    render = config.get("render")
+    if render is None:
+        return
+    if not isinstance(render, dict):
+        report.add_error(
+            "render must be a mapping",
+            path=config_path,
+            field="render",
+            next_action="Use render.skin to select a course skin profile.",
+        )
+        return
+    if "skin" not in render:
+        return
+    skin_id = render.get("skin")
+    if not isinstance(skin_id, str) or not skin_id.strip():
+        report.add_error(
+            "render.skin must be a non-empty string",
+            path=config_path,
+            field="render.skin",
+            next_action="Set render.skin to a skin profile ID such as warm-academic.",
         )
 
 
