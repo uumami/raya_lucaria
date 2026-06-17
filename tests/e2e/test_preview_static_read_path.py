@@ -153,6 +153,61 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "@media (max-width: 720px)" in rich_css
 
 
+def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                    before = page.evaluate("() => getComputedStyle(document.body).fontFamily")
+                    page.click(".raya-font-toggle")
+                    after = page.evaluate(
+                        """() => ({
+                            pressed: document
+                              .querySelector('.raya-font-toggle')
+                              ?.getAttribute('aria-pressed'),
+                            rootSetting: document.documentElement
+                              .getAttribute('data-raya-open-dyslexic'),
+                            bodyFont: getComputedStyle(document.body).fontFamily,
+                            bodyToken: getComputedStyle(document.body)
+                              .getPropertyValue('--raya-font-body')
+                              .trim(),
+                        })"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "OpenDyslexic" not in before
+    assert after["pressed"] == "true"
+    assert after["rootSetting"] == "true"
+    assert after["bodyToken"] == '"OpenDyslexic"'
+    assert "OpenDyslexic" in after["bodyFont"]
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:

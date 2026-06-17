@@ -1851,6 +1851,7 @@ def test_open_dyslexic_resource_is_packaged_and_storage_safe() -> None:
     assert font.is_file()
     assert accessibility.source_font.is_file()
     assert font.read_bytes() == accessibility.source_font.read_bytes()
+    assert '[data-raya-open-dyslexic="true"] body' in accessibility.css
     assert "try {" in accessibility.javascript
     assert "catch" in accessibility.javascript
     assert "localStorage" in accessibility.javascript

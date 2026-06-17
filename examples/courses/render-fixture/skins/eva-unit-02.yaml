@@ -2,16 +2,16 @@ id: eva-unit-02
 name: Eva Unit 02
 tokens:
   color:
-    page: "#fff8f3"
-    surface: "#ffffff"
-    text: "#211b18"
-    muted: "#5f5049"
-    accent: "#b5121b"
-    accent_soft: "#ffe1d2"
-    border: "#d8b8aa"
+    page: "#fff1e6"
+    surface: "#fffaf5"
+    text: "#211512"
+    muted: "#60443c"
+    accent: "#c4001a"
+    accent_soft: "#ffd166"
+    border: "#e27b5f"
     success: "#236c3a"
     warning: "#8f5d00"
-    danger: "#b5121b"
+    danger: "#c4001a"
   font:
     body: "system-ui"
     heading: "system-ui"

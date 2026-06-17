@@ -37,6 +37,11 @@ def open_dyslexic_resources() -> AccessibilityResources:
   --raya-font-heading: "OpenDyslexic";
 }}
 
+[data-raya-open-dyslexic="true"] body {{
+  --raya-font-body: "OpenDyslexic";
+  --raya-font-heading: "OpenDyslexic";
+}}
+
 .raya-font-toggle {{
   align-items: center;
   background: var(--raya-color-accent-soft);
