@@ -726,14 +726,7 @@ def _render_page(
     math_renderer: MathRenderer,
     skin_context: SkinContext,
 ) -> str:
-    nav_items = []
-    for target in content_model.pages:
-        href = _relative_href(page.output_path, target.output_path)
-        label = html.escape(_navigation_label(target))
-        current = ' aria-current="page"' if target.output_path == page.output_path else ""
-        nav_items.append(f'<a href="{html.escape(href)}"{current}>{label}</a>')
     breadcrumbs = _render_breadcrumbs(page, content_model)
-    sequence_nav = _render_sequence_nav(page, content_model)
     generated_index = _render_generated_index(
         page,
         content_model,
@@ -766,6 +759,31 @@ def _render_page(
     support_panels = "\n".join(
         panel for panel in (reference_panel, reviewed_output_panel) if panel
     )
+    article_html = render_markdown_body(
+        body,
+        generated_index=generated_index,
+        resolve_href=lambda href: _resolve_markdown_href(
+            page,
+            href,
+            pages_by_source,
+            pages_by_reference,
+            numbered_objects.objects_by_id,
+            course_root,
+            source_dir,
+            report,
+        ),
+        source_path=page.source_path,
+        report=report,
+        math_renderer=math_renderer,
+        numbered_objects=numbered_objects,
+        proofs=proofs,
+    )
+    learning_rail = _render_learning_rail(
+        page,
+        article_html,
+        content_model,
+        support_panels,
+    )
 
     return "\n".join(
         [
@@ -785,60 +803,171 @@ def _render_page(
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-content">Skip to content</a>',
-            '<header class="raya-site-header">',
-            '<div class="raya-site-header-inner">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            (
-                '<button class="raya-font-toggle" type="button" '
-                'aria-pressed="false">OpenDyslexic</button>'
-            ),
-            '<nav class="raya-course-nav" aria-label="Course pages">',
-            "\n".join(nav_items),
-            "</nav>",
+            _render_top_command_bar(course_title),
+            '<main id="raya-content" class="raya-learning-shell">',
+            _render_course_map(page, content_model),
+            '<article class="raya-main-article">',
             breadcrumbs,
-            "</div>",
-            "</header>",
-            '<main id="raya-content" class="raya-main">',
-            '<article class="raya-article">',
-            render_markdown_body(
-                body,
-                generated_index=generated_index,
-                resolve_href=lambda href: _resolve_markdown_href(
-                    page,
-                    href,
-                    pages_by_source,
-                    pages_by_reference,
-                    numbered_objects.objects_by_id,
-                    course_root,
-                    source_dir,
-                    report,
-                ),
-                source_path=page.source_path,
-                report=report,
-                math_renderer=math_renderer,
-                numbered_objects=numbered_objects,
-                proofs=proofs,
-            ),
+            article_html,
             "</article>",
-            (
-                '<aside class="raya-support-stack" aria-label="Resource status">'
-                f"\n{support_panels}\n"
-                "</aside>"
-                if support_panels
-                else ""
-            ),
+            learning_rail,
             "</main>",
-            (
-                f'<footer class="raya-page-footer">{sequence_nav}</footer>'
-                if sequence_nav
-                else ""
-            ),
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
         ]
     )
+
+
+def _render_top_command_bar(course_title: str) -> str:
+    return "\n".join(
+        [
+            '<header class="raya-top-command-bar">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<div class="raya-course-tools" aria-label="Course tools">',
+            (
+                '<button class="raya-font-toggle" type="button" '
+                'aria-label="Toggle OpenDyslexic font" '
+                'aria-pressed="false">OpenDyslexic</button>'
+            ),
+            "</div>",
+            "</header>",
+        ]
+    )
+
+
+def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
+    nav_items = []
+    for target in content_model.pages:
+        href = _relative_href(page.output_path, target.output_path)
+        label = html.escape(_navigation_label(target))
+        current = ' aria-current="page"' if target.output_path == page.output_path else ""
+        nav_items.append(f'<a href="{html.escape(href)}"{current}>{label}</a>')
+    return "\n".join(
+        [
+            '<nav class="raya-course-map" aria-label="Course map">',
+            "\n".join(nav_items),
+            "</nav>",
+        ]
+    )
+
+
+def _render_learning_rail(
+    page: ContentPage,
+    rendered_article_html: str,
+    content_model: ContentModel,
+    support_panels: str,
+) -> str:
+    panels = [
+        _render_page_summary_rail(page),
+        _render_page_status_rail(page),
+        _render_estimated_time_rail(page),
+        _render_tags_rail(page),
+        _render_prerequisites_rail(page, content_model),
+        _render_page_contents_rail(rendered_article_html),
+        _render_sequence_rail(page, content_model),
+        support_panels,
+    ]
+    body = "\n".join(panel for panel in panels if panel)
+    if not body:
+        return ""
+    return "\n".join(
+        [
+            '<aside class="raya-learning-rail" aria-label="Learning context">',
+            body,
+            "</aside>",
+        ]
+    )
+
+
+def _render_rail_panel(class_name: str, title: str, body: str) -> str:
+    if not body:
+        return ""
+    return "\n".join(
+        [
+            f'<section class="raya-rail-panel {html.escape(class_name)}">',
+            f"<h2>{html.escape(title)}</h2>",
+            body,
+            "</section>",
+        ]
+    )
+
+
+def _render_page_contents_rail(rendered_article_html: str) -> str:
+    match = re.search(
+        r'<nav class="raya-page-toc" aria-label="Page contents">.*?</nav>',
+        rendered_article_html,
+        flags=re.DOTALL,
+    )
+    if match is None:
+        return ""
+    return _render_rail_panel("raya-page-contents", "Page contents", match.group(0))
+
+
+def _render_page_summary_rail(page: ContentPage) -> str:
+    if not page.summary:
+        return ""
+    return _render_rail_panel(
+        "raya-page-summary",
+        "Summary",
+        f"<p>{html.escape(page.summary)}</p>",
+    )
+
+
+def _render_page_status_rail(page: ContentPage) -> str:
+    if not page.status:
+        return ""
+    return _render_rail_panel(
+        "raya-page-status",
+        "Status",
+        f"<p>{html.escape(page.status)}</p>",
+    )
+
+
+def _render_estimated_time_rail(page: ContentPage) -> str:
+    if not page.estimated_time:
+        return ""
+    return _render_rail_panel(
+        "raya-page-estimated-time",
+        "Estimated time",
+        f"<p>{html.escape(page.estimated_time)}</p>",
+    )
+
+
+def _render_tags_rail(page: ContentPage) -> str:
+    if not page.tags:
+        return ""
+    items = "\n".join(f"<li>{html.escape(tag)}</li>" for tag in page.tags)
+    return _render_rail_panel("raya-page-tags", "Tags", f"<ul>{items}</ul>")
+
+
+def _render_prerequisites_rail(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    items = []
+    for prerequisite in page.prerequisites:
+        target = content_model.pages_by_id.get(prerequisite)
+        if target is None:
+            continue
+        href = _relative_href(page.output_path, target.output_path)
+        label = target.nav_title or target.title
+        items.append(f'<li><a href="{html.escape(href)}">{html.escape(label)}</a></li>')
+    if not items:
+        return ""
+    return _render_rail_panel(
+        "raya-page-prerequisites",
+        "Prerequisites",
+        "<ul>" + "\n".join(items) + "</ul>",
+    )
+
+
+def _render_sequence_rail(page: ContentPage, content_model: ContentModel) -> str:
+    sequence_nav = _render_sequence_nav(page, content_model)
+    if not sequence_nav:
+        return ""
+    return _render_rail_panel("raya-page-sequence", "Sequence", sequence_nav)
 
 
 def _resolve_markdown_href(

@@ -22,6 +22,7 @@ from raya_schema import (
     validate_reviewed_outputs_index,
     validate_runtime_index,
 )
+from raya_schema import content as schema_content
 from raya_static import build_course
 from raya_static import builder as static_builder
 from raya_static.math_renderer import MathRenderResult
@@ -1832,6 +1833,61 @@ def test_render_fixture_builds_rich_static_pages(
     assert "\\vect" not in authoring_matrix_visible
     assert "\\mat" not in authoring_matrix_visible
     assert "\\norm" not in authoring_matrix_visible
+
+
+def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<header class="raya-top-command-bar"' in html
+    assert 'aria-label="Course tools"' in html
+    assert '<nav class="raya-course-map" aria-label="Course map">' in html
+    assert '<main id="raya-content" class="raya-learning-shell">' in html
+    assert '<article class="raya-main-article"' in html
+    assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
+    assert '<section class="raya-rail-panel raya-page-summary"' in html
+    assert '<section class="raya-rail-panel raya-page-status"' in html
+    assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
+    assert "Prerequisites" in html
+    assert "Raya Lucaria Render Fixture" in html
+    assert 'href="../index.html"' in html
+    assert "related practice" not in _visible_text(html).lower()
+    assert "personal progress" not in _visible_text(html).lower()
+
+
+def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+    reader = course / "course" / "4_reader_ux" / "0_index.md"
+    reader.write_text(
+        reader.read_text(encoding="utf-8").replace(
+            "prerequisites:\n  - render-root\n",
+            "prerequisites:\n  - render-root\n  - missing-page-id\n",
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        schema_content,
+        "_validate_prerequisites",
+        lambda model, report: None,
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert "Raya Lucaria Render Fixture" in html
+    assert "missing-page-id" not in html
+    assert "unresolved prerequisite" not in _visible_text(html).lower()
 
 
 def test_open_dyslexic_resource_is_packaged_and_storage_safe() -> None:

@@ -3,6 +3,8 @@ id: reader-ux
 title: Reader UX Fixture
 summary: Reader-facing fixture material for scannable numbered content.
 status: ready
+prerequisites:
+  - render-root
 ---
 
 # Reader UX Fixture
