@@ -103,10 +103,12 @@ def test_guidance_surfaces_allow_user_selected_superpowers_renderer_loops() -> N
         "docs/guides/es/colaboradores/index.md": [
             "Superpowers",
             "OpenSpec remains available",
+            "superficies afectadas de foundation, rol, test y contrato",
         ],
         "docs/guides/es/agentes/index.md": [
             "Superpowers",
             "OpenSpec remains available",
+            "superficies afectadas de foundation, rol, test y contrato",
         ],
     }
     for relative_path, needles in required.items():
