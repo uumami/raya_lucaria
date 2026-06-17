@@ -4,14 +4,22 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 lock_message() {
-  cat >&2 <<'LOCK'
+  cat >&2 <<LOCK
 Another Raya verification is preparing dependencies.
 Wait for it to finish, then rerun this command.
+Lock path: ${RAYA_CHECK_LOCK_DIR:-unknown}
+LOCK
+  if [[ -f "${RAYA_CHECK_LOCK_DIR:-}/owner" ]]; then
+    sed 's/^/Lock owner: /' "$RAYA_CHECK_LOCK_DIR/owner" >&2
+  fi
+  cat >&2 <<'LOCK'
+If this lock is stale, check whether the recorded PID is still running before removing the lock directory.
 LOCK
 }
 
 release_dependency_lock() {
   if [[ -n "${RAYA_CHECK_LOCK_HELD:-}" && -n "${RAYA_CHECK_LOCK_DIR:-}" ]]; then
+    rm -f "$RAYA_CHECK_LOCK_DIR/owner" 2>/dev/null || true
     rmdir "$RAYA_CHECK_LOCK_DIR" 2>/dev/null || true
     unset RAYA_CHECK_LOCK_HELD
   fi
@@ -23,6 +31,11 @@ acquire_dependency_lock() {
     lock_message
     return 75
   fi
+  {
+    printf 'pid=%s\n' "$$"
+    printf 'command=%s\n' "$0"
+    printf 'host=%s\n' "${HOSTNAME:-$(hostname 2>/dev/null || printf unknown)}"
+  } >"$RAYA_CHECK_LOCK_DIR/owner"
   RAYA_CHECK_LOCK_HELD=1
   trap release_dependency_lock EXIT
   trap 'release_dependency_lock; exit 130' INT
@@ -81,8 +94,6 @@ acquire_dependency_lock
 run npm ci --ignore-scripts --no-audit --no-fund
 run npm run raya-render-math -- --self-test
 run uv sync --python 3.10 --all-packages --dev
-release_dependency_lock
-trap - EXIT INT TERM
 
 run uv run pytest -q
 
