@@ -8,6 +8,8 @@ status: ready
 
 Documentation explains accepted Raya Lucaria behavior for people and agents. It is not course canon, generated output, or a substitute for foundation decisions and accepted OpenSpec specs.
 
+Some implementation loops may be planned through committed Superpowers design and plan documents when the user explicitly selects that workflow. Those documents explain the active work, but they do not replace foundation decisions or accepted specs. OpenSpec remains an accepted workflow, and documentation must say which workflow is active when guidance would otherwise be ambiguous.
+
 ## Role Audiences
 
 Role documentation covers four audiences:

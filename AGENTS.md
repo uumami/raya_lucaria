@@ -6,6 +6,8 @@ Raya Lucaria is a foundation-first open educational framework and commons, not a
 
 Current seed truth lives in `docs/foundation/`. Start with `docs/foundation/00_index.md` and `docs/foundation/15_system_overview.md`, then read `docs/foundation/13_truth_surfaces.md` for the authority map and the relevant foundation file for the task. Legacy code, examples, archived OpenSpec changes, and old guides may be mined for principles, but they are not canonical after the reset.
 
+OpenSpec remains available for future contract changes. When a user explicitly selects a Superpowers workflow, committed Superpowers design and plan documents may drive that loop, but `docs/foundation/` remains the highest source of seed truth and implementation must update the affected foundation, role, test, and contract surfaces.
+
 Role documentation lives under `docs/guides/en/` and `docs/guides/es/`. Keep English and Spanish role directories separate, with each role starting at an `index.md` page. Do not mix languages in one role page. Technical identifiers such as commands, paths, package names, schema fields, domain names, and stable IDs remain in English.
 
 Future structure is defined in `docs/foundation/08_package_boundaries.md`: plain package names such as `cli`, `schema`, `static`, `graph`, `study`, `agents`, `collaboration`, `live`, `identity`, `core`, `web`, and `ui`. Domain names are defined in `docs/foundation/14_domain_language.md`; use them for conceptual ownership and user-facing language, not as default package directory names.

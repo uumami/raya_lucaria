@@ -16,6 +16,8 @@ explore -> propose -> apply -> archive
 
 Do not batch all rendering and execution work into one proposal. Each phase should leave accepted specs, examples, tests, docs, rendered docs, and role guidance in a coherent state.
 
+Current renderer-learning-shell work is being planned through a Superpowers design and implementation plan because the user selected that workflow for this science-backed course shell loop. OpenSpec remains available for future renderer contract changes. This loop must still update `docs/foundation/`, role docs, tests, and artifact/static-renderer contracts before claiming new behavior is current.
+
 ## Core Decisions
 
 - Raya owns the source contract, rendered artifact contract, navigation, indexes, official objects, and study scopes.

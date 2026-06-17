@@ -13,6 +13,8 @@ This repository is being reset to a foundation-first starting point. Legacy code
 - Examples, packages, and deployment recipes: valid only after they are rebuilt against current contracts.
 - Historical material: Git history, old branches, archived changes, and legacy code.
 
+OpenSpec remains available for future contract changes. When a user explicitly selects a Superpowers workflow, committed Superpowers design and plan documents may drive that loop, but `docs/foundation/` remains the highest source of seed truth and implementation must update the affected foundation, role, test, and contract surfaces.
+
 See `docs/foundation/13_truth_surfaces.md`.
 
 ## Foundation Map

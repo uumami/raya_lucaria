@@ -10,6 +10,8 @@ Agents operate through explicit files, commands, OpenSpec specs, diagnostics, an
 
 Use `docs/foundation/13_truth_surfaces.md` for the authority map, accepted OpenSpec specs for testable contracts, and `AGENTS.md` for repository workflow.
 
+OpenSpec remains available for future contract changes. When a user explicitly selects a Superpowers workflow, committed Superpowers design and plan documents may drive that loop, but `docs/foundation/` remains the highest source of seed truth and implementation must update the affected foundation, role, test, and contract surfaces.
+
 Use the canonical check scripts from `README.md` and `AGENTS.md`: `./scripts/check.sh` for the host gate, `./scripts/check-docker.sh` for reference-container Python/Raya verification, and `./scripts/smoke-test.sh` for external-course portability checks. Run `./scripts/check.sh` and `./scripts/check-docker.sh` sequentially, not in parallel. Both prepare local Node/MathJax dependencies through `scripts/check-python.sh`, so the fail-fast repository lock reports when another Raya verification is already preparing dependencies. Wait for the active process to finish and rerun the blocked command. Avoid editing generated outputs, dependency folders, caches, or local session output. Keep deferred capabilities in `docs/foundation/18_known_missing_work.md` until an accepted OpenSpec change makes them current.
 
 For course content, treat source files as canonical and generated artifacts as rebuildable. Preserve `source: course`, the ordered `course/` tree, frontmatter `id`, `raya:<id>` links, colocated `_official/` and `_assets/` privacy, generated index markers, and manifest-declared data surfaces. Do not edit generated `artifact/` output as source truth.

@@ -61,6 +61,60 @@ def test_role_documentation_uses_separate_english_and_spanish_pages() -> None:
     assert not (GUIDES / "es" / "contributors" / "index.md").exists()
 
 
+def test_guidance_surfaces_allow_user_selected_superpowers_renderer_loops() -> None:
+    required = {
+        "docs/foundation/13_truth_surfaces.md": [
+            "Superpowers design and plan documents",
+            "user explicitly selects that workflow",
+            "OpenSpec remains an accepted workflow",
+        ],
+        "docs/foundation/16_documentation_surfaces.md": [
+            "Superpowers design and plan documents",
+            "OpenSpec remains an accepted workflow",
+        ],
+        "docs/foundation/17_rendering_execution_plan.md": [
+            "Superpowers",
+            "science-backed course shell",
+            "OpenSpec remains available",
+        ],
+        "README.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+            "docs/foundation/",
+        ],
+        "AGENTS.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+            "docs/foundation/",
+        ],
+        "openspec/config.yaml": [
+            "Superpowers",
+            "OpenSpec remains available",
+            "docs/foundation/",
+        ],
+        "docs/guides/en/contributors/index.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+        ],
+        "docs/guides/en/agents/index.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+        ],
+        "docs/guides/es/colaboradores/index.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "Superpowers",
+            "OpenSpec remains available",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_role_documentation_covers_renderer_skins_and_accessibility() -> None:
     needles = {
         "docs/guides/en/professors/index.md": ["render.skin", "skins/", "eva-unit-02"],

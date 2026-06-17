@@ -20,6 +20,8 @@ After the reset:
 6. Examples are fixtures only.
 7. Git history and old branches are historical reference.
 
+When a user explicitly selects that workflow, committed Superpowers design and plan documents may drive implementation for that loop. They do not outrank `docs/foundation/`; they are temporary planning surfaces that must update foundation docs, role docs, tests, and accepted contracts as needed. OpenSpec remains an accepted workflow for future contract changes and can mine the Superpowers design later if the user switches back.
+
 If any lower surface conflicts with foundation docs, the lower surface is wrong until a new decision updates the foundation.
 
 ## Surface Classes

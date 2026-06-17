@@ -7,6 +7,12 @@ context: |
   decisions. Use docs/foundation/15_system_overview.md as the system map and
   docs/foundation/13_truth_surfaces.md as the authority map.
 
+  OpenSpec remains available for future contract changes. When a user explicitly
+  selects a Superpowers workflow, committed Superpowers design and plan documents
+  may drive that loop, but `docs/foundation/` remains the highest source of seed
+  truth and implementation must update the affected foundation, role, test, and
+  contract surfaces.
+
   Pedagogical quality and educational freedom are equal first principles. The
   framework must serve serious university-level learning while keeping courses,
   student work, schemas, artifacts, and application logic portable.
