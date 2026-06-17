@@ -231,6 +231,21 @@ def test_role_docs_cover_skin_profiles_and_style_guide() -> None:
         for needle in needles:
             assert needle in text, f"{relative_path} must mention {needle}"
 
+    professor_profile_needles = (
+        "tokens:",
+        "color:",
+        "font:",
+        "density:",
+        "accent_soft",
+    )
+    for relative_path in (
+        "docs/guides/en/professors/index.md",
+        "docs/guides/es/profesores/index.md",
+    ):
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in professor_profile_needles:
+            assert needle in text, f"{relative_path} must include profile {needle}"
+
 
 def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
     professor_paths = (

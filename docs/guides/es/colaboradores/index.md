@@ -15,12 +15,14 @@ Cuando cambies validacion o rendering de cursos, preserva el modelo convention-f
 El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y MathJax detras de `packages/static`; los contratos de fuente deben describir comportamiento de autoria, no detalles internos de librerias. La math aceptada usa math inline con delimitadores de dolar, bloques display con delimitadores de doble dolar en lineas propias, macros locales por pagina, recursos locales bajo `site/_raya/render/math/`, diagnosticos estrictos y ninguna dependencia de renderer solo en browser. Cambios de renderer necesitan fixtures representativos, diagnosticos invalidos cuando aplique, tests de contrato, tests e2e/static-read-path, checks Chromium de math visible/sin requests externos, checks de overflow desktop/mobile y actualizaciones de documentacion de rol.
 
 Los cambios de skin deben preservar validacion de tokens semanticos y output
-estatico generado. Las skins de curso y seccion emiten `_raya/render/skin.css`
-y marcan paginas con `data-raya-skin`. El archivo CSS generado es `skin.css`
-bajo la ruta de soporte del renderer. La regla es no CSS arbitrario, no fuentes
-externas, no requests CDN y no resolver de skin en el browser. Cubre cambios de
-skin con evidencia render-debug cuando puedan fallar CSS generado, atributos de
-pagina, recursos locales o layout visual.
+estatico generado. Los perfiles locales del curso bajo `skins/` definen tokens
+semanticos. `render.skin` del curso y los selectores `_raya/skin.yaml` de
+seccion eligen uno de esos perfiles; no definen tokens. El rendering emite
+`_raya/render/skin.css` y marca paginas con `data-raya-skin`. El archivo CSS
+generado es `skin.css` bajo la ruta de soporte del renderer. La regla es no
+CSS arbitrario, no fuentes externas, no requests CDN y no resolver de skin en el browser.
+Cubre cambios de skin con evidencia render-debug cuando puedan fallar CSS generado,
+atributos de pagina, recursos locales o layout visual.
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando cambies rendering de math o guia de autoria. Es el fixture target para ejemplos validos actuales: `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas, notacion de optimizacion y Markdown de objetos numerados. Mantiene ejemplos invalidos de math en tests para que docs de profesores y estudiantes sigan siendo copiables.
 

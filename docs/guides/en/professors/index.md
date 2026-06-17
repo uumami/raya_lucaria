@@ -101,21 +101,39 @@ The `hint`, `solution`, and `answer` blocks above support
 Use course skins for visual identity and section skins to emphasize units,
 labs, appendices, practice sections, or review sections.
 
+Course `render.skin` selects the default profile by ID:
+
 ```yaml
 render:
   skin: warm-academic
 ```
 
-```text
-skins/
-  warm-academic.yaml
-  practice-lab.yaml
-course/
-  2_practice/
-    0_index.md
-    _raya/
-      skin.yaml
+The root `skins/<id>.yaml` file defines the semantic tokens for that profile:
+
+```yaml
+id: warm-academic
+name: Warm Academic
+tokens:
+  color:
+    page: "#ffffff"
+    surface: "#f6f8fa"
+    text: "#1f2328"
+    muted: "#57606a"
+    accent: "#0969da"
+    accent_soft: "#ddf4ff"
+    border: "#d0d7de"
+    success: "#1a7f37"
+    warning: "#9a6700"
+    danger: "#cf222e"
+  font:
+    body: "system-ui"
+    heading: "system-ui"
+    mono: "ui-monospace"
+  density: comfortable
 ```
+
+Section `course/**/_raya/skin.yaml` selects a profile for that section and its
+descendants:
 
 ```yaml
 render:

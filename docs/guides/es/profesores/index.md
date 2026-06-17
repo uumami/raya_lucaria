@@ -101,21 +101,39 @@ Los bloques `hint`, `solution` y `answer` anteriores apoyan
 Usa skins de curso para identidad visual y skins de seccion para enfatizar
 unidades, labs, apendices, secciones de practica o secciones de repaso.
 
+`render.skin` del curso selecciona el perfil predeterminado por ID:
+
 ```yaml
 render:
   skin: warm-academic
 ```
 
-```text
-skins/
-  warm-academic.yaml
-  practice-lab.yaml
-course/
-  2_practice/
-    0_index.md
-    _raya/
-      skin.yaml
+El archivo raiz `skins/<id>.yaml` define los tokens semanticos de ese perfil:
+
+```yaml
+id: warm-academic
+name: Warm Academic
+tokens:
+  color:
+    page: "#ffffff"
+    surface: "#f6f8fa"
+    text: "#1f2328"
+    muted: "#57606a"
+    accent: "#0969da"
+    accent_soft: "#ddf4ff"
+    border: "#d0d7de"
+    success: "#1a7f37"
+    warning: "#9a6700"
+    danger: "#cf222e"
+  font:
+    body: "system-ui"
+    heading: "system-ui"
+    mono: "ui-monospace"
+  density: comfortable
 ```
+
+`course/**/_raya/skin.yaml` de una seccion selecciona un perfil para esa
+seccion y sus descendientes:
 
 ```yaml
 render:
