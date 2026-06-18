@@ -238,10 +238,23 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         _assert_intersects_viewport(page, "nav.raya-course-map")
                         _assert_intersects_viewport(page, "article.raya-main-article")
                         _assert_intersects_viewport(page, "aside.raya-learning-rail")
+                        course_map = _bounding_box(page, "nav.raya-course-map")
+                        article = _bounding_box(page, "article.raya-main-article")
+                        learning_rail = _bounding_box(page, "aside.raya-learning-rail")
+                        if viewport["width"] > 900:
+                            assert course_map["x"] < article["x"] < learning_rail["x"]
+                        else:
+                            assert course_map["y"] < learning_rail["y"] < article["y"]
+                            _assert_bounded_scroll_region(page, "nav.raya-course-map")
+                            _assert_bounded_scroll_region(page, "aside.raya-learning-rail")
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
                         page.keyboard.press("Tab")
                         focused = page.evaluate("() => document.activeElement && document.activeElement.className")
                         assert "raya-skip-link" in focused or "raya-font-toggle" in focused
+                        page.locator(".raya-skip-link").focus()
+                        page.keyboard.press("Enter")
+                        focused_id = page.evaluate("() => document.activeElement && document.activeElement.id")
+                        assert focused_id == "raya-article"
                     finally:
                         page.close()
             finally:
@@ -1090,8 +1103,7 @@ def _assert_no_horizontal_overflow(page) -> None:
 
 
 def _assert_intersects_viewport(page, selector: str) -> None:
-    box = page.locator(selector).bounding_box()
-    assert box is not None, f"{selector} did not render"
+    box = _bounding_box(page, selector)
     viewport = page.evaluate(
         "() => ({ width: window.innerWidth, height: window.innerHeight })"
     )
@@ -1101,11 +1113,37 @@ def _assert_intersects_viewport(page, selector: str) -> None:
     assert box["y"] < viewport["height"], f"{selector} is below the viewport: {box}"
 
 
+def _assert_bounded_scroll_region(page, selector: str) -> None:
+    region = page.evaluate(
+        """(selector) => {
+            const element = document.querySelector(selector);
+            if (!element) return null;
+            const style = getComputedStyle(element);
+            return {
+              clientHeight: element.clientHeight,
+              scrollHeight: element.scrollHeight,
+              overflowY: style.overflowY,
+            };
+        }""",
+        selector,
+    )
+    assert region is not None, f"{selector} did not render"
+    assert region["clientHeight"] > 0, f"{selector} has no usable height: {region}"
+    if region["scrollHeight"] > region["clientHeight"]:
+        assert region["overflowY"] in {"auto", "scroll"}, (
+            f"{selector} clips scrollable content without scroll overflow: {region}"
+        )
+
+
+def _bounding_box(page, selector: str) -> dict[str, float]:
+    box = page.locator(selector).bounding_box()
+    assert box is not None, f"{selector} did not render"
+    return box
+
+
 def _assert_no_overlap(page, first_selector: str, second_selector: str) -> None:
-    first = page.locator(first_selector).bounding_box()
-    second = page.locator(second_selector).bounding_box()
-    assert first is not None
-    assert second is not None
+    first = _bounding_box(page, first_selector)
+    second = _bounding_box(page, second_selector)
     assert not _boxes_overlap(first, second)
 
 

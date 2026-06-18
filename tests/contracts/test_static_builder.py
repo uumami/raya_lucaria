@@ -1845,14 +1845,22 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert '<header class="raya-top-command-bar"' in html
+    assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav class="raya-course-map" aria-label="Course map">' in html
     assert '<main id="raya-content" class="raya-learning-shell">' in html
-    assert '<article class="raya-main-article"' in html
+    assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
     assert '<section class="raya-rail-panel raya-page-summary"' in html
     assert '<section class="raya-rail-panel raya-page-status"' in html
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
+    assert '<h2 class="raya-rail-title">Status</h2>' in html
+    assert html.index('<nav class="raya-course-map"') < html.index(
+        '<aside class="raya-learning-rail"'
+    )
+    assert html.index('<aside class="raya-learning-rail"') < html.index(
+        '<article id="raya-article"'
+    )
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
     assert 'href="../index.html"' in html

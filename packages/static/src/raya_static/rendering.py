@@ -519,7 +519,17 @@ img {
   align-items: start;
   display: grid;
   gap: calc(var(--raya-space-block) * 1.25);
+  grid-template-areas: "course-map main-article learning-rail";
   grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem);
+}
+.raya-course-map {
+  grid-area: course-map;
+}
+.raya-main-article {
+  grid-area: main-article;
+}
+.raya-learning-rail {
+  grid-area: learning-rail;
 }
 .raya-course-map,
 .raya-main-article,
@@ -891,6 +901,10 @@ mjx-container[display="true"] {
 }
 @media (max-width: 900px) {
   .raya-learning-shell {
+    grid-template-areas:
+      "course-map"
+      "learning-rail"
+      "main-article";
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-course-map,
@@ -899,15 +913,6 @@ mjx-container[display="true"] {
     max-height: 14rem;
     overflow: auto;
     position: static;
-  }
-  .raya-course-map {
-    order: 1;
-  }
-  .raya-learning-rail {
-    order: 2;
-  }
-  .raya-main-article {
-    order: 3;
   }
   .raya-learning-rail {
     margin-top: 1rem;

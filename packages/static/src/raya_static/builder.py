@@ -803,15 +803,15 @@ def _render_page(
                 f'<body data-raya-surface="{SURFACE_STUDENT_DEFAULT}" '
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
-            '<a class="raya-skip-link" href="#raya-content">Skip to content</a>',
+            '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
             _render_top_command_bar(course_title),
             '<main id="raya-content" class="raya-learning-shell">',
             _render_course_map(page, content_model),
-            '<article class="raya-main-article">',
+            learning_rail,
+            '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             breadcrumbs,
             article_html,
             "</article>",
-            learning_rail,
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             "</body>",
@@ -890,7 +890,7 @@ def _render_rail_panel(class_name: str, title: str, body: str) -> str:
     return "\n".join(
         [
             f'<section class="raya-rail-panel {html.escape(class_name)}">',
-            f"<h2>{html.escape(title)}</h2>",
+            f'<h2 class="raya-rail-title">{html.escape(title)}</h2>',
             body,
             "</section>",
         ]
