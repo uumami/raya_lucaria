@@ -134,18 +134,13 @@ def test_inspection_ignores_blocked_renderer_terms_in_prose_and_code(
 ) -> None:
     site_dir, debug_dir = _write_debug_fixture(
         tmp_path,
-        """
-        <!doctype html>
-        <html>
-          <body>
-            <main>
-              <p>This page documents cdn.jsdelivr.net and tex-chtml as examples.</p>
-              <code>mathjax.js</code>
-              <!-- startup.js appears in a comment, not a resource URL. -->
-            </main>
-          </body>
-        </html>
-        """,
+        _learning_shell_html(
+            """
+            <p>This page documents cdn.jsdelivr.net and tex-chtml as examples.</p>
+            <code>mathjax.js</code>
+            <!-- startup.js appears in a comment, not a resource URL. -->
+            """
+        ),
     )
 
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
@@ -159,14 +154,7 @@ def test_render_debug_report_passes_when_skin_css_and_capture_skin_exist(
 ) -> None:
     site_dir, debug_dir = _write_debug_fixture(
         tmp_path,
-        """
-        <!doctype html>
-        <html>
-          <body data-raya-skin="practice-lab">
-            <main><p>Skin evidence fixture.</p></main>
-          </body>
-        </html>
-        """,
+        _learning_shell_html("<p>Skin evidence fixture.</p>", skin="practice-lab"),
         skin="practice-lab",
     )
 
@@ -252,6 +240,57 @@ def test_render_debug_report_fails_when_capture_skin_is_missing(
     assert "http://127.0.0.1/index.html" in skin_checks[
         "capture-skin:index:desktop"
     ]["message"]
+
+
+def test_render_debug_report_fails_when_learning_shell_regions_are_missing(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+          <body data-raya-skin="warm-academic">
+            <main><article>Missing learning shell.</article></main>
+          </body>
+        </html>
+        """,
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    assert checks["site:learning-shell:index"]["status"] == "fail"
+    assert "raya-course-map" in checks["site:learning-shell:index"]["message"]
+    assert "raya-learning-rail" in checks["site:learning-shell:index"]["message"]
+
+
+def test_render_debug_report_passes_when_learning_shell_regions_exist(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+          <body data-raya-skin="warm-academic">
+            <header class="raya-top-command-bar" aria-label="Course tools"></header>
+            <main id="raya-content" class="raya-learning-shell">
+              <nav class="raya-course-map" aria-label="Course map"></nav>
+              <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+              <article id="raya-article" class="raya-main-article"></article>
+            </main>
+          </body>
+        </html>
+        """,
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    assert checks["site:learning-shell:index"]["status"] == "pass"
 
 
 def test_copy_static_site_rejects_destination_under_source(tmp_path: Path) -> None:
@@ -372,35 +411,37 @@ def test_render_debug_report_enriches_numbered_content_from_index(
         encoding="utf-8",
     )
     (site / "index.html").write_text(
-        '<!doctype html><html><body><section class="raya-numbered-object" '
-        'id="raya-object-main-theorem" data-object-id="main-theorem">'
-        '<span class="raya-numbered-object-reference">Theorem 1</span>'
-        '</section><section class="raya-proof" id="raya-proof-proof-main">'
-        '<div class="raya-proof-heading"><span class="raya-proof-reference">'
-        "Proof of Theorem 1</span></div></section>"
-        "</body></html>",
+        _learning_shell_html(
+            '<section class="raya-numbered-object" '
+            'id="raya-object-main-theorem" data-object-id="main-theorem">'
+            '<span class="raya-numbered-object-reference">Theorem 1</span>'
+            '</section><section class="raya-proof" id="raya-proof-proof-main">'
+            '<div class="raya-proof-heading"><span class="raya-proof-reference">'
+            "Proof of Theorem 1</span></div></section>"
+        ),
         encoding="utf-8",
     )
     reader_ux = site / "reader-ux"
     reader_ux.mkdir()
     (reader_ux / "index.html").write_text(
-        "<!doctype html><html><body>"
-        '<aside class="raya-static-environment raya-static-environment--hint" '
-        'id="raya-static-environment-hint-orthogonal-activity">'
-        '<div class="raya-static-environment-heading">Hint for Activity 4.1</div>'
-        "<p>Compare the projection formula before expanding the matrix product.</p>"
-        "</aside>"
-        '<aside class="raya-static-environment raya-static-environment--solution" '
-        'id="raya-static-environment-solution-orthogonal-activity">'
-        '<div class="raya-static-environment-heading">Solution of Activity 4.1</div>'
-        f"<p>{SOLUTION_BODY_EVIDENCE} while the projection line stays fixed.</p>"
-        "</aside>"
-        '<aside class="raya-static-environment raya-static-environment--answer" '
-        'id="raya-static-environment-answer-orthogonal-activity">'
-        '<div class="raya-static-environment-heading">Answer to Activity 4.1</div>'
-        "<p>The residual vector is orthogonal to the direction vector.</p>"
-        "</aside>"
-        "</body></html>",
+        _learning_shell_html(
+            '<aside class="raya-static-environment raya-static-environment--hint" '
+            'id="raya-static-environment-hint-orthogonal-activity">'
+            '<div class="raya-static-environment-heading">Hint for Activity 4.1</div>'
+            "<p>Compare the projection formula before expanding the matrix product.</p>"
+            "</aside>"
+            '<aside class="raya-static-environment raya-static-environment--solution" '
+            'id="raya-static-environment-solution-orthogonal-activity">'
+            '<div class="raya-static-environment-heading">Solution of Activity 4.1</div>'
+            f"<p>{SOLUTION_BODY_EVIDENCE} while the projection line stays fixed.</p>"
+            "</aside>"
+            '<aside class="raya-static-environment raya-static-environment--answer" '
+            'id="raya-static-environment-answer-orthogonal-activity">'
+            '<div class="raya-static-environment-heading">Answer to Activity 4.1</div>'
+            "<p>The residual vector is orthogonal to the direction vector.</p>"
+            "</aside>",
+            skin="practice-lab",
+        ),
         encoding="utf-8",
     )
     static_environments = _reader_static_environments()
@@ -1055,6 +1096,24 @@ def _write_debug_fixture(
         encoding="utf-8",
     )
     return site_dir, debug_dir
+
+
+def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
+    return f"""
+    <!doctype html>
+    <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+      <body data-raya-skin="{skin}">
+        <header class="raya-top-command-bar" aria-label="Course tools"></header>
+        <main id="raya-content" class="raya-learning-shell">
+          <nav class="raya-course-map" aria-label="Course map"></nav>
+          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+          <article id="raya-article" class="raya-main-article">
+            {content}
+          </article>
+        </main>
+      </body>
+    </html>
+    """
 
 
 def _write_skin_css(site_dir: Path, *, css: str | None = None) -> None:

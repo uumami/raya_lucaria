@@ -63,6 +63,13 @@ READER_UX_STATIC_ENVIRONMENTS = {
         "text": "The residual vector is orthogonal to the direction vector.",
     },
 }
+LEARNING_SHELL_REGIONS = (
+    "raya-top-command-bar",
+    "raya-learning-shell",
+    "raya-course-map",
+    "raya-main-article",
+    "raya-learning-rail",
+)
 
 
 def inspect_render_debug(
@@ -97,6 +104,7 @@ def inspect_render_debug(
     _inspect_numbered_content(captures, numbered_index, report)
     _inspect_static_environment_content(site_root, captures, report)
     _inspect_static_site(site_root, report, context="site")
+    _inspect_learning_shell(site_root, report, context="site")
     if copied_site_root is not None:
         _inspect_copied_site(site_root, copied_site_root, report)
         _inspect_capture_skins(
@@ -730,6 +738,41 @@ def _inspect_static_site(
         _inspect_local_mathjax_resources(site_dir, report, context=context)
 
 
+def _inspect_learning_shell(
+    site_dir: Path,
+    report: dict[str, Any],
+    *,
+    context: str,
+) -> None:
+    html_paths = [
+        path
+        for path in sorted(site_dir.rglob("*.html")) if site_dir.is_dir()
+        if "_raya" not in path.relative_to(site_dir).parts
+    ]
+    for html_path in html_paths:
+        text = html_path.read_text(encoding="utf-8")
+        missing = [region for region in LEARNING_SHELL_REGIONS if region not in text]
+        page_name = _page_name_for_html(site_dir, html_path)
+        _add_check(
+            report,
+            check_id=f"{context}:learning-shell:{page_name}",
+            status="fail" if missing else "pass",
+            path=html_path,
+            message=(
+                f"missing learning shell region(s) in {html_path}: "
+                f"{', '.join(missing)}"
+                if missing
+                else f"learning shell regions exist in {html_path}"
+            ),
+            next_action=(
+                "Rebuild the static site with the Raya learning shell regions."
+                if missing
+                else None
+            ),
+            details={"missing_regions": missing},
+        )
+
+
 def _inspect_skin_css(
     site_dir: Path,
     report: dict[str, Any],
@@ -975,6 +1018,15 @@ def _expected_page_names(site_dir: Path) -> list[str]:
     if (site_dir / "reader-ux" / "index.html").is_file():
         page_names.append("reader-ux")
     return page_names
+
+
+def _page_name_for_html(site_dir: Path, html_path: Path) -> str:
+    relative = html_path.relative_to(site_dir)
+    if relative.name == "index.html":
+        if len(relative.parts) == 1:
+            return "index"
+        return relative.parts[-2]
+    return relative.with_suffix("").as_posix().replace("/", "-")
 
 
 def _add_check(

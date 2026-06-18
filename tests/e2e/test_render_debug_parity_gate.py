@@ -397,11 +397,11 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
     (math_dir / "fonts").mkdir(parents=True)
     debug_dir.mkdir()
     (site_dir / "index.html").write_text(
-        "<html><body><mjx-container></mjx-container></body></html>",
+        _learning_shell_html("<mjx-container></mjx-container>"),
         encoding="utf-8",
     )
     (site_dir / "static-path" / "index.html").write_text(
-        "<html><body>static</body></html>",
+        _learning_shell_html("static"),
         encoding="utf-8",
     )
     (math_dir / "mathjax.css").write_text(
@@ -448,3 +448,21 @@ def write_debug_fixture(tmp_path: Path) -> tuple[Path, Path]:
         encoding="utf-8",
     )
     return site_dir, debug_dir
+
+
+def _learning_shell_html(content: str) -> str:
+    return f"""
+    <!doctype html>
+    <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+      <body data-raya-skin="warm-academic">
+        <header class="raya-top-command-bar" aria-label="Course tools"></header>
+        <main id="raya-content" class="raya-learning-shell">
+          <nav class="raya-course-map" aria-label="Course map"></nav>
+          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+          <article id="raya-article" class="raya-main-article">
+            {content}
+          </article>
+        </main>
+      </body>
+    </html>
+    """
