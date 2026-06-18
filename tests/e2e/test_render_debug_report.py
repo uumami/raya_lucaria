@@ -261,9 +261,9 @@ def test_render_debug_report_fails_when_learning_shell_regions_are_missing(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
-    assert checks["site:learning-shell:index"]["status"] == "fail"
-    assert "raya-course-map" in checks["site:learning-shell:index"]["message"]
-    assert "raya-learning-rail" in checks["site:learning-shell:index"]["message"]
+    assert checks["site:learning-shell:index.html"]["status"] == "fail"
+    assert "raya-course-map" in checks["site:learning-shell:index.html"]["message"]
+    assert "raya-learning-rail" in checks["site:learning-shell:index.html"]["message"]
 
 
 def test_render_debug_report_passes_when_learning_shell_regions_exist(
@@ -290,7 +290,112 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
-    assert checks["site:learning-shell:index"]["status"] == "pass"
+    assert checks["site:learning-shell:index.html"]["status"] == "pass"
+
+
+def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+          <body data-raya-skin="warm-academic">
+            <!-- raya-top-command-bar raya-learning-shell raya-course-map -->
+            <main>
+              <article>
+                <p>raya-main-article raya-learning-rail appear only in prose.</p>
+                <code>raya-course-map</code>
+                <script>const ignored = "raya-learning-shell";</script>
+              </article>
+            </main>
+          </body>
+        </html>
+        """,
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index.html"]
+    assert shell_check["status"] == "fail"
+    assert set(shell_check["details"]["missing_regions"]) == {
+        "raya-top-command-bar",
+        "raya-learning-shell",
+        "raya-course-map",
+        "raya-main-article",
+        "raya-learning-rail",
+    }
+
+
+def test_render_debug_report_fails_when_copied_site_shell_regions_are_missing(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        _learning_shell_html("<p>Original shell fixture.</p>"),
+        skin="warm-academic",
+    )
+    copied_site = tmp_path / "copied-site"
+    copied_site.mkdir()
+    _write_skin_css(copied_site)
+    (copied_site / "index.html").write_text(
+        """
+        <!doctype html>
+        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+          <body data-raya-skin="warm-academic">
+            <main><article>Copied site missing shell.</article></main>
+          </body>
+        </html>
+        """,
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(
+        site_dir=site_dir,
+        debug_dir=debug_dir,
+        copied_site_dir=copied_site,
+    )
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["copied-site:learning-shell:index.html"]
+    assert report["ok"] is False
+    assert shell_check["status"] == "fail"
+    assert "raya-course-map" in shell_check["message"]
+    assert "raya-learning-rail" in shell_check["message"]
+
+
+def test_render_debug_report_uses_relative_html_paths_for_shell_check_ids(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        _learning_shell_html("<p>Top page.</p>"),
+        skin="warm-academic",
+    )
+    first = site_dir / "alpha" / "lesson"
+    second = site_dir / "beta" / "lesson"
+    first.mkdir(parents=True)
+    second.mkdir(parents=True)
+    (first / "index.html").write_text(
+        _learning_shell_html("<p>First nested lesson.</p>"),
+        encoding="utf-8",
+    )
+    (second / "index.html").write_text(
+        _learning_shell_html("<p>Second nested lesson.</p>"),
+        encoding="utf-8",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    check_ids = {check["id"] for check in report["checks"]}
+    assert {
+        "site:learning-shell:index.html",
+        "site:learning-shell:alpha:lesson:index.html",
+        "site:learning-shell:beta:lesson:index.html",
+    } <= check_ids
 
 
 def test_copy_static_site_rejects_destination_under_source(tmp_path: Path) -> None:

@@ -113,6 +113,7 @@ def inspect_render_debug(
             report,
             context="copied-site",
         )
+        _inspect_learning_shell(copied_site_root, report, context="copied-site")
         _add_check(
             report,
             check_id="site:copied-site",
@@ -751,11 +752,11 @@ def _inspect_learning_shell(
     ]
     for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8")
-        missing = [region for region in LEARNING_SHELL_REGIONS if region not in text]
-        page_name = _page_name_for_html(site_dir, html_path)
+        classes = _classes_from_html(text)
+        missing = [region for region in LEARNING_SHELL_REGIONS if region not in classes]
         _add_check(
             report,
-            check_id=f"{context}:learning-shell:{page_name}",
+            check_id=f"{context}:learning-shell:{_relative_id(site_dir, html_path)}",
             status="fail" if missing else "pass",
             path=html_path,
             message=(
@@ -771,6 +772,29 @@ def _inspect_learning_shell(
             ),
             details={"missing_regions": missing},
         )
+
+
+def _classes_from_html(text: str) -> set[str]:
+    parser = _ClassCollectorParser()
+    parser.feed(text)
+    parser.close()
+    return parser.classes
+
+
+class _ClassCollectorParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.classes: set[str] = set()
+
+    def handle_starttag(
+        self,
+        tag: str,  # noqa: ARG002
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        attributes = {name.lower(): value or "" for name, value in attrs}
+        class_name = attributes.get("class")
+        if class_name:
+            self.classes.update(class_name.split())
 
 
 def _inspect_skin_css(
@@ -1018,15 +1042,6 @@ def _expected_page_names(site_dir: Path) -> list[str]:
     if (site_dir / "reader-ux" / "index.html").is_file():
         page_names.append("reader-ux")
     return page_names
-
-
-def _page_name_for_html(site_dir: Path, html_path: Path) -> str:
-    relative = html_path.relative_to(site_dir)
-    if relative.name == "index.html":
-        if len(relative.parts) == 1:
-            return "index"
-        return relative.parts[-2]
-    return relative.with_suffix("").as_posix().replace("/", "-")
 
 
 def _add_check(
