@@ -1893,10 +1893,14 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert '<section class="raya-rail-panel raya-page-estimated-time">' in html
+    assert '<h2 class="raya-rail-title">Estimated time</h2>' in html
     assert "15 minutes" in html
-    assert "reading" in html
-    assert "navigation" in html
-    assert "accessibility" in html
+    assert '<section class="raya-rail-panel raya-page-tags">' in html
+    assert '<h2 class="raya-rail-title">Tags</h2>' in html
+    assert "<li>reading</li>" in html
+    assert "<li>navigation</li>" in html
+    assert "<li>accessibility</li>" in html
 
 
 def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
