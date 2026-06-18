@@ -283,11 +283,15 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
         handle.close()
 
     assert '<header class="raya-top-command-bar">' in root_html
+    assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
     assert '<main id="raya-content" class="raya-learning-shell">' in root_html
-    assert '<article class="raya-main-article">' in root_html
+    assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
-    assert root_html.index('<article class="raya-main-article">') < root_html.index(
+    assert root_html.index('<nav class="raya-course-map"') < root_html.index(
         '<aside class="raya-learning-rail"'
+    )
+    assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(
+        '<article id="raya-article"'
     )
     assert "SHA-256" not in root_html
     assert "Source path" not in root_html
