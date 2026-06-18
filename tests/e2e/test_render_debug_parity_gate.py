@@ -458,10 +458,10 @@ def _learning_shell_html(content: str) -> str:
         <header class="raya-top-command-bar" aria-label="Course tools"></header>
         <main id="raya-content" class="raya-learning-shell">
           <nav class="raya-course-map" aria-label="Course map"></nav>
-          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
           <article id="raya-article" class="raya-main-article">
             {content}
           </article>
+          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
         </main>
       </body>
     </html>

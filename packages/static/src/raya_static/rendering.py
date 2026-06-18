@@ -903,8 +903,8 @@ mjx-container[display="true"] {
   .raya-learning-shell {
     grid-template-areas:
       "course-map"
-      "learning-rail"
-      "main-article";
+      "main-article"
+      "learning-rail";
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-course-map,

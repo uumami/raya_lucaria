@@ -807,11 +807,11 @@ def _render_page(
             _render_top_command_bar(course_title),
             '<main id="raya-content" class="raya-learning-shell">',
             _render_course_map(page, content_model),
-            learning_rail,
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             breadcrumbs,
             article_html,
             "</article>",
+            learning_rail,
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             "</body>",
@@ -824,10 +824,10 @@ def _render_page(
 def _render_top_command_bar(course_title: str) -> str:
     return "\n".join(
         [
-            '<header class="raya-top-command-bar">',
+            '<header class="raya-top-command-bar" aria-label="Course tools">',
             '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<div class="raya-course-tools" aria-label="Course tools">',
+            '<div class="raya-course-tools">',
             (
                 '<button class="raya-font-toggle" type="button" '
                 'aria-label="Toggle OpenDyslexic font" '
@@ -933,7 +933,7 @@ def _render_page_status_rail(page: ContentPage) -> str:
     return _render_rail_panel(
         "raya-page-status",
         "Status",
-        f"<p>{html.escape(page.status)}</p>",
+        f'<p><span class="raya-status-chip">{html.escape(page.status)}</span></p>',
     )
 
 

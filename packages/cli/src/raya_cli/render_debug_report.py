@@ -74,6 +74,13 @@ LEARNING_SHELL_IDS = (
     "raya-content",
     "raya-article",
 )
+LEARNING_SHELL_SELECTORS = (
+    "header.raya-top-command-bar",
+    "main#raya-content.raya-learning-shell",
+    "nav.raya-course-map",
+    "article#raya-article.raya-main-article",
+    "aside.raya-learning-rail",
+)
 
 
 def inspect_render_debug(
@@ -765,7 +772,12 @@ def _inspect_learning_shell(
         missing_ids = [
             region for region in LEARNING_SHELL_IDS if region not in elements["ids"]
         ]
-        missing = missing_classes + missing_ids
+        missing_selectors = [
+            selector
+            for selector in LEARNING_SHELL_SELECTORS
+            if selector not in elements["selectors"]
+        ]
+        missing = missing_classes + missing_ids + missing_selectors
         _add_check(
             report,
             check_id=(
@@ -788,6 +800,7 @@ def _inspect_learning_shell(
             details={
                 "missing_classes": missing_classes,
                 "missing_ids": missing_ids,
+                "missing_selectors": missing_selectors,
             },
         )
 
@@ -803,7 +816,11 @@ def _element_markers_from_html(text: str) -> dict[str, set[str]]:
     parser = _ElementMarkerParser()
     parser.feed(text)
     parser.close()
-    return {"classes": parser.classes, "ids": parser.ids}
+    return {
+        "classes": parser.classes,
+        "ids": parser.ids,
+        "selectors": parser.selectors,
+    }
 
 
 class _ElementMarkerParser(HTMLParser):
@@ -811,6 +828,7 @@ class _ElementMarkerParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.classes: set[str] = set()
         self.ids: set[str] = set()
+        self.selectors: set[str] = set()
 
     def handle_starttag(
         self,
@@ -819,11 +837,19 @@ class _ElementMarkerParser(HTMLParser):
     ) -> None:
         attributes = {name.lower(): value or "" for name, value in attrs}
         class_name = attributes.get("class")
+        class_tokens = class_name.split() if class_name else []
         if class_name:
-            self.classes.update(class_name.split())
+            self.classes.update(class_tokens)
         element_id = attributes.get("id")
         if element_id:
             self.ids.add(element_id)
+        tag_lower = tag.lower()
+        for class_token in class_tokens:
+            self.selectors.add(f"{tag_lower}.{class_token}")
+        if element_id:
+            self.selectors.add(f"{tag_lower}#{element_id}")
+            for class_token in class_tokens:
+                self.selectors.add(f"{tag_lower}#{element_id}.{class_token}")
 
 
 def _inspect_skin_css(

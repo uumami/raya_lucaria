@@ -237,14 +237,23 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         _assert_intersects_viewport(page, "header.raya-top-command-bar")
                         _assert_intersects_viewport(page, "nav.raya-course-map")
                         _assert_intersects_viewport(page, "article.raya-main-article")
-                        _assert_intersects_viewport(page, "aside.raya-learning-rail")
+                        if viewport["width"] > 900:
+                            _assert_intersects_viewport(page, "aside.raya-learning-rail")
                         course_map = _bounding_box(page, "nav.raya-course-map")
                         article = _bounding_box(page, "article.raya-main-article")
                         learning_rail = _bounding_box(page, "aside.raya-learning-rail")
+                        dom_order = page.evaluate(
+                            """() => Array.from(
+                                document.querySelectorAll(
+                                  'nav.raya-course-map, article.raya-main-article, aside.raya-learning-rail'
+                                )
+                              ).map((element) => element.tagName.toLowerCase()).join('>')"""
+                        )
+                        assert dom_order == "nav>article>aside"
                         if viewport["width"] > 900:
                             assert course_map["x"] < article["x"] < learning_rail["x"]
                         else:
-                            assert course_map["y"] < learning_rail["y"] < article["y"]
+                            assert course_map["y"] < article["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
                             _assert_bounded_scroll_region(page, "aside.raya-learning-rail")
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
@@ -282,16 +291,16 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     finally:
         handle.close()
 
-    assert '<header class="raya-top-command-bar">' in root_html
+    assert '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
     assert '<main id="raya-content" class="raya-learning-shell">' in root_html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
     assert root_html.index('<nav class="raya-course-map"') < root_html.index(
-        '<aside class="raya-learning-rail"'
-    )
-    assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(
         '<article id="raya-article"'
+    )
+    assert root_html.index('<article id="raya-article"') < root_html.index(
+        '<aside class="raya-learning-rail"'
     )
     assert "SHA-256" not in root_html
     assert "Source path" not in root_html

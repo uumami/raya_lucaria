@@ -1844,7 +1844,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert '<header class="raya-top-command-bar"' in html
+    assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav class="raya-course-map" aria-label="Course map">' in html
@@ -1856,10 +1856,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
     assert '<h2 class="raya-rail-title">Status</h2>' in html
     assert html.index('<nav class="raya-course-map"') < html.index(
-        '<aside class="raya-learning-rail"'
-    )
-    assert html.index('<aside class="raya-learning-rail"') < html.index(
         '<article id="raya-article"'
+    )
+    assert html.index('<article id="raya-article"') < html.index(
+        '<aside class="raya-learning-rail"'
     )
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
@@ -1869,6 +1869,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
+    assert root_html.index('<article id="raya-article"') < root_html.index(
+        '<aside class="raya-learning-rail"'
+    )
     assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
