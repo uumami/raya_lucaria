@@ -70,6 +70,10 @@ LEARNING_SHELL_REGIONS = (
     "raya-main-article",
     "raya-learning-rail",
 )
+LEARNING_SHELL_IDS = (
+    "raya-content",
+    "raya-article",
+)
 
 
 def inspect_render_debug(
@@ -752,8 +756,16 @@ def _inspect_learning_shell(
     ]
     for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8")
-        classes = _classes_from_html(text)
-        missing = [region for region in LEARNING_SHELL_REGIONS if region not in classes]
+        elements = _element_markers_from_html(text)
+        missing_classes = [
+            region
+            for region in LEARNING_SHELL_REGIONS
+            if region not in elements["classes"]
+        ]
+        missing_ids = [
+            region for region in LEARNING_SHELL_IDS if region not in elements["ids"]
+        ]
+        missing = missing_classes + missing_ids
         _add_check(
             report,
             check_id=(
@@ -773,7 +785,10 @@ def _inspect_learning_shell(
                 if missing
                 else None
             ),
-            details={"missing_regions": missing},
+            details={
+                "missing_classes": missing_classes,
+                "missing_ids": missing_ids,
+            },
         )
 
 
@@ -784,17 +799,18 @@ def _learning_shell_page_id(site_dir: Path, html_path: Path) -> str:
     return _path_id(relative)
 
 
-def _classes_from_html(text: str) -> set[str]:
-    parser = _ClassCollectorParser()
+def _element_markers_from_html(text: str) -> dict[str, set[str]]:
+    parser = _ElementMarkerParser()
     parser.feed(text)
     parser.close()
-    return parser.classes
+    return {"classes": parser.classes, "ids": parser.ids}
 
 
-class _ClassCollectorParser(HTMLParser):
+class _ElementMarkerParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.classes: set[str] = set()
+        self.ids: set[str] = set()
 
     def handle_starttag(
         self,
@@ -805,6 +821,9 @@ class _ClassCollectorParser(HTMLParser):
         class_name = attributes.get("class")
         if class_name:
             self.classes.update(class_name.split())
+        element_id = attributes.get("id")
+        if element_id:
+            self.ids.add(element_id)
 
 
 def _inspect_skin_css(

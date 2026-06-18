@@ -293,6 +293,41 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
     assert checks["site:learning-shell:index"]["status"] == "pass"
 
 
+def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        """
+        <!doctype html>
+        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
+          <body data-raya-skin="warm-academic">
+            <header class="raya-top-command-bar" aria-label="Course tools"></header>
+            <main class="raya-learning-shell">
+              <nav class="raya-course-map" aria-label="Course map"></nav>
+              <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+              <article class="raya-main-article"></article>
+            </main>
+          </body>
+        </html>
+        """,
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index"]
+    assert shell_check["status"] == "fail"
+    assert shell_check["details"]["missing_classes"] == []
+    assert shell_check["details"]["missing_ids"] == [
+        "raya-content",
+        "raya-article",
+    ]
+    assert "raya-content" in shell_check["message"]
+    assert "raya-article" in shell_check["message"]
+
+
 def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     tmp_path: Path,
 ) -> None:
@@ -321,7 +356,7 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     checks = {check["id"]: check for check in report["checks"]}
     shell_check = checks["site:learning-shell:index"]
     assert shell_check["status"] == "fail"
-    assert set(shell_check["details"]["missing_regions"]) == {
+    assert set(shell_check["details"]["missing_classes"]) == {
         "raya-top-command-bar",
         "raya-learning-shell",
         "raya-course-map",
