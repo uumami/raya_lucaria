@@ -1,8 +1,13 @@
 ---
 id: reader-ux
 title: Reader UX Fixture
-summary: Reader-facing fixture material for scannable numbered content.
+summary: Reader UX fixture for course-shell navigation, learning rail context, static environments, and accessibility checks.
 status: ready
+estimated_time: 15 minutes
+tags:
+  - reading
+  - navigation
+  - accessibility
 prerequisites:
   - render-root
 ---
@@ -118,6 +123,27 @@ $$
 For $u=\begin{bmatrix}2\\1\end{bmatrix}$ and
 $v=\begin{bmatrix}1\\4\end{bmatrix}$, compute $\orthproj_u(v)$ and verify the
 residual is orthogonal to $u$.
+:::
+
+## Orientation Checkpoint
+
+> [!TIP]
+> Before reading, identify the current page in the course map and the immediate next page link.
+
+## Static Practice Prompt
+
+::: problem {#reader-map-practice title="Reader map practice"}
+Use the course map and learning rail to name this page, its prerequisite, and
+the next page linked from the map.
+:::
+
+::: hint {#hint-reader-map-practice of="reader-map-practice"}
+Start with the learning rail, then compare it with the left-side course map.
+:::
+
+::: answer {#answer-reader-map-practice of="reader-map-practice"}
+This page is Reader UX Fixture, its prerequisite is Raya Lucaria Render Fixture,
+and the next map page is Authoring Matrix Fixture.
 :::
 
 ::: activity {#orthogonal-activity title="Check the residual"}

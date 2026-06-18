@@ -1874,6 +1874,31 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "personal progress" not in _visible_text(html).lower()
 
 
+def test_render_fixture_reader_page_exercises_learning_rail_metadata(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    pages = json.loads(
+        (course / "artifact" / "data" / "pages.json").read_text(encoding="utf-8")
+    )
+    reader = next(page for page in pages["pages"] if page["quantum_id"] == "reader-ux")
+    assert reader["estimated_time"] == "15 minutes"
+    assert reader["tags"] == ["reading", "navigation", "accessibility"]
+    assert reader["prerequisites"] == ["render-root"]
+
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert "15 minutes" in html
+    assert "reading" in html
+    assert "navigation" in html
+    assert "accessibility" in html
+
+
 def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
