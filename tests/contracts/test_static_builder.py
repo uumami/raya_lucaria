@@ -1867,7 +1867,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
-    assert '<nav class="raya-course-map" aria-label="Course map">' in html
+    assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert '<main id="raya-content" class="raya-learning-shell">' in html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
@@ -1875,7 +1875,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<section class="raya-rail-panel raya-page-status"' in html
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
     assert '<h2 class="raya-rail-title">Status</h2>' in html
-    assert html.index('<nav class="raya-course-map"') < html.index(
+    assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     )
     assert html.index('<article id="raya-article"') < html.index(
@@ -1895,6 +1895,30 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
+
+
+def test_static_builder_renders_collapsible_shell_controls_and_page_position(
+    tmp_path: Path,
+) -> None:
+    from raya_static.builder import build_course
+
+    course = _copy_minimal(tmp_path)
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+
+    assert '<nav id="raya-course-map" class="raya-course-map"' in html
+    assert '<button class="raya-course-map-toggle"' in html
+    assert "data-raya-course-map-toggle" in html
+    assert 'aria-controls="raya-course-map"' in html
+    assert 'aria-expanded="false"' in html
+    assert '<p class="raya-page-position">Page 1 of 3</p>' in html
+    assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
+    assert 'aria-label="Previous and next pages"' in html
+    assert html.index('<nav id="raya-course-map"') < html.index(
+        '<article id="raya-article"'
+    ) < html.index('<aside class="raya-learning-rail"')
 
 
 def test_render_fixture_reader_page_exercises_learning_rail_metadata(

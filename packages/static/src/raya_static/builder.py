@@ -814,6 +814,7 @@ def _render_page(
             '<main id="raya-content" class="raya-learning-shell">',
             _render_course_map(page, content_model),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
+            _render_article_sequence_nav(page, content_model),
             breadcrumbs,
             article_html,
             "</article>",
@@ -835,6 +836,7 @@ def _render_top_command_bar(course_title: str) -> str:
             '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
             '<div class="raya-course-tools">',
+            _render_course_map_toggle("Course map"),
             (
                 '<button class="raya-font-toggle" type="button" '
                 'aria-label="Toggle OpenDyslexic font" '
@@ -847,6 +849,24 @@ def _render_top_command_bar(course_title: str) -> str:
     )
 
 
+def _page_position(page: ContentPage, content_model: ContentModel) -> str:
+    for index, target in enumerate(content_model.pages, start=1):
+        if target.id == page.id:
+            return f"Page {index} of {len(content_model.pages)}"
+    return ""
+
+
+def _render_course_map_toggle(label: str = "Course map") -> str:
+    return (
+        '<button class="raya-course-map-toggle" type="button" '
+        "data-raya-course-map-toggle "
+        'aria-controls="raya-course-map" '
+        'aria-expanded="false">'
+        f"{html.escape(label)}"
+        "</button>"
+    )
+
+
 def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
     nav_items = []
     for target in content_model.pages:
@@ -854,10 +874,18 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
         label = html.escape(_navigation_label(target))
         current = ' aria-current="page"' if target.output_path == page.output_path else ""
         nav_items.append(f'<a href="{html.escape(href)}"{current}>{label}</a>')
+    position = html.escape(_page_position(page, content_model))
     return "\n".join(
         [
-            '<nav class="raya-course-map" aria-label="Course map">',
+            '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
+            '<div class="raya-course-map-header">',
+            '<p class="raya-region-title">Course map</p>',
+            f'<p class="raya-page-position">{position}</p>' if position else "",
+            _render_course_map_toggle("Toggle map"),
+            "</div>",
+            '<div class="raya-course-map-list" id="raya-course-map-list">',
             "\n".join(nav_items),
+            "</div>",
             "</nav>",
         ]
     )
@@ -1099,26 +1127,47 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
     return '<nav aria-label="Breadcrumbs">' + " / ".join(items) + "</nav>"
 
 
-def _render_sequence_nav(page: ContentPage, content_model: ContentModel) -> str:
-    flat_pages = _flatten_navigation(content_model)
-    try:
-        index = flat_pages.index(page.id)
-    except ValueError:
+def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
+    pages = content_model.pages
+    current_index = next(
+        (index for index, target in enumerate(pages) if target.output_path == page.output_path),
+        None,
+    )
+    if current_index is None:
         return ""
     links: list[str] = []
-    if index > 0:
-        previous = content_model.pages_by_id[flat_pages[index - 1]]
+    if current_index > 0:
+        previous = pages[current_index - 1]
+        href = _relative_href(page.output_path, previous.output_path)
         links.append(
-            f'<a rel="prev" href="{html.escape(_relative_href(page.output_path, previous.output_path))}">Previous: {html.escape(previous.nav_title)}</a>'
+            f'<a href="{html.escape(href)}">Previous: {html.escape(previous.nav_title or previous.title)}</a>'
         )
-    if index < len(flat_pages) - 1:
-        next_page = content_model.pages_by_id[flat_pages[index + 1]]
+    if current_index + 1 < len(pages):
+        next_page = pages[current_index + 1]
+        href = _relative_href(page.output_path, next_page.output_path)
         links.append(
-            f'<a rel="next" href="{html.escape(_relative_href(page.output_path, next_page.output_path))}">Next: {html.escape(next_page.nav_title)}</a>'
+            f'<a href="{html.escape(href)}">Next: {html.escape(next_page.nav_title or next_page.title)}</a>'
         )
-    if not links:
+    return "\n".join(links)
+
+
+def _render_article_sequence_nav(page: ContentPage, content_model: ContentModel) -> str:
+    sequence = _sequence_links(page, content_model)
+    if not sequence:
         return ""
-    return '<nav aria-label="Previous and next">' + " ".join(links) + "</nav>"
+    return (
+        '<nav class="raya-article-sequence raya-article-sequence-top" '
+        'aria-label="Previous and next pages">'
+        + sequence
+        + "</nav>"
+    )
+
+
+def _render_sequence_nav(page: ContentPage, content_model: ContentModel) -> str:
+    sequence = _sequence_links(page, content_model)
+    if not sequence:
+        return ""
+    return '<nav aria-label="Previous and next">' + sequence + "</nav>"
 
 
 def _render_generated_index(
