@@ -756,7 +756,10 @@ def _inspect_learning_shell(
         missing = [region for region in LEARNING_SHELL_REGIONS if region not in classes]
         _add_check(
             report,
-            check_id=f"{context}:learning-shell:{_relative_id(site_dir, html_path)}",
+            check_id=(
+                f"{context}:learning-shell:"
+                f"{_learning_shell_page_id(site_dir, html_path)}"
+            ),
             status="fail" if missing else "pass",
             path=html_path,
             message=(
@@ -772,6 +775,13 @@ def _inspect_learning_shell(
             ),
             details={"missing_regions": missing},
         )
+
+
+def _learning_shell_page_id(site_dir: Path, html_path: Path) -> str:
+    relative = html_path.relative_to(site_dir)
+    if relative == Path("index.html"):
+        return "index"
+    return _path_id(relative)
 
 
 def _classes_from_html(text: str) -> set[str]:

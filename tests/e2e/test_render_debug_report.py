@@ -261,9 +261,9 @@ def test_render_debug_report_fails_when_learning_shell_regions_are_missing(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
-    assert checks["site:learning-shell:index.html"]["status"] == "fail"
-    assert "raya-course-map" in checks["site:learning-shell:index.html"]["message"]
-    assert "raya-learning-rail" in checks["site:learning-shell:index.html"]["message"]
+    assert checks["site:learning-shell:index"]["status"] == "fail"
+    assert "raya-course-map" in checks["site:learning-shell:index"]["message"]
+    assert "raya-learning-rail" in checks["site:learning-shell:index"]["message"]
 
 
 def test_render_debug_report_passes_when_learning_shell_regions_exist(
@@ -290,7 +290,7 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
-    assert checks["site:learning-shell:index.html"]["status"] == "pass"
+    assert checks["site:learning-shell:index"]["status"] == "pass"
 
 
 def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
@@ -319,7 +319,7 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
-    shell_check = checks["site:learning-shell:index.html"]
+    shell_check = checks["site:learning-shell:index"]
     assert shell_check["status"] == "fail"
     assert set(shell_check["details"]["missing_regions"]) == {
         "raya-top-command-bar",
@@ -360,7 +360,7 @@ def test_render_debug_report_fails_when_copied_site_shell_regions_are_missing(
     )
 
     checks = {check["id"]: check for check in report["checks"]}
-    shell_check = checks["copied-site:learning-shell:index.html"]
+    shell_check = checks["copied-site:learning-shell:index"]
     assert report["ok"] is False
     assert shell_check["status"] == "fail"
     assert "raya-course-map" in shell_check["message"]
@@ -392,7 +392,7 @@ def test_render_debug_report_uses_relative_html_paths_for_shell_check_ids(
 
     check_ids = {check["id"] for check in report["checks"]}
     assert {
-        "site:learning-shell:index.html",
+        "site:learning-shell:index",
         "site:learning-shell:alpha:lesson:index.html",
         "site:learning-shell:beta:lesson:index.html",
     } <= check_ids
