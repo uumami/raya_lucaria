@@ -1835,6 +1835,26 @@ def test_render_fixture_builds_rich_static_pages(
     assert "\\norm" not in authoring_matrix_visible
 
 
+def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
+    from raya_static.builder import build_course
+
+    course = _copy_minimal(tmp_path)
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    site = course / "artifact" / "site"
+    shell_js = site / "_raya" / "render" / "shell.js"
+    index_html = (site / "index.html").read_text(encoding="utf-8")
+    script_text = shell_js.read_text(encoding="utf-8")
+
+    assert shell_js.exists()
+    assert '<script src="_raya/render/shell.js" defer></script>' in index_html
+    assert "raya.courseMapExpanded" in script_text
+    assert "localStorage" in script_text
+    assert "fetch(" not in script_text
+    assert "XMLHttpRequest" not in script_text
+
+
 def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

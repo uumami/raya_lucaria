@@ -110,6 +110,7 @@ from raya_static.skins import (
     render_skin_css,
     skin_id_for_source_path,
 )
+from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
@@ -343,6 +344,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
     _write_rich_render_resources(site_dir, report, skin_context=skin_context)
+    _write_shell_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -743,6 +745,10 @@ def _render_page(
         page.output_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
     )
+    shell_js_href = _relative_href(
+        page.output_path,
+        Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
+    )
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -814,6 +820,7 @@ def _render_page(
             learning_rail,
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
@@ -1971,6 +1978,16 @@ def _write_rich_render_resources(
     report.wrote_output(css_path)
     report.wrote_output(js_path)
     report.wrote_output(font_path)
+
+
+def _write_shell_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = shell_resources()
+    shell_dir = site_dir / SHELL_RESOURCE_PATH
+    shell_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(shell_dir)
+    script_path = shell_dir / SHELL_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
 
 
 def _prepare_math_render_resources(
