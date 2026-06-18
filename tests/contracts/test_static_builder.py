@@ -1906,16 +1906,22 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     report = build_course(course)
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
-    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    site = course / "artifact" / "site"
+    html = (site / "index.html").read_text(encoding="utf-8")
+    middle_html = (site / "unit" / "index.html").read_text(encoding="utf-8")
 
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="false"' in html
+    assert 'aria-expanded="true"' in html
+    assert 'data-raya-course-map="expanded"' in html
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
+    assert 'rel="next" href="unit/index.html"' in html
+    assert 'rel="prev" href="../index.html"' in middle_html
+    assert 'rel="next" href="topic/index.html"' in middle_html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     ) < html.index('<aside class="raya-learning-rail"')

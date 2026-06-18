@@ -856,12 +856,13 @@ def _page_position(page: ContentPage, content_model: ContentModel) -> str:
     return ""
 
 
-def _render_course_map_toggle(label: str = "Course map") -> str:
+def _render_course_map_toggle(label: str = "Course map", expanded: bool = True) -> str:
+    aria_expanded = "true" if expanded else "false"
     return (
         '<button class="raya-course-map-toggle" type="button" '
         "data-raya-course-map-toggle "
         'aria-controls="raya-course-map" '
-        'aria-expanded="false">'
+        f'aria-expanded="{aria_expanded}">'
         f"{html.escape(label)}"
         "</button>"
     )
@@ -1140,13 +1141,13 @@ def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
         previous = pages[current_index - 1]
         href = _relative_href(page.output_path, previous.output_path)
         links.append(
-            f'<a href="{html.escape(href)}">Previous: {html.escape(previous.nav_title or previous.title)}</a>'
+            f'<a rel="prev" href="{html.escape(href)}">Previous: {html.escape(previous.nav_title or previous.title)}</a>'
         )
     if current_index + 1 < len(pages):
         next_page = pages[current_index + 1]
         href = _relative_href(page.output_path, next_page.output_path)
         links.append(
-            f'<a href="{html.escape(href)}">Next: {html.escape(next_page.nav_title or next_page.title)}</a>'
+            f'<a rel="next" href="{html.escape(href)}">Next: {html.escape(next_page.nav_title or next_page.title)}</a>'
         )
     return "\n".join(links)
 
