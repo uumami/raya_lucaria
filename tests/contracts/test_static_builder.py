@@ -1893,14 +1893,14 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert '<section class="raya-rail-panel raya-page-estimated-time">' in html
-    assert '<h2 class="raya-rail-title">Estimated time</h2>' in html
-    assert "15 minutes" in html
-    assert '<section class="raya-rail-panel raya-page-tags">' in html
-    assert '<h2 class="raya-rail-title">Tags</h2>' in html
-    assert "<li>reading</li>" in html
-    assert "<li>navigation</li>" in html
-    assert "<li>accessibility</li>" in html
+    estimated_panel = _section_html(html, "raya-page-estimated-time")
+    assert '<h2 class="raya-rail-title">Estimated time</h2>' in estimated_panel
+    assert "15 minutes" in estimated_panel
+    tags_panel = _section_html(html, "raya-page-tags")
+    assert '<h2 class="raya-rail-title">Tags</h2>' in tags_panel
+    assert "<li>reading</li>" in tags_panel
+    assert "<li>navigation</li>" in tags_panel
+    assert "<li>accessibility</li>" in tags_panel
 
 
 def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
@@ -2717,6 +2717,13 @@ def _write_test_skin(path: Path, skin_id: str) -> None:
 
 def _visible_text(html_text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", html_text))
+
+
+def _section_html(html_text: str, class_name: str) -> str:
+    section_start = f'<section class="raya-rail-panel {class_name}">'
+    start = html_text.index(section_start)
+    end = html_text.index("</section>", start) + len("</section>")
+    return html_text[start:end]
 
 
 class _MissingMathHtmlRenderer:
