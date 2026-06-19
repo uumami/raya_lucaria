@@ -77,7 +77,10 @@ LEARNING_SHELL_IDS = (
 LEARNING_SHELL_SELECTORS = (
     "header.raya-top-command-bar",
     "main#raya-content.raya-learning-shell",
+    "nav#raya-course-map.raya-course-map",
     "nav.raya-course-map",
+    "button.raya-course-map-toggle",
+    "[data-raya-course-map-toggle]",
     "article#raya-article.raya-main-article",
     "aside.raya-learning-rail",
 )
@@ -285,6 +288,7 @@ def _inspect_captures(
                 continue
 
             failures = _capture_failures(capture, debug_dir, screenshot_name)
+            screenshots = _capture_screenshot_details(capture)
             _add_check(
                 report,
                 check_id=check_id,
@@ -303,6 +307,7 @@ def _inspect_captures(
                     "page": page_name,
                     "viewport": viewport_name,
                     "screenshot": screenshot_name,
+                    "screenshots": screenshots,
                     "failures": failures,
                 },
             )
@@ -338,6 +343,36 @@ def _capture_failures(
             )
     if not screenshot.is_file() or screenshot.stat().st_size <= 0:
         failures.append(f"missing or empty screenshot {screenshot}")
+    screenshots = capture.get("screenshots")
+    if screenshots is not None:
+        if not isinstance(screenshots, dict):
+            failures.append(
+                "screenshots must be an object in capture "
+                f"page={page!r} viewport={viewport_name!r}"
+            )
+        else:
+            for name, value in sorted(screenshots.items()):
+                declared_screenshot = Path(str(value))
+                if not declared_screenshot.is_absolute():
+                    declared_screenshot = debug_dir / declared_screenshot
+                declared_screenshot = declared_screenshot.resolve()
+                try:
+                    declared_screenshot.relative_to(debug_dir.resolve())
+                except ValueError:
+                    failures.append(
+                        "screenshot path is outside debug directory "
+                        f"for name={name!r} page={page!r} "
+                        f"viewport={viewport_name!r}: {declared_screenshot}"
+                    )
+                    continue
+                if (
+                    not declared_screenshot.is_file()
+                    or declared_screenshot.stat().st_size <= 0
+                ):
+                    failures.append(
+                        "missing or empty declared screenshot "
+                        f"{name!r}: {declared_screenshot}"
+                    )
     if capture.get("raw_tex_visible"):
         failures.append(
             f"visible raw TeX in capture page={page!r} viewport={viewport_name!r}"
@@ -361,6 +396,16 @@ def _capture_failures(
             f"page={page!r} viewport={viewport_name!r}"
         )
     return failures
+
+
+def _capture_screenshot_details(capture: dict[str, Any]) -> dict[str, str]:
+    screenshots = capture.get("screenshots")
+    if not isinstance(screenshots, dict):
+        return {}
+    return {
+        str(name): Path(str(value)).name
+        for name, value in sorted(screenshots.items())
+    }
 
 
 def _inspect_capture_skins(
@@ -838,6 +883,8 @@ class _ElementMarkerParser(HTMLParser):
         attributes = {name.lower(): value or "" for name, value in attrs}
         class_name = attributes.get("class")
         class_tokens = class_name.split() if class_name else []
+        for name in attributes:
+            self.selectors.add(f"[{name}]")
         if class_name:
             self.classes.update(class_tokens)
         element_id = attributes.get("id")
@@ -1231,6 +1278,14 @@ def _render_screenshot_link(check: dict[str, Any]) -> str:
     details = check.get("details")
     if not isinstance(details, dict):
         return ""
+    screenshots = details.get("screenshots")
+    if isinstance(screenshots, dict) and screenshots:
+        page = details.get("page", "")
+        return "\n".join(
+            f'    <a href="{html.escape(str(screenshot))}">'
+            f"{html.escape(f'{name} {page}'.strip())}</a>"
+            for name, screenshot in sorted(screenshots.items())
+        )
     screenshot = details.get("screenshot")
     if not isinstance(screenshot, str):
         return ""

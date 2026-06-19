@@ -217,6 +217,15 @@ def _capture_render_debug_artifact(
     page.goto(page_url, wait_until="networkidle")
     screenshot_path = debug_dir / f"{viewport_name}-{page_name}.png"
     page.screenshot(path=str(screenshot_path), full_page=True)
+    screenshots = {viewport_name: str(screenshot_path)}
+    screenshots.update(
+        _capture_desktop_shell_state_screenshots(
+            page,
+            debug_dir=debug_dir,
+            page_name=page_name,
+            viewport_name=viewport_name,
+        )
+    )
     visible_text = _visible_non_code_text(page)
     raw_tex_markers = raw_tex_markers_from_text(visible_text)
     overflow = page.evaluate(
@@ -239,11 +248,47 @@ def _capture_render_debug_artifact(
         "raw_tex_markers": raw_tex_markers,
         "external_requests": sorted(set(external_requests)),
         "horizontal_overflow": overflow,
+        "screenshots": screenshots,
         "numbered_content": _numbered_content_evidence(page),
         "staticEnvironments": _static_environment_evidence(page),
     }
     _append_summary(debug_dir / "summary.json", capture)
     return capture
+
+
+def _capture_desktop_shell_state_screenshots(
+    page: Any,
+    *,
+    debug_dir: Path,
+    page_name: str,
+    viewport_name: str,
+) -> dict[str, str]:
+    if viewport_name != "desktop":
+        return {}
+    toggle = page.locator(".raya-course-map-toggle").first
+    if toggle.count() == 0:
+        return {}
+
+    collapsed_path = debug_dir / f"desktop-collapsed-{page_name}.png"
+    expanded_path = debug_dir / f"desktop-expanded-{page_name}.png"
+    if toggle.get_attribute("aria-expanded") == "true":
+        toggle.click()
+        page.wait_for_timeout(100)
+    page.screenshot(path=str(collapsed_path), full_page=False)
+
+    if toggle.get_attribute("aria-expanded") != "true":
+        toggle.click()
+        page.wait_for_timeout(100)
+    page.screenshot(path=str(expanded_path), full_page=False)
+    page.evaluate(
+        """() => {
+            window.localStorage.setItem("raya.courseMapExpanded", "false");
+        }"""
+    )
+    return {
+        "desktop-collapsed": str(collapsed_path),
+        "desktop-expanded": str(expanded_path),
+    }
 
 
 def _visible_non_code_text(page: Any) -> str:
@@ -379,11 +424,17 @@ def _reset_render_debug_dir(debug_dir: Path, report: ValidationReport) -> bool:
 
 
 def _render_debug_screenshot_names() -> set[str]:
-    return {
+    normal_names = {
         f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
         for page_name in _RENDER_DEBUG_CLEANUP_PAGE_NAMES
     }
+    shell_state_names = {
+        f"desktop-{state}-{page_name}.png"
+        for state in ("collapsed", "expanded")
+        for page_name in _RENDER_DEBUG_CLEANUP_PAGE_NAMES
+    }
+    return normal_names | shell_state_names
 
 
 def raw_tex_markers_from_text(visible_text: str) -> list[str]:

@@ -48,6 +48,8 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     assert "check-render-debug: passed" in result.stdout
     assert (debug_dir / "summary.json").is_file()
     assert (debug_dir / "desktop-index.png").stat().st_size > 0
+    assert (debug_dir / "desktop-collapsed-index.png").stat().st_size > 0
+    assert (debug_dir / "desktop-expanded-index.png").stat().st_size > 0
     assert (debug_dir / "mobile-static-path.png").stat().st_size > 0
     assert (debug_dir / "desktop-reader-ux.png").stat().st_size > 0
     assert (debug_dir / "mobile-reader-ux.png").stat().st_size > 0
@@ -457,7 +459,12 @@ def _learning_shell_html(content: str) -> str:
       <body data-raya-skin="warm-academic">
         <header class="raya-top-command-bar" aria-label="Course tools"></header>
         <main id="raya-content" class="raya-learning-shell">
-          <nav class="raya-course-map" aria-label="Course map"></nav>
+          <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
+            <button class="raya-course-map-toggle" type="button"
+              data-raya-course-map-toggle aria-expanded="false">
+              Course map
+            </button>
+          </nav>
           <article id="raya-article" class="raya-main-article">
             {content}
           </article>
