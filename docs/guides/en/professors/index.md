@@ -156,6 +156,10 @@ The render fixture uses `eva-unit-02` as its readable default skin example;
 copy its pattern when you want a stronger visual identity without reducing
 contrast or changing course meaning.
 
+Reader comfort controls such as `Text size` and `OpenDyslexic` are local display
+preferences. They do not replace course skins and should not be used to encode
+course meaning, level, grading, progress, or official status.
+
 The learning-science course shell works best when source pages give the static
 renderer honest structure. Write concise page summaries, stable prerequisites,
 clear checkpoints as authored content, worked examples, retrieval practice

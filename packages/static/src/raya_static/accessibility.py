@@ -42,6 +42,18 @@ def open_dyslexic_resources() -> AccessibilityResources:
   --raya-font-heading: "OpenDyslexic";
 }}
 
+:root {{
+  --raya-reader-text-scale: 1;
+}}
+
+:root[data-raya-text-size="large"] {{
+  --raya-reader-text-scale: 1.125;
+}}
+
+:root[data-raya-text-size="x-large"] {{
+  --raya-reader-text-scale: 1.25;
+}}
+
 .raya-font-toggle {{
   align-items: center;
   background: var(--raya-color-accent-soft);
@@ -64,26 +76,48 @@ def open_dyslexic_resources() -> AccessibilityResources:
 }}
 '''
     javascript = '''(() => {
-  const storageKey = "raya:open-dyslexic";
-  const activeValue = "true";
+  const dyslexicStorageKey = "raya:open-dyslexic";
+  const dyslexicActiveValue = "true";
+  const textSizeStorageKey = "raya:text-size";
+  const textSizes = ["normal", "large", "x-large"];
 
-  function storedPreference() {
+  function storedDyslexicPreference() {
     try {
-      return localStorage.getItem(storageKey) === activeValue;
+      return localStorage.getItem(dyslexicStorageKey) === dyslexicActiveValue;
     } catch {
       return false;
     }
   }
 
-  function storePreference(enabled) {
+  function storeDyslexicPreference(enabled) {
     try {
-      localStorage.setItem(storageKey, enabled ? activeValue : "false");
+      localStorage.setItem(
+        dyslexicStorageKey,
+        enabled ? dyslexicActiveValue : "false"
+      );
     } catch {
       return;
     }
   }
 
-  function apply(enabled) {
+  function storedTextSizePreference() {
+    try {
+      const value = localStorage.getItem(textSizeStorageKey) || "normal";
+      return textSizes.includes(value) ? value : "normal";
+    } catch {
+      return "normal";
+    }
+  }
+
+  function storeTextSizePreference(size) {
+    try {
+      localStorage.setItem(textSizeStorageKey, size);
+    } catch {
+      return;
+    }
+  }
+
+  function applyDyslexic(enabled) {
     document.documentElement.setAttribute(
       "data-raya-open-dyslexic",
       enabled ? "true" : "false"
@@ -93,16 +127,39 @@ def open_dyslexic_resources() -> AccessibilityResources:
     });
   }
 
-  apply(storedPreference());
+  function applyTextSize(size) {
+    const normalized = textSizes.includes(size) ? size : "normal";
+    document.documentElement.setAttribute("data-raya-text-size", normalized);
+    document.querySelectorAll(".raya-text-size-toggle").forEach((button) => {
+      button.setAttribute(
+        "aria-pressed",
+        normalized === "normal" ? "false" : "true"
+      );
+      button.setAttribute("aria-label", `Text size: ${normalized}`);
+    });
+  }
+
+  applyDyslexic(storedDyslexicPreference());
+  applyTextSize(storedTextSizePreference());
 
   document.addEventListener("click", (event) => {
-    const button = event.target.closest(".raya-font-toggle");
-    if (!button) {
+    const fontButton = event.target.closest(".raya-font-toggle");
+    if (fontButton) {
+      const enabled = fontButton.getAttribute("aria-pressed") !== "true";
+      storeDyslexicPreference(enabled);
+      applyDyslexic(enabled);
       return;
     }
-    const enabled = button.getAttribute("aria-pressed") !== "true";
-    storePreference(enabled);
-    apply(enabled);
+
+    const sizeButton = event.target.closest(".raya-text-size-toggle");
+    if (sizeButton) {
+      const current = document.documentElement.getAttribute("data-raya-text-size")
+        || "normal";
+      const index = textSizes.indexOf(current);
+      const next = textSizes[(index + 1) % textSizes.length];
+      storeTextSizePreference(next);
+      applyTextSize(next);
+    }
   });
 })();
 '''

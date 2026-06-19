@@ -18,6 +18,11 @@ El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y 
 
 Los bloques de codigo fenced renderizan controles locales de copiado. Preserva el texto exacto copiado desde `pre code`, botones accesibles por teclado, fallback HTML estatico y la regla de no storage, no fetch y no scripts externos al cambiar este comportamiento.
 
+Los controles de comodidad lectora viven en recursos locales de accesibilidad.
+`Text size` y `OpenDyslexic` pueden persistir preferencias locales del browser,
+pero no deben cambiar skins del curso, datos fuente, datos del grafo, identidad
+de objetos numerados, progreso, respuestas, dominio ni recomendaciones.
+
 Los cambios de skin deben preservar validacion de tokens semanticos y output
 estatico generado. Los perfiles locales del curso bajo `skins/` definen tokens
 semanticos. `render.skin` del curso y los selectores `_raya/skin.yaml` de

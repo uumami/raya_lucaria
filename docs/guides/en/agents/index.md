@@ -37,6 +37,12 @@ and static parity between preview and copied deployment. Treat any external font
 request as a regression; the toggle may use a local script, but it must not
 introduce browser-side MathJax or an external renderer.
 
+For the `Text size` reader toggle, verify the same local accessibility resource
+path, `data-raya-text-size` on the document root, command-bar labels, computed
+article text size, and reload persistence. Treat it as a local comfort
+preference only; it must not change `data-raya-skin`, source content, graph
+data, progress, answers, mastery, or recommendations.
+
 For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. Numbered object support is current behavior: inspect fenced directives, stable IDs, rendered anchors, `@id` shorthand references, `raya:ref/id` explicit references, and the manifest-declared `data/numbered-objects.json` index instead of looking for LaTeX `\label` or `\ref` support.
 
 When a rendering issue crosses math, numbered objects, skins, references, static environments, and local assets, inspect `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` first, then move to the specialized fixture page for the failing surface.

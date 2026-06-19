@@ -21,10 +21,10 @@ the course asks you to complete. If two sections look different, use the page
 title, links, and labels as the source of course meaning; the skin is only
 visual emphasis.
 
-Rendered pages may include an `OpenDyslexic` button in the top chrome. It is a
-local reading preference stored by your browser for that static site; it changes
-the page font for easier reading but does not change course content, grading,
-links, or authority labels.
+Rendered pages may include `Text size` and `OpenDyslexic` buttons in the top
+chrome. They are local reading preferences stored by your browser for that
+static site; they change text scale or page font for easier reading but do not
+change course content, grading, links, skin identity, or authority labels.
 
 The current course shell is a static reading aid. On desktop, the expanded course map
 gives orientation by default, the main article remains the lesson,
@@ -34,7 +34,7 @@ choice is non-persistent and does not store or show personal progress.
 
 Use the Course map button to collapse or expand navigation when you need a
 different focus. Use Previous and Next to move through the ordered material, and
-use OpenDyslexic when that font is more comfortable.
+use Text size or OpenDyslexic when those settings are more comfortable.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 

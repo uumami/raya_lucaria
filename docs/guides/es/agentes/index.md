@@ -38,6 +38,13 @@ cualquier request de fuente externa como regresion; el toggle puede usar un
 script local, pero no debe introducir MathJax en el browser ni un renderer
 externo.
 
+Para el toggle lector `Text size`, verifica la misma ruta local de recursos de
+accesibilidad, `data-raya-text-size` en la raiz del documento, labels de la barra
+de comandos, tamano de texto computado del articulo y persistencia tras recargar.
+Tratalo solo como preferencia local de comodidad; no debe cambiar
+`data-raya-skin`, contenido fuente, datos del grafo, progreso, respuestas,
+dominio ni recomendaciones.
+
 Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como fixture de fuente enfocado. Verifica paginas de fuente en vez de archivos generados bajo `artifact/`, y usa evidencia de render-debug para confirmar que no hay TeX crudo visible, conversion browser-side MathJax ni requests externos del renderer. El soporte de objeto numerado es comportamiento actual: inspecciona directivas fenced, IDs duraderos, anclas renderizadas, referencias abreviadas `@id`, referencias explicitas `raya:ref/id` y el index `data/numbered-objects.json` declarado en manifest en vez de buscar soporte LaTeX `\label` o `\ref`.
 
 Cuando un problema de rendering cruce math, objetos numerados, skins, referencias, entornos estaticos y assets locales, inspecciona primero `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md`, despues pasa a la pagina fixture especializada de la superficie que falla.

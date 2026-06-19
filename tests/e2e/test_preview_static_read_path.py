@@ -381,6 +381,185 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     assert "OpenDyslexic" in after["bodyFont"]
 
 
+def test_render_fixture_text_size_toggle_changes_reader_scale(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 1280, "height": 900})
+                try:
+                    page = context.new_page()
+                    try:
+                        requested_urls: list[str] = []
+                        page.on(
+                            "request",
+                            lambda request: requested_urls.append(request.url),
+                        )
+                        page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                        requested_urls.clear()
+                        before_url = page.url
+                        initial = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              skin: document.body.getAttribute('data-raya-skin'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              pressed: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-pressed'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                            })"""
+                        )
+
+                        page.click(".raya-text-size-toggle")
+                        large = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              skin: document.body.getAttribute('data-raya-skin'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              pressed: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-pressed'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                              stored: localStorage.getItem('raya:text-size'),
+                              url: window.location.href,
+                            })"""
+                        )
+
+                        page.click(".raya-text-size-toggle")
+                        x_large = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              skin: document.body.getAttribute('data-raya-skin'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              pressed: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-pressed'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                              stored: localStorage.getItem('raya:text-size'),
+                              url: window.location.href,
+                            })"""
+                        )
+                        text_size_click_urls = requested_urls.copy()
+
+                        page.reload(wait_until="networkidle")
+                        persisted = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                              url: window.location.href,
+                            })"""
+                        )
+
+                        requested_urls.clear()
+                        page.click(".raya-text-size-toggle")
+                        normal = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              skin: document.body.getAttribute('data-raya-skin'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              pressed: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-pressed'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                              stored: localStorage.getItem('raya:text-size'),
+                              url: window.location.href,
+                            })"""
+                        )
+                        text_size_click_urls.extend(requested_urls)
+
+                        page.evaluate(
+                            "() => localStorage.setItem('raya:text-size', 'huge')"
+                        )
+                        page.reload(wait_until="networkidle")
+                        invalid_fallback = page.evaluate(
+                            """() => ({
+                              size: document.documentElement.getAttribute('data-raya-text-size'),
+                              label: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-label'),
+                              pressed: document.querySelector('.raya-text-size-toggle')
+                                ?.getAttribute('aria-pressed'),
+                              articleFontSize: parseFloat(
+                                getComputedStyle(document.querySelector('.raya-main-article')).fontSize
+                              ),
+                              url: window.location.href,
+                            })"""
+                        )
+                    finally:
+                        page.close()
+                finally:
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert initial["size"] == "normal"
+    assert initial["skin"] == "eva-unit-02"
+    assert initial["label"] == "Text size: normal"
+    assert initial["pressed"] == "false"
+    assert large["size"] == "large"
+    assert large["skin"] == initial["skin"]
+    assert large["label"] == "Text size: large"
+    assert large["pressed"] == "true"
+    assert large["stored"] == "large"
+    assert large["articleFontSize"] > initial["articleFontSize"]
+    assert x_large["size"] == "x-large"
+    assert x_large["skin"] == initial["skin"]
+    assert x_large["label"] == "Text size: x-large"
+    assert x_large["pressed"] == "true"
+    assert x_large["stored"] == "x-large"
+    assert x_large["articleFontSize"] > large["articleFontSize"]
+    assert persisted["size"] == "x-large"
+    assert persisted["label"] == "Text size: x-large"
+    assert persisted["articleFontSize"] == x_large["articleFontSize"]
+    assert normal["size"] == "normal"
+    assert normal["skin"] == initial["skin"]
+    assert normal["label"] == "Text size: normal"
+    assert normal["pressed"] == "false"
+    assert normal["stored"] == "normal"
+    assert normal["articleFontSize"] == initial["articleFontSize"]
+    assert invalid_fallback["size"] == "normal"
+    assert invalid_fallback["label"] == "Text size: normal"
+    assert invalid_fallback["pressed"] == "false"
+    assert invalid_fallback["articleFontSize"] == initial["articleFontSize"]
+    assert large["url"] == before_url
+    assert x_large["url"] == before_url
+    assert persisted["url"] == before_url
+    assert normal["url"] == before_url
+    assert invalid_fallback["url"] == before_url
+    assert text_size_click_urls == []
+
+
 def test_render_fixture_command_bar_controls_are_dense_and_operable(
     tmp_path: Path,
 ) -> None:
@@ -435,18 +614,26 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 mapExpanded: document
                                   .querySelector('.raya-command-map')
                                   ?.getAttribute('aria-expanded'),
+                                sizeLabel: document
+                                  .querySelector('.raya-command-size')
+                                  ?.getAttribute('aria-label'),
+                                sizePressed: document
+                                  .querySelector('.raya-command-size')
+                                  ?.getAttribute('aria-pressed'),
                                 fontPressed: document
                                   .querySelector('.raya-command-font')
                                   ?.getAttribute('aria-pressed'),
                           };
                         }"""
                         )
-                        assert state["count"] == 4
+                        assert state["count"] == 5
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
                         assert state["searchHref"] == "_raya/search/index.html"
                         assert state["graphHref"] == "_raya/graph/index.html"
                         assert state["mapExpanded"] == "true"
+                        assert state["sizeLabel"] == "Text size: normal"
+                        assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
 
                         page.click(".raya-command-map")
@@ -475,6 +662,22 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             collapsed_state["topBarWidth"]
                             <= collapsed_state["viewportWidth"]
                         )
+                        page.click(".raya-command-size")
+                        after_size = page.evaluate(
+                            """() => ({
+                              label: document
+                                .querySelector('.raya-command-size')
+                                ?.getAttribute('aria-label'),
+                              pressed: document
+                                .querySelector('.raya-command-size')
+                                ?.getAttribute('aria-pressed'),
+                              rootSize: document.documentElement
+                                .getAttribute('data-raya-text-size'),
+                            })"""
+                        )
+                        assert after_size["label"] == "Text size: large"
+                        assert after_size["pressed"] == "true"
+                        assert after_size["rootSize"] == "large"
                         page.click(".raya-command-font")
                         after_font = page.evaluate(
                             """() => ({
@@ -573,7 +776,11 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
                         page.keyboard.press("Tab")
                         focused = page.evaluate("() => document.activeElement && document.activeElement.className")
-                        assert "raya-skip-link" in focused or "raya-font-toggle" in focused
+                        assert (
+                            "raya-skip-link" in focused
+                            or "raya-text-size-toggle" in focused
+                            or "raya-font-toggle" in focused
+                        )
                         page.locator(".raya-skip-link").focus()
                         page.keyboard.press("Enter")
                         focused_id = page.evaluate("() => document.activeElement && document.activeElement.id")

@@ -894,6 +894,13 @@ def _render_top_command_bar(
                 aria_label="Collapse course map",
             ),
             (
+                '<button class="raya-command raya-command-size raya-text-size-toggle" type="button" '
+                'aria-label="Text size: normal" '
+                'aria-pressed="false">'
+                '<span class="raya-command-label">Text size</span>'
+                "</button>"
+            ),
+            (
                 '<button class="raya-command raya-command-font raya-font-toggle" type="button" '
                 'aria-label="Toggle OpenDyslexic font" '
                 'aria-pressed="false">'

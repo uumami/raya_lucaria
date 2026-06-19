@@ -19,6 +19,11 @@ Rich static rendering is Glintstone-owned. Keep parser, highlighter, and MathJax
 
 Fenced code blocks render with local copy controls. Preserve exact copied `pre code` text, keyboard-reachable buttons, static HTML fallback, and the no-storage/no-fetch/no-external-script rule when changing this behavior.
 
+Reader comfort controls live in local accessibility resources. `Text size` and
+`OpenDyslexic` may persist local browser preferences, but they must not change
+course skins, source data, graph data, numbered object identity, progress,
+answers, mastery, or recommendations.
+
 Skin profile changes must preserve token validation and generated static output.
 Course-local profiles under `skins/` define semantic tokens. Course
 `render.skin` and section `_raya/skin.yaml` selectors choose one of those

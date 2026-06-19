@@ -1777,7 +1777,15 @@ def test_render_fixture_builds_rich_static_pages(
     assert accessibility_js.is_file()
     assert accessibility_font.is_file()
     assert "OpenDyslexic" in accessibility_css.read_text(encoding="utf-8")
-    assert "localStorage" in accessibility_js.read_text(encoding="utf-8")
+    accessibility_css_text = accessibility_css.read_text(encoding="utf-8")
+    accessibility_js_text = accessibility_js.read_text(encoding="utf-8")
+    assert "OpenDyslexic" in accessibility_css_text
+    assert "--raya-reader-text-scale" in accessibility_css_text
+    assert '[data-raya-text-size="large"]' in accessibility_css_text
+    assert '[data-raya-text-size="x-large"]' in accessibility_css_text
+    assert "localStorage" in accessibility_js_text
+    assert "raya:text-size" in accessibility_js_text
+    assert "fetch(" not in accessibility_js_text
     numbered_objects_html_path = (
         course / "artifact" / "site" / "numbered-objects" / "index.html"
     )
@@ -2140,6 +2148,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'aria-label="Open course graph"' in html
     assert '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
     assert 'aria-label="Collapse course map"' in html
+    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
+    assert 'aria-label="Text size: normal"' in html
+    assert '<span class="raya-command-label">Text size</span>' in html
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
     assert 'href="../_raya/search/index.html"' in html
@@ -2362,7 +2373,7 @@ def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning(
     assert "unresolved prerequisite" not in _visible_text(html).lower()
 
 
-def test_open_dyslexic_resource_is_packaged_and_storage_safe() -> None:
+def test_accessibility_resource_is_packaged_and_storage_safe() -> None:
     from importlib import resources
 
     from raya_static.accessibility import (

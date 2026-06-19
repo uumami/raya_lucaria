@@ -155,6 +155,11 @@ El render fixture usa `eva-unit-02` como ejemplo de skin predeterminada legible;
 copia ese patron cuando quieras una identidad visual mas fuerte sin bajar
 contraste ni cambiar el significado del curso.
 
+Los controles de comodidad lectora como `Text size` y `OpenDyslexic` son
+preferencias locales de visualizacion. No reemplazan las skins del curso y no
+deben usarse para codificar significado del curso, nivel, evaluacion, progreso
+ni estado oficial.
+
 La estructura del curso basada en ciencia del aprendizaje funciona mejor cuando
 las paginas fuente dan estructura honesta al renderizador estatico. Escribe
 resumenes breves, prerrequisitos estables, checkpoints como contenido visible,

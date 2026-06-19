@@ -562,6 +562,9 @@ img {
 .raya-command-map::before {
   content: "M";
 }
+.raya-command-size::before {
+  content: "T";
+}
 .raya-command-font::before {
   content: "Aa";
 }
@@ -724,9 +727,11 @@ html[data-raya-shell-ready="true"] .raya-course-map {
 }
 .raya-main-article {
   grid-area: main-article;
+  font-size: calc(1rem * var(--raya-reader-text-scale, 1));
 }
 .raya-learning-rail {
   grid-area: learning-rail;
+  font-size: calc(1rem * var(--raya-reader-text-scale, 1));
 }
 .raya-course-map,
 .raya-main-article,

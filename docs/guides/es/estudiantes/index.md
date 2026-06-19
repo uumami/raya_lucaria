@@ -21,10 +21,12 @@ trabajo que el curso te pide completar. Si dos secciones se ven diferentes, usa
 el titulo de pagina, enlaces y etiquetas como significado del curso; la skin solo
 es enfasis visual.
 
-Las paginas renderizadas pueden incluir un boton `OpenDyslexic` en la parte
-superior. Es una preferencia de lectura local que guarda tu navegador para ese
-sitio estatico; cambia la fuente de la pagina para facilitar lectura, pero no
-cambia contenido, evaluacion, enlaces ni etiquetas de autoridad.
+Las paginas renderizadas pueden incluir botones `Text size` y `OpenDyslexic` en
+la parte superior. Son preferencias de lectura locales que guarda tu navegador
+para ese sitio estatico; cambian la escala del texto o la fuente para facilitar
+lectura. Cada preferencia de lectura no cambia contenido, evaluacion, enlaces,
+identidad de skin ni
+etiquetas de autoridad.
 
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
 el mapa del curso expandido da orientacion por defecto, el articulo principal
@@ -35,7 +37,7 @@ progreso personal.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. Usa Anterior y Siguiente para moverte por el material
-ordenado, y usa OpenDyslexic cuando esa fuente sea mas comoda.
+ordenado, y usa Text size u OpenDyslexic cuando esos ajustes sean mas comodos.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
