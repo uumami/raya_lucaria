@@ -2,7 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the current cramped collapsed-by-default course shell with a desktop-expanded balanced learning workspace that keeps the article primary, collapses to a real compact map rail, and preserves accessibility/static-rendering guarantees.
+**Status note:** This plan records the implementation path from the pre-change shell state. Current renderer guidance lives in `docs/foundation/20_learning_renderer_contract.md`; the accepted behavior is expanded by default, non-persistent, and collapsible by explicit click to a compact map rail.
+
+**Goal:** Replace the pre-change cramped collapsed-by-default course shell with a desktop-expanded balanced learning workspace that keeps the article primary, collapses to a real compact map rail, and preserves accessibility/static-rendering guarantees.
 
 **Architecture:** Keep the implementation inside the existing static renderer. `builder.py` owns generated shell markup, `rendering.py` owns the shared CSS layout and skin-neutral visual treatment, `shell.py` owns local interaction state, and tests/docs lock the behavior against future regressions.
 
@@ -33,7 +35,7 @@
 - `tests/contracts/test_renderer_dependencies.py`
   - Add docs coverage needles for the new shell behavior.
 - `docs/foundation/20_learning_renderer_contract.md`
-  - Replace collapsed-by-default current contract with balanced workspace current behavior.
+  - Replace the pre-change collapsed-by-default contract text with balanced workspace current behavior.
 - Role docs:
   - `docs/guides/en/professors/index.md`
   - `docs/guides/en/contributors/index.md`
@@ -91,7 +93,7 @@ Run:
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_static_builder_renders_collapsible_shell_controls_and_page_position -q
 ```
 
-Expected: FAIL because current generated HTML starts collapsed and uses `Toggle map`.
+Expected in the pre-change RED state: FAIL because generated HTML starts collapsed and uses `Toggle map`.
 
 - [ ] **Step 3: Implement expanded initial shell markup**
 
@@ -227,7 +229,7 @@ Run:
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_read_path.py::test_render_fixture_course_map_collapses_and_expands_on_click_only -q
 ```
 
-Expected: FAIL because current CSS defaults collapsed and collapsed button text wraps vertically.
+Expected in the pre-change RED state: FAIL because the old CSS defaults collapsed and collapsed button text wraps vertically.
 
 - [ ] **Step 3: Implement balanced grid dimensions**
 
@@ -738,7 +740,7 @@ Expected: FAIL until docs are updated.
 
 - [ ] **Step 3: Update foundation contract**
 
-In `docs/foundation/20_learning_renderer_contract.md`, replace the current collapsed-by-default paragraph with:
+In `docs/foundation/20_learning_renderer_contract.md`, replace the pre-change collapsed-by-default paragraph with:
 
 ```markdown
 The current shell uses a balanced learning workspace on desktop: the course map is expanded by default for orientation, the article is visually primary, and the right learning rail provides compact page context. Readers may collapse the course map to a compact map rail when they want more focus. Mobile keeps article-first priority and presents navigation/context as bounded secondary regions.
