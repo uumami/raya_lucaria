@@ -18,6 +18,8 @@ For course content, treat source files as canonical and generated artifacts as r
 
 For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, pre-render accepted MathJax math at build time, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML, static read paths, browser-visible math, local math assets, no external renderer requests, and desktop/mobile overflow.
 
+For copyable code blocks, inspect the rendered `.raya-code-block` markup, the local `shell.js` handler, and the copied `pre code` text. The copy control may use the Clipboard API or local fallback behavior, but it must not execute code, persist reader state, fetch data, or load external scripts.
+
 For skin debugging, inspect surfaces in order: the selector in `raya.yaml` or
 `_raya/skin.yaml`, the selected skin file, build diagnostics, generated
 `_raya/render/skin.css`, the `skin.css` file name, the rendered

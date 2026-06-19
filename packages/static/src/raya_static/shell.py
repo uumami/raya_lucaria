@@ -194,6 +194,63 @@ _SHELL_JAVASCRIPT = r"""
     return true;
   }
 
+  function resetCopyButton(button) {
+    window.setTimeout(() => {
+      button.textContent = "Copy";
+      button.setAttribute("aria-label", "Copy code block");
+      button.removeAttribute("data-raya-copy-state");
+    }, 1600);
+  }
+
+  function copyWithFallback(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "-1000px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      return document.execCommand("copy");
+    } finally {
+      textarea.remove();
+    }
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    return copyWithFallback(text);
+  }
+
+  function initializeCodeCopyControls() {
+    document.querySelectorAll("[data-raya-copy-code]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const block = button.closest(".raya-code-block");
+        const code = block ? block.querySelector("pre code") : null;
+        if (!code) {
+          return;
+        }
+        try {
+          const copied = await copyText(code.textContent || "");
+          button.textContent = copied ? "Copied" : "Copy failed";
+          button.setAttribute(
+            "aria-label",
+            copied ? "Code block copied" : "Code block copy failed"
+          );
+          button.dataset.rayaCopyState = copied ? "copied" : "failed";
+        } catch {
+          button.textContent = "Copy failed";
+          button.setAttribute("aria-label", "Code block copy failed");
+          button.dataset.rayaCopyState = "failed";
+        }
+        resetCopyButton(button);
+      });
+    });
+  }
+
   desktopMapQuery.addEventListener("change", () => {
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
@@ -289,6 +346,7 @@ _SHELL_JAVASCRIPT = r"""
 
   setExpanded(true);
   setLearningRailExpanded(true);
+  initializeCodeCopyControls();
   root.dataset.rayaShellReady = "true";
 })();
 """

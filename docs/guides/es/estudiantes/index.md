@@ -12,7 +12,7 @@ Las paginas estaticas de curso son utiles sin cuentas. Estado dinamico de estudi
 
 Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiantes deben ver titulos limpios, etiquetas de jerarquia, resumenes, breadcrumbs, enlaces anterior/siguiente, indices generados de seccion, anexos, prerequisitos y conteos de objetos oficiales de estudio cuando el curso provee esa metadata.
 
-Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
+Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, botones de copiado en bloques de codigo fenced, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
 Algunos cursos usan skins para presentacion visual o para enfatizar una unidad,
 lab, apendice, seccion de practica o seccion de repaso. Una skin no cambia la
@@ -53,6 +53,8 @@ figura, tabla o ecuacion, ese encabezado ya debe estar resuelto antes de que la
 pagina llegue al navegador.
 
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
+
+Los ejemplos de codigo fenced pueden incluir un boton `Copy`. Copiar pone el texto de codigo mostrado en tu clipboard; no ejecuta el codigo, no guarda progreso ni contacta un backend.
 
 Algunos cursos incluyen runtime metadata para futura ejecucion local o con Docker. En el artifact estatico actual, esa metadata solo explica perfiles previstos, policies y cache keys. No significa que la pagina web ya ejecuto el codigo.
 

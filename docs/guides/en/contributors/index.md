@@ -17,6 +17,8 @@ When changing course validation or rendering, preserve the convention-first sour
 
 Rich static rendering is Glintstone-owned. Keep parser, highlighter, and MathJax libraries behind the `packages/static` boundary; source contracts should describe supported authoring behavior, not library internals. Accepted math uses inline dollar math, display dollar-delimiter blocks, page-local macros, local `site/_raya/render/math/` support resources, strict diagnostics, and no browser-only renderer dependency. Renderer changes need representative fixtures, invalid diagnostics when applicable, contract tests, e2e/static-read-path tests, Chromium visible-math/no-external-request checks, desktop/mobile overflow checks, and role documentation updates.
 
+Fenced code blocks render with local copy controls. Preserve exact copied `pre code` text, keyboard-reachable buttons, static HTML fallback, and the no-storage/no-fetch/no-external-script rule when changing this behavior.
+
 Skin profile changes must preserve token validation and generated static output.
 Course-local profiles under `skins/` define semantic tokens. Course
 `render.skin` and section `_raya/skin.yaml` selectors choose one of those

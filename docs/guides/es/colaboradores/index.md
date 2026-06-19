@@ -16,6 +16,8 @@ Cuando cambies validacion o rendering de cursos, preserva el modelo convention-f
 
 El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y MathJax detras de `packages/static`; los contratos de fuente deben describir comportamiento de autoria, no detalles internos de librerias. La math aceptada usa math inline con delimitadores de dolar, bloques display con delimitadores de doble dolar en lineas propias, macros locales por pagina, recursos locales bajo `site/_raya/render/math/`, diagnosticos estrictos y ninguna dependencia de renderer solo en browser. Cambios de renderer necesitan fixtures representativos, diagnosticos invalidos cuando aplique, tests de contrato, tests e2e/static-read-path, checks Chromium de math visible/sin requests externos, checks de overflow desktop/mobile y actualizaciones de documentacion de rol.
 
+Los bloques de codigo fenced renderizan controles locales de copiado. Preserva el texto exacto copiado desde `pre code`, botones accesibles por teclado, fallback HTML estatico y la regla de no storage, no fetch y no scripts externos al cambiar este comportamiento.
+
 Los cambios de skin deben preservar validacion de tokens semanticos y output
 estatico generado. Los perfiles locales del curso bajo `skins/` definen tokens
 semanticos. `render.skin` del curso y los selectores `_raya/skin.yaml` de

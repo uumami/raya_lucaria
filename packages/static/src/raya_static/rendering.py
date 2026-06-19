@@ -354,9 +354,16 @@ class RichMarkdownRenderer:
             if language
             else ""
         )
+        header = (
+            '<div class="raya-code-header">'
+            f"{label}"
+            '<button class="raya-code-copy" type="button" '
+            'data-raya-copy-code aria-label="Copy code block">Copy</button>'
+            "</div>"
+        )
         return (
             f'<div class="raya-code-block"{data_language}>'
-            f"{label}"
+            f"{header}"
             f'<pre class="highlight"><code{code_class}>{code_html}</code></pre>'
             "</div>\n"
         )
@@ -1095,13 +1102,47 @@ nav[aria-label="Breadcrumbs"] {
 .raya-code-block {
   margin: 1rem 0;
 }
+.raya-code-header {
+  align-items: stretch;
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  min-height: 2.25rem;
+}
 .raya-code-label {
-  background: #24292f;
-  color: #ffffff;
-  display: inline-block;
+  align-items: center;
+  background: var(--raya-color-text);
+  color: var(--raya-color-page);
+  display: inline-flex;
   font-family: var(--raya-font-mono), ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.8125rem;
+  font-weight: 700;
   padding: 0.25rem 0.5rem;
+}
+.raya-code-copy {
+  background: var(--raya-color-accent-soft);
+  border: 0;
+  border-left: 1px solid var(--raya-color-border);
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+}
+.raya-code-copy:hover {
+  background: var(--raya-color-accent);
+  color: var(--raya-color-page);
+}
+.raya-code-copy:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
+.raya-code-copy[data-raya-copy-state="failed"] {
+  background: var(--raya-color-danger);
+  color: var(--raya-color-page);
 }
 .raya-code-block pre {
   font-family: var(--raya-font-mono), ui-monospace, SFMono-Regular, Consolas, monospace;

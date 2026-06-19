@@ -662,6 +662,97 @@ def test_render_fixture_keyboard_shortcuts_move_between_sequence_pages(
         handle.close()
 
 
+def test_render_fixture_code_copy_button_copies_code_text(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 1280, "height": 900})
+                try:
+                    page = context.new_page()
+                    try:
+                        page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                        page.evaluate(
+                            """() => {
+                              window.__rayaCopiedText = "";
+                              Object.defineProperty(navigator, "clipboard", {
+                                configurable: true,
+                                value: {
+                                  writeText: async (text) => {
+                                    window.__rayaCopiedText = text;
+                                  },
+                                },
+                              });
+                            }"""
+                        )
+
+                        copy_button = page.locator("[data-raya-copy-code]").first
+                        copy_button.focus()
+                        assert copy_button.evaluate("button => document.activeElement === button")
+                        copy_button.click()
+                        page.wait_for_function("() => window.__rayaCopiedText.length > 0")
+
+                        copied = page.evaluate("() => window.__rayaCopiedText")
+                        assert copied == (
+                            'def fixture_value() -> str:\n'
+                            '    return "<rendered, not executed>"\n'
+                        )
+                        assert copy_button.inner_text() == "Copied"
+                        assert copy_button.get_attribute("aria-label") == "Code block copied"
+                        assert page.url.endswith("/index.html")
+
+                        page.reload(wait_until="networkidle")
+                        page.evaluate(
+                            """() => {
+                              window.__rayaFallbackCopiedText = "";
+                              Object.defineProperty(navigator, "clipboard", {
+                                configurable: true,
+                                value: undefined,
+                              });
+                              document.execCommand = (command) => {
+                                if (command !== "copy") {
+                                  return false;
+                                }
+                                const textarea = document.querySelector("textarea");
+                                window.__rayaFallbackCopiedText = textarea ? textarea.value : "";
+                                return true;
+                              };
+                            }"""
+                        )
+                        fallback_button = page.locator("[data-raya-copy-code]").first
+                        fallback_button.click()
+                        page.wait_for_function(
+                            "() => window.__rayaFallbackCopiedText.length > 0"
+                        )
+                        fallback_copied = page.evaluate(
+                            "() => window.__rayaFallbackCopiedText"
+                        )
+                        assert fallback_copied == copied
+                        assert fallback_button.inner_text() == "Copied"
+                    finally:
+                        page.close()
+                finally:
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_course_map_collapses_and_expands_on_click_only(
     tmp_path: Path,
 ) -> None:

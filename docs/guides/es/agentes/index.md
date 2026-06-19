@@ -18,6 +18,8 @@ Para contenido de curso, trata los archivos fuente como canonicos y los artifact
 
 Para rich static rendering, preserva el limite de Glintstone: reescribe enlaces mediante reglas Raya, genera anchors locales y tablas de contenido desde headings de fuente, pre-renderiza math MathJax aceptada durante build, mantiene archivos de soporte bajo `site/_raya/`, escapa raw HTML y no ejecutes bloques de codigo. Testea HTML generado, static read paths, math visible en browser, assets locales de math, ausencia de requests externos del renderer y overflow en desktop/mobile.
 
+Para bloques de codigo copiables, inspecciona el markup `.raya-code-block` renderizado, el handler local en `shell.js` y el texto copiado desde `pre code`. El control de copiado puede usar Clipboard API o fallback local, pero no debe ejecutar codigo, persistir estado lector, hacer fetch de datos ni cargar scripts externos.
+
 Para depurar skins, inspecciona superficies en este orden: el selector en
 `raya.yaml` o `_raya/skin.yaml`, el archivo de skin seleccionado, diagnosticos
 de build, `_raya/render/skin.css` generado, el atributo renderizado

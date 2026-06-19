@@ -1876,6 +1876,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert '<span class="math inline">a^2 + b^2 = c^2</span>' not in html
     assert 'data-language="python"' in html
     assert 'class="language-python"' in html
+    assert 'class="raya-code-copy"' in html
+    assert "data-raya-copy-code" in html
+    assert 'aria-label="Copy code block"' in html
+    assert html.index('data-language="python"') < html.index("data-raya-copy-code")
     assert 'data-language="unknownlang"' in html
     assert "&lt;script&gt;not_executed()&lt;/script&gt;" in html
     assert '<aside class="raya-callout raya-callout-note"' in html
@@ -2076,6 +2080,10 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "ArrowLeft" in script_text
     assert "ArrowRight" in script_text
     assert "isEditableNavigationTarget" in script_text
+    assert "data-raya-copy-code" in script_text
+    assert "navigator.clipboard.writeText" in script_text
+    assert 'execCommand("copy")' in script_text
+    assert "Code block copied" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
 
