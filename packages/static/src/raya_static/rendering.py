@@ -546,6 +546,9 @@ img {
   min-width: 1.5rem;
   padding: 0 0.2rem;
 }
+.raya-command-search::before {
+  content: "S";
+}
 .raya-command-graph::before {
   content: "G";
 }
@@ -579,23 +582,31 @@ img {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
 }
-.raya-graph-page {
+.raya-graph-page,
+.raya-search-page {
   margin: 0 auto;
   max-width: 118rem;
   padding: var(--raya-space-page);
 }
 .raya-graph-header,
+.raya-search-header,
 .raya-graph-controls,
+.raya-search-controls,
 .raya-graph-groups,
 .raya-graph-status,
+.raya-search-status,
 .raya-graph-canvas,
-.raya-graph-list {
+.raya-graph-list,
+.raya-search-results,
+.raya-search-empty {
   margin-bottom: var(--raya-space-block);
 }
-.raya-graph-header {
+.raya-graph-header,
+.raya-search-header {
   max-width: 72rem;
 }
 .raya-graph-controls,
+.raya-search-controls,
 .raya-graph-groups {
   align-items: center;
   display: flex;
@@ -603,6 +614,7 @@ img {
   gap: 0.75rem;
 }
 .raya-graph-controls input,
+.raya-search-controls input,
 .raya-graph-controls select,
 .raya-graph-controls button,
 .raya-graph-chip {
@@ -613,6 +625,31 @@ img {
   font: inherit;
   min-height: 2.5rem;
   padding: 0.45rem 0.7rem;
+}
+.raya-search-controls input {
+  min-width: min(100%, 24rem);
+}
+.raya-search-results {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding-left: 0;
+}
+.raya-search-results li {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  padding: 0.9rem 1rem;
+}
+.raya-search-results li[hidden],
+.raya-search-empty[hidden] {
+  display: none;
+}
+.raya-search-result-meta,
+.raya-search-status,
+.raya-search-empty {
+  color: var(--raya-color-muted);
+  font-size: 0.875rem;
 }
 .raya-graph-chip[aria-pressed="true"] {
   border-color: var(--raya-color-accent);
@@ -1287,7 +1324,8 @@ mjx-container[display="true"] {
   .raya-learning-shell,
   .raya-page-footer,
   .raya-inspection-main,
-  .raya-graph-page {
+  .raya-graph-page,
+  .raya-search-page {
     padding: 0.75rem;
   }
   .raya-top-command-bar-inner {

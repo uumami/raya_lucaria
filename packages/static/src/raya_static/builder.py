@@ -112,6 +112,7 @@ from raya_static.skins import (
     render_skin_css,
     skin_id_for_source_path,
 )
+from raya_static.search import SEARCH_RESOURCE_PATH, SEARCH_SCRIPT_NAME, search_resources
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
 
 
@@ -124,6 +125,7 @@ STATIC_FILES_PATH = Path(STATIC_RESOURCE_DIR) / "files"
 STATIC_REVIEWED_PATH = REVIEWED_BROWSER_DIR
 STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
 STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
+STATIC_SEARCH_PATH = Path(STATIC_RESOURCE_DIR) / "search" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
 MATH_FONT_SOURCE_DIR = (
     REPOSITORY_ROOT
@@ -359,6 +361,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_rich_render_resources(site_dir, report, skin_context=skin_context)
     _write_shell_resources(site_dir, report)
     _write_graph_resources(site_dir, report)
+    _write_search_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -446,6 +449,14 @@ def build_course(course_path: str | Path) -> ValidationReport:
         course_title=str(config["title"]),
         language=str(config["language"]),
         graph_index=graph_index,
+        skin_context=skin_context,
+        report=report,
+    )
+    _write_search_surface(
+        site_dir=site_dir,
+        content_model=content_model,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
         skin_context=skin_context,
         report=report,
     )
@@ -769,6 +780,7 @@ def _render_page(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
     )
+    search_href = _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix())
     graph_href = _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
@@ -832,7 +844,7 @@ def _render_page(
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
-            _render_top_command_bar(course_title, graph_href),
+            _render_top_command_bar(course_title, search_href, graph_href),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(page, content_model),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
@@ -851,13 +863,24 @@ def _render_page(
     )
 
 
-def _render_top_command_bar(course_title: str, graph_href: str) -> str:
+def _render_top_command_bar(
+    course_title: str,
+    search_href: str,
+    graph_href: str,
+) -> str:
     return "\n".join(
         [
             '<header class="raya-top-command-bar" aria-label="Course tools">',
             '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
             '<div class="raya-course-tools">',
+            (
+                f'<a class="raya-command raya-command-search" '
+                f'href="{html.escape(search_href)}" '
+                'aria-label="Open course search">'
+                '<span class="raya-command-label">Search</span>'
+                "</a>"
+            ),
             (
                 f'<a class="raya-command raya-command-graph" '
                 f'href="{html.escape(graph_href)}" '
@@ -2303,6 +2326,137 @@ def _browser_graph_payload(graph_index: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _write_search_surface(
+    *,
+    site_dir: Path,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+    report: ValidationReport,
+) -> None:
+    search_path = site_dir / STATIC_SEARCH_PATH
+    search_path.parent.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(search_path.parent)
+    search_path.write_text(
+        _render_search_surface(
+            content_model=content_model,
+            course_title=course_title,
+            language=language,
+            skin_context=skin_context,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(search_path)
+
+
+def _render_search_surface(
+    *,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+) -> str:
+    stylesheet_href = _relative_href(STATIC_SEARCH_PATH.as_posix(), RENDER_STYLESHEET_PATH)
+    skin_stylesheet_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
+    accessibility_css_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+    )
+    search_js_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(),
+        Path(SEARCH_RESOURCE_PATH) / SEARCH_SCRIPT_NAME,
+    )
+    root_skin = skin_id_for_source_path(content_model.pages[0].source_path, skin_context)
+    browser_search = _browser_search_payload(content_model)
+    search_payload = _json_script_text(browser_search)
+    result_items = []
+    for page in browser_search["pages"]:
+        tags = ", ".join(page["tags"])
+        meta_parts = [page["status"], page["hierarchy_label"], tags]
+        meta = " | ".join(part for part in meta_parts if part)
+        result_items.append(
+            f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}">'
+            f'<a href="{html.escape(page["url"])}">{html.escape(page["title"])}</a>'
+            f'<p>{html.escape(page["summary"])}</p>'
+            f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
+            "</li>"
+        )
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Course Search - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
+            "</head>",
+            (
+                f'<body data-raya-surface="search" '
+                f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
+            ),
+            '<a class="raya-skip-link" href="#raya-search-main">Skip to search</a>',
+            (
+                '<main id="raya-search-main" class="raya-search-page" '
+                'data-raya-search-page tabindex="-1">'
+            ),
+            '<header class="raya-search-header">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            "<h1>Course Search</h1>",
+            "<p>Search page titles, summaries, stable IDs, tags, and status metadata.</p>",
+            "</header>",
+            '<section class="raya-search-controls" aria-label="Course search controls">',
+            '<label for="raya-search-input">Search</label>',
+            '<input id="raya-search-input" type="search" autocomplete="off">',
+            '<p id="raya-search-status" class="raya-search-status" aria-live="polite"></p>',
+            "</section>",
+            '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
+            '<ol id="raya-search-results" class="raya-search-results">',
+            "\n".join(result_items),
+            "</ol>",
+            '<script type="application/json" id="raya-search-data">',
+            search_payload,
+            "</script>",
+            "</main>",
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(search_js_href)}" defer></script>',
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _browser_search_payload(content_model: ContentModel) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "pages": [
+            {
+                "id": page.id,
+                "title": page.title,
+                "nav_title": page.nav_title,
+                "summary": page.summary,
+                "status": page.status,
+                "tags": list(page.tags),
+                "hierarchy_label": page.hierarchy_label,
+                "url": _relative_href(STATIC_SEARCH_PATH.as_posix(), page.output_path),
+            }
+            for page in content_model.pages
+        ],
+    }
+
+
 def _json_script_text(data: dict[str, Any]) -> str:
     return (
         json.dumps(data, ensure_ascii=False, sort_keys=True)
@@ -2521,6 +2675,16 @@ def _write_graph_resources(site_dir: Path, report: ValidationReport) -> None:
     graph_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(graph_dir)
     script_path = graph_dir / GRAPH_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_search_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = search_resources()
+    search_dir = site_dir / SEARCH_RESOURCE_PATH
+    search_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(search_dir)
+    script_path = search_dir / SEARCH_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 

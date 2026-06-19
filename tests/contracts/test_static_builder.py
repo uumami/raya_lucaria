@@ -405,6 +405,79 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "window.location.href" in graph_script
 
 
+def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    search_page = site / "_raya" / "search" / "index.html"
+    search_js = site / "_raya" / "render" / "search.js"
+    index_html = (site / "index.html").read_text(encoding="utf-8")
+    search_html = search_page.read_text(encoding="utf-8")
+    search_script = search_js.read_text(encoding="utf-8")
+
+    assert search_page.exists()
+    assert search_js.exists()
+    assert 'href="_raya/search/index.html"' in index_html
+    assert 'data-raya-surface="search"' in search_html
+    assert (
+        '<main id="raya-search-main" class="raya-search-page" '
+        'data-raya-search-page tabindex="-1">'
+    ) in search_html
+    assert '<script type="application/json" id="raya-search-data">' in search_html
+    assert 'src="../render/search.js"' in search_html
+    assert 'href="../render/rich.css"' in search_html
+    assert 'href="../render/skin.css"' in search_html
+    assert 'href="../../data/pages.json"' not in search_html
+    assert "https://" not in search_html
+    assert "http://" not in search_html
+    assert "pagefind" not in search_html.lower()
+    assert "graph-search" not in search_html
+    assert "course/5_authoring_matrix" not in search_html
+    assert "raya-search-results" in search_html
+    assert "Authoring Matrix Fixture" in search_html
+    assert "../../authoring-matrix/index.html" in search_html
+    search_payload_match = re.search(
+        r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
+        search_html,
+        re.DOTALL,
+    )
+    assert search_payload_match is not None
+    search_payload = json.loads(search_payload_match.group(1))
+    assert set(search_payload) == {"pages", "version"}
+    assert search_payload["version"] == 1
+    assert search_payload["pages"]
+    allowed_page_keys = {
+        "hierarchy_label",
+        "id",
+        "nav_title",
+        "status",
+        "summary",
+        "tags",
+        "title",
+        "url",
+    }
+    for page in search_payload["pages"]:
+        assert set(page) == allowed_page_keys
+        assert not page["url"].startswith("../../data/")
+    serialized_search_payload = json.dumps(search_payload)
+    for private_token in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "cache_key",
+        "course/",
+    ):
+        assert private_token not in serialized_search_payload
+    assert "raya-search-data" in search_script
+    assert "fetch(" not in search_script
+    assert "XMLHttpRequest" not in search_script
+
+
 def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
     graph_path = tmp_path / "graph.json"
     graph_path.write_text(
@@ -2011,12 +2084,15 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
+    assert '<a class="raya-command raya-command-search"' in html
+    assert 'aria-label="Open course search"' in html
     assert '<a class="raya-command raya-command-graph"' in html
     assert 'aria-label="Open course graph"' in html
     assert '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
     assert 'aria-label="Collapse course map"' in html
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
+    assert 'href="../_raya/search/index.html"' in html
     assert 'href="../_raya/graph/index.html"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
@@ -2174,6 +2250,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-top-command-bar",
         ".raya-command",
         ".raya-command::before",
+        ".raya-command-search::before",
         ".raya-command-graph::before",
         ".raya-command-map::before",
         ".raya-command-font::before",

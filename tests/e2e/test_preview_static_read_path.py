@@ -176,6 +176,78 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         handle.close()
 
 
+def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+        search_html = _fetch_text(f"{base_url}/_raya/search/index.html")
+        search_js = _fetch_text(f"{base_url}/_raya/render/search.js")
+
+        assert 'data-raya-surface="search"' in search_html
+        assert "raya-search-data" in search_html
+        assert "pagefind" not in search_html.lower()
+        assert "https://" not in search_html
+        assert "http://" not in search_html
+        assert "fetch(" not in search_js
+        assert "XMLHttpRequest" not in search_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        browser_requests: list[str] = []
+                        page.on("request", lambda request: browser_requests.append(request.url))
+                        page.goto(f"{base_url}/_raya/search/index.html", wait_until="networkidle")
+                        assert browser_requests
+                        assert all(url.startswith(f"{base_url}/") for url in browser_requests)
+                        _assert_no_horizontal_overflow(page)
+                        before = page.locator(
+                            "#raya-search-results [data-raya-search-result]:visible"
+                        ).count()
+                        page.fill("#raya-search-input", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-search-status')
+                              ?.textContent
+                              ?.includes('visible result')"""
+                        )
+                        after = page.locator(
+                            "#raya-search-results [data-raya-search-result]:visible"
+                        ).count()
+                        assert after < before
+                        assert "Authoring Matrix Fixture" in page.locator(
+                            "#raya-search-results"
+                        ).inner_text()
+                        assert page.locator("#raya-search-empty").is_hidden()
+                        page.fill("#raya-search-input", "zz-no-result")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-search-empty')
+                              ?.hidden === false"""
+                        )
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 
@@ -354,6 +426,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 ),
                                 topBarWidth: topBar.scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
+                                searchHref: document
+                                  .querySelector('.raya-command-search')
+                                  ?.getAttribute('href'),
                                 graphHref: document
                                   .querySelector('.raya-command-graph')
                                   ?.getAttribute('href'),
@@ -363,12 +438,13 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 fontPressed: document
                                   .querySelector('.raya-command-font')
                                   ?.getAttribute('aria-pressed'),
-                              };
-                            }"""
+                          };
+                        }"""
                         )
-                        assert state["count"] == 3
+                        assert state["count"] == 4
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
+                        assert state["searchHref"] == "_raya/search/index.html"
                         assert state["graphHref"] == "_raya/graph/index.html"
                         assert state["mapExpanded"] == "true"
                         assert state["fontPressed"] == "false"
