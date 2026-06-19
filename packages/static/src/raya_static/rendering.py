@@ -495,7 +495,7 @@ img {
 .raya-top-command-bar-inner {
   align-items: center;
   display: flex;
-  gap: 1rem;
+  gap: var(--raya-space-block);
   justify-content: space-between;
 }
 .raya-course-title {
@@ -520,7 +520,7 @@ img {
 }
 .raya-learning-shell {
   display: grid;
-  gap: 1rem;
+  gap: var(--raya-space-block);
   grid-template-areas: "course-map main-article learning-rail";
   grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);
 }

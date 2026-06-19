@@ -62,10 +62,11 @@ def test_render_fixture_uses_eva_unit_02_default_and_emits_new_skin_selectors() 
         "ghost-in-the-shell",
     ):
         assert f'[data-raya-skin="{skin_id}"]' in css
-    assert "--raya-color-page: #fff1e6;" in css
-    assert "--raya-color-accent: #c4001a;" in css
-    assert "--raya-color-accent-soft: #ffd166;" in css
-    assert "--raya-color-border: #e27b5f;" in css
+    assert "--raya-color-page: #f6f7f9;" in css
+    assert "--raya-color-surface: #ffffff;" in css
+    assert "--raya-color-accent: #d92323;" in css
+    assert "--raya-color-accent-soft: #fff0ec;" in css
+    assert "--raya-color-border: #d8dee4;" in css
 
 
 def test_invalid_default_skin_type_reports_error(
