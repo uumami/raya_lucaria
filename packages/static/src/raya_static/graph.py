@@ -287,6 +287,16 @@ _GRAPH_JAVASCRIPT = r"""
     render();
   }
 
+  function initialPageFocus() {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      const pageId = params.get("page") || "";
+      return nodesById.has(pageId) ? pageId : "";
+    } catch {
+      return "";
+    }
+  }
+
   function renderList(activeIds) {
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
       const id = item.getAttribute("data-raya-graph-node") || "";
@@ -438,6 +448,7 @@ _GRAPH_JAVASCRIPT = r"""
     render();
   });
 
+  selectedId = initialPageFocus();
   setGraphExpanded(false);
   renderDetail();
   render();

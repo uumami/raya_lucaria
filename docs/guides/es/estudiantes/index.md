@@ -50,12 +50,14 @@ Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada y workspace expandido del
 grafo son herramientas locales de lectura sobre la estructura actual del curso.
 No guardan progreso, no recomiendan que estudiar despues y no cambian la
-autoridad del curso.
+autoridad del curso. Abrirlo desde una pagina del curso puede enfocar esa pagina
+para ver primero sus links explicitos.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y
 movimiento con teclado por resultados visibles, y no busca rutas ocultas de
-fuente ni guarda tu consulta.
+fuente ni guarda tu consulta. Abrirlo desde una pagina del curso puede precargar
+el titulo de esa pagina como consulta temporal.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 

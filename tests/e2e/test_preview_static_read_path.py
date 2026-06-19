@@ -323,6 +323,17 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "#raya-graph-canvas [data-raya-graph-node]"
                             ).first.dblclick()
                         assert page.url == graph_href
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                        assert "Authoring Matrix Fixture" in page.locator(
+                            "[data-raya-graph-detail-title]"
+                        ).inner_text()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
+                        ).evaluate("node => node.classList.contains('is-active')")
                     finally:
                         page.close()
             finally:
@@ -428,6 +439,16 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                               .querySelector('#raya-search-empty')
                               ?.hidden === false"""
                         )
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html?q=Authoring%20Matrix%20Fixture",
+                            wait_until="networkidle",
+                        )
+                        assert page.input_value("#raya-search-input") == (
+                            "Authoring Matrix Fixture"
+                        )
+                        assert "Authoring Matrix Fixture" in page.locator(
+                            "#raya-search-results"
+                        ).inner_text()
                     finally:
                         page.close()
             finally:
@@ -817,8 +838,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["count"] == 5
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
-                        assert state["searchHref"] == "_raya/search/index.html"
-                        assert state["graphHref"] == "_raya/graph/index.html"
+                        assert state["searchHref"] == (
+                            "_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"
+                        )
+                        assert state["graphHref"] == "_raya/graph/index.html?page=render-root"
                         assert state["mapExpanded"] == "true"
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"

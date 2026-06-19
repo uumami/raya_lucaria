@@ -370,7 +370,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
 
     assert graph_page.exists()
     assert graph_js.exists()
-    assert 'href="_raya/graph/index.html"' in index_html
+    assert 'href="_raya/graph/index.html?page=render-root"' in index_html
     assert 'data-raya-surface="graph"' in graph_html
     assert '<script type="application/json" id="raya-graph-data">' in graph_html
     assert 'src="../render/graph.js"' in graph_html
@@ -420,6 +420,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-expanded" in graph_script
     assert 'mode === "list"' in graph_script
     assert "graph-reset" in graph_script
+    assert "URLSearchParams" in graph_script
+    assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script
     for forbidden_runtime_token in (
         "fetch(",
@@ -452,7 +454,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
 
     assert search_page.exists()
     assert search_js.exists()
-    assert 'href="_raya/search/index.html"' in index_html
+    assert 'href="_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"' in index_html
     assert 'data-raya-surface="search"' in search_html
     assert (
         '<main id="raya-search-main" class="raya-search-page" '
@@ -511,6 +513,8 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "levenshtein" in search_script
     assert "setActiveResult" in search_script
     assert "raya-search-clear" in search_script
+    assert "URLSearchParams" in search_script
+    assert 'params.get("q")' in search_script
     assert "window.location.href" in search_script
     for forbidden_runtime_token in (
         "fetch(",
@@ -2260,8 +2264,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Text size</span>' in html
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
-    assert 'href="../_raya/search/index.html"' in html
-    assert 'href="../_raya/graph/index.html"' in html
+    assert 'href="../_raya/search/index.html?q=Reader%20UX%20Fixture"' in html
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html

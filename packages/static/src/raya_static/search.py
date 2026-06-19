@@ -127,6 +127,15 @@ _SEARCH_JAVASCRIPT = r"""
     input.focus();
   }
 
+  function initialQuery() {
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      return params.get("q") || "";
+    } catch {
+      return "";
+    }
+  }
+
   function render() {
     const query = normalize(input.value);
     let visible = 0;
@@ -173,6 +182,7 @@ _SEARCH_JAVASCRIPT = r"""
   if (clear) {
     clear.addEventListener("click", clearSearch);
   }
+  input.value = initialQuery();
   render();
 })();
 """

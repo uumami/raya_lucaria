@@ -78,11 +78,13 @@ Review the Course graph as a static artifact surface. Graph search, selected-pag
 details, group filters, and expanded graph workspace mode must use embedded
 artifact data and local renderer resources only. Do not add CDN graph engines,
 runtime fetches, persistent graph state, or recommendation/progress wording.
+Generated URL context may focus a page, but it must remain transient.
 
 Review Course Search as the matching companion to graph navigation. Approximate
 matching, clear controls, and keyboard result movement are allowed over embedded
 page metadata only. Do not index rendered prose, source paths, artifact paths,
-MathJax output, cache keys, or learner state.
+MathJax output, cache keys, or learner state. Generated query context may preload
+the search box without becoming stored search state.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

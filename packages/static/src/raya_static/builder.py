@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from importlib import resources
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from raya_schema import (
     ValidationReport,
@@ -780,8 +781,14 @@ def _render_page(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
     )
-    search_href = _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix())
-    graph_href = _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix())
+    search_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix()),
+        {"q": page.title},
+    )
+    graph_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
+        {"page": page.id},
+    )
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -3083,3 +3090,14 @@ def _relative_href(from_output: str, to_output: str) -> str:
     from_dir = Path(from_output).parent
     rel = os.path.relpath(to_output, start=from_dir if str(from_dir) != "." else ".")
     return Path(rel).as_posix()
+
+
+def _href_with_query(href: str, params: dict[str, str]) -> str:
+    encoded = [
+        f"{quote(key, safe='')}={quote(value, safe='')}"
+        for key, value in params.items()
+        if value
+    ]
+    if not encoded:
+        return href
+    return f"{href}?{'&'.join(encoded)}"

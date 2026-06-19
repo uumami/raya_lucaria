@@ -80,13 +80,15 @@ Revisa el Course graph como una superficie estatica de artifact. La busqueda del
 grafo, los detalles de pagina seleccionada, filtros de grupo y workspace
 expandido del grafo deben usar solo datos embebidos del artifact y recursos
 locales del renderer. No agregues motores de grafo CDN, fetches runtime, estado
-persistente del grafo ni lenguaje de recomendaciones/progreso.
+persistente del grafo ni lenguaje de recomendaciones/progreso. El contexto de
+URL generado puede enfocar una pagina, pero debe seguir siendo transitorio.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia
 aproximada, controles de limpiar y movimiento con teclado por resultados son
 validos solo sobre metadata embebida de paginas. No indexes prosa renderizada,
 rutas de fuente, rutas de artifact, output MathJax, cache keys ni estado del
-estudiante.
+estudiante. El contexto de consulta generado puede precargar la caja de busqueda
+sin convertirse en estado guardado.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
