@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Supersession note, current as of the balanced learning workspace update:**
+> this historical plan's collapsed-by-default and course-map `localStorage`
+> decisions are superseded. Current behavior is expanded by default,
+> non-persistent, and collapsible by explicit click to a compact map rail. Do
+> not implement `raya.courseMapExpanded` or persisted course-map state from this
+> plan.
+
 **Goal:** Build a click-only collapsible course shell that gives rendered Raya pages more reading space, stronger static page tracking, and verified desktop/mobile behavior.
 
 **Architecture:** Keep the current semantic shell order in `builder.py`: top command bar, course map, article, learning rail. Add a small local shell resource beside the existing rich CSS, skin CSS, MathJax CSS, and OpenDyslexic assets; use document data attributes and CSS grid states for collapsed/expanded layout instead of changing DOM order. Extend existing contract/e2e/render-debug tests so static preview, copied site output, and browser inspection all verify the same shell behavior.
@@ -61,11 +68,15 @@ Verification:
 
 - The current branch already has a semantic shell with `nav.raya-course-map`, `article#raya-article.raya-main-article`, and `aside.raya-learning-rail`.
 - Preserve DOM order as `nav -> article -> aside`; desktop visual order may change only through CSS.
-- Default shell state is collapsed on desktop and mobile when JavaScript runs.
+- Superseded: this historical plan originally defaulted the shell to collapsed.
+  Current shell state is expanded on desktop and mobile when JavaScript runs.
 - No hover expansion. CSS may style hover/focus for the button, but hover must not open the map.
-- The JavaScript may use `localStorage` only for a reader UI preference. Use key `raya.courseMapExpanded`.
+- Superseded: the JavaScript must not use `localStorage` for course-map state
+  and must not use the historical `raya.courseMapExpanded` key.
 - Do not fetch JSON or external resources from the shell script.
-- If JavaScript is disabled, the static course map remains visible and usable. JavaScript applies the collapsed state after loading.
+- If JavaScript is disabled, the static course map remains visible and usable.
+  JavaScript preserves the expanded default until an explicit click collapses
+  the map to the compact rail.
 - Page-position wording must be structural: use `Page N of M`. Never use completion, progress percent, mastered, score, or finished.
 - Active section tracking uses existing heading anchors and links in the generated page contents. It is a reader aid, not personal progress.
 
@@ -97,8 +108,9 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
 
     assert shell_js.exists()
     assert '<script src="_raya/render/shell.js" defer></script>' in index_html
-    assert "raya.courseMapExpanded" in script_text
-    assert "localStorage" in script_text
+    assert "raya.courseMapExpanded" not in script_text
+    assert "localStorage" not in script_text
+    assert "setExpanded(true)" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
 ```
@@ -115,7 +127,9 @@ Expected: fail because `_raya/render/shell.js` is not generated or linked yet.
 
 - [ ] **Step 3: Add shell resource module**
 
-Create `packages/static/src/raya_static/shell.py`:
+Create `packages/static/src/raya_static/shell.py`. Historical note: the
+original sample below used persisted course-map state; that storage behavior is
+superseded. Implement the current non-persistent expanded default instead:
 
 ```python
 from __future__ import annotations
@@ -138,7 +152,6 @@ def shell_resources() -> ShellResources:
 
 _SHELL_JAVASCRIPT = r"""
 (() => {
-  const STORAGE_KEY = "raya.courseMapExpanded";
   const root = document.documentElement;
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
@@ -155,19 +168,13 @@ _SHELL_JAVASCRIPT = r"""
     return;
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  const expanded = stored === "true";
-
-  function setExpanded(nextExpanded, persist = true) {
+  function setExpanded(nextExpanded) {
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     toggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     });
-    if (persist) {
-      window.localStorage.setItem(STORAGE_KEY, nextExpanded ? "true" : "false");
-    }
   }
 
   toggleButtons.forEach((button) => {
@@ -202,7 +209,7 @@ _SHELL_JAVASCRIPT = r"""
     headings.forEach((item) => observer.observe(item.target));
   }
 
-  setExpanded(expanded, false);
+  setExpanded(true);
 })();
 """
 ```
@@ -954,7 +961,8 @@ def test_docs_cover_collapsible_learning_shell() -> None:
             "OpenDyslexic",
         ],
         "docs/guides/en/agents/index.md": [
-            "raya.courseMapExpanded",
+            "expanded course map",
+            "non-persistent",
             "no external requests",
             "render-debug",
         ],
@@ -975,7 +983,8 @@ def test_docs_cover_collapsible_learning_shell() -> None:
             "OpenDyslexic",
         ],
         "docs/guides/es/agentes/index.md": [
-            "raya.courseMapExpanded",
+            "mapa del curso expandido",
+            "no persistente",
             "sin solicitudes externas",
             "render-debug",
         ],
@@ -1003,7 +1012,7 @@ Expected: fail because docs do not yet mention the new shell behavior.
 In `docs/foundation/20_learning_renderer_contract.md`, update the Course Shell and Static Renderer Status sections with:
 
 ```markdown
-The current shell uses a collapsed course map on desktop and mobile-first article priority. The course map expands through an explicit click-only control. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
+The current shell uses an expanded course map by default, mobile-first article priority, and an explicit click-only control that collapses the map to a compact rail. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
 ```
 
 Add under Non-Goals:
@@ -1020,7 +1029,7 @@ Add concise role-specific paragraphs:
 Professors:
 
 ```markdown
-Rendered pages now use a collapsed course map by default so students get more reading space. The shell may show structure such as `Page N of M`; treat that as course position, not personal progress or completion.
+Rendered pages now use an expanded course map by default and let students collapse it to a compact rail for more reading space. The shell may show structure such as `Page N of M`; treat that as course position, not personal progress or completion.
 ```
 
 Contributors:
@@ -1038,7 +1047,7 @@ Use the Course map button to open the course navigation when you need orientatio
 Agents:
 
 ```markdown
-When changing the shell, verify `raya.courseMapExpanded`, render-debug output, mobile no-overflow behavior, and no external requests. The shell preference is local UI state only.
+When changing the shell, verify the expanded course map default, compact rail metadata, render-debug output, mobile no-overflow behavior, and no external requests. The course map state is non-persistent UI state.
 ```
 
 - [ ] **Step 5: Update Spanish role docs**
@@ -1048,7 +1057,7 @@ Add concise role-specific paragraphs:
 Profesores:
 
 ```markdown
-Las paginas renderizadas usan un mapa del curso colapsado por defecto para dar mas espacio de lectura. La shell puede mostrar estructura como `Page N of M`; eso es posicion dentro del curso y no es progreso personal ni finalizacion.
+Las paginas renderizadas usan un mapa del curso expandido por defecto y permiten colapsarlo a un riel compacto para dar mas espacio de lectura. La shell puede mostrar estructura como `Page N of M`; eso es posicion dentro del curso y no es progreso personal ni finalizacion.
 ```
 
 Colaboradores:
@@ -1066,7 +1075,7 @@ Usa el boton del mapa del curso para abrir la navegacion cuando necesites orient
 Agentes:
 
 ```markdown
-Al cambiar la shell, verifica `raya.courseMapExpanded`, la salida de render-debug, el comportamiento movil sin overflow y sin solicitudes externas. La preferencia de la shell es solo estado local de UI.
+Al cambiar la shell, verifica el mapa del curso expandido por defecto, la metadata del riel compacto, la salida de render-debug, el comportamiento movil sin overflow y sin solicitudes externas. El estado del mapa del curso es UI no persistente.
 ```
 
 - [ ] **Step 6: Run docs test**
@@ -1167,7 +1176,7 @@ If port `8018` is occupied by a stale preview, stop the old preview process and 
 Use `superpowers:requesting-code-review`. Review the full implementation range from the plan commit to current `HEAD`. Ask the reviewer to check:
 
 - click-only course-map expansion;
-- desktop collapsed default and article width;
+- desktop expanded default, compact collapsed rail, and article width;
 - mobile article priority and no overflow;
 - active heading behavior;
 - no personal-progress wording;

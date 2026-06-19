@@ -6,6 +6,12 @@ status: approved-for-plan
 
 # Collapsible Learning Shell Design
 
+> **Supersession note, current as of the balanced learning workspace update:**
+> this historical design's collapsed-by-default and stored-preference decisions
+> are superseded. Current shell behavior is expanded by default, non-persistent,
+> and collapsible by explicit click to a compact map rail. Do not implement
+> course-map `localStorage` persistence from this document.
+
 ## Goal
 
 Improve rendered course comfort, learning orientation, and desktop usability by
@@ -63,16 +69,18 @@ honest.
 
 ## Requirements
 
-1. The desktop left course map defaults to a slim collapsed rail.
+1. Superseded: the desktop left course map no longer defaults to a slim
+   collapsed rail. Current behavior is expanded by default and may collapse by
+   explicit click to a compact map rail.
 2. The full course map expands only by intentional user action, not by hover.
 3. The course-map toggle is a real button with `aria-expanded`,
    `aria-controls`, keyboard focus, and an accessible label.
 4. Clicking the toggle opens or closes the full map.
 5. Pressing `Escape` while the full map is open closes it.
-6. Selecting a course-map link may leave the map open or closed according to
-   the stored reader preference, but it must never block navigation.
-7. The open/closed preference may be stored in `localStorage` as UI state only.
-   It must not alter artifact truth or generated data.
+6. Selecting a course-map link must never block navigation. Historical stored
+   reader preference behavior is superseded and must not be implemented.
+7. Superseded: the open/closed preference is not stored in `localStorage`.
+   Current course-map state is non-persistent UI state only.
 8. The current page remains visible in the collapsed rail through a compact
    marker, number, or label.
 9. The central article gets wider and clearer desktop priority when the map is
@@ -139,11 +147,11 @@ Do not hide the article behind navigation on initial render.
 Add a small local shell script under the renderer static resources, for example
 `artifact/site/_raya/render/shell.js`. It should:
 
-- initialize from a default collapsed state on desktop;
+- initialize from the expanded static default;
 - apply a class or data attribute to the document when the map is expanded;
 - update `aria-expanded`;
 - support `Escape` to close;
-- persist only the open/closed UI preference in `localStorage`;
+- keep course-map state non-persistent; do not read or write `localStorage`;
 - degrade cleanly when JavaScript is disabled by showing usable static
   navigation.
 
@@ -215,14 +223,16 @@ Update role docs in English and Spanish when implementation changes behavior:
   metadata is safe to rely on, and why static pages do not claim progress;
 - contributors/collaborators: how to review shell behavior, accessibility, and
   local-resource boundaries;
-- students: how to use the collapsed course map, page contents, previous/next
+- students: how to use the expanded-by-default course map, compact collapsed
+  rail, page contents, previous/next
   controls, and OpenDyslexic toggle;
 - agents: how to verify shell behavior, render-debug artifacts, no external
   requests, and local/deployed static parity.
 
 Update foundation renderer guidance where needed, especially
 `docs/foundation/20_learning_renderer_contract.md`, so the shell contract names
-collapsed navigation and static page tracking explicitly.
+expanded-by-default navigation, compact collapsed rail behavior, and static
+page tracking explicitly.
 
 ## Testing
 
@@ -233,7 +243,7 @@ Expected coverage:
 - contract tests for generated shell markup, toggle attributes, controlled IDs,
   and shell resource links;
 - static builder tests for course map, article, and learning rail order;
-- browser/e2e tests for collapsed desktop default, expanded click state,
+- browser/e2e tests for expanded desktop default, explicit collapsed click state,
   `Escape` close behavior, no hover requirement, and mobile article priority;
 - render-debug tests for shell inspection fields and screenshots;
 - static-read-path tests proving copied `artifact/site/` serves the same local
@@ -244,7 +254,7 @@ Expected coverage:
 
 ## Acceptance Criteria
 
-- Desktop rendered pages default to a collapsed left course rail.
+- Desktop rendered pages default to an expanded course map.
 - A click-only toggle expands and collapses the full course map.
 - The toggle uses accessible button semantics and updates `aria-expanded`.
 - The current page remains visible while the left rail is collapsed.
