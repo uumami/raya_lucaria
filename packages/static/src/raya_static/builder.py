@@ -274,6 +274,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
         return report
     reviewed_by_reference = reviewed_outputs_by_reference(reviewed_outputs)
     references_by_page = _references_by_page(references)
+    links_index = _links_index(
+        course_id,
+        content_model,
+        pages_by_reference,
+        pages_by_source,
+        root,
+    )
+    graph_index = _graph_index(course_id, content_model, links_index)
+    graph_context_by_page = _graph_context_by_page(content_model, graph_index)
     math_renderer = MathRenderer()
     numbered_object_collection = _collect_numbered_objects(
         course_root=root,
@@ -324,6 +333,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             report=report,
             math_renderer=math_renderer,
             skin_context=skin_context,
+            page_graph_context=graph_context_by_page.get(page.id, {}),
         )
         if not report.ok:
             return report
@@ -388,14 +398,6 @@ def build_course(course_path: str | Path) -> ValidationReport:
 
     pages_index = _pages_index(course_id, pages)
     quanta_index = _quanta_index(course_id, pages)
-    links_index = _links_index(
-        course_id,
-        content_model,
-        pages_by_reference,
-        pages_by_source,
-        root,
-    )
-    graph_index = _graph_index(course_id, content_model, links_index)
     navigation_index = _navigation_index(course_id, content_model)
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
@@ -744,6 +746,7 @@ def _render_page(
     report: ValidationReport,
     math_renderer: MathRenderer,
     skin_context: SkinContext,
+    page_graph_context: dict[str, list[dict[str, str]]],
 ) -> str:
     breadcrumbs = _render_breadcrumbs(page, content_model)
     generated_index = _render_generated_index(
@@ -808,6 +811,7 @@ def _render_page(
         toc_html,
         content_model,
         support_panels,
+        page_graph_context,
     )
 
     return "\n".join(
@@ -923,6 +927,7 @@ def _render_learning_rail(
     toc_html: str,
     content_model: ContentModel,
     support_panels: str,
+    page_graph_context: dict[str, list[dict[str, str]]],
 ) -> str:
     panels = [
         _render_page_summary_rail(page),
@@ -930,6 +935,7 @@ def _render_learning_rail(
         _render_estimated_time_rail(page),
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
+        _render_linked_pages_rail(page, page_graph_context),
         _render_page_contents_rail(toc_html),
         _render_sequence_rail(page, content_model),
         support_panels,
@@ -1066,6 +1072,44 @@ def _render_prerequisites_rail(
         "raya-page-prerequisites",
         "Prerequisites",
         "<ul>" + "\n".join(items) + "</ul>",
+    )
+
+
+def _render_linked_pages_rail(
+    page: ContentPage,
+    page_graph_context: dict[str, list[dict[str, str]]],
+) -> str:
+    sections = []
+    outgoing = page_graph_context.get("outgoing", [])
+    incoming = page_graph_context.get("incoming", [])
+    if outgoing:
+        sections.append(
+            "<h3>From this page</h3>"
+            "<ul>"
+            + "\n".join(_linked_page_item(page, item) for item in outgoing)
+            + "</ul>"
+        )
+    if incoming:
+        sections.append(
+            "<h3>Links here</h3>"
+            "<ul>"
+            + "\n".join(_linked_page_item(page, item) for item in incoming)
+            + "</ul>"
+        )
+    if not sections:
+        return ""
+    return _render_rail_panel(
+        "raya-page-linked-pages",
+        "Linked pages",
+        "\n".join(sections),
+    )
+
+
+def _linked_page_item(page: ContentPage, item: dict[str, str]) -> str:
+    href = _relative_href(page.output_path, item["url"])
+    return (
+        f'<li><a href="{html.escape(href)}">'
+        f'{html.escape(item["title"])}</a></li>'
     )
 
 
@@ -1433,6 +1477,45 @@ def _graph_index(
         "groups": groups,
         "backlinks": backlinks,
     }
+
+
+def _graph_context_by_page(
+    content_model: ContentModel,
+    graph_index: dict[str, Any],
+) -> dict[str, dict[str, list[dict[str, str]]]]:
+    pages_by_id = content_model.pages_by_id
+    context: dict[str, dict[str, list[dict[str, str]]]] = {
+        page.id: {"outgoing": [], "incoming": []} for page in content_model.pages
+    }
+    seen: set[tuple[str, str, str]] = set()
+    for edge in graph_index["edges"]:
+        if edge["kind"] != "content":
+            continue
+        source = pages_by_id.get(edge["from"])
+        target = pages_by_id.get(edge["to"])
+        if source is None or target is None or source.id == target.id:
+            continue
+        key = (source.id, target.id, edge["kind"])
+        if key in seen:
+            continue
+        seen.add(key)
+        context[source.id]["outgoing"].append(
+            {
+                "id": target.id,
+                "title": target.nav_title or target.title,
+                "url": target.output_path,
+                "kind": edge["kind"],
+            }
+        )
+        context[target.id]["incoming"].append(
+            {
+                "id": source.id,
+                "title": source.nav_title or source.title,
+                "url": source.output_path,
+                "kind": edge["kind"],
+            }
+        )
+    return context
 
 
 def _graph_group_by_page(content_model: ContentModel) -> dict[str, str]:

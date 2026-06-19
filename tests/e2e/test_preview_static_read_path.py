@@ -674,6 +674,99 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
         handle.close()
 
 
+def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script("delete HTMLElement.prototype.inert;")
+                try:
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    panel = page.locator(".raya-page-linked-pages").first
+                    collapsed = panel.evaluate(
+                        """(panel) => {
+                          const body = panel.querySelector('.raya-rail-panel-body');
+                          const link = body?.querySelector('a');
+                          link?.focus();
+                          return {
+                            state: panel.dataset.rayaRailPanelState,
+                            expanded: panel.querySelector('[data-raya-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            ariaHidden: body?.getAttribute('aria-hidden'),
+                            inert: body?.inert,
+                            bodyHeight: body?.getBoundingClientRect().height,
+                            hasLink: !!link,
+                            linkTabIndex: link?.getAttribute('tabindex'),
+                          };
+                        }"""
+                    )
+                    assert collapsed["state"] == "collapsed"
+                    assert collapsed["expanded"] == "false"
+                    assert collapsed["ariaHidden"] == "true"
+                    assert collapsed["inert"] is True
+                    assert collapsed["bodyHeight"] < 2
+                    assert collapsed["hasLink"] is True
+                    assert collapsed["linkTabIndex"] == "-1"
+
+                    panel.locator("[data-raya-rail-toggle]").click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-linked-pages')
+                          ?.dataset.rayaRailPanelState === 'expanded'"""
+                    )
+                    expanded = panel.evaluate(
+                        """(panel) => {
+                          const body = panel.querySelector('.raya-rail-panel-body');
+                          const link = body?.querySelector('a');
+                          link?.focus();
+                          return {
+                            state: panel.dataset.rayaRailPanelState,
+                            expanded: panel.querySelector('[data-raya-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            ariaHidden: body?.getAttribute('aria-hidden'),
+                            inert: body?.inert,
+                            bodyHeight: body?.getBoundingClientRect().height,
+                            linkTabIndex: link?.getAttribute('tabindex'),
+                            text: panel.innerText,
+                          };
+                        }"""
+                    )
+                    assert expanded["state"] == "expanded"
+                    assert expanded["expanded"] == "true"
+                    assert expanded["ariaHidden"] == "false"
+                    assert expanded["inert"] in {False, None}
+                    assert expanded["linkTabIndex"] is None
+                    assert "From this page" in expanded["text"]
+                    assert "Links here" in expanded["text"]
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_course_map_works_without_storage(
     tmp_path: Path,
 ) -> None:

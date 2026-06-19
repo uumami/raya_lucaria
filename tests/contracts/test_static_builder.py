@@ -2120,6 +2120,37 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     assert "<li>accessibility</li>" in tags_panel
 
 
+def test_render_fixture_authoring_page_shows_explicit_graph_context(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (
+        course / "artifact" / "site" / "authoring-matrix" / "index.html"
+    ).read_text(encoding="utf-8")
+    panel = _section_html(html, "raya-page-linked-pages")
+    visible = _visible_text(panel).lower()
+
+    assert '<section class="raya-rail-panel raya-page-linked-pages"' in panel
+    assert 'aria-expanded="false">Linked pages</button>' in panel
+    assert 'aria-hidden="true" inert' in panel
+    assert "From this page" in panel
+    assert "Links here" in panel
+    assert 'href="../numbered-objects/index.html"' in panel
+    assert 'href="../reader-ux/index.html"' in panel
+    assert 'href="../index.html"' in panel
+    assert "navigation" not in visible
+    assert "parent" not in visible
+    assert "prerequisite" not in visible
+    assert "recommended" not in visible
+    assert "practice" not in visible
+    assert "progress" not in visible
+    assert "mastery" not in visible
+
+
 def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
