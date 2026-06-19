@@ -26,15 +26,15 @@ local reading preference stored by your browser for that static site; it changes
 the page font for easier reading but does not change course content, grading,
 links, or authority labels.
 
-The current course shell is a static reading aid. Use the course map for
-orientation, the main article for the lesson, the learning rail for page
-contents and nearby course context, and static next links to keep moving through
-the course. The page may show `OpenDyslexic` and other local reading controls,
-but it does not store or show personal progress.
+The current course shell is a static reading aid. On desktop, the expanded course map
+gives orientation by default, the main article remains the lesson,
+and the learning rail provides page contents and nearby course context. You can
+collapse the map to a compact map rail when you want more reading space; that
+choice is non-persistent and does not store or show personal progress.
 
-Use the Course map button to open the course navigation when you need
-orientation. Use Previous and Next to move through the ordered material, and use
-OpenDyslexic when that font is more comfortable.
+Use the Course map button to collapse or expand navigation when you need a
+different focus. Use Previous and Next to move through the ordered material, and
+use OpenDyslexic when that font is more comfortable.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 

@@ -26,15 +26,16 @@ superior. Es una preferencia de lectura local que guarda tu navegador para ese
 sitio estatico; cambia la fuente de la pagina para facilitar lectura, pero no
 cambia contenido, evaluacion, enlaces ni etiquetas de autoridad.
 
-La estructura actual del curso es una ayuda de lectura estatica. El mapa del curso
-ayuda a orientarte; usa el articulo principal para la leccion, el riel de aprendizaje
-para contenidos de pagina y contexto cercano, y los enlaces
-estaticos siguientes para avanzar. La pagina puede mostrar `OpenDyslexic` y
-otros controles locales de lectura, pero no guarda ni muestra progreso personal.
+La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
+el mapa del curso expandido da orientacion por defecto, el articulo principal
+sigue siendo la leccion, y el riel de aprendizaje ofrece contenidos de pagina y
+contexto cercano. Puedes colapsar el mapa a un riel compacto cuando quieras mas
+espacio de lectura; esa eleccion es no persistente y no guarda ni muestra
+progreso personal.
 
-Usa el boton del mapa del curso para abrir la navegacion cuando necesites
-orientarte. Usa Anterior y Siguiente para moverte por el material ordenado, y
-usa OpenDyslexic cuando esa fuente sea mas comoda.
+Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
+necesites otro foco. Usa Anterior y Siguiente para moverte por el material
+ordenado, y usa OpenDyslexic cuando esa fuente sea mas comoda.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 

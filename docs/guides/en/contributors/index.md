@@ -56,8 +56,10 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
-Review shell controls as accessibility surfaces. The course-map behavior is
-click-only, uses `aria-expanded`, and must be served from local renderer resources
+Review shell controls as accessibility surfaces. The current reader uses an expanded course map
+by default on desktop, can collapse by explicit click to a
+compact map rail, and keeps that shell state non-persistent. The course-map
+behavior is click-only, uses `aria-expanded`, and must be served from local renderer resources
 rather than external scripts or styles.
 
 ```markdown
