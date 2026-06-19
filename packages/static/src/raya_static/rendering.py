@@ -475,8 +475,9 @@ img {
   top: 1rem;
 }
 .raya-top-command-bar {
-  background: var(--raya-color-surface);
-  border-bottom: 1px solid var(--raya-color-border);
+  background: var(--raya-color-text);
+  border-bottom: 1px solid color-mix(in srgb, var(--raya-color-text) 72%, var(--raya-color-accent));
+  color: var(--raya-color-surface);
   position: sticky;
   top: 0;
   z-index: 5;
@@ -499,10 +500,18 @@ img {
   justify-content: space-between;
 }
 .raya-course-title {
+  color: inherit;
   font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 0.875rem;
   font-weight: 700;
   margin: 0;
+}
+.raya-course-tools {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
 }
 .raya-font-toggle {
   background: var(--raya-color-accent-soft);
@@ -550,7 +559,12 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   min-width: 0;
 }
 .raya-main-article {
-  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
+  box-shadow: 0 1rem 2.5rem rgba(31, 35, 40, 0.08);
+}
+.raya-course-map,
+.raya-learning-rail {
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-page));
+  border-color: color-mix(in srgb, var(--raya-color-border) 72%, var(--raya-color-page));
 }
 .raya-course-map,
 .raya-learning-rail {

@@ -775,6 +775,90 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
     assert not _looks_like_eva_warm_wash(hierarchy["articleBackground"])
 
 
+def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1680, "height": 980})
+                try:
+                    page.goto(f"{handle.base_url}/authoring-matrix/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    chrome = page.evaluate(
+                        """() => {
+                          const rgb = (value) => value.match(/\\d+/g).slice(0, 3).map(Number);
+                          const luminance = (value) => {
+                            const [r, g, b] = rgb(value).map((channel) => channel / 255);
+                            return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                          };
+                          const topBar = document.querySelector('.raya-top-command-bar');
+                          const article = document.querySelector('article.raya-main-article');
+                          const courseMap = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
+                          const shell = document.querySelector('.raya-learning-shell');
+                          const bodyStyle = getComputedStyle(document.body);
+                          const topBarStyle = getComputedStyle(topBar);
+                          const articleStyle = getComputedStyle(article);
+                          const courseMapStyle = getComputedStyle(courseMap);
+                          const railStyle = getComputedStyle(rail);
+                          return {
+                            shellWidth: shell.getBoundingClientRect().width,
+                            articleWidth: article.getBoundingClientRect().width,
+                            mapWidth: courseMap.getBoundingClientRect().width,
+                            railWidth: rail.getBoundingClientRect().width,
+                            courseMapButtonVisible: !!document
+                              .querySelector('.raya-course-map-toggle')
+                              ?.getClientRects().length,
+                            fontButtonVisible: !!document
+                              .querySelector('.raya-font-toggle')
+                              ?.getClientRects().length,
+                            topBarBackground: topBarStyle.backgroundColor,
+                            topBarText: topBarStyle.color,
+                            bodyBackground: bodyStyle.backgroundColor,
+                            articleBackground: articleStyle.backgroundColor,
+                            courseMapBackground: courseMapStyle.backgroundColor,
+                            railBackground: railStyle.backgroundColor,
+                            topBarLuminance: luminance(topBarStyle.backgroundColor),
+                            pageLuminance: luminance(bodyStyle.backgroundColor),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert chrome["shellWidth"] > 1500
+    assert chrome["articleWidth"] >= 820
+    assert 220 <= chrome["mapWidth"] <= 300
+    assert 250 <= chrome["railWidth"] <= 330
+    assert chrome["topBarLuminance"] < chrome["pageLuminance"] - 0.35
+    assert chrome["topBarBackground"] != chrome["bodyBackground"]
+    assert chrome["topBarText"] != chrome["topBarBackground"]
+    assert chrome["courseMapBackground"] != chrome["articleBackground"]
+    assert chrome["railBackground"] != chrome["articleBackground"]
+    assert chrome["courseMapButtonVisible"] is True
+    assert chrome["fontButtonVisible"] is True
+
+
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
     tmp_path: Path,
 ) -> None:
