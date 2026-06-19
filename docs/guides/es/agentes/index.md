@@ -74,6 +74,11 @@ comportamiento movil sin overflow y sin solicitudes externas despues de cargar
 la pagina. El estado UI del grafo es no persistente y debe venir de datos de
 grafo embebidos del artifact, no de HTML scrapeado ni browser storage.
 
+Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
+teclado por resultados, Enter para abrir, controles de limpiar, sin solicitudes
+externas y sin estado persistente de busqueda. Los payloads de busqueda siguen
+siendo solo metadata.
+
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 
 Para diagnosticos de objeto numerado, compara la directiva en la fuente, la entrada en `data/numbered-objects.json`, el ancla renderizada de la pagina, el href estatico, el texto visible de referencia y la evidencia de captura/reporte de render-debug. Incluye el fixture reader-ux y casos de familia theorem como `remark` incorporado cuando fallen etiquetas, secuencias compartidas o presentacion. Anota si los objetos usan el estilo esperado `scannable`, `caption` o `equation`. Usa la ruta render-debug para generar capturas y output de inspeccion, pero conserva el contrato machine-readable en datos declarados por el manifest en vez de HTML scrapeado.

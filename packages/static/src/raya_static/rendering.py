@@ -627,6 +627,7 @@ img {
 .raya-search-controls input,
 .raya-graph-controls select,
 .raya-graph-controls button,
+.raya-search-controls button,
 .raya-graph-chip {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);
@@ -651,6 +652,14 @@ img {
   border-radius: 0.375rem;
   padding: 0.9rem 1rem;
 }
+.raya-search-results li[data-raya-search-active="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow: inset 0.25rem 0 0 var(--raya-color-accent);
+}
+.raya-search-results li[data-raya-search-active="true"] a {
+  color: var(--raya-color-success);
+  font-weight: 800;
+}
 .raya-search-results li[hidden],
 .raya-search-empty[hidden] {
   display: none;
@@ -664,6 +673,60 @@ img {
 .raya-graph-chip[aria-pressed="true"] {
   border-color: var(--raya-color-accent);
   box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
+}
+.raya-graph-legend {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 1rem;
+  margin-bottom: var(--raya-space-block);
+  padding: 0.7rem 0.85rem;
+}
+.raya-graph-legend-item {
+  align-items: center;
+  color: var(--raya-color-muted);
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: 0.4rem;
+}
+.raya-graph-legend-swatch {
+  background: var(--raya-color-accent-soft);
+  border: 2px solid var(--raya-color-accent);
+  border-radius: 999px;
+  display: inline-block;
+  height: 0.85rem;
+  width: 0.85rem;
+}
+.raya-graph-legend-match {
+  border-width: 4px;
+}
+.raya-graph-legend-selected {
+  background: var(--raya-color-success);
+  border-color: var(--raya-color-success);
+}
+.raya-graph-legend-line {
+  background: var(--raya-color-border);
+  display: inline-block;
+  height: 0.18rem;
+  width: 1.6rem;
+}
+.raya-graph-help {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin-bottom: var(--raya-space-block);
+  padding: 0.75rem 0.9rem;
+}
+.raya-graph-help summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.raya-graph-help p {
+  margin: 0.65rem 0 0;
 }
 .raya-graph-detail {
   background: var(--raya-color-surface);

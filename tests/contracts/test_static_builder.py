@@ -385,6 +385,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-fit" in graph_html
     assert "graph-reset" in graph_html
     assert "graph-expand" in graph_html
+    assert 'class="raya-graph-legend"' in graph_html
+    assert 'data-raya-graph-legend="node"' in graph_html
+    assert 'data-raya-graph-legend="match"' in graph_html
+    assert 'data-raya-graph-legend="selected"' in graph_html
+    assert 'data-raya-graph-help' in graph_html
+    assert "<summary>Graph controls</summary>" in graph_html
     assert "raya-graph-detail" in graph_html
     assert "data-raya-graph-detail-empty" in graph_html
     assert "data-raya-graph-detail-panel" in graph_html
@@ -415,10 +421,20 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'mode === "list"' in graph_script
     assert "graph-reset" in graph_script
     assert "window.location.href" in graph_script
-    assert "fetch(" not in graph_script
-    assert "XMLHttpRequest" not in graph_script
-    assert "localStorage" not in graph_script
-    assert "sessionStorage" not in graph_script
+    for forbidden_runtime_token in (
+        "fetch(",
+        "XMLHttpRequest",
+        "localStorage",
+        "sessionStorage",
+        "indexedDB",
+        "caches.",
+        "navigator.sendBeacon",
+        "import(",
+        "new Worker",
+        "EventSource",
+        "WebSocket",
+    ):
+        assert forbidden_runtime_token not in graph_script
 
 
 def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
@@ -451,6 +467,8 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "http://" not in search_html
     assert "pagefind" not in search_html.lower()
     assert "graph-search" not in search_html
+    assert 'id="raya-search-clear"' in search_html
+    assert 'data-raya-search-active="false"' in search_html
     assert "course/5_authoring_matrix" not in search_html
     assert "raya-search-results" in search_html
     assert "Authoring Matrix Fixture" in search_html
@@ -490,8 +508,57 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     ):
         assert private_token not in serialized_search_payload
     assert "raya-search-data" in search_script
-    assert "fetch(" not in search_script
-    assert "XMLHttpRequest" not in search_script
+    assert "levenshtein" in search_script
+    assert "setActiveResult" in search_script
+    assert "raya-search-clear" in search_script
+    assert "window.location.href" in search_script
+    for forbidden_runtime_token in (
+        "fetch(",
+        "XMLHttpRequest",
+        "localStorage",
+        "sessionStorage",
+        "indexedDB",
+        "caches.",
+        "navigator.sendBeacon",
+        "import(",
+        "new Worker",
+        "EventSource",
+        "WebSocket",
+    ):
+        assert forbidden_runtime_token not in search_script
+
+
+def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    surfaces = [
+        (site / "_raya" / "search" / "index.html").read_text(encoding="utf-8"),
+        (site / "_raya" / "graph" / "index.html").read_text(encoding="utf-8"),
+        _tag_html(
+            (site / "reader-ux" / "index.html").read_text(encoding="utf-8"),
+            "nav",
+            "raya-course-map",
+        ),
+    ]
+    visible_text = "\n".join(_visible_text(surface).lower() for surface in surfaces)
+
+    for forbidden_text in (
+        "progress",
+        "mastery",
+        "recommend",
+        "recommended",
+        "completion",
+        "confidence",
+        "review history",
+        "related practice",
+    ):
+        assert forbidden_text not in visible_text
 
 
 def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
@@ -3271,6 +3338,17 @@ def _section_html(html_text: str, class_name: str) -> str:
     assert match is not None
     start = match.start()
     end = html_text.index("</section>", start) + len("</section>")
+    return html_text[start:end]
+
+
+def _tag_html(html_text: str, tag_name: str, class_name: str) -> str:
+    match = re.search(
+        rf'<{re.escape(tag_name)}[^>]*class="{re.escape(class_name)}"[^>]*>',
+        html_text,
+    )
+    assert match is not None
+    start = match.start()
+    end = html_text.index(f"</{tag_name}>", start) + len(f"</{tag_name}>")
     return html_text[start:end]
 
 

@@ -184,6 +184,11 @@ relationships through local fuzzy search, selected-page details, and an expanded
 graph workspace. Treat it as course structure from current artifact data, not as
 analytics, recommendations, mastery, or personal progress.
 
+Course Search is a static metadata search surface. It can match titles,
+navigation labels, summaries, tags, status, hierarchy labels, and stable IDs
+approximately, but it does not index hidden source paths, rendered prose, math
+output, or personal learner state.
+
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 
 Courses may declare runtime metadata with root `pyproject.toml`, `uv.lock`, and `runtime/profiles.yaml`. This helps future local or Docker execution stay reproducible, but the current build only records profiles, policies, and cache keys; it does not run code, install packages, refresh caches, or trust notebook outputs.

@@ -188,6 +188,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
                         requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-graph-legend").is_visible()
+                        assert page.locator("[data-raya-graph-legend='node']").is_visible()
+                        assert page.locator("[data-raya-graph-legend='match']").is_visible()
+                        assert page.locator("[data-raya-graph-legend='selected']").is_visible()
+                        assert page.locator("[data-raya-graph-help]").is_visible()
+                        assert page.locator("[data-raya-graph-help]").get_attribute("open") is None
+                        page.locator("[data-raya-graph-help] summary").click()
+                        assert "Search" in page.locator("[data-raya-graph-help]").inner_text()
                         assert page.locator("#raya-graph-canvas .raya-graph-node").count() > 0
                         before = page.locator(
                             "#raya-graph-list [data-raya-graph-node]:visible"
@@ -380,6 +388,39 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert "Authoring Matrix Fixture" in page.locator(
                             "#raya-search-results"
                         ).inner_text()
+                        assert page.locator("#raya-search-empty").is_hidden()
+                        page.fill("#raya-search-input", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-search-status')
+                              ?.textContent
+                              ?.includes('visible result')"""
+                        )
+                        assert "Authoring Matrix Fixture" in page.locator(
+                            "#raya-search-results"
+                        ).inner_text()
+                        page.press("#raya-search-input", "ArrowDown")
+                        active = page.locator(
+                            '#raya-search-results [data-raya-search-active="true"]'
+                        )
+                        assert active.count() == 1
+                        active_href = active.locator("a").evaluate("node => node.href")
+                        with page.expect_navigation():
+                            page.press("#raya-search-input", "Enter")
+                        assert page.url == active_href
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.fill("#raya-search-input", "matrix")
+                        page.click("#raya-search-clear")
+                        assert page.input_value("#raya-search-input") == ""
+                        assert (
+                            page.locator(
+                                '#raya-search-results [data-raya-search-active="true"]'
+                            ).count()
+                            == 0
+                        )
                         assert page.locator("#raya-search-empty").is_hidden()
                         page.fill("#raya-search-input", "zz-no-result")
                         page.wait_for_function(

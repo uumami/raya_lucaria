@@ -2425,6 +2425,32 @@ def _render_graph_surface(
             '<section class="raya-graph-groups" aria-label="Graph groups">',
             "\n".join(group_buttons),
             "</section>",
+            '<section class="raya-graph-legend" aria-label="Graph legend">',
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="node">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-node"></span>'
+                "Page node"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="match">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-match"></span>'
+                "Search match"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="selected">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-selected"></span>'
+                "Selected page"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
+                '<span class="raya-graph-legend-line"></span>'
+                "Explicit source link"
+                "</span>"
+            ),
+            "</section>",
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
             '<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>',
@@ -2447,6 +2473,22 @@ def _render_graph_surface(
             "</div>",
             "</div>",
             "</section>",
+            '<details class="raya-graph-help" data-raya-graph-help>',
+            "<summary>Graph controls</summary>",
+            (
+                "<p>Search filters pages by generated titles, labels, stable IDs, "
+                "groups, tags, and status metadata.</p>"
+            ),
+            (
+                "<p>Map groups pages by course structure, radial places visible "
+                "pages around one circle, and list hides the SVG so links stay "
+                "simple to scan.</p>"
+            ),
+            (
+                "<p>Fit redraws the current layout. Reset clears search, group "
+                "filters, selected page, and expanded graph workspace.</p>"
+            ),
+            "</details>",
             (
                 '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
                 'role="img" aria-label="Course graph"></svg>'
@@ -2547,7 +2589,8 @@ def _render_search_surface(
         meta_parts = [page["status"], page["hierarchy_label"], tags]
         meta = " | ".join(part for part in meta_parts if part)
         result_items.append(
-            f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}">'
+            f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
+            'data-raya-search-active="false">'
             f'<a href="{html.escape(page["url"])}">{html.escape(page["title"])}</a>'
             f'<p>{html.escape(page["summary"])}</p>'
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
@@ -2583,6 +2626,7 @@ def _render_search_surface(
             '<section class="raya-search-controls" aria-label="Course search controls">',
             '<label for="raya-search-input">Search</label>',
             '<input id="raya-search-input" type="search" autocomplete="off">',
+            '<button id="raya-search-clear" type="button">Clear</button>',
             '<p id="raya-search-status" class="raya-search-status" aria-live="polite"></p>',
             "</section>",
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',

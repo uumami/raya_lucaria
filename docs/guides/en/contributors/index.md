@@ -79,6 +79,11 @@ details, group filters, and expanded graph workspace mode must use embedded
 artifact data and local renderer resources only. Do not add CDN graph engines,
 runtime fetches, persistent graph state, or recommendation/progress wording.
 
+Review Course Search as the matching companion to graph navigation. Approximate
+matching, clear controls, and keyboard result movement are allowed over embedded
+page metadata only. Do not index rendered prose, source paths, artifact paths,
+MathJax output, cache keys, or learner state.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

@@ -82,6 +82,12 @@ expandido del grafo deben usar solo datos embebidos del artifact y recursos
 locales del renderer. No agregues motores de grafo CDN, fetches runtime, estado
 persistente del grafo ni lenguaje de recomendaciones/progreso.
 
+Revisa Course Search como companero de navegacion del grafo. Coincidencia
+aproximada, controles de limpiar y movimiento con teclado por resultados son
+validos solo sobre metadata embebida de paginas. No indexes prosa renderizada,
+rutas de fuente, rutas de artifact, output MathJax, cache keys ni estado del
+estudiante.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

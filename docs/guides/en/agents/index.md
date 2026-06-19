@@ -70,6 +70,10 @@ group filters, expanded graph workspace state, mobile no-overflow behavior, and
 no external requests after page load. Graph UI state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 
+When changing Course Search, verify approximate matching, keyboard result
+movement, Enter-to-open behavior, clear controls, no external requests, and no
+persistent search state. Search payloads stay metadata-only.
+
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 
 For numbered object diagnostics, compare the source directive, `data/numbered-objects.json` entry, rendered page anchor, static href, visible reference text, and render-debug screenshot/report evidence. Include the reader-ux fixture and theorem-family cases such as built-in `remark` when labels, shared sequences, or presentation regress. Note whether objects use the expected `scannable`, `caption`, or `equation` style. Use the render-debug route to capture screenshots and inspection output, but keep the machine contract in manifest-declared data rather than scraped HTML.
