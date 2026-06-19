@@ -23,6 +23,7 @@ _SHELL_JAVASCRIPT = r"""
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
   const toggleButtons = Array.from(document.querySelectorAll("[data-raya-course-map-toggle]"));
+  const desktopMapQuery = window.matchMedia("(min-width: 901px)");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const headings = tocLinks
     .map((link) => {
@@ -38,6 +39,17 @@ _SHELL_JAVASCRIPT = r"""
   const stored = window.localStorage.getItem(STORAGE_KEY);
   const expanded = stored === "true";
 
+  function updateMapLinkTabOrder(nextExpanded) {
+    const hideLinks = !nextExpanded && desktopMapQuery.matches;
+    map.querySelectorAll("a").forEach((link) => {
+      if (hideLinks) {
+        link.setAttribute("tabindex", "-1");
+      } else {
+        link.removeAttribute("tabindex");
+      }
+    });
+  }
+
   function setExpanded(nextExpanded, persist = true) {
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
@@ -45,10 +57,15 @@ _SHELL_JAVASCRIPT = r"""
     toggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     });
+    updateMapLinkTabOrder(nextExpanded);
     if (persist) {
       window.localStorage.setItem(STORAGE_KEY, nextExpanded ? "true" : "false");
     }
   }
+
+  desktopMapQuery.addEventListener("change", () => {
+    updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
+  });
 
   toggleButtons.forEach((button) => {
     button.addEventListener("click", () => {

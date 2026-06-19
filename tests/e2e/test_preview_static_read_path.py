@@ -149,7 +149,11 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
     assert "max-width: 110rem" in rich_css
-    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem)" in rich_css
+    assert "grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) minmax(14rem, 18rem)" in rich_css
+    assert "@media (min-width: 901px)" in rich_css
+    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(12rem, 16rem)" in rich_css
+    assert ".raya-course-map-toggle:focus-visible" in rich_css
+    assert "outline: 3px solid var(--raya-color-accent)" in rich_css
     assert "@media (max-width: 900px)" in rich_css
 
 
@@ -229,7 +233,11 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                 args=["--no-sandbox"],
             )
             try:
-                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 960, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
                     page = browser.new_page(viewport=viewport)
                     try:
                         page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
@@ -252,6 +260,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         assert dom_order == "nav>article>aside"
                         if viewport["width"] > 900:
                             assert course_map["x"] < article["x"] < learning_rail["x"]
+                            if viewport["width"] == 960:
+                                page.click(".raya-course-map-toggle")
+                                _assert_no_horizontal_overflow(page)
                         else:
                             assert course_map["y"] < article["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
@@ -321,12 +332,16 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["expanded"] == "false"
                     assert collapsed["mapWidth"] < 130
                     assert collapsed["articleWidth"] > 760
+                    assert collapsed["linkTabIndexes"]
+                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
 
                     page.hover("#raya-course-map")
                     after_hover = page.evaluate("() => document.documentElement.dataset.rayaCourseMap")
@@ -338,11 +353,14 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           state: document.documentElement.dataset.rayaCourseMap,
                           expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
                     assert expanded["state"] == "expanded"
                     assert expanded["expanded"] == "true"
                     assert expanded["mapWidth"] > 220
+                    assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.keyboard.press("Escape")
                     assert page.evaluate("() => document.documentElement.dataset.rayaCourseMap") == "collapsed"

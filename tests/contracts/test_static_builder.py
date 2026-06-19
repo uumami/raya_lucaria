@@ -1974,9 +1974,13 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-rail-panel",
         ".raya-status-chip",
         ".raya-font-toggle:focus-visible",
+        ".raya-course-map-toggle:focus-visible",
     ):
         assert selector in css
-    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(16rem, 22rem);" in css
+    assert "grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) minmax(14rem, 18rem);" in css
+    assert "@media (min-width: 901px)" in css
+    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(12rem, 16rem);" in css
+    assert "outline: 3px solid var(--raya-color-accent);" in css
     assert "@media (max-width: 900px)" in css
 
 
