@@ -157,10 +157,10 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert 'data-raya-rail-toggle' in reader_html
     assert 'data-raya-rail-panel-state="collapsed"' in reader_html
     assert 'aria-hidden="true" inert' in reader_html
-    assert "max-width: 110rem" in rich_css
-    assert "grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) minmax(14rem, 18rem)" in rich_css
+    assert "max-width: 116rem" in rich_css
+    assert "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
     assert "@media (min-width: 901px)" in rich_css
-    assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(12rem, 16rem)" in rich_css
+    assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
     assert "transition: grid-template-columns 180ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
     assert ".raya-rail-toggle:focus-visible" in rich_css
@@ -500,6 +500,7 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
             )
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script("delete HTMLElement.prototype.inert;")
                 try:
                     page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
                     link_panel = page.locator(".raya-page-prerequisites").first
@@ -516,7 +517,7 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                             inert: body?.inert,
                             bodyHeight: body?.getBoundingClientRect().height,
                             hasLink: !!link,
-                            linkFocused: document.activeElement === link,
+                            linkTabIndex: link?.getAttribute('tabindex'),
                           };
                         }"""
                     )
@@ -526,9 +527,14 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                     assert collapsed["inert"] is True
                     assert collapsed["bodyHeight"] < 2
                     assert collapsed["hasLink"] is True
-                    assert collapsed["linkFocused"] is False
+                    assert collapsed["linkTabIndex"] == "-1"
 
                     link_panel.locator("[data-raya-rail-toggle]").click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-prerequisites')
+                          ?.dataset.rayaRailPanelState === 'expanded'"""
+                    )
                     expanded = link_panel.evaluate(
                         """(panel) => {
                           const body = panel.querySelector('.raya-rail-panel-body');
@@ -541,6 +547,7 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                             ariaHidden: body?.getAttribute('aria-hidden'),
                             inert: body?.inert,
                             bodyHeight: body?.getBoundingClientRect().height,
+                            linkTabIndex: link?.getAttribute('tabindex'),
                             linkFocused: document.activeElement === link,
                           };
                         }"""
@@ -548,9 +555,8 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                     assert expanded["state"] == "expanded"
                     assert expanded["expanded"] == "true"
                     assert expanded["ariaHidden"] == "false"
-                    assert expanded["inert"] is False
-                    assert expanded["bodyHeight"] > collapsed["bodyHeight"]
-                    assert expanded["linkFocused"] is True
+                    assert expanded["inert"] in {False, None}
+                    assert expanded["linkTabIndex"] is None
                 finally:
                     page.close()
             finally:

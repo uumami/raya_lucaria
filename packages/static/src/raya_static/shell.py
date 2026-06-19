@@ -67,6 +67,28 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function setFocusableDescendantsEnabled(container, enabled) {
+    container
+      .querySelectorAll("a[href], button, input, select, textarea, [tabindex]")
+      .forEach((element) => {
+        if (enabled) {
+          if (element.dataset.rayaPreviousTabindex === "__none__") {
+            element.removeAttribute("tabindex");
+          } else if (element.dataset.rayaPreviousTabindex) {
+            element.setAttribute("tabindex", element.dataset.rayaPreviousTabindex);
+          }
+          delete element.dataset.rayaPreviousTabindex;
+          return;
+        }
+        if (!element.dataset.rayaPreviousTabindex) {
+          element.dataset.rayaPreviousTabindex = element.hasAttribute("tabindex")
+            ? element.getAttribute("tabindex")
+            : "__none__";
+        }
+        element.setAttribute("tabindex", "-1");
+      });
+  }
+
   function setExpanded(nextExpanded) {
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
@@ -98,6 +120,7 @@ _SHELL_JAVASCRIPT = r"""
     button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     body.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
     body.inert = !nextExpanded;
+    setFocusableDescendantsEnabled(body, nextExpanded);
   }
 
   desktopMapQuery.addEventListener("change", () => {
