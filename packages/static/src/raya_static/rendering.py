@@ -444,7 +444,7 @@ def rich_render_css() -> str:
   box-sizing: border-box;
 }
 body {
-  background: var(--raya-color-page);
+  background: #f6f7f9;
   color: var(--raya-color-text);
   font-family: var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
@@ -548,6 +548,13 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
   min-width: 0;
+}
+.raya-main-article,
+.raya-learning-rail {
+  background: #ffffff;
+}
+.raya-main-article {
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
 }
 .raya-course-map,
 .raya-learning-rail {
@@ -766,13 +773,23 @@ nav[aria-label="Breadcrumbs"] {
 .raya-inspection-main > :first-child {
   margin-top: 0;
 }
+.raya-main-article > * {
+  max-width: 52rem;
+}
+.raya-main-article > .raya-article-sequence,
+.raya-main-article > nav[aria-label="Breadcrumbs"],
+.raya-main-article > .raya-numbered-object,
+.raya-main-article > table,
+.raya-main-article > pre {
+  max-width: 100%;
+}
 .raya-learning-rail {
   display: grid;
-  gap: var(--raya-space-block);
+  gap: 0;
 }
 .raya-rail-panel {
   border-bottom: 1px solid var(--raya-color-border);
-  padding-bottom: var(--raya-space-block);
+  padding: 0.875rem 0;
 }
 .raya-rail-panel:last-child {
   border-bottom: 0;

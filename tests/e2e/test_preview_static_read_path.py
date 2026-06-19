@@ -691,6 +691,62 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
         handle.close()
 
 
+def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(f"{handle.base_url}/authoring-matrix/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    hierarchy = page.evaluate(
+                        """() => {
+                          const bodyStyle = getComputedStyle(document.body);
+                          const article = document.querySelector('article.raya-main-article');
+                          const shell = document.querySelector('.raya-learning-shell');
+                          const courseMap = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
+                          const articleStyle = getComputedStyle(article);
+                          return {
+                            bodyBackground: bodyStyle.backgroundColor,
+                            articleBackground: articleStyle.backgroundColor,
+                            articleWidth: article.getBoundingClientRect().width,
+                            shellWidth: shell.getBoundingClientRect().width,
+                            mapWidth: courseMap.getBoundingClientRect().width,
+                            railWidth: rail.getBoundingClientRect().width,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert hierarchy["articleWidth"] > hierarchy["mapWidth"] * 2
+    assert hierarchy["articleWidth"] > hierarchy["railWidth"] * 2
+    assert hierarchy["articleWidth"] < hierarchy["shellWidth"]
+    assert hierarchy["articleBackground"] != hierarchy["bodyBackground"]
+    assert not _looks_like_eva_warm_wash(hierarchy["bodyBackground"])
+    assert not _looks_like_eva_warm_wash(hierarchy["articleBackground"])
+
+
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
     tmp_path: Path,
 ) -> None:
@@ -1654,6 +1710,13 @@ def _assert_no_horizontal_overflow(page) -> None:
         "() => Math.ceil(document.documentElement.scrollWidth - window.innerWidth)"
     )
     assert overflow <= 1
+
+
+def _looks_like_eva_warm_wash(color: str) -> bool:
+    match = re.fullmatch(r"rgba?\((\d+), (\d+), (\d+)(?:, [^)]+)?\)", color)
+    assert match is not None, f"Unexpected computed color: {color}"
+    red, green, blue = (int(channel) for channel in match.groups())
+    return red >= 245 and green >= 225 and blue <= 245 and red - blue >= 10
 
 
 def _assert_intersects_viewport(page, selector: str) -> None:
