@@ -749,7 +749,7 @@ The current shell uses a balanced learning workspace on desktop: the course map 
 Update the Course map table row:
 
 ```markdown
-| Course map | `current` | Render from current navigation data, expanded by default on desktop, collapsible through an explicit click-only control into a compact map rail, and secondary to article-first mobile reading. |
+| Course map | `current` | Render from current navigation data, expanded by default on desktop, non-persistent, not hover-triggered, collapsible through an explicit click control or Escape into a compact map rail, and secondary to article-first mobile reading. |
 ```
 
 - [ ] **Step 4: Update English role docs**
