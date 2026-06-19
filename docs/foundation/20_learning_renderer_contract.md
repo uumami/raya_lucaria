@@ -20,11 +20,13 @@ The course shell is the reader-facing static page structure for a built course. 
 
 The shell uses current artifact data only. It must not infer learning goals, related practice, assignments, progress, mastery, or spacing from prose.
 
+The current shell uses a collapsed course map on desktop and mobile-first article priority. The course map expands through an explicit click-only control. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
+
 ## Static Renderer Status
 
 | Capability | Status | Static renderer behavior |
 | --- | --- | --- |
-| Course map | `current` | Render from current navigation data. |
+| Course map | `current` | Render from current navigation data, collapsed by default when the shell script runs, and expanded only through a click-only control. |
 | Main article | `current` | Render authored content, build-time MathJax, numbered objects, static environments, callouts, tables, code, and local assets. |
 | Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, and previous/next links from current artifact data. |
 | Reader controls | `current` | Use local OpenDyslexic resources and keyboard-reachable controls. |
@@ -57,6 +59,8 @@ Personal progress, analytics, adaptive review, spaced queues, mastery estimates,
 The learning course shell has explicit non-goals in this loop:
 
 - no personal progress claims in static HTML;
+- no hover-first navigation expansion that moves the reading layout without intent;
+- no wording that turns structural page position into personal progress;
 - no inferred goals or related practice;
 - no browser-side MathJax conversion;
 - no external CSS, font, script, renderer, or CDN requests;

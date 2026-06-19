@@ -32,6 +32,10 @@ para contenidos de pagina y contexto cercano, y los enlaces
 estaticos siguientes para avanzar. La pagina puede mostrar `OpenDyslexic` y
 otros controles locales de lectura, pero no guarda ni muestra progreso personal.
 
+Usa el boton del mapa del curso para abrir la navegacion cuando necesites
+orientarte. Usa Anterior y Siguiente para moverte por el material ordenado, y
+usa OpenDyslexic cuando esa fuente sea mas comoda.
+
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
 Matrices renderizadas, vectores, notacion de conjuntos, notas tipo theorem y pruebas deben aparecer como texto normal del curso mas matematica compuesta. Si ves `\begin{bmatrix}` crudo, una macro desconocida, matematica visible con delimitadores de dolar, o una pagina que pide cargar browser-side MathJax, reportalo al equipo del curso con la URL o titulo de la pagina.

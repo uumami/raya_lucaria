@@ -160,6 +160,10 @@ practica que estudiantes puedan usar sin progreso falso. Usa checkpoints y
 metas como material docente visible hasta que un contrato futuro los acepte como
 metadata.
 
+Las paginas renderizadas usan un mapa del curso colapsado por defecto para dar
+mas espacio de lectura. La shell puede mostrar estructura como `Page N of M`;
+eso es posicion dentro del curso y no es progreso personal ni finalizacion.
+
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 
 Los cursos pueden declarar runtime metadata con `pyproject.toml`, `uv.lock` y `runtime/profiles.yaml` en la raiz. Esto ayuda a que futura ejecucion local o con Docker sea reproducible, pero el build actual solo registra perfiles, policies y cache keys; no ejecuta codigo, instala paquetes, refresca caches ni confia en outputs de notebooks.

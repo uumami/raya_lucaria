@@ -56,6 +56,10 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
+Review shell controls as accessibility surfaces. The course-map behavior is
+click-only, uses `aria-expanded`, and must be served from local renderer resources
+rather than external scripts or styles.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

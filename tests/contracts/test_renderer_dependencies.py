@@ -339,6 +339,63 @@ def test_role_docs_cover_learning_science_course_shell() -> None:
             assert needle in text, f"{relative_path} must mention {needle}"
 
 
+def test_docs_cover_collapsible_learning_shell() -> None:
+    required = {
+        "docs/foundation/20_learning_renderer_contract.md": [
+            "collapsed course map",
+            "click-only",
+            "Page N of M",
+            "no personal progress",
+        ],
+        "docs/guides/en/professors/index.md": [
+            "collapsed course map",
+            "Page N of M",
+            "not personal progress",
+        ],
+        "docs/guides/en/contributors/index.md": [
+            "click-only",
+            "aria-expanded",
+            "local renderer resources",
+        ],
+        "docs/guides/en/students/index.md": [
+            "Course map",
+            "Previous",
+            "Next",
+            "OpenDyslexic",
+        ],
+        "docs/guides/en/agents/index.md": [
+            "raya.courseMapExpanded",
+            "no external requests",
+            "render-debug",
+        ],
+        "docs/guides/es/profesores/index.md": [
+            "mapa del curso colapsado",
+            "Page N of M",
+            "no es progreso personal",
+        ],
+        "docs/guides/es/colaboradores/index.md": [
+            "click-only",
+            "aria-expanded",
+            "recursos locales del renderer",
+        ],
+        "docs/guides/es/estudiantes/index.md": [
+            "mapa del curso",
+            "Anterior",
+            "Siguiente",
+            "OpenDyslexic",
+        ],
+        "docs/guides/es/agentes/index.md": [
+            "raya.courseMapExpanded",
+            "sin solicitudes externas",
+            "render-debug",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_math_authoring_guidance_and_theorem_handoff_are_documented() -> None:
     professor_paths = (
         ROOT / "docs" / "guides" / "en" / "professors" / "index.md",

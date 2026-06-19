@@ -58,6 +58,10 @@ dinamico de estudio fuera del renderizador estatico. Conserva las reglas: sin
 MathJax en el browser, sin assets externos, sin metas inferidas y sin practica
 relacionada inventada desde la prosa.
 
+Revisa los controles de la shell como superficies de accesibilidad. El mapa del
+curso es click-only, usa `aria-expanded`, y debe servirse desde recursos locales del renderer
+sin scripts ni estilos externos.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.
