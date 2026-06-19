@@ -570,16 +570,6 @@ img {
   display: grid;
   gap: 0.15rem;
 }
-[data-raya-course-map="collapsed"] .raya-course-map-list,
-.raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-list {
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
-}
 .raya-course-map-toggle {
   background: var(--raya-color-accent-soft);
   border: 1px solid var(--raya-color-border);
@@ -618,6 +608,18 @@ img {
   border-left-color: var(--raya-color-success);
   color: var(--raya-color-success);
   font-weight: 700;
+}
+@media (min-width: 901px) {
+  [data-raya-course-map="collapsed"] .raya-course-map-list,
+  .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-list {
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
 }
 nav[aria-label="Breadcrumbs"] {
   color: var(--raya-color-muted);

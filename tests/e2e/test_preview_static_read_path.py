@@ -256,6 +256,16 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert course_map["y"] < article["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
                             _assert_bounded_scroll_region(page, "aside.raya-learning-rail")
+                            mobile_course_list = page.locator(
+                                "#raya-course-map .raya-course-map-list"
+                            ).bounding_box()
+                            assert mobile_course_list is not None
+                            assert mobile_course_list["width"] > 100
+                            assert mobile_course_list["height"] > 40
+                            mobile_course_link = page.locator("#raya-course-map a").first.bounding_box()
+                            assert mobile_course_link is not None
+                            assert mobile_course_link["width"] > 0
+                            assert mobile_course_link["height"] > 0
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
                         page.keyboard.press("Tab")
                         focused = page.evaluate("() => document.activeElement && document.activeElement.className")
