@@ -29,15 +29,18 @@ identidad de skin ni
 etiquetas de autoridad.
 
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
-el mapa del curso expandido da orientacion por defecto, el articulo principal
+el mapa del curso expandido se renderiza como un mapa jerarquico del curso
+expandido y da orientacion por defecto, el articulo principal
 sigue siendo la leccion, y el riel de aprendizaje ofrece contenidos de pagina y
 contexto cercano. Puedes colapsar el mapa a un riel compacto operable cuando quieras mas
 espacio de lectura; esa eleccion es no persistente y no guarda ni muestra
 progreso personal.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
-necesites otro foco. Usa Anterior y Siguiente para moverte por el material
-ordenado, y usa Text size u OpenDyslexic cuando esos ajustes sean mas comodos.
+necesites otro foco. Usa el filtro del mapa para limitar etiquetas de paginas
+visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente para
+moverte por el material ordenado, y usa Text size u OpenDyslexic cuando esos
+ajustes sean mas comodos.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 

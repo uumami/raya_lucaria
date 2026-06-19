@@ -27,14 +27,16 @@ static site; they change text scale or page font for easier reading but do not
 change course content, grading, links, skin identity, or authority labels.
 
 The current course shell is a static reading aid. On desktop, the expanded course map
-gives orientation by default, the main article remains the lesson,
+is rendered as an expanded hierarchical course map and gives
+orientation by default, the main article remains the lesson,
 and the learning rail provides page contents and nearby course context. You can
 collapse the map to an operable compact map rail when you want more reading space; that
 choice is non-persistent and does not store or show personal progress.
 
 Use the Course map button to collapse or expand navigation when you need a
-different focus. Use Previous and Next to move through the ordered material, and
-use Text size or OpenDyslexic when those settings are more comfortable.
+different focus. Use the map filter to narrow visible page labels inside the
+current static hierarchy. Use Previous and Next to move through the ordered
+material, and use Text size or OpenDyslexic when those settings are more comfortable.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 

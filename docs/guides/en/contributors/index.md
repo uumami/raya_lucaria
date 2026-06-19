@@ -66,11 +66,13 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
-Review shell controls as accessibility surfaces. The current reader uses an expanded course map
-by default on desktop, can collapse by explicit click to a
-operable compact map rail, and keeps that shell state non-persistent. The course-map
-behavior is explicit-click rather than hover-triggered, uses `aria-expanded`, and must be served from local renderer resources
-rather than external scripts or styles.
+Review shell controls as accessibility surfaces. The current reader uses an
+expanded course map, rendered as an expanded hierarchical course map by default
+on desktop, can filter the rendered
+map labels locally, can collapse by explicit click to an operable compact map rail,
+and keeps that shell state non-persistent. The course-map behavior is
+explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
+served from local renderer resources rather than external scripts or styles.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

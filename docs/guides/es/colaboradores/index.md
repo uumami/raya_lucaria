@@ -69,8 +69,10 @@ MathJax en el browser, sin assets externos, sin metas inferidas y sin practica
 relacionada inventada desde la prosa.
 
 Revisa los controles de la shell como superficies de accesibilidad. El lector
-actual usa un mapa del curso expandido por defecto en escritorio, puede
-colapsarse con click explicito a un riel compacto operable, y mantiene ese estado no persistente.
+actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
+curso expandido por defecto en escritorio,
+puede filtrar etiquetas renderizadas del mapa localmente, puede colapsarse con
+click explicito a un riel compacto operable, y mantiene ese estado no persistente.
 El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
 servirse desde recursos locales del renderer sin scripts ni estilos externos.
 

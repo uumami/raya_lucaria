@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+MINIMAL = ROOT / "examples" / "courses" / "minimal"
 EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
 
 
@@ -787,6 +788,212 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         assert focused_id == "raya-article"
                     finally:
                         page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_course_map_hierarchy_filters_without_requests(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    assert page.locator("[data-raya-map-active='ancestor']").count() > 0
+                    first_toggle = page.locator("[data-raya-map-node-toggle]").first
+                    before = first_toggle.get_attribute("aria-expanded")
+                    first_toggle.click()
+                    after = first_toggle.get_attribute("aria-expanded")
+                    assert before != after
+                    page.fill("#raya-course-map-filter", "matrix")
+                    assert page.locator("[data-raya-map-node]:visible").count() >= 1
+                    assert "matrix" in page.locator("#raya-course-map-list").inner_text().lower()
+                    assert page.locator("[data-raya-map-filter-empty]").is_hidden()
+                    page.fill("#raya-course-map-filter", "zz-no-match")
+                    assert page.locator("[data-raya-map-filter-empty]").is_visible()
+                    page.fill("#raya-course-map-filter", "")
+                    assert page.locator("[data-raya-map-filter-empty]").is_hidden()
+                    assert requested_urls == []
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(f"{handle.base_url}/unit/topic/index.html", wait_until="networkidle")
+                    requested_urls.clear()
+                    initial = page.evaluate(
+                        """() => ({
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstUnitChildrenHidden: document
+                            .querySelector('#raya-map-children-2-first-unit')
+                            ?.hasAttribute('hidden'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                          filterVisible: !!document
+                            .querySelector('#raya-course-map-filter')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert initial == {
+                        "firstUnitExpanded": "true",
+                        "firstUnitChildrenHidden": False,
+                        "firstTopicVisible": True,
+                        "filterVisible": True,
+                    }
+
+                    page.click('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                    collapsed_unit = page.evaluate(
+                        """() => ({
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstUnitChildrenHidden: document
+                            .querySelector('#raya-map-children-2-first-unit')
+                            ?.hasAttribute('hidden'),
+                          firstUnitChildrenAria: document
+                            .querySelector('#raya-map-children-2-first-unit')
+                            ?.getAttribute('aria-hidden'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert collapsed_unit == {
+                        "firstUnitExpanded": "false",
+                        "firstUnitChildrenHidden": True,
+                        "firstUnitChildrenAria": "true",
+                        "firstTopicVisible": False,
+                    }
+
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    compact = page.evaluate(
+                        """() => ({
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                          filterVisible: !!document
+                            .querySelector('#raya-course-map-filter')
+                            ?.checkVisibility(),
+                          emptyVisible: !!document
+                            .querySelector('[data-raya-map-filter-empty]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert compact == {
+                        "firstTopicVisible": False,
+                        "filterVisible": False,
+                        "emptyVisible": False,
+                    }
+
+                    page.click(".raya-course-map-toggle")
+                    page.click('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                    page.fill("#raya-course-map-filter", "topic")
+                    filtered = page.evaluate(
+                        """() => ({
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                          emptyVisible: !!document
+                            .querySelector('[data-raya-map-filter-empty]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert filtered == {
+                        "firstUnitExpanded": "true",
+                        "firstTopicVisible": True,
+                        "emptyVisible": False,
+                    }
+                    page.fill("#raya-course-map-filter", "zz-no-match")
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    compact_after_filter = page.evaluate(
+                        """() => ({
+                          filterValue: document.querySelector('#raya-course-map-filter')?.value,
+                          visibleLinks: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .filter((link) => link.checkVisibility()).length,
+                          filterVisible: !!document
+                            .querySelector('#raya-course-map-filter')
+                            ?.checkVisibility(),
+                          emptyVisible: !!document
+                            .querySelector('[data-raya-map-filter-empty]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert compact_after_filter == {
+                        "filterValue": "",
+                        "visibleLinks": 3,
+                        "filterVisible": False,
+                        "emptyVisible": False,
+                    }
+                    assert requested_urls == []
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
             finally:
                 browser.close()
     finally:

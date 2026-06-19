@@ -2128,6 +2128,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "navigator.clipboard.writeText" in script_text
     assert 'execCommand("copy")' in script_text
     assert "Code block copied" in script_text
+    assert "data-raya-course-map-filter" in script_text
+    assert "data-raya-map-node-toggle" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
 
@@ -2232,6 +2234,19 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     )
     assert 'aria-expanded="true">Collapse map</button>' in html
     assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in html
+    assert 'class="raya-course-map-filter"' in html
+    assert 'id="raya-course-map-filter"' in html
+    assert "data-raya-course-map-filter" in html
+    assert 'data-raya-map-node="course-root"' in html
+    assert 'data-raya-map-node="first-unit"' in html
+    assert 'data-raya-map-parent="course-root"' in html
+    assert 'data-raya-map-active="ancestor"' in middle_html
+    assert "data-raya-map-children" in html
+    assert 'id="raya-map-children-1-course-root" data-raya-map-children aria-hidden="false"' in html
+    assert 'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"' in html
+    assert 'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="true"' in html
+    assert "data-raya-map-node-toggle" in html
+    assert "raya-map-filter-empty" in html
     assert 'data-raya-map-label="Raya Lucaria Render Fixture"' in render_html
     assert 'data-raya-map-index="1"' in render_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
@@ -2245,6 +2260,69 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     ) < html.index('<aside id="raya-learning-rail"')
+
+
+def test_static_builder_course_map_child_ids_do_not_collide_after_sanitizing(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    first = course / "course" / "2_collision_a" / "0_index.md"
+    first_child = course / "course" / "2_collision_a" / "1_child" / "0_index.md"
+    second = course / "course" / "3_collision_b" / "0_index.md"
+    second_child = course / "course" / "3_collision_b" / "1_child" / "0_index.md"
+    first.parent.mkdir(parents=True)
+    first_child.parent.mkdir(parents=True)
+    second.parent.mkdir(parents=True)
+    second_child.parent.mkdir(parents=True)
+    first.write_text(
+        "---\n"
+        "id: map/a\n"
+        "title: Map Slash\n"
+        "summary: Collision fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Map Slash\n",
+        encoding="utf-8",
+    )
+    first_child.write_text(
+        "---\n"
+        "id: map-a-child\n"
+        "title: Map Slash Child\n"
+        "summary: Collision child fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Map Slash Child\n",
+        encoding="utf-8",
+    )
+    second.write_text(
+        "---\n"
+        "id: map a\n"
+        "title: Map Space\n"
+        "summary: Collision fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Map Space\n",
+        encoding="utf-8",
+    )
+    second_child.write_text(
+        "---\n"
+        "id: map-a-child-2\n"
+        "title: Map Space Child\n"
+        "summary: Collision child fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Map Space Child\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    child_list_ids = re.findall(r'id="(raya-map-children-[^"]+)"', html)
+    assert len(child_list_ids) == len(set(child_list_ids))
+    assert any(item.endswith("-map-a") for item in child_list_ids)
+    assert "raya-map-children-map-a" not in child_list_ids
 
 
 def test_render_fixture_reader_page_exercises_learning_rail_metadata(

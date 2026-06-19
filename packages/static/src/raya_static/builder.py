@@ -942,20 +942,103 @@ def _render_course_map_toggle(
     )
 
 
+def _safe_map_fragment_id(value: str) -> str:
+    fragment = re.sub(r"[^a-zA-Z0-9_-]+", "-", value).strip("-")
+    return fragment or "course-map-node"
+
+
 def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
-    nav_items = []
-    for target in content_model.pages:
+    active_path = {crumb.id for crumb in _breadcrumb_pages(page, content_model)}
+    active_path.add(page.id)
+    sequence_index = {
+        target.id: index for index, target in enumerate(content_model.pages, start=1)
+    }
+
+    def render_node(target: ContentPage, depth: int) -> str:
+        child_ids = content_model.children_by_parent.get(target.id, [])
+        child_pages = [
+            content_model.pages_by_id[child_id]
+            for child_id in child_ids
+            if child_id in content_model.pages_by_id
+        ]
         href = _relative_href(page.output_path, target.output_path)
         label = _navigation_label(target)
-        current = ' aria-current="page"' if target.output_path == page.output_path else ""
-        nav_items.append(
-            '<a '
-            f'href="{html.escape(href)}"{current} '
-            f'data-raya-map-index="{len(nav_items) + 1}" '
-            f'data-raya-map-label="{html.escape(label, quote=True)}">'
-            f"{html.escape(label)}"
-            "</a>"
+        active_state = (
+            "current"
+            if target.id == page.id
+            else "ancestor"
+            if target.id in active_path
+            else "inactive"
         )
+        expanded = bool(child_pages)
+        node_id = (
+            f"raya-map-children-{sequence_index[target.id]}-"
+            f"{_safe_map_fragment_id(target.id)}"
+        )
+        current = ' aria-current="page"' if target.output_path == page.output_path else ""
+        parent = (
+            f'data-raya-map-parent="{html.escape(target.parent_id, quote=True)}" '
+            if target.parent_id
+            else ""
+        )
+        toggle = ""
+        children = ""
+        if child_pages:
+            toggle = (
+                '<button class="raya-course-map-node-toggle" type="button" '
+                "data-raya-map-node-toggle "
+                f'aria-controls="{html.escape(node_id, quote=True)}" '
+                f'aria-expanded="{"true" if expanded else "false"}" '
+                f'aria-label="Toggle {html.escape(label, quote=True)}">'
+                "</button>"
+            )
+            children = "\n".join(render_node(child, depth + 1) for child in child_pages)
+            children = (
+                f'<ol id="{html.escape(node_id, quote=True)}" '
+                "data-raya-map-children "
+                f'{"hidden " if not expanded else ""}'
+                f'aria-hidden="{"false" if expanded else "true"}">'
+                f"{children}"
+                "</ol>"
+            )
+        else:
+            toggle = '<span class="raya-course-map-node-spacer" aria-hidden="true"></span>'
+        return "\n".join(
+            [
+                (
+                    '<li class="raya-course-map-node" '
+                    f'data-raya-map-node="{html.escape(target.id, quote=True)}" '
+                    f"{parent}"
+                    f'data-raya-map-depth="{depth}" '
+                    f'data-raya-map-active="{active_state}" '
+                    f'data-raya-map-expanded="{"true" if expanded else "false"}">'
+                ),
+                '<div class="raya-course-map-node-row">',
+                toggle,
+                (
+                    '<a '
+                    f'href="{html.escape(href)}"{current} '
+                    f'data-raya-map-index="{sequence_index[target.id]}" '
+                    f'data-raya-map-label="{html.escape(label, quote=True)}">'
+                    f"{html.escape(label)}"
+                    "</a>"
+                ),
+                "</div>",
+                children,
+                "</li>",
+            ]
+        )
+
+    root_ids = (
+        [content_model.root_id]
+        if content_model.root_id and content_model.root_id in content_model.pages_by_id
+        else content_model.children_by_parent.get(None, [])
+    )
+    nav_items = [
+        render_node(content_model.pages_by_id[root_id], 0)
+        for root_id in root_ids
+        if root_id in content_model.pages_by_id
+    ]
     position = html.escape(_page_position(page, content_model))
     return "\n".join(
         [
@@ -965,8 +1048,17 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
             f'<p class="raya-page-position">{position}</p>' if position else "",
             _render_course_map_toggle("Collapse map"),
             "</div>",
+            '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
+            (
+                '<input id="raya-course-map-filter" '
+                'class="raya-course-map-filter" type="search" autocomplete="off" '
+                'data-raya-course-map-filter>'
+            ),
+            '<p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>No map matches.</p>',
             '<div class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false">',
+            "<ol>",
             "\n".join(nav_items),
+            "</ol>",
             "</div>",
             "</nav>",
         ]
