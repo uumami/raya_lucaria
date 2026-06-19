@@ -46,7 +46,23 @@ _SHELL_JAVASCRIPT = r"""
     return;
   }
 
-  const stored = window.localStorage.getItem(STORAGE_KEY);
+  function storedCourseMapState() {
+    try {
+      return window.localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  function persistCourseMapState(nextExpanded) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, nextExpanded ? "true" : "false");
+    } catch {
+      // Storage is only a reader preference; the shell still initializes without it.
+    }
+  }
+
+  const stored = storedCourseMapState();
   const expanded = stored === "true";
 
   function updateMapLinkTabOrder(nextExpanded) {
@@ -74,7 +90,7 @@ _SHELL_JAVASCRIPT = r"""
     });
     updateMapLinkTabOrder(nextExpanded);
     if (persist) {
-      window.localStorage.setItem(STORAGE_KEY, nextExpanded ? "true" : "false");
+      persistCourseMapState(nextExpanded);
     }
   }
 
