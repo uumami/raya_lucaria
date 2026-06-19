@@ -18,7 +18,6 @@ def shell_resources() -> ShellResources:
 
 _SHELL_JAVASCRIPT = r"""
 (() => {
-  const STORAGE_KEY = "raya.courseMapExpanded";
   const root = document.documentElement;
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
@@ -47,14 +46,6 @@ _SHELL_JAVASCRIPT = r"""
     return;
   }
 
-  function persistCourseMapState(nextExpanded) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, nextExpanded ? "true" : "false");
-    } catch {
-      // Storage is only a reader preference; the shell still initializes without it.
-    }
-  }
-
   function updateMapLinkTabOrder(nextExpanded) {
     const hideLinks = !nextExpanded;
     const mapList = map.querySelector("#raya-course-map-list");
@@ -76,17 +67,18 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
-  function setExpanded(nextExpanded, persist = true) {
+  function setExpanded(nextExpanded) {
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     toggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+      button.setAttribute(
+        "aria-label",
+        nextExpanded ? "Collapse course map" : "Expand course map"
+      );
     });
     updateMapLinkTabOrder(nextExpanded);
-    if (persist) {
-      persistCourseMapState(nextExpanded);
-    }
   }
 
   function setRailPanelExpanded(button, nextExpanded) {
@@ -150,7 +142,7 @@ _SHELL_JAVASCRIPT = r"""
     window.addEventListener("resize", updateActiveHeading);
   }
 
-  setExpanded(false, false);
+  setExpanded(true);
   root.dataset.rayaShellReady = "true";
 })();
 """

@@ -148,12 +148,12 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "OpenDyslexic" in accessibility_css
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
-    assert 'data-raya-course-map="collapsed"' in index_html
-    assert 'aria-expanded="false">Course map</button>' in index_html
-    assert 'class="raya-learning-shell" data-raya-course-map="collapsed"' in index_html
-    assert 'class="raya-course-map" aria-label="Course map" data-raya-course-map="collapsed"' in index_html
-    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="true" inert' in index_html
-    assert '<a href="static-path/index.html" tabindex="-1">1 Static Path</a>' in index_html
+    assert 'data-raya-course-map="expanded"' in index_html
+    assert 'aria-expanded="true">Course map</button>' in index_html
+    assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
+    assert 'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"' in index_html
+    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in index_html
+    assert 'data-raya-map-label="1 Static Path">1 Static Path</a>' in index_html
     assert 'data-raya-rail-toggle' in reader_html
     assert 'data-raya-rail-panel-state="collapsed"' in reader_html
     assert 'aria-hidden="true" inert' in reader_html
@@ -337,10 +337,57 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                 try:
                     page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
                     _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-expanded')),
+                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-label')),
+                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
+                          listInert: document.querySelector('#raya-course-map-list')?.inert,
+                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                          articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert initial["state"] == "expanded"
+                    assert initial["shellState"] == "expanded"
+                    assert initial["mapState"] == "expanded"
+                    assert initial["expanded"] == ["true", "true"]
+                    assert initial["labels"] == [
+                        "Collapse course map",
+                        "Collapse course map",
+                    ]
+                    assert initial["listHidden"] == "false"
+                    assert initial["listInert"] is False
+                    assert initial["mapWidth"] > 220
+                    assert initial["articleWidth"] > 650
+                    assert initial["linkTabIndexes"]
+                    assert set(initial["linkTabIndexes"]) == {None}
+
+                    page.hover("#raya-course-map")
+                    after_hover = page.evaluate("() => document.documentElement.dataset.rayaCourseMap")
+                    assert after_hover == "expanded"
+
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width < 130"""
+                    )
                     collapsed = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-expanded')),
+                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-label')),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
@@ -350,17 +397,19 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         })"""
                     )
                     assert collapsed["state"] == "collapsed"
-                    assert collapsed["expanded"] == "false"
+                    assert collapsed["shellState"] == "collapsed"
+                    assert collapsed["mapState"] == "collapsed"
+                    assert collapsed["expanded"] == ["false", "false"]
+                    assert collapsed["labels"] == [
+                        "Expand course map",
+                        "Expand course map",
+                    ]
                     assert collapsed["listHidden"] == "true"
                     assert collapsed["listInert"] is True
                     assert collapsed["mapWidth"] < 130
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["linkTabIndexes"]
                     assert set(collapsed["linkTabIndexes"]) == {"-1"}
-
-                    page.hover("#raya-course-map")
-                    after_hover = page.evaluate("() => document.documentElement.dataset.rayaCourseMap")
-                    assert after_hover == "collapsed"
 
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(
@@ -371,23 +420,29 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     expanded = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-expanded')),
+                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.getAttribute('aria-label')),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
-                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
                     assert expanded["state"] == "expanded"
-                    assert expanded["expanded"] == "true"
+                    assert expanded["shellState"] == "expanded"
+                    assert expanded["mapState"] == "expanded"
+                    assert expanded["expanded"] == ["true", "true"]
+                    assert expanded["labels"] == [
+                        "Collapse course map",
+                        "Collapse course map",
+                    ]
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
-                    assert expanded["mapWidth"] > 220
                     assert set(expanded["linkTabIndexes"]) == {None}
-
-                    page.keyboard.press("Escape")
-                    assert page.evaluate("() => document.documentElement.dataset.rayaCourseMap") == "collapsed"
                 finally:
                     page.close()
             finally:
@@ -511,6 +566,20 @@ def test_render_fixture_course_map_works_without_storage(
                 )
                 try:
                     page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    initial = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert initial["state"] == "expanded"
+                    assert initial["expanded"] == "true"
+                    assert initial["linkTabIndexes"]
+                    assert set(initial["linkTabIndexes"]) == {None}
+
+                    page.click(".raya-course-map-toggle")
                     collapsed = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -521,21 +590,7 @@ def test_render_fixture_course_map_works_without_storage(
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["expanded"] == "false"
-                    assert collapsed["linkTabIndexes"]
                     assert set(collapsed["linkTabIndexes"]) == {"-1"}
-
-                    page.click(".raya-course-map-toggle")
-                    expanded = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
-                    )
-                    assert expanded["state"] == "expanded"
-                    assert expanded["expanded"] == "true"
-                    assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(
@@ -551,7 +606,7 @@ def test_render_fixture_course_map_works_without_storage(
         handle.close()
 
 
-def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
+def test_render_fixture_course_map_ignores_saved_collapsed_state_on_load(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -575,7 +630,7 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 page.add_init_script(
                     """
-                    window.localStorage.setItem('raya.courseMapExpanded', 'true');
+                    window.localStorage.setItem('raya.courseMapExpanded', 'false');
                     """
                 )
                 try:
@@ -589,9 +644,9 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
                         })"""
                     )
                     assert stable["shellReady"] == "true"
-                    assert stable["state"] == "collapsed"
-                    assert stable["expanded"] == "false"
-                    assert stable["mapWidth"] < 130
+                    assert stable["state"] == "expanded"
+                    assert stable["expanded"] == "true"
+                    assert stable["mapWidth"] > 220
                 finally:
                     page.close()
             finally:
