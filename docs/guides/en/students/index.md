@@ -12,6 +12,10 @@ Static course pages are useful without accounts. Dynamic study state, review que
 
 Rendered courses hide source filename mechanics. Students should see clean page titles, hierarchy labels, summaries, breadcrumbs, previous/next links, generated section indexes, appendices, prerequisites, and official study-object counts when the course provides that metadata.
 
+Generated section indexes appear as landing cards for child pages. They are a
+map of course structure from the current artifact, not personal progress,
+completion, mastery, or recommendations about what to study next.
+
 Static pages may include pre-rendered math, highlighted code, copy buttons on fenced code blocks, tables, callouts, footnotes, heading anchors, and page contents. Math should already be typeset in the generated page and should not require a CDN, account, backend, or browser-side MathJax conversion. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
 Some courses use skins for visual presentation or to emphasize a unit, lab,

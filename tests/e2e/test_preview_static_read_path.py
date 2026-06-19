@@ -96,6 +96,60 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
     assert all(len(font) > 0 for font in math_fonts)
 
 
+def test_render_fixture_section_landing_cards_are_static_navigation(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
+                    try:
+                        page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                        requested_urls.clear()
+                        _assert_no_horizontal_overflow(page)
+                        cards = page.locator(".raya-section-card")
+                        assert cards.count() >= 5
+                        first_link = page.locator(".raya-section-card-link").first
+                        assert first_link.is_visible()
+                        assert first_link.locator(".raya-section-card-title").inner_text().strip()
+                        assert first_link.locator(".raya-section-card-summary").inner_text().strip()
+                        box = first_link.bounding_box()
+                        assert box is not None
+                        assert box["width"] >= 180 or viewport["width"] < 500
+                        href = first_link.evaluate("node => node.href")
+                        with page.expect_navigation():
+                            first_link.click()
+                        assert page.url == href
+                        assert requested_urls
+                        assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

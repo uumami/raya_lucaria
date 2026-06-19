@@ -1792,6 +1792,28 @@ def test_render_fixture_builds_rich_static_pages(
     assert accessibility_css.is_file()
     assert accessibility_js.is_file()
     assert accessibility_font.is_file()
+    assert 'class="raya-generated-index raya-section-landing"' in html
+    assert 'class="raya-section-card-list"' in html
+    assert 'class="raya-section-card"' in html
+    assert 'class="raya-section-card-link"' in html
+    assert 'class="raya-section-card-title"' in html
+    assert 'class="raya-section-card-summary"' in html
+    generated_section = re.search(
+        r'<section class="raya-generated-index raya-section-landing".*?</section>',
+        html,
+        re.DOTALL,
+    )
+    assert generated_section is not None
+    generated_index_html = generated_section.group(0).lower()
+    assert "recommend" not in generated_index_html
+    assert "progress" not in generated_index_html
+    assert "mastery" not in generated_index_html
+    assert "completion" not in generated_index_html
+    assert "fetch(" not in generated_index_html
+    assert "xmlhttprequest" not in generated_index_html
+    assert "https://" not in generated_index_html
+    assert "http://" not in generated_index_html
+    assert "//" not in generated_index_html
     assert "OpenDyslexic" in accessibility_css.read_text(encoding="utf-8")
     accessibility_css_text = accessibility_css.read_text(encoding="utf-8")
     accessibility_js_text = accessibility_js.read_text(encoding="utf-8")

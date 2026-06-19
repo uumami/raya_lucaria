@@ -1450,30 +1450,49 @@ def _render_generated_index(
     if not child_ids and not counts:
         return ""
 
-    parts = ['<section class="raya-generated-index" aria-label="Generated index">']
+    section_class = (
+        "raya-generated-index raya-section-landing"
+        if child_ids
+        else "raya-generated-index"
+    )
+    parts = [f'<section class="{section_class}" aria-label="Generated index">']
     if child_ids:
         heading = "Course Index" if page.parent_id is None else "Topics"
         parts.append(f"<h2>{html.escape(heading)}</h2>")
-        parts.append("<ol>")
+        parts.append('<ol class="raya-section-card-list">')
         for child_id in child_ids:
             child = content_model.pages_by_id[child_id]
             href = _relative_href(page.output_path, child.output_path)
-            parts.append("<li>")
-            parts.append(
-                f'<a href="{html.escape(href)}">{html.escape(_navigation_label(child))}</a>'
-            )
-            parts.append(f"<p>{html.escape(child.summary)}</p>")
-            if child.estimated_time:
-                parts.append(
-                    f"<p>Estimated time: {html.escape(child.estimated_time)}</p>"
-                )
             child_counts = _aggregate_study_counts(
                 child.id,
                 content_model,
                 official_counts,
             )
+            meta_items = []
+            if child.estimated_time:
+                meta_items.append(f"Estimated time: {child.estimated_time}")
             if child_counts:
-                parts.append(f"<p>{html.escape(_study_counts_text(child_counts))}</p>")
+                meta_items.append(_study_counts_text(child_counts))
+            parts.append('<li class="raya-section-card">')
+            parts.append(
+                f'<a class="raya-section-card-link" href="{html.escape(href)}">'
+                f'<span class="raya-section-card-title">'
+                f"{html.escape(_navigation_label(child))}"
+                "</span>"
+            )
+            if child.summary:
+                parts.append(
+                    f'<span class="raya-section-card-summary">'
+                    f"{html.escape(child.summary)}"
+                    "</span>"
+                )
+            if meta_items:
+                parts.append(
+                    f'<span class="raya-section-card-meta">'
+                    f"{html.escape(' | '.join(meta_items))}"
+                    "</span>"
+                )
+            parts.append("</a>")
             parts.append("</li>")
         parts.append("</ol>")
     if counts:

@@ -1238,6 +1238,53 @@ nav[aria-label="Breadcrumbs"] {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+.raya-section-landing {
+  margin: 2rem 0;
+}
+.raya-section-card-list {
+  display: grid;
+  gap: 0.875rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+.raya-section-card {
+  margin: 0;
+}
+.raya-section-card-link {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  display: grid;
+  gap: 0.45rem;
+  min-height: 100%;
+  padding: 1rem;
+  text-decoration: none;
+}
+.raya-section-card-link:hover {
+  border-color: var(--raya-color-accent);
+  color: var(--raya-color-text);
+}
+.raya-section-card-link:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-section-card-title {
+  color: var(--raya-color-accent);
+  font-weight: 800;
+  line-height: 1.25;
+}
+.raya-section-card-summary {
+  color: var(--raya-color-muted);
+  font-size: 0.95rem;
+}
+.raya-section-card-meta {
+  color: var(--raya-color-muted);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
 .raya-page-toc {
   border: 1px solid #d8dee4;
   margin: 1rem 0 1.5rem;

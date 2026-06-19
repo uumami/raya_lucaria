@@ -12,6 +12,10 @@ Las paginas estaticas de curso son utiles sin cuentas. Estado dinamico de estudi
 
 Los cursos renderizados ocultan la mecanica de nombres de archivo. Los estudiantes deben ver titulos limpios, etiquetas de jerarquia, resumenes, breadcrumbs, enlaces anterior/siguiente, indices generados de seccion, anexos, prerequisitos y conteos de objetos oficiales de estudio cuando el curso provee esa metadata.
 
+Los indices generados de seccion aparecen como cards de entrada para paginas
+hijas. Son un mapa de estructura del curso desde el artifact actual, no progreso
+personal, finalizacion, dominio ni recomendaciones sobre que estudiar despues.
+
 Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, botones de copiado en bloques de codigo fenced, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
 Algunos cursos usan skins para presentacion visual o para enfatizar una unidad,

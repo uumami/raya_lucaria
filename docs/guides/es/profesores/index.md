@@ -14,6 +14,11 @@ La fuente del curso usa `source: course` y orden visible dentro de `course/`: `0
 
 Las paginas de curso pueden usar el baseline rich static aceptado: tablas, math MathJax en build, codigo mostrado con botones locales de copiado, callouts, footnotes, heading anchors y tablas de contenido generadas por pagina. Escribe math inline con delimitadores de dolar y math display con delimitadores de doble dolar en lineas propias. Usa `\newcommand` o `\renewcommand` locales a la pagina para macros soportadas. Documentos LaTeX completos, delimitadores malformados, delimitadores anidados no soportados y macros desconocidas fallan antes de publicar. Los bloques de codigo solo se muestran en esta fase, raw HTML se escapa y los archivos de soporte renderizados se generan bajo `artifact/site/_raya/`.
 
+Los indices generados de paginas hijas se renderizan como cards de entrada de
+seccion. Mantiene resumenes, tiempo estimado y objetos oficiales honestos para
+que las cards ayuden a escanear estructura sin implicar progreso personal,
+dominio, finalizacion ni recomendaciones.
+
 Para notacion comun de curso, prefiere macros pequenas locales a la pagina como `\newcommand{\rayaVec}[1]{\mathbf{#1}}` y usalas consistentemente despues de definirlas. Matrices como `\begin{bmatrix} ... \end{bmatrix}`, ecuaciones alineadas, casos, derivadas, integrales, notacion de probabilidad, notacion de optimizacion y `\renewcommand` para ajustes locales de pagina estan cubiertas por fixtures. Mantiene las definiciones de macros cerca de la pagina que las usa para que los diagnosticos apunten a la fuente relevante.
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` como referencia fixture actual para patrones copiables de MathJax en build. Cubre math inline y display, matrices `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas y notacion de optimizacion. Define macros antes de usarlas, mantenlas locales a la pagina y usa delimitadores `$$` en lineas propias para expresiones grandes.

@@ -63,6 +63,11 @@ el comportamiento del filtro del mapa, la metadata del riel compacto operable,
 la salida de render-debug, el comportamiento movil sin overflow y sin solicitudes externas.
 El estado del mapa del curso y el texto del filtro son UI no persistente.
 
+Al cambiar indices generados de seccion, verifica markup de cards de entrada,
+navegacion normal con enlaces locales, comportamiento desktop/mobile sin
+overflow y ausencia de lenguaje de recomendaciones/progreso/dominio dentro de la
+superficie del indice generado.
+
 Al cambiar el Course graph, verifica busqueda aproximada, detalles de pagina
 seleccionada, filtros de grupo, estado de workspace expandido del grafo,
 comportamiento movil sin overflow y sin solicitudes externas despues de cargar

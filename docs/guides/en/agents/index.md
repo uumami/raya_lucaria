@@ -61,6 +61,10 @@ map filter behavior, compact rail metadata, render-debug output, mobile
 no-overflow behavior, and no external requests. The course map state and filter
 text are non-persistent UI state.
 
+When changing generated section indexes, verify section landing card markup,
+normal local link navigation, desktop/mobile no-overflow behavior, and absence
+of recommendation/progress/mastery wording inside the generated index surface.
+
 When changing the Course graph, verify fuzzy search, selected-page details,
 group filters, expanded graph workspace state, mobile no-overflow behavior, and
 no external requests after page load. Graph UI state is non-persistent and must

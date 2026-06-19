@@ -12,6 +12,11 @@ Examples are fixtures unless a course team explicitly accepts them as course mat
 
 Course source uses `source: course` and visible order inside `course/`: `0_index.md`, `1_foundations/`, `2_practice/`, and `A_reference/`. Put manual introductions in `0_index.md`; Glintstone renders generated child indexes and study counts from page summaries and official objects without overwriting source. Put official learning objects under `_official/` beside the topic they support, and local topic assets under `_assets/`. Use stable frontmatter `id` values and `raya:<id>` links for references that should survive renumbering or moving pages.
 
+Generated child indexes render as section landing cards. Keep summaries,
+estimated time, and official objects honest so the cards help students scan
+course structure without implying personal progress, mastery, completion, or
+recommendations.
+
 Course pages may use the accepted rich static baseline: tables, build-time MathJax math, displayed code with local copy buttons, callouts, footnotes, heading anchors, and generated page tables of contents. Write inline math with single dollar delimiters and display math with double-dollar delimiter lines on their own. Use page-local `\newcommand` or `\renewcommand` for supported macros. Full LaTeX documents, malformed delimiters, unsupported nested delimiters, and unknown macros fail before publication. Code blocks are display-only in this phase, raw HTML is escaped, and rendered support files are generated under `artifact/site/_raya/`.
 
 For common course notation, prefer small page-local macros such as `\newcommand{\rayaVec}[1]{\mathbf{#1}}` and use them consistently after definition. Matrices such as `\begin{bmatrix} ... \end{bmatrix}`, aligned equations, cases, derivatives, integrals, probability notation, optimization notation, and `\renewcommand` for page-local adjustments are fixture-tested. Keep macro definitions close to the page that uses them so diagnostics point to the relevant source page.
