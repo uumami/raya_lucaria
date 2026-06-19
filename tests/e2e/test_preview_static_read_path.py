@@ -606,7 +606,7 @@ def test_render_fixture_course_map_works_without_storage(
         handle.close()
 
 
-def test_render_fixture_course_map_ignores_saved_collapsed_state_on_load(
+def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -685,8 +685,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     rail = _bounding_box(page, "aside.raya-learning-rail")
                     assert article["y"] < course_map["y"] < rail["y"]
                     assert not page.locator("#raya-course-map .raya-course-map-toggle").is_visible()
-                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "false"
-                    collapsed = page.evaluate(
+                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "true"
+                    expanded = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
                           mapTabIndex: document.querySelector('#raya-course-map')
@@ -695,21 +695,23 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
-                    assert collapsed["state"] == "collapsed"
-                    assert collapsed["mapTabIndex"] == "-1"
-                    assert collapsed["linkTabIndexes"]
-                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
+                    assert expanded["state"] == "expanded"
+                    assert expanded["mapTabIndex"] == "-1"
+                    assert expanded["linkTabIndexes"]
+                    assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.click(".raya-course-map-toggle")
-                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "true"
+                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "false"
                     _assert_no_horizontal_overflow(page)
-                    expanded = page.evaluate(
+                    collapsed = page.evaluate(
                         """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
-                    assert set(expanded["linkTabIndexes"]) == {None}
+                    assert collapsed["state"] == "collapsed"
+                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(

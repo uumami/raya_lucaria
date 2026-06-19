@@ -1849,8 +1849,9 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
 
     assert shell_js.exists()
     assert '<script src="_raya/render/shell.js" defer></script>' in index_html
-    assert "raya.courseMapExpanded" in script_text
-    assert "localStorage" in script_text
+    assert "raya.courseMapExpanded" not in script_text
+    assert "localStorage" not in script_text
+    assert "setExpanded(true)" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
 
