@@ -266,6 +266,14 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert mobile_course_link is not None
                             assert mobile_course_link["width"] > 0
                             assert mobile_course_link["height"] > 0
+                            page.click(".raya-course-map-toggle")
+                            _assert_no_horizontal_overflow(page)
+                            mobile_grid_columns = page.evaluate(
+                                """() => getComputedStyle(
+                                  document.querySelector('.raya-learning-shell')
+                                ).gridTemplateColumns"""
+                            )
+                            assert len(mobile_grid_columns.split()) == 1
                         assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
                         page.keyboard.press("Tab")
                         focused = page.evaluate("() => document.activeElement && document.activeElement.className")
