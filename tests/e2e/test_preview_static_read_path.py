@@ -402,10 +402,14 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((button) => button.textContent.trim()),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
+                          activeElement: document.activeElement?.id,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
                           firstLinkWidth: document.querySelector('#raya-course-map a')
                             ?.getBoundingClientRect().width,
+                          firstLinkPointerEvents: getComputedStyle(
+                            document.querySelector('#raya-course-map a')
+                          ).pointerEvents,
                           buttonVisualLabel: getComputedStyle(
                             document.querySelector('#raya-course-map .raya-course-map-toggle'),
                             '::after'
@@ -426,16 +430,17 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Expand course map",
                     ]
                     assert collapsed["texts"] == ["Course map", "Expand map"]
-                    assert collapsed["listHidden"] == "true"
-                    assert collapsed["listInert"] is True
+                    assert collapsed["listHidden"] == "false"
+                    assert collapsed["listInert"] is False
                     assert 56 <= collapsed["mapWidth"] <= 84
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
                     assert collapsed["buttonVisualLabel"] == '"Map"'
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
+                    assert collapsed["firstLinkPointerEvents"] == "auto"
                     assert collapsed["linkTabIndexes"]
-                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
+                    assert set(collapsed["linkTabIndexes"]) == {None}
 
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(
@@ -472,6 +477,27 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
                     assert set(expanded["linkTabIndexes"]) == {None}
+
+                    page.locator("#raya-course-map a").first.focus()
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    escape_collapsed = page.evaluate(
+                        """() => ({
+                          activeElementClass: document.activeElement?.className,
+                          activeElementText: document.activeElement?.textContent.trim(),
+                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
+                          listInert: document.querySelector('#raya-course-map-list')?.inert,
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert "raya-course-map-toggle" in escape_collapsed["activeElementClass"]
+                    assert escape_collapsed["activeElementText"] == "Expand map"
+                    assert escape_collapsed["listHidden"] == "false"
+                    assert escape_collapsed["listInert"] is False
+                    assert set(escape_collapsed["linkTabIndexes"]) == {None}
                 finally:
                     page.close()
             finally:
@@ -625,7 +651,7 @@ def test_render_fixture_course_map_works_without_storage(
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["expanded"] == "false"
-                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
+                    assert set(collapsed["linkTabIndexes"]) == {None}
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(
@@ -805,7 +831,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         })"""
                     )
                     assert collapsed["state"] == "collapsed"
-                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
+                    assert set(collapsed["linkTabIndexes"]) == {None}
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(

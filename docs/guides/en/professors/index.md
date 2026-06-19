@@ -161,7 +161,7 @@ checkpoints and goals as visible teaching material until a later source contract
 accepts them as metadata.
 
 Rendered pages now use an expanded course map by default and let students
-collapse it to a compact map rail for more reading space. Course-map state is
+collapse it to an operable compact map rail for more reading space. Course-map state is
 non-persistent UI state. The shell may show structure such as `Page N of M`;
 treat that as course position, not personal progress or completion.
 

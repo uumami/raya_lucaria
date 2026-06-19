@@ -29,7 +29,7 @@ cambia contenido, evaluacion, enlaces ni etiquetas de autoridad.
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
 el mapa del curso expandido da orientacion por defecto, el articulo principal
 sigue siendo la leccion, y el riel de aprendizaje ofrece contenidos de pagina y
-contexto cercano. Puedes colapsar el mapa a un riel compacto cuando quieras mas
+contexto cercano. Puedes colapsar el mapa a un riel compacto operable cuando quieras mas
 espacio de lectura; esa eleccion es no persistente y no guarda ni muestra
 progreso personal.
 

@@ -161,7 +161,7 @@ metas como material docente visible hasta que un contrato futuro los acepte como
 metadata.
 
 Las paginas renderizadas usan un mapa del curso expandido por defecto y permiten
-colapsarlo a un riel compacto para dar mas espacio de lectura. El estado del
+colapsarlo a un riel compacto operable para dar mas espacio de lectura. El estado del
 mapa del curso es UI no persistente. La shell puede mostrar estructura como
 `Page N of M`; eso es posicion dentro del curso y no es progreso personal ni
 finalizacion.

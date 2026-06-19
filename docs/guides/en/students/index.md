@@ -29,7 +29,7 @@ links, or authority labels.
 The current course shell is a static reading aid. On desktop, the expanded course map
 gives orientation by default, the main article remains the lesson,
 and the learning rail provides page contents and nearby course context. You can
-collapse the map to a compact map rail when you want more reading space; that
+collapse the map to an operable compact map rail when you want more reading space; that
 choice is non-persistent and does not store or show personal progress.
 
 Use the Course map button to collapse or expand navigation when you need a

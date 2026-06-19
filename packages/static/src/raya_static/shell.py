@@ -47,11 +47,10 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function updateMapLinkTabOrder(nextExpanded) {
-    const hideLinks = !nextExpanded;
     const mapList = map.querySelector("#raya-course-map-list");
     if (mapList) {
-      mapList.setAttribute("aria-hidden", hideLinks ? "true" : "false");
-      mapList.inert = hideLinks;
+      mapList.setAttribute("aria-hidden", "false");
+      mapList.inert = false;
     }
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
@@ -59,11 +58,7 @@ _SHELL_JAVASCRIPT = r"""
       map.setAttribute("tabindex", "-1");
     }
     map.querySelectorAll("a").forEach((link) => {
-      if (hideLinks) {
-        link.setAttribute("tabindex", "-1");
-      } else {
-        link.removeAttribute("tabindex");
-      }
+      link.removeAttribute("tabindex");
     });
   }
 
@@ -142,7 +137,18 @@ _SHELL_JAVASCRIPT = r"""
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && root.dataset.rayaCourseMap === "expanded") {
+      const activeElement = document.activeElement;
+      const shouldMoveFocus =
+        activeElement instanceof Element &&
+        map.contains(activeElement) &&
+        !activeElement.matches("[data-raya-course-map-toggle]");
       setExpanded(false);
+      if (shouldMoveFocus) {
+        const mapToggle = map.querySelector("[data-raya-course-map-toggle]");
+        if (mapToggle) {
+          mapToggle.focus();
+        }
+      }
     }
   });
 

@@ -60,7 +60,7 @@ relacionada inventada desde la prosa.
 
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un mapa del curso expandido por defecto en escritorio, puede
-colapsarse con click explicito a un riel compacto, y mantiene ese estado no persistente.
+colapsarse con click explicito a un riel compacto operable, y mantiene ese estado no persistente.
 El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
 servirse desde recursos locales del renderer sin scripts ni estilos externos.
 

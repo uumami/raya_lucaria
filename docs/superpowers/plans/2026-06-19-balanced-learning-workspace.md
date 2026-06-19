@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Status note:** This plan records the implementation path from the pre-change shell state. Current renderer guidance lives in `docs/foundation/20_learning_renderer_contract.md`; the accepted behavior is expanded by default, non-persistent, and collapsible by explicit click to a compact map rail.
+**Status note:** This plan records the implementation path from the pre-change shell state. Current renderer guidance lives in `docs/foundation/20_learning_renderer_contract.md`; the accepted behavior is expanded by default, non-persistent, collapsible by explicit click to an operable compact map rail, and not defined by the unchecked historical task boxes below.
 
 **Goal:** Replace the pre-change cramped collapsed-by-default course shell with a desktop-expanded balanced learning workspace that keeps the article primary, collapses to a real compact map rail, and preserves accessibility/static-rendering guarantees.
 
@@ -24,7 +24,7 @@
   - Tune Eva-inspired defaults through semantic tokens and avoid broad saturated reading backgrounds.
 - `packages/static/src/raya_static/shell.py`
   - Toggle course map expanded/collapsed state without persistence.
-  - Keep `aria-expanded`, `aria-hidden`, `inert`, labels, and link tab order synchronized.
+  - Keep `aria-expanded`, labels, and focus behavior synchronized while collapsed map rail links remain operable.
   - Keep right rail accordions accessible.
 - `tests/contracts/test_static_builder.py`
   - Assert generated static HTML has the expanded desktop default and accessible collapsed structures.
