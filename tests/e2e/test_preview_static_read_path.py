@@ -404,6 +404,10 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
                           firstLinkWidth: document.querySelector('#raya-course-map a')
                             ?.getBoundingClientRect().width,
+                          buttonVisualLabel: getComputedStyle(
+                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
+                            '::after'
+                          ).content,
                           wrappedLinkTexts: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.innerText)
                             .filter((text) => text.includes('\\n')),
@@ -425,6 +429,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert 56 <= collapsed["mapWidth"] <= 84
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
+                    assert collapsed["buttonVisualLabel"] == '"Map"'
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
                     assert collapsed["linkTabIndexes"]

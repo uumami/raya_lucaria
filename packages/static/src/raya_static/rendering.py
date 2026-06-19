@@ -699,7 +699,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   }
   [data-raya-course-map="collapsed"] .raya-course-map-toggle::after,
   .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-toggle::after {
-    content: ">";
+    content: "Map";
     display: grid;
     inset: 0;
     place-items: center;
