@@ -28,7 +28,7 @@ The current shell uses an expanded course map by default on desktop and browser 
 | --- | --- | --- |
 | Course map | `current` | Render from current navigation data, expanded by default when the shell script runs, non-persistent, not hover-triggered, and collapsible through an explicit click control or Escape into an operable compact map rail. |
 | Main article | `current` | Render authored content, build-time MathJax, numbered objects, static environments, callouts, tables, code, and local assets. |
-| Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, and previous/next links from current artifact data. |
+| Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, explicit graph link context, and previous/next links from current artifact data. |
 | Reader controls | `current` | Use local OpenDyslexic resources and keyboard-reachable controls. |
 | Checkpoints and goals as metadata | `planned` | Require a future source-contract change; do not infer from prose. |
 | Related practice index | `planned` | Requires accepted source/artifact data. |
@@ -40,7 +40,9 @@ The static renderer may present course map navigation, the main article, and the
 
 The main article owns authored teaching content. It may include build-time MathJax, numbered objects, static environments, callouts, tables, code, local assets, and links rewritten through current Raya rules.
 
-The right learning rail owns compact page context. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, and previous/next links from generated navigation.
+The right learning rail owns compact page context. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, explicit incoming and outgoing content links from generated graph data, and previous/next links from generated navigation.
+
+Explicit graph link context means relationships already present in source links, stable IDs, or prerequisite metadata. It does not mean inferred recommendations, related practice, personal next steps, or mastery guidance.
 
 Reader controls may use local `OpenDyslexic` resources and keyboard-reachable controls. They must work from static files and must not depend on accounts, a backend, CDN resources, or external font requests.
 
