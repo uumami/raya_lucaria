@@ -346,6 +346,65 @@ def test_build_writes_graph_index_from_current_navigation_and_links(
     assert 'href="../../unit/topic/index.html"' in inspection_html
 
 
+def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    root_page = course / "course" / "0_index.md"
+    root_page.write_text(
+        root_page.read_text(encoding="utf-8").replace(
+            "title: Raya Lucaria Render Fixture",
+            "title: Raya & Lucaria <Graph> Fixture",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    graph_page = site / "_raya" / "graph" / "index.html"
+    graph_js = site / "_raya" / "render" / "graph.js"
+    index_html = (site / "index.html").read_text(encoding="utf-8")
+    graph_html = graph_page.read_text(encoding="utf-8")
+    graph_script = graph_js.read_text(encoding="utf-8")
+
+    assert graph_page.exists()
+    assert graph_js.exists()
+    assert 'href="_raya/graph/index.html"' in index_html
+    assert 'data-raya-surface="graph"' in graph_html
+    assert '<script type="application/json" id="raya-graph-data">' in graph_html
+    assert 'src="../render/graph.js"' in graph_html
+    assert 'href="../render/rich.css"' in graph_html
+    assert 'href="../render/skin.css"' in graph_html
+    assert 'href="../../data/graph.json"' not in graph_html
+    assert "https://" not in graph_html
+    assert "http://" not in graph_html
+    assert "cytoscape" not in graph_html.lower()
+    assert "graph-search" in graph_html
+    assert "graph-layout" in graph_html
+    assert "graph-fit" in graph_html
+    assert "graph-reset" in graph_html
+    assert "data-raya-graph-node" in graph_html
+    assert "raya-graph-list-metrics" in graph_html
+    assert "Backlinks:" in graph_html
+    assert "../../index.html" in graph_html
+    graph_payload_match = re.search(
+        r'<script type="application/json" id="raya-graph-data">\n(.*?)\n</script>',
+        graph_html,
+        re.DOTALL,
+    )
+    assert graph_payload_match is not None
+    graph_payload = json.loads(graph_payload_match.group(1))
+    graph_nodes_by_id = {node["id"]: node for node in graph_payload["nodes"]}
+    assert graph_nodes_by_id["render-root"]["title"] == "Raya & Lucaria <Graph> Fixture"
+    assert "data-raya-graph-layout" in graph_script
+    assert "graph-search" in graph_script
+    assert "graph-group-filter" in graph_script
+    assert 'mode === "list"' in graph_script
+    assert "graph-reset" in graph_script
+    assert "window.location.href" in graph_script
+
+
 def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
     graph_path = tmp_path / "graph.json"
     graph_path.write_text(

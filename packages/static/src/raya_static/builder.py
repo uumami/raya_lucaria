@@ -80,6 +80,7 @@ from raya_static.accessibility import (
     OPEN_DYSLEXIC_JS_NAME,
     open_dyslexic_resources,
 )
+from raya_static.graph import GRAPH_RESOURCE_PATH, GRAPH_SCRIPT_NAME, graph_resources
 from raya_static.math_renderer import MathRenderer
 from raya_static.numbered_objects import (
     NumberedObjectRenderContext,
@@ -122,6 +123,7 @@ STATIC_ASSETS_PATH = Path(STATIC_RESOURCE_DIR) / "assets"
 STATIC_FILES_PATH = Path(STATIC_RESOURCE_DIR) / "files"
 STATIC_REVIEWED_PATH = REVIEWED_BROWSER_DIR
 STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
+STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
 MATH_FONT_SOURCE_DIR = (
     REPOSITORY_ROOT
@@ -346,6 +348,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         report.wrote_output(directory)
     _write_rich_render_resources(site_dir, report, skin_context=skin_context)
     _write_shell_resources(site_dir, report)
+    _write_graph_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -433,6 +436,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
         graph_index=graph_index,
         references=references,
         reviewed_outputs=reviewed_outputs,
+        report=report,
+    )
+    _write_graph_surface(
+        site_dir=site_dir,
+        content_model=content_model,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
+        graph_index=graph_index,
+        skin_context=skin_context,
         report=report,
     )
 
@@ -754,6 +766,7 @@ def _render_page(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
     )
+    graph_href = _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -815,7 +828,7 @@ def _render_page(
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
-            _render_top_command_bar(course_title),
+            _render_top_command_bar(course_title, graph_href),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(page, content_model),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
@@ -834,13 +847,14 @@ def _render_page(
     )
 
 
-def _render_top_command_bar(course_title: str) -> str:
+def _render_top_command_bar(course_title: str, graph_href: str) -> str:
     return "\n".join(
         [
             '<header class="raya-top-command-bar" aria-label="Course tools">',
             '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
             '<div class="raya-course-tools">',
+            f'<a class="raya-graph-link" href="{html.escape(graph_href)}">Graph</a>',
             _render_course_map_toggle("Course map"),
             (
                 '<button class="raya-font-toggle" type="button" '
@@ -2016,6 +2030,186 @@ def _render_inspection_surface(
     )
 
 
+def _write_graph_surface(
+    *,
+    site_dir: Path,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    graph_index: dict[str, Any],
+    skin_context: SkinContext,
+    report: ValidationReport,
+) -> None:
+    graph_path = site_dir / STATIC_GRAPH_PATH
+    graph_path.parent.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(graph_path.parent)
+    graph_path.write_text(
+        _render_graph_surface(
+            content_model=content_model,
+            course_title=course_title,
+            language=language,
+            graph_index=graph_index,
+            skin_context=skin_context,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(graph_path)
+
+
+def _render_graph_surface(
+    *,
+    content_model: ContentModel,
+    course_title: str,
+    language: str,
+    graph_index: dict[str, Any],
+    skin_context: SkinContext,
+) -> str:
+    stylesheet_href = _relative_href(STATIC_GRAPH_PATH.as_posix(), RENDER_STYLESHEET_PATH)
+    skin_stylesheet_href = _relative_href(
+        STATIC_GRAPH_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
+    accessibility_css_href = _relative_href(
+        STATIC_GRAPH_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        STATIC_GRAPH_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+    )
+    graph_js_href = _relative_href(
+        STATIC_GRAPH_PATH.as_posix(),
+        Path(GRAPH_RESOURCE_PATH) / GRAPH_SCRIPT_NAME,
+    )
+    root_skin = skin_id_for_source_path(content_model.pages[0].source_path, skin_context)
+    browser_graph = _browser_graph_payload(graph_index)
+    graph_payload = _json_script_text(browser_graph)
+    group_buttons = [
+        (
+            '<button class="raya-graph-chip" type="button" '
+            f'data-raya-graph-group-filter="{html.escape(group["id"], quote=True)}" '
+            'aria-pressed="true">'
+            f'{html.escape(group["title"])}'
+            "</button>"
+        )
+        for group in graph_index["groups"]
+    ]
+    edge_counts: dict[str, int] = defaultdict(int)
+    for edge in browser_graph["edges"]:
+        edge_counts[str(edge["from"])] += 1
+        edge_counts[str(edge["to"])] += 1
+    node_items = []
+    for node in browser_graph["nodes"]:
+        backlink_count = len(browser_graph["backlinks"].get(node["id"], []))
+        edge_count = edge_counts[node["id"]]
+        node_items.append(
+            f'<li data-raya-graph-node="{html.escape(node["id"], quote=True)}">'
+            f'<a href="{html.escape(node["url"])}">{html.escape(node["title"])}</a>'
+            '<span class="raya-graph-list-metrics">'
+            f'Status: {html.escape(node["status"])}; '
+            f'Edges: {edge_count}; Backlinks: {backlink_count}'
+            "</span>"
+            "</li>"
+        )
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Course Graph - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
+            "</head>",
+            (
+                f'<body data-raya-surface="graph" '
+                f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
+            ),
+            '<a class="raya-skip-link" href="#raya-graph-main">Skip to graph</a>',
+            '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
+            '<header class="raya-graph-header">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            "<h1>Course Graph</h1>",
+            (
+                "<p>Explore pages, unit groups, prerequisites, and content references "
+                "generated from this course.</p>"
+            ),
+            "</header>",
+            '<section class="raya-graph-controls" aria-label="Graph controls">',
+            '<label for="graph-search">Search</label>',
+            '<input id="graph-search" type="search" autocomplete="off">',
+            '<label for="graph-layout">Layout</label>',
+            (
+                '<select id="graph-layout">'
+                '<option value="map">Map</option>'
+                '<option value="radial">Radial</option>'
+                '<option value="list">List</option>'
+                "</select>"
+            ),
+            '<button id="graph-fit" type="button">Fit</button>',
+            '<button id="graph-reset" type="button">Reset</button>',
+            "</section>",
+            '<section class="raya-graph-groups" aria-label="Graph groups">',
+            "\n".join(group_buttons),
+            "</section>",
+            '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
+            (
+                '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
+                'role="img" aria-label="Course graph"></svg>'
+            ),
+            '<ol id="raya-graph-list" class="raya-graph-list">',
+            "\n".join(node_items),
+            "</ol>",
+            '<script type="application/json" id="raya-graph-data">',
+            graph_payload,
+            "</script>",
+            "</main>",
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(graph_js_href)}" defer></script>',
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _browser_graph_payload(graph_index: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **graph_index,
+        "nodes": [
+            {
+                **node,
+                "url": _relative_href(STATIC_GRAPH_PATH.as_posix(), node["url"]),
+            }
+            for node in graph_index["nodes"]
+        ],
+        "backlinks": {
+            page_id: [
+                {
+                    **backlink,
+                    "url": _relative_href(STATIC_GRAPH_PATH.as_posix(), backlink["url"]),
+                }
+                for backlink in backlinks
+            ]
+            for page_id, backlinks in graph_index["backlinks"].items()
+        },
+    }
+
+
+def _json_script_text(data: dict[str, Any]) -> str:
+    return (
+        json.dumps(data, ensure_ascii=False, sort_keys=True)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+    )
+
+
 def _reviewed_output_excerpt(reviewed: ReviewedOutput) -> str:
     for reviewed_file in reviewed.files:
         if reviewed_file.kind not in {"stdout", "text", "output"}:
@@ -2213,6 +2407,16 @@ def _write_shell_resources(site_dir: Path, report: ValidationReport) -> None:
     shell_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(shell_dir)
     script_path = shell_dir / SHELL_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_graph_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = graph_resources()
+    graph_dir = site_dir / GRAPH_RESOURCE_PATH
+    graph_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(graph_dir)
+    script_path = graph_dir / GRAPH_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 

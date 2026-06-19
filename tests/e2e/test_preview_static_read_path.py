@@ -95,6 +95,87 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
     assert all(len(font) > 0 for font in math_fonts)
 
 
+def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+        graph_html = _fetch_text(f"{base_url}/_raya/graph/index.html")
+        graph_js = _fetch_text(f"{base_url}/_raya/render/graph.js")
+
+        assert 'data-raya-surface="graph"' in graph_html
+        assert "raya-graph-data" in graph_html
+        assert "https://" not in graph_html
+        assert "http://" not in graph_html
+        assert "cytoscape" not in graph_html.lower()
+        assert "window.location.href" in graph_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator("#raya-graph-canvas .raya-graph-node").count() > 0
+                        before = page.locator(
+                            "#raya-graph-list [data-raya-graph-node]:visible"
+                        ).count()
+                        page.fill("#graph-search", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        after = page.locator(
+                            "#raya-graph-list [data-raya-graph-node]:visible"
+                        ).count()
+                        assert after < before
+                        assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        page.select_option("#graph-layout", "radial")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "radial"
+                        )
+                        page.select_option("#graph-layout", "list")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "list"
+                        )
+                        assert page.locator("#raya-graph-canvas").is_hidden()
+                        page.click("#graph-reset")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "map"
+                        )
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 

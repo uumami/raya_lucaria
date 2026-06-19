@@ -527,6 +527,107 @@ img {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
 }
+.raya-graph-link,
+.raya-graph-back-link {
+  align-items: center;
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  text-decoration: none;
+}
+.raya-graph-link:focus-visible,
+.raya-graph-back-link:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-graph-page {
+  margin: 0 auto;
+  max-width: 118rem;
+  padding: var(--raya-space-page);
+}
+.raya-graph-header,
+.raya-graph-controls,
+.raya-graph-groups,
+.raya-graph-status,
+.raya-graph-canvas,
+.raya-graph-list {
+  margin-bottom: var(--raya-space-block);
+}
+.raya-graph-header {
+  max-width: 72rem;
+}
+.raya-graph-controls,
+.raya-graph-groups {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.raya-graph-controls input,
+.raya-graph-controls select,
+.raya-graph-controls button,
+.raya-graph-chip {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+}
+.raya-graph-chip[aria-pressed="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
+}
+.raya-graph-canvas {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  display: block;
+  min-height: 34rem;
+  width: 100%;
+}
+.raya-graph-canvas[hidden] {
+  display: none;
+}
+.raya-graph-edge {
+  stroke: var(--raya-color-border);
+  stroke-width: 2;
+}
+.raya-graph-edge.is-active {
+  stroke: var(--raya-color-accent);
+  stroke-width: 3;
+}
+.raya-graph-node circle {
+  fill: var(--raya-color-accent-soft);
+  stroke: var(--raya-color-accent);
+  stroke-width: 2;
+}
+.raya-graph-node text {
+  fill: var(--raya-color-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-anchor: middle;
+}
+.raya-graph-node.is-muted {
+  opacity: 0.28;
+}
+.raya-graph-list {
+  columns: 2;
+  padding-left: 1.25rem;
+}
+.raya-graph-list li {
+  break-inside: avoid;
+  margin-bottom: 0.35rem;
+}
+.raya-graph-list li[hidden] {
+  display: none;
+}
 .raya-learning-shell {
   display: grid;
   gap: var(--raya-space-block);
@@ -1140,12 +1241,19 @@ mjx-container[display="true"] {
   .raya-learning-rail {
     margin-top: 1rem;
   }
+  .raya-graph-canvas {
+    min-height: 24rem;
+  }
+  .raya-graph-list {
+    columns: 1;
+  }
 }
 @media (max-width: 520px) {
   .raya-top-command-bar-inner,
   .raya-learning-shell,
   .raya-page-footer,
-  .raya-inspection-main {
+  .raya-inspection-main,
+  .raya-graph-page {
     padding: 0.75rem;
   }
   .raya-top-command-bar-inner {
