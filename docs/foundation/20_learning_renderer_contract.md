@@ -29,7 +29,7 @@ The current shell uses an expanded course map by default on desktop and browser 
 | Course map | `current` | Render from current navigation data, expanded by default when the shell script runs, non-persistent, not hover-triggered, and collapsible through an explicit click control or Escape into an operable compact map rail. |
 | Main article | `current` | Render authored content, build-time MathJax, numbered objects, static environments, callouts, tables, code, and local assets. |
 | Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, explicit graph link context, and previous/next links from current artifact data. |
-| Reader controls | `current` | Use local OpenDyslexic resources and keyboard-reachable controls. |
+| Reader controls | `current` | Use local OpenDyslexic resources, keyboard-reachable controls, and previous/next page keyboard navigation from generated sequence links. |
 | Local course search | `current` | Render a static search surface from generated page metadata only, using local JavaScript and deployment-neutral page links. |
 | Checkpoints and goals as metadata | `planned` | Require a future source-contract change; do not infer from prose. |
 | Related practice index | `planned` | Requires accepted source/artifact data. |
@@ -45,7 +45,7 @@ The right learning rail owns compact page context. It is expanded by default on 
 
 Explicit graph link context means relationships already present in source links, stable IDs, or prerequisite metadata. It does not mean inferred recommendations, related practice, personal next steps, or mastery guidance.
 
-Reader controls may use local `OpenDyslexic` resources and keyboard-reachable controls. They must work from static files and must not depend on accounts, a backend, CDN resources, or external font requests.
+Reader controls may use local `OpenDyslexic` resources, keyboard-reachable controls, and previous/next page keyboard navigation from generated sequence links. They must work from static files and must not depend on storage-backed reader state, fetch/XHR requests, accounts, a backend, CDN resources, external font requests, personal progress, adaptive recommendations, or browser-side MathJax conversion.
 
 Local course search may expose generated page titles, navigation titles, stable IDs, summaries, status, hierarchy labels, tags, and rendered page links. It must not scrape rendered prose, MathJax output, source paths, artifact paths, cache keys, personal progress, or inferred recommendations into the student search surface.
 

@@ -586,6 +586,82 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
         handle.close()
 
 
+def test_render_fixture_keyboard_shortcuts_move_between_sequence_pages(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.keyboard.press("ArrowRight")
+                    page.wait_for_url("**/static-path/index.html")
+                    assert page.url.endswith("/static-path/index.html")
+
+                    page.evaluate(
+                        """() => {
+                          const input = document.createElement('input');
+                          input.id = 'keyboard-nav-guard';
+                          input.type = 'text';
+                          document.querySelector('#raya-article')?.prepend(input);
+                        }"""
+                    )
+                    page.focus("#keyboard-nav-guard")
+                    page.keyboard.press("ArrowRight")
+                    page.wait_for_timeout(250)
+                    assert page.url.endswith("/static-path/index.html")
+
+                    page.locator("#raya-article").focus()
+                    alt_arrow_not_canceled = page.evaluate(
+                        """() => {
+                          const event = new KeyboardEvent('keydown', {
+                            key: 'ArrowRight',
+                            altKey: true,
+                            bubbles: true,
+                            cancelable: true,
+                          });
+                          return document.dispatchEvent(event);
+                        }"""
+                    )
+                    page.wait_for_timeout(250)
+                    assert alt_arrow_not_canceled is True
+                    assert page.url.endswith("/static-path/index.html")
+
+                    page.keyboard.press("Alt+j")
+                    page.wait_for_url("**/math-authoring/index.html")
+                    assert page.url.endswith("/math-authoring/index.html")
+
+                    page.keyboard.press("Alt+k")
+                    page.wait_for_url("**/static-path/index.html")
+                    assert page.url.endswith("/static-path/index.html")
+
+                    page.keyboard.press("ArrowLeft")
+                    page.wait_for_url("**/index.html")
+                    assert page.url.endswith("/index.html")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_course_map_collapses_and_expands_on_click_only(
     tmp_path: Path,
 ) -> None:

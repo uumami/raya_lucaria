@@ -1309,13 +1309,15 @@ def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
         previous = pages[current_index - 1]
         href = _relative_href(page.output_path, previous.output_path)
         links.append(
-            f'<a rel="prev" href="{html.escape(href)}">Previous: {html.escape(previous.nav_title or previous.title)}</a>'
+            f'<a rel="prev" data-raya-prev-page href="{html.escape(href)}">'
+            f"Previous: {html.escape(previous.nav_title or previous.title)}</a>"
         )
     if current_index + 1 < len(pages):
         next_page = pages[current_index + 1]
         href = _relative_href(page.output_path, next_page.output_path)
         links.append(
-            f'<a rel="next" href="{html.escape(href)}">Next: {html.escape(next_page.nav_title or next_page.title)}</a>'
+            f'<a rel="next" data-raya-next-page href="{html.escape(href)}">'
+            f"Next: {html.escape(next_page.nav_title or next_page.title)}</a>"
         )
     return "\n".join(links)
 

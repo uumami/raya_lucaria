@@ -2069,7 +2069,13 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert '<script src="_raya/render/shell.js" defer></script>' in index_html
     assert "raya.courseMapExpanded" not in script_text
     assert "localStorage" not in script_text
+    assert "sessionStorage" not in script_text
     assert "setExpanded(true)" in script_text
+    assert "data-raya-prev-page" in script_text
+    assert "data-raya-next-page" in script_text
+    assert "ArrowLeft" in script_text
+    assert "ArrowRight" in script_text
+    assert "isEditableNavigationTarget" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
 
@@ -2178,9 +2184,9 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
-    assert 'rel="next" href="unit/index.html"' in html
-    assert 'rel="prev" href="../index.html"' in middle_html
-    assert 'rel="next" href="topic/index.html"' in middle_html
+    assert 'rel="next" data-raya-next-page href="unit/index.html"' in html
+    assert 'rel="prev" data-raya-prev-page href="../index.html"' in middle_html
+    assert 'rel="next" data-raya-next-page href="topic/index.html"' in middle_html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     ) < html.index('<aside id="raya-learning-rail"')

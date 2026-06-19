@@ -145,6 +145,55 @@ _SHELL_JAVASCRIPT = r"""
     setFocusableDescendantsEnabled(body, nextExpanded);
   }
 
+  function isEditableNavigationTarget(target) {
+    if (!(target instanceof Element)) {
+      return false;
+    }
+    const tagName = target.tagName.toLowerCase();
+    return (
+      target.isContentEditable ||
+      tagName === "input" ||
+      tagName === "textarea" ||
+      tagName === "select"
+    );
+  }
+
+  function navigateToSequenceLink(selector) {
+    const link = document.querySelector(selector);
+    const href = link ? link.getAttribute("href") : "";
+    if (!href) {
+      return false;
+    }
+    window.location.href = href;
+    return true;
+  }
+
+  function handleSequenceKeyboardNavigation(event) {
+    if (isEditableNavigationTarget(event.target)) {
+      return false;
+    }
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+      return false;
+    }
+    const previousRequested =
+      (!event.altKey && event.key === "ArrowLeft") ||
+      (event.altKey && event.key === "k");
+    const nextRequested =
+      (!event.altKey && event.key === "ArrowRight") ||
+      (event.altKey && event.key === "j");
+    if (!previousRequested && !nextRequested) {
+      return false;
+    }
+    const selector = previousRequested
+      ? "[data-raya-prev-page]"
+      : "[data-raya-next-page]";
+    if (!navigateToSequenceLink(selector)) {
+      return false;
+    }
+    event.preventDefault();
+    return true;
+  }
+
   desktopMapQuery.addEventListener("change", () => {
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
@@ -184,6 +233,9 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   document.addEventListener("keydown", (event) => {
+    if (handleSequenceKeyboardNavigation(event)) {
+      return;
+    }
     if (event.key === "Escape" && root.dataset.rayaCourseMap === "expanded") {
       const activeElement = document.activeElement;
       const shouldMoveFocus =
