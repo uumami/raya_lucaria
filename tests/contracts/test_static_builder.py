@@ -2011,6 +2011,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
+    assert '<a class="raya-command raya-command-graph"' in html
+    assert 'aria-label="Open course graph"' in html
+    assert '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
+    assert 'aria-label="Collapse course map"' in html
+    assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
+    assert 'aria-label="Toggle OpenDyslexic font"' in html
+    assert 'href="../_raya/graph/index.html"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
@@ -2071,7 +2078,10 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="true">Course map</button>' in html
+    assert (
+        'aria-expanded="true" aria-label="Collapse course map">Course map</button>'
+        in html
+    )
     assert 'aria-expanded="true">Collapse map</button>' in html
     assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in html
     assert 'data-raya-map-label="Raya Lucaria Render Fixture"' in render_html
@@ -2162,16 +2172,23 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     for selector in (
         ".raya-top-command-bar",
+        ".raya-command",
+        ".raya-command::before",
+        ".raya-command-graph::before",
+        ".raya-command-map::before",
+        ".raya-command-font::before",
         ".raya-learning-shell",
         ".raya-course-map",
         ".raya-main-article",
         ".raya-learning-rail",
         ".raya-rail-panel",
         ".raya-status-chip",
+        ".raya-command:focus-visible",
         ".raya-font-toggle:focus-visible",
         ".raya-course-map-toggle:focus-visible",
     ):
         assert selector in css
+    assert "min-width: 2.75rem" in css
     assert "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);" in css
     assert "@media (min-width: 901px)" in css
     assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem);" in css

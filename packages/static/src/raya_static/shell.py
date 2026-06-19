@@ -94,7 +94,7 @@ _SHELL_JAVASCRIPT = r"""
         "aria-label",
         nextExpanded ? "Collapse course map" : "Expand course map"
       );
-      if (map.contains(button)) {
+      if (map.contains(button) && !button.classList.contains("raya-command-map")) {
         button.textContent = nextExpanded ? "Collapse map" : "Expand map";
       }
     });

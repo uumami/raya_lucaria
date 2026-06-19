@@ -858,12 +858,24 @@ def _render_top_command_bar(course_title: str, graph_href: str) -> str:
             '<div class="raya-top-command-bar-inner">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
             '<div class="raya-course-tools">',
-            f'<a class="raya-graph-link" href="{html.escape(graph_href)}">Graph</a>',
-            _render_course_map_toggle("Course map"),
             (
-                '<button class="raya-font-toggle" type="button" '
+                f'<a class="raya-command raya-command-graph" '
+                f'href="{html.escape(graph_href)}" '
+                'aria-label="Open course graph">'
+                '<span class="raya-command-label">Graph</span>'
+                "</a>"
+            ),
+            _render_course_map_toggle(
+                "Course map",
+                class_name="raya-command raya-command-map raya-course-map-toggle",
+                aria_label="Collapse course map",
+            ),
+            (
+                '<button class="raya-command raya-command-font raya-font-toggle" type="button" '
                 'aria-label="Toggle OpenDyslexic font" '
-                'aria-pressed="false">OpenDyslexic</button>'
+                'aria-pressed="false">'
+                '<span class="raya-command-label">OpenDyslexic</span>'
+                "</button>"
             ),
             "</div>",
             "</div>",
@@ -879,13 +891,22 @@ def _page_position(page: ContentPage, content_model: ContentModel) -> str:
     return ""
 
 
-def _render_course_map_toggle(label: str = "Course map", expanded: bool = True) -> str:
+def _render_course_map_toggle(
+    label: str = "Course map",
+    expanded: bool = True,
+    *,
+    class_name: str = "raya-course-map-toggle",
+    aria_label: str | None = None,
+) -> str:
     aria_expanded = "true" if expanded else "false"
+    aria_label_attr = (
+        f' aria-label="{html.escape(aria_label, quote=True)}"' if aria_label else ""
+    )
     return (
-        '<button class="raya-course-map-toggle" type="button" '
+        f'<button class="{html.escape(class_name, quote=True)}" type="button" '
         "data-raya-course-map-toggle "
         'aria-controls="raya-course-map" '
-        f'aria-expanded="{aria_expanded}">'
+        f'aria-expanded="{aria_expanded}"{aria_label_attr}>'
         f"{html.escape(label)}"
         "</button>"
     )

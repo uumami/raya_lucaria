@@ -510,24 +510,59 @@ img {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
-.raya-font-toggle {
+.raya-command {
+  align-items: center;
   background: var(--raya-color-accent-soft);
-  border: 1px solid var(--raya-color-accent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 64%, var(--raya-color-border));
   border-radius: 0.375rem;
   color: var(--raya-color-text);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
   font-weight: 700;
-  padding: 0.5rem 0.75rem;
+  gap: 0.45rem;
+  justify-content: center;
+  min-height: 2.5rem;
+  min-width: 2.75rem;
+  padding: 0.45rem 0.65rem;
+  text-decoration: none;
 }
+.raya-command::before {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 56%, transparent);
+  border-radius: 0.25rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 800;
+  height: 1.5rem;
+  justify-content: center;
+  line-height: 1;
+  min-width: 1.5rem;
+  padding: 0 0.2rem;
+}
+.raya-command-graph::before {
+  content: "G";
+}
+.raya-command-map::before {
+  content: "M";
+}
+.raya-command-font::before {
+  content: "Aa";
+}
+.raya-command:hover {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
+}
+.raya-command:focus-visible,
 .raya-font-toggle:focus-visible {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
 }
-.raya-graph-link,
 .raya-graph-back-link {
   align-items: center;
   background: var(--raya-color-accent-soft);
@@ -540,7 +575,6 @@ img {
   padding: 0.45rem 0.75rem;
   text-decoration: none;
 }
-.raya-graph-link:focus-visible,
 .raya-graph-back-link:focus-visible {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
@@ -805,7 +839,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
     white-space: nowrap;
     width: 1px;
   }
-  [data-raya-course-map="collapsed"] .raya-course-map-toggle,
+  [data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-toggle,
   .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-toggle {
     aspect-ratio: 1;
     overflow: hidden;
@@ -815,7 +849,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
     white-space: nowrap;
     width: 100%;
   }
-  [data-raya-course-map="collapsed"] .raya-course-map-toggle::after,
+  [data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-toggle::after,
   .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-toggle::after {
     content: "Map";
     display: grid;

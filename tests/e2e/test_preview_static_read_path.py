@@ -221,7 +221,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert '[data-raya-skin="eva-unit-03"]' in index_skin_css
     assert '[data-raya-skin="ghost-in-the-shell"]' in index_skin_css
     assert '[data-raya-skin="practice-lab"]' in reader_skin_css
-    assert '<button class="raya-font-toggle"' in index_html
+    assert '<button class="raya-command raya-command-font raya-font-toggle"' in index_html
     assert 'aria-pressed="false"' in index_html
     assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
     assert 'src="_raya/render/accessibility/open-dyslexic-toggle.js"' in index_html
@@ -230,7 +230,10 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
     assert 'data-raya-course-map="expanded"' in index_html
-    assert 'aria-expanded="true">Course map</button>' in index_html
+    assert (
+        'aria-expanded="true" aria-label="Collapse course map">Course map</button>'
+        in index_html
+    )
     assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
     assert 'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"' in index_html
     assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in index_html
@@ -304,6 +307,118 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     assert after["rootSetting"] == "true"
     assert after["bodyToken"] == '"OpenDyslexic"'
     assert "OpenDyslexic" in after["bodyFont"]
+
+
+def test_render_fixture_command_bar_controls_are_dense_and_operable(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                states = []
+                for viewport in (
+                    {"width": 1440, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                        _assert_no_horizontal_overflow(page)
+                        state = page.evaluate(
+                            """() => {
+                              const commands = Array.from(
+                                document.querySelectorAll('.raya-command')
+                              );
+                              const topBar = document.querySelector('.raya-top-command-bar');
+                              return {
+                                count: commands.length,
+                                minHeights: commands.map(
+                                  (item) => item.getBoundingClientRect().height
+                                ),
+                                topBarWidth: topBar.scrollWidth,
+                                viewportWidth: document.documentElement.clientWidth,
+                                graphHref: document
+                                  .querySelector('.raya-command-graph')
+                                  ?.getAttribute('href'),
+                                mapExpanded: document
+                                  .querySelector('.raya-command-map')
+                                  ?.getAttribute('aria-expanded'),
+                                fontPressed: document
+                                  .querySelector('.raya-command-font')
+                                  ?.getAttribute('aria-pressed'),
+                              };
+                            }"""
+                        )
+                        assert state["count"] == 3
+                        assert all(height >= 36 for height in state["minHeights"])
+                        assert state["topBarWidth"] <= state["viewportWidth"]
+                        assert state["graphHref"] == "_raya/graph/index.html"
+                        assert state["mapExpanded"] == "true"
+                        assert state["fontPressed"] == "false"
+
+                        page.click(".raya-command-map")
+                        collapsed_state = page.evaluate(
+                            """() => {
+                              const command = document.querySelector('.raya-command-map');
+                              const bounds = command.getBoundingClientRect();
+                              return {
+                                expanded: command.getAttribute('aria-expanded'),
+                                label: command.innerText,
+                                width: bounds.width,
+                                height: bounds.height,
+                                topBarWidth: document
+                                  .querySelector('.raya-top-command-bar')
+                                  .scrollWidth,
+                                viewportWidth: document.documentElement.clientWidth,
+                              };
+                            }"""
+                        )
+                        assert collapsed_state["expanded"] == "false"
+                        assert collapsed_state["label"] == "Course map"
+                        assert collapsed_state["height"] >= 36
+                        assert collapsed_state["height"] < 72
+                        assert collapsed_state["width"] < 180
+                        assert (
+                            collapsed_state["topBarWidth"]
+                            <= collapsed_state["viewportWidth"]
+                        )
+                        page.click(".raya-command-font")
+                        after_font = page.evaluate(
+                            """() => ({
+                              pressed: document
+                                .querySelector('.raya-command-font')
+                                ?.getAttribute('aria-pressed'),
+                              bodyFont: getComputedStyle(document.body).fontFamily,
+                            })"""
+                        )
+                        assert after_font["pressed"] == "true"
+                        assert "OpenDyslexic" in after_font["bodyFont"]
+                        states.append(state)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert len(states) == 2
 
 
 def test_render_fixture_learning_shell_layout_and_accessibility(
