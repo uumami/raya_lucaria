@@ -47,9 +47,12 @@ Numbered content appears as static labels and links, such as `Theorem 3.1`, `Fig
 Rendered proof headings name the object being proved, and math inside the proof should already be typeset during build. The page should not need a browser-side MathJax request to display the proof. If you see raw source syntax or raw TeX instead of a rendered proof, report it to the course team with the page URL or title.
 
 Proofs, solutions, hints, and answers should appear as static course content.
-When they name a theorem, problem, activity, homework, figure, table, or
-equation, that heading should already be resolved before the page reaches your
-browser.
+Proofs stay open when they are part of the explanation. Hints, solutions, and
+answers may start collapsed so you can reveal them only when you want support.
+Opening one does not submit an answer, save progress, contact a backend, or
+ask your browser to render MathJax. When a block names a theorem, problem,
+activity, homework, figure, table, or equation, that heading should already be
+resolved before the page reaches your browser.
 
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 

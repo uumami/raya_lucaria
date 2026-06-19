@@ -1325,6 +1325,20 @@ nav[aria-label="Breadcrumbs"] {
   margin: 0;
   padding: 0.6rem 0.85rem;
 }
+.raya-static-environment > summary.raya-static-environment-heading {
+  cursor: pointer;
+  list-style-position: inside;
+}
+.raya-static-environment > summary.raya-static-environment-heading:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: -3px;
+}
+.raya-static-environment:not([open]) > summary.raya-static-environment-heading {
+  border-bottom: 0;
+}
+.raya-static-environment:not([open]) > .raya-static-environment-body {
+  display: none;
+}
 .raya-static-environment-reference {
   color: var(--raya-color-text);
 }
@@ -1847,17 +1861,17 @@ def _render_static_environment_html(
     return "\n".join(
         [
             (
-                f'<section{id_html} class="raya-static-environment '
+                f'<details{id_html} class="raya-static-environment '
                 f'raya-static-environment--{escaped_kind}">'
             ),
-            '<p class="raya-static-environment-heading">',
+            '<summary class="raya-static-environment-heading">',
             f'<span class="raya-static-environment-reference">{html.escape(reference)}</span>'
             + (f" {title_html}" if title_html else ""),
-            "</p>",
+            "</summary>",
             '<div class="raya-static-environment-body">',
             body,
             "</div>",
-            "</section>",
+            "</details>",
         ]
     )
 

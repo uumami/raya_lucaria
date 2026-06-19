@@ -47,7 +47,10 @@ Proof blocks are static render surfaces, not numbered-index records. They may re
 Build-time static environments are separate from numbered objects. Preserve
 `proof`, `solution`, `hint`, and `answer` as rendered blocks whose optional `of`
 target resolves against `data/numbered-objects.json`; do not add them to the
-numbered index or require browser-side reference resolution.
+numbered index or require browser-side reference resolution. Keep proofs
+expanded, and keep `hint`, `solution`, and `answer` as native closed
+`details` disclosures by default. Do not add scoring, storage-backed progress,
+fetch requests, external assets, or browser-side MathJax to those disclosures.
 
 The learning renderer contract divides course shell behavior into `current`,
 `planned`, and `future` categories. Current renderer work may use existing

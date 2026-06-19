@@ -170,9 +170,12 @@ Accepted baseline:
 - Proof blocks use `::: proof {of="object-id"}` and render statically as proof environments. They may target any numbered object family, including theorems, definitions, equations, figures, tables, problems, homework, and activities. Proofs are not numbered objects and do not appear in `data/numbered-objects.json`.
 - Static environments are current build-time rendering behavior. `proof`,
   `solution`, `hint`, and `answer` use fenced directives, may carry stable
-  IDs, and may target a numbered object with `of="object-id"`. They render
-  static headings such as `Solution of Problem 3.1`, `Hint for Activity 4.1`,
-  and `Answer to Homework 5.1`, but they do not appear in
+  IDs, and may target a numbered object with `of="object-id"`. `proof`
+  renders expanded as part of the reasoning flow. `hint`, `solution`, and
+  `answer` render as closed native static disclosures by default while
+  preserving generated IDs, resolved headings such as `Solution of Problem
+  3.1`, `Hint for Activity 4.1`, and `Answer to Homework 5.1`, optional titles,
+  and body content. Static environments do not appear in
   `data/numbered-objects.json`. Unknown targets, malformed attributes,
   duplicate static-environment IDs, and collisions with numbered object IDs
   fail build with source diagnostics.

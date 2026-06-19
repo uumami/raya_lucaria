@@ -57,7 +57,10 @@ Use static environments for support around numbered objects. `proof`,
 `of="object-id"` to target any numbered object, including theorem-like objects,
 practice objects, figures, tables, equations, and configured course families.
 They are not numbered objects and do not create records in
-`data/numbered-objects.json`.
+`data/numbered-objects.json`. Proofs stay expanded in the argument flow.
+`hint`, `solution`, and `answer` render as closed native disclosures by default,
+so students reveal them when ready without submitting answers, storing progress,
+or loading a browser-side renderer.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
@@ -97,8 +100,8 @@ $\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}$
 ```
 
 The `hint`, `solution`, and `answer` blocks above support
-`matrix-practice`; they render on the page but do not create records in
-`data/numbered-objects.json`.
+`matrix-practice`; they render as spoiler-safe disclosures on the page but do
+not create records in `data/numbered-objects.json`.
 
 Use course skins for visual identity and section skins to emphasize units,
 labs, appendices, practice sections, or review sections.

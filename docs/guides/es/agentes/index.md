@@ -60,12 +60,14 @@ Para diagnosticos de objeto numerado, compara la directiva en la fuente, la entr
 
 Para fallas de contenido numerado, compara en este orden: la directiva en la fuente, el diagnostico de build, `data/numbered-objects.json`, el ancla/enlace renderizado y la evidencia de render-debug.
 
-Para bloques de prueba, valida objetivos `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Las pruebas se renderizan como entornos estaticos y no deben aparecer como registros del index numerado.
+Para bloques de prueba, valida objetivos `of` contra `data/numbered-objects.json`; no introduzcas `\label`, `\ref`, `\begin{proof}` de LaTeX ni browser-side MathJax. Las pruebas se renderizan como entornos estaticos abiertos y no deben aparecer como registros del index numerado.
 
 Para fallas de entornos estaticos, inspecciona la directiva en la fuente, el
 diagnostico de build, el registro objetivo en `data/numbered-objects.json` si `of` esta presente,
 el encabezado/ancla renderizado y la evidencia de render-debug del fixture
-`reader-ux`.
+`reader-ux`. `hint`, `solution` y `answer` deben ser disclosures nativos
+cerrados por defecto; no deben requerir storage, fetch, scoring, assets externos
+ni browser-side MathJax.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

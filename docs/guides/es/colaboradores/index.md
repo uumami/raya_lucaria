@@ -48,7 +48,10 @@ Los entornos estaticos estan separados de los objetos numerados. Preserva
 `proof`, `solution`, `hint` y `answer` como bloques renderizados durante el
 build cuyo objetivo opcional `of` se resuelve contra
 `data/numbered-objects.json`; no los agregues al index numerado ni exijas un
-resolver de referencias en el navegador.
+resolver de referencias en el navegador. Manten las pruebas abiertas y manten
+`hint`, `solution` y `answer` como disclosures nativos cerrados por defecto. No
+agregues scoring, progreso guardado, requests `fetch`, assets externos ni
+browser-side MathJax a esos disclosures.
 
 El contrato del renderizador de aprendizaje divide la estructura del curso en
 categorias `current`, `planned` y `future`. El trabajo `current` puede usar

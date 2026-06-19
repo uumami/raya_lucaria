@@ -644,21 +644,27 @@ def test_render_debug_report_enriches_numbered_content_from_index(
     reader_ux.mkdir()
     (reader_ux / "index.html").write_text(
         _learning_shell_html(
-            '<aside class="raya-static-environment raya-static-environment--hint" '
+            '<details class="raya-static-environment raya-static-environment--hint" '
             'id="raya-static-environment-hint-orthogonal-activity">'
-            '<div class="raya-static-environment-heading">Hint for Activity 4.1</div>'
+            '<summary class="raya-static-environment-heading">Hint for Activity 4.1</summary>'
+            '<div class="raya-static-environment-body">'
             "<p>Compare the projection formula before expanding the matrix product.</p>"
-            "</aside>"
-            '<aside class="raya-static-environment raya-static-environment--solution" '
+            "</div>"
+            "</details>"
+            '<details class="raya-static-environment raya-static-environment--solution" '
             'id="raya-static-environment-solution-orthogonal-activity">'
-            '<div class="raya-static-environment-heading">Solution of Activity 4.1</div>'
+            '<summary class="raya-static-environment-heading">Solution of Activity 4.1</summary>'
+            '<div class="raya-static-environment-body">'
             f"<p>{SOLUTION_BODY_EVIDENCE} while the projection line stays fixed.</p>"
-            "</aside>"
-            '<aside class="raya-static-environment raya-static-environment--answer" '
+            "</div>"
+            "</details>"
+            '<details class="raya-static-environment raya-static-environment--answer" '
             'id="raya-static-environment-answer-orthogonal-activity">'
-            '<div class="raya-static-environment-heading">Answer to Activity 4.1</div>'
+            '<summary class="raya-static-environment-heading">Answer to Activity 4.1</summary>'
+            '<div class="raya-static-environment-body">'
             "<p>The residual vector is orthogonal to the direction vector.</p>"
-            "</aside>",
+            "</div>"
+            "</details>",
             skin="practice-lab",
         ),
         encoding="utf-8",

@@ -27,7 +27,7 @@ The current shell uses an expanded course map by default on desktop and browser 
 | Capability | Status | Static renderer behavior |
 | --- | --- | --- |
 | Course map | `current` | Render from current navigation data, expanded by default when the shell script runs, non-persistent, not hover-triggered, and collapsible through an explicit click control or Escape into an operable compact map rail. |
-| Main article | `current` | Render authored content, build-time MathJax, numbered objects, static environments, callouts, tables, code, and local assets. |
+| Main article | `current` | Render authored content, build-time MathJax, numbered objects, spoiler-safe static environments, callouts, tables, code, and local assets. |
 | Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, explicit graph link context, and previous/next links from current artifact data. |
 | Reader controls | `current` | Use local OpenDyslexic resources, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. |
 | Local course search | `current` | Render a static search surface from generated page metadata only, using local JavaScript and deployment-neutral page links. |
@@ -39,7 +39,7 @@ The current shell uses an expanded course map by default on desktop and browser 
 
 The static renderer may present course map navigation, the main article, and the right learning rail as reader-facing regions. These regions should be stable across desktop and mobile layouts even when the visual skin changes.
 
-The main article owns authored teaching content. It may include build-time MathJax, numbered objects, static environments, callouts, tables, code, local assets, and links rewritten through current Raya rules.
+The main article owns authored teaching content. It may include build-time MathJax, numbered objects, static environments, callouts, tables, code, local assets, and links rewritten through current Raya rules. Proof static environments remain expanded as part of the reasoning flow. Optional support environments such as hints, solutions, and answers render as native closed disclosures by default so learners can reveal support intentionally without the static page storing progress, submitting answers, or contacting a service.
 
 The right learning rail owns compact page context. It is expanded by default on desktop and may collapse through an explicit click control into an operable compact context tab. Collapsed rail content must be hidden from keyboard and screen-reader navigation. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, explicit incoming and outgoing content links from generated graph data, and previous/next links from generated navigation.
 

@@ -48,7 +48,7 @@ Current static pages can preserve explicit prerequisites, previous/next links, a
 
 Worked examples reduce unnecessary search for novices. A common progression is concept, worked example, partially completed example, independent practice, then mixed review.
 
-Raya should make examples, problems, hints, solutions, answers, proofs, and explanations scannable without turning them into hidden dynamic behavior. Fading is an authoring pattern today, not an automatic renderer transformation.
+Raya should make examples, problems, proofs, and explanations scannable without turning them into hidden dynamic behavior. Proofs remain expanded when they carry the reasoning flow. Optional support such as hints, solutions, and answers may render as native closed static disclosures so students reveal support intentionally; this is not scoring, progress tracking, adaptive behavior, or a browser-side renderer. Fading is an authoring pattern today, not an automatic renderer transformation.
 
 ## Self-Explanation
 

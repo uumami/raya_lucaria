@@ -59,12 +59,14 @@ For numbered object diagnostics, compare the source directive, `data/numbered-ob
 
 For numbered-content failures, compare five surfaces in order: the source directive, the build diagnostic, `data/numbered-objects.json`, the rendered anchor/link text, and render-debug screenshots/report details.
 
-For proof blocks, validate `of` targets against `data/numbered-objects.json`; do not introduce LaTeX `\label`, `\ref`, `\begin{proof}`, or browser-side MathJax. Proofs render as static environments and should not appear as numbered-index records.
+For proof blocks, validate `of` targets against `data/numbered-objects.json`; do not introduce LaTeX `\label`, `\ref`, `\begin{proof}`, or browser-side MathJax. Proofs render as expanded static environments and should not appear as numbered-index records.
 
 For static-environment failures, inspect the source directive, the build
 diagnostic, the target record in `data/numbered-objects.json` when `of` is present,
 the rendered heading/anchor, and render-debug evidence from the `reader-ux`
-fixture.
+fixture. `hint`, `solution`, and `answer` should be native closed `details`
+disclosures by default; they must not require storage, fetch, scoring, external
+assets, or browser-side MathJax.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

@@ -2009,7 +2009,7 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
                                 .map((node) => node.innerText),
                               staticEnvironmentCount: document.querySelectorAll('.raya-static-environment').length,
                               staticEnvironmentTexts: Array.from(document.querySelectorAll('.raya-static-environment'))
-                                .map((node) => node.innerText),
+                                .map((node) => node.textContent),
                               staticEnvironmentIds: Array.from(document.querySelectorAll('.raya-static-environment[id]'))
                                 .map((node) => node.id),
                             };
@@ -2078,6 +2078,103 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
         "The residual vector is orthogonal to the direction vector."
         in static_environment_text
     )
+    assert external_requests == []
+
+
+def test_render_fixture_optional_static_environments_are_spoiler_safe(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.on(
+                    "request",
+                    lambda request: record_external_request(
+                        request.url,
+                        base_url,
+                        external_requests,
+                    ),
+                )
+                try:
+                    page.goto(f"{base_url}/reader-ux/", wait_until="networkidle")
+                    before_url = page.url
+                    closed_probe = page.evaluate(
+                        """() => {
+                            const details = document.querySelector(
+                              '#raya-static-environment-hint-orthogonal-activity'
+                            );
+                            const summary = details?.querySelector('summary');
+                            const body = details?.querySelector('.raya-static-environment-body');
+                            const bodyHeight = body ? body.getBoundingClientRect().height : -1;
+                            return {
+                              tag: details?.tagName || '',
+                              open: Boolean(details?.open),
+                              summaryTag: summary?.tagName || '',
+                              summaryCursor: summary ? getComputedStyle(summary).cursor : '',
+                              summaryText: summary?.innerText || '',
+                              bodyHeight,
+                              bodyTextContent: body?.textContent || '',
+                              location: window.location.href,
+                            };
+                        }"""
+                    )
+
+                    assert closed_probe["tag"] == "DETAILS"
+                    assert closed_probe["summaryTag"] == "SUMMARY"
+                    assert closed_probe["open"] is False
+                    assert closed_probe["summaryCursor"] == "pointer"
+                    assert closed_probe["summaryText"].startswith("Hint for Activity 4.1")
+                    assert closed_probe["bodyHeight"] == 0
+                    assert "Compare the projection formula" in closed_probe["bodyTextContent"]
+                    assert closed_probe["location"] == before_url
+
+                    page.locator(
+                        "#raya-static-environment-hint-orthogonal-activity > summary"
+                    ).click()
+                    opened_probe = page.evaluate(
+                        """() => {
+                            const details = document.querySelector(
+                              '#raya-static-environment-hint-orthogonal-activity'
+                            );
+                            const body = details?.querySelector('.raya-static-environment-body');
+                            return {
+                              open: Boolean(details?.open),
+                              bodyHeight: body ? body.getBoundingClientRect().height : -1,
+                              bodyInnerText: body?.innerText || '',
+                              location: window.location.href,
+                            };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert opened_probe["open"] is True
+    assert opened_probe["bodyHeight"] > 0
+    assert "Compare the projection formula" in opened_probe["bodyInnerText"]
+    assert opened_probe["location"] == before_url
     assert external_requests == []
 
 

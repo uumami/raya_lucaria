@@ -57,7 +57,10 @@ Usa entornos estaticos para apoyo alrededor de objetos numerados. `proof`,
 `of="object-id"` para apuntar a cualquier objeto numerado, incluidos objetos
 tipo teorema, objetos de practica, figuras, tablas, ecuaciones y familias
 configuradas del curso; no son objetos numerados y no crean registros en
-`data/numbered-objects.json`.
+`data/numbered-objects.json`. Las pruebas permanecen abiertas en el flujo del
+argumento. `hint`, `solution` y `answer` se renderizan cerrados por defecto como
+disclosures nativos, para que estudiantes los abran cuando esten listos sin
+enviar respuestas, guardar progreso ni cargar un renderer en el browser.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
@@ -97,8 +100,8 @@ $\begin{bmatrix}x_1+2x_2\\x_2\end{bmatrix}$
 ```
 
 Los bloques `hint`, `solution` y `answer` anteriores apoyan
-`matrix-practice`; se renderizan en la pagina pero no crean registros en
-`data/numbered-objects.json`.
+`matrix-practice`; se renderizan como disclosures contra spoilers en la pagina
+pero no crean registros en `data/numbered-objects.json`.
 
 Usa skins de curso para identidad visual y skins de seccion para enfatizar
 unidades, labs, apendices, secciones de practica o secciones de repaso.

@@ -795,6 +795,8 @@ def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
     assert "mjx-container" in html
     assert "proof-main" not in numbered_index["by_id"]
     assert list(numbered_index["by_id"]) == ["main-theorem"]
+    assert '<details class="raya-proof"' not in html
+    assert "<summary" not in html
     assert 'class="raya-proof"' in html
     assert "raya-static-environment--proof" not in html
     assert '<span class="raya-proof-reference">Proof of Theorem 1</span>' in html
@@ -852,9 +854,21 @@ def test_static_environments_render_targeted_headings_and_stay_out_of_numbered_i
     assert "Worked residual" in visible
     assert "Answer to Problem 1" in visible
     assert "Hint Standalone hint." in visible
-    assert 'id="raya-static-environment-hint-residual"' in html
-    assert 'id="raya-static-environment-solution-residual"' in html
-    assert 'id="raya-static-environment-answer-residual"' in html
+    assert (
+        '<details id="raya-static-environment-hint-residual" '
+        'class="raya-static-environment raya-static-environment--hint">'
+    ) in html
+    assert (
+        '<details id="raya-static-environment-solution-residual" '
+        'class="raya-static-environment raya-static-environment--solution">'
+    ) in html
+    assert (
+        '<details id="raya-static-environment-answer-residual" '
+        'class="raya-static-environment raya-static-environment--answer">'
+    ) in html
+    assert '<summary class="raya-static-environment-heading">' in html
+    assert '<details open' not in html
+    assert 'id="raya-static-environment-hint-residual" open' not in html
     assert "raya-static-environment--hint" in html
     assert "raya-static-environment--solution" in html
     assert "raya-static-environment--answer" in html
@@ -2011,6 +2025,22 @@ def test_render_fixture_builds_rich_static_pages(
     assert "raya-static-environment--hint" in reader_ux_html
     assert "raya-static-environment--solution" in reader_ux_html
     assert "raya-static-environment--answer" in reader_ux_html
+    assert (
+        '<details id="raya-static-environment-hint-orthogonal-activity" '
+        'class="raya-static-environment raya-static-environment--hint">'
+    ) in reader_ux_html
+    assert (
+        '<details id="raya-static-environment-solution-orthogonal-activity" '
+        'class="raya-static-environment raya-static-environment--solution">'
+    ) in reader_ux_html
+    assert (
+        '<details id="raya-static-environment-answer-orthogonal-activity" '
+        'class="raya-static-environment raya-static-environment--answer">'
+    ) in reader_ux_html
+    assert '<summary class="raya-static-environment-heading">' in reader_ux_html
+    assert "<details open" not in reader_ux_html
+    assert 'class="raya-proof"' in reader_ux_html
+    assert '<details class="raya-proof"' not in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--scannable ' in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--caption ' in reader_ux_html
     assert 'class="raya-numbered-object raya-numbered-object--equation ' in reader_ux_html
@@ -2045,6 +2075,12 @@ def test_render_fixture_builds_rich_static_pages(
     assert "raya-static-environment--hint" in authoring_matrix_html
     assert "raya-static-environment--solution" in authoring_matrix_html
     assert "raya-static-environment--answer" in authoring_matrix_html
+    assert (
+        '<details id="raya-static-environment-hint-authoring-activity" '
+        'class="raya-static-environment raya-static-environment--hint">'
+    ) in authoring_matrix_html
+    assert "<details open" not in authoring_matrix_html
+    assert 'class="raya-proof"' in authoring_matrix_html
     assert "raya-numbered-object-reference" in authoring_matrix_html
     assert 'src="../_raya/assets/_source/_local/diagrams/static-path.svg"' in (
         authoring_matrix_html
