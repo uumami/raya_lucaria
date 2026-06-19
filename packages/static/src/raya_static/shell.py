@@ -27,7 +27,17 @@ _SHELL_JAVASCRIPT = r"""
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const headings = tocLinks
     .map((link) => {
-      const target = document.querySelector(link.getAttribute("href"));
+      const href = link.getAttribute("href");
+      if (!href || href === "#") {
+        return null;
+      }
+      let id = href.slice(1);
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        id = href.slice(1);
+      }
+      const target = document.getElementById(id);
       return target ? { link, target } : null;
     })
     .filter(Boolean);
@@ -40,7 +50,12 @@ _SHELL_JAVASCRIPT = r"""
   const expanded = stored === "true";
 
   function updateMapLinkTabOrder(nextExpanded) {
-    const hideLinks = !nextExpanded && desktopMapQuery.matches;
+    const hideLinks = !nextExpanded;
+    if (desktopMapQuery.matches) {
+      map.removeAttribute("tabindex");
+    } else {
+      map.setAttribute("tabindex", "-1");
+    }
     map.querySelectorAll("a").forEach((link) => {
       if (hideLinks) {
         link.setAttribute("tabindex", "-1");
@@ -79,24 +94,26 @@ _SHELL_JAVASCRIPT = r"""
     }
   });
 
-  if ("IntersectionObserver" in window && headings.length > 0) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top)[0];
-        if (!visible) {
-          return;
-        }
-        tocLinks.forEach((link) => link.removeAttribute("aria-current"));
-        const active = headings.find((item) => item.target === visible.target);
-        if (active) {
-          active.link.setAttribute("aria-current", "location");
-        }
-      },
-      { rootMargin: "-20% 0px -65% 0px", threshold: [0, 1] }
-    );
-    headings.forEach((item) => observer.observe(item.target));
+  function updateActiveHeading() {
+    if (headings.length === 0) {
+      return;
+    }
+    const activationLine = window.innerHeight * 0.3;
+    const active = headings.reduce((current, item) => {
+      const top = item.target.getBoundingClientRect().top;
+      if (top <= activationLine) {
+        return item;
+      }
+      return current;
+    }, headings[0]);
+    tocLinks.forEach((link) => link.removeAttribute("aria-current"));
+    active.link.setAttribute("aria-current", "location");
+  }
+
+  if (headings.length > 0) {
+    updateActiveHeading();
+    window.addEventListener("scroll", updateActiveHeading, { passive: true });
+    window.addEventListener("resize", updateActiveHeading);
   }
 
   setExpanded(expanded, false);

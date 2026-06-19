@@ -243,9 +243,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
                         _assert_no_horizontal_overflow(page)
                         _assert_intersects_viewport(page, "header.raya-top-command-bar")
-                        _assert_intersects_viewport(page, "nav.raya-course-map")
                         _assert_intersects_viewport(page, "article.raya-main-article")
                         if viewport["width"] > 900:
+                            _assert_intersects_viewport(page, "nav.raya-course-map")
                             _assert_intersects_viewport(page, "aside.raya-learning-rail")
                         course_map = _bounding_box(page, "nav.raya-course-map")
                         article = _bounding_box(page, "article.raya-main-article")
@@ -264,7 +264,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 page.click(".raya-course-map-toggle")
                                 _assert_no_horizontal_overflow(page)
                         else:
-                            assert course_map["y"] < article["y"] < learning_rail["y"]
+                            assert article["y"] < course_map["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
                             _assert_bounded_scroll_region(page, "aside.raya-learning-rail")
                             mobile_course_list = page.locator(
@@ -364,6 +364,91 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
 
                     page.keyboard.press("Escape")
                     assert page.evaluate("() => document.documentElement.dataset.rayaCourseMap") == "collapsed"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    article = _bounding_box(page, "article.raya-main-article")
+                    course_map = _bounding_box(page, "nav.raya-course-map")
+                    rail = _bounding_box(page, "aside.raya-learning-rail")
+                    assert article["y"] < course_map["y"] < rail["y"]
+                    assert not page.locator("#raya-course-map .raya-course-map-toggle").is_visible()
+                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "false"
+                    collapsed = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          mapTabIndex: document.querySelector('#raya-course-map')
+                            ?.getAttribute('tabindex'),
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert collapsed["state"] == "collapsed"
+                    assert collapsed["mapTabIndex"] == "-1"
+                    assert collapsed["linkTabIndexes"]
+                    assert set(collapsed["linkTabIndexes"]) == {"-1"}
+
+                    page.click(".raya-course-map-toggle")
+                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "true"
+                    _assert_no_horizontal_overflow(page)
+                    expanded = page.evaluate(
+                        """() => ({
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert set(expanded["linkTabIndexes"]) == {None}
+
+                    page.locator("#worked-example").scroll_into_view_if_needed()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-toc a[aria-current="location"]')
+                          ?.getAttribute('href') === '#worked-example'"""
+                    )
+                    active = page.evaluate(
+                        """() => document.querySelector('.raya-page-toc a[aria-current="location"]')?.getAttribute('href')"""
+                    )
+                    assert active == "#worked-example"
+
+                    page.evaluate(
+                        """() => document
+                          .getElementById('1-numeric-heading')
+                          ?.scrollIntoView({ block: 'start' })"""
+                    )
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-toc a[aria-current="location"]')
+                          ?.getAttribute('href') === '#1-numeric-heading'"""
+                    )
                 finally:
                     page.close()
             finally:

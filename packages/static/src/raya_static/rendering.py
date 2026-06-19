@@ -678,6 +678,10 @@ nav[aria-label="Breadcrumbs"] {
 .raya-page-toc-level-6 {
   margin-left: 1rem;
 }
+.raya-page-toc a[aria-current="location"] {
+  color: var(--raya-color-success);
+  font-weight: 700;
+}
 .raya-code-block {
   margin: 1rem 0;
 }
@@ -949,17 +953,26 @@ mjx-container[display="true"] {
 @media (max-width: 900px) {
   .raya-learning-shell {
     grid-template-areas:
-      "course-map"
       "main-article"
+      "course-map"
       "learning-rail";
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-course-map,
   .raya-learning-rail {
     margin-bottom: 1rem;
-    max-height: 14rem;
+    max-height: 16rem;
     overflow: auto;
     position: static;
+  }
+  [data-raya-course-map="collapsed"] .raya-course-map {
+    max-height: 5.5rem;
+  }
+  [data-raya-course-map="expanded"] .raya-course-map {
+    max-height: 70vh;
+  }
+  .raya-course-map .raya-course-map-toggle {
+    display: none;
   }
   .raya-learning-rail {
     margin-top: 1rem;

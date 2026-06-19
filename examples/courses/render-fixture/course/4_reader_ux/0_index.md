@@ -98,6 +98,16 @@ The residual is $\begin{bmatrix}1\\-1\end{bmatrix}$, whose dot product with
 $u$ is $0$.
 :::
 
+## Worked Example
+
+The worked example above is intentionally compact fixture material for active
+heading and page table-of-contents checks.
+
+## 1 Numeric Heading
+
+Numeric heading slugs are valid rendered anchors and must not break shell
+initialization or active heading tracking.
+
 ::: equation {#orthogonal-equation}
 $$
 v =
