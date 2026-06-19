@@ -2099,7 +2099,18 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
-    assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
+    assert (
+        '<aside id="raya-learning-rail" class="raya-learning-rail" '
+        'aria-label="Learning context" data-raya-learning-rail="expanded">'
+    ) in html
+    assert '<div class="raya-learning-rail-header">' in html
+    assert (
+        '<div id="raya-learning-rail-body" class="raya-learning-rail-body" '
+        'aria-hidden="false">'
+    ) in html
+    assert "data-raya-learning-rail-collapse" in html
+    assert "data-raya-learning-rail-expand" in html
+    assert 'aria-controls="raya-learning-rail-body"' in html
     assert '<section class="raya-rail-panel raya-page-summary"' in html
     assert '<section class="raya-rail-panel raya-page-status"' in html
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
@@ -2109,7 +2120,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<article id="raya-article"'
     )
     assert html.index('<article id="raya-article"') < html.index(
-        '<aside class="raya-learning-rail"'
+        '<aside id="raya-learning-rail"'
     )
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
@@ -2120,9 +2131,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
     assert root_html.index('<article id="raya-article"') < root_html.index(
-        '<aside class="raya-learning-rail"'
+        '<aside id="raya-learning-rail"'
     )
-    assert root_html.index('<aside class="raya-learning-rail"') < root_html.index(toc)
+    assert root_html.index('<aside id="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
 
@@ -2172,7 +2183,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'rel="next" href="topic/index.html"' in middle_html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
-    ) < html.index('<aside class="raya-learning-rail"')
+    ) < html.index('<aside id="raya-learning-rail"')
 
 
 def test_render_fixture_reader_page_exercises_learning_rail_metadata(
@@ -2258,11 +2269,15 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-course-map",
         ".raya-main-article",
         ".raya-learning-rail",
+        ".raya-learning-rail-header",
+        ".raya-learning-rail-body",
+        ".raya-learning-rail-expand",
         ".raya-rail-panel",
         ".raya-status-chip",
         ".raya-command:focus-visible",
         ".raya-font-toggle:focus-visible",
         ".raya-course-map-toggle:focus-visible",
+        '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
     assert "min-width: 2.75rem" in css

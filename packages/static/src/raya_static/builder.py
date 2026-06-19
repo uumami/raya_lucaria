@@ -989,8 +989,30 @@ def _render_learning_rail(
         return ""
     return "\n".join(
         [
-            '<aside class="raya-learning-rail" aria-label="Learning context">',
+            (
+                '<aside id="raya-learning-rail" class="raya-learning-rail" '
+                'aria-label="Learning context" data-raya-learning-rail="expanded">'
+            ),
+            '<div class="raya-learning-rail-header">',
+            '<p class="raya-region-title">Learning context</p>',
+            (
+                '<button class="raya-learning-rail-collapse" type="button" '
+                "data-raya-learning-rail-collapse "
+                'aria-controls="raya-learning-rail-body" '
+                'aria-expanded="true" '
+                'aria-label="Hide learning context">Hide context</button>'
+            ),
+            "</div>",
+            '<div id="raya-learning-rail-body" class="raya-learning-rail-body" aria-hidden="false">',
             body,
+            "</div>",
+            (
+                '<button class="raya-learning-rail-expand" type="button" '
+                "data-raya-learning-rail-expand "
+                'aria-controls="raya-learning-rail-body" '
+                'aria-expanded="true" '
+                'aria-label="Show learning context">Context</button>'
+            ),
             "</aside>",
         ]
     )

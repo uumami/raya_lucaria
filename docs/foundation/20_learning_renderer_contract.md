@@ -41,7 +41,7 @@ The static renderer may present course map navigation, the main article, and the
 
 The main article owns authored teaching content. It may include build-time MathJax, numbered objects, static environments, callouts, tables, code, local assets, and links rewritten through current Raya rules.
 
-The right learning rail owns compact page context. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, explicit incoming and outgoing content links from generated graph data, and previous/next links from generated navigation.
+The right learning rail owns compact page context. It is expanded by default on desktop and may collapse through an explicit click control into an operable compact context tab. Collapsed rail content must be hidden from keyboard and screen-reader navigation. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, explicit incoming and outgoing content links from generated graph data, and previous/next links from generated navigation.
 
 Explicit graph link context means relationships already present in source links, stable IDs, or prerequisite metadata. It does not mean inferred recommendations, related practice, personal next steps, or mastery guidance.
 

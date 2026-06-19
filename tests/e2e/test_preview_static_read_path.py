@@ -865,6 +865,232 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
         handle.close()
 
 
+def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const shell = document.querySelector('#raya-content');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const article = document.querySelector('#raya-article');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          return {
+                            rootState: root.dataset.rayaLearningRail,
+                            shellState: shell?.dataset.rayaLearningRail,
+                            railState: rail?.dataset.rayaLearningRail,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            articleWidth: article?.getBoundingClientRect().width,
+                            railWidth: rail?.getBoundingClientRect().width,
+                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                            collapseExpanded: document
+                              .querySelector('[data-raya-learning-rail-collapse]')
+                              ?.getAttribute('aria-expanded'),
+                          };
+                        }"""
+                    )
+                    assert initial["rootState"] == "expanded"
+                    assert initial["shellState"] == "expanded"
+                    assert initial["railState"] == "expanded"
+                    assert initial["bodyHidden"] == "false"
+                    assert initial["bodyInert"] in {False, None}
+                    assert initial["articleWidth"] > 520
+                    assert 240 <= initial["railWidth"] <= 330
+                    assert initial["expandVisible"] is False
+                    assert initial["collapseExpanded"] == "true"
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.getBoundingClientRect()
+                          ?.width < 120"""
+                    )
+                    collapsed = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const shell = document.querySelector('#raya-content');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const article = document.querySelector('#raya-article');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const bodyLink = body?.querySelector('a');
+                          return {
+                            rootState: root.dataset.rayaLearningRail,
+                            shellState: shell?.dataset.rayaLearningRail,
+                            railState: rail?.dataset.rayaLearningRail,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            articleWidth: article?.getBoundingClientRect().width,
+                            railWidth: rail?.getBoundingClientRect().width,
+                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                            expandExpanded: expand?.getAttribute('aria-expanded'),
+                            bodyLinkTabIndex: bodyLink?.getAttribute('tabindex'),
+                            wrappedExpandText: expand?.innerText.includes('\\n'),
+                          };
+                        }"""
+                    )
+                    assert collapsed["rootState"] == "collapsed"
+                    assert collapsed["shellState"] == "collapsed"
+                    assert collapsed["railState"] == "collapsed"
+                    assert collapsed["bodyHidden"] == "true"
+                    assert collapsed["bodyInert"] is True
+                    assert collapsed["articleWidth"] > initial["articleWidth"]
+                    assert collapsed["railWidth"] < 120
+                    assert collapsed["expandVisible"] is True
+                    assert collapsed["expandExpanded"] == "false"
+                    assert collapsed["bodyLinkTabIndex"] == "-1"
+                    assert collapsed["wrappedExpandText"] is False
+
+                    page.click("[data-raya-learning-rail-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.getBoundingClientRect()
+                          ?.width >= 240"""
+                    )
+                    expanded = page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          return {
+                            rootState: document.documentElement.dataset.rayaLearningRail,
+                            railState: rail?.dataset.rayaLearningRail,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            railWidth: rail?.getBoundingClientRect().width,
+                          };
+                        }"""
+                    )
+                    assert expanded["rootState"] == "expanded"
+                    assert expanded["railState"] == "expanded"
+                    assert expanded["bodyHidden"] == "false"
+                    assert expanded["bodyInert"] in {False, None}
+                    assert expanded["railWidth"] >= 240
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.getBoundingClientRect()
+                          ?.width < 120"""
+                    )
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.dataset
+                          ?.rayaLearningRail === 'expanded'"""
+                    )
+                    resized_mobile = page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
+                          return {
+                            rootState: document.documentElement.dataset.rayaLearningRail,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                            collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
+                          };
+                        }"""
+                    )
+                    assert resized_mobile["rootState"] == "expanded"
+                    assert resized_mobile["bodyHidden"] == "false"
+                    assert resized_mobile["bodyInert"] in {False, None}
+                    assert resized_mobile["expandVisible"] is False
+                    assert resized_mobile["collapseVisible"] is False
+
+                    page.set_viewport_size({"width": 1280, "height": 900})
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.getBoundingClientRect()
+                          ?.width >= 240"""
+                    )
+                    page.focus("[data-raya-learning-rail-collapse]")
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.dataset
+                          ?.rayaLearningRail === 'collapsed'"""
+                    )
+                    escape_collapsed = page.evaluate(
+                        """() => ({
+                          rootState: document.documentElement.dataset.rayaLearningRail,
+                          activeControl: document.activeElement
+                            ?.getAttribute('data-raya-learning-rail-expand') !== null,
+                          railWidth: document
+                            .querySelector('#raya-learning-rail')
+                            ?.getBoundingClientRect()
+                            ?.width,
+                          expandWidth: document
+                            .querySelector('[data-raya-learning-rail-expand]')
+                            ?.getBoundingClientRect()
+                            ?.width,
+                        })"""
+                    )
+                    assert escape_collapsed["rootState"] == "collapsed"
+                    assert escape_collapsed["activeControl"] is True
+                    assert escape_collapsed["expandWidth"] <= escape_collapsed["railWidth"]
+                finally:
+                    page.close()
+
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(mobile)
+                    mobile_state = mobile.evaluate(
+                        """() => {
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const article = document.querySelector('#raya-article');
+                          return {
+                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                            collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
+                            articleTop: article?.getBoundingClientRect().top,
+                            railTop: rail?.getBoundingClientRect().top,
+                          };
+                        }"""
+                    )
+                    assert mobile_state["expandVisible"] is False
+                    assert mobile_state["collapseVisible"] is False
+                    assert mobile_state["articleTop"] < mobile_state["railTop"]
+                finally:
+                    mobile.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
     tmp_path: Path,
 ) -> None:
@@ -1334,12 +1560,15 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
     assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in root_html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
-    assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
+    assert (
+        '<aside id="raya-learning-rail" class="raya-learning-rail" '
+        'aria-label="Learning context" data-raya-learning-rail="expanded">'
+    ) in root_html
     assert root_html.index('<nav id="raya-course-map" class="raya-course-map"') < root_html.index(
         '<article id="raya-article"'
     )
     assert root_html.index('<article id="raya-article"') < root_html.index(
-        '<aside class="raya-learning-rail"'
+        '<aside id="raya-learning-rail"'
     )
     assert "SHA-256" not in root_html
     assert "Source path" not in root_html
