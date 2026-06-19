@@ -157,6 +157,8 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert 'data-raya-rail-toggle' in reader_html
     assert 'data-raya-rail-panel-state="collapsed"' in reader_html
     assert 'aria-hidden="true" inert' in reader_html
+    assert "background: var(--raya-color-page)" in rich_css
+    assert "background: var(--raya-color-surface)" in rich_css
     assert "max-width: 116rem" in rich_css
     assert "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
     assert "@media (min-width: 901px)" in rich_css
