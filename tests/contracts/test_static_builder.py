@@ -1868,7 +1868,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
-    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="collapsed">' in html
+    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
     assert '<section class="raya-rail-panel raya-page-summary"' in html
@@ -1910,13 +1910,28 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     site = course / "artifact" / "site"
     html = (site / "index.html").read_text(encoding="utf-8")
     middle_html = (site / "unit" / "index.html").read_text(encoding="utf-8")
+    render_course = _copy_render_fixture(tmp_path)
+    render_report = build_course(render_course)
+    assert render_report.ok, [
+        diagnostic.format() for diagnostic in render_report.diagnostics
+    ]
+    render_html = (render_course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
 
-    assert '<nav id="raya-course-map" class="raya-course-map"' in html
+    assert '<html lang="en" data-raya-course-map="expanded">' in html
+    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in html
+    assert '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">' in html
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="false"' in html
-    assert 'data-raya-course-map="collapsed"' in html
+    assert 'aria-expanded="true">Course map</button>' in html
+    assert 'aria-expanded="true">Collapse map</button>' in html
+    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in html
+    assert 'data-raya-map-label="Raya Lucaria Render Fixture"' in render_html
+    assert 'data-raya-map-index="1"' in render_html
+    course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    assert 'tabindex="-1"' not in course_map_html
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
@@ -2777,6 +2792,12 @@ def _write_test_skin(path: Path, skin_id: str) -> None:
 
 def _visible_text(html_text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", html_text))
+
+
+def _element_html(html_text: str, element_start: str, element_end: str) -> str:
+    start = html_text.index(element_start)
+    end = html_text.index(element_end, start) + len(element_end)
+    return html_text[start:end]
 
 
 def _section_html(html_text: str, class_name: str) -> str:
