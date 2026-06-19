@@ -160,9 +160,10 @@ prompts, and practice links that students can use without fake progress. Use
 checkpoints and goals as visible teaching material until a later source contract
 accepts them as metadata.
 
-Rendered pages now use a collapsed course map by default so students get more
-reading space. The shell may show structure such as `Page N of M`; treat that as
-course position, not personal progress or completion.
+Rendered pages now use an expanded course map by default and let students
+collapse it to a compact map rail for more reading space. Course-map state is
+non-persistent UI state. The shell may show structure such as `Page N of M`;
+treat that as course position, not personal progress or completion.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

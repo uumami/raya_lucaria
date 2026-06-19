@@ -280,11 +280,6 @@ def _capture_desktop_shell_state_screenshots(
         toggle.click()
         page.wait_for_timeout(100)
     page.screenshot(path=str(expanded_path), full_page=False)
-    page.evaluate(
-        """() => {
-            window.localStorage.setItem("raya.courseMapExpanded", "false");
-        }"""
-    )
     return {
         "desktop-collapsed": str(collapsed_path),
         "desktop-expanded": str(expanded_path),

@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 SCRIPT = ROOT / "scripts" / "check-render-debug.sh"
+RENDER_DEBUG_SOURCE = ROOT / "packages" / "cli" / "src" / "raya_cli" / "render_debug.py"
 
 
 def run_gate(
@@ -119,6 +120,13 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     assert "Render Debug Inspection Report" in report_html
     assert "Copied site:" in report_html
     assert "reader-ux" in report_html
+
+
+def test_render_debug_capture_does_not_seed_persisted_course_map_state() -> None:
+    source = RENDER_DEBUG_SOURCE.read_text(encoding="utf-8")
+
+    assert "raya.courseMapExpanded" not in source
+    assert "localStorage.setItem" not in source
 
 
 def test_render_debug_parity_gate_inspects_explicit_copied_site_contents(

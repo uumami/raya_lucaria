@@ -342,13 +342,17 @@ def test_role_docs_cover_learning_science_course_shell() -> None:
 def test_docs_cover_collapsible_learning_shell() -> None:
     required = {
         "docs/foundation/20_learning_renderer_contract.md": [
-            "collapsed course map",
+            "expanded course map",
+            "compact map rail",
+            "non-persistent",
             "click-only",
             "Page N of M",
             "no personal progress",
         ],
         "docs/guides/en/professors/index.md": [
-            "collapsed course map",
+            "expanded course map",
+            "compact map rail",
+            "non-persistent",
             "Page N of M",
             "not personal progress",
         ],
@@ -370,7 +374,9 @@ def test_docs_cover_collapsible_learning_shell() -> None:
             "render-debug",
         ],
         "docs/guides/es/profesores/index.md": [
-            "mapa del curso colapsado",
+            "mapa del curso expandido",
+            "riel compacto",
+            "no persistente",
             "Page N of M",
             "no es progreso personal",
         ],
