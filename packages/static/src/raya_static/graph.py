@@ -26,8 +26,17 @@ _GRAPH_JAVASCRIPT = r"""
   const layout = document.getElementById("graph-layout");
   const fit = document.getElementById("graph-fit");
   const reset = document.getElementById("graph-reset");
+  const graphExpand = document.getElementById("graph-expand");
   const status = document.getElementById("graph-status");
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
+  const detailEmpty = document.querySelector("[data-raya-graph-detail-empty]");
+  const detailPanel = document.querySelector("[data-raya-graph-detail-panel]");
+  const detailTitle = document.querySelector("[data-raya-graph-detail-title]");
+  const detailMeta = document.querySelector("[data-raya-graph-detail-meta]");
+  const detailLink = document.querySelector("[data-raya-graph-detail-link]");
+  const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
+  const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
+  const detailClear = document.querySelector("[data-raya-graph-detail-clear]");
 
   if (!root || !dataEl || !canvas || !list) {
     return;
@@ -44,9 +53,14 @@ _GRAPH_JAVASCRIPT = r"""
   const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
   const edges = Array.isArray(graph.edges) ? graph.edges : [];
   const groups = Array.isArray(graph.groups) ? graph.groups : [];
+  const backlinks = graph.backlinks && typeof graph.backlinks === "object" ? graph.backlinks : {};
+  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const groupsById = new Map(groups.map((group) => [group.id, group]));
   const hiddenGroups = new Set();
   let query = "";
   let selectedId = "";
+  let matchIds = new Set();
+  let pendingSelectTimer = 0;
 
   function normalize(value) {
     return String(value || "")
@@ -56,15 +70,77 @@ _GRAPH_JAVASCRIPT = r"""
       .trim();
   }
 
+  function levenshtein(a, b) {
+    const left = normalize(a);
+    const right = normalize(b);
+    if (left.length === 0) return right.length;
+    if (right.length === 0) return left.length;
+    const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    const current = Array(right.length + 1).fill(0);
+    for (let i = 1; i <= left.length; i += 1) {
+      current[0] = i;
+      for (let j = 1; j <= right.length; j += 1) {
+        const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+        current[j] = Math.min(
+          previous[j] + 1,
+          current[j - 1] + 1,
+          previous[j - 1] + cost
+        );
+      }
+      for (let j = 0; j <= right.length; j += 1) {
+        previous[j] = current[j];
+      }
+    }
+    return previous[right.length];
+  }
+
+  function fuzzyMatch(queryText, targetText) {
+    const needle = normalize(queryText);
+    const haystack = normalize(targetText);
+    if (!needle) return true;
+    if (haystack.includes(needle)) return true;
+    const words = haystack.split(/[\s_\/-]+/).filter(Boolean);
+    if (words.some((word) => word.startsWith(needle))) return true;
+    const threshold = needle.length <= 3 ? 1 : Math.floor(needle.length * 0.35);
+    return words.some((word) => levenshtein(needle, word) <= threshold) ||
+      (haystack.length <= 28 && levenshtein(needle, haystack) <= threshold);
+  }
+
+  function nodeSearchText(node) {
+    const group = groupsById.get(node.group || "");
+    return [
+      node.title,
+      node.nav_title,
+      node.id,
+      node.status,
+      node.hierarchy_label,
+      group ? group.title : "",
+      Array.isArray(node.tags) ? node.tags.join(" ") : "",
+    ].join(" ");
+  }
+
   function matchesNode(node) {
     if (hiddenGroups.has(node.group || "")) return false;
     if (!query) return true;
-    const haystack = normalize([node.title, node.nav_title, node.id].join(" "));
-    return haystack.includes(query) || haystack.split(/\s+/).some((word) => word.startsWith(query));
+    return fuzzyMatch(query, nodeSearchText(node));
   }
 
   function visibleNodes() {
-    return nodes.filter(matchesNode);
+    const directlyVisible = nodes.filter(matchesNode);
+    matchIds = new Set(query ? directlyVisible.map((node) => node.id) : []);
+    if (!query) {
+      return directlyVisible;
+    }
+    const expandedIds = new Set(matchIds);
+    directlyVisible.forEach((node) => {
+      neighborsOf(node.id).forEach((id) => {
+        const neighbor = nodesById.get(id);
+        if (neighbor && !hiddenGroups.has(neighbor.group || "")) {
+          expandedIds.add(id);
+        }
+      });
+    });
+    return nodes.filter((node) => expandedIds.has(node.id));
   }
 
   function visibleEdges(visibleIds) {
@@ -127,12 +203,106 @@ _GRAPH_JAVASCRIPT = r"""
     return ids;
   }
 
+  function edgeLabel(edge) {
+    const kind = edge && edge.kind ? edge.kind : "link";
+    return kind.replace(/-/g, " ");
+  }
+
+  function renderDetailList(listEl, items, emptyText) {
+    if (!listEl) return;
+    listEl.replaceChildren();
+    if (items.length === 0) {
+      const empty = document.createElement("li");
+      empty.textContent = emptyText;
+      listEl.appendChild(empty);
+      return;
+    }
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = item.url || "#";
+      link.textContent = item.title || item.id || "Untitled page";
+      const meta = document.createElement("span");
+      meta.className = "raya-graph-detail-edge-kind";
+      meta.textContent = ` ${item.kind || "link"}`;
+      li.append(link, meta);
+      listEl.appendChild(li);
+    });
+  }
+
+  function renderDetail() {
+    const node = selectedId ? nodesById.get(selectedId) : null;
+    if (!node) {
+      if (detailEmpty) detailEmpty.hidden = false;
+      if (detailPanel) detailPanel.hidden = true;
+      return;
+    }
+    const group = groupsById.get(node.group || "");
+    if (detailEmpty) detailEmpty.hidden = true;
+    if (detailPanel) detailPanel.hidden = false;
+    if (detailTitle) detailTitle.textContent = node.title || node.nav_title || node.id;
+    if (detailMeta) {
+      detailMeta.textContent = [
+        group ? `Group: ${group.title}` : "Group: Course",
+        node.status ? `Status: ${node.status}` : "",
+        Array.isArray(node.tags) && node.tags.length ? `Tags: ${node.tags.join(", ")}` : "",
+      ].filter(Boolean).join("; ");
+    }
+    if (detailLink) {
+      detailLink.href = node.url;
+      detailLink.textContent = "Open page";
+    }
+    const outgoing = edges
+      .filter((edge) => edge.from === node.id)
+      .map((edge) => {
+        const target = nodesById.get(edge.to) || {};
+        return {
+          id: edge.to,
+          title: target.title || edge.to,
+          url: target.url || "#",
+          kind: edgeLabel(edge),
+        };
+      });
+    const incoming = Array.isArray(backlinks[node.id])
+      ? backlinks[node.id].map((backlink) => ({
+          id: backlink.from,
+          title: backlink.title,
+          url: backlink.url,
+          kind: edgeLabel(backlink),
+        }))
+      : [];
+    renderDetailList(detailOutgoing, outgoing, "No outgoing links.");
+    renderDetailList(detailIncoming, incoming, "No incoming links.");
+  }
+
+  function selectGraphNode(nodeId) {
+    selectedId = nodeId;
+    renderDetail();
+    render();
+  }
+
+  function clearGraphSelection() {
+    selectedId = "";
+    renderDetail();
+    render();
+  }
+
   function renderList(activeIds) {
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
       const id = item.getAttribute("data-raya-graph-node") || "";
       item.hidden = !activeIds.has(id);
       item.classList.toggle("is-active", id === selectedId);
+      item.classList.toggle("is-match", matchIds.has(id));
     });
+  }
+
+  function setGraphExpanded(nextExpanded) {
+    root.dataset.rayaGraphExpanded = nextExpanded ? "true" : "false";
+    root.setAttribute("data-raya-graph-expanded", nextExpanded ? "true" : "false");
+    if (graphExpand) {
+      graphExpand.setAttribute("aria-pressed", nextExpanded ? "true" : "false");
+      graphExpand.textContent = nextExpanded ? "Compact graph" : "Expand graph";
+    }
   }
 
   function render() {
@@ -142,6 +312,10 @@ _GRAPH_JAVASCRIPT = r"""
     const activeNodes = visibleNodes();
     const activeIds = new Set(activeNodes.map((node) => node.id));
     const activeEdges = visibleEdges(activeIds);
+    if (selectedId && !activeIds.has(selectedId)) {
+      selectedId = "";
+      renderDetail();
+    }
     renderList(activeIds);
     if (status) {
       status.textContent = `${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
@@ -185,7 +359,15 @@ _GRAPH_JAVASCRIPT = r"""
       link.dataset.rayaGraphNode = node.id;
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const active = !selectedId || selectedNeighbors.has(node.id);
-      group.setAttribute("class", active ? "raya-graph-node" : "raya-graph-node is-muted");
+      group.setAttribute(
+        "class",
+        [
+          "raya-graph-node",
+          active ? "" : "is-muted",
+          node.id === selectedId ? "is-selected" : "",
+          matchIds.has(node.id) ? "is-match" : "",
+        ].filter(Boolean).join(" ")
+      );
       group.setAttribute("transform", `translate(${point.x} ${point.y})`);
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       circle.setAttribute("r", node.id === selectedId ? "18" : "14");
@@ -194,16 +376,16 @@ _GRAPH_JAVASCRIPT = r"""
       text.textContent = node.nav_title || node.title || node.id;
       group.append(circle, text);
       link.appendChild(group);
-      link.addEventListener("mouseenter", () => {
-        selectedId = node.id;
-        render();
-      });
-      link.addEventListener("focus", () => {
-        selectedId = node.id;
-        render();
-      });
       link.addEventListener("click", (event) => {
         event.preventDefault();
+        window.clearTimeout(pendingSelectTimer);
+        pendingSelectTimer = window.setTimeout(() => {
+          selectGraphNode(node.id);
+        }, 180);
+      });
+      link.addEventListener("dblclick", (event) => {
+        event.preventDefault();
+        window.clearTimeout(pendingSelectTimer);
         window.location.href = node.url;
       });
       canvas.appendChild(link);
@@ -219,11 +401,22 @@ _GRAPH_JAVASCRIPT = r"""
       if (layout) layout.value = "map";
       hiddenGroups.clear();
       selectedId = "";
+      setGraphExpanded(false);
+      renderDetail();
       groupFilters.forEach((button) => {
         button.setAttribute("aria-pressed", "true");
       });
       render();
     });
+  }
+  if (graphExpand) {
+    graphExpand.addEventListener("click", () => {
+      setGraphExpanded(root.dataset.rayaGraphExpanded !== "true");
+      render();
+    });
+  }
+  if (detailClear) {
+    detailClear.addEventListener("click", clearGraphSelection);
   }
   groupFilters.forEach((button) => {
     button.addEventListener("click", () => {
@@ -239,10 +432,14 @@ _GRAPH_JAVASCRIPT = r"""
     });
   });
   canvas.addEventListener("mouseleave", () => {
-    selectedId = "";
+    if (!detailPanel || detailPanel.hidden) {
+      selectedId = "";
+    }
     render();
   });
 
+  setGraphExpanded(false);
+  renderDetail();
   render();
 })();
 """

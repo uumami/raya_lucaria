@@ -76,6 +76,12 @@ click explicito a un riel compacto operable, y mantiene ese estado no persistent
 El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
 servirse desde recursos locales del renderer sin scripts ni estilos externos.
 
+Revisa el Course graph como una superficie estatica de artifact. La busqueda del
+grafo, los detalles de pagina seleccionada, filtros de grupo y workspace
+expandido del grafo deben usar solo datos embebidos del artifact y recursos
+locales del renderer. No agregues motores de grafo CDN, fetches runtime, estado
+persistente del grafo ni lenguaje de recomendaciones/progreso.
+
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
 Para cada vector $\vect{v}$, la identidad devuelve $\vect{v}$.

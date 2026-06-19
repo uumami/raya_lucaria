@@ -665,6 +665,53 @@ img {
   border-color: var(--raya-color-accent);
   box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
 }
+.raya-graph-detail {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin-bottom: var(--raya-space-block);
+  padding: 0.9rem 1rem;
+}
+.raya-graph-detail [hidden] {
+  display: none;
+}
+.raya-graph-detail-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+.raya-graph-detail-header h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.raya-graph-detail button {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+}
+.raya-graph-detail-meta,
+.raya-graph-detail-edge-kind {
+  color: var(--raya-color-muted);
+  font-size: 0.875rem;
+}
+.raya-graph-detail-links {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.raya-graph-detail-links h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+}
+.raya-graph-detail-links ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
 .raya-graph-canvas {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);
@@ -672,6 +719,9 @@ img {
   display: block;
   min-height: 34rem;
   width: 100%;
+}
+[data-raya-graph-expanded="true"] .raya-graph-canvas {
+  min-height: clamp(34rem, 72vh, 48rem);
 }
 .raya-graph-canvas[hidden] {
   display: none;
@@ -684,10 +734,20 @@ img {
   stroke: var(--raya-color-accent);
   stroke-width: 3;
 }
+.raya-graph-node-link {
+  cursor: pointer;
+}
 .raya-graph-node circle {
   fill: var(--raya-color-accent-soft);
   stroke: var(--raya-color-accent);
   stroke-width: 2;
+}
+.raya-graph-node.is-selected circle {
+  fill: var(--raya-color-success);
+  stroke: var(--raya-color-success);
+}
+.raya-graph-node.is-match circle {
+  stroke-width: 4;
 }
 .raya-graph-node text {
   fill: var(--raya-color-text);
@@ -705,6 +765,14 @@ img {
 .raya-graph-list li {
   break-inside: avoid;
   margin-bottom: 0.35rem;
+}
+.raya-graph-list li.is-active a {
+  color: var(--raya-color-success);
+  font-weight: 700;
+}
+.raya-graph-list li.is-match a {
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
 }
 .raya-graph-list li[hidden] {
   display: none;
@@ -1542,6 +1610,9 @@ mjx-container[display="true"] {
   }
   .raya-graph-canvas {
     min-height: 24rem;
+  }
+  .raya-graph-detail-links {
+    grid-template-columns: 1fr;
   }
   .raya-graph-list {
     columns: 1;

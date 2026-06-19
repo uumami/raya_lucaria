@@ -74,6 +74,11 @@ and keeps that shell state non-persistent. The course-map behavior is
 explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
 served from local renderer resources rather than external scripts or styles.
 
+Review the Course graph as a static artifact surface. Graph search, selected-page
+details, group filters, and expanded graph workspace mode must use embedded
+artifact data and local renderer resources only. Do not add CDN graph engines,
+runtime fetches, persistent graph state, or recommendation/progress wording.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

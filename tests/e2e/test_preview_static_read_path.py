@@ -128,8 +128,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
             try:
                 for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
                     page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
                     try:
                         page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
                         assert page.locator("#raya-graph-canvas .raya-graph-node").count() > 0
                         before = page.locator(
@@ -147,6 +150,60 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ).count()
                         assert after < before
                         assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        page.fill("#graph-search", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        graph_node = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).first
+                        graph_node.hover()
+                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        assert page.locator("[data-raya-graph-detail-panel]").is_hidden()
+                        graph_node.click()
+                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                        assert page.locator("[data-raya-graph-detail-title]").inner_text().strip()
+                        assert page.locator("[data-raya-graph-detail-link]").get_attribute("href")
+                        assert page.locator("[data-raya-graph-detail-empty]").is_hidden()
+                        outgoing_or_incoming = (
+                            page.locator("[data-raya-graph-detail-outgoing] li").count()
+                            + page.locator("[data-raya-graph-detail-incoming] li").count()
+                        )
+                        assert outgoing_or_incoming >= 1
+                        page.fill("#graph-search", "zz-no-result")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.startsWith('0 visible node')"""
+                        )
+                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        assert page.locator("[data-raya-graph-detail-panel]").is_hidden()
+                        page.fill("#graph-search", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        page.locator("#raya-graph-canvas [data-raya-graph-node]").first.click()
+                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                        before_height = page.locator("#raya-graph-canvas").bounding_box()["height"]
+                        page.click("#graph-expand")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-expanded"
+                            )
+                            == "true"
+                        )
+                        after_height = page.locator("#raya-graph-canvas").bounding_box()["height"]
+                        assert after_height >= before_height
+                        page.click("[data-raya-graph-detail-clear]")
+                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
                         page.select_option("#graph-layout", "radial")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -169,6 +226,41 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "map"
                         )
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-expanded"
+                            )
+                            == "false"
+                        )
+                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        assert requested_urls == []
+                        first_list_link = page.locator(
+                            "#raya-graph-list [data-raya-graph-node]:visible a"
+                        ).first
+                        list_href = first_list_link.evaluate("node => node.href")
+                        with page.expect_navigation():
+                            first_list_link.click()
+                        assert page.url == list_href
+                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        page.locator("#raya-graph-canvas [data-raya-graph-node]").first.click()
+                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                        detail_href = page.locator(
+                            "[data-raya-graph-detail-link]"
+                        ).evaluate("node => node.href")
+                        with page.expect_navigation():
+                            page.click("[data-raya-graph-detail-link]")
+                        assert page.url == detail_href
+                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        graph_href = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).first.evaluate(
+                            "node => new URL(node.getAttribute('href'), document.baseURI).href"
+                        )
+                        with page.expect_navigation():
+                            page.locator(
+                                "#raya-graph-canvas [data-raya-graph-node]"
+                            ).first.dblclick()
+                        assert page.url == graph_href
                     finally:
                         page.close()
             finally:

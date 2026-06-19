@@ -384,6 +384,15 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-layout" in graph_html
     assert "graph-fit" in graph_html
     assert "graph-reset" in graph_html
+    assert "graph-expand" in graph_html
+    assert "raya-graph-detail" in graph_html
+    assert "data-raya-graph-detail-empty" in graph_html
+    assert "data-raya-graph-detail-panel" in graph_html
+    assert "data-raya-graph-detail-title" in graph_html
+    assert "data-raya-graph-detail-link" in graph_html
+    assert "data-raya-graph-detail-outgoing" in graph_html
+    assert "data-raya-graph-detail-incoming" in graph_html
+    assert "data-raya-graph-detail-clear" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html
     assert "Backlinks:" in graph_html
@@ -400,9 +409,16 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-layout" in graph_script
     assert "graph-search" in graph_script
     assert "graph-group-filter" in graph_script
+    assert "levenshtein" in graph_script
+    assert "selectGraphNode" in graph_script
+    assert "data-raya-graph-expanded" in graph_script
     assert 'mode === "list"' in graph_script
     assert "graph-reset" in graph_script
     assert "window.location.href" in graph_script
+    assert "fetch(" not in graph_script
+    assert "XMLHttpRequest" not in graph_script
+    assert "localStorage" not in graph_script
+    assert "sessionStorage" not in graph_script
 
 
 def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:

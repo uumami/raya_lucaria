@@ -45,6 +45,13 @@ The right learning rail owns compact page context. It is expanded by default on 
 
 Explicit graph link context means relationships already present in source links, stable IDs, or prerequisite metadata. It does not mean inferred recommendations, related practice, personal next steps, or mastery guidance.
 
+The static graph page is a reader-facing view of generated artifact graph data.
+It may provide local fuzzy search, deterministic layouts, group filters,
+selected-page details, incoming/outgoing link lists, and a non-persistent
+expanded workspace mode. It must not fetch graph data at runtime, load external
+graph libraries, persist graph state, infer recommendations, or present graph
+position as personal progress.
+
 Reader controls may use local `OpenDyslexic` resources, a local text-size comfort preference, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. They must work from static files and must not depend on fetch/XHR requests, accounts, a backend, CDN resources, external font requests, personal progress, adaptive recommendations, or browser-side MathJax conversion. Local storage may be used only for reader comfort preferences such as font and text size; it must not store course progress, answers, mastery, recommendations, graph state, skin authority, or authored content.
 
 Local course search may expose generated page titles, navigation titles, stable IDs, summaries, status, hierarchy labels, tags, and rendered page links. It must not scrape rendered prose, MathJax output, source paths, artifact paths, cache keys, personal progress, or inferred recommendations into the student search surface.
