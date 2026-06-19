@@ -346,6 +346,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((button) => button.getAttribute('aria-expanded')),
                           labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
                             .map((button) => button.getAttribute('aria-label')),
+                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.textContent.trim()),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
@@ -362,6 +364,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
+                    assert initial["texts"] == ["Course map", "Collapse map"]
                     assert initial["listHidden"] == "false"
                     assert initial["listInert"] is False
                     assert initial["mapWidth"] > 220
@@ -388,6 +391,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((button) => button.getAttribute('aria-expanded')),
                           labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
                             .map((button) => button.getAttribute('aria-label')),
+                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.textContent.trim()),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
@@ -404,6 +409,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Expand course map",
                         "Expand course map",
                     ]
+                    assert collapsed["texts"] == ["Course map", "Expand map"]
                     assert collapsed["listHidden"] == "true"
                     assert collapsed["listInert"] is True
                     assert collapsed["mapWidth"] < 130
@@ -426,6 +432,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((button) => button.getAttribute('aria-expanded')),
                           labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
                             .map((button) => button.getAttribute('aria-label')),
+                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
+                            .map((button) => button.textContent.trim()),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
@@ -440,6 +448,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
+                    assert expanded["texts"] == ["Course map", "Collapse map"]
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
                     assert set(expanded["linkTabIndexes"]) == {None}

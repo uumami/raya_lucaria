@@ -71,13 +71,16 @@ _SHELL_JAVASCRIPT = r"""
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    toggleButtons.forEach((button) => {
-      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
-      button.setAttribute(
-        "aria-label",
-        nextExpanded ? "Collapse course map" : "Expand course map"
-      );
-    });
+	    toggleButtons.forEach((button) => {
+	      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+	      button.setAttribute(
+	        "aria-label",
+	        nextExpanded ? "Collapse course map" : "Expand course map"
+	      );
+	      if (map.contains(button)) {
+	        button.textContent = nextExpanded ? "Collapse map" : "Expand map";
+	      }
+	    });
     updateMapLinkTabOrder(nextExpanded);
   }
 
