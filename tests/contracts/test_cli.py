@@ -15,7 +15,11 @@ MINIMAL = ROOT / "examples" / "courses" / "minimal"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 
 
-def run_cli(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
+def run_cli(
+    *args: str,
+    cwd: Path = ROOT,
+    timeout: int = 30,
+) -> subprocess.CompletedProcess[str]:
     env = {**os.environ}
     pythonpath = ":".join(
         str(path)
@@ -36,7 +40,7 @@ def run_cli(*args: str, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
-        timeout=30,
+        timeout=timeout,
     )
 
 
@@ -134,23 +138,36 @@ def test_cli_preview_render_debug_writes_artifacts_and_exits(tmp_path: Path) -> 
         "0",
         "--render-debug",
         str(debug_dir),
+        timeout=90,
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "render_debug=" in result.stdout
     assert str(debug_dir) in result.stdout
-    expected_screenshots = {
+    expected_primary_screenshots = {
         f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
         for page_name in RENDER_DEBUG_PAGE_NAMES
     }
+    expected_shell_screenshots = {
+        f"desktop-{state}-{page_name}.png"
+        for state in ("collapsed", "expanded")
+        for page_name in RENDER_DEBUG_PAGE_NAMES
+    }
+    expected_screenshots = expected_primary_screenshots | expected_shell_screenshots
     assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
     assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == len(expected_screenshots)
+    assert len(summary["captures"]) == len(expected_primary_screenshots)
     assert {
         Path(capture["screenshot"]).name for capture in summary["captures"]
-    } == expected_screenshots
+    } == expected_primary_screenshots
+    assert {
+        Path(path).name
+        for capture in summary["captures"]
+        for key, path in capture.get("screenshots", {}).items()
+        if key in {"desktop-collapsed", "desktop-expanded"}
+    } == expected_shell_screenshots
     assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
 

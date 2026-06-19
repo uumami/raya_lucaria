@@ -481,7 +481,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     assert '<main id="raya-content" class="raya-learning-shell">' in root_html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
-    assert root_html.index('<nav class="raya-course-map"') < root_html.index(
+    assert root_html.index('<nav id="raya-course-map" class="raya-course-map"') < root_html.index(
         '<article id="raya-article"'
     )
     assert root_html.index('<article id="raya-article"') < root_html.index(
@@ -941,11 +941,17 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
 
     _run_render_fixture_math_check(tmp_path)
 
-    expected_screenshots = {
+    expected_primary_screenshots = {
         f"{viewport_name(viewport)}-{page_name}.png"
         for viewport in RENDER_DEBUG_VIEWPORTS
         for page_name in RENDER_DEBUG_PAGE_NAMES
     }
+    expected_shell_screenshots = {
+        f"desktop-{state}-{page_name}.png"
+        for state in ("collapsed", "expanded")
+        for page_name in RENDER_DEBUG_PAGE_NAMES
+    }
+    expected_screenshots = expected_primary_screenshots | expected_shell_screenshots
     actual_screenshots = {path.name for path in debug_dir.glob("*.png")}
     assert actual_screenshots == expected_screenshots
     for name in expected_screenshots:
@@ -953,11 +959,18 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
 
     summary_path = debug_dir / "summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == len(expected_screenshots)
+    assert len(summary["captures"]) == len(expected_primary_screenshots)
     captured_names = {
         Path(capture["screenshot"]).name for capture in summary["captures"]
     }
-    assert captured_names == expected_screenshots
+    assert captured_names == expected_primary_screenshots
+    captured_shell_names = {
+        Path(path).name
+        for capture in summary["captures"]
+        for key, path in capture.get("screenshots", {}).items()
+        if key in {"desktop-collapsed", "desktop-expanded"}
+    }
+    assert captured_shell_names == expected_shell_screenshots
     assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
     assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
     assert all(
@@ -1031,15 +1044,37 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
         "mobile-numbered-objects.png",
         "desktop-reader-ux.png",
         "mobile-reader-ux.png",
+        "desktop-collapsed-index.png",
+        "desktop-expanded-index.png",
+        "desktop-collapsed-static-path.png",
+        "desktop-expanded-static-path.png",
+        "desktop-collapsed-math-authoring.png",
+        "desktop-expanded-math-authoring.png",
+        "desktop-collapsed-numbered-objects.png",
+        "desktop-expanded-numbered-objects.png",
+        "desktop-collapsed-reader-ux.png",
+        "desktop-expanded-reader-ux.png",
     }
+    expected_primary_screenshots = {
+        name
+        for name in expected_screenshots
+        if not name.startswith(("desktop-collapsed-", "desktop-expanded-"))
+    }
+    expected_shell_screenshots = expected_screenshots - expected_primary_screenshots
     assert {path.name for path in debug_dir.glob("*.png")} == expected_screenshots
     assert all((debug_dir / name).stat().st_size > 0 for name in expected_screenshots)
 
     summary = json.loads((debug_dir / "summary.json").read_text(encoding="utf-8"))
-    assert len(summary["captures"]) == len(expected_screenshots)
+    assert len(summary["captures"]) == len(expected_primary_screenshots)
     assert {
         Path(capture["screenshot"]).name for capture in summary["captures"]
-    } == expected_screenshots
+    } == expected_primary_screenshots
+    assert {
+        Path(path).name
+        for capture in summary["captures"]
+        for key, path in capture.get("screenshots", {}).items()
+        if key in {"desktop-collapsed", "desktop-expanded"}
+    } == expected_shell_screenshots
     assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
     assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
