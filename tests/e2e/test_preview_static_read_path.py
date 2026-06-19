@@ -148,11 +148,22 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "OpenDyslexic" in accessibility_css
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
+    assert 'data-raya-course-map="collapsed"' in index_html
+    assert 'aria-expanded="false">Course map</button>' in index_html
+    assert 'class="raya-learning-shell" data-raya-course-map="collapsed"' in index_html
+    assert 'class="raya-course-map" aria-label="Course map" data-raya-course-map="collapsed"' in index_html
+    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="true" inert' in index_html
+    assert '<a href="static-path/index.html" tabindex="-1">1 Static Path</a>' in index_html
+    assert 'data-raya-rail-toggle' in reader_html
+    assert 'data-raya-rail-panel-state="collapsed"' in reader_html
+    assert 'aria-hidden="true" inert' in reader_html
     assert "max-width: 110rem" in rich_css
     assert "grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) minmax(14rem, 18rem)" in rich_css
     assert "@media (min-width: 901px)" in rich_css
     assert "grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr) minmax(12rem, 16rem)" in rich_css
+    assert "transition: grid-template-columns 180ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
+    assert ".raya-rail-toggle:focus-visible" in rich_css
     assert "outline: 3px solid var(--raya-color-accent)" in rich_css
     assert "@media (max-width: 900px)" in rich_css
 
@@ -330,6 +341,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
                           expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
+                          listInert: document.querySelector('#raya-course-map-list')?.inert,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
@@ -338,6 +351,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["expanded"] == "false"
+                    assert collapsed["listHidden"] == "true"
+                    assert collapsed["listInert"] is True
                     assert collapsed["mapWidth"] < 130
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["linkTabIndexes"]
@@ -348,10 +363,17 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert after_hover == "collapsed"
 
                     page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width > 220"""
+                    )
                     expanded = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
                           expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
+                          listInert: document.querySelector('#raya-course-map-list')?.inert,
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
@@ -359,11 +381,94 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     )
                     assert expanded["state"] == "expanded"
                     assert expanded["expanded"] == "true"
+                    assert expanded["listHidden"] == "false"
+                    assert expanded["listInert"] is False
                     assert expanded["mapWidth"] > 220
                     assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.keyboard.press("Escape")
                     assert page.evaluate("() => document.documentElement.dataset.rayaCourseMap") == "collapsed"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    link_panel = page.locator(".raya-page-prerequisites").first
+                    collapsed = link_panel.evaluate(
+                        """(panel) => {
+                          const body = panel.querySelector('.raya-rail-panel-body');
+                          const link = body?.querySelector('a');
+                          link?.focus();
+                          return {
+                            state: panel.dataset.rayaRailPanelState,
+                            expanded: panel.querySelector('[data-raya-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            ariaHidden: body?.getAttribute('aria-hidden'),
+                            inert: body?.inert,
+                            bodyHeight: body?.getBoundingClientRect().height,
+                            hasLink: !!link,
+                            linkFocused: document.activeElement === link,
+                          };
+                        }"""
+                    )
+                    assert collapsed["state"] == "collapsed"
+                    assert collapsed["expanded"] == "false"
+                    assert collapsed["ariaHidden"] == "true"
+                    assert collapsed["inert"] is True
+                    assert collapsed["bodyHeight"] < 2
+                    assert collapsed["hasLink"] is True
+                    assert collapsed["linkFocused"] is False
+
+                    link_panel.locator("[data-raya-rail-toggle]").click()
+                    expanded = link_panel.evaluate(
+                        """(panel) => {
+                          const body = panel.querySelector('.raya-rail-panel-body');
+                          const link = body?.querySelector('a');
+                          link?.focus();
+                          return {
+                            state: panel.dataset.rayaRailPanelState,
+                            expanded: panel.querySelector('[data-raya-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            ariaHidden: body?.getAttribute('aria-hidden'),
+                            inert: body?.inert,
+                            bodyHeight: body?.getBoundingClientRect().height,
+                            linkFocused: document.activeElement === link,
+                          };
+                        }"""
+                    )
+                    assert expanded["state"] == "expanded"
+                    assert expanded["expanded"] == "true"
+                    assert expanded["ariaHidden"] == "false"
+                    assert expanded["inert"] is False
+                    assert expanded["bodyHeight"] > collapsed["bodyHeight"]
+                    assert expanded["linkFocused"] is True
                 finally:
                     page.close()
             finally:
@@ -438,6 +543,55 @@ def test_render_fixture_course_map_works_without_storage(
                           .querySelector('.raya-page-toc a[aria-current="location"]')
                           ?.getAttribute('href') === '#worked-example'"""
                     )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    """
+                    window.localStorage.setItem('raya.courseMapExpanded', 'true');
+                    """
+                )
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    stable = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                          shellReady: document.documentElement.dataset.rayaShellReady,
+                        })"""
+                    )
+                    assert stable["shellReady"] == "true"
+                    assert stable["state"] == "collapsed"
+                    assert stable["expanded"] == "false"
+                    assert stable["mapWidth"] < 130
                 finally:
                     page.close()
             finally:
@@ -552,7 +706,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
 
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
-    assert '<main id="raya-content" class="raya-learning-shell">' in root_html
+    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="collapsed">' in root_html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
     assert root_html.index('<nav id="raya-course-map" class="raya-course-map"') < root_html.index(

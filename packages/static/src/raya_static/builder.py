@@ -795,7 +795,7 @@ def _render_page(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            f'<html lang="{html.escape(language)}" data-raya-course-map="collapsed">',
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -811,7 +811,7 @@ def _render_page(
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
             _render_top_command_bar(course_title),
-            '<main id="raya-content" class="raya-learning-shell">',
+            '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="collapsed">',
             _render_course_map(page, content_model),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             _render_article_sequence_nav(page, content_model),
@@ -856,7 +856,7 @@ def _page_position(page: ContentPage, content_model: ContentModel) -> str:
     return ""
 
 
-def _render_course_map_toggle(label: str = "Course map", expanded: bool = True) -> str:
+def _render_course_map_toggle(label: str = "Course map", expanded: bool = False) -> str:
     aria_expanded = "true" if expanded else "false"
     return (
         '<button class="raya-course-map-toggle" type="button" '
@@ -874,17 +874,17 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
         href = _relative_href(page.output_path, target.output_path)
         label = html.escape(_navigation_label(target))
         current = ' aria-current="page"' if target.output_path == page.output_path else ""
-        nav_items.append(f'<a href="{html.escape(href)}"{current}>{label}</a>')
+        nav_items.append(f'<a href="{html.escape(href)}"{current} tabindex="-1">{label}</a>')
     position = html.escape(_page_position(page, content_model))
     return "\n".join(
         [
-            '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
+            '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="collapsed">',
             '<div class="raya-course-map-header">',
             '<p class="raya-region-title">Course map</p>',
             f'<p class="raya-page-position">{position}</p>' if position else "",
             _render_course_map_toggle("Toggle map"),
             "</div>",
-            '<div class="raya-course-map-list" id="raya-course-map-list">',
+            '<div class="raya-course-map-list" id="raya-course-map-list" aria-hidden="true" inert>',
             "\n".join(nav_items),
             "</div>",
             "</nav>",
@@ -920,14 +920,45 @@ def _render_learning_rail(
     )
 
 
-def _render_rail_panel(class_name: str, title: str, body: str) -> str:
+def _render_rail_panel(
+    class_name: str,
+    title: str,
+    body: str,
+    *,
+    expanded: bool = False,
+) -> str:
     if not body:
         return ""
+    panel_id = re.sub(r"[^a-z0-9_-]+", "-", class_name.lower()).strip("-")
+    body_id = f"{panel_id}-body"
+    panel_state = "expanded" if expanded else "collapsed"
+    aria_expanded = "true" if expanded else "false"
+    aria_hidden = "false" if expanded else "true"
+    inert = "" if expanded else " inert"
     return "\n".join(
         [
-            f'<section class="raya-rail-panel {html.escape(class_name)}">',
-            f'<h2 class="raya-rail-title">{html.escape(title)}</h2>',
+            (
+                f'<section class="raya-rail-panel {html.escape(class_name)}" '
+                f'data-raya-rail-panel-state="{panel_state}">'
+            ),
+            '<h2 class="raya-rail-title">',
+            (
+                '<button class="raya-rail-toggle" type="button" '
+                "data-raya-rail-toggle "
+                f'aria-controls="{html.escape(body_id, quote=True)}" '
+                f'aria-expanded="{aria_expanded}">'
+                f"{html.escape(title)}"
+                "</button>"
+            ),
+            "</h2>",
+            (
+                f'<div class="raya-rail-panel-body" id="{html.escape(body_id, quote=True)}" '
+                f'aria-hidden="{aria_hidden}"{inert}>'
+            ),
+            '<div class="raya-rail-panel-body-inner">',
             body,
+            "</div>",
+            "</div>",
             "</section>",
         ]
     )
@@ -950,7 +981,7 @@ def _extract_page_toc(rendered_article_html: str) -> tuple[str, str]:
 def _render_page_contents_rail(toc_html: str) -> str:
     if not toc_html:
         return ""
-    return _render_rail_panel("raya-page-contents", "Page contents", toc_html)
+    return _render_rail_panel("raya-page-contents", "Page contents", toc_html, expanded=True)
 
 
 def _render_page_summary_rail(page: ContentPage) -> str:
@@ -960,6 +991,7 @@ def _render_page_summary_rail(page: ContentPage) -> str:
         "raya-page-summary",
         "Summary",
         f"<p>{html.escape(page.summary)}</p>",
+        expanded=True,
     )
 
 

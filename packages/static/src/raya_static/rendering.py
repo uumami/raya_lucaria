@@ -521,9 +521,15 @@ img {
   grid-template-areas: "course-map main-article learning-rail";
   grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) minmax(14rem, 18rem);
 }
+html[data-raya-shell-ready="true"] .raya-learning-shell {
+  transition: grid-template-columns 180ms ease;
+}
 .raya-course-map {
   grid-area: course-map;
   overflow: hidden;
+}
+html[data-raya-shell-ready="true"] .raya-course-map {
+  transition: max-height 180ms ease, width 180ms ease;
 }
 .raya-main-article {
   grid-area: main-article;
@@ -579,6 +585,50 @@ img {
 .raya-course-map-toggle:focus-visible {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 2px;
+}
+.raya-rail-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-weight: 700;
+  justify-content: space-between;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+.raya-rail-toggle::after {
+  content: "+";
+  font-weight: 700;
+  margin-left: 0.75rem;
+}
+.raya-rail-toggle[aria-expanded="true"]::after {
+  content: "-";
+}
+.raya-rail-toggle:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-rail-panel-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  margin-top: 0.5rem;
+  opacity: 1;
+}
+html[data-raya-shell-ready="true"] .raya-rail-panel-body {
+  transition: grid-template-rows 180ms ease, opacity 160ms ease, margin-top 180ms ease;
+}
+.raya-rail-panel-body-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.raya-rail-panel[data-raya-rail-panel-state="collapsed"] .raya-rail-panel-body {
+  grid-template-rows: 0fr;
+  margin-top: 0;
+  opacity: 0;
 }
 .raya-article-sequence {
   border-bottom: 1px solid var(--raya-color-border);

@@ -1868,13 +1868,14 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
-    assert '<main id="raya-content" class="raya-learning-shell">' in html
+    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="collapsed">' in html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in html
     assert '<section class="raya-rail-panel raya-page-summary"' in html
     assert '<section class="raya-rail-panel raya-page-status"' in html
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
-    assert '<h2 class="raya-rail-title">Status</h2>' in html
+    assert '<button class="raya-rail-toggle" type="button" data-raya-rail-toggle' in html
+    assert 'aria-expanded="false">Status</button>' in html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     )
@@ -1914,8 +1915,8 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="true"' in html
-    assert 'data-raya-course-map="expanded"' in html
+    assert 'aria-expanded="false"' in html
+    assert 'data-raya-course-map="collapsed"' in html
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
@@ -1947,10 +1948,12 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
         encoding="utf-8"
     )
     estimated_panel = _section_html(html, "raya-page-estimated-time")
-    assert '<h2 class="raya-rail-title">Estimated time</h2>' in estimated_panel
+    assert 'aria-expanded="false">Estimated time</button>' in estimated_panel
+    assert 'aria-hidden="true" inert' in estimated_panel
     assert "15 minutes" in estimated_panel
     tags_panel = _section_html(html, "raya-page-tags")
-    assert '<h2 class="raya-rail-title">Tags</h2>' in tags_panel
+    assert 'aria-expanded="false">Tags</button>' in tags_panel
+    assert 'aria-hidden="true" inert' in tags_panel
     assert "<li>reading</li>" in tags_panel
     assert "<li>navigation</li>" in tags_panel
     assert "<li>accessibility</li>" in tags_panel
@@ -2777,8 +2780,12 @@ def _visible_text(html_text: str) -> str:
 
 
 def _section_html(html_text: str, class_name: str) -> str:
-    section_start = f'<section class="raya-rail-panel {class_name}">'
-    start = html_text.index(section_start)
+    match = re.search(
+        rf'<section class="raya-rail-panel {re.escape(class_name)}"[^>]*>',
+        html_text,
+    )
+    assert match is not None
+    start = match.start()
     end = html_text.index("</section>", start) + len("</section>")
     return html_text[start:end]
 
