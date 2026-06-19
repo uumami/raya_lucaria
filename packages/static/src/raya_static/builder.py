@@ -18,6 +18,7 @@ from raya_schema import (
     validate_artifact_manifest,
     validate_cache_index,
     validate_execution_index,
+    validate_graph_index,
     validate_indices_index,
     validate_course,
     validate_links_index,
@@ -391,6 +392,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         pages_by_source,
         root,
     )
+    graph_index = _graph_index(course_id, content_model, links_index)
     navigation_index = _navigation_index(course_id, content_model)
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
@@ -412,6 +414,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "pages.json", pages_index, report)
     _write_json(data_dir / "quanta.json", quanta_index, report)
     _write_json(data_dir / "links.json", links_index, report)
+    _write_json(data_dir / "graph.json", graph_index, report)
     _write_json(data_dir / "navigation.json", navigation_index, report)
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
@@ -427,6 +430,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         content_model=content_model,
         course_title=str(config["title"]),
         language=str(config["language"]),
+        graph_index=graph_index,
         references=references,
         reviewed_outputs=reviewed_outputs,
         report=report,
@@ -443,6 +447,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "pages": "data/pages.json",
             "quanta": "data/quanta.json",
             "links": "data/links.json",
+            "graph": "data/graph.json",
             "navigation": "data/navigation.json",
             "indices": "data/indices.json",
             "official": "data/official.json",
@@ -1342,6 +1347,100 @@ def _links_index(
     return {"course_id": course_id, "links": links}
 
 
+def _graph_index(
+    course_id: str,
+    content_model: ContentModel,
+    links_index: dict[str, Any],
+) -> dict[str, Any]:
+    group_by_page = _graph_group_by_page(content_model)
+    nodes = [
+        {
+            "id": page.id,
+            "title": page.title,
+            "nav_title": page.nav_title,
+            "url": page.output_path,
+            "group": group_by_page.get(page.id, ""),
+            "order": index,
+            "status": page.status,
+            "tags": list(page.tags),
+        }
+        for index, page in enumerate(content_model.pages, start=1)
+    ]
+    edges = [
+        {
+            "from": link["from"],
+            "to": link["to"],
+            "kind": link["kind"],
+            "source": "links",
+        }
+        for link in links_index["links"]
+    ]
+    groups = [
+        {
+            "id": page.id,
+            "title": page.nav_title or page.title,
+            "order": index,
+        }
+        for index, page in enumerate(
+            (
+                content_model.pages_by_id[page_id]
+                for page_id in content_model.children_by_parent.get(
+                    content_model.root_id or "",
+                    [],
+                )
+            ),
+            start=1,
+        )
+    ]
+    pages_by_id = content_model.pages_by_id
+    backlinks: dict[str, list[dict[str, str]]] = {
+        page.id: [] for page in content_model.pages
+    }
+    for edge in edges:
+        if edge["kind"] not in {"content", "prerequisite"}:
+            continue
+        source = pages_by_id.get(edge["from"])
+        target = pages_by_id.get(edge["to"])
+        if source is None or target is None:
+            continue
+        backlinks[target.id].append(
+            {
+                "from": source.id,
+                "title": source.title,
+                "url": source.output_path,
+                "kind": edge["kind"],
+            }
+        )
+    return {
+        "version": 1,
+        "course_id": course_id,
+        "nodes": nodes,
+        "edges": edges,
+        "groups": groups,
+        "backlinks": backlinks,
+    }
+
+
+def _graph_group_by_page(content_model: ContentModel) -> dict[str, str]:
+    groups: dict[str, str] = {}
+    root_id = content_model.root_id
+    top_level = set(content_model.children_by_parent.get(root_id or "", []))
+    for page in content_model.pages:
+        if page.id in top_level:
+            groups[page.id] = page.id
+            continue
+        ancestor = page.parent_id
+        selected = ""
+        while ancestor:
+            if ancestor in top_level:
+                selected = ancestor
+                break
+            ancestor_page = content_model.pages_by_id.get(ancestor)
+            ancestor = ancestor_page.parent_id if ancestor_page is not None else None
+        groups[page.id] = selected
+    return groups
+
+
 def _navigation_index(course_id: str, content_model: ContentModel) -> dict[str, Any]:
     flat = _flatten_navigation(content_model)
     previous_next: dict[str, tuple[str | None, str | None]] = {}
@@ -1727,6 +1826,7 @@ def _write_inspection_surface(
     content_model: ContentModel,
     course_title: str,
     language: str,
+    graph_index: dict[str, Any],
     references: list[SourceReference],
     reviewed_outputs: list[ReviewedOutput],
     report: ValidationReport,
@@ -1739,6 +1839,7 @@ def _write_inspection_surface(
             content_model=content_model,
             course_title=course_title,
             language=language,
+            graph_index=graph_index,
             references=references,
             reviewed_outputs=reviewed_outputs,
         ),
@@ -1753,6 +1854,7 @@ def _render_inspection_surface(
     content_model: ContentModel,
     course_title: str,
     language: str,
+    graph_index: dict[str, Any],
     references: list[SourceReference],
     reviewed_outputs: list[ReviewedOutput],
 ) -> str:
@@ -1773,6 +1875,24 @@ def _render_inspection_surface(
             f"<span>{html.escape(page.id)}</span>"
             "</li>"
         )
+
+    graph_node_items = []
+    for node in graph_index["nodes"]:
+        href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), node["url"])
+        graph_node_items.append(
+            f'<li><a href="{html.escape(href)}">{html.escape(node["title"])}</a></li>'
+        )
+    edge_kind_counts: dict[str, int] = {}
+    for edge in graph_index["edges"]:
+        kind = str(edge["kind"])
+        edge_kind_counts[kind] = edge_kind_counts.get(kind, 0) + 1
+    edge_kind_items = [
+        f"<li>{html.escape(kind)}: {count}</li>"
+        for kind, count in sorted(edge_kind_counts.items())
+    ]
+    group_items = [
+        f"<li>{html.escape(group['title'])}</li>" for group in graph_index["groups"]
+    ]
 
     reference_items = []
     for reference in references:
@@ -1854,6 +1974,24 @@ def _render_inspection_surface(
                 "manifest-declared artifact data for professors, contributors, and agents. "
                 "Normal course pages remain the student-default surface.</p>"
             ),
+            "<h2>Course Graph</h2>",
+            (
+                f"<p>{len(graph_index['nodes'])} page node(s), "
+                f"{len(graph_index['edges'])} graph edge(s).</p>"
+            ),
+            "<p>Artifact data path: <code>data/graph.json</code></p>",
+            "<h3>Edge kinds</h3>",
+            "<ul>",
+            "\n".join(edge_kind_items) if edge_kind_items else "<li>No graph edges.</li>",
+            "</ul>",
+            "<h3>Groups</h3>",
+            "<ul>",
+            "\n".join(group_items) if group_items else "<li>No graph groups.</li>",
+            "</ul>",
+            "<h3>Graph Pages</h3>",
+            "<ul>",
+            "\n".join(graph_node_items) if graph_node_items else "<li>No graph nodes.</li>",
+            "</ul>",
             "<h2>Pages</h2>",
             "<ul>",
             "\n".join(page_items),
@@ -2211,6 +2349,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_pages_index(artifact_dir / "data" / "pages.json"),
         validate_quanta_index(artifact_dir / "data" / "quanta.json"),
         validate_links_index(artifact_dir / "data" / "links.json"),
+        validate_graph_index(artifact_dir / "data" / "graph.json"),
         validate_navigation_index(artifact_dir / "data" / "navigation.json"),
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),

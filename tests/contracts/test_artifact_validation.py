@@ -10,6 +10,7 @@ from raya_schema import (
     validate_cache_index,
     validate_execution_index,
     validate_execution_results_index,
+    validate_graph_index,
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
@@ -44,6 +45,7 @@ def test_valid_artifact_manifest(tmp_path: Path) -> None:
     "pages": "data/pages.json",
     "quanta": "data/quanta.json",
     "links": "data/links.json",
+    "graph": "data/graph.json",
     "navigation": "data/navigation.json",
     "indices": "data/indices.json",
     "official": "data/official.json"
@@ -82,6 +84,7 @@ def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
     "pages": "data/pages.json",
     "quanta": "data/quanta.json",
     "links": "data/links.json",
+    "graph": "data/graph.json",
     "navigation": "data/navigation.json",
     "indices": "data/indices.json",
     "official": "data/official.json",
@@ -98,6 +101,38 @@ def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
     assert any("data.numbered_objects" in item.field for item in report.diagnostics)
 
 
+def test_artifact_manifest_rejects_non_string_graph_data_path(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        """{
+  "artifact_version": "0.1",
+  "course_id": "minimal-course",
+  "course_version_id": "fixture",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "source_schema_version": "0.1",
+  "static_site_root": "site",
+  "data": {
+    "pages": "data/pages.json",
+    "quanta": "data/quanta.json",
+    "links": "data/links.json",
+    "graph": [],
+    "navigation": "data/navigation.json",
+    "indices": "data/indices.json",
+    "official": "data/official.json"
+  }
+}
+""",
+        encoding="utf-8",
+    )
+
+    report = validate_artifact_manifest(manifest)
+
+    assert not report.ok
+    assert any("data.graph" in item.field for item in report.diagnostics)
+
+
 def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
     pages = tmp_path / "pages.json"
     pages.write_text(
@@ -112,6 +147,16 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
     links = tmp_path / "links.json"
     links.write_text(
         '{"course_id":"minimal-course","links":[{"from":"course-root","to":"first-topic","kind":"internal"}]}',
+        encoding="utf-8",
+    )
+    graph = tmp_path / "graph.json"
+    graph.write_text(
+        (
+            '{"version":1,"course_id":"minimal-course",'
+            '"nodes":[{"id":"course-root","title":"Home","nav_title":"","url":"index.html",'
+            '"group":"","order":1,"status":"ready","tags":[]}],'
+            '"edges":[],"groups":[],"backlinks":{"course-root":[]}}'
+        ),
         encoding="utf-8",
     )
     official = tmp_path / "official.json"
@@ -164,6 +209,7 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_pages_index(pages),
         validate_quanta_index(quanta),
         validate_links_index(links),
+        validate_graph_index(graph),
         validate_navigation_index(navigation),
         validate_indices_index(indices),
         validate_official_index(official),

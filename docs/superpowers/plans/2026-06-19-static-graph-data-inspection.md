@@ -95,8 +95,9 @@ def test_build_writes_graph_index_from_current_navigation_and_links(
     ).read_text(encoding="utf-8")
     assert "Course Graph" in inspection_html
     assert "3 page node(s)" in inspection_html
-    assert "5 graph edge(s)" in inspection_html
-    assert 'href="../../data/graph.json"' in inspection_html
+    assert "6 graph edge(s)" in inspection_html
+    assert "Artifact data path: data/graph.json" in inspection_html
+    assert 'href="../../data/graph.json"' not in inspection_html
     assert 'href="../../unit/topic/index.html"' in inspection_html
 ```
 
@@ -381,7 +382,6 @@ Add `graph_index` as a parameter to `_write_inspection_surface()` and `_render_i
 In the inspection HTML, add a `Course Graph` section before `Pages` that renders:
 
 ```python
-graph_href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), "data/graph.json")
 graph_page_links = []
 for node in graph_index["nodes"]:
     href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), node["url"])
@@ -394,8 +394,8 @@ Render counts and links:
 
 ```html
 <h2>Course Graph</h2>
-<p>3 page node(s), 5 graph edge(s).</p>
-<p><a href="../../data/graph.json">Raw graph data</a></p>
+<p>3 page node(s), 6 graph edge(s).</p>
+<p>Artifact data path: <code>data/graph.json</code></p>
 <ul>...</ul>
 ```
 

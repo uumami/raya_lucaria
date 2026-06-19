@@ -12,6 +12,7 @@ from raya_schema import (
     validate_artifact_manifest,
     validate_cache_index,
     validate_execution_index,
+    validate_graph_index,
     validate_indices_index,
     validate_links_index,
     validate_navigation_index,
@@ -51,6 +52,7 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "data" / "pages.json").exists()
     assert (artifact / "data" / "quanta.json").exists()
     assert (artifact / "data" / "links.json").exists()
+    assert (artifact / "data" / "graph.json").exists()
     assert (artifact / "data" / "navigation.json").exists()
     assert (artifact / "data" / "indices.json").exists()
     assert (artifact / "data" / "official.json").exists()
@@ -75,6 +77,7 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
         "by_id": {},
     }
     assert manifest["data"]["numbered_objects"] == "data/numbered-objects.json"
+    assert manifest["data"]["graph"] == "data/graph.json"
 
 
 def test_build_applies_course_skin_to_pages_and_writes_skin_css(
@@ -266,6 +269,7 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         validate_pages_index(artifact / "data" / "pages.json"),
         validate_quanta_index(artifact / "data" / "quanta.json"),
         validate_links_index(artifact / "data" / "links.json"),
+        validate_graph_index(artifact / "data" / "graph.json"),
         validate_navigation_index(artifact / "data" / "navigation.json"),
         validate_indices_index(artifact / "data" / "indices.json"),
         validate_official_index(artifact / "data" / "official.json"),
@@ -279,6 +283,88 @@ def test_generated_artifact_contract_validates(tmp_path: Path) -> None:
         assert validation_report.ok, [
             diagnostic.format() for diagnostic in validation_report.diagnostics
         ]
+
+
+def test_build_writes_graph_index_from_current_navigation_and_links(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    root_page = course / "course" / "0_index.md"
+    root_page.write_text(
+        root_page.read_text(encoding="utf-8")
+        + "\nRead the [topic](1_unit/1_topic/0_index.md).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    graph_path = artifact / "data" / "graph.json"
+    assert graph_path.exists()
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["data"]["graph"] == "data/graph.json"
+    graph_report = validate_graph_index(graph_path)
+    assert graph_report.ok, [
+        diagnostic.format() for diagnostic in graph_report.diagnostics
+    ]
+
+    graph = json.loads(graph_path.read_text(encoding="utf-8"))
+    assert graph["version"] == 1
+    assert graph["course_id"] == "minimal-course"
+    nodes_by_id = {node["id"]: node for node in graph["nodes"]}
+    assert nodes_by_id["course-root"]["title"] == "Minimal Course"
+    assert nodes_by_id["course-root"]["url"] == "index.html"
+    assert nodes_by_id["first-unit"]["group"] == "first-unit"
+    assert nodes_by_id["first-topic"]["group"] == "first-unit"
+    assert nodes_by_id["first-topic"]["tags"] == []
+    edges = {(edge["from"], edge["to"], edge["kind"]) for edge in graph["edges"]}
+    assert ("course-root", "first-unit", "navigation") in edges
+    assert ("first-unit", "course-root", "parent") in edges
+    assert ("first-unit", "first-topic", "navigation") in edges
+    assert ("first-topic", "first-unit", "parent") in edges
+    assert ("first-topic", "first-unit", "prerequisite") in edges
+    assert ("course-root", "first-topic", "content") in edges
+    backlinks = graph["backlinks"]["first-topic"]
+    assert backlinks == [
+        {
+            "from": "course-root",
+            "title": "Minimal Course",
+            "url": "index.html",
+            "kind": "content",
+        }
+    ]
+    inspection_html = (
+        artifact / "site" / "_raya" / "inspect" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert "Course Graph" in inspection_html
+    assert "3 page node(s)" in inspection_html
+    assert "6 graph edge(s)" in inspection_html
+    assert "Artifact data path:" in inspection_html
+    assert "<code>data/graph.json</code>" in inspection_html
+    assert 'href="../../data/graph.json"' not in inspection_html
+    assert 'href="../../unit/topic/index.html"' in inspection_html
+
+
+def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
+    graph_path = tmp_path / "graph.json"
+    graph_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "course_id": "broken",
+                "edges": [],
+                "groups": [],
+                "backlinks": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = validate_graph_index(graph_path)
+
+    assert not report.ok
+    assert any("nodes" in diagnostic.format() for diagnostic in report.diagnostics)
 
 
 def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> None:

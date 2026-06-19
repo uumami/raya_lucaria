@@ -62,7 +62,7 @@ The existing `_raya/inspect/index.html` surface gains a compact graph section:
 - total edge count;
 - edge-kind counts;
 - top-level groups;
-- a link to the raw `data/graph.json` file.
+- the raw `data/graph.json` manifest path as artifact data, not a browser link.
 
 This page is for professors, contributors, and agents. It is not the student default view and must not imply personal progress or adaptive recommendations.
 
@@ -95,7 +95,7 @@ First failing test:
 - Validate the graph index with `validate_graph_index`.
 - Assert graph nodes include `render-root` and `authoring-matrix`.
 - Assert graph edges include generated content relationships.
-- Assert the inspection page mentions graph node/edge counts and links to `../../data/graph.json`.
+- Assert the inspection page mentions graph node/edge counts and the `data/graph.json` artifact path without creating a broken browser link.
 
 Regression tests should also prove:
 
