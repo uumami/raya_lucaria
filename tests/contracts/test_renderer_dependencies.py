@@ -364,7 +364,8 @@ def test_docs_cover_collapsible_learning_shell() -> None:
             "OpenDyslexic",
         ],
         "docs/guides/en/agents/index.md": [
-            "raya.courseMapExpanded",
+            "expanded course map",
+            "non-persistent",
             "no external requests",
             "render-debug",
         ],
@@ -385,7 +386,8 @@ def test_docs_cover_collapsible_learning_shell() -> None:
             "OpenDyslexic",
         ],
         "docs/guides/es/agentes/index.md": [
-            "raya.courseMapExpanded",
+            "mapa del curso expandido",
+            "no persistente",
             "sin solicitudes externas",
             "render-debug",
         ],

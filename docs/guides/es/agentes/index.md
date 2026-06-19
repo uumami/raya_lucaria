@@ -48,9 +48,9 @@ sin metas inferidas, sin practica relacionada falsa, sin progreso personal y sin
 MathJax en el browser. Usa checks render-debug cuando puedan fallar layout de la
 estructura del curso, recursos locales, capturas, overflow o math visible.
 
-Al cambiar la shell, verifica `raya.courseMapExpanded`, la salida de
-render-debug, el comportamiento movil sin overflow y sin solicitudes externas.
-La preferencia de la shell es solo estado local de UI.
+Al cambiar la shell, verifica el mapa del curso expandido por defecto, la
+metadata del riel compacto, la salida de render-debug, el comportamiento movil
+sin overflow y sin solicitudes externas. El estado del mapa del curso es UI no persistente.
 
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 

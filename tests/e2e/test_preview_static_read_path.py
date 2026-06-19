@@ -620,6 +620,9 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
     try:
         assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
         assert handle.base_url is not None
+        shell_js = _fetch_text(f"{handle.base_url}/_raya/render/shell.js")
+        assert "raya.courseMapExpanded" not in shell_js
+        assert "localStorage" not in shell_js
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
                 executable_path=str(browser_executable),
@@ -630,7 +633,7 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 page.add_init_script(
                     """
-                    window.localStorage.setItem('raya.courseMapExpanded', 'false');
+                    window.localStorage.setItem('raya.unrelatedReaderPreference', 'collapsed');
                     """
                 )
                 try:
@@ -763,7 +766,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
 
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
-    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="collapsed">' in root_html
+    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in root_html
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
     assert '<aside class="raya-learning-rail" aria-label="Learning context">' in root_html
     assert root_html.index('<nav id="raya-course-map" class="raya-course-map"') < root_html.index(

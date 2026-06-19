@@ -47,9 +47,9 @@ personal progress, and no browser-side MathJax. Use render-debug checks when
 course shell layout, local resources, screenshots, overflow, or visible math can
 regress.
 
-When changing the shell, verify `raya.courseMapExpanded`, render-debug output,
-mobile no-overflow behavior, and no external requests. The shell preference is
-local UI state only.
+When changing the shell, verify the expanded course map default, compact rail
+metadata, render-debug output, mobile no-overflow behavior, and no external requests.
+The course map state is non-persistent UI state.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 
