@@ -17,8 +17,7 @@ Current foundation constraints are strict:
 Add a compact collapsible right-rail panel called `Linked pages` on normal course pages. It shows explicit graph relationships for the current page:
 
 - `From this page`: authored content links from the current page to other pages;
-- `Links here`: authored content links from other pages to the current page;
-- `Prerequisites`: explicit prerequisite relationships already accepted in source metadata.
+- `Links here`: authored content links from other pages to the current page.
 
 The panel is a reading aid. It does not say “recommended,” “practice,” “progress,” “mastery,” or “you should.”
 
