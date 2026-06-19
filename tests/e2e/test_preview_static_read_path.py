@@ -272,6 +272,70 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
         handle.close()
 
 
+def test_render_fixture_course_map_collapses_and_expands_on_click_only(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    collapsed = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                          articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
+                        })"""
+                    )
+                    assert collapsed["state"] == "collapsed"
+                    assert collapsed["expanded"] == "false"
+                    assert collapsed["mapWidth"] < 130
+                    assert collapsed["articleWidth"] > 760
+
+                    page.hover("#raya-course-map")
+                    after_hover = page.evaluate("() => document.documentElement.dataset.rayaCourseMap")
+                    assert after_hover == "collapsed"
+
+                    page.click(".raya-course-map-toggle")
+                    expanded = page.evaluate(
+                        """() => ({
+                          state: document.documentElement.dataset.rayaCourseMap,
+                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
+                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                        })"""
+                    )
+                    assert expanded["state"] == "expanded"
+                    assert expanded["expanded"] == "true"
+                    assert expanded["mapWidth"] > 220
+
+                    page.keyboard.press("Escape")
+                    assert page.evaluate("() => document.documentElement.dataset.rayaCourseMap") == "collapsed"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:
