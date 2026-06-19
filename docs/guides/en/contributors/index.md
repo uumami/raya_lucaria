@@ -59,7 +59,7 @@ related practice invented from prose.
 Review shell controls as accessibility surfaces. The current reader uses an expanded course map
 by default on desktop, can collapse by explicit click to a
 compact map rail, and keeps that shell state non-persistent. The course-map
-behavior is click-only, uses `aria-expanded`, and must be served from local renderer resources
+behavior is explicit-click rather than hover-triggered, uses `aria-expanded`, and must be served from local renderer resources
 rather than external scripts or styles.
 
 ```markdown

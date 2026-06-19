@@ -8,6 +8,8 @@
 > non-persistent, and collapsible by explicit click to a compact map rail. Do
 > not implement `raya.courseMapExpanded` or persisted course-map state from this
 > plan.
+> Unchecked task snippets below are historical implementation notes, not current
+> renderer guidance.
 
 **Goal:** Build a click-only collapsible course shell that gives rendered Raya pages more reading space, stronger static page tracking, and verified desktop/mobile behavior.
 
@@ -494,6 +496,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(tmp_path:
                 try:
                     page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
                     _assert_no_horizontal_overflow(page)
+                    # Historical pre-change assertion. Current behavior is expanded by
+                    # default and non-persistent; do not copy this assertion forward.
                     collapsed = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -933,6 +937,9 @@ git commit -m "Inspect collapsible learning shell"
 
 - [ ] **Step 1: Write failing docs coverage test**
 
+Historical pre-change docs coverage example. Current docs coverage must require
+expanded-by-default, compact map rail, and non-persistent behavior instead.
+
 Add this test to `tests/contracts/test_renderer_dependencies.py`:
 
 ```python
@@ -1012,7 +1019,7 @@ Expected: fail because docs do not yet mention the new shell behavior.
 In `docs/foundation/20_learning_renderer_contract.md`, update the Course Shell and Static Renderer Status sections with:
 
 ```markdown
-The current shell uses an expanded course map by default, mobile-first article priority, and an explicit click-only control that collapses the map to a compact rail. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
+The current shell uses an expanded course map by default, mobile-first article priority, no hover-triggered collapse, and an explicit click control that collapses the map to a compact rail. Keyboard users may also close the expanded map with Escape. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
 ```
 
 Add under Non-Goals:
@@ -1035,7 +1042,7 @@ Rendered pages now use an expanded course map by default and let students collap
 Contributors:
 
 ```markdown
-Review shell controls as accessibility surfaces. The course-map behavior is click-only, uses `aria-expanded`, and must be served from local renderer resources rather than external scripts or styles.
+Review shell controls as accessibility surfaces. The course-map behavior is explicit-click rather than hover-triggered, uses `aria-expanded`, and must be served from local renderer resources rather than external scripts or styles.
 ```
 
 Students:
@@ -1063,7 +1070,7 @@ Las paginas renderizadas usan un mapa del curso expandido por defecto y permiten
 Colaboradores:
 
 ```markdown
-Revisa los controles de la shell como superficies de accesibilidad. El mapa del curso es click-only, usa `aria-expanded`, y debe servirse desde recursos locales del renderer sin scripts ni estilos externos.
+Revisa los controles de la shell como superficies de accesibilidad. El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe servirse desde recursos locales del renderer sin scripts ni estilos externos.
 ```
 
 Estudiantes:
@@ -1175,7 +1182,7 @@ If port `8018` is occupied by a stale preview, stop the old preview process and 
 
 Use `superpowers:requesting-code-review`. Review the full implementation range from the plan commit to current `HEAD`. Ask the reviewer to check:
 
-- click-only course-map expansion;
+- explicit-click course-map collapse without hover-triggered layout movement;
 - desktop expanded default, compact collapsed rail, and article width;
 - mobile article priority and no overflow;
 - active heading behavior;
