@@ -1235,15 +1235,20 @@ def _render_prerequisites_rail(
         target = content_model.pages_by_id.get(prerequisite)
         if target is None:
             continue
-        href = _relative_href(page.output_path, target.output_path)
-        label = target.nav_title or target.title
-        items.append(f'<li><a href="{html.escape(href)}">{html.escape(label)}</a></li>')
+        items.append(
+            _rail_page_context_item(
+                page,
+                prerequisite,
+                target.nav_title or target.title,
+                target.output_path,
+            )
+        )
     if not items:
         return ""
     return _render_rail_panel(
         "raya-page-prerequisites",
         "Prerequisites",
-        "<ul>" + "\n".join(items) + "</ul>",
+        '<ul class="raya-rail-link-list">' + "\n".join(items) + "</ul>",
     )
 
 
@@ -1257,14 +1262,14 @@ def _render_linked_pages_rail(
     if outgoing:
         sections.append(
             "<h3>From this page</h3>"
-            "<ul>"
+            '<ul class="raya-rail-link-list">'
             + "\n".join(_linked_page_item(page, item) for item in outgoing)
             + "</ul>"
         )
     if incoming:
         sections.append(
             "<h3>Links here</h3>"
-            "<ul>"
+            '<ul class="raya-rail-link-list">'
             + "\n".join(_linked_page_item(page, item) for item in incoming)
             + "</ul>"
         )
@@ -1278,10 +1283,32 @@ def _render_linked_pages_rail(
 
 
 def _linked_page_item(page: ContentPage, item: dict[str, str]) -> str:
-    href = _relative_href(page.output_path, item["url"])
+    return _rail_page_context_item(
+        page,
+        item["id"],
+        item["title"],
+        item["url"],
+    )
+
+
+def _rail_page_context_item(
+    page: ContentPage,
+    target_id: str,
+    title: str,
+    target_output_path: str,
+) -> str:
+    href = _relative_href(page.output_path, target_output_path)
+    graph_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
+        {"page": target_id},
+    )
     return (
-        f'<li><a href="{html.escape(href)}">'
-        f'{html.escape(item["title"])}</a></li>'
+        '<li><span class="raya-rail-link-row">'
+        f'<a href="{html.escape(href)}">{html.escape(title)}</a>'
+        f'<a class="raya-rail-context-link" href="{html.escape(graph_href)}" '
+        f'aria-label="View {html.escape(title, quote=True)} in course graph">'
+        "Graph</a>"
+        "</span></li>"
     )
 
 

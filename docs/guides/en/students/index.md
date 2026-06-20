@@ -46,7 +46,8 @@ Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, and expanded graph workspace are local reading
 tools over current course structure. They do not store progress, recommend what
 to study next, or change course authority. Opening it from a course page may
-focus that page so you can see its explicit links first.
+focus that page so you can see its explicit links first. Some context links in
+the learning rail also open the graph focused on that linked page.
 
 Use Course Search when you remember a title, tag, status, summary phrase, or
 stable ID. It searches generated metadata only, supports approximate matches and

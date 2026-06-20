@@ -48,12 +48,13 @@ For math authoring checks, use `examples/courses/render-fixture/course/2_math_au
 When a rendering issue crosses math, numbered objects, skins, references, static environments, and local assets, inspect `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` first, then move to the specialized fixture page for the failing surface.
 
 For the learning-science course shell, preserve source constraints and current
-artifact authority. The right learning rail may render only current page
-contents, normalized metadata, stable-ID prerequisites, and previous/next links.
-Keep the boundary explicit: no inferred goals, no fake related practice, no
-personal progress, and no browser-side MathJax. Use render-debug checks when
-course shell layout, local resources, screenshots, overflow, or visible math can
-regress.
+artifact authority. The right learning rail may render current page contents,
+normalized metadata, stable-ID prerequisites, previous/next links, explicit
+incoming/outgoing graph context, and graph-focus links for those explicit
+relationships. Keep the boundary explicit: no inferred goals, no fake related
+practice, no personal progress, and no browser-side MathJax. Use render-debug
+checks when course shell layout, local resources, screenshots, overflow, or
+visible math can regress.
 
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
@@ -70,7 +71,8 @@ group filters, expanded graph workspace state, mobile no-overflow behavior, and
 no external requests after page load. Graph UI state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Generated URL context may select a page only when it resolves to an embedded
-graph node.
+graph node. Rail graph-focus links must point only to explicit prerequisites or
+incoming/outgoing graph context.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, Enter-to-open behavior, clear controls, no external requests, and no

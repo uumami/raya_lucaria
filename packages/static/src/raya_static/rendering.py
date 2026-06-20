@@ -1017,6 +1017,35 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   margin: 0;
   padding-left: 1.25rem;
 }
+.raya-rail-link-list {
+  list-style: none;
+  padding-left: 0;
+}
+.raya-rail-link-row {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+}
+.raya-rail-link-row > a:first-child {
+  min-width: 0;
+}
+.raya-rail-context-link {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+  text-decoration: none;
+}
+.raya-rail-context-link:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
 .raya-course-map ol {
   list-style: none;
   padding-left: 0;

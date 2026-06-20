@@ -91,6 +91,15 @@ _SHELL_JAVASCRIPT = r"""
       });
   }
 
+  function setElementInert(element, inert) {
+    if (inert) {
+      element.setAttribute("inert", "");
+    } else {
+      element.removeAttribute("inert");
+    }
+    element.inert = inert;
+  }
+
   function setExpanded(nextExpanded) {
     if (!nextExpanded && mapFilter && mapFilter.value) {
       mapFilter.value = "";
@@ -196,7 +205,7 @@ _SHELL_JAVASCRIPT = r"""
     shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-    learningRailBody.inert = !nextExpanded;
+    setElementInert(learningRailBody, !nextExpanded);
     setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
     if (nextExpanded) {
       railToggleButtons.forEach((button) => {
@@ -224,7 +233,7 @@ _SHELL_JAVASCRIPT = r"""
     panel.dataset.rayaRailPanelState = nextExpanded ? "expanded" : "collapsed";
     button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     body.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-    body.inert = !nextExpanded;
+    setElementInert(body, !nextExpanded);
     setFocusableDescendantsEnabled(body, nextExpanded);
   }
 

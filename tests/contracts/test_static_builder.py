@@ -2297,6 +2297,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
     assert 'href="../index.html"' in html
+    prereq_panel = _section_html(html, "raya-page-prerequisites")
+    assert 'class="raya-rail-context-link"' in prereq_panel
+    assert 'href="../_raya/graph/index.html?page=render-root"' in prereq_panel
+    assert (
+        'aria-label="View Raya Lucaria Render Fixture in course graph"'
+        in prereq_panel
+    )
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
@@ -2487,6 +2494,10 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     assert 'href="../numbered-objects/index.html"' in panel
     assert 'href="../reader-ux/index.html"' in panel
     assert 'href="../index.html"' in panel
+    assert 'class="raya-rail-link-row"' in panel
+    assert 'class="raya-rail-context-link"' in panel
+    assert 'href="../_raya/graph/index.html?page=numbered-objects"' in panel
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in panel
     assert "navigation" not in visible
     assert "parent" not in visible
     assert "prerequisite" not in visible

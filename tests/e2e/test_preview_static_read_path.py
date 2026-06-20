@@ -1967,6 +1967,17 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert expanded["linkTabIndex"] is None
                     assert "From this page" in expanded["text"]
                     assert "Links here" in expanded["text"]
+                    graph_link = panel.locator(
+                        '.raya-rail-context-link[href="../_raya/graph/index.html?page=reader-ux"]'
+                    )
+                    graph_href = graph_link.evaluate("node => node.href")
+                    with page.expect_navigation():
+                        graph_link.click()
+                    assert page.url == graph_href
+                    page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                    assert "Reader UX Fixture" in page.locator(
+                        "[data-raya-graph-detail-title]"
+                    ).inner_text()
                 finally:
                     page.close()
             finally:
