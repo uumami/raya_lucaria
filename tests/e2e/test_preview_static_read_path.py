@@ -832,6 +832,18 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 fontPressed: document
                                   .querySelector('.raya-command-font')
                                   ?.getAttribute('aria-pressed'),
+                                contextText: document
+                                  .querySelector('.raya-reading-context')
+                                  ?.innerText,
+                                contextWidth: document
+                                  .querySelector('.raya-reading-context')
+                                  ?.getBoundingClientRect().width,
+                                prevHref: document
+                                  .querySelector('.raya-reading-context-prev')
+                                  ?.getAttribute('href') || '',
+                                nextHref: document
+                                  .querySelector('.raya-reading-context-next')
+                                  ?.getAttribute('href') || '',
                           };
                         }"""
                         )
@@ -846,6 +858,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
+                        assert "Raya Lucaria Render Fixture" in state["contextText"]
+                        assert "Page 1 of 6" in state["contextText"]
+                        assert state["contextWidth"] > 0
+                        assert state["prevHref"] == ""
+                        assert state["nextHref"] == "static-path/index.html"
 
                         page.click(".raya-command-map")
                         collapsed_state = page.evaluate(

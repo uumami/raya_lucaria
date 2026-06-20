@@ -34,17 +34,18 @@ etiquetas de autoridad.
 
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
 el mapa del curso expandido se renderiza como un mapa jerarquico del curso
-expandido y da orientacion por defecto, el articulo principal
-sigue siendo la leccion, y el riel de aprendizaje ofrece contenidos de pagina y
-contexto cercano. Puedes colapsar el mapa a un riel compacto operable cuando quieras mas
-espacio de lectura; esa eleccion es no persistente y no guarda ni muestra
-progreso personal.
+expandido y da orientacion por defecto, la barra superior mantiene visibles el
+titulo del curso, el titulo de la pagina actual y la posicion estructural de la
+pagina, el articulo principal sigue siendo la leccion, y el riel de aprendizaje
+ofrece contenidos de pagina y contexto cercano. Puedes colapsar el mapa a un
+riel compacto operable cuando quieras mas espacio de lectura; esa eleccion es
+no persistente y no guarda ni muestra progreso personal.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. Usa el filtro del mapa para limitar etiquetas de paginas
-visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente para
-moverte por el material ordenado, y usa Text size u OpenDyslexic cuando esos
-ajustes sean mas comodos.
+visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
+articulo o en el contexto superior de lectura para moverte por el material
+ordenado, y usa Text size u OpenDyslexic cuando esos ajustes sean mas comodos.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada y workspace expandido del

@@ -2264,6 +2264,30 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Text size</span>' in html
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
+    assert (
+        '<div class="raya-reading-context" aria-label="Current reading position">'
+        in html
+    )
+    assert '<span class="raya-reading-context-course">Render Fixture</span>' in html
+    assert '<span class="raya-reading-context-page">Reader UX Fixture</span>' in html
+    assert '<span class="raya-reading-context-position">Page 5 of 6</span>' in html
+    assert html.count('<span class="raya-reading-context-separator">/</span>') >= 3
+    assert (
+        '<span class="raya-reading-context-course">Render Fixture</span>'
+        '<span class="raya-reading-context-separator">/</span>'
+        '<span class="raya-reading-context-page">Reader UX Fixture</span>'
+        in html
+    )
+    assert (
+        '<nav class="raya-reading-context-sequence" '
+        'aria-label="Compact previous and next pages">'
+    ) in html
+    assert 'class="raya-reading-context-link raya-reading-context-prev"' in html
+    assert 'href="../numbered-objects/index.html"' in html
+    assert 'aria-label="Previous page: Numbered Objects"' in html
+    assert 'class="raya-reading-context-link raya-reading-context-next"' in html
+    assert 'href="../authoring-matrix/index.html"' in html
+    assert 'aria-label="Next page: Authoring Matrix Fixture"' in html
     assert 'href="../_raya/search/index.html?q=Reader%20UX%20Fixture"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
@@ -2307,6 +2331,12 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert 'class="raya-reading-context-link raya-reading-context-prev"' not in root_html
+    last_html = (
+        course / "artifact" / "site" / "authoring-matrix" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'class="raya-reading-context-link raya-reading-context-next"' not in last_html
+    assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
     assert root_html.index('<article id="raya-article"') < root_html.index(

@@ -32,15 +32,17 @@ change course content, grading, links, skin identity, or authority labels.
 
 The current course shell is a static reading aid. On desktop, the expanded course map
 is rendered as an expanded hierarchical course map and gives
-orientation by default, the main article remains the lesson,
-and the learning rail provides page contents and nearby course context. You can
-collapse the map to an operable compact map rail when you want more reading space; that
+orientation by default, the top bar keeps the current course/page title and
+structural page position visible, the main article remains the lesson, and the
+learning rail provides page contents and nearby course context. You can collapse
+the map to an operable compact map rail when you want more reading space; that
 choice is non-persistent and does not store or show personal progress.
 
 Use the Course map button to collapse or expand navigation when you need a
 different focus. Use the map filter to narrow visible page labels inside the
-current static hierarchy. Use Previous and Next to move through the ordered
-material, and use Text size or OpenDyslexic when those settings are more comfortable.
+current static hierarchy. Use Previous and Next in the article or top reading
+context to move through the ordered material, and use Text size or OpenDyslexic
+when those settings are more comfortable.
 
 Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, and expanded graph workspace are local reading

@@ -20,13 +20,13 @@ The course shell is the reader-facing static page structure for a built course. 
 
 The shell uses current artifact data only. It must not infer learning goals, related practice, assignments, progress, mastery, or spacing from prose.
 
-The current shell uses an expanded course map, rendered as an expanded hierarchical course map by default on desktop and browser load, keeps the article primary, and supports mobile article-first layout. The course map is generated from current navigation data, can be filtered locally by rendered page labels, and does not collapse on hover; readers can collapse it through an explicit click control, and keyboard users can close it with Escape. Collapsed mode becomes an operable compact map rail: visible rail items remain real navigation targets, not decorative markers. Course-map state and filter text are non-persistent UI state. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
+The current shell uses an expanded course map, rendered as an expanded hierarchical course map by default on desktop and browser load, keeps the article primary, and supports mobile article-first layout. The sticky command bar may show current reading context such as course title, page title, structural page position, and compact previous/next links. The course map is generated from current navigation data, can be filtered locally by rendered page labels, and does not collapse on hover; readers can collapse it through an explicit click control, and keyboard users can close it with Escape. Collapsed mode becomes an operable compact map rail: visible rail items remain real navigation targets, not decorative markers. Course-map state and filter text are non-persistent UI state. The shell may show structural page position such as `Page N of M`; this is course structure, not personal progress.
 
 ## Static Renderer Status
 
 | Capability | Status | Static renderer behavior |
 | --- | --- | --- |
-| Course map | `current` | Render a hierarchical map from current navigation data, expanded by default when the shell script runs, locally filterable by page labels, non-persistent, not hover-triggered, and collapsible through an explicit click control or Escape into an operable compact map rail. |
+| Course map and reading context | `current` | Render a hierarchical map from current navigation data, expanded by default when the shell script runs, locally filterable by page labels, non-persistent, not hover-triggered, and collapsible through an explicit click control or Escape into an operable compact map rail. The sticky command bar may show static course/page title, structural page position, and compact previous/next links. |
 | Main article | `current` | Render authored content, build-time MathJax, numbered objects, spoiler-safe static environments, callouts, tables, code, and local assets. |
 | Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, explicit graph link context, and previous/next links from current artifact data. |
 | Reader controls | `current` | Use local OpenDyslexic resources, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. |
@@ -37,7 +37,7 @@ The current shell uses an expanded course map, rendered as an expanded hierarchi
 
 ## Current Responsibilities
 
-The static renderer may present course map navigation, the main article, and the right learning rail as reader-facing regions. These regions should be stable across desktop and mobile layouts even when the visual skin changes.
+The static renderer may present command-bar reading context, course map navigation, the main article, and the right learning rail as reader-facing regions. These regions should be stable across desktop and mobile layouts even when the visual skin changes.
 
 The main article owns authored teaching content. It may include build-time MathJax, numbered objects, static environments, callouts, tables, code, local assets, generated section landing cards, and links rewritten through current Raya rules. Generated section landing cards come from current child pages, page summaries, estimated time, and authored study-object counts; they are course structure, not recommendations, completion, mastery, or personal progress. Proof static environments remain expanded as part of the reasoning flow. Optional support environments such as hints, solutions, and answers render as native closed disclosures by default so learners can reveal support intentionally without the static page storing progress, submitting answers, or contacting a service.
 

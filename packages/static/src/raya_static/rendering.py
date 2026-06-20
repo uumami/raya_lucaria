@@ -506,6 +506,76 @@ img {
   gap: var(--raya-space-block);
   justify-content: space-between;
 }
+.raya-reading-context {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  min-width: 0;
+}
+.raya-reading-context-course,
+.raya-reading-context-page {
+  color: inherit;
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.raya-reading-context-course {
+  font-size: 0.75rem;
+  opacity: 0.82;
+}
+.raya-reading-context-page {
+  font-size: 0.95rem;
+}
+.raya-reading-context-position {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 82%, var(--raya-color-text));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 52%, transparent);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.28rem 0.5rem;
+}
+.raya-reading-context-separator {
+  color: var(--raya-color-muted);
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.raya-reading-context-sequence {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 0.35rem;
+}
+.raya-reading-context-link {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 58%, var(--raya-color-border));
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  min-height: 1.9rem;
+  padding: 0.35rem 0.5rem;
+  text-decoration: none;
+}
+.raya-reading-context-link:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-reading-context-link:hover {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
+}
 .raya-course-title {
   color: inherit;
   font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -1769,6 +1839,17 @@ mjx-container[display="true"] {
   .raya-top-command-bar-inner {
     align-items: stretch;
     display: grid;
+  }
+  .raya-reading-context {
+    display: grid;
+    gap: 0.4rem;
+  }
+  .raya-reading-context-course,
+  .raya-reading-context-page {
+    white-space: normal;
+  }
+  .raya-reading-context-sequence {
+    flex-wrap: wrap;
   }
   .raya-course-map,
   .raya-main-article,

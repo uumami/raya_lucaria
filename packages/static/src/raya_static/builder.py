@@ -851,7 +851,13 @@ def _render_page(
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
-            _render_top_command_bar(course_title, search_href, graph_href),
+            _render_top_command_bar(
+                course_title,
+                page,
+                content_model,
+                search_href,
+                graph_href,
+            ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(page, content_model),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
@@ -872,6 +878,8 @@ def _render_page(
 
 def _render_top_command_bar(
     course_title: str,
+    page: ContentPage,
+    content_model: ContentModel,
     search_href: str,
     graph_href: str,
 ) -> str:
@@ -879,7 +887,7 @@ def _render_top_command_bar(
         [
             '<header class="raya-top-command-bar" aria-label="Course tools">',
             '<div class="raya-top-command-bar-inner">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            _render_reading_context(course_title, page, content_model),
             '<div class="raya-course-tools">',
             (
                 f'<a class="raya-command raya-command-search" '
@@ -919,6 +927,71 @@ def _render_top_command_bar(
             "</header>",
         ]
     )
+
+
+def _render_reading_context(
+    course_title: str,
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    position = _page_position(page, content_model)
+    sequence = _reading_context_sequence_links(page, content_model)
+    sequence_html = (
+        '<nav class="raya-reading-context-sequence" '
+        'aria-label="Compact previous and next pages">'
+        + sequence
+        + "</nav>"
+        if sequence
+        else ""
+    )
+    parts = [
+        '<div class="raya-reading-context" aria-label="Current reading position">'
+        f'<span class="raya-reading-context-course">{html.escape(course_title)}</span>',
+        '<span class="raya-reading-context-separator">/</span>',
+        f'<span class="raya-reading-context-page">{html.escape(page.nav_title or page.title)}</span>',
+        '<span class="raya-reading-context-separator">/</span>',
+        f'<span class="raya-reading-context-position">{html.escape(position)}</span>',
+    ]
+    if sequence_html:
+        parts.append('<span class="raya-reading-context-separator">/</span>')
+        parts.append(sequence_html)
+    parts.append("</div>")
+    return "".join(parts)
+
+
+def _reading_context_sequence_links(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    pages = content_model.pages
+    current_index = next(
+        (index for index, target in enumerate(pages) if target.output_path == page.output_path),
+        None,
+    )
+    if current_index is None:
+        return ""
+    links: list[str] = []
+    if current_index > 0:
+        previous = pages[current_index - 1]
+        title = previous.nav_title or previous.title
+        href = _relative_href(page.output_path, previous.output_path)
+        links.append(
+            '<a class="raya-reading-context-link raya-reading-context-prev" '
+            f'href="{html.escape(href)}" '
+            f'aria-label="Previous page: {html.escape(title, quote=True)}">'
+            "Previous</a>"
+        )
+    if current_index + 1 < len(pages):
+        next_page = pages[current_index + 1]
+        title = next_page.nav_title or next_page.title
+        href = _relative_href(page.output_path, next_page.output_path)
+        links.append(
+            '<a class="raya-reading-context-link raya-reading-context-next" '
+            f'href="{html.escape(href)}" '
+            f'aria-label="Next page: {html.escape(title, quote=True)}">'
+            "Next</a>"
+        )
+    return "\n".join(links)
 
 
 def _page_position(page: ContentPage, content_model: ContentModel) -> str:

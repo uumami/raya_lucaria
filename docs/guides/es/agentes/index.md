@@ -61,9 +61,12 @@ math visible.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
-el comportamiento del filtro del mapa, la metadata del riel compacto operable,
-la salida de render-debug, el comportamiento movil sin overflow y sin solicitudes externas.
-El estado del mapa del curso y el texto del filtro son UI no persistente.
+el comportamiento del filtro del mapa, el contexto superior de lectura, los
+links compactos anterior/siguiente, la metadata del riel compacto operable, la
+salida de render-debug, el comportamiento movil sin overflow y sin solicitudes
+externas. El estado del mapa del curso, el texto del filtro y el contexto de
+lectura son UI no persistente. Trata la posicion de pagina en la barra superior
+como orientacion estructural del curso, no como progreso del estudiante.
 
 Al cambiar indices generados de seccion, verifica markup de cards de entrada,
 navegacion normal con enlaces locales, comportamiento desktop/mobile sin
