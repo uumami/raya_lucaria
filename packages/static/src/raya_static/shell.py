@@ -197,6 +197,47 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function orientCourseMapToCurrentPage(options = {}) {
+    const mapList = map.querySelector("#raya-course-map-list");
+    const currentLink = mapList
+      ? mapList.querySelector('a[aria-current="page"]')
+      : null;
+    const scrollContainer = map;
+    if (!mapList || !currentLink || !scrollContainer) {
+      return false;
+    }
+    if (mapFilter && mapFilter.value && !options.force) {
+      return false;
+    }
+    if (
+      scrollContainer.dataset.rayaCourseMapOriented === "true" &&
+      !options.force &&
+      !options.repeat
+    ) {
+      return false;
+    }
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const linkRect = currentLink.getBoundingClientRect();
+    const isVisible =
+      linkRect.top >= containerRect.top && linkRect.bottom <= containerRect.bottom;
+    if (!isVisible) {
+      const offset =
+        scrollContainer.scrollTop +
+        linkRect.top -
+        containerRect.top -
+        scrollContainer.clientHeight / 2 +
+        currentLink.offsetHeight / 2;
+      scrollContainer.scrollTop = Math.max(0, offset);
+    }
+    scrollContainer.dataset.rayaCourseMapOriented = "true";
+    return true;
+  }
+
+  window.rayaOrientCourseMapToCurrentPage = () =>
+    orientCourseMapToCurrentPage({ force: true });
+  window.rayaOrientCourseMapToCurrentPageAutomatic = () =>
+    orientCourseMapToCurrentPage({ repeat: true });
+
   function setLearningRailExpanded(nextExpanded) {
     if (!learningRail || !learningRailBody) {
       return;
@@ -353,6 +394,11 @@ _SHELL_JAVASCRIPT = r"""
   toggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
       setExpanded(root.dataset.rayaCourseMap !== "expanded");
+      if (root.dataset.rayaCourseMap === "expanded") {
+        window.requestAnimationFrame(() =>
+          orientCourseMapToCurrentPage({ repeat: true })
+        );
+      }
     });
   });
 
@@ -458,6 +504,7 @@ _SHELL_JAVASCRIPT = r"""
 
   setExpanded(true);
   setLearningRailExpanded(true);
+  window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
   root.dataset.rayaShellReady = "true";
 })();

@@ -37,6 +37,8 @@ structural page position visible, the main article remains the lesson, and the
 learning rail provides page contents and nearby course context. You can collapse
 the map to an operable compact map rail when you want more reading space; that
 choice is non-persistent and does not store or show personal progress.
+When a long map opens, the page can move the current page link into the visible
+part of the map. That orientation is temporary reading context, not saved state.
 
 Use the Course map button to collapse or expand navigation when you need a
 different focus. Use the map filter to narrow visible page labels inside the

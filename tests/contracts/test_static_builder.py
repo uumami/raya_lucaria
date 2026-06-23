@@ -2251,10 +2251,13 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
 
     site = course / "artifact" / "site"
     shell_js = site / "_raya" / "render" / "shell.js"
+    rich_css = site / "_raya" / "render" / "rich.css"
     index_html = (site / "index.html").read_text(encoding="utf-8")
     script_text = shell_js.read_text(encoding="utf-8")
+    css_text = rich_css.read_text(encoding="utf-8")
 
     assert shell_js.exists()
+    assert rich_css.exists()
     assert '<script src="_raya/render/shell.js" defer></script>' in index_html
     assert "raya.courseMapExpanded" not in script_text
     assert "localStorage" not in script_text
@@ -2269,10 +2272,15 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "navigator.clipboard.writeText" in script_text
     assert 'execCommand("copy")' in script_text
     assert "Code block copied" in script_text
+    assert "function orientCourseMapToCurrentPage" in script_text
+    assert "rayaCourseMapOriented" in script_text
+    assert "scrollIntoView" not in script_text
+    assert "glintstone-nav-expanded" not in script_text
     assert "data-raya-course-map-filter" in script_text
     assert "data-raya-map-node-toggle" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
+    assert ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;" in css_text
 
 
 def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:

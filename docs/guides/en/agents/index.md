@@ -58,10 +58,12 @@ resources, screenshots, overflow, or visible math can regress.
 
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
-map filter behavior, sticky reading context, compact previous/next links,
+current-page map orientation, map filter behavior, sticky reading context, compact previous/next links,
 compact rail metadata, render-debug output, mobile no-overflow behavior, and no
 external requests. The course map state, filter text, and reading context are
-non-persistent UI state. Treat page position in the top bar as structural course
+non-persistent UI state; current-page map orientation must also remain
+non-persistent and must not restore legacy navigation storage. Treat page
+position in the top bar as structural course
 orientation, not learner progress.
 
 When changing generated section indexes, verify section landing card markup,

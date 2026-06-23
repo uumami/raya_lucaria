@@ -1144,6 +1144,106 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     )
                     requested_urls.clear()
                     assert page.locator("[data-raya-map-active='ancestor']").count() > 0
+                    desktop_map_region = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          if (!map) return null;
+                          const style = getComputedStyle(map);
+                          return {
+                            maxHeight: style.maxHeight,
+                            overflowY: style.overflowY,
+                          };
+                        }"""
+                    )
+                    assert desktop_map_region is not None
+                    assert desktop_map_region["maxHeight"] != "none"
+                    assert desktop_map_region["overflowY"] in {"auto", "scroll"}
+                    page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const filter = document.querySelector('#raya-course-map-filter');
+                          if (!map || !list || !filter) {
+                            throw new Error('missing course map controls');
+                          }
+                          map.style.transition = 'none';
+                          map.style.setProperty('max-height', '5rem', 'important');
+                          map.style.setProperty('overflow', 'auto', 'important');
+                          map.scrollTop = 0;
+                          delete map.dataset.rayaCourseMapOriented;
+                          filter.value = 'matrix';
+                          window.rayaOrientCourseMapToCurrentPageAutomatic?.();
+                          if (map.scrollTop !== 0) {
+                            throw new Error('filtered automatic orientation scrolled');
+                          }
+                          filter.value = '';
+                          window.rayaOrientCourseMapToCurrentPage?.();
+                        }"""
+                    )
+                    orientation = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const current = list?.querySelector('a[aria-current="page"]');
+                          if (!map || !list || !current) return null;
+                          const mapRect = map.getBoundingClientRect();
+                          const currentRect = current.getBoundingClientRect();
+                          return {
+                            oriented: map.dataset.rayaCourseMapOriented,
+                            scrollTop: map.scrollTop,
+                            currentTop: currentRect.top,
+                            currentBottom: currentRect.bottom,
+                            mapTop: mapRect.top,
+                            mapBottom: mapRect.bottom,
+                            localStorageKeys: Object.keys(localStorage),
+                            sessionStorageKeys: Object.keys(sessionStorage),
+                          };
+                        }"""
+                    )
+                    assert orientation is not None
+                    assert orientation["oriented"] == "true"
+                    assert orientation["scrollTop"] > 0
+                    assert orientation["currentTop"] >= orientation["mapTop"]
+                    assert orientation["currentBottom"] <= orientation["mapBottom"]
+                    assert orientation["localStorageKeys"] == []
+                    assert orientation["sessionStorageKeys"] == []
+                    page.click(".raya-course-map-toggle")
+                    page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          if (!map) throw new Error('missing course map');
+                          map.scrollTop = 0;
+                          map.dataset.rayaCourseMapOriented = 'true';
+                        }"""
+                    )
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          return !!map && map.scrollTop > 0;
+                        }"""
+                    )
+                    reexpanded = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const current = list?.querySelector('a[aria-current="page"]');
+                          if (!map || !current) return null;
+                          const mapRect = map.getBoundingClientRect();
+                          const currentRect = current.getBoundingClientRect();
+                          return {
+                            scrollTop: map.scrollTop,
+                            currentTop: currentRect.top,
+                            currentBottom: currentRect.bottom,
+                            mapTop: mapRect.top,
+                            mapBottom: mapRect.bottom,
+                          };
+                        }"""
+                    )
+                    assert reexpanded is not None
+                    assert reexpanded["scrollTop"] > 0
+                    assert reexpanded["currentTop"] >= reexpanded["mapTop"]
+                    assert reexpanded["currentBottom"] <= reexpanded["mapBottom"]
                     first_toggle = page.locator("[data-raya-map-node-toggle]").first
                     before = first_toggle.get_attribute("aria-expanded")
                     first_toggle.click()

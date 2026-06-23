@@ -1011,8 +1011,12 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
   transition: grid-template-columns 180ms ease;
 }
 .raya-course-map {
+  align-self: start;
   grid-area: course-map;
-  overflow: hidden;
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-course-map {
   transition: max-height 180ms ease, width 180ms ease;

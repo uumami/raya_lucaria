@@ -40,6 +40,9 @@ pagina, el articulo principal sigue siendo la leccion, y el riel de aprendizaje
 ofrece contenidos de pagina y contexto cercano. Puedes colapsar el mapa a un
 riel compacto operable cuando quieras mas espacio de lectura; esa eleccion es
 no persistente y no guarda ni muestra progreso personal.
+Cuando un mapa largo se abre, la pagina puede mover el enlace de la pagina
+actual a la parte visible del mapa. Esa orientacion es contexto temporal de
+lectura, no estado guardado.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. Usa el filtro del mapa para limitar etiquetas de paginas
