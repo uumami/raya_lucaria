@@ -184,6 +184,18 @@ para herramientas. No disenes estos objetos alrededor de scoring, grading,
 submissions, attempts, progreso, dominio, recomendaciones, llamadas a backend,
 fetching en el browser, storage, renderers externos ni MathJax en el browser.
 
+El workspace Official Practice se genera desde los mismos objetos
+oficiales aceptados. Escribe cada objeto una vez bajo `_official/` junto a la
+pagina que lo posee; Glintstone puede renderizar la seccion de pagina y una
+superficie estatica de descubrimiento `_raya/practice/index.html` desde
+`data/official.json`. Mantiene labels, resumenes, tags, status e IDs estables
+utiles para escanear, y espera que los links de Practice devuelvan a estudiantes
+a anchors de la pagina propietaria como `#raya-official-<id>`. No escribas
+respuestas ocultas duplicadas para el workspace ni lo presentes como adaptativo,
+recomendado, con scoring, evaluado, entregado, intentado, progreso personal,
+dominio, estado guardado del estudiante, fetching en runtime, requests externos
+o vista de rutas privadas de fuente.
+
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
 y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto

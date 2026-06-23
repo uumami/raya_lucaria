@@ -183,6 +183,17 @@ grading, submissions, attempts, progress, mastery, recommendations, backend
 calls, browser-side fetching, storage, external renderers, or browser-side
 MathJax.
 
+The Official Practice workspace is generated from the same accepted
+official objects. Author objects once under the owning page's `_official/`
+directory; Glintstone can render both the page section and a static
+`_raya/practice/index.html` discovery surface from `data/official.json`. Keep
+object labels, summaries, tags, status, and stable IDs useful for scanning, and
+expect Practice links to return students to owning page anchors such as
+`#raya-official-<id>`. Do not author duplicate hidden answers for the workspace
+or frame it as adaptive, recommended, scored, graded, submitted, attempted,
+personal progress, mastery, stored learner state, runtime fetching, external
+requests, or a private source-path view.
+
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
 students filter visible page labels or collapse the map to an operable compact map rail

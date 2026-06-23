@@ -725,6 +725,123 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in search_script
 
 
+def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    practice_page = site / "_raya" / "practice" / "index.html"
+    practice_js = site / "_raya" / "render" / "practice.js"
+    index_html = (site / "index.html").read_text(encoding="utf-8")
+    topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
+    practice_html = practice_page.read_text(encoding="utf-8")
+    practice_script = practice_js.read_text(encoding="utf-8")
+
+    assert practice_page.exists()
+    assert practice_js.exists()
+    assert 'href="_raya/practice/index.html"' in index_html
+    assert 'href="../../_raya/practice/index.html"' in topic_html
+    assert 'data-raya-surface="practice"' in practice_html
+    assert "raya-discovery-command-bar" in practice_html
+    assert "Official practice workspace" in practice_html
+    assert 'href="../search/index.html"' in practice_html
+    assert 'href="../graph/index.html"' in practice_html
+    assert '<span class="raya-command-label">Search</span>' in practice_html
+    assert '<span class="raya-command-label">Graph</span>' in practice_html
+    assert "shell.js" not in practice_html
+    assert "localStorage" not in practice_html
+    assert '<script type="application/json" id="raya-practice-data">' in practice_html
+    assert 'src="../render/practice.js"' in practice_html
+    assert 'href="../render/rich.css"' in practice_html
+    assert 'href="../render/skin.css"' in practice_html
+    assert 'href="../../data/official.json"' not in practice_html
+    assert "https://" not in practice_html
+    assert "http://" not in practice_html
+    assert 'id="raya-practice-search"' in practice_html
+    assert 'id="raya-practice-clear"' in practice_html
+    assert 'data-raya-practice-filter="quiz"' in practice_html
+    assert 'data-raya-practice-object="first-topic-card"' in practice_html
+    assert 'data-raya-practice-object="first-topic-prompt"' in practice_html
+    assert 'data-raya-practice-object="first-topic-quiz"' in practice_html
+    assert "What loop does Raya Lucaria support?" in practice_html
+    assert "Explain how retrieval practice differs from rereading." in practice_html
+    assert "Which action is part of the Raya Lucaria learning loop?" in practice_html
+    assert "Read, retrieve, reflect, adapt, revisit, and contribute." not in practice_html
+    assert "Correct option" not in practice_html
+    assert "Vendor lock-in" not in practice_html
+    assert 'href="../../unit/topic/index.html#raya-official-first-topic-card"' in practice_html
+    assert 'href="../graph/index.html?page=first-topic"' in practice_html
+
+    payload_match = re.search(
+        r'<script type="application/json" id="raya-practice-data">\n(.*?)\n</script>',
+        practice_html,
+        re.DOTALL,
+    )
+    assert payload_match is not None
+    payload = json.loads(payload_match.group(1))
+    assert set(payload) == {"objects", "types", "version"}
+    assert payload["version"] == 1
+    by_id = {item["id"]: item for item in payload["objects"]}
+    assert set(by_id) == {"first-topic-card", "first-topic-prompt", "first-topic-quiz"}
+    assert by_id["first-topic-card"]["preview"] == "What loop does Raya Lucaria support?"
+    assert by_id["first-topic-quiz"]["preview"] == (
+        "Which action is part of the Raya Lucaria learning loop?"
+    )
+    assert by_id["first-topic-card"]["page_url"].endswith(
+        "/unit/topic/index.html#raya-official-first-topic-card"
+    )
+    assert by_id["first-topic-card"]["graph_url"] == "../graph/index.html?page=first-topic"
+    allowed_object_keys = {
+        "anchor",
+        "authority",
+        "graph_url",
+        "id",
+        "page_id",
+        "page_title",
+        "page_url",
+        "preview",
+        "type",
+        "type_label",
+    }
+    for item in payload["objects"]:
+        assert set(item) == allowed_object_keys
+    serialized_payload = json.dumps(payload)
+    for private_token in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "cache_key",
+        "course/",
+        "correct",
+        "solution",
+        "answer",
+        "back",
+    ):
+        assert private_token not in serialized_payload
+    for forbidden_runtime_token in (
+        "fetch(",
+        "XMLHttpRequest",
+        "localStorage",
+        "sessionStorage",
+        "indexedDB",
+        "caches.",
+        "navigator.sendBeacon",
+        "import(",
+        "new Worker",
+        "EventSource",
+        "WebSocket",
+    ):
+        assert forbidden_runtime_token not in practice_script
+        for script_href in re.findall(r'<script src="([^"]+)"', practice_html):
+            script_path = practice_page.parent / script_href
+            loaded_script = script_path.resolve().read_text(encoding="utf-8")
+            assert forbidden_runtime_token not in loaded_script
+
+
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
     tmp_path: Path,
 ) -> None:
@@ -737,6 +854,7 @@ def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_stat
     surfaces = [
         (site / "_raya" / "search" / "index.html").read_text(encoding="utf-8"),
         (site / "_raya" / "graph" / "index.html").read_text(encoding="utf-8"),
+        (site / "_raya" / "practice" / "index.html").read_text(encoding="utf-8"),
         _tag_html(
             (site / "reader-ux" / "index.html").read_text(encoding="utf-8"),
             "nav",

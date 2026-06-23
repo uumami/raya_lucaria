@@ -91,6 +91,11 @@ from raya_static.numbered_objects import (
     page_number_prefix_from_source_path,
     prepare_numbered_object_markdown,
 )
+from raya_static.practice import (
+    PRACTICE_RESOURCE_PATH,
+    PRACTICE_SCRIPT_NAME,
+    practice_resources,
+)
 from raya_static.proofs import (
     StaticEnvironmentRenderContext,
     StaticEnvironmentRenderItem,
@@ -131,6 +136,7 @@ STATIC_REVIEWED_PATH = REVIEWED_BROWSER_DIR
 STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
 STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
 STATIC_SEARCH_PATH = Path(STATIC_RESOURCE_DIR) / "search" / "index.html"
+STATIC_PRACTICE_PATH = Path(STATIC_RESOURCE_DIR) / "practice" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
 GRAPH_GROUP_COLORS = (
     "var(--raya-graph-group-1)",
@@ -387,6 +393,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_shell_resources(site_dir, report)
     _write_graph_resources(site_dir, report)
     _write_search_resources(site_dir, report)
+    _write_practice_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -480,6 +487,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_search_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
+        skin_context=skin_context,
+        report=report,
+    )
+    _write_practice_surface(
+        site_dir=site_dir,
+        content_model=content_model,
+        official_by_page=official_by_page,
         course_title=str(config["title"]),
         language=str(config["language"]),
         skin_context=skin_context,
@@ -818,6 +834,7 @@ def _render_page(
         _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
         {"page": page.id},
     )
+    practice_href = _relative_href(page.output_path, STATIC_PRACTICE_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -894,6 +911,7 @@ def _render_page(
                 content_model,
                 search_href,
                 graph_href,
+                practice_href,
             ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(page, content_model),
@@ -922,6 +940,7 @@ def _render_top_command_bar(
     content_model: ContentModel,
     search_href: str,
     graph_href: str,
+    practice_href: str,
 ) -> str:
     return "\n".join(
         [
@@ -941,6 +960,13 @@ def _render_top_command_bar(
                 f'href="{html.escape(graph_href)}" '
                 'aria-label="Open course graph">'
                 '<span class="raya-command-label">Graph</span>'
+                "</a>"
+            ),
+            (
+                f'<a class="raya-command raya-command-practice" '
+                f'href="{html.escape(practice_href)}" '
+                'aria-label="Open official practice">'
+                '<span class="raya-command-label">Practice</span>'
                 "</a>"
             ),
             _render_course_map_toggle(
@@ -976,6 +1002,7 @@ def _render_discovery_command_bar(
     home_href: str,
     search_href: str | None,
     graph_href: str | None,
+    practice_href: str | None,
 ) -> str:
     commands = [
         (
@@ -1002,6 +1029,16 @@ def _render_discovery_command_bar(
                 f'href="{html.escape(graph_href)}" '
                 'aria-label="Open course graph">'
                 '<span class="raya-command-label">Graph</span>'
+                "</a>"
+            )
+        )
+    if practice_href is not None:
+        commands.append(
+            (
+                f'<a class="raya-command raya-command-practice" '
+                f'href="{html.escape(practice_href)}" '
+                'aria-label="Open official practice">'
+                '<span class="raya-command-label">Practice</span>'
                 "</a>"
             )
         )
@@ -3112,6 +3149,7 @@ def _render_graph_surface(
                 home_href="../../index.html",
                 search_href="../search/index.html",
                 graph_href=None,
+                practice_href="../practice/index.html",
             ),
             '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
             '<header class="raya-graph-header">',
@@ -3374,6 +3412,7 @@ def _render_search_surface(
                 home_href="../../index.html",
                 search_href=None,
                 graph_href="../graph/index.html",
+                practice_href="../practice/index.html",
             ),
             (
                 '<main id="raya-search-main" class="raya-search-page" '
@@ -3432,6 +3471,321 @@ def _browser_search_payload(content_model: ContentModel) -> dict[str, Any]:
             for page in content_model.pages
         ],
     }
+
+
+def _write_practice_surface(
+    *,
+    site_dir: Path,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+    report: ValidationReport,
+) -> None:
+    practice_path = site_dir / STATIC_PRACTICE_PATH
+    practice_path.parent.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(practice_path.parent)
+    practice_path.write_text(
+        _render_practice_surface(
+            content_model=content_model,
+            official_by_page=official_by_page,
+            course_title=course_title,
+            language=language,
+            skin_context=skin_context,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(practice_path)
+
+
+def _render_practice_surface(
+    *,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+) -> str:
+    stylesheet_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(), RENDER_STYLESHEET_PATH
+    )
+    skin_stylesheet_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
+    accessibility_css_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    practice_js_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(),
+        Path(PRACTICE_RESOURCE_PATH) / PRACTICE_SCRIPT_NAME,
+    )
+    root_skin = skin_id_for_source_path(
+        content_model.pages[0].source_path, skin_context
+    )
+    browser_practice = _browser_practice_payload(content_model, official_by_page)
+    practice_payload = _json_script_text(browser_practice)
+    type_buttons = [
+        (
+            '<button class="raya-practice-chip" type="button" '
+            'data-raya-practice-filter="all" aria-pressed="true">'
+            f"All ({len(browser_practice['objects'])})"
+            "</button>"
+        )
+    ]
+    for type_info in browser_practice["types"]:
+        type_buttons.append(
+            (
+                '<button class="raya-practice-chip" type="button" '
+                f'data-raya-practice-filter="{html.escape(type_info["type"], quote=True)}" '
+                'aria-pressed="false">'
+                f"{html.escape(type_info['label'])} ({type_info['count']})"
+                "</button>"
+            )
+        )
+
+    objects_by_page: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for item in browser_practice["objects"]:
+        objects_by_page[str(item["page_id"])].append(item)
+
+    group_sections: list[str] = []
+    for page in content_model.pages:
+        page_objects = objects_by_page.get(page.id, [])
+        if not page_objects:
+            continue
+        cards = []
+        for item in page_objects:
+            cards.append(
+                "\n".join(
+                    [
+                        (
+                            '<article class="raya-practice-object" '
+                            f'data-raya-practice-object="{html.escape(item["id"], quote=True)}" '
+                            f'data-raya-practice-type="{html.escape(item["type"], quote=True)}">'
+                        ),
+                        '<header class="raya-practice-object-header">',
+                        (
+                            '<span class="raya-practice-kind">'
+                            f"{html.escape(item['type_label'])}</span>"
+                        ),
+                        (
+                            '<span class="raya-practice-authority">'
+                            f"{html.escape(item['authority'])}</span>"
+                        ),
+                        "</header>",
+                        f"<h3>{html.escape(item['preview'])}</h3>",
+                        (
+                            '<p class="raya-practice-meta">'
+                            f"From {html.escape(item['page_title'])} | "
+                            f"ID {html.escape(item['id'])}"
+                            "</p>"
+                        ),
+                        '<p class="raya-practice-actions">',
+                        (
+                            '<a class="raya-practice-open" '
+                            f'href="{html.escape(item["page_url"])}">Open page</a>'
+                        ),
+                        (
+                            '<a class="raya-practice-graph" '
+                            f'href="{html.escape(item["graph_url"])}" '
+                            f'aria-label="View {html.escape(item["page_title"], quote=True)} in course graph">'
+                            "View in graph</a>"
+                        ),
+                        "</p>",
+                        "</article>",
+                    ]
+                )
+            )
+        group_sections.append(
+            "\n".join(
+                [
+                    (
+                        '<section class="raya-practice-group" '
+                        f'data-raya-practice-group="{html.escape(page.id, quote=True)}">'
+                    ),
+                    f"<h2>{html.escape(page.title)}</h2>",
+                    '<div class="raya-practice-grid">',
+                    "\n".join(cards),
+                    "</div>",
+                    "</section>",
+                ]
+            )
+        )
+
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Official Practice - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
+            "</head>",
+            (
+                f'<body data-raya-surface="practice" '
+                f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
+            ),
+            '<a class="raya-skip-link" href="#raya-practice-main">Skip to practice</a>',
+            _render_discovery_command_bar(
+                course_title=course_title,
+                workspace_label="Official practice workspace",
+                home_href="../../index.html",
+                search_href="../search/index.html",
+                graph_href="../graph/index.html",
+                practice_href=None,
+            ),
+            (
+                '<main id="raya-practice-main" class="raya-practice-page" '
+                'data-raya-practice-page tabindex="-1">'
+            ),
+            '<header class="raya-practice-header">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            "<h1>Official Practice</h1>",
+            (
+                "<p>Find accepted course practice objects by page and type. "
+                "Open the owning page when you are ready to work with the full context.</p>"
+            ),
+            "</header>",
+            '<section class="raya-practice-controls" aria-label="Official practice controls">',
+            '<label for="raya-practice-search">Search</label>',
+            '<input id="raya-practice-search" type="search" autocomplete="off">',
+            '<button id="raya-practice-clear" type="button">Clear</button>',
+            '<div class="raya-practice-filters" aria-label="Practice type filters">',
+            "\n".join(type_buttons),
+            "</div>",
+            '<p id="raya-practice-status" class="raya-practice-status" aria-live="polite"></p>',
+            "</section>",
+            (
+                '<p id="raya-practice-empty" class="raya-practice-empty" hidden>'
+                "No matching official practice objects.</p>"
+            ),
+            '<section class="raya-practice-results" aria-label="Official practice results">',
+            "\n".join(group_sections),
+            "</section>",
+            '<script type="application/json" id="raya-practice-data">',
+            practice_payload,
+            "</script>",
+            "</main>",
+            f'<script src="{html.escape(practice_js_href)}" defer></script>',
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _browser_practice_payload(
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+) -> dict[str, Any]:
+    objects: list[dict[str, str]] = []
+    type_counts: dict[str, int] = defaultdict(int)
+    for page in content_model.pages:
+        page_objects = sorted(
+            official_by_page.get(page.id, []),
+            key=lambda item: (
+                item.get("source_order")
+                if isinstance(item.get("source_order"), int)
+                else 0,
+                str(item.get("id") or ""),
+            ),
+        )
+        for item in page_objects:
+            if not isinstance(item, dict):
+                continue
+            object_id = str(item.get("id") or "").strip()
+            object_type = str(item.get("type") or "practice").strip() or "practice"
+            authority = str(item.get("authority") or "official").strip() or "official"
+            preview = _official_preview_text(item)
+            if not object_id or not preview:
+                continue
+            anchor = f"raya-official-{_safe_map_fragment_id(object_id)}"
+            page_url = (
+                _relative_href(STATIC_PRACTICE_PATH.as_posix(), page.output_path)
+                + f"#{anchor}"
+            )
+            graph_url = _href_with_query(
+                _relative_href(
+                    STATIC_PRACTICE_PATH.as_posix(),
+                    STATIC_GRAPH_PATH.as_posix(),
+                ),
+                {"page": page.id},
+            )
+            type_counts[object_type] += 1
+            objects.append(
+                {
+                    "anchor": anchor,
+                    "authority": authority,
+                    "graph_url": graph_url,
+                    "id": object_id,
+                    "page_id": page.id,
+                    "page_title": page.title,
+                    "page_url": page_url,
+                    "preview": preview,
+                    "type": object_type,
+                    "type_label": _official_type_label(object_type),
+                }
+            )
+    types = [
+        {
+            "count": count,
+            "label": _official_type_label(object_type),
+            "type": object_type,
+        }
+        for object_type, count in sorted(
+            type_counts.items(), key=lambda pair: (_official_type_label(pair[0]), pair[0])
+        )
+    ]
+    return {
+        "objects": objects,
+        "types": types,
+        "version": 1,
+    }
+
+
+def _official_preview_text(item: dict[str, Any]) -> str:
+    content = item.get("content")
+    if not isinstance(content, dict):
+        return ""
+    object_type = str(item.get("type") or "")
+    if object_type == "card":
+        return _official_plain_text(content.get("front"))
+    if object_type == "prompt":
+        return _official_plain_text(content.get("prompt"))
+    if object_type == "quiz":
+        questions = content.get("questions")
+        if isinstance(questions, list):
+            for question in questions:
+                if isinstance(question, dict):
+                    prompt = _official_plain_text(question.get("prompt"))
+                    if prompt:
+                        return prompt
+        return ""
+    for field in ("title", "summary", "prompt", "instructions", "body", "question"):
+        preview = _official_plain_text(content.get(field))
+        if preview:
+            return preview
+    return ""
+
+
+def _official_plain_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (list, tuple)):
+        return "; ".join(
+            text for text in (_official_plain_text(item) for item in value) if text
+        )
+    if isinstance(value, dict):
+        return "; ".join(
+            text for text in (_official_plain_text(item) for item in value.values()) if text
+        )
+    return " ".join(str(value).split())
 
 
 def _json_script_text(data: dict[str, Any]) -> str:
@@ -3702,6 +4056,16 @@ def _write_search_resources(site_dir: Path, report: ValidationReport) -> None:
     search_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(search_dir)
     script_path = search_dir / SEARCH_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_practice_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = practice_resources()
+    practice_dir = site_dir / PRACTICE_RESOURCE_PATH
+    practice_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(practice_dir)
+    script_path = practice_dir / PRACTICE_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 

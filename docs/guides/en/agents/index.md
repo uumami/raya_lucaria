@@ -69,6 +69,16 @@ localStorage/sessionStorage, external/CDN renderer requests, or browser-side
 MathJax. When this surface changes, include static-read-path checks,
 escaping/privacy checks, no-storage/no-fetch inspection, and role-doc impact.
 
+For the Official Practice workspace, inspect the same source
+`_official/` objects, `data/official.json`, `manifest.json`,
+`_raya/practice/index.html`, and the local workspace script. Verify that the
+workspace lists only accepted official objects, links each item back to its
+owning page anchor such as `#raya-official-<id>`, and uses generated graph focus
+links only when graph context exists. Confirm there are no private source paths,
+support paths, hidden answer duplicates, external requests, runtime `fetch`,
+localStorage/sessionStorage, scoring, submissions, attempts, grading, progress,
+mastery, recommendation, adaptive, or learner-state language.
+
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
 current-page map orientation, map filter behavior, sticky reading context,

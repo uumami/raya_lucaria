@@ -73,6 +73,17 @@ externos/CDN del renderer ni MathJax en el browser. Cuando cambie esta
 superficie, incluye checks static-read-path, checks de escaping/privacidad,
 inspeccion no-storage/no-fetch e impacto de docs de rol.
 
+Para el workspace Official Practice, inspecciona los mismos objetos
+fuente `_official/`, `data/official.json`, `manifest.json`,
+`_raya/practice/index.html` y el script local del workspace. Verifica que el
+workspace liste solo objetos oficiales aceptados, enlace cada item de vuelta al
+anchor de su pagina propietaria como `#raya-official-<id>` y use links de foco
+en grafo solo cuando exista contexto de grafo. Confirma que no haya rutas
+privadas de fuente, rutas de soporte, duplicados ocultos de respuestas,
+requests externos, `fetch` en runtime, localStorage/sessionStorage, scoring,
+submissions, attempts, grading, progreso, dominio, recomendacion, adaptacion ni
+lenguaje de estado del estudiante.
+
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
 la orientacion de pagina actual dentro del mapa, el comportamiento del filtro

@@ -121,6 +121,17 @@ envia trabajo, no guarda respuestas, no crea attempts, no actualiza progreso, no
 cambia dominio, no contacta un backend, no hace fetch de mas datos y no pide al
 browser renderizar MathJax.
 
+Algunos cursos tambien pueden incluir un workspace Official Practice bajo
+`_raya/practice/`. Usalo para encontrar cards, prompts, quizzes, tasks y otros
+objetos oficiales aceptados en todo el curso, y despues vuelve a la pagina que
+los posee para ver el contexto. Los items de Practice deben enlazar a anchors
+de pagina como `#raya-official-<id>` y pueden ofrecer links `View in graph`. El
+workspace es una superficie estatica de descubrimiento, no un motor de
+recomendaciones, registro de progreso, sistema de entregas, sistema de
+evaluacion, scoring, registro de attempts, estimacion de dominio, estado de
+practica guardado, workflow de requests externos, visor de rutas privadas de
+fuente ni cola personal de repaso.
+
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Los ejemplos de codigo fenced pueden incluir un boton `Copy`. Copiar pone el texto de codigo mostrado en tu clipboard; no ejecuta el codigo, no guarda progreso ni contacta un backend.

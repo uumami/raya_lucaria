@@ -638,6 +638,9 @@ img {
 .raya-command-graph::before {
   content: "G";
 }
+.raya-command-practice::before {
+  content: "P";
+}
 .raya-command-map::before {
   content: "M";
 }
@@ -672,7 +675,8 @@ img {
   outline-offset: 3px;
 }
 .raya-graph-page,
-.raya-search-page {
+.raya-search-page,
+.raya-practice-page {
   margin: 0 auto;
   max-width: 118rem;
   padding: var(--raya-space-page);
@@ -689,25 +693,32 @@ img {
 }
 .raya-graph-header,
 .raya-search-header,
+.raya-practice-header,
 .raya-graph-controls,
 .raya-search-controls,
+.raya-practice-controls,
 .raya-graph-groups,
 .raya-graph-status,
 .raya-graph-hover-status,
 .raya-graph-instructions,
 .raya-search-status,
+.raya-practice-status,
 .raya-graph-canvas,
 .raya-graph-list,
 .raya-search-results,
-.raya-search-empty {
+.raya-practice-results,
+.raya-search-empty,
+.raya-practice-empty {
   margin-bottom: var(--raya-space-block);
 }
 .raya-graph-header,
-.raya-search-header {
+.raya-search-header,
+.raya-practice-header {
   max-width: 72rem;
 }
 .raya-graph-controls,
 .raya-search-controls,
+.raya-practice-controls,
 .raya-graph-groups {
   align-items: center;
   display: flex;
@@ -716,10 +727,13 @@ img {
 }
 .raya-graph-controls input,
 .raya-search-controls input,
+.raya-practice-controls input,
 .raya-graph-controls select,
 .raya-graph-controls button,
 .raya-search-controls button,
-.raya-graph-chip {
+.raya-practice-controls button,
+.raya-graph-chip,
+.raya-practice-chip {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
@@ -734,6 +748,15 @@ img {
 }
 .raya-search-controls input {
   min-width: min(100%, 24rem);
+}
+.raya-practice-controls input {
+  min-width: min(100%, 28rem);
+}
+.raya-practice-filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 .raya-search-results {
   display: grid;
@@ -756,12 +779,18 @@ img {
   font-weight: 800;
 }
 .raya-search-results li[hidden],
-.raya-search-empty[hidden] {
+.raya-search-empty[hidden],
+.raya-practice-empty[hidden],
+.raya-practice-group[hidden],
+.raya-practice-object[hidden] {
   display: none;
 }
 .raya-search-result-meta,
 .raya-search-status,
-.raya-search-empty {
+.raya-practice-status,
+.raya-search-empty,
+.raya-practice-empty,
+.raya-practice-meta {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
 }
@@ -783,10 +812,79 @@ img {
   border-color: var(--raya-color-accent);
   box-shadow: inset 0 -0.2rem 0 var(--raya-graph-group-color, var(--raya-color-accent));
 }
+.raya-practice-chip[aria-pressed="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
+}
 .raya-graph-chip {
   align-items: center;
   display: inline-flex;
   gap: 0.45rem;
+}
+.raya-practice-results {
+  display: grid;
+  gap: 1.25rem;
+}
+.raya-practice-group {
+  display: grid;
+  gap: 0.75rem;
+}
+.raya-practice-group h2 {
+  border-bottom: 1px solid var(--raya-color-border);
+  margin-bottom: 0;
+  padding-bottom: 0.35rem;
+}
+.raya-practice-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+.raya-practice-object {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  box-shadow: inset 0.25rem 0 0 var(--raya-color-accent);
+  padding: 1rem;
+}
+.raya-practice-object-header,
+.raya-practice-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.raya-practice-kind,
+.raya-practice-authority {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 0.15rem 0.5rem;
+  text-transform: uppercase;
+}
+.raya-practice-kind {
+  background: color-mix(in srgb, var(--raya-color-accent) 12%, transparent);
+  color: var(--raya-color-text);
+}
+.raya-practice-object h3 {
+  font-size: clamp(1.05rem, 1rem + 0.2vw, 1.25rem);
+  margin: 0.65rem 0 0.4rem;
+}
+.raya-practice-actions {
+  margin: 0.75rem 0 0;
+}
+.raya-practice-open,
+.raya-practice-graph {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.65rem;
 }
 .raya-graph-group-swatch {
   background: var(--raya-graph-group-color, var(--raya-color-accent));
@@ -1487,6 +1585,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
+  scroll-margin-top: 32rem;
 }
 .raya-official-object-header {
   align-items: center;
@@ -2312,7 +2411,8 @@ mjx-container[display="true"] {
   .raya-page-footer,
   .raya-inspection-main,
   .raya-graph-page,
-  .raya-search-page {
+  .raya-search-page,
+  .raya-practice-page {
     padding: 0.75rem;
   }
   .raya-top-command-bar-inner {

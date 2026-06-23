@@ -896,6 +896,148 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
         handle.close()
 
 
+def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        practice_html = _fetch_text(f"{base_url}/_raya/practice/index.html")
+        practice_js = _fetch_text(f"{base_url}/_raya/render/practice.js")
+
+        assert 'data-raya-surface="practice"' in practice_html
+        assert "raya-practice-data" in practice_html
+        assert "https://" not in practice_html
+        assert "http://" not in practice_html
+        assert "fetch(" not in practice_js
+        assert "XMLHttpRequest" not in practice_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        browser_requests: list[str] = []
+                        page.on(
+                            "request",
+                            lambda request: browser_requests.append(request.url),
+                        )
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert browser_requests
+                        assert all(
+                            url.startswith(f"{base_url}/") for url in browser_requests
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(".raya-command-search").is_visible()
+                        assert page.locator(".raya-command-graph").is_visible()
+                        assert page.locator(".raya-command-size").is_visible()
+                        assert page.locator(".raya-command-font").is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-prompt"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-quiz"]'
+                        ).is_visible()
+
+                        page.fill("#raya-practice-search", "retrieval")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('1 visible practice object')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-prompt"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_hidden()
+
+                        page.click('[data-raya-practice-filter="quiz"]')
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('0 visible practice object')"""
+                        )
+                        assert page.locator("#raya-practice-empty").is_visible()
+
+                        page.click("#raya-practice-clear")
+                        page.click('[data-raya-practice-filter="quiz"]')
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('1 visible practice object')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-quiz"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_hidden()
+
+                        page.click("#raya-practice-clear")
+                        open_href = page.locator(
+                            '[data-raya-practice-object="first-topic-card"] '
+                            ".raya-practice-open"
+                        ).evaluate("node => node.href")
+                        with page.expect_navigation():
+                            page.click(
+                                '[data-raya-practice-object="first-topic-card"] '
+                                ".raya-practice-open"
+                            )
+                        assert page.url == open_href
+                        assert page.url.endswith(
+                            "/unit/topic/index.html#raya-official-first-topic-card"
+                        )
+                        assert page.locator("#raya-official-first-topic-card").is_visible()
+                        uncovered = page.evaluate(
+                            """() => {
+                              const target = document.querySelector(
+                                '#raya-official-first-topic-card'
+                              );
+                              const bar = document.querySelector('.raya-top-command-bar');
+                              if (!target || !bar) return false;
+                              const targetBox = target.getBoundingClientRect();
+                              const barBox = bar.getBoundingClientRect();
+                              return targetBox.top >= barBox.bottom + 8;
+                            }"""
+                        )
+                        assert uncovered
+                        _assert_no_horizontal_overflow(page)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 
@@ -1282,6 +1424,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 graphHref: document
                                   .querySelector('.raya-command-graph')
                                   ?.getAttribute('href'),
+                                practiceHref: document
+                                  .querySelector('.raya-command-practice')
+                                  ?.getAttribute('href'),
                                 mapExpanded: document
                                   .querySelector('.raya-command-map')
                                   ?.getAttribute('aria-expanded'),
@@ -1309,7 +1454,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 5
+                        assert state["count"] == 6
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
                         assert state["searchHref"] == (
@@ -1319,6 +1464,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             state["graphHref"]
                             == "_raya/graph/index.html?page=render-root"
                         )
+                        assert state["practiceHref"] == "_raya/practice/index.html"
                         assert state["mapExpanded"] == "true"
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"

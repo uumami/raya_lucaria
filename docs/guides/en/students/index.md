@@ -109,6 +109,16 @@ local browser controls; opening one does not submit work, save answers, create
 attempts, update progress, change mastery, contact a backend, fetch more data,
 or ask your browser to render MathJax.
 
+Some courses may also include an Official Practice workspace under
+`_raya/practice/`. Use it to find accepted course cards, prompts, quizzes,
+tasks, and other official objects across the course, then return to the owning
+page for context. Practice items should link to page anchors such as
+`#raya-official-<id>` and may offer `View in graph` links. The workspace is a
+static discovery surface, not a recommendation engine, progress tracker,
+submission system, grading system, scoring system, attempt log, mastery
+estimate, stored practice state, external request workflow, private source-path
+viewer, or personal review queue.
+
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Fenced code examples may include a `Copy` button. Copying puts the displayed code text on your clipboard; it does not run the code, save progress, or contact a backend.
