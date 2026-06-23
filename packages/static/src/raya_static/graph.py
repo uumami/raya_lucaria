@@ -28,6 +28,7 @@ _GRAPH_JAVASCRIPT = r"""
   const reset = document.getElementById("graph-reset");
   const graphExpand = document.getElementById("graph-expand");
   const status = document.getElementById("graph-status");
+  const hoverStatus = document.querySelector("[data-raya-graph-hover-status]");
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
   const detailEmpty = document.querySelector("[data-raya-graph-detail-empty]");
   const detailPanel = document.querySelector("[data-raya-graph-detail-panel]");
@@ -60,6 +61,7 @@ _GRAPH_JAVASCRIPT = r"""
   const hiddenGroups = new Set();
   let query = "";
   let selectedId = "";
+  let inspectedId = "";
   let matchIds = new Set();
   let pendingSelectTimer = 0;
 
@@ -153,6 +155,11 @@ _GRAPH_JAVASCRIPT = r"""
     return group ? group.title : "Course";
   }
 
+  function groupColorIndex(groupId) {
+    const index = groups.findIndex((group) => group.id === groupId);
+    return index >= 0 ? (index % 8) + 1 : 1;
+  }
+
   function positionsFor(activeNodes, mode) {
     const width = 960;
     const height = 560;
@@ -230,6 +237,78 @@ _GRAPH_JAVASCRIPT = r"""
       incomingCount,
       connectedCount: connectedIds.size,
     };
+  }
+
+  function degreeFor(nodeId) {
+    return edges.reduce((count, edge) => {
+      return count + (edge.from === nodeId ? 1 : 0) + (edge.to === nodeId ? 1 : 0);
+    }, 0);
+  }
+
+  function degreeRadiusFor(nodeId, selected) {
+    if (selected) return 19;
+    return 14 + Math.min(8, Math.sqrt(degreeFor(nodeId)) * 2);
+  }
+
+  function inspectionTextFor(nodeId) {
+    const node = nodesById.get(nodeId);
+    if (!node) return "";
+    const group = groupsById.get(node.group || "");
+    const counts = relationshipCountsFor(nodeId);
+    return `Inspecting ${node.title || node.nav_title || node.id}: ${group ? group.title : "Course"}; ${counts.outgoingCount} outgoing link(s), ${counts.incomingCount} incoming link(s), ${counts.connectedCount} connected page(s).`;
+  }
+
+  function updateInspectionDom() {
+    const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
+    canvas.querySelectorAll("[data-raya-graph-node] g").forEach((nodeGroup) => {
+      const link = nodeGroup.closest("[data-raya-graph-node]");
+      const id = link ? link.getAttribute("data-raya-graph-node") || "" : "";
+      nodeGroup.classList.toggle("is-inspected", id === inspectedId);
+      nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+    });
+    canvas.querySelectorAll(".raya-graph-edge").forEach((edge) => {
+      const from = edge.getAttribute("data-raya-graph-from") || "";
+      const to = edge.getAttribute("data-raya-graph-to") || "";
+      edge.classList.toggle(
+        "is-inspected",
+        Boolean(inspectedId) && (from === inspectedId || to === inspectedId)
+      );
+    });
+    list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
+      const id = item.getAttribute("data-raya-graph-node") || "";
+      item.classList.toggle("is-inspected", id === inspectedId);
+      item.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+    });
+  }
+
+  function inspectGraphNode(nodeId) {
+    inspectedId = nodesById.has(nodeId) ? nodeId : "";
+    if (hoverStatus) hoverStatus.textContent = inspectedId ? inspectionTextFor(inspectedId) : "";
+    updateInspectionDom();
+  }
+
+  function focusedInspectionNodeId() {
+    const active = document.activeElement;
+    if (!active || typeof active.closest !== "function") return "";
+    const item = active.closest("[data-raya-graph-node]");
+    if (!item || item.hidden) return "";
+    return item.getAttribute("data-raya-graph-node") || "";
+  }
+
+  function clearGraphInspection(nodeId) {
+    const applyClear = () => {
+      if (nodeId && inspectedId !== nodeId) return;
+      const focusedNodeId = focusedInspectionNodeId();
+      if (focusedNodeId && focusedNodeId === inspectedId) return;
+      inspectedId = "";
+      if (hoverStatus) hoverStatus.textContent = "";
+      updateInspectionDom();
+    };
+    if (nodeId) {
+      window.setTimeout(applyClear, 0);
+    } else {
+      applyClear();
+    }
   }
 
   function edgeLabel(edge) {
@@ -333,11 +412,14 @@ _GRAPH_JAVASCRIPT = r"""
 
   function renderList(activeIds) {
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
+    const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
       const id = item.getAttribute("data-raya-graph-node") || "";
       item.hidden = !activeIds.has(id);
       item.classList.toggle("is-active", id === selectedId);
       item.classList.toggle("is-neighbor", connectedIds.has(id));
+      item.classList.toggle("is-inspected", id === inspectedId);
+      item.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
       item.classList.toggle("is-match", matchIds.has(id));
     });
   }
@@ -374,6 +456,7 @@ _GRAPH_JAVASCRIPT = r"""
     canvas.removeAttribute("hidden");
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const selectedCluster = selectedId ? new Set([selectedId, ...connectedIds]) : new Set();
+    const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     const geometry = positionsFor(activeNodes, mode);
 
     canvas.setAttribute("viewBox", `0 0 ${geometry.width} ${geometry.height}`);
@@ -388,11 +471,17 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("y1", String(from.y));
       line.setAttribute("x2", String(to.x));
       line.setAttribute("y2", String(to.y));
+      line.setAttribute("data-raya-graph-from", edge.from);
+      line.setAttribute("data-raya-graph-to", edge.to);
       line.setAttribute(
         "class",
-        selectedId && (edge.from === selectedId || edge.to === selectedId)
-          ? "raya-graph-edge is-active"
-          : "raya-graph-edge"
+        [
+          "raya-graph-edge",
+          selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
+          inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
+            ? "is-inspected"
+            : "",
+        ].filter(Boolean).join(" ")
       );
       canvas.appendChild(line);
     });
@@ -403,10 +492,13 @@ _GRAPH_JAVASCRIPT = r"""
       const link = document.createElementNS("http://www.w3.org/2000/svg", "a");
       link.setAttribute("href", node.url);
       link.setAttribute("class", "raya-graph-node-link");
+      link.setAttribute("aria-label", inspectionTextFor(node.id));
       link.dataset.rayaGraphNode = node.id;
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
       const active = !selectedId || selectedCluster.has(node.id);
       const isConnected = connectedIds.has(node.id);
+      const isInspected = node.id === inspectedId;
+      const isInspectedNeighbor = inspectedConnectedIds.has(node.id);
       group.setAttribute(
         "class",
         [
@@ -414,16 +506,26 @@ _GRAPH_JAVASCRIPT = r"""
           active ? "" : "is-muted",
           node.id === selectedId ? "is-selected" : "",
           isConnected ? "is-neighbor" : "",
+          isInspected ? "is-inspected" : "",
+          isInspectedNeighbor ? "is-inspected-neighbor" : "",
           matchIds.has(node.id) ? "is-match" : "",
         ].filter(Boolean).join(" ")
       );
       group.setAttribute("transform", `translate(${point.x} ${point.y})`);
+      group.style.setProperty(
+        "--raya-graph-node-color",
+        `var(--raya-graph-group-${groupColorIndex(node.group || "")})`
+      );
       const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      circle.setAttribute("r", node.id === selectedId ? "18" : "14");
+      const radius = degreeRadiusFor(node.id, node.id === selectedId);
+      const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      hitTarget.setAttribute("class", "raya-graph-node-hit");
+      hitTarget.setAttribute("r", String(Math.max(30, radius + 8)));
+      circle.setAttribute("r", String(radius));
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      text.setAttribute("y", "34");
+      text.setAttribute("y", String(radius + 20));
       text.textContent = node.nav_title || node.title || node.id;
-      group.append(circle, text);
+      group.append(hitTarget, circle, text);
       link.appendChild(group);
       link.addEventListener("click", (event) => {
         event.preventDefault();
@@ -437,8 +539,13 @@ _GRAPH_JAVASCRIPT = r"""
         window.clearTimeout(pendingSelectTimer);
         window.location.href = node.url;
       });
+      link.addEventListener("mouseenter", () => inspectGraphNode(node.id));
+      link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
+      link.addEventListener("focus", () => inspectGraphNode(node.id));
+      link.addEventListener("blur", () => clearGraphInspection(node.id));
       canvas.appendChild(link);
     });
+    updateInspectionDom();
   }
 
   if (search) search.addEventListener("input", render);
@@ -450,6 +557,8 @@ _GRAPH_JAVASCRIPT = r"""
       if (layout) layout.value = "map";
       hiddenGroups.clear();
       selectedId = "";
+      inspectedId = "";
+      if (hoverStatus) hoverStatus.textContent = "";
       setGraphExpanded(false);
       renderDetail();
       groupFilters.forEach((button) => {
@@ -480,10 +589,30 @@ _GRAPH_JAVASCRIPT = r"""
       render();
     });
   });
+  list.addEventListener("focusin", (event) => {
+    const item = event.target.closest("[data-raya-graph-node]");
+    if (!item || item.hidden) return;
+    inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");
+  });
+  list.addEventListener("focusout", (event) => {
+    const item = event.target.closest("[data-raya-graph-node]");
+    clearGraphInspection(item ? item.getAttribute("data-raya-graph-node") || "" : "");
+  });
+  list.addEventListener("pointerover", (event) => {
+    const item = event.target.closest("[data-raya-graph-node]");
+    if (!item || item.hidden) return;
+    inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");
+  });
+  list.addEventListener("pointerout", (event) => {
+    if (!list.contains(event.relatedTarget)) {
+      clearGraphInspection();
+    }
+  });
   canvas.addEventListener("mouseleave", () => {
     if (!detailPanel || detailPanel.hidden) {
       selectedId = "";
     }
+    clearGraphInspection();
     render();
   });
 

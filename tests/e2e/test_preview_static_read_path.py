@@ -220,6 +220,48 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.includes('visible node')"""
                         )
                         assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).hover()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-hover-status]')
+                              ?.textContent
+                              ?.includes('Inspecting Authoring Matrix Fixture')"""
+                        )
+                        assert page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] g'
+                        ).evaluate("node => node.classList.contains('is-inspected')")
+                        for node_id in (
+                            "render-root",
+                            "math-authoring",
+                            "numbered-objects",
+                            "reader-ux",
+                        ):
+                            assert page.locator(
+                                f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
+                            ).evaluate(
+                                "node => node.classList.contains('is-inspected-neighbor')"
+                            )
+                        page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"] a'
+                        ).focus()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-hover-status]')
+                              ?.textContent
+                              ?.includes('Inspecting Authoring Matrix Fixture')"""
+                        )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).focus()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-hover-status]')
+                              ?.textContent
+                              ?.includes('Inspecting Authoring Matrix Fixture')"""
+                        )
+                        assert requested_urls == []
                         graph_node = page.locator(
                             "#raya-graph-canvas [data-raya-graph-node]"
                         ).first

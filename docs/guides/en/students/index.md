@@ -55,6 +55,10 @@ recommendations or personal progress.
 When a page is selected in the graph, connected pages may be highlighted and
 summarized as outgoing links, incoming links, and connected pages. Those numbers
 describe the current static graph, not how far you have progressed.
+Graph colors group pages by current course structure, node size can show how
+many explicit links touch a page, and hover or keyboard focus can temporarily
+inspect a page and its connected pages. These are static readability cues, not
+importance rankings, progress, mastery, recommendations, or grading signals.
 
 Use Course Search when you remember a title, tag, status, summary phrase, or
 stable ID. It searches generated metadata only, supports approximate matches and

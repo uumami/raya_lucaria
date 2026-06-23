@@ -59,6 +59,11 @@ autoradas, no recomendaciones ni progreso personal.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
+Los colores del grafo agrupan paginas por la estructura actual del curso, el
+tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
+hover o foco de teclado puede inspeccionar temporalmente una pagina y sus
+paginas conectadas. Son pistas estaticas de legibilidad, no rankings de
+importancia, progreso, dominio, recomendaciones ni senales de evaluacion.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y

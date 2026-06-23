@@ -49,9 +49,13 @@ The static graph page is a reader-facing view of generated artifact graph data.
 It may provide local fuzzy search, deterministic layouts, group filters,
 selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, connected-page visual states, transient
-page focus from generated URL context, and a non-persistent expanded workspace
-mode. It must not fetch graph data at runtime, load external graph libraries,
-persist graph state, infer
+page focus from generated URL context, structural group color, bounded node
+size derived from static link degree, hover/focus inspection text, keyboard
+inspection parity, and a non-persistent expanded workspace mode. These visual
+semantics are readability cues for current graph structure only; they are not
+progress, authority, recommendation rank, importance rank, mastery, or
+completion signals. It must not fetch graph data at runtime, load external graph
+libraries, persist graph state, infer
 recommendations, or present graph position as personal progress.
 
 Reader controls may use local `OpenDyslexic` resources, a local text-size comfort preference, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. They must work from static files and must not depend on fetch/XHR requests, accounts, a backend, CDN resources, external font requests, personal progress, adaptive recommendations, or browser-side MathJax conversion. Local storage may be used only for reader comfort preferences such as font and text size; it must not store course progress, answers, mastery, recommendations, graph state, skin authority, or authored content.

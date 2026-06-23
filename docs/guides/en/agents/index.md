@@ -70,14 +70,19 @@ of recommendation/progress/mastery wording inside the generated index surface.
 
 When changing the Course graph, verify fuzzy search, selected-page details,
 selected-page neighborhood summaries, connected-page visual states, group
-filters, expanded graph workspace state, mobile no-overflow behavior, and no
-external requests after page load. Graph UI state is non-persistent and must
+filters, group color semantics, bounded degree-based node sizing, hover/focus
+inspection status, keyboard inspection parity, expanded graph workspace state,
+mobile no-overflow behavior, and no external requests after page load. Graph UI
+state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Generated URL context may select a page only when it resolves to an embedded
 graph node. Neighborhood counts must be derived from generated graph edges, and
 connected-page highlights must exclude the selected node itself. Connections
 rail counts must come from explicit graph context only. Rail graph-focus links
 must point only to explicit prerequisites or incoming/outgoing graph context.
+Treat graph color, size, and inspection text as structural readability cues; do
+not introduce progress, mastery, recommendation, ranking, persistent graph
+state, external graph libraries, fetch requests, or runtime graph payloads.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, Enter-to-open behavior, clear controls, no external requests, and no

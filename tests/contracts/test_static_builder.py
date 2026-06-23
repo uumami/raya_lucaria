@@ -385,6 +385,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-fit" in graph_html
     assert "graph-reset" in graph_html
     assert "graph-expand" in graph_html
+    assert "raya-graph-instructions" in graph_html
+    assert "Hover or focus a page" in graph_html
+    assert "data-raya-graph-hover-status" in graph_html
     assert 'class="raya-graph-legend"' in graph_html
     assert 'data-raya-graph-legend="node"' in graph_html
     assert 'data-raya-graph-legend="match"' in graph_html
@@ -405,6 +408,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-clear" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html
+    assert 'style="--raya-graph-group-color:' in graph_html
+    assert "raya-graph-group-swatch" in graph_html
     assert "Backlinks:" in graph_html
     assert "../../index.html" in graph_html
     graph_payload_match = re.search(
@@ -427,6 +432,13 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "URLSearchParams" in graph_script
     assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script
+    assert "degreeRadiusFor" in graph_script
+    assert "14 + Math.min(8" in graph_script
+    assert "raya-graph-node-hit" in graph_script
+    assert "inspectGraphNode" in graph_script
+    assert "is-inspected" in graph_script
+    assert "is-inspected-neighbor" in graph_script
+    assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",
         "XMLHttpRequest",

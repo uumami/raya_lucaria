@@ -128,6 +128,16 @@ STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
 STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
 STATIC_SEARCH_PATH = Path(STATIC_RESOURCE_DIR) / "search" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
+GRAPH_GROUP_COLORS = (
+    "var(--raya-graph-group-1)",
+    "var(--raya-graph-group-2)",
+    "var(--raya-graph-group-3)",
+    "var(--raya-graph-group-4)",
+    "var(--raya-graph-group-5)",
+    "var(--raya-graph-group-6)",
+    "var(--raya-graph-group-7)",
+    "var(--raya-graph-group-8)",
+)
 MATH_FONT_SOURCE_DIR = (
     REPOSITORY_ROOT
     / "node_modules"
@@ -2479,16 +2489,20 @@ def _render_graph_surface(
     root_skin = skin_id_for_source_path(content_model.pages[0].source_path, skin_context)
     browser_graph = _browser_graph_payload(graph_index)
     graph_payload = _json_script_text(browser_graph)
-    group_buttons = [
-        (
-            '<button class="raya-graph-chip" type="button" '
-            f'data-raya-graph-group-filter="{html.escape(group["id"], quote=True)}" '
-            'aria-pressed="true">'
-            f'{html.escape(group["title"])}'
-            "</button>"
+    group_buttons = []
+    for index, group in enumerate(graph_index["groups"]):
+        group_color = GRAPH_GROUP_COLORS[index % len(GRAPH_GROUP_COLORS)]
+        group_buttons.append(
+            (
+                '<button class="raya-graph-chip" type="button" '
+                f'style="--raya-graph-group-color: {html.escape(group_color, quote=True)}" '
+                f'data-raya-graph-group-filter="{html.escape(group["id"], quote=True)}" '
+                'aria-pressed="true">'
+                '<span class="raya-graph-group-swatch" aria-hidden="true"></span>'
+                f'{html.escape(group["title"])}'
+                "</button>"
+            )
         )
-        for group in graph_index["groups"]
-    ]
     edge_counts: dict[str, int] = defaultdict(int)
     for edge in browser_graph["edges"]:
         edge_counts[str(edge["from"])] += 1
@@ -2548,6 +2562,12 @@ def _render_graph_surface(
             '<button id="graph-reset" type="button">Reset</button>',
             '<button id="graph-expand" type="button" aria-pressed="false">Expand graph</button>',
             "</section>",
+            (
+                '<p class="raya-graph-instructions">'
+                "Hover or focus a page to inspect nearby structure. Click to select it; "
+                "double-click a graph node or open the detail link to navigate."
+                "</p>"
+            ),
             '<section class="raya-graph-groups" aria-label="Graph groups">',
             "\n".join(group_buttons),
             "</section>",
@@ -2584,6 +2604,10 @@ def _render_graph_surface(
             ),
             "</section>",
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
+            (
+                '<p class="raya-graph-hover-status" '
+                'data-raya-graph-hover-status aria-live="polite"></p>'
+            ),
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
             '<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>',
             '<div data-raya-graph-detail-panel hidden>',

@@ -668,12 +668,24 @@ img {
   max-width: 118rem;
   padding: var(--raya-space-page);
 }
+.raya-graph-page {
+  --raya-graph-group-1: var(--raya-color-accent);
+  --raya-graph-group-2: var(--raya-color-success);
+  --raya-graph-group-3: color-mix(in srgb, var(--raya-color-accent) 68%, var(--raya-color-success));
+  --raya-graph-group-4: color-mix(in srgb, var(--raya-color-success) 70%, var(--raya-color-text));
+  --raya-graph-group-5: color-mix(in srgb, var(--raya-color-accent) 58%, var(--raya-color-text));
+  --raya-graph-group-6: color-mix(in srgb, var(--raya-color-success) 52%, var(--raya-color-accent-soft));
+  --raya-graph-group-7: color-mix(in srgb, var(--raya-color-accent) 44%, var(--raya-color-surface));
+  --raya-graph-group-8: color-mix(in srgb, var(--raya-color-success) 44%, var(--raya-color-surface));
+}
 .raya-graph-header,
 .raya-search-header,
 .raya-graph-controls,
 .raya-search-controls,
 .raya-graph-groups,
 .raya-graph-status,
+.raya-graph-hover-status,
+.raya-graph-instructions,
 .raya-search-status,
 .raya-graph-canvas,
 .raya-graph-list,
@@ -742,7 +754,30 @@ img {
 }
 .raya-graph-chip[aria-pressed="true"] {
   border-color: var(--raya-color-accent);
-  box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
+  box-shadow: inset 0 -0.2rem 0 var(--raya-graph-group-color, var(--raya-color-accent));
+}
+.raya-graph-chip {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+}
+.raya-graph-group-swatch {
+  background: var(--raya-graph-group-color, var(--raya-color-accent));
+  border: 1px solid color-mix(in srgb, var(--raya-color-text) 24%, transparent);
+  border-radius: 999px;
+  display: inline-block;
+  height: 0.85rem;
+  width: 0.85rem;
+}
+.raya-graph-instructions,
+.raya-graph-hover-status {
+  color: var(--raya-color-muted);
+  font-size: 0.9rem;
+}
+.raya-graph-hover-status {
+  border-left: 0.22rem solid var(--raya-color-border);
+  min-height: 1.6rem;
+  padding-left: 0.65rem;
 }
 .raya-graph-legend {
   align-items: center;
@@ -879,13 +914,30 @@ img {
   stroke: var(--raya-color-accent);
   stroke-width: 3;
 }
+.raya-graph-edge.is-inspected {
+  stroke: var(--raya-color-success);
+  stroke-width: 3;
+}
 .raya-graph-node-link {
   cursor: pointer;
 }
+.raya-graph-node-hit {
+  fill: transparent;
+  pointer-events: all;
+  stroke: transparent;
+}
 .raya-graph-node circle {
-  fill: var(--raya-color-accent-soft);
-  stroke: var(--raya-color-accent);
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 24%, var(--raya-color-surface));
+  stroke: var(--raya-graph-node-color, var(--raya-color-accent));
   stroke-width: 2;
+}
+.raya-graph-node.is-inspected circle {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 54%, var(--raya-color-surface));
+  stroke-width: 4;
+}
+.raya-graph-node.is-inspected-neighbor circle {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 38%, var(--raya-color-surface));
+  stroke-width: 3;
 }
 .raya-graph-node.is-selected circle {
   fill: var(--raya-color-success);
@@ -922,6 +974,14 @@ img {
 }
 .raya-graph-list li.is-neighbor a {
   font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
+}
+.raya-graph-list li.is-inspected a {
+  color: var(--raya-color-success);
+  font-weight: 800;
+}
+.raya-graph-list li.is-inspected-neighbor a {
   text-decoration: underline;
   text-decoration-thickness: 0.1em;
 }
