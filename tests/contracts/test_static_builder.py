@@ -2337,6 +2337,19 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     assert 'class="raya-reading-context-link raya-reading-context-next"' not in last_html
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
+    connections_panel = _section_html(last_html, "raya-page-linked-pages")
+    assert 'aria-expanded="false">Connections</button>' in connections_panel
+    assert '<p class="raya-rail-connection-summary">' in connections_panel
+    assert "<strong>3</strong> from this page" in connections_panel
+    assert "<strong>1</strong> link here" in connections_panel
+    assert '<span class="raya-rail-count">3</span>' in connections_panel
+    assert '<span class="raya-rail-count">1</span>' in connections_panel
+    assert "From this page" in connections_panel
+    assert "Links here" in connections_panel
+    assert 'href="../math-authoring/index.html"' in connections_panel
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
+    assert "recommend" not in connections_panel.lower()
+    assert "progress" not in connections_panel.lower()
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
     assert root_html.index('<article id="raya-article"') < root_html.index(
@@ -2517,8 +2530,13 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     visible = _visible_text(panel).lower()
 
     assert '<section class="raya-rail-panel raya-page-linked-pages"' in panel
-    assert 'aria-expanded="false">Linked pages</button>' in panel
+    assert 'aria-expanded="false">Connections</button>' in panel
     assert 'aria-hidden="true" inert' in panel
+    assert '<p class="raya-rail-connection-summary">' in panel
+    assert "<strong>3</strong> from this page" in panel
+    assert "<strong>1</strong> link here" in panel
+    assert '<span class="raya-rail-count">3</span>' in panel
+    assert '<span class="raya-rail-count">1</span>' in panel
     assert "From this page" in panel
     assert "Links here" in panel
     assert 'href="../numbered-objects/index.html"' in panel

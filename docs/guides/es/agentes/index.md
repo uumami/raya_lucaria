@@ -52,12 +52,12 @@ Cuando un problema de rendering cruce math, objetos numerados, skins, referencia
 Para la estructura del curso basada en ciencia del aprendizaje, conserva
 restricciones de fuente y autoridad actual del artifact. El riel derecho puede
 renderizar contenidos de pagina actuales, metadata normalizada, prerrequisitos
-por ID estable, enlaces anterior/siguiente, contexto explicito de grafo entrante
-y saliente, y enlaces de foco en grafo para esas relaciones explicitas. Mantiene
-el limite: sin metas inferidas, sin practica relacionada falsa, sin progreso
-personal y sin MathJax en el browser. Usa checks render-debug cuando puedan
-fallar layout de la estructura del curso, recursos locales, capturas, overflow o
-math visible.
+por ID estable, enlaces anterior/siguiente, resumenes estaticos de Connections
+para contexto explicito de grafo entrante y saliente, y enlaces de foco en grafo para
+esas relaciones explicitas. Mantiene el limite: sin metas inferidas, sin practica
+relacionada falsa, sin progreso personal y sin MathJax en el browser. Usa checks
+render-debug cuando puedan fallar layout de la estructura del curso, recursos
+locales, capturas, overflow o math visible.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
@@ -79,7 +79,8 @@ comportamiento movil sin overflow y sin solicitudes externas despues de cargar
 la pagina. El estado UI del grafo es no persistente y debe venir de datos de
 grafo embebidos del artifact, no de HTML scrapeado ni browser storage. El
 contexto de URL generado puede seleccionar una pagina solo cuando resuelve a un
-nodo embebido del grafo. Los links de foco al grafo en el riel deben apuntar
+nodo embebido del grafo. Los conteos del riel Connections deben venir solo de
+contexto explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar
 solo a prerequisitos explicitos o contexto de grafo entrante/saliente.
 
 Al cambiar Course Search, verifica coincidencia aproximada, movimiento con

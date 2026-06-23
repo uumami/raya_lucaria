@@ -52,8 +52,10 @@ busqueda, filtros, detalles de pagina seleccionada y workspace expandido del
 grafo son herramientas locales de lectura sobre la estructura actual del curso.
 No guardan progreso, no recomiendan que estudiar despues y no cambian la
 autoridad del curso. Abrirlo desde una pagina del curso puede enfocar esa pagina
-para ver primero sus links explicitos. Algunos links de contexto en el riel de
-aprendizaje tambien abren el grafo enfocado en esa pagina linkeada.
+para ver primero sus enlaces explicitos. El riel de aprendizaje tambien puede
+mostrar un panel Connections con conteos de enlaces que salen de la pagina actual
+y enlaces que apuntan a ella; esos conteos describen relaciones estaticas
+autoradas, no recomendaciones ni progreso personal.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y

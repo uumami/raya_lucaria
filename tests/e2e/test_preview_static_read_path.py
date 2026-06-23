@@ -1974,6 +1974,12 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                             bodyHeight: body?.getBoundingClientRect().height,
                             linkTabIndex: link?.getAttribute('tabindex'),
                             text: panel.innerText,
+                            summaryLabels: Array
+                              .from(panel.querySelectorAll('.raya-rail-connection-summary span'))
+                              .map((node) => node.innerText.replace(/\\s+/g, ' ').trim()),
+                            counts: Array
+                              .from(panel.querySelectorAll('.raya-rail-count'))
+                              .map((node) => node.innerText.trim()),
                           };
                         }"""
                     )
@@ -1982,6 +1988,12 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert expanded["ariaHidden"] == "false"
                     assert expanded["inert"] in {False, None}
                     assert expanded["linkTabIndex"] is None
+                    assert "Connections" in expanded["text"]
+                    assert expanded["summaryLabels"] == [
+                        "3 from this page",
+                        "1 link here",
+                    ]
+                    assert expanded["counts"] == ["3", "1"]
                     assert "From this page" in expanded["text"]
                     assert "Links here" in expanded["text"]
                     graph_link = panel.locator(

@@ -1091,6 +1091,46 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   list-style: none;
   padding-left: 0;
 }
+.raya-rail-connection-summary {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.7rem;
+}
+.raya-rail-connection-summary span {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 42%, var(--raya-color-border));
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  line-height: 1;
+  padding: 0.32rem 0.5rem;
+}
+.raya-rail-connection-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin: 0.75rem 0 0.35rem;
+}
+.raya-rail-connection-heading h3 {
+  margin: 0;
+}
+.raya-rail-count {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.2rem 0.42rem;
+}
 .raya-rail-link-row {
   align-items: baseline;
   display: flex;

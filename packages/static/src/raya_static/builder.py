@@ -1332,17 +1332,23 @@ def _render_linked_pages_rail(
     sections = []
     outgoing = page_graph_context.get("outgoing", [])
     incoming = page_graph_context.get("incoming", [])
+    summary = (
+        '<p class="raya-rail-connection-summary">'
+        f"<span><strong>{len(outgoing)}</strong> {_relationship_count_label(len(outgoing), 'from this page', 'from this page')}</span>"
+        f"<span><strong>{len(incoming)}</strong> {_relationship_count_label(len(incoming), 'links here', 'link here')}</span>"
+        "</p>"
+    )
     if outgoing:
         sections.append(
-            "<h3>From this page</h3>"
-            '<ul class="raya-rail-link-list">'
+            _rail_connection_heading("From this page", len(outgoing))
+            + '<ul class="raya-rail-link-list">'
             + "\n".join(_linked_page_item(page, item) for item in outgoing)
             + "</ul>"
         )
     if incoming:
         sections.append(
-            "<h3>Links here</h3>"
-            '<ul class="raya-rail-link-list">'
+            _rail_connection_heading("Links here", len(incoming))
+            + '<ul class="raya-rail-link-list">'
             + "\n".join(_linked_page_item(page, item) for item in incoming)
             + "</ul>"
         )
@@ -1350,8 +1356,21 @@ def _render_linked_pages_rail(
         return ""
     return _render_rail_panel(
         "raya-page-linked-pages",
-        "Linked pages",
-        "\n".join(sections),
+        "Connections",
+        summary + "\n" + "\n".join(sections),
+    )
+
+
+def _relationship_count_label(count: int, plural: str, singular: str) -> str:
+    return singular if count == 1 else plural
+
+
+def _rail_connection_heading(title: str, count: int) -> str:
+    return (
+        '<div class="raya-rail-connection-heading">'
+        f"<h3>{html.escape(title)}</h3>"
+        f'<span class="raya-rail-count">{count}</span>'
+        "</div>"
     )
 
 
