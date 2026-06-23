@@ -75,6 +75,10 @@ puede filtrar etiquetas renderizadas del mapa localmente, puede colapsarse con
 click explicito a un riel compacto operable, y mantiene ese estado no persistente.
 El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
 servirse desde recursos locales del renderer sin scripts ni estilos externos.
+Las cards Previous/Next al final del articulo se generan desde el mismo orden del
+curso que los links compactos de secuencia. Mantenlas estaticas, accesibles con
+teclado, responsivas, y sin lenguaje de progreso, dominio, recomendacion o
+siguiente paso personal.
 
 Revisa el Course graph como una superficie estatica de artifact. La busqueda del
 grafo, los detalles de pagina seleccionada, filtros de grupo y workspace

@@ -1177,6 +1177,56 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   margin: 0 0 1rem;
   padding: 0 0 0.75rem;
 }
+.raya-article-sequence-cards {
+  border-top: 1px solid var(--raya-color-border);
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 2rem;
+  padding-top: 1rem;
+}
+.raya-sequence-card {
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, var(--raya-color-accent));
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.9rem 1rem;
+  text-decoration: none;
+}
+.raya-sequence-card:hover {
+  border-color: var(--raya-color-accent);
+  box-shadow: 0 0.5rem 1.25rem rgba(31, 35, 40, 0.12);
+  text-decoration: none;
+}
+.raya-sequence-card:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-sequence-card-next {
+  text-align: right;
+}
+.raya-sequence-card-kicker {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+.raya-sequence-card-title {
+  color: var(--raya-color-text);
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.raya-sequence-card-meta {
+  color: var(--raya-color-muted);
+  font-size: 0.85rem;
+}
 .raya-course-map ol,
 .raya-learning-rail ul {
   margin: 0;
@@ -1602,6 +1652,7 @@ nav[aria-label="Breadcrumbs"] {
   max-width: 52rem;
 }
 .raya-main-article > .raya-article-sequence,
+.raya-main-article > .raya-article-sequence-cards,
 .raya-main-article > .raya-article-connections,
 .raya-main-article > nav[aria-label="Breadcrumbs"],
 .raya-main-article > .raya-numbered-object,
@@ -2063,6 +2114,12 @@ mjx-container[display="true"] {
   }
   .raya-graph-list {
     columns: 1;
+  }
+  .raya-article-sequence-cards {
+    grid-template-columns: 1fr;
+  }
+  .raya-sequence-card-next {
+    text-align: left;
   }
 }
 @media (max-width: 520px) {

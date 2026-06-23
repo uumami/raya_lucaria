@@ -73,6 +73,9 @@ map labels locally, can collapse by explicit click to an operable compact map ra
 and keeps that shell state non-persistent. The course-map behavior is
 explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
 served from local renderer resources rather than external scripts or styles.
+Article-end Previous/Next cards are generated from the same course order as the
+compact sequence links. Keep them static, keyboard reachable, responsive, and
+free of progress, mastery, recommendation, or personal next-step wording.
 
 Review the Course graph as a static artifact surface. Graph search, selected-page
 details, group filters, and expanded graph workspace mode must use embedded

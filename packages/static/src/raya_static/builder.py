@@ -890,6 +890,7 @@ def _render_page(
             breadcrumbs,
             article_html,
             article_connections_html,
+            _render_article_sequence_cards(page, content_model),
             "</article>",
             learning_rail,
             "</main>",
@@ -1719,7 +1720,10 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
     return '<nav aria-label="Breadcrumbs">' + " / ".join(items) + "</nav>"
 
 
-def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
+def _sequence_targets(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> dict[str, dict[str, object]]:
     pages = content_model.pages
     current_index = next(
         (
@@ -1730,20 +1734,47 @@ def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
         None,
     )
     if current_index is None:
-        return ""
-    links: list[str] = []
+        return {}
+    targets: dict[str, dict[str, object]] = {}
+    total_pages = len(pages)
     if current_index > 0:
         previous = pages[current_index - 1]
-        href = _relative_href(page.output_path, previous.output_path)
-        links.append(
-            f'<a rel="prev" data-raya-prev-page href="{html.escape(href)}">'
-            f"Previous: {html.escape(previous.nav_title or previous.title)}</a>"
-        )
-    if current_index + 1 < len(pages):
+        targets["previous"] = {
+            "page": previous,
+            "href": _relative_href(page.output_path, previous.output_path),
+            "index": current_index,
+            "total": total_pages,
+        }
+    if current_index + 1 < total_pages:
         next_page = pages[current_index + 1]
-        href = _relative_href(page.output_path, next_page.output_path)
+        targets["next"] = {
+            "page": next_page,
+            "href": _relative_href(page.output_path, next_page.output_path),
+            "index": current_index + 2,
+            "total": total_pages,
+        }
+    return targets
+
+
+def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
+    targets = _sequence_targets(page, content_model)
+    links: list[str] = []
+    previous = targets.get("previous")
+    if previous is not None:
+        previous_page = previous["page"]
+        assert isinstance(previous_page, ContentPage)
         links.append(
-            f'<a rel="next" data-raya-next-page href="{html.escape(href)}">'
+            '<a rel="prev" data-raya-prev-page '
+            f'href="{html.escape(str(previous["href"]))}">'
+            f"Previous: {html.escape(previous_page.nav_title or previous_page.title)}</a>"
+        )
+    next_target = targets.get("next")
+    if next_target is not None:
+        next_page = next_target["page"]
+        assert isinstance(next_page, ContentPage)
+        links.append(
+            '<a rel="next" data-raya-next-page '
+            f'href="{html.escape(str(next_target["href"]))}">'
             f"Next: {html.escape(next_page.nav_title or next_page.title)}</a>"
         )
     return "\n".join(links)
@@ -1756,6 +1787,52 @@ def _render_article_sequence_nav(page: ContentPage, content_model: ContentModel)
     return (
         '<nav class="raya-article-sequence raya-article-sequence-top" '
         'aria-label="Previous and next pages">' + sequence + "</nav>"
+    )
+
+
+def _render_article_sequence_cards(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    targets = _sequence_targets(page, content_model)
+    if not targets:
+        return ""
+    cards: list[str] = []
+    previous = targets.get("previous")
+    if previous is not None:
+        previous_page = previous["page"]
+        assert isinstance(previous_page, ContentPage)
+        cards.append(
+            '<a class="raya-sequence-card raya-sequence-card-prev" '
+            'rel="prev" data-raya-prev-page '
+            f'href="{html.escape(str(previous["href"]))}">'
+            '<span class="raya-sequence-card-kicker">Previous page</span>'
+            '<span class="raya-sequence-card-title">'
+            f"{html.escape(previous_page.nav_title or previous_page.title)}</span>"
+            '<span class="raya-sequence-card-meta">'
+            f'Page {previous["index"]} of {previous["total"]}</span>'
+            "</a>"
+        )
+    next_target = targets.get("next")
+    if next_target is not None:
+        next_page = next_target["page"]
+        assert isinstance(next_page, ContentPage)
+        cards.append(
+            '<a class="raya-sequence-card raya-sequence-card-next" '
+            'rel="next" data-raya-next-page '
+            f'href="{html.escape(str(next_target["href"]))}">'
+            '<span class="raya-sequence-card-kicker">Next page</span>'
+            '<span class="raya-sequence-card-title">'
+            f"{html.escape(next_page.nav_title or next_page.title)}</span>"
+            '<span class="raya-sequence-card-meta">'
+            f'Page {next_target["index"]} of {next_target["total"]}</span>'
+            "</a>"
+        )
+    return (
+        '<nav class="raya-article-sequence-cards" '
+        'aria-label="End-of-page navigation">'
+        + "\n".join(cards)
+        + "</nav>"
     )
 
 

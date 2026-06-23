@@ -178,6 +178,9 @@ students filter visible page labels or collapse the map to an operable compact m
 for more reading space. Course-map state and filter text are
 non-persistent UI state. The shell may show structure such as `Page N of M`;
 treat that as course position, not personal progress or completion.
+Pages may also end with larger Previous/Next cards generated from the authored
+course order. You do not author these cards separately; keep the page order and
+titles clear, and treat the cards as static navigation, not recommendations.
 
 The generated Course graph can help students inspect explicit page
 relationships through local fuzzy search, selected-page details, and an expanded

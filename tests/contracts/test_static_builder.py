@@ -2457,6 +2457,22 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert last_html.index("Matrix norm fixture") < last_html.index(
         '<section class="raya-article-connections"'
     )
+    last_sequence_cards = _article_sequence_cards_html(last_html)
+    assert (
+        last_html.index('<section class="raya-article-connections"')
+        < last_html.index('<nav class="raya-article-sequence-cards"')
+    )
+    assert 'class="raya-sequence-card raya-sequence-card-next"' not in last_sequence_cards
+    assert (
+        'class="raya-sequence-card raya-sequence-card-prev" '
+        'rel="prev" data-raya-prev-page href="../reader-ux/index.html"'
+    ) in last_sequence_cards
+    assert '<span class="raya-sequence-card-kicker">Previous page</span>' in last_sequence_cards
+    assert '<span class="raya-sequence-card-title">Reader UX Fixture</span>' in last_sequence_cards
+    assert '<span class="raya-sequence-card-meta">Page 5 of 6</span>' in last_sequence_cards
+    assert "recommend" not in last_sequence_cards.lower()
+    assert "progress" not in last_sequence_cards.lower()
+    assert "mastery" not in last_sequence_cards.lower()
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
     assert root_html.index('<article id="raya-article"') < root_html.index(
@@ -2541,6 +2557,33 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'rel="next" data-raya-next-page href="unit/index.html"' in html
     assert 'rel="prev" data-raya-prev-page href="../index.html"' in middle_html
     assert 'rel="next" data-raya-next-page href="topic/index.html"' in middle_html
+    root_sequence_cards = _article_sequence_cards_html(html)
+    assert (
+        '<nav class="raya-article-sequence-cards" '
+        'aria-label="End-of-page navigation">'
+    ) in root_sequence_cards
+    assert 'class="raya-sequence-card raya-sequence-card-prev"' not in root_sequence_cards
+    assert (
+        'class="raya-sequence-card raya-sequence-card-next" '
+        'rel="next" data-raya-next-page href="unit/index.html"'
+    ) in root_sequence_cards
+    assert '<span class="raya-sequence-card-kicker">Next page</span>' in root_sequence_cards
+    assert '<span class="raya-sequence-card-title">First Unit</span>' in root_sequence_cards
+    assert '<span class="raya-sequence-card-meta">Page 2 of 3</span>' in root_sequence_cards
+    middle_sequence_cards = _article_sequence_cards_html(middle_html)
+    assert (
+        'class="raya-sequence-card raya-sequence-card-prev" '
+        'rel="prev" data-raya-prev-page href="../index.html"'
+    ) in middle_sequence_cards
+    assert (
+        'class="raya-sequence-card raya-sequence-card-next" '
+        'rel="next" data-raya-next-page href="topic/index.html"'
+    ) in middle_sequence_cards
+    assert '<span class="raya-sequence-card-title">Minimal Course</span>' in middle_sequence_cards
+    assert '<span class="raya-sequence-card-title">First Topic</span>' in middle_sequence_cards
+    assert "recommend" not in middle_sequence_cards.lower()
+    assert "progress" not in middle_sequence_cards.lower()
+    assert "mastery" not in middle_sequence_cards.lower()
     assert (
         html.index('<nav id="raya-course-map"')
         < html.index('<article id="raya-article"')
@@ -3572,6 +3615,12 @@ def _article_connections_html(html_text: str) -> str:
     start = html_text.index('<section class="raya-article-connections"')
     article_end = html_text.index("</article>", start)
     return html_text[start:article_end]
+
+
+def _article_sequence_cards_html(html_text: str) -> str:
+    start = html_text.index('<nav class="raya-article-sequence-cards"')
+    end = html_text.index("</nav>", start) + len("</nav>")
+    return html_text[start:end]
 
 
 def _tag_html(html_text: str, tag_name: str, class_name: str) -> str:

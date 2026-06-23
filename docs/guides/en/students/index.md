@@ -42,9 +42,10 @@ part of the map. That orientation is temporary reading context, not saved state.
 
 Use the Course map button to collapse or expand navigation when you need a
 different focus. Use the map filter to narrow visible page labels inside the
-current static hierarchy. Use Previous and Next in the article or top reading
-context to move through the ordered material, and use Text size or OpenDyslexic
-when those settings are more comfortable.
+current static hierarchy. Use Previous and Next in the article, top reading
+context, or end-of-page cards to move through the ordered material, and use Text
+size or OpenDyslexic when those settings are more comfortable. End-of-page cards
+are course-order links; they are not recommendations or progress markers.
 
 Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, and expanded graph workspace are local reading

@@ -47,8 +47,10 @@ lectura, no estado guardado.
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. Usa el filtro del mapa para limitar etiquetas de paginas
 visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
-articulo o en el contexto superior de lectura para moverte por el material
-ordenado, y usa Text size u OpenDyslexic cuando esos ajustes sean mas comodos.
+articulo, en el contexto superior de lectura o en las cards al final de pagina
+para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando
+esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
+orden del curso; no son recomendaciones ni marcadores de progreso.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada y workspace expandido del

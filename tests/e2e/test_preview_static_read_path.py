@@ -452,8 +452,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             wait_until="networkidle",
                         )
                         page.locator(
-                            "#raya-graph-canvas .raya-graph-node-hit"
-                        ).first.click()
+                            "#raya-graph-canvas .raya-graph-node-link"
+                        ).first.dispatch_event("click")
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
@@ -474,8 +474,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         with page.expect_navigation():
                             page.locator(
-                                "#raya-graph-canvas .raya-graph-node-hit"
-                            ).first.dblclick()
+                                "#raya-graph-canvas .raya-graph-node-link"
+                            ).first.dispatch_event("dblclick")
                         assert page.url == graph_href
                         page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
@@ -1672,6 +1672,100 @@ def test_render_fixture_keyboard_shortcuts_move_between_sequence_pages(
                     page.keyboard.press("ArrowLeft")
                     page.wait_for_url("**/index.html")
                     assert page.url.endswith("/index.html")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_end_of_page_sequence_cards_are_static_and_responsive(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/static-path/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    cards = page.locator(".raya-article-sequence-cards")
+                    cards.scroll_into_view_if_needed()
+                    desktop_state = page.evaluate(
+                        """() => {
+                          const nav = document.querySelector('.raya-article-sequence-cards');
+                          const previous = document.querySelector('.raya-sequence-card-prev');
+                          const next = document.querySelector('.raya-sequence-card-next');
+                          if (!nav || !previous || !next) return null;
+                          return {
+                            display: getComputedStyle(nav).display,
+                            columnCount: getComputedStyle(nav).gridTemplateColumns
+                              .split(' ')
+                              .filter(Boolean)
+                              .length,
+                            previousHref: previous.getAttribute('href'),
+                            nextHref: next.getAttribute('href'),
+                            previousLabel: previous.textContent,
+                            nextLabel: next.textContent,
+                          };
+                        }"""
+                    )
+                    assert desktop_state is not None
+                    assert desktop_state["display"] == "grid"
+                    assert desktop_state["columnCount"] == 2
+                    assert desktop_state["previousHref"] == "../index.html"
+                    assert desktop_state["nextHref"] == "../math-authoring/index.html"
+                    assert "Previous page" in desktop_state["previousLabel"]
+                    assert "Next page" in desktop_state["nextLabel"]
+                    assert "progress" not in desktop_state["nextLabel"].lower()
+                    assert "recommend" not in desktop_state["nextLabel"].lower()
+                    assert requested_urls == []
+                    _assert_no_horizontal_overflow(page)
+
+                    page.set_viewport_size({"width": 390, "height": 820})
+                    cards.scroll_into_view_if_needed()
+                    mobile_state = page.evaluate(
+                        """() => {
+                          const nav = document.querySelector('.raya-article-sequence-cards');
+                          if (!nav) return null;
+                          return {
+                            display: getComputedStyle(nav).display,
+                            columns: getComputedStyle(nav).gridTemplateColumns,
+                          };
+                        }"""
+                    )
+                    assert mobile_state is not None
+                    assert mobile_state["display"] == "grid"
+                    assert " " not in mobile_state["columns"].strip()
+                    _assert_no_horizontal_overflow(page)
+
+                    page.set_viewport_size({"width": 1280, "height": 900})
+                    page.keyboard.press("ArrowRight")
+                    page.wait_for_url("**/math-authoring/index.html")
+                    assert page.url.endswith("/math-authoring/index.html")
                 finally:
                     page.close()
             finally:

@@ -65,13 +65,14 @@ Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
 la orientacion de pagina actual dentro del mapa, el comportamiento del filtro
 del mapa, el contexto superior de lectura, los links compactos
-anterior/siguiente, la metadata del riel compacto operable, la salida de
-render-debug, el comportamiento movil sin overflow y sin solicitudes externas.
-El estado del mapa del curso, el texto del filtro y el contexto de lectura son
-UI no persistente; la orientacion de pagina actual en el mapa tambien debe
-seguir no persistente y no debe restaurar storage de navegacion legacy. Trata la
-posicion de pagina en la barra superior como orientacion estructural del curso,
-no como progreso del estudiante.
+anterior/siguiente, las cards Previous/Next al final del articulo, la metadata
+del riel compacto operable, la salida de render-debug, el comportamiento movil
+sin overflow y sin solicitudes externas. El estado del mapa del curso, el texto
+del filtro y el contexto de lectura son UI no persistente; la orientacion de
+pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
+storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
+en las cards de secuencia como orientacion estructural del curso, no como
+progreso del estudiante.
 
 Al cambiar indices generados de seccion, verifica markup de cards de entrada,
 navegacion normal con enlaces locales, comportamiento desktop/mobile sin
