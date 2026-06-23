@@ -592,9 +592,10 @@ img {
 .raya-course-tools {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   justify-content: flex-end;
+  min-width: 0;
 }
 .raya-command {
   align-items: center;
@@ -1807,7 +1808,17 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   color: var(--raya-color-success);
   font-weight: 700;
 }
-@media (min-width: 901px) {
+@media (max-width: 1500px) {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+}
+@media (min-width: 1100px) {
   [data-raya-course-map="expanded"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"] {
     grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);
@@ -1965,7 +1976,7 @@ nav[aria-label="Breadcrumbs"] {
   margin-top: 0;
 }
 .raya-main-article > * {
-  max-width: 52rem;
+  max-width: 68rem;
 }
 .raya-main-article > .raya-article-sequence,
 .raya-main-article > .raya-article-sequence-cards,
@@ -2391,7 +2402,7 @@ mjx-container[display="true"] {
   padding: 0.75rem;
   white-space: pre-wrap;
 }
-@media (max-width: 900px) {
+@media (max-width: 1099px) {
   .raya-learning-shell {
     grid-template-areas:
       "main-article"
@@ -2456,12 +2467,37 @@ mjx-container[display="true"] {
     display: grid;
     gap: 0.4rem;
   }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context {
+    align-items: center;
+    display: flex;
+    gap: 0.35rem 0.5rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-separator {
+    display: none;
+  }
   .raya-reading-context-course,
   .raya-reading-context-page {
     white-space: normal;
   }
   .raya-reading-context-sequence {
     flex-wrap: wrap;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+    min-width: 2.5rem;
+    padding: 0.45rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
   }
   .raya-discovery-command-bar .raya-top-command-bar-inner {
     gap: 0.5rem;

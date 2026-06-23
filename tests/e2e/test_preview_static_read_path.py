@@ -1195,7 +1195,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)"
         in rich_css
     )
-    assert "@media (min-width: 901px)" in rich_css
+    assert "@media (min-width: 1100px)" in rich_css
     assert (
         "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
     )
@@ -1203,7 +1203,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert ".raya-course-map-toggle:focus-visible" in rich_css
     assert ".raya-rail-toggle:focus-visible" in rich_css
     assert "outline: 3px solid var(--raya-color-accent)" in rich_css
-    assert "@media (max-width: 900px)" in rich_css
+    assert "@media (max-width: 1099px)" in rich_css
 
 
 def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
@@ -1486,11 +1486,16 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 document.querySelectorAll('.raya-command')
                               );
                               const topBar = document.querySelector('.raya-top-command-bar');
+                              const commandTops = commands.map(
+                                (item) => Math.round(item.getBoundingClientRect().top)
+                              );
                               return {
                                 count: commands.length,
                                 minHeights: commands.map(
                                   (item) => item.getBoundingClientRect().height
                                 ),
+                                topBarHeight: topBar.getBoundingClientRect().height,
+                                commandRows: new Set(commandTops).size,
                                 topBarWidth: topBar.scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
                                 searchHref: document
@@ -1532,6 +1537,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["count"] == 6
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
+                        if viewport["width"] >= 1024:
+                            assert state["topBarHeight"] <= 96
+                            assert state["commandRows"] == 1
+                        else:
+                            assert state["topBarHeight"] <= 220
                         assert state["searchHref"] == (
                             "_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"
                         )
@@ -1640,6 +1650,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                 for viewport in (
                     {"width": 1280, "height": 900},
                     {"width": 960, "height": 900},
+                    {"width": 1024, "height": 900},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
@@ -1651,7 +1662,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         _assert_no_horizontal_overflow(page)
                         _assert_intersects_viewport(page, "header.raya-top-command-bar")
                         _assert_intersects_viewport(page, "article.raya-main-article")
-                        if viewport["width"] > 900:
+                        if viewport["width"] >= 1100:
                             _assert_intersects_viewport(page, "nav.raya-course-map")
                             _assert_intersects_viewport(
                                 page, "aside.raya-learning-rail"
@@ -1667,12 +1678,11 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                               ).map((element) => element.tagName.toLowerCase()).join('>')"""
                         )
                         assert dom_order == "nav>article>aside"
-                        if viewport["width"] > 900:
+                        if viewport["width"] >= 1100:
                             assert course_map["x"] < article["x"] < learning_rail["x"]
-                            if viewport["width"] == 960:
-                                page.click(".raya-course-map-toggle")
-                                _assert_no_horizontal_overflow(page)
                         else:
+                            if viewport["width"] >= 900:
+                                assert article["width"] >= 700
                             assert article["y"] < course_map["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
                             _assert_bounded_scroll_region(
@@ -3340,7 +3350,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1680, "height": 980})
+                page = browser.new_page(viewport={"width": 1920, "height": 980})
                 try:
                     page.goto(
                         f"{handle.base_url}/authoring-matrix/index.html",
@@ -3356,6 +3366,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           };
                           const topBar = document.querySelector('.raya-top-command-bar');
                           const article = document.querySelector('article.raya-main-article');
+                          const firstParagraph = document.querySelector('article.raya-main-article > p');
                           const courseMap = document.querySelector('nav.raya-course-map');
                           const rail = document.querySelector('aside.raya-learning-rail');
                           const shell = document.querySelector('.raya-learning-shell');
@@ -3367,6 +3378,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           return {
                             shellWidth: shell.getBoundingClientRect().width,
                             articleWidth: article.getBoundingClientRect().width,
+                            paragraphWidth: firstParagraph.getBoundingClientRect().width,
                             mapWidth: courseMap.getBoundingClientRect().width,
                             railWidth: rail.getBoundingClientRect().width,
                             courseMapButtonVisible: !!document
@@ -3393,8 +3405,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     finally:
         handle.close()
 
-    assert chrome["shellWidth"] > 1500
+    assert chrome["shellWidth"] > 1700
     assert chrome["articleWidth"] >= 820
+    assert chrome["paragraphWidth"] >= 1000
+    assert chrome["paragraphWidth"] <= 1120
     assert 220 <= chrome["mapWidth"] <= 300
     assert 250 <= chrome["railWidth"] <= 330
     assert chrome["topBarLuminance"] < chrome["pageLuminance"] - 0.35
@@ -3436,6 +3450,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         wait_until="networkidle",
                     )
                     _assert_no_horizontal_overflow(page)
+                    topbar = _bounding_box(page, ".raya-top-command-bar")
+                    assert topbar["height"] <= 220
                     article = _bounding_box(page, "article.raya-main-article")
                     course_map = _bounding_box(page, "nav.raya-course-map")
                     rail = _bounding_box(page, "aside.raya-learning-rail")
@@ -3565,7 +3581,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     assert '<main class="raya-inspection-main">' in inspection_html
     assert ".raya-learning-shell" in css
     assert "grid-template-columns" in css
-    assert "@media (max-width: 900px)" in css
+    assert "@media (max-width: 1099px)" in css
     assert "overflow-wrap: anywhere" in css
 
 

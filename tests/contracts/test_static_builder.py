@@ -3265,10 +3265,12 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
         in css
     )
-    assert "@media (min-width: 901px)" in css
+    assert "@media (max-width: 1500px)" in css
+    assert "@media (min-width: 1100px)" in css
     assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem);" in css
     assert "outline: 3px solid var(--raya-color-accent);" in css
-    assert "@media (max-width: 900px)" in css
+    assert "@media (max-width: 1099px)" in css
+    assert "max-width: 68rem;" in css
 
 
 def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning() -> None:
