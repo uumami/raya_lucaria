@@ -483,6 +483,23 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    official_dir = course / "course" / "5_authoring_matrix" / "_official" / "prompts"
+    official_dir.mkdir(parents=True)
+    (official_dir / "1_matrix_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt: Explain why the identity matrix preserves vector norms.",
+                "retrieval:",
+                "  kind: reflection",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -546,7 +563,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-empty" in graph_html
     assert "data-raya-graph-detail-panel" in graph_html
     assert "data-raya-graph-detail-title" in graph_html
+    assert "data-raya-graph-detail-summary" in graph_html
+    assert "data-raya-graph-detail-study-counts" in graph_html
     assert "data-raya-graph-detail-link" in graph_html
+    assert "data-raya-graph-detail-search-link" in graph_html
+    assert "data-raya-graph-detail-practice-link" in graph_html
     assert "raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-outgoing" in graph_html
@@ -567,6 +588,51 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     graph_payload = json.loads(graph_payload_match.group(1))
     graph_nodes_by_id = {node["id"]: node for node in graph_payload["nodes"]}
     assert graph_nodes_by_id["render-root"]["title"] == "Raya & Lucaria <Graph> Fixture"
+    authoring_node = graph_nodes_by_id["authoring-matrix"]
+    allowed_graph_node_keys = {
+        "graph_url",
+        "group",
+        "hierarchy_label",
+        "id",
+        "link_counts",
+        "nav_title",
+        "next_url",
+        "order",
+        "practice_url",
+        "previous_url",
+        "search_url",
+        "stable_id",
+        "status",
+        "study_counts",
+        "summary",
+        "tags",
+        "title",
+        "url",
+    }
+    for node in graph_payload["nodes"]:
+        assert set(node) == allowed_graph_node_keys
+        assert node["stable_id"] == node["id"]
+        assert set(node["link_counts"]) == {"connected", "incoming", "outgoing"}
+        assert not node["url"].startswith("../../data/")
+        assert node["search_url"].startswith("../search/index.html?q=")
+    assert authoring_node["study_counts"] == {"prompt": 1}
+    assert authoring_node["practice_url"] == "../practice/index.html"
+    assert authoring_node["previous_url"].endswith("../reader-ux/index.html")
+    serialized_graph_payload = json.dumps(graph_payload)
+    for private_token in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "cache_key",
+        "course/",
+        "correct",
+        "solution",
+        "answer",
+        '"back"',
+    ):
+        assert private_token not in serialized_graph_payload
     assert "data-raya-graph-layout" in graph_script
     assert "graph-search" in graph_script
     assert "graph-group-filter" in graph_script
@@ -605,8 +671,81 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in graph_script
 
 
+def test_browser_graph_payload_skips_stale_graph_nodes() -> None:
+    page = SimpleNamespace(
+        id="known-page",
+        title="Known Page",
+        nav_title="Known",
+        summary="Public summary.",
+        status="ready",
+        tags=[],
+        hierarchy_label="Page",
+        output_path="index.html",
+    )
+    content_model = SimpleNamespace(
+        pages=[page],
+        pages_by_id={"known-page": page},
+        children_by_parent={},
+        root_id="known-page",
+    )
+    graph_index = {
+        "version": 1,
+        "course_id": "fixture",
+        "nodes": [
+            {
+                "id": "known-page",
+                "title": "Known Page",
+                "nav_title": "Known",
+                "url": "index.html",
+                "group": "",
+                "order": 1,
+                "status": "ready",
+                "tags": [],
+            },
+            {
+                "id": "stale-page",
+                "title": "Stale Page",
+                "nav_title": "Stale",
+                "url": "stale/index.html",
+                "group": "",
+                "order": 2,
+                "status": "ready",
+                "tags": [],
+            },
+        ],
+        "edges": [],
+        "groups": [],
+        "backlinks": {},
+    }
+
+    payload = static_builder._browser_graph_payload(
+        content_model,
+        graph_index,
+        {},
+    )
+
+    assert [node["id"] for node in payload["nodes"]] == ["known-page"]
+
+
 def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
+    official_dir = course / "course" / "5_authoring_matrix" / "_official" / "prompts"
+    official_dir.mkdir(parents=True)
+    (official_dir / "1_matrix_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt: Explain why the identity matrix preserves vector norms.",
+                "retrieval:",
+                "  kind: reflection",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -660,10 +799,18 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         '<a class="raya-search-result-page" href="../../authoring-matrix/index.html">'
         in search_html
     )
+    assert "Stable ID" in search_html
+    assert "Explicit links" in search_html
+    assert "Official objects" in search_html
+    assert "Prompt: 1" in search_html
     assert 'class="raya-search-result-actions"' in search_html
+    assert "Open page" in search_html
     assert 'class="raya-search-result-graph"' in search_html
     assert 'href="../graph/index.html?page=authoring-matrix"' in search_html
     assert "View in graph" in search_html
+    assert 'class="raya-search-result-practice"' in search_html
+    assert 'href="../practice/index.html"' in search_html
+    assert "Open practice" in search_html
     search_payload_match = re.search(
         r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
         search_html,
@@ -678,8 +825,15 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         "graph_url",
         "hierarchy_label",
         "id",
+        "link_counts",
         "nav_title",
+        "next_url",
+        "practice_url",
+        "previous_url",
+        "search_url",
+        "stable_id",
         "status",
+        "study_counts",
         "summary",
         "tags",
         "title",
@@ -687,10 +841,18 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     }
     for page in search_payload["pages"]:
         assert set(page) == allowed_page_keys
+        assert page["stable_id"] == page["id"]
+        assert set(page["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not page["url"].startswith("../../data/")
         assert page["graph_url"].startswith("../graph/index.html?page=")
         assert page["id"] in page["graph_url"]
         assert not page["graph_url"].startswith("../../data/")
+    pages_by_id = {page["id"]: page for page in search_payload["pages"]}
+    assert pages_by_id["authoring-matrix"]["study_counts"] == {"prompt": 1}
+    assert pages_by_id["authoring-matrix"]["practice_url"] == "../practice/index.html"
+    assert pages_by_id["authoring-matrix"]["previous_url"].endswith(
+        "../../reader-ux/index.html"
+    )
     serialized_search_payload = json.dumps(search_payload)
     for private_token in (
         "_official",

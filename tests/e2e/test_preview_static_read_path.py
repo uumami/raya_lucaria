@@ -280,6 +280,23 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
 
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    official_dir = course / "course" / "5_authoring_matrix" / "_official" / "prompts"
+    official_dir.mkdir(parents=True)
+    (official_dir / "1_matrix_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt: Explain why the identity matrix preserves vector norms.",
+                "retrieval:",
+                "  kind: reflection",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -298,6 +315,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         assert "http://" not in graph_html
         assert "cytoscape" not in graph_html.lower()
         assert "window.location.href" in graph_js
+        for forbidden_runtime_token in (
+            "fetch(",
+            "XMLHttpRequest",
+            "localStorage",
+            "sessionStorage",
+        ):
+            assert forbidden_runtime_token not in graph_js
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -689,8 +713,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).inner_text()
                         )
                         assert (
-                            "Neighborhood: 4 outgoing link(s), 2 incoming link(s), "
-                            "4 connected page(s)."
+                            "Explicit links: 4 outgoing, 2 incoming, 4 connected."
                         ) in page.locator(
                             "[data-raya-graph-detail-neighborhood]"
                         ).inner_text()
@@ -730,6 +753,23 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
 
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    official_dir = course / "course" / "5_authoring_matrix" / "_official" / "prompts"
+    official_dir.mkdir(parents=True)
+    (official_dir / "1_matrix_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt: Explain why the identity matrix preserves vector norms.",
+                "retrieval:",
+                "  kind: reflection",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -809,6 +849,17 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "Authoring Matrix Fixture"
                             in page.locator("#raya-search-results").inner_text()
                         )
+                        result_card = page.locator(
+                            '[data-raya-search-result="authoring-matrix"]'
+                        )
+                        assert "Stable ID authoring-matrix" in result_card.inner_text()
+                        assert "Explicit links" in result_card.inner_text()
+                        assert "Official objects: Prompt: 1" in result_card.inner_text()
+                        assert (
+                            result_card.locator(".raya-search-result-practice")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/practice/index.html")
+                        )
                         assert page.locator("#raya-search-empty").is_hidden()
                         graph_focus_href = page.locator(
                             '[data-raya-search-result="authoring-matrix"] '
@@ -886,6 +937,30 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             in page.locator(
                                 "[data-raya-graph-detail-title]"
                             ).inner_text()
+                        )
+                        assert (
+                            "Official objects: Prompt: 1"
+                            in page.locator(
+                                "[data-raya-graph-detail-study-counts]"
+                            ).inner_text()
+                        )
+                        assert (
+                            "Explicit links:"
+                            in page.locator(
+                                "[data-raya-graph-detail-neighborhood]"
+                            ).inner_text()
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-detail-search-link]")
+                            .evaluate("node => node.href")
+                            .endswith(
+                                "/_raya/search/index.html?q=Authoring%20Matrix%20Fixture"
+                            )
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-detail-practice-link]")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/practice/index.html")
                         )
                         _assert_no_horizontal_overflow(page)
                     finally:

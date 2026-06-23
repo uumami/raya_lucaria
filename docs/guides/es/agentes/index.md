@@ -151,6 +151,19 @@ Graph pueden cargar recursos locales de accesibilidad para Text size y
 `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
 assets externos de workspace ni estado persistente de graph/search.
 
+Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
+embebidos y las cards visibles usen solo metadata publica generada: titulo de
+pagina, nav title, stable ID, hierarchy label, status, summary, tags, enlaces
+anterior/siguiente del orden del curso, conteos explicitos de enlaces del grafo,
+conteos de objetos oficiales aceptados y enlaces relativos a paginas
+propietarias o workspaces generados. Confirma que no haya rutas de fuente,
+`_official/`, `_assets/`, `_reviewed/`, internos de artifact, cache keys,
+contenido de respuestas/soporte, `fetch` en runtime, storage de search/graph,
+requests externos, recomendacion, progreso, dominio, completion, ranking ni
+lenguaje falso de practica relacionada. Enter en Search debe seguir abriendo la
+pagina del resultado, mientras los detalles de pagina seleccionada en Graph
+pueden ofrecer enlaces separados hacia Search y Practice.
+
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 
 Para diagnosticos de objeto numerado, compara la directiva en la fuente, la entrada en `data/numbered-objects.json`, el ancla renderizada de la pagina, el href estatico, el texto visible de referencia y la evidencia de captura/reporte de render-debug. Incluye el fixture reader-ux y casos de familia theorem como `remark` incorporado cuando fallen etiquetas, secuencias compartidas o presentacion. Anota si los objetos usan el estilo esperado `scannable`, `caption` o `equation`. Usa la ruta render-debug para generar capturas y output de inspeccion, pero conserva el contrato machine-readable en datos declarados por el manifest en vez de HTML scrapeado.

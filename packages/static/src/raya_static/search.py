@@ -53,11 +53,18 @@ _SEARCH_JAVASCRIPT = r"""
       page.id,
       normalize([
         page.id,
+        page.stable_id,
         page.title,
         page.nav_title,
         page.summary,
         page.status,
         page.hierarchy_label,
+        page.link_counts
+          ? `${page.link_counts.outgoing} ${page.link_counts.incoming} ${page.link_counts.connected}`
+          : "",
+        page.study_counts
+          ? Object.keys(page.study_counts).join(" ")
+          : "",
         ...(Array.isArray(page.tags) ? page.tags : []),
       ].join(" ")),
     ])

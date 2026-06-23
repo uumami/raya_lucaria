@@ -60,7 +60,7 @@ selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, connected-page visual states, transient
 page focus from generated URL context, structural group color, bounded node
 size derived from static link degree, hover/focus inspection text, keyboard
-inspection parity, non-persistent SVG viewport controls such as Zoom in, Zoom
+inspection parity, public selected-page discovery card metadata, non-persistent SVG viewport controls such as Zoom in, Zoom
 out, Fit, and Reset view, and a non-persistent expanded workspace mode. These visual
 semantics are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
@@ -72,9 +72,11 @@ recommendations, or present graph position as personal progress.
 
 Generated Search, Graph, and Practice pages may share discovery workspace chrome that shows the current course title, identifies the workspace, links back to the course, links between discovery workspaces, and exposes local text-size and `OpenDyslexic` controls. This chrome is static page structure. It must not load the course shell script, show a course map control without a course map, store search, graph, or practice state, fetch external resources, or turn structural workspace labels into progress, ranking, or recommendation language.
 
+Generated Search and Graph cards/details may show public page metadata from generated artifact data: page title, navigation title, stable ID, hierarchy label, status, summary, tags, previous/next course-order links, explicit incoming/outgoing/connected graph counts, accepted official object counts, and local links to Search, Graph, Practice, and owning pages. These are structural discovery cues, not recommendations, progress, mastery, importance, ranking, or related-practice inference. Official object counts may be displayed only as counts of accepted source objects owned by the page or its generated structural scope. They must not imply recommended practice or expose answer/support content.
+
 Reader controls may use local `OpenDyslexic` resources, a local text-size comfort preference, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. They must work from static files and must not depend on fetch/XHR requests, accounts, a backend, CDN resources, external font requests, personal progress, adaptive recommendations, or browser-side MathJax conversion. Local storage may be used only for reader comfort preferences such as font and text size; it must not store course progress, answers, mastery, recommendations, graph state, skin authority, or authored content.
 
-Local course search may expose generated page titles, navigation titles, stable IDs, summaries, status, hierarchy labels, tags, rendered page links, and graph-focus links generated from stable page IDs. It may support approximate matching, clear controls, keyboard movement over visible results, transient query context from generated page links, and static handoff from a result to the graph page focused on the same page. It must not scrape rendered prose, MathJax output, source paths, artifact paths, cache keys, personal progress, or inferred recommendations into the student search surface.
+Local course search may expose generated page titles, navigation titles, stable IDs, summaries, status, hierarchy labels, tags, explicit link counts, official object counts, rendered page links, workspace handoff links, and graph-focus links generated from stable page IDs. It may support approximate matching, clear controls, keyboard movement over visible results, transient query context from generated page links, and static handoff from a result to the graph page focused on the same page. It must not scrape rendered prose, MathJax output, source paths, artifact paths, cache keys, personal progress, answer/support content, related-practice inference, or recommendations into the student search surface.
 
 ## Planned Static Work
 

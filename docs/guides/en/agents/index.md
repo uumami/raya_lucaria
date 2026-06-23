@@ -134,6 +134,18 @@ local accessibility resources for Text size and `OpenDyslexic`, but must not
 load `shell.js`, a course-map toggle, external workspace assets, or persisted
 graph/search state.
 
+When changing Search or Graph discovery cards, verify that embedded payloads and
+visible cards use only public generated metadata: page title, nav title, stable
+ID, hierarchy label, status, summary, tags, previous/next course-order links,
+explicit graph link counts, accepted official object counts, and relative links
+to owning pages or generated workspaces. Confirm there are no source paths,
+`_official/`, `_assets/`, `_reviewed/`, artifact internals, cache keys,
+answer/support content, runtime `fetch`, search/graph storage, external
+requests, recommendation, progress, mastery, completion, ranking, or fake
+related-practice language. Search Enter must still open the page result, while
+Graph selected-page details may offer separate Search and Practice handoff
+links.
+
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 
 For numbered object diagnostics, compare the source directive, `data/numbered-objects.json` entry, rendered page anchor, static href, visible reference text, and render-debug screenshot/report evidence. Include the reader-ux fixture and theorem-family cases such as built-in `remark` when labels, shared sequences, or presentation regress. Note whether objects use the expected `scannable`, `caption`, or `equation` style. Use the render-debug route to capture screenshots and inspection output, but keep the machine contract in manifest-declared data rather than scraped HTML.

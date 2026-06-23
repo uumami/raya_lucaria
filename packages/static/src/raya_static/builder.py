@@ -481,6 +481,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         course_title=str(config["title"]),
         language=str(config["language"]),
         graph_index=graph_index,
+        official_counts=official_counts,
         skin_context=skin_context,
         report=report,
     )
@@ -489,6 +490,8 @@ def build_course(course_path: str | Path) -> ValidationReport:
         content_model=content_model,
         course_title=str(config["title"]),
         language=str(config["language"]),
+        graph_index=graph_index,
+        official_counts=official_counts,
         skin_context=skin_context,
         report=report,
     )
@@ -3037,6 +3040,95 @@ def _render_inspection_surface(
     )
 
 
+def _public_discovery_page_payload(
+    page: ContentPage,
+    *,
+    content_model: ContentModel,
+    graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
+    from_path: str,
+    search_from_path: str,
+    graph_from_path: str,
+    practice_from_path: str,
+) -> dict[str, Any]:
+    previous_page, next_page = _previous_next_pages(page, content_model)
+    counts = _aggregate_study_counts(page.id, content_model, official_counts)
+    return {
+        "id": page.id,
+        "stable_id": page.id,
+        "title": page.title,
+        "nav_title": page.nav_title,
+        "summary": page.summary,
+        "status": page.status,
+        "tags": list(page.tags),
+        "hierarchy_label": page.hierarchy_label,
+        "url": _relative_href(from_path, page.output_path),
+        "previous_url": (
+            _relative_href(from_path, previous_page.output_path)
+            if previous_page is not None
+            else ""
+        ),
+        "next_url": (
+            _relative_href(from_path, next_page.output_path)
+            if next_page is not None
+            else ""
+        ),
+        "graph_url": _href_with_query(
+            _relative_href(graph_from_path, STATIC_GRAPH_PATH.as_posix()),
+            {"page": page.id},
+        ),
+        "search_url": _href_with_query(
+            _relative_href(search_from_path, STATIC_SEARCH_PATH.as_posix()),
+            {"q": page.title},
+        ),
+        "practice_url": (
+            _relative_href(practice_from_path, STATIC_PRACTICE_PATH.as_posix())
+            if counts
+            else ""
+        ),
+        "study_counts": counts,
+        "link_counts": _graph_link_counts(page.id, graph_index),
+    }
+
+
+def _previous_next_pages(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> tuple[ContentPage | None, ContentPage | None]:
+    flat = _flatten_navigation(content_model)
+    try:
+        index = flat.index(page.id)
+    except ValueError:
+        return None, None
+    previous_id = flat[index - 1] if index > 0 else None
+    next_id = flat[index + 1] if index < len(flat) - 1 else None
+    return (
+        content_model.pages_by_id.get(previous_id) if previous_id else None,
+        content_model.pages_by_id.get(next_id) if next_id else None,
+    )
+
+
+def _graph_link_counts(page_id: str, graph_index: dict[str, Any]) -> dict[str, int]:
+    connected: set[str] = set()
+    outgoing = 0
+    incoming = 0
+    for edge in graph_index["edges"]:
+        source = str(edge["from"])
+        target = str(edge["to"])
+        if source == page_id:
+            outgoing += 1
+            connected.add(target)
+        if target == page_id:
+            incoming += 1
+            connected.add(source)
+    connected.discard(page_id)
+    return {
+        "connected": len(connected),
+        "incoming": incoming,
+        "outgoing": outgoing,
+    }
+
+
 def _write_graph_surface(
     *,
     site_dir: Path,
@@ -3044,6 +3136,7 @@ def _write_graph_surface(
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -3056,6 +3149,7 @@ def _write_graph_surface(
             course_title=course_title,
             language=language,
             graph_index=graph_index,
+            official_counts=official_counts,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -3069,6 +3163,7 @@ def _render_graph_surface(
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -3093,7 +3188,11 @@ def _render_graph_surface(
     root_skin = skin_id_for_source_path(
         content_model.pages[0].source_path, skin_context
     )
-    browser_graph = _browser_graph_payload(graph_index)
+    browser_graph = _browser_graph_payload(
+        content_model,
+        graph_index,
+        official_counts,
+    )
     graph_payload = _json_script_text(browser_graph)
     group_buttons = []
     for index, group in enumerate(graph_index["groups"]):
@@ -3121,9 +3220,11 @@ def _render_graph_surface(
             f'<li data-raya-graph-node="{html.escape(node["id"], quote=True)}">'
             f'<a href="{html.escape(node["url"])}">{html.escape(node["title"])}</a>'
             '<span class="raya-graph-list-metrics">'
+            f"Stable ID {html.escape(node['stable_id'])}; "
             f"Status: {html.escape(node['status'])}; "
-            f"Edges: {edge_count}; Backlinks: {backlink_count}"
+            f"Explicit links: {edge_count}; Backlinks: {backlink_count}"
             "</span>"
+            f'<span class="raya-graph-list-summary">{html.escape(node["summary"])}</span>'
             "</li>"
         )
     return "\n".join(
@@ -3232,12 +3333,21 @@ def _render_graph_surface(
             "<h2 data-raya-graph-detail-title>Selected page</h2>",
             '<button type="button" data-raya-graph-detail-clear>Clear</button>',
             "</div>",
+            '<p class="raya-graph-detail-summary" data-raya-graph-detail-summary></p>',
             '<p class="raya-graph-detail-meta" data-raya-graph-detail-meta></p>',
+            (
+                '<p class="raya-graph-detail-study-counts" '
+                "data-raya-graph-detail-study-counts></p>"
+            ),
             (
                 '<p class="raya-graph-detail-neighborhood" '
                 "data-raya-graph-detail-neighborhood></p>"
             ),
-            '<p><a data-raya-graph-detail-link href="../../index.html">Open page</a></p>',
+            '<p class="raya-graph-detail-actions">',
+            '<a data-raya-graph-detail-link href="../../index.html">Open page</a>',
+            '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
+            '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
+            "</p>",
             '<div class="raya-graph-detail-links">',
             "<section>",
             "<h3>Links from this page</h3>",
@@ -3290,16 +3400,34 @@ def _render_graph_surface(
     )
 
 
-def _browser_graph_payload(graph_index: dict[str, Any]) -> dict[str, Any]:
-    return {
-        **graph_index,
-        "nodes": [
+def _browser_graph_payload(
+    content_model: ContentModel,
+    graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
+) -> dict[str, Any]:
+    nodes: list[dict[str, Any]] = []
+    for node in graph_index["nodes"]:
+        page = content_model.pages_by_id.get(str(node["id"]))
+        if page is None:
+            continue
+        nodes.append(
             {
                 **node,
-                "url": _relative_href(STATIC_GRAPH_PATH.as_posix(), node["url"]),
+                **_public_discovery_page_payload(
+                    page,
+                    content_model=content_model,
+                    graph_index=graph_index,
+                    official_counts=official_counts,
+                    from_path=STATIC_GRAPH_PATH.as_posix(),
+                    search_from_path=STATIC_GRAPH_PATH.as_posix(),
+                    graph_from_path=STATIC_GRAPH_PATH.as_posix(),
+                    practice_from_path=STATIC_GRAPH_PATH.as_posix(),
+                ),
             }
-            for node in graph_index["nodes"]
-        ],
+        )
+    return {
+        **graph_index,
+        "nodes": nodes,
         "backlinks": {
             page_id: [
                 {
@@ -3321,6 +3449,8 @@ def _write_search_surface(
     content_model: ContentModel,
     course_title: str,
     language: str,
+    graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -3332,6 +3462,8 @@ def _write_search_surface(
             content_model=content_model,
             course_title=course_title,
             language=language,
+            graph_index=graph_index,
+            official_counts=official_counts,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -3344,6 +3476,8 @@ def _render_search_surface(
     content_model: ContentModel,
     course_title: str,
     language: str,
+    graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -3368,13 +3502,42 @@ def _render_search_surface(
     root_skin = skin_id_for_source_path(
         content_model.pages[0].source_path, skin_context
     )
-    browser_search = _browser_search_payload(content_model)
+    browser_search = _browser_search_payload(
+        content_model,
+        graph_index,
+        official_counts,
+    )
     search_payload = _json_script_text(browser_search)
     result_items = []
     for page in browser_search["pages"]:
         tags = ", ".join(page["tags"])
-        meta_parts = [page["status"], page["hierarchy_label"], tags]
+        meta_parts = [
+            f"Stable ID {page['stable_id']}",
+            page["status"],
+            page["hierarchy_label"],
+            tags,
+        ]
         meta = " | ".join(part for part in meta_parts if part)
+        link_counts = page["link_counts"]
+        counts_text = (
+            f"Explicit links: {link_counts['outgoing']} outgoing, "
+            f"{link_counts['incoming']} incoming, "
+            f"{link_counts['connected']} connected"
+        )
+        study_counts_text = _study_counts_text(page["study_counts"])
+        study_counts_html = (
+            '<p class="raya-search-result-counts">'
+            f"Official objects: {html.escape(study_counts_text)}"
+            "</p>"
+            if study_counts_text
+            else ""
+        )
+        practice_action = (
+            f'<a class="raya-search-result-practice" href="{html.escape(page["practice_url"])}">'
+            "Open practice</a>"
+            if page["practice_url"]
+            else ""
+        )
         result_items.append(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
@@ -3382,10 +3545,15 @@ def _render_search_surface(
             f'{html.escape(page["title"])}</a>'
             f"<p>{html.escape(page['summary'])}</p>"
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
+            f'<p class="raya-search-result-counts">{html.escape(counts_text)}</p>'
+            f"{study_counts_html}"
             '<p class="raya-search-result-actions">'
+            f'<a class="raya-search-result-open" href="{html.escape(page["url"])}">'
+            "Open page</a>"
             f'<a class="raya-search-result-graph" href="{html.escape(page["graph_url"])}" '
             f'aria-label="View {html.escape(page["title"], quote=True)} in course graph">'
             "View in graph</a>"
+            f"{practice_action}"
             "</p>"
             "</li>"
         )
@@ -3447,27 +3615,24 @@ def _render_search_surface(
     )
 
 
-def _browser_search_payload(content_model: ContentModel) -> dict[str, Any]:
+def _browser_search_payload(
+    content_model: ContentModel,
+    graph_index: dict[str, Any],
+    official_counts: dict[str, dict[str, int]],
+) -> dict[str, Any]:
     return {
         "version": 1,
         "pages": [
-            {
-                "id": page.id,
-                "title": page.title,
-                "nav_title": page.nav_title,
-                "summary": page.summary,
-                "status": page.status,
-                "tags": list(page.tags),
-                "hierarchy_label": page.hierarchy_label,
-                "url": _relative_href(STATIC_SEARCH_PATH.as_posix(), page.output_path),
-                "graph_url": _href_with_query(
-                    _relative_href(
-                        STATIC_SEARCH_PATH.as_posix(),
-                        STATIC_GRAPH_PATH.as_posix(),
-                    ),
-                    {"page": page.id},
-                ),
-            }
+            _public_discovery_page_payload(
+                page,
+                content_model=content_model,
+                graph_index=graph_index,
+                official_counts=official_counts,
+                from_path=STATIC_SEARCH_PATH.as_posix(),
+                search_from_path=STATIC_SEARCH_PATH.as_posix(),
+                graph_from_path=STATIC_SEARCH_PATH.as_posix(),
+                practice_from_path=STATIC_SEARCH_PATH.as_posix(),
+            )
             for page in content_model.pages
         ],
     }

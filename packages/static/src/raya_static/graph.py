@@ -36,9 +36,13 @@ _GRAPH_JAVASCRIPT = r"""
   const detailEmpty = document.querySelector("[data-raya-graph-detail-empty]");
   const detailPanel = document.querySelector("[data-raya-graph-detail-panel]");
   const detailTitle = document.querySelector("[data-raya-graph-detail-title]");
+  const detailSummary = document.querySelector("[data-raya-graph-detail-summary]");
   const detailMeta = document.querySelector("[data-raya-graph-detail-meta]");
+  const detailStudyCounts = document.querySelector("[data-raya-graph-detail-study-counts]");
   const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
+  const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
+  const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
   const detailClear = document.querySelector("[data-raya-graph-detail-clear]");
@@ -120,9 +124,12 @@ _GRAPH_JAVASCRIPT = r"""
       node.title,
       node.nav_title,
       node.id,
+      node.stable_id,
       node.status,
       node.hierarchy_label,
+      node.summary,
       group ? group.title : "",
+      node.study_counts ? Object.keys(node.study_counts).join(" ") : "",
       Array.isArray(node.tags) ? node.tags.join(" ") : "",
     ].join(" ");
   }
@@ -223,6 +230,14 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function relationshipCountsFor(nodeId) {
+    const node = nodesById.get(nodeId);
+    if (node && node.link_counts) {
+      return {
+        outgoingCount: Number(node.link_counts.outgoing || 0),
+        incomingCount: Number(node.link_counts.incoming || 0),
+        connectedCount: Number(node.link_counts.connected || 0),
+      };
+    }
     const connectedIds = new Set();
     let outgoingCount = 0;
     let incomingCount = 0;
@@ -342,9 +357,12 @@ _GRAPH_JAVASCRIPT = r"""
 
   function clearGraphInspection(nodeId) {
     const applyClear = () => {
-      if (nodeId && inspectedId !== nodeId) return;
       const focusedNodeId = focusedInspectionNodeId();
-      if (focusedNodeId && focusedNodeId === inspectedId) return;
+      if (focusedNodeId) {
+        inspectGraphNode(focusedNodeId);
+        return;
+      }
+      if (nodeId && inspectedId !== nodeId) return;
       inspectedId = "";
       if (hoverStatus) hoverStatus.textContent = "";
       updateInspectionDom();
@@ -383,11 +401,22 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
+  function studyCountsText(counts) {
+    if (!counts || typeof counts !== "object") return "";
+    return Object.keys(counts).sort().map((key) => {
+      const value = counts[key];
+      const label = value === 1 ? key : `${key}s`;
+      return `${label.charAt(0).toUpperCase()}${label.slice(1)}: ${value}`;
+    }).join(", ");
+  }
+
   function renderDetail() {
     const node = selectedId ? nodesById.get(selectedId) : null;
     if (!node) {
       if (detailEmpty) detailEmpty.hidden = false;
       if (detailPanel) detailPanel.hidden = true;
+      if (detailSummary) detailSummary.textContent = "";
+      if (detailStudyCounts) detailStudyCounts.textContent = "";
       if (detailNeighborhood) detailNeighborhood.textContent = "";
       return;
     }
@@ -395,20 +424,41 @@ _GRAPH_JAVASCRIPT = r"""
     if (detailEmpty) detailEmpty.hidden = true;
     if (detailPanel) detailPanel.hidden = false;
     if (detailTitle) detailTitle.textContent = node.title || node.nav_title || node.id;
+    if (detailSummary) detailSummary.textContent = node.summary || "";
     if (detailMeta) {
       detailMeta.textContent = [
+        `Stable ID: ${node.stable_id || node.id}`,
         group ? `Group: ${group.title}` : "Group: Course",
+        node.hierarchy_label ? `Hierarchy: ${node.hierarchy_label}` : "",
         node.status ? `Status: ${node.status}` : "",
         Array.isArray(node.tags) && node.tags.length ? `Tags: ${node.tags.join(", ")}` : "",
       ].filter(Boolean).join("; ");
     }
+    if (detailStudyCounts) {
+      const countsText = studyCountsText(node.study_counts);
+      detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
+    }
     if (detailNeighborhood) {
       const counts = relationshipCountsFor(node.id);
-      detailNeighborhood.textContent = `Neighborhood: ${counts.outgoingCount} outgoing link(s), ${counts.incomingCount} incoming link(s), ${counts.connectedCount} connected page(s).`;
+      detailNeighborhood.textContent = `Explicit links: ${counts.outgoingCount} outgoing, ${counts.incomingCount} incoming, ${counts.connectedCount} connected.`;
     }
     if (detailLink) {
       detailLink.href = node.url;
       detailLink.textContent = "Open page";
+    }
+    if (detailSearchLink) {
+      detailSearchLink.href = node.search_url || "../search/index.html";
+      detailSearchLink.textContent = "Find in search";
+    }
+    if (detailPracticeLink) {
+      if (node.practice_url) {
+        detailPracticeLink.href = node.practice_url;
+        detailPracticeLink.hidden = false;
+      } else {
+        detailPracticeLink.href = "../practice/index.html";
+        detailPracticeLink.hidden = true;
+      }
+      detailPracticeLink.textContent = "Open practice";
     }
     const outgoing = edges
       .filter((edge) => edge.from === node.id)
@@ -682,11 +732,22 @@ _GRAPH_JAVASCRIPT = r"""
       clearGraphInspection();
     }
   });
+  list.querySelectorAll("[data-raya-graph-node] a").forEach((link) => {
+    link.addEventListener("focus", () => {
+      const item = link.closest("[data-raya-graph-node]");
+      if (!item || item.hidden) return;
+      inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");
+    });
+    link.addEventListener("blur", () => {
+      const item = link.closest("[data-raya-graph-node]");
+      clearGraphInspection(item ? item.getAttribute("data-raya-graph-node") || "" : "");
+    });
+  });
   canvas.addEventListener("mouseleave", () => {
     if (!detailPanel || detailPanel.hidden) {
       selectedId = "";
     }
-    clearGraphInspection();
+    clearGraphInspection(inspectedId);
     render();
   });
 
