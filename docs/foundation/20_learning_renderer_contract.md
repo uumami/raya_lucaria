@@ -31,6 +31,7 @@ The current shell uses an expanded course map, rendered as an expanded hierarchi
 | Right learning rail | `current` | Render page contents, normalized summary/status, optional estimated time/tags, stable-ID prerequisites, static Connections summaries for explicit graph link context, graph-focus links, and previous/next links from current artifact data. |
 | Reader controls | `current` | Use local OpenDyslexic resources, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. |
 | Local course search | `current` | Render a static search surface from generated page metadata only, using local JavaScript, approximate matching, keyboard result movement, and deployment-neutral page links. |
+| Discovery workspace chrome | `current` | Render shared static course chrome on generated Search and Graph surfaces with a course link, cross-workspace links, local comfort controls, compact mobile layout, and no shell script dependency. |
 | Checkpoints and goals as metadata | `planned` | Require a future source-contract change; do not infer from prose. |
 | Related practice index | `planned` | Requires accepted source/artifact data. |
 | Personal progress, analytics, adaptive review, spaced queues | `future` | Requires dynamic study state outside the static renderer. |
@@ -57,6 +58,8 @@ progress, authority, recommendation rank, importance rank, mastery, or
 completion signals. It must not fetch graph data at runtime, load external graph
 libraries, persist graph state, infer
 recommendations, or present graph position as personal progress.
+
+Generated Search and Graph pages may share discovery workspace chrome that shows the current course title, identifies the workspace, links back to the course, links between Search and Graph, and exposes local text-size and `OpenDyslexic` controls. This chrome is static page structure. It must not load the course shell script, show a course map control without a course map, store search or graph state, fetch external resources, or turn structural workspace labels into progress, ranking, or recommendation language.
 
 Reader controls may use local `OpenDyslexic` resources, a local text-size comfort preference, keyboard-reachable controls, copyable fenced code blocks, and previous/next page keyboard navigation from generated sequence links. They must work from static files and must not depend on fetch/XHR requests, accounts, a backend, CDN resources, external font requests, personal progress, adaptive recommendations, or browser-side MathJax conversion. Local storage may be used only for reader comfort preferences such as font and text size; it must not store course progress, answers, mastery, recommendations, graph state, skin authority, or authored content.
 

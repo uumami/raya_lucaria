@@ -372,6 +372,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert graph_js.exists()
     assert 'href="_raya/graph/index.html?page=render-root"' in index_html
     assert 'data-raya-surface="graph"' in graph_html
+    assert "raya-discovery-command-bar" in graph_html
+    assert "Graph workspace" in graph_html
+    assert 'href="../search/index.html"' in graph_html
+    assert '<span class="raya-command-label">Search</span>' in graph_html
+    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in graph_html
+    assert '<button class="raya-command raya-command-font raya-font-toggle"' in graph_html
+    assert "shell.js" not in graph_html
+    assert "localStorage" not in graph_html
     assert '<script type="application/json" id="raya-graph-data">' in graph_html
     assert 'src="../render/graph.js"' in graph_html
     assert 'href="../render/rich.css"' in graph_html
@@ -472,6 +480,14 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert search_js.exists()
     assert 'href="_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"' in index_html
     assert 'data-raya-surface="search"' in search_html
+    assert "raya-discovery-command-bar" in search_html
+    assert "Search workspace" in search_html
+    assert 'href="../graph/index.html"' in search_html
+    assert '<span class="raya-command-label">Graph</span>' in search_html
+    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in search_html
+    assert '<button class="raya-command raya-command-font raya-font-toggle"' in search_html
+    assert "shell.js" not in search_html
+    assert "localStorage" not in search_html
     assert (
         '<main id="raya-search-main" class="raya-search-page" '
         'data-raya-search-page tabindex="-1">'

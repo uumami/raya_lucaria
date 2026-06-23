@@ -188,6 +188,18 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
                         requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-discovery-command-bar").is_visible()
+                        if viewport["width"] < 520:
+                            discovery_box = page.locator(
+                                ".raya-discovery-command-bar"
+                            ).bounding_box()
+                            assert discovery_box is not None
+                            assert discovery_box["height"] <= 150
+                        assert page.locator(".raya-command-search").evaluate(
+                            "node => node.href"
+                        ).endswith("/_raya/search/index.html")
+                        assert page.locator(".raya-command-size").is_visible()
+                        assert page.locator(".raya-command-font").is_visible()
                         assert page.locator(".raya-graph-legend").is_visible()
                         assert page.locator("[data-raya-graph-legend='node']").is_visible()
                         assert page.locator("[data-raya-graph-legend='match']").is_visible()
@@ -346,7 +358,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             first_list_link.click()
                         assert page.url == list_href
                         page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
-                        page.locator("#raya-graph-canvas [data-raya-graph-node]").first.click()
+                        page.locator("#raya-graph-canvas .raya-graph-node-hit").first.click()
                         page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
                         detail_href = page.locator(
                             "[data-raya-graph-detail-link]"
@@ -362,7 +374,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         with page.expect_navigation():
                             page.locator(
-                                "#raya-graph-canvas [data-raya-graph-node]"
+                                "#raya-graph-canvas .raya-graph-node-hit"
                             ).first.dblclick()
                         assert page.url == graph_href
                         page.goto(
@@ -450,6 +462,18 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert browser_requests
                         assert all(url.startswith(f"{base_url}/") for url in browser_requests)
                         _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-discovery-command-bar").is_visible()
+                        if viewport["width"] < 520:
+                            discovery_box = page.locator(
+                                ".raya-discovery-command-bar"
+                            ).bounding_box()
+                            assert discovery_box is not None
+                            assert discovery_box["height"] <= 150
+                        assert page.locator(".raya-command-graph").evaluate(
+                            "node => node.href"
+                        ).endswith("/_raya/graph/index.html")
+                        assert page.locator(".raya-command-size").is_visible()
+                        assert page.locator(".raya-command-font").is_visible()
                         before = page.locator(
                             "#raya-search-results [data-raya-search-result]:visible"
                         ).count()

@@ -72,7 +72,8 @@ When changing the Course graph, verify fuzzy search, selected-page details,
 selected-page neighborhood summaries, connected-page visual states, group
 filters, group color semantics, bounded degree-based node sizing, hover/focus
 inspection status, keyboard inspection parity, expanded graph workspace state,
-mobile no-overflow behavior, and no external requests after page load. Graph UI
+shared discovery chrome, compact mobile discovery chrome, mobile no-overflow
+behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Generated URL context may select a page only when it resolves to an embedded
@@ -85,9 +86,12 @@ not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.
 
 When changing Course Search, verify approximate matching, keyboard result
-movement, Enter-to-open behavior, clear controls, no external requests, and no
-persistent search state. Search payloads stay metadata-only, and generated query
-context must remain transient.
+movement, Enter-to-open behavior, clear controls, shared discovery chrome,
+compact mobile discovery chrome, no external requests, and no persistent search
+state. Search payloads stay metadata-only, and generated query context must
+remain transient. Search and Graph discovery pages may load local accessibility
+resources for Text size and `OpenDyslexic`, but must not load `shell.js`, a
+course-map toggle, external workspace assets, or persisted graph/search state.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 

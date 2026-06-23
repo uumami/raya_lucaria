@@ -56,6 +56,11 @@ para ver primero sus enlaces explicitos. El riel de aprendizaje tambien puede
 mostrar un panel Connections con conteos de enlaces que salen de la pagina actual
 y enlaces que apuntan a ella; esos conteos describen relaciones estaticas
 autoradas, no recomendaciones ni progreso personal.
+Las paginas Search y Graph usan la misma barra estatica de descubrimiento para
+volver al curso, cambiar entre esos dos workspaces y mantener disponibles Text
+size u OpenDyslexic. Esos controles son de comodidad de lectura; Search y Graph
+no guardan tu consulta, nodo seleccionado ni layout del grafo como estado de
+estudio.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.

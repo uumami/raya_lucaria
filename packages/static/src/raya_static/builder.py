@@ -939,6 +939,80 @@ def _render_top_command_bar(
     )
 
 
+def _render_discovery_command_bar(
+    *,
+    course_title: str,
+    workspace_label: str,
+    home_href: str,
+    search_href: str | None,
+    graph_href: str | None,
+) -> str:
+    commands = [
+        (
+            f'<a class="raya-command raya-command-home" href="{html.escape(home_href)}" '
+            'aria-label="Back to course">'
+            '<span class="raya-command-label">Course</span>'
+            "</a>"
+        )
+    ]
+    if search_href is not None:
+        commands.append(
+            (
+                f'<a class="raya-command raya-command-search" '
+                f'href="{html.escape(search_href)}" '
+                'aria-label="Open course search">'
+                '<span class="raya-command-label">Search</span>'
+                "</a>"
+            )
+        )
+    if graph_href is not None:
+        commands.append(
+            (
+                f'<a class="raya-command raya-command-graph" '
+                f'href="{html.escape(graph_href)}" '
+                'aria-label="Open course graph">'
+                '<span class="raya-command-label">Graph</span>'
+                "</a>"
+            )
+        )
+    commands.extend(
+        [
+            (
+                '<button class="raya-command raya-command-size raya-text-size-toggle" '
+                'type="button" aria-label="Text size: normal" aria-pressed="false">'
+                '<span class="raya-command-label">Text size</span>'
+                "</button>"
+            ),
+            (
+                '<button class="raya-command raya-command-font raya-font-toggle" '
+                'type="button" aria-label="Toggle OpenDyslexic font" '
+                'aria-pressed="false">'
+                '<span class="raya-command-label">OpenDyslexic</span>'
+                "</button>"
+            ),
+        ]
+    )
+    return "\n".join(
+        [
+            (
+                '<header class="raya-top-command-bar raya-discovery-command-bar" '
+                'aria-label="Course discovery tools">'
+            ),
+            '<div class="raya-top-command-bar-inner">',
+            '<div class="raya-reading-context">',
+            f'<span class="raya-reading-context-course">{html.escape(course_title)}</span>',
+            '<span class="raya-reading-context-separator" aria-hidden="true">/</span>',
+            f'<span class="raya-reading-context-page">{html.escape(workspace_label)}</span>',
+            "</div>",
+            '<div class="raya-course-tools">',
+            "\n".join(commands),
+            "</div>",
+            "</div>",
+            "</header>",
+        ]
+    )
+
+
 def _render_reading_context(
     course_title: str,
     page: ContentPage,
@@ -2537,6 +2611,13 @@ def _render_graph_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-graph-main">Skip to graph</a>',
+            _render_discovery_command_bar(
+                course_title=course_title,
+                workspace_label="Graph workspace",
+                home_href="../../index.html",
+                search_href="../search/index.html",
+                graph_href=None,
+            ),
             '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
             '<header class="raya-graph-header">',
             f'<p class="raya-course-title">{html.escape(course_title)}</p>',
@@ -2773,6 +2854,13 @@ def _render_search_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-search-main">Skip to search</a>',
+            _render_discovery_command_bar(
+                course_title=course_title,
+                workspace_label="Search workspace",
+                home_href="../../index.html",
+                search_href=None,
+                graph_href="../graph/index.html",
+            ),
             (
                 '<main id="raya-search-main" class="raya-search-page" '
                 'data-raya-search-page tabindex="-1">'
