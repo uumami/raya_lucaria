@@ -195,7 +195,9 @@ aproximadamente con titulos, etiquetas de navegacion, resumenes, tags, status,
 etiquetas de jerarquia y stable IDs, pero no indexa rutas ocultas de fuente,
 prosa renderizada, output de math ni estado personal del estudiante. Los links
 generados de pagina pueden precargar una consulta temporal, pero el renderer no
-la guarda.
+la guarda. Los resultados tambien pueden incluir links `View in graph`
+generados desde stable IDs para que estudiantes inspeccionen donde queda una
+pagina encontrada dentro del grafo del curso.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 

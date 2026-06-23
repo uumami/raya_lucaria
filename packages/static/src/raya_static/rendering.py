@@ -747,7 +747,7 @@ img {
   border-color: var(--raya-color-accent);
   box-shadow: inset 0.25rem 0 0 var(--raya-color-accent);
 }
-.raya-search-results li[data-raya-search-active="true"] a {
+.raya-search-results li[data-raya-search-active="true"] .raya-search-result-page {
   color: var(--raya-color-success);
   font-weight: 800;
 }
@@ -760,6 +760,20 @@ img {
 .raya-search-empty {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
+}
+.raya-search-result-actions {
+  margin: 0.65rem 0 0;
+}
+.raya-search-result-graph {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  color: var(--raya-color-link);
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.65rem;
 }
 .raya-graph-chip[aria-pressed="true"] {
   border-color: var(--raya-color-accent);

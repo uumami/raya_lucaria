@@ -76,7 +76,9 @@ Use Course Search when you remember a title, tag, status, summary phrase, or
 stable ID. It searches generated metadata only, supports approximate matches and
 keyboard movement through visible results, and does not search hidden source
 paths or store your query. Opening it from a course page may preload that page
-title as a temporary query.
+title as a temporary query. A result can also offer `View in graph`, which opens
+the Course Graph focused on that same page so you can inspect its course
+position and explicit links.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 

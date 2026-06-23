@@ -3057,9 +3057,15 @@ def _render_search_surface(
         result_items.append(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
-            f'<a href="{html.escape(page["url"])}">{html.escape(page["title"])}</a>'
+            f'<a class="raya-search-result-page" href="{html.escape(page["url"])}">'
+            f'{html.escape(page["title"])}</a>'
             f"<p>{html.escape(page['summary'])}</p>"
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
+            '<p class="raya-search-result-actions">'
+            f'<a class="raya-search-result-graph" href="{html.escape(page["graph_url"])}" '
+            f'aria-label="View {html.escape(page["title"], quote=True)} in course graph">'
+            "View in graph</a>"
+            "</p>"
             "</li>"
         )
     return "\n".join(
@@ -3132,6 +3138,13 @@ def _browser_search_payload(content_model: ContentModel) -> dict[str, Any]:
                 "tags": list(page.tags),
                 "hierarchy_label": page.hierarchy_label,
                 "url": _relative_href(STATIC_SEARCH_PATH.as_posix(), page.output_path),
+                "graph_url": _href_with_query(
+                    _relative_href(
+                        STATIC_SEARCH_PATH.as_posix(),
+                        STATIC_GRAPH_PATH.as_posix(),
+                    ),
+                    {"page": page.id},
+                ),
             }
             for page in content_model.pages
         ],

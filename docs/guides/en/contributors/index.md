@@ -87,7 +87,9 @@ Review Course Search as the matching companion to graph navigation. Approximate
 matching, clear controls, and keyboard result movement are allowed over embedded
 page metadata only. Do not index rendered prose, source paths, artifact paths,
 MathJax output, cache keys, or learner state. Generated query context may preload
-the search box without becoming stored search state.
+the search box without becoming stored search state. Search result graph-focus
+links must be generated from stable page IDs and local graph URLs only; keep
+their wording structural, such as `View in graph`.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

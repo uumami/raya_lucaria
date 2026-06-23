@@ -98,9 +98,12 @@ When changing Course Search, verify approximate matching, keyboard result
 movement, Enter-to-open behavior, clear controls, shared discovery chrome,
 compact mobile discovery chrome, no external requests, and no persistent search
 state. Search payloads stay metadata-only, and generated query context must
-remain transient. Search and Graph discovery pages may load local accessibility
-resources for Text size and `OpenDyslexic`, but must not load `shell.js`, a
-course-map toggle, external workspace assets, or persisted graph/search state.
+remain transient. Search result graph-focus links must come from stable page IDs
+and generated local graph URLs, preserve Enter-to-open-page behavior, and avoid
+recommendation or progress language. Search and Graph discovery pages may load
+local accessibility resources for Text size and `OpenDyslexic`, but must not
+load `shell.js`, a course-map toggle, external workspace assets, or persisted
+graph/search state.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 

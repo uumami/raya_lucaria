@@ -514,7 +514,14 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "course/5_authoring_matrix" not in search_html
     assert "raya-search-results" in search_html
     assert "Authoring Matrix Fixture" in search_html
-    assert "../../authoring-matrix/index.html" in search_html
+    assert (
+        '<a class="raya-search-result-page" href="../../authoring-matrix/index.html">'
+        in search_html
+    )
+    assert 'class="raya-search-result-actions"' in search_html
+    assert 'class="raya-search-result-graph"' in search_html
+    assert 'href="../graph/index.html?page=authoring-matrix"' in search_html
+    assert "View in graph" in search_html
     search_payload_match = re.search(
         r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
         search_html,
@@ -526,6 +533,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert search_payload["version"] == 1
     assert search_payload["pages"]
     allowed_page_keys = {
+        "graph_url",
         "hierarchy_label",
         "id",
         "nav_title",
@@ -538,6 +546,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     for page in search_payload["pages"]:
         assert set(page) == allowed_page_keys
         assert not page["url"].startswith("../../data/")
+        assert page["graph_url"].startswith("../graph/index.html?page=")
+        assert page["id"] in page["graph_url"]
+        assert not page["graph_url"].startswith("../../data/")
     serialized_search_payload = json.dumps(search_payload)
     for private_token in (
         "_official",

@@ -92,7 +92,9 @@ aproximada, controles de limpiar y movimiento con teclado por resultados son
 validos solo sobre metadata embebida de paginas. No indexes prosa renderizada,
 rutas de fuente, rutas de artifact, output MathJax, cache keys ni estado del
 estudiante. El contexto de consulta generado puede precargar la caja de busqueda
-sin convertirse en estado guardado.
+sin convertirse en estado guardado. Los enlaces graph-focus de resultados de
+busqueda deben generarse solo desde stable IDs y URLs locales del grafo; conserva
+lenguaje estructural como `View in graph`.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

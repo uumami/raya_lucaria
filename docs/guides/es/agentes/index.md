@@ -108,11 +108,13 @@ Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
 teclado por resultados, Enter para abrir, controles de limpiar, chrome
 compartido de descubrimiento, chrome movil compacto, sin solicitudes externas y
 sin estado persistente de busqueda. Los payloads de busqueda siguen siendo solo
-metadata, y el contexto de consulta generado debe permanecer transitorio. Las
-paginas de descubrimiento Search y Graph pueden cargar recursos locales de
-accesibilidad para Text size y `OpenDyslexic`, pero no deben cargar `shell.js`,
-un toggle de mapa del curso, assets externos de workspace ni estado persistente
-de graph/search.
+metadata, y el contexto de consulta generado debe permanecer transitorio. Los
+enlaces graph-focus de resultados de busqueda deben venir de stable IDs y URLs
+locales generadas del grafo, preservar Enter para abrir la pagina, y evitar
+lenguaje de recomendacion o progreso. Las paginas de descubrimiento Search y
+Graph pueden cargar recursos locales de accesibilidad para Text size y
+`OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
+assets externos de workspace ni estado persistente de graph/search.
 
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 

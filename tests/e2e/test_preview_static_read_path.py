@@ -613,6 +613,14 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             in page.locator("#raya-search-results").inner_text()
                         )
                         assert page.locator("#raya-search-empty").is_hidden()
+                        graph_focus_href = page.locator(
+                            '[data-raya-search-result="authoring-matrix"] '
+                            ".raya-search-result-graph"
+                        ).get_attribute("href")
+                        assert (
+                            graph_focus_href
+                            == "../graph/index.html?page=authoring-matrix"
+                        )
                         page.fill("#raya-search-input", "matrx")
                         page.wait_for_function(
                             """() => document
@@ -629,7 +637,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             '#raya-search-results [data-raya-search-active="true"]'
                         )
                         assert active.count() == 1
-                        active_href = active.locator("a").evaluate("node => node.href")
+                        active_href = active.locator("a").first.evaluate(
+                            "node => node.href"
+                        )
                         with page.expect_navigation():
                             page.press("#raya-search-input", "Enter")
                         assert page.url == active_href
@@ -664,6 +674,23 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "Authoring Matrix Fixture"
                             in page.locator("#raya-search-results").inner_text()
                         )
+                        page.click(
+                            '[data-raya-search-result="authoring-matrix"] '
+                            ".raya-search-result-graph"
+                        )
+                        page.wait_for_url(
+                            "**/_raya/graph/index.html?page=authoring-matrix"
+                        )
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator(
+                                "[data-raya-graph-detail-title]"
+                            ).inner_text()
+                        )
+                        _assert_no_horizontal_overflow(page)
                     finally:
                         page.close()
             finally:

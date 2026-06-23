@@ -192,7 +192,9 @@ Course Search is a static metadata search surface. It can match titles,
 navigation labels, summaries, tags, status, hierarchy labels, and stable IDs
 approximately, but it does not index hidden source paths, rendered prose, math
 output, or personal learner state. Generated page links may preload a temporary
-query, but the renderer does not store it.
+query, but the renderer does not store it. Search results may also include
+`View in graph` links generated from stable page IDs so students can inspect
+where a found page sits in the course graph.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

@@ -84,7 +84,9 @@ Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y
 movimiento con teclado por resultados visibles, y no busca rutas ocultas de
 fuente ni guarda tu consulta. Abrirlo desde una pagina del curso puede precargar
-el titulo de esa pagina como consulta temporal.
+el titulo de esa pagina como consulta temporal. Un resultado tambien puede
+ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
+inspeccionar su posicion en el curso y sus enlaces explicitos.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
