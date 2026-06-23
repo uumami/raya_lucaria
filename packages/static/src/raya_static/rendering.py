@@ -728,6 +728,10 @@ img {
   min-height: 2.5rem;
   padding: 0.45rem 0.7rem;
 }
+.raya-graph-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
 .raya-search-controls input {
   min-width: min(100%, 24rem);
 }

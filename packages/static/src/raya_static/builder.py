@@ -2859,7 +2859,10 @@ def _render_graph_surface(
                 "</select>"
             ),
             '<button id="graph-fit" type="button">Fit</button>',
-            '<button id="graph-reset" type="button">Reset</button>',
+            '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">Zoom in</button>',
+            '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">Zoom out</button>',
+            '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset view</button>',
+            '<button id="graph-reset" type="button">Reset graph</button>',
             '<button id="graph-expand" type="button" aria-pressed="false">Expand graph</button>',
             "</section>",
             (
@@ -2945,8 +2948,12 @@ def _render_graph_surface(
                 "simple to scan.</p>"
             ),
             (
-                "<p>Fit redraws the current layout. Reset clears search, group "
+                "<p>Fit redraws the current layout. Reset graph clears search, group "
                 "filters, selected page, and expanded graph workspace.</p>"
+            ),
+            (
+                "<p>Zoom and Reset view change only the visual SVG graph view; "
+                "the list and selected-page details remain complete.</p>"
             ),
             "</details>",
             (

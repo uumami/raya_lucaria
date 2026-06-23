@@ -53,14 +53,17 @@ esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
 orden del curso; no son recomendaciones ni marcadores de progreso.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
-busqueda, filtros, detalles de pagina seleccionada y workspace expandido del
-grafo son herramientas locales de lectura sobre la estructura actual del curso.
-No guardan progreso, no recomiendan que estudiar despues y no cambian la
-autoridad del curso. Abrirlo desde una pagina del curso puede enfocar esa pagina
-para ver primero sus enlaces explicitos. El riel de aprendizaje tambien puede
-mostrar un panel Connections con conteos de enlaces que salen de la pagina actual
-y enlaces que apuntan a ella; esos conteos describen relaciones estaticas
-autoradas, no recomendaciones ni progreso personal.
+busqueda, filtros, detalles de pagina seleccionada, Zoom in, Zoom out, Fit,
+Reset view y workspace expandido del grafo son herramientas locales de lectura
+sobre la estructura actual del curso. No guardan progreso, no recomiendan que
+estudiar despues y no cambian la autoridad del curso. Fit y Reset view solo
+cambian la vista visual del grafo; la lista y los detalles de pagina
+seleccionada siguen disponibles. Abrirlo desde una pagina del curso puede
+enfocar esa pagina para ver primero sus enlaces explicitos. El riel de
+aprendizaje tambien puede mostrar un panel Connections con conteos de enlaces
+que salen de la pagina actual y enlaces que apuntan a ella; esos conteos
+describen relaciones estaticas autoradas, no recomendaciones ni progreso
+personal.
 Algunas paginas tambien pueden terminar con un bloque Page connections dentro
 del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace

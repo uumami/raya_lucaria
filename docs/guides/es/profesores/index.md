@@ -185,10 +185,12 @@ los titulos de pagina, y tratalas como navegacion estatica, no recomendaciones.
 
 El Course graph generado puede ayudar a estudiantes a inspeccionar relaciones
 explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
-seleccionada y workspace expandido del grafo. Tratalo como estructura del curso
-desde datos actuales de artifact, no como analiticas, recomendaciones, dominio o
-progreso personal. Los links generados de pagina pueden abrir el grafo enfocado
-en la pagina actual.
+seleccionada y workspace expandido del grafo. Estudiantes tambien pueden usar
+Zoom in, Zoom out, Fit y Reset view para inspeccionar zonas visuales densas del
+grafo sin cambiar datos del curso ni estado guardado. Tratalo como estructura
+del curso desde datos actuales de artifact, no como analiticas,
+recomendaciones, dominio o progreso personal. Los links generados de pagina
+pueden abrir el grafo enfocado en la pagina actual.
 
 Course Search es una superficie estatica de busqueda de metadata. Puede coincidir
 aproximadamente con titulos, etiquetas de navegacion, resumenes, tags, status,

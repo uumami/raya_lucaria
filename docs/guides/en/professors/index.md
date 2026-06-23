@@ -184,9 +184,11 @@ titles clear, and treat the cards as static navigation, not recommendations.
 
 The generated Course graph can help students inspect explicit page
 relationships through local fuzzy search, selected-page details, and an expanded
-graph workspace. Treat it as course structure from current artifact data, not as
-analytics, recommendations, mastery, or personal progress. Generated page links
-may open the graph focused on the current page.
+graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to
+inspect dense visual graph areas without changing course data or saved state.
+Treat it as course structure from current artifact data, not as analytics,
+recommendations, mastery, or personal progress. Generated page links may open
+the graph focused on the current page.
 
 Course Search is a static metadata search surface. It can match titles,
 navigation labels, summaries, tags, status, hierarchy labels, and stable IDs

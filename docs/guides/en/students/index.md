@@ -48,13 +48,15 @@ size or OpenDyslexic when those settings are more comfortable. End-of-page cards
 are course-order links; they are not recommendations or progress markers.
 
 Use the Course graph to inspect generated page relationships. Its search,
-filters, selected-page details, and expanded graph workspace are local reading
-tools over current course structure. They do not store progress, recommend what
-to study next, or change course authority. Opening it from a course page may
-focus that page so you can see its explicit links first. The learning rail may
-also show a Connections panel with counts for links from the current page and
-links into it; those counts describe authored static relationships, not
-recommendations or personal progress.
+filters, selected-page details, Zoom in, Zoom out, Fit, Reset view, and expanded
+graph workspace are local reading tools over current course structure. They do
+not store progress, recommend what to study next, or change course authority.
+Fit and Reset view only change the visual graph view; the list and selected-page
+details stay available. Opening it from a course page may focus that page so you
+can see its explicit links first. The learning rail may also show a Connections
+panel with counts for links from the current page and links into it; those
+counts describe authored static relationships, not recommendations or personal
+progress.
 Some pages may also end with a Page connections block inside the article. It
 uses the same static relationship data to show pages linked from the lesson,
 pages that link back to it, and an Open in course graph link. Use it as a

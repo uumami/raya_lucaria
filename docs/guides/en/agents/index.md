@@ -77,10 +77,13 @@ When changing the Course graph, verify fuzzy search, selected-page details,
 selected-page neighborhood summaries, connected-page visual states, group
 filters, group color semantics, bounded degree-based node sizing, hover/focus
 inspection status, keyboard inspection parity, expanded graph workspace state,
-shared discovery chrome, compact mobile discovery chrome, mobile no-overflow
-behavior, and no external requests after page load. Graph UI
+SVG viewport controls, shared discovery chrome, compact mobile discovery chrome,
+mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
+Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must
+not fetch graph data, persist graph state, clear selected-page details, or remain
+enabled when the SVG graph is hidden by list layout.
 Generated URL context may select a page only when it resolves to an embedded
 graph node. Neighborhood counts must be derived from generated graph edges, and
 connected-page highlights must exclude the selected node itself. Connections

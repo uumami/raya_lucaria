@@ -81,11 +81,14 @@ teclado, responsivas, y sin lenguaje de progreso, dominio, recomendacion o
 siguiente paso personal.
 
 Revisa el Course graph como una superficie estatica de artifact. La busqueda del
-grafo, los detalles de pagina seleccionada, filtros de grupo y workspace
-expandido del grafo deben usar solo datos embebidos del artifact y recursos
-locales del renderer. No agregues motores de grafo CDN, fetches runtime, estado
-persistente del grafo ni lenguaje de recomendaciones/progreso. El contexto de
-URL generado puede enfocar una pagina, pero debe seguir siendo transitorio.
+grafo, los detalles de pagina seleccionada, filtros de grupo, controles SVG de
+viewport y workspace expandido del grafo deben usar solo datos embebidos del
+artifact y recursos locales del renderer. Zoom in, Zoom out, Fit y Reset view
+pueden cambiar el viewport SVG visual, pero no deben persistir estado, pedir
+datos del grafo ni limpiar el contexto de pagina seleccionada. No agregues
+motores de grafo CDN, fetches runtime, estado persistente del grafo ni lenguaje
+de recomendaciones/progreso. El contexto de URL generado puede enfocar una
+pagina, pero debe seguir siendo transitorio.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia
 aproximada, controles de limpiar y movimiento con teclado por resultados son

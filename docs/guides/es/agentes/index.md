@@ -83,9 +83,10 @@ Al cambiar el Course graph, verifica busqueda aproximada, detalles de pagina
 seleccionada, resumenes de vecindario de pagina seleccionada, estados visuales
 de paginas conectadas, filtros de grupo, semantica de color por grupo, tamano de
 nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
-inspeccion con teclado, estado de workspace expandido del grafo, chrome
-compartido de descubrimiento, chrome movil compacto, comportamiento movil sin
-overflow y sin solicitudes externas despues de cargar la pagina. El
+inspeccion con teclado, estado de workspace expandido del grafo, controles SVG
+de viewport, chrome compartido de descubrimiento, chrome movil compacto,
+comportamiento movil sin overflow y sin solicitudes externas despues de cargar
+la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos
 del artifact, no de HTML scrapeado ni browser storage. El contexto de URL
 generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
@@ -94,6 +95,10 @@ generado, y los resaltados de pagina conectada deben excluir el nodo
 seleccionado. Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
 a prerequisitos explicitos o contexto de grafo entrante/saliente.
+Zoom in, Zoom out, Fit y Reset view pueden cambiar el `viewBox` SVG; no deben
+pedir datos del grafo, persistir estado del grafo, limpiar detalles de pagina
+seleccionada ni quedar habilitados cuando el grafo SVG esta oculto por el layout
+de lista.
 Los conteos y enlaces de Page connections del articulo tambien deben venir solo
 de contexto explicito del grafo de enlaces de contenido entrantes/salientes,
 permanecer dentro del articulo y evitar rutas de fuente, rutas privadas de

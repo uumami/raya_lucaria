@@ -16,8 +16,10 @@ This document names intentional gaps so they do not become tribal knowledge or a
 
 ## Deferred Graph And Search
 
-- Backlinks, wikilinks, graph scopes, graph UI, and cross-course graph.
-- Search indexes and browser search UI.
+- Wikilinks, graph scopes, cross-course graph, graph editing, inferred related
+  pages, and dynamic graph/state services.
+- Full-text search indexes, prose-derived search, external search services, and
+  dynamic search state.
 
 ## Deferred Dynamic Domains
 

@@ -99,10 +99,14 @@ Minimum static expectations:
 - accessible HTML,
 - local assets,
 - build-time MathJax for accepted math with local support resources,
+- local static discovery surfaces when accepted by renderer contracts,
 - local static preview,
 - manifest and generated data for future services.
 
-Search, themes, graph UI, slides, offline support, and rich interactivity are future capabilities unless a current spec accepts them.
+Local course search, visual skins, and static graph UI are current renderer
+capabilities only inside accepted static contracts. Slides, offline support, and
+rich interactivity remain future capabilities unless a current spec accepts
+them.
 
 ## Rendered Surfaces
 
@@ -173,7 +177,7 @@ Each domain has a minimum useful contract and a growth path. The foundation shou
 | Domain | Minimum requirement | First growth | Later growth |
 | --- | --- | --- | --- |
 | Glintstone | validate and build readable static course artifacts | richer components and local assets | optional renderer capabilities after artifact contracts stabilize |
-| Primeval Current | internal links and generated link data | backlinks and graph scopes | graph UI, cross-course graph, context expansion |
+| Primeval Current | internal links, generated link data, and explicit static graph context | local static graph/search discovery surfaces | graph scopes, cross-course graph, context expansion |
 | Rennala | official cards, quizzes, prompts, and retrieval hooks | personal review queues and spaced repetition | mastery maps, metacognition, exam planning |
 | Glintstone Key | stable IDs, registration model, role concepts | auth adapters and enrollment | multi-course trust, audit, provider migration |
 | Sellen | prompt/context contracts and agent authority rules | Socratic tutor, answer comparison, card drafting | study plans and graph-aware agent workflows |

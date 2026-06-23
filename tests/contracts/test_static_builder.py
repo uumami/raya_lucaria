@@ -391,8 +391,15 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-search" in graph_html
     assert "graph-layout" in graph_html
     assert "graph-fit" in graph_html
+    assert "graph-zoom-in" in graph_html
+    assert "graph-zoom-out" in graph_html
+    assert "graph-reset-view" in graph_html
     assert "graph-reset" in graph_html
     assert "graph-expand" in graph_html
+    assert "Zoom in" in graph_html
+    assert "Zoom out" in graph_html
+    assert "Reset view" in graph_html
+    assert "Reset graph" in graph_html
     assert "raya-graph-instructions" in graph_html
     assert "Hover or focus a page" in graph_html
     assert "data-raya-graph-hover-status" in graph_html
@@ -437,6 +444,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-expanded" in graph_script
     assert 'mode === "list"' in graph_script
     assert "graph-reset" in graph_script
+    assert "setGraphViewBox" in graph_script
+    assert "zoomGraphView" in graph_script
+    assert "resetGraphView" in graph_script
+    assert "setGraphViewportControlsEnabled" in graph_script
     assert "URLSearchParams" in graph_script
     assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script

@@ -25,6 +25,9 @@ _GRAPH_JAVASCRIPT = r"""
   const search = document.getElementById("graph-search");
   const layout = document.getElementById("graph-layout");
   const fit = document.getElementById("graph-fit");
+  const zoomIn = document.getElementById("graph-zoom-in");
+  const zoomOut = document.getElementById("graph-zoom-out");
+  const resetView = document.getElementById("graph-reset-view");
   const reset = document.getElementById("graph-reset");
   const graphExpand = document.getElementById("graph-expand");
   const status = document.getElementById("graph-status");
@@ -64,6 +67,8 @@ _GRAPH_JAVASCRIPT = r"""
   let inspectedId = "";
   let matchIds = new Set();
   let pendingSelectTimer = 0;
+  let fullViewBox = null;
+  let graphViewBox = null;
 
   function normalize(value) {
     return String(value || "")
@@ -248,6 +253,46 @@ _GRAPH_JAVASCRIPT = r"""
   function degreeRadiusFor(nodeId, selected) {
     if (selected) return 19;
     return 14 + Math.min(8, Math.sqrt(degreeFor(nodeId)) * 2);
+  }
+
+  function viewBoxString(box) {
+    return `${box.x} ${box.y} ${box.width} ${box.height}`;
+  }
+
+  function setGraphViewBox(box) {
+    graphViewBox = box;
+    if (canvas && box) canvas.setAttribute("viewBox", viewBoxString(box));
+  }
+
+  function resetGraphView() {
+    if (!fullViewBox) return;
+    setGraphViewBox({ ...fullViewBox });
+  }
+
+  function setGraphViewportControlsEnabled(enabled) {
+    [zoomIn, zoomOut, resetView].forEach((button) => {
+      if (button) button.disabled = !enabled;
+    });
+  }
+
+  function zoomGraphView(factor) {
+    if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
+      return;
+    }
+    const minWidth = fullViewBox.width * 0.32;
+    const maxWidth = fullViewBox.width * 1.75;
+    const minHeight = fullViewBox.height * 0.32;
+    const maxHeight = fullViewBox.height * 1.75;
+    const nextWidth = Math.max(minWidth, Math.min(maxWidth, graphViewBox.width * factor));
+    const nextHeight = Math.max(minHeight, Math.min(maxHeight, graphViewBox.height * factor));
+    const centerX = graphViewBox.x + graphViewBox.width / 2;
+    const centerY = graphViewBox.y + graphViewBox.height / 2;
+    setGraphViewBox({
+      x: centerX - nextWidth / 2,
+      y: centerY - nextHeight / 2,
+      width: nextWidth,
+      height: nextHeight,
+    });
   }
 
   function inspectionTextFor(nodeId) {
@@ -451,6 +496,9 @@ _GRAPH_JAVASCRIPT = r"""
     if (mode === "list") {
       canvas.setAttribute("hidden", "hidden");
       canvas.replaceChildren();
+      fullViewBox = null;
+      graphViewBox = null;
+      setGraphViewportControlsEnabled(false);
       return;
     }
     canvas.removeAttribute("hidden");
@@ -459,7 +507,13 @@ _GRAPH_JAVASCRIPT = r"""
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     const geometry = positionsFor(activeNodes, mode);
 
-    canvas.setAttribute("viewBox", `0 0 ${geometry.width} ${geometry.height}`);
+    fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
+    if (!graphViewBox) {
+      setGraphViewBox({ ...fullViewBox });
+    } else {
+      canvas.setAttribute("viewBox", viewBoxString(graphViewBox));
+    }
+    setGraphViewportControlsEnabled(true);
     canvas.replaceChildren();
 
     activeEdges.forEach((edge) => {
@@ -548,9 +602,27 @@ _GRAPH_JAVASCRIPT = r"""
     updateInspectionDom();
   }
 
-  if (search) search.addEventListener("input", render);
-  if (layout) layout.addEventListener("change", render);
-  if (fit) fit.addEventListener("click", render);
+  if (search) {
+    search.addEventListener("input", () => {
+      graphViewBox = null;
+      render();
+    });
+  }
+  if (layout) {
+    layout.addEventListener("change", () => {
+      graphViewBox = null;
+      render();
+    });
+  }
+  if (fit) {
+    fit.addEventListener("click", () => {
+      graphViewBox = null;
+      render();
+    });
+  }
+  if (zoomIn) zoomIn.addEventListener("click", () => zoomGraphView(0.82));
+  if (zoomOut) zoomOut.addEventListener("click", () => zoomGraphView(1.22));
+  if (resetView) resetView.addEventListener("click", resetGraphView);
   if (reset) {
     reset.addEventListener("click", () => {
       if (search) search.value = "";
@@ -558,6 +630,7 @@ _GRAPH_JAVASCRIPT = r"""
       hiddenGroups.clear();
       selectedId = "";
       inspectedId = "";
+      graphViewBox = null;
       if (hoverStatus) hoverStatus.textContent = "";
       setGraphExpanded(false);
       renderDetail();
@@ -586,6 +659,7 @@ _GRAPH_JAVASCRIPT = r"""
         hiddenGroups.add(group);
         button.setAttribute("aria-pressed", "false");
       }
+      graphViewBox = null;
       render();
     });
   });

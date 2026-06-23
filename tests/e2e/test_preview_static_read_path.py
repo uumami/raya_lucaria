@@ -32,6 +32,17 @@ MINIMAL = ROOT / "examples" / "courses" / "minimal"
 EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
 
 
+def _viewbox_values(value: str | None) -> tuple[float, float, float, float]:
+    assert value is not None
+    parts = value.split()
+    assert len(parts) == 4
+    return tuple(float(part) for part in parts)
+
+
+def _viewbox_width(value: str | None) -> float:
+    return _viewbox_values(value)[2]
+
+
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     tmp_path: Path,
 ) -> None:
@@ -346,6 +357,69 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
+                        initial_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        initial_viewbox_values = _viewbox_values(initial_viewbox)
+                        assert initial_viewbox_values[2] > 0
+                        assert initial_viewbox_values[3] > 0
+                        assert page.get_by_role(
+                            "button", name="Zoom in graph"
+                        ).is_visible()
+                        assert page.get_by_role(
+                            "button", name="Zoom out graph"
+                        ).is_visible()
+                        assert page.get_by_role(
+                            "button", name="Reset graph view"
+                        ).is_visible()
+                        page.click("#graph-zoom-in")
+                        zoomed_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert zoomed_viewbox != initial_viewbox
+                        assert _viewbox_width(zoomed_viewbox) < _viewbox_width(
+                            initial_viewbox
+                        )
+                        page.click("#graph-zoom-out")
+                        zoomed_out_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert _viewbox_width(zoomed_out_viewbox) > _viewbox_width(
+                            zoomed_viewbox
+                        )
+                        page.click("#graph-fit")
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == initial_viewbox
+                        )
+                        page.click("#graph-zoom-in")
+                        assert _viewbox_width(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        ) < _viewbox_width(initial_viewbox)
+                        page.fill("#graph-search", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == initial_viewbox
+                        )
+                        page.click("#graph-zoom-in")
+                        assert _viewbox_width(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        ) < _viewbox_width(initial_viewbox)
+                        page.click("#graph-reset-view")
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == initial_viewbox
+                        )
+                        assert page.input_value("#graph-search") == "matrx"
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
                         assert (
                             page.locator("[data-raya-graph-detail-title]")
                             .inner_text()
@@ -423,6 +497,28 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             == "list"
                         )
                         assert page.locator("#raya-graph-canvas").is_hidden()
+                        assert page.locator("#graph-zoom-in").is_disabled()
+                        assert page.locator("#graph-zoom-out").is_disabled()
+                        assert page.locator("#graph-reset-view").is_disabled()
+                        page.select_option("#graph-layout", "map")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "map"
+                        )
+                        assert page.locator("#graph-zoom-in").is_enabled()
+                        assert page.locator("#graph-zoom-out").is_enabled()
+                        assert page.locator("#graph-reset-view").is_enabled()
+                        page.click("#graph-zoom-in")
+                        assert _viewbox_width(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        ) < _viewbox_width(initial_viewbox)
+                        group_filter = page.locator(
+                            "[data-raya-graph-group-filter]"
+                        ).first
+                        group_filter.click()
+                        assert group_filter.get_attribute("aria-pressed") == "false"
                         page.click("#graph-reset")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -439,6 +535,19 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-empty]"
                         ).is_visible()
+                        assert page.input_value("#graph-search") == ""
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == initial_viewbox
+                        )
+                        assert all(
+                            value == "true"
+                            for value in page.locator(
+                                "[data-raya-graph-group-filter]"
+                            ).evaluate_all(
+                                "buttons => buttons.map((button) => button.getAttribute('aria-pressed'))"
+                            )
+                        )
                         assert requested_urls == []
                         first_list_link = page.locator(
                             "#raya-graph-list [data-raya-graph-node]:visible a"

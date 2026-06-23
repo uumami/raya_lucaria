@@ -78,10 +78,12 @@ compact sequence links. Keep them static, keyboard reachable, responsive, and
 free of progress, mastery, recommendation, or personal next-step wording.
 
 Review the Course graph as a static artifact surface. Graph search, selected-page
-details, group filters, and expanded graph workspace mode must use embedded
-artifact data and local renderer resources only. Do not add CDN graph engines,
-runtime fetches, persistent graph state, or recommendation/progress wording.
-Generated URL context may focus a page, but it must remain transient.
+details, group filters, SVG viewport controls, and expanded graph workspace mode
+must use embedded artifact data and local renderer resources only. Zoom in, Zoom
+out, Fit, and Reset view may change the visual SVG viewport, but must not persist
+state, fetch graph data, or clear selected-page context. Do not add CDN graph
+engines, runtime fetches, persistent graph state, or recommendation/progress
+wording. Generated URL context may focus a page, but it must remain transient.
 
 Review Course Search as the matching companion to graph navigation. Approximate
 matching, clear controls, and keyboard result movement are allowed over embedded
