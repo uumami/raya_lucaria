@@ -2571,6 +2571,12 @@ def _render_graph_surface(
                 "</span>"
             ),
             (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="neighbor">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-neighbor"></span>'
+                "Connected page"
+                "</span>"
+            ),
+            (
                 '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
                 '<span class="raya-graph-legend-line"></span>'
                 "Explicit source link"
@@ -2586,6 +2592,10 @@ def _render_graph_surface(
             '<button type="button" data-raya-graph-detail-clear>Clear</button>',
             "</div>",
             '<p class="raya-graph-detail-meta" data-raya-graph-detail-meta></p>',
+            (
+                '<p class="raya-graph-detail-neighborhood" '
+                "data-raya-graph-detail-neighborhood></p>"
+            ),
             '<p><a data-raya-graph-detail-link href="../../index.html">Open page</a></p>',
             '<div class="raya-graph-detail-links">',
             "<section>",

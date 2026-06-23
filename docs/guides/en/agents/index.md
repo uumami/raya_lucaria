@@ -69,13 +69,15 @@ normal local link navigation, desktop/mobile no-overflow behavior, and absence
 of recommendation/progress/mastery wording inside the generated index surface.
 
 When changing the Course graph, verify fuzzy search, selected-page details,
-group filters, expanded graph workspace state, mobile no-overflow behavior, and
-no external requests after page load. Graph UI state is non-persistent and must
+selected-page neighborhood summaries, connected-page visual states, group
+filters, expanded graph workspace state, mobile no-overflow behavior, and no
+external requests after page load. Graph UI state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Generated URL context may select a page only when it resolves to an embedded
-graph node. Connections rail counts must come from explicit graph context only.
-Rail graph-focus links must point only to explicit prerequisites or
-incoming/outgoing graph context.
+graph node. Neighborhood counts must be derived from generated graph edges, and
+connected-page highlights must exclude the selected node itself. Connections
+rail counts must come from explicit graph context only. Rail graph-focus links
+must point only to explicit prerequisites or incoming/outgoing graph context.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, Enter-to-open behavior, clear controls, no external requests, and no

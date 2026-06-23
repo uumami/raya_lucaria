@@ -33,6 +33,7 @@ _GRAPH_JAVASCRIPT = r"""
   const detailPanel = document.querySelector("[data-raya-graph-detail-panel]");
   const detailTitle = document.querySelector("[data-raya-graph-detail-title]");
   const detailMeta = document.querySelector("[data-raya-graph-detail-meta]");
+  const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
@@ -203,6 +204,34 @@ _GRAPH_JAVASCRIPT = r"""
     return ids;
   }
 
+  function connectedNodeIds(nodeId) {
+    const ids = neighborsOf(nodeId);
+    ids.delete(nodeId);
+    return ids;
+  }
+
+  function relationshipCountsFor(nodeId) {
+    const connectedIds = new Set();
+    let outgoingCount = 0;
+    let incomingCount = 0;
+    edges.forEach((edge) => {
+      if (edge.from === nodeId) {
+        outgoingCount += 1;
+        connectedIds.add(edge.to);
+      }
+      if (edge.to === nodeId) {
+        incomingCount += 1;
+        connectedIds.add(edge.from);
+      }
+    });
+    connectedIds.delete(nodeId);
+    return {
+      outgoingCount,
+      incomingCount,
+      connectedCount: connectedIds.size,
+    };
+  }
+
   function edgeLabel(edge) {
     const kind = edge && edge.kind ? edge.kind : "link";
     return kind.replace(/-/g, " ");
@@ -235,6 +264,7 @@ _GRAPH_JAVASCRIPT = r"""
     if (!node) {
       if (detailEmpty) detailEmpty.hidden = false;
       if (detailPanel) detailPanel.hidden = true;
+      if (detailNeighborhood) detailNeighborhood.textContent = "";
       return;
     }
     const group = groupsById.get(node.group || "");
@@ -247,6 +277,10 @@ _GRAPH_JAVASCRIPT = r"""
         node.status ? `Status: ${node.status}` : "",
         Array.isArray(node.tags) && node.tags.length ? `Tags: ${node.tags.join(", ")}` : "",
       ].filter(Boolean).join("; ");
+    }
+    if (detailNeighborhood) {
+      const counts = relationshipCountsFor(node.id);
+      detailNeighborhood.textContent = `Neighborhood: ${counts.outgoingCount} outgoing link(s), ${counts.incomingCount} incoming link(s), ${counts.connectedCount} connected page(s).`;
     }
     if (detailLink) {
       detailLink.href = node.url;
@@ -298,10 +332,12 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function renderList(activeIds) {
+    const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
       const id = item.getAttribute("data-raya-graph-node") || "";
       item.hidden = !activeIds.has(id);
       item.classList.toggle("is-active", id === selectedId);
+      item.classList.toggle("is-neighbor", connectedIds.has(id));
       item.classList.toggle("is-match", matchIds.has(id));
     });
   }
@@ -336,7 +372,8 @@ _GRAPH_JAVASCRIPT = r"""
       return;
     }
     canvas.removeAttribute("hidden");
-    const selectedNeighbors = selectedId ? neighborsOf(selectedId) : new Set();
+    const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
+    const selectedCluster = selectedId ? new Set([selectedId, ...connectedIds]) : new Set();
     const geometry = positionsFor(activeNodes, mode);
 
     canvas.setAttribute("viewBox", `0 0 ${geometry.width} ${geometry.height}`);
@@ -368,13 +405,15 @@ _GRAPH_JAVASCRIPT = r"""
       link.setAttribute("class", "raya-graph-node-link");
       link.dataset.rayaGraphNode = node.id;
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      const active = !selectedId || selectedNeighbors.has(node.id);
+      const active = !selectedId || selectedCluster.has(node.id);
+      const isConnected = connectedIds.has(node.id);
       group.setAttribute(
         "class",
         [
           "raya-graph-node",
           active ? "" : "is-muted",
           node.id === selectedId ? "is-selected" : "",
+          isConnected ? "is-neighbor" : "",
           matchIds.has(node.id) ? "is-match" : "",
         ].filter(Boolean).join(" ")
       );

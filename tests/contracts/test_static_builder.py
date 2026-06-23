@@ -389,6 +389,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="node"' in graph_html
     assert 'data-raya-graph-legend="match"' in graph_html
     assert 'data-raya-graph-legend="selected"' in graph_html
+    assert 'data-raya-graph-legend="neighbor"' in graph_html
+    assert "Connected page" in graph_html
     assert 'data-raya-graph-help' in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "raya-graph-detail" in graph_html
@@ -396,6 +398,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-panel" in graph_html
     assert "data-raya-graph-detail-title" in graph_html
     assert "data-raya-graph-detail-link" in graph_html
+    assert "raya-graph-detail-neighborhood" in graph_html
+    assert "data-raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-outgoing" in graph_html
     assert "data-raya-graph-detail-incoming" in graph_html
     assert "data-raya-graph-detail-clear" in graph_html

@@ -52,6 +52,9 @@ focus that page so you can see its explicit links first. The learning rail may
 also show a Connections panel with counts for links from the current page and
 links into it; those counts describe authored static relationships, not
 recommendations or personal progress.
+When a page is selected in the graph, connected pages may be highlighted and
+summarized as outgoing links, incoming links, and connected pages. Those numbers
+describe the current static graph, not how far you have progressed.
 
 Use Course Search when you remember a title, tag, status, summary phrase, or
 stable ID. It searches generated metadata only, supports approximate matches and

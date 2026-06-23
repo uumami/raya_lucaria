@@ -74,14 +74,17 @@ overflow y ausencia de lenguaje de recomendaciones/progreso/dominio dentro de la
 superficie del indice generado.
 
 Al cambiar el Course graph, verifica busqueda aproximada, detalles de pagina
-seleccionada, filtros de grupo, estado de workspace expandido del grafo,
-comportamiento movil sin overflow y sin solicitudes externas despues de cargar
-la pagina. El estado UI del grafo es no persistente y debe venir de datos de
-grafo embebidos del artifact, no de HTML scrapeado ni browser storage. El
+seleccionada, resumenes de vecindario de pagina seleccionada, estados visuales
+de paginas conectadas, filtros de grupo, estado de workspace expandido del
+grafo, comportamiento movil sin overflow y sin solicitudes externas despues de
+cargar la pagina. El estado UI del grafo es no persistente y debe venir de datos
+de grafo embebidos del artifact, no de HTML scrapeado ni browser storage. El
 contexto de URL generado puede seleccionar una pagina solo cuando resuelve a un
-nodo embebido del grafo. Los conteos del riel Connections deben venir solo de
-contexto explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar
-solo a prerequisitos explicitos o contexto de grafo entrante/saliente.
+nodo embebido del grafo. Los conteos de vecindario deben derivarse de edges del
+grafo generado, y los resaltados de pagina conectada deben excluir el nodo
+seleccionado. Los conteos del riel Connections deben venir solo de contexto
+explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
+a prerequisitos explicitos o contexto de grafo entrante/saliente.
 
 Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
 teclado por resultados, Enter para abrir, controles de limpiar, sin solicitudes

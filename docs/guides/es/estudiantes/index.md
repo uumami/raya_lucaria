@@ -56,6 +56,9 @@ para ver primero sus enlaces explicitos. El riel de aprendizaje tambien puede
 mostrar un panel Connections con conteos de enlaces que salen de la pagina actual
 y enlaces que apuntan a ella; esos conteos describen relaciones estaticas
 autoradas, no recomendaciones ni progreso personal.
+Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
+resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
+conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y

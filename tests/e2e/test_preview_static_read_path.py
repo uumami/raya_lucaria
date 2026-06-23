@@ -327,13 +327,39 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
                             wait_until="networkidle",
                         )
+                        requested_urls.clear()
                         page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
                         assert "Authoring Matrix Fixture" in page.locator(
                             "[data-raya-graph-detail-title]"
                         ).inner_text()
+                        assert (
+                            "Neighborhood: 4 outgoing link(s), 2 incoming link(s), "
+                            "4 connected page(s)."
+                        ) in page.locator(
+                            "[data-raya-graph-detail-neighborhood]"
+                        ).inner_text()
                         assert page.locator(
                             '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
                         ).evaluate("node => node.classList.contains('is-active')")
+                        assert not page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
+                        ).evaluate("node => node.classList.contains('is-neighbor')")
+                        assert not page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] g'
+                        ).evaluate("node => node.classList.contains('is-neighbor')")
+                        for node_id in (
+                            "render-root",
+                            "math-authoring",
+                            "numbered-objects",
+                            "reader-ux",
+                        ):
+                            assert page.locator(
+                                f'#raya-graph-list [data-raya-graph-node="{node_id}"]'
+                            ).evaluate("node => node.classList.contains('is-neighbor')")
+                            assert page.locator(
+                                f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
+                            ).evaluate("node => node.classList.contains('is-neighbor')")
+                        assert requested_urls == []
                     finally:
                         page.close()
             finally:

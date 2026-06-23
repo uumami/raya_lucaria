@@ -778,6 +778,10 @@ img {
   background: var(--raya-color-success);
   border-color: var(--raya-color-success);
 }
+.raya-graph-legend-neighbor {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 62%, var(--raya-color-success));
+  border-color: var(--raya-color-accent);
+}
 .raya-graph-legend-line {
   background: var(--raya-color-border);
   display: inline-block;
@@ -832,6 +836,14 @@ img {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
 }
+.raya-graph-detail-neighborhood {
+  border-left: 0.22rem solid var(--raya-color-accent);
+  color: var(--raya-color-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0.65rem 0;
+  padding-left: 0.65rem;
+}
 .raya-graph-detail-links {
   display: grid;
   gap: 0.75rem;
@@ -879,6 +891,11 @@ img {
   fill: var(--raya-color-success);
   stroke: var(--raya-color-success);
 }
+.raya-graph-node.is-neighbor circle {
+  fill: color-mix(in srgb, var(--raya-color-accent-soft) 58%, var(--raya-color-success));
+  stroke: var(--raya-color-accent);
+  stroke-width: 3;
+}
 .raya-graph-node.is-match circle {
   stroke-width: 4;
 }
@@ -902,6 +919,11 @@ img {
 .raya-graph-list li.is-active a {
   color: var(--raya-color-success);
   font-weight: 700;
+}
+.raya-graph-list li.is-neighbor a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
 }
 .raya-graph-list li.is-match a {
   text-decoration: underline;
