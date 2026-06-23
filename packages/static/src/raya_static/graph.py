@@ -30,6 +30,7 @@ _GRAPH_JAVASCRIPT = r"""
   const resetView = document.getElementById("graph-reset-view");
   const reset = document.getElementById("graph-reset");
   const graphExpand = document.getElementById("graph-expand");
+  const panelToggles = Array.from(document.querySelectorAll("[data-raya-graph-toggle-panel]"));
   const status = document.getElementById("graph-status");
   const hoverStatus = document.querySelector("[data-raya-graph-hover-status]");
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
@@ -290,6 +291,65 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
+  function focusablePanelElements(body) {
+    if (!body) return [];
+    return Array.from(body.querySelectorAll(
+      "a[href], button, input, select, textarea, summary, [tabindex]"
+    ));
+  }
+
+  function setPanelFocusable(body, enabled) {
+    focusablePanelElements(body).forEach((element) => {
+      if (!enabled) {
+        if (!element.hasAttribute("data-raya-graph-original-tabindex")) {
+          element.setAttribute(
+            "data-raya-graph-original-tabindex",
+            element.hasAttribute("tabindex") ? element.getAttribute("tabindex") : ""
+          );
+        }
+        element.setAttribute("tabindex", "-1");
+        return;
+      }
+      const original = element.getAttribute("data-raya-graph-original-tabindex");
+      if (original === null) return;
+      if (original === "") {
+        element.removeAttribute("tabindex");
+      } else {
+        element.setAttribute("tabindex", original);
+      }
+      element.removeAttribute("data-raya-graph-original-tabindex");
+    });
+  }
+
+  function graphPanelBody(panelName) {
+    return document.querySelector(`[data-raya-graph-panel-body="${panelName}"]`);
+  }
+
+  function graphPanelLabel(panelName) {
+    return panelName === "inspector" ? "inspector" : "list";
+  }
+
+  function setGraphPanelState(panelName, expanded) {
+    const label = graphPanelLabel(panelName);
+    const state = expanded ? "expanded" : "collapsed";
+    const attr = panelName === "inspector"
+      ? "data-raya-graph-inspector-state"
+      : "data-raya-graph-list-state";
+    root.setAttribute(attr, state);
+    root.dataset[panelName === "inspector" ? "rayaGraphInspectorState" : "rayaGraphListState"] = state;
+    const body = graphPanelBody(panelName);
+    if (body) {
+      body.setAttribute("aria-hidden", expanded ? "false" : "true");
+      setPanelFocusable(body, expanded);
+    }
+    panelToggles
+      .filter((button) => button.getAttribute("data-raya-graph-toggle-panel") === panelName)
+      .forEach((button) => {
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+        button.textContent = `${expanded ? "Collapse" : "Expand"} ${label}`;
+      });
+  }
+
   function zoomGraphView(factor) {
     if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
       return;
@@ -541,7 +601,12 @@ _GRAPH_JAVASCRIPT = r"""
     }
     renderList(activeIds);
     if (status) {
-      status.textContent = `${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+      if (query) {
+        const contextCount = Math.max(0, activeNodes.length - matchIds.size);
+        status.textContent = `${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+      } else {
+        status.textContent = `${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+      }
     }
     if (mode === "list") {
       canvas.setAttribute("hidden", "hidden");
@@ -683,6 +748,8 @@ _GRAPH_JAVASCRIPT = r"""
       graphViewBox = null;
       if (hoverStatus) hoverStatus.textContent = "";
       setGraphExpanded(false);
+      setGraphPanelState("list", true);
+      setGraphPanelState("inspector", true);
       renderDetail();
       groupFilters.forEach((button) => {
         button.setAttribute("aria-pressed", "true");
@@ -692,10 +759,22 @@ _GRAPH_JAVASCRIPT = r"""
   }
   if (graphExpand) {
     graphExpand.addEventListener("click", () => {
-      setGraphExpanded(root.dataset.rayaGraphExpanded !== "true");
+      const nextExpanded = root.dataset.rayaGraphExpanded !== "true";
+      setGraphExpanded(nextExpanded);
+      setGraphPanelState("list", !nextExpanded);
       render();
     });
   }
+  panelToggles.forEach((button) => {
+    button.addEventListener("click", () => {
+      const panelName = button.getAttribute("data-raya-graph-toggle-panel") || "";
+      if (!panelName) return;
+      const attr = panelName === "inspector"
+        ? "data-raya-graph-inspector-state"
+        : "data-raya-graph-list-state";
+      setGraphPanelState(panelName, root.getAttribute(attr) === "collapsed");
+    });
+  });
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
   }
@@ -752,6 +831,8 @@ _GRAPH_JAVASCRIPT = r"""
   });
 
   selectedId = initialPageFocus();
+  setGraphPanelState("list", true);
+  setGraphPanelState("inspector", true);
   setGraphExpanded(false);
   renderDetail();
   render();

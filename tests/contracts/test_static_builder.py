@@ -560,6 +560,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "raya-graph-detail" in graph_html
+    assert "raya-graph-workspace" in graph_html
+    assert "raya-graph-map-panel" in graph_html
+    assert "data-raya-graph-list-panel" in graph_html
+    assert "data-raya-graph-inspector-panel" in graph_html
+    assert 'data-raya-graph-toggle-panel="list"' in graph_html
+    assert 'data-raya-graph-toggle-panel="inspector"' in graph_html
     assert "data-raya-graph-detail-empty" in graph_html
     assert "data-raya-graph-detail-panel" in graph_html
     assert "data-raya-graph-detail-title" in graph_html
@@ -645,6 +651,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "zoomGraphView" in graph_script
     assert "resetGraphView" in graph_script
     assert "setGraphViewportControlsEnabled" in graph_script
+    assert "setGraphPanelState" in graph_script
+    assert "data-raya-graph-list-state" in graph_script
+    assert "data-raya-graph-inspector-state" in graph_script
     assert "URLSearchParams" in graph_script
     assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script

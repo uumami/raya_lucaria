@@ -717,6 +717,76 @@ img {
 .raya-practice-header {
   max-width: 72rem;
 }
+.raya-graph-workspace {
+  align-items: stretch;
+  display: grid;
+  gap: var(--raya-space-block);
+  grid-template-columns: minmax(16rem, 22rem) minmax(34rem, 1fr) minmax(18rem, 24rem);
+  margin-top: var(--raya-space-block);
+}
+.raya-graph-list-panel,
+.raya-graph-map-panel,
+.raya-graph-inspector-panel {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: 0.9rem;
+}
+.raya-graph-map-panel {
+  display: flex;
+  flex-direction: column;
+}
+.raya-graph-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.raya-graph-panel-header h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.raya-graph-panel-header button {
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.6rem;
+}
+.raya-graph-panel-body[aria-hidden="true"] {
+  display: none;
+}
+[data-raya-graph-list-state="collapsed"] .raya-graph-workspace {
+  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(34rem, 1fr) minmax(18rem, 24rem);
+}
+[data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace {
+  grid-template-columns: minmax(16rem, 22rem) minmax(34rem, 1fr) minmax(4.5rem, 5.5rem);
+}
+[data-raya-graph-list-state="collapsed"][data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace {
+  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(40rem, 1fr) minmax(4.5rem, 5.5rem);
+}
+[data-raya-graph-list-state="collapsed"] .raya-graph-list-panel,
+[data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+[data-raya-graph-list-state="collapsed"] .raya-graph-list-panel .raya-graph-panel-header,
+[data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel .raya-graph-panel-header {
+  flex-direction: column;
+}
+[data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
+[data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
+  writing-mode: vertical-rl;
+}
+[data-raya-graph-expanded="true"] .raya-graph-workspace {
+  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(40rem, 1fr) minmax(18rem, 24rem);
+}
 .raya-graph-controls,
 .raya-search-controls,
 .raya-practice-controls,
@@ -1047,10 +1117,11 @@ img {
   padding-left: 1.2rem;
 }
 .raya-graph-canvas {
-  background: var(--raya-color-surface);
+  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
   display: block;
+  flex: 1 1 auto;
   min-height: 34rem;
   width: 100%;
 }
@@ -1115,7 +1186,7 @@ img {
   opacity: 0.28;
 }
 .raya-graph-list {
-  columns: 2;
+  columns: 1;
   padding-left: 1.25rem;
 }
 .raya-graph-list li {
@@ -2401,6 +2472,23 @@ mjx-container[display="true"] {
   overflow-x: auto;
   padding: 0.75rem;
   white-space: pre-wrap;
+}
+@media (max-width: 1279px) {
+  .raya-learning-shell {
+    grid-template-areas: "course-map main-article learning-rail";
+    grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);
+  }
+  .raya-graph-workspace,
+  [data-raya-graph-list-state="collapsed"] .raya-graph-workspace,
+  [data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace,
+  [data-raya-graph-list-state="collapsed"][data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace,
+  [data-raya-graph-expanded="true"] .raya-graph-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
+  [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
+    writing-mode: horizontal-tb;
+  }
 }
 @media (max-width: 1099px) {
   .raya-learning-shell {

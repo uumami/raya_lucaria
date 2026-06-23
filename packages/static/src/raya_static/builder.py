@@ -3286,42 +3286,59 @@ def _render_graph_surface(
                 "double-click a graph node or open the detail link to navigate."
                 "</p>"
             ),
+            (
+                '<section class="raya-graph-workspace" '
+                'aria-label="Graph inspection workspace">'
+            ),
+            (
+                '<aside id="raya-graph-list-panel" class="raya-graph-list-panel" '
+                'data-raya-graph-list-panel aria-label="Graph pages">'
+            ),
+            '<div class="raya-graph-panel-header">',
+            "<h2>Pages</h2>",
+            (
+                '<button type="button" data-raya-graph-toggle-panel="list" '
+                'aria-controls="raya-graph-list-panel-body" aria-expanded="true">'
+                "Collapse list</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-graph-list-panel-body" class="raya-graph-panel-body" '
+                'data-raya-graph-panel-body="list" aria-hidden="false">'
+            ),
             '<section class="raya-graph-groups" aria-label="Graph groups">',
             "\n".join(group_buttons),
             "</section>",
-            '<section class="raya-graph-legend" aria-label="Graph legend">',
+            '<ol id="raya-graph-list" class="raya-graph-list">',
+            "\n".join(node_items),
+            "</ol>",
+            "</div>",
+            "</aside>",
+            '<section class="raya-graph-map-panel" aria-label="Course graph map">',
+            '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="node">'
-                '<span class="raya-graph-legend-swatch raya-graph-legend-node"></span>'
-                "Page node"
-                "</span>"
-            ),
-            (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="match">'
-                '<span class="raya-graph-legend-swatch raya-graph-legend-match"></span>'
-                "Search match"
-                "</span>"
-            ),
-            (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="selected">'
-                '<span class="raya-graph-legend-swatch raya-graph-legend-selected"></span>'
-                "Selected page"
-                "</span>"
-            ),
-            (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="neighbor">'
-                '<span class="raya-graph-legend-swatch raya-graph-legend-neighbor"></span>'
-                "Connected page"
-                "</span>"
-            ),
-            (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
-                '<span class="raya-graph-legend-line"></span>'
-                "Explicit source link"
-                "</span>"
+                '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
+                'role="img" aria-label="Course graph"></svg>'
             ),
             "</section>",
-            '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
+            (
+                '<aside id="raya-graph-inspector-panel" '
+                'class="raya-graph-inspector-panel" '
+                'data-raya-graph-inspector-panel aria-label="Graph inspector">'
+            ),
+            '<div class="raya-graph-panel-header">',
+            "<h2>Inspector</h2>",
+            (
+                '<button type="button" data-raya-graph-toggle-panel="inspector" '
+                'aria-controls="raya-graph-inspector-panel-body" aria-expanded="true">'
+                "Collapse inspector</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-graph-inspector-panel-body" '
+                'class="raya-graph-panel-body" '
+                'data-raya-graph-panel-body="inspector" aria-hidden="false">'
+            ),
             (
                 '<p class="raya-graph-hover-status" '
                 'data-raya-graph-hover-status aria-live="polite"></p>'
@@ -3360,6 +3377,38 @@ def _render_graph_surface(
             "</div>",
             "</div>",
             "</section>",
+            '<section class="raya-graph-legend" aria-label="Graph legend">',
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="node">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-node"></span>'
+                "Page node"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="match">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-match"></span>'
+                "Search match"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="selected">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-selected"></span>'
+                "Selected page"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="neighbor">'
+                '<span class="raya-graph-legend-swatch raya-graph-legend-neighbor"></span>'
+                "Connected page"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
+                '<span class="raya-graph-legend-line"></span>'
+                "Explicit source link"
+                "</span>"
+            ),
+            "</section>",
             '<details class="raya-graph-help" data-raya-graph-help>',
             "<summary>Graph controls</summary>",
             (
@@ -3380,13 +3429,9 @@ def _render_graph_surface(
                 "the list and selected-page details remain complete.</p>"
             ),
             "</details>",
-            (
-                '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
-                'role="img" aria-label="Course graph"></svg>'
-            ),
-            '<ol id="raya-graph-list" class="raya-graph-list">',
-            "\n".join(node_items),
-            "</ol>",
+            "</div>",
+            "</aside>",
+            "</section>",
             '<script type="application/json" id="raya-graph-data">',
             graph_payload,
             "</script>",
