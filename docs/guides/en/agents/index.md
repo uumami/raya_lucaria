@@ -104,6 +104,11 @@ Article Page connections counts and links must also come from explicit
 incoming/outgoing content-link graph context only, stay inside the article, and
 avoid source paths, private support paths, external URLs, fetch requests,
 storage calls, progress, mastery, recommendations, and ranking language.
+Page-connection previews in the rail and article must use generated public page
+metadata only: title, summary, status, local page URL, graph-focus URL, and
+explicit incoming/outgoing counts. Verify native disclosure behavior, escaped
+text, no private paths, no browser storage, no fetch, no external requests, and
+no recommendation/progress/mastery wording.
 Treat graph color, size, and inspection text as structural readability cues; do
 not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.

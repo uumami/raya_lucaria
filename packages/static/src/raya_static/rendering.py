@@ -1385,6 +1385,86 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   margin: 0.65rem 0 0;
   padding: 0;
 }
+.raya-connection-preview {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  min-width: 0;
+}
+.raya-connection-preview summary {
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  padding: 0.45rem 0.55rem;
+}
+.raya-connection-preview summary:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
+.raya-connection-preview[open] {
+  border-color: color-mix(in srgb, var(--raya-color-accent) 52%, var(--raya-color-border));
+}
+.raya-connection-preview-body {
+  border-top: 1px solid var(--raya-color-border);
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.6rem;
+}
+.raya-connection-preview-body p {
+  margin: 0;
+}
+.raya-connection-preview-summary {
+  color: var(--raya-color-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.raya-connection-preview-status {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.28rem 0.5rem;
+}
+.raya-connection-preview-counts,
+.raya-connection-preview-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.raya-connection-preview-counts span {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 65%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 38%, var(--raya-color-border));
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  line-height: 1;
+  padding: 0.3rem 0.48rem;
+}
+.raya-connection-preview-open,
+.raya-connection-preview-graph {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.35rem 0.52rem;
+  text-decoration: none;
+}
+.raya-connection-preview-open:focus-visible,
+.raya-connection-preview-graph:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
 .raya-official-practice {
   border-top: 1px solid var(--raya-color-border);
   display: grid;
@@ -1475,11 +1555,8 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   margin-bottom: 0;
 }
 .raya-article-connection-item {
-  align-items: baseline;
   border-top: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
-  display: flex;
-  gap: 0.55rem;
-  justify-content: space-between;
+  display: block;
   min-width: 0;
   padding-top: 0.45rem;
 }

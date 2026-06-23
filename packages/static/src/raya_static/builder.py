@@ -1554,23 +1554,8 @@ def _article_connection_section(
 
 
 def _article_connection_item(page: ContentPage, item: dict[str, str]) -> str:
-    title = item["title"]
-    target_id = item["id"]
-    href = _relative_href(page.output_path, item["url"])
-    graph_href = _href_with_query(
-        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
-        {"page": target_id},
-    )
-    return (
-        '<li class="raya-article-connection-item">'
-        '<span class="raya-article-connection-title">'
-        f'<a href="{html.escape(href)}">{html.escape(title)}</a>'
-        "</span>"
-        f'<a class="raya-article-connection-context" href="{html.escape(graph_href)}" '
-        f'aria-label="View {html.escape(title, quote=True)} in course graph">'
-        "Graph</a>"
-        "</li>"
-    )
+    preview = _connection_preview_item(page, item, "article")
+    return f'<li class="raya-article-connection-item">{preview}</li>'
 
 
 def _relationship_count_label(count: int, plural: str, singular: str) -> str:
@@ -1587,12 +1572,71 @@ def _rail_connection_heading(title: str, count: int) -> str:
 
 
 def _linked_page_item(page: ContentPage, item: dict[str, str]) -> str:
-    return _rail_page_context_item(
-        page,
-        item["id"],
-        item["title"],
-        item["url"],
+    return "<li>" + _connection_preview_item(page, item, "rail") + "</li>"
+
+
+def _connection_preview_item(
+    page: ContentPage,
+    item: dict[str, str],
+    variant: str,
+) -> str:
+    title = item["title"]
+    href = _relative_href(page.output_path, item["url"])
+    graph_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
+        {"page": item["id"]},
     )
+    metadata = _connection_preview_metadata(item)
+    return "\n".join(
+        [
+            (
+                '<details class="raya-connection-preview '
+                f'raya-connection-preview-{html.escape(variant, quote=True)}">'
+            ),
+            f"<summary>{html.escape(title)}</summary>",
+            '<div class="raya-connection-preview-body">',
+            metadata,
+            '<p class="raya-connection-preview-actions">',
+            (
+                f'<a class="raya-connection-preview-open" href="{html.escape(href)}">'
+                "Open page</a>"
+            ),
+            (
+                f'<a class="raya-connection-preview-graph" href="{html.escape(graph_href)}" '
+                f'aria-label="View {html.escape(title, quote=True)} in course graph">'
+                "Graph</a>"
+            ),
+            "</p>",
+            "</div>",
+            "</details>",
+        ]
+    )
+
+
+def _connection_preview_metadata(item: dict[str, str]) -> str:
+    parts: list[str] = []
+    summary = item.get("summary", "")
+    status = item.get("status", "")
+    if summary:
+        parts.append(
+            f'<p class="raya-connection-preview-summary">{html.escape(summary)}</p>'
+        )
+    if status:
+        parts.append(
+            '<p><span class="raya-connection-preview-status">'
+            f"{html.escape(status)}</span></p>"
+        )
+    outgoing_count = int(item.get("outgoing_count", "0"))
+    incoming_count = int(item.get("incoming_count", "0"))
+    parts.append(
+        '<p class="raya-connection-preview-counts">'
+        f"<span><strong>{outgoing_count}</strong> "
+        f"{_relationship_count_label(outgoing_count, 'from this page', 'from this page')}</span>"
+        f"<span><strong>{incoming_count}</strong> "
+        f"{_relationship_count_label(incoming_count, 'links here', 'link here')}</span>"
+        "</p>"
+    )
+    return "\n".join(parts)
 
 
 def _rail_page_context_item(
@@ -2283,7 +2327,10 @@ def _graph_context_by_page(
     context: dict[str, dict[str, list[dict[str, str]]]] = {
         page.id: {"outgoing": [], "incoming": []} for page in content_model.pages
     }
+    outgoing_counts = {page.id: 0 for page in content_model.pages}
+    incoming_counts = {page.id: 0 for page in content_model.pages}
     seen: set[tuple[str, str, str]] = set()
+    content_edges: list[tuple[ContentPage, ContentPage, str]] = []
     for edge in graph_index["edges"]:
         if edge["kind"] != "content":
             continue
@@ -2295,23 +2342,45 @@ def _graph_context_by_page(
         if key in seen:
             continue
         seen.add(key)
-        context[source.id]["outgoing"].append(
-            {
-                "id": target.id,
-                "title": target.nav_title or target.title,
-                "url": target.output_path,
-                "kind": edge["kind"],
-            }
+        content_edges.append((source, target, edge["kind"]))
+        outgoing_counts[source.id] += 1
+        incoming_counts[target.id] += 1
+    for source, target, kind in content_edges:
+        target_context = _public_graph_page_context(
+            target,
+            outgoing_count=outgoing_counts[target.id],
+            incoming_count=incoming_counts[target.id],
         )
-        context[target.id]["incoming"].append(
-            {
-                "id": source.id,
-                "title": source.nav_title or source.title,
-                "url": source.output_path,
-                "kind": edge["kind"],
-            }
+        target_context["kind"] = kind
+        context[source.id]["outgoing"].append(target_context)
+        source_context = _public_graph_page_context(
+            source,
+            outgoing_count=outgoing_counts[source.id],
+            incoming_count=incoming_counts[source.id],
         )
+        source_context["kind"] = kind
+        context[target.id]["incoming"].append(source_context)
     return context
+
+
+def _public_graph_page_context(
+    page: ContentPage,
+    *,
+    outgoing_count: int,
+    incoming_count: int,
+) -> dict[str, str]:
+    data = {
+        "id": page.id,
+        "title": page.nav_title or page.title,
+        "url": page.output_path,
+        "outgoing_count": str(outgoing_count),
+        "incoming_count": str(incoming_count),
+    }
+    if page.summary:
+        data["summary"] = page.summary
+    if page.status:
+        data["status"] = page.status
+    return data
 
 
 def _graph_group_by_page(content_model: ContentModel) -> dict[str, str]:

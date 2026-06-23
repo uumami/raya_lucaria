@@ -115,8 +115,15 @@ Los conteos y enlaces de Page connections del articulo tambien deben venir solo
 de contexto explicito del grafo de enlaces de contenido entrantes/salientes,
 permanecer dentro del articulo y evitar rutas de fuente, rutas privadas de
 soporte, URLs externas, requests fetch, llamadas a storage, progreso, dominio,
-recomendaciones y lenguaje de ranking. Trata color, tamano y texto de
-inspeccion del grafo como pistas de legibilidad estructural;
+recomendaciones y lenguaje de ranking.
+Las vistas previas de Page connections en el riel y el articulo deben usar solo
+metadatos publicos generados de pagina: titulo, resumen, estado, URL local de
+la pagina, URL de foco en grafo y conteos explicitos entrantes/salientes.
+Verifica comportamiento de controles nativos de despliegue, texto escapado, sin
+rutas privadas, sin almacenamiento del navegador, sin fetch, sin solicitudes
+externas y sin lenguaje de recomendacion, avance o maestria.
+Trata color, tamano y texto de inspeccion del grafo como pistas de legibilidad
+estructural;
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente
 del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.

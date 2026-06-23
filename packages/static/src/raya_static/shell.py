@@ -71,7 +71,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function setFocusableDescendantsEnabled(container, enabled) {
     container
-      .querySelectorAll("a[href], button, input, select, textarea, [tabindex]")
+      .querySelectorAll("a[href], button, input, select, textarea, summary, [tabindex]")
       .forEach((element) => {
         if (enabled) {
           if (element.dataset.rayaPreviousTabindex === "__none__") {

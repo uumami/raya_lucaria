@@ -2335,11 +2335,11 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                     link_panel = page.locator(".raya-page-prerequisites").first
                     collapsed = link_panel.evaluate(
                         """(panel) => {
-                          const body = panel.querySelector('.raya-rail-panel-body');
-                          const link = body?.querySelector('a');
-                          link?.focus();
-                          return {
-                            state: panel.dataset.rayaRailPanelState,
+                      const body = panel.querySelector('.raya-rail-panel-body');
+                      const link = body?.querySelector('a');
+                      link?.focus();
+                      return {
+                        state: panel.dataset.rayaRailPanelState,
                             expanded: panel.querySelector('[data-raya-rail-toggle]')
                               ?.getAttribute('aria-expanded'),
                             ariaHidden: body?.getAttribute('aria-hidden'),
@@ -2347,8 +2347,8 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                             bodyHeight: body?.getBoundingClientRect().height,
                             hasLink: !!link,
                             linkTabIndex: link?.getAttribute('tabindex'),
-                          };
-                        }"""
+                      };
+                    }"""
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["expanded"] == "false"
@@ -2366,10 +2366,10 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                     )
                     expanded = link_panel.evaluate(
                         """(panel) => {
-                          const body = panel.querySelector('.raya-rail-panel-body');
-                          const link = body?.querySelector('a');
-                          link?.focus();
-                          return {
+                      const body = panel.querySelector('.raya-rail-panel-body');
+                      const link = body?.querySelector('a');
+                      link?.focus();
+                      return {
                             state: panel.dataset.rayaRailPanelState,
                             expanded: panel.querySelector('[data-raya-rail-toggle]')
                               ?.getAttribute('aria-expanded'),
@@ -2666,6 +2666,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                         """(panel) => {
                           const body = panel.querySelector('.raya-rail-panel-body');
                           const link = body?.querySelector('a');
+                          const summary = body?.querySelector('summary');
                           link?.focus();
                           return {
                             state: panel.dataset.rayaRailPanelState,
@@ -2676,6 +2677,8 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                             bodyHeight: body?.getBoundingClientRect().height,
                             hasLink: !!link,
                             linkTabIndex: link?.getAttribute('tabindex'),
+                            hasSummary: !!summary,
+                            summaryTabIndex: summary?.getAttribute('tabindex'),
                           };
                         }"""
                     )
@@ -2686,6 +2689,8 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert collapsed["bodyHeight"] < 2
                     assert collapsed["hasLink"] is True
                     assert collapsed["linkTabIndex"] == "-1"
+                    assert collapsed["hasSummary"] is True
+                    assert collapsed["summaryTabIndex"] == "-1"
 
                     panel.locator("[data-raya-rail-toggle]").click()
                     page.wait_for_function(
@@ -2697,6 +2702,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                         """(panel) => {
                           const body = panel.querySelector('.raya-rail-panel-body');
                           const link = body?.querySelector('a');
+                          const summary = body?.querySelector('summary');
                           link?.focus();
                           return {
                             state: panel.dataset.rayaRailPanelState,
@@ -2706,6 +2712,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                             inert: body?.inert,
                             bodyHeight: body?.getBoundingClientRect().height,
                             linkTabIndex: link?.getAttribute('tabindex'),
+                            summaryTabIndex: summary?.getAttribute('tabindex'),
                             text: panel.innerText,
                             summaryLabels: Array
                               .from(panel.querySelectorAll('.raya-rail-connection-summary span'))
@@ -2721,6 +2728,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert expanded["ariaHidden"] == "false"
                     assert expanded["inert"] in {False, None}
                     assert expanded["linkTabIndex"] is None
+                    assert expanded["summaryTabIndex"] is None
                     assert "Connections" in expanded["text"]
                     assert expanded["summaryLabels"] == [
                         "3 from this page",
@@ -2729,8 +2737,12 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert expanded["counts"] == ["3", "1"]
                     assert "From this page" in expanded["text"]
                     assert "Links here" in expanded["text"]
+                    panel.locator(
+                        ".raya-connection-preview-rail summary",
+                        has_text="Reader UX Fixture",
+                    ).click()
                     graph_link = panel.locator(
-                        '.raya-rail-context-link[href="../_raya/graph/index.html?page=reader-ux"]'
+                        '.raya-connection-preview-graph[href="../_raya/graph/index.html?page=reader-ux"]'
                     )
                     graph_href = graph_link.evaluate("node => node.href")
                     with page.expect_navigation():
@@ -2840,6 +2852,44 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                         assert "mastery" not in state["text"].lower()
                         assert state["localStorageKeys"] == []
                         assert state["sessionStorageKeys"] == []
+                        preview = block.locator(
+                            ".raya-connection-preview-article summary",
+                            has_text="Math Authoring Fixture",
+                        ).first
+                        preview.click()
+                        preview_state = block.evaluate(
+                            """(block) => {
+                              const details = Array
+                                .from(block.querySelectorAll('.raya-connection-preview-article'))
+                                .find((node) => node.querySelector('summary')?.innerText.includes('Math Authoring Fixture'));
+                              return {
+                                open: details?.open,
+                                text: details?.innerText,
+                                normalizedText: details?.innerText.replace(/\\s+/g, ' ').trim(),
+                                openHref: details?.querySelector('.raya-connection-preview-open')?.getAttribute('href'),
+                                graphHref: details?.querySelector('.raya-connection-preview-graph')?.getAttribute('href'),
+                                localStorageKeys: Object.keys(localStorage),
+                                sessionStorageKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                        assert preview_state["open"] is True
+                        assert (
+                            "Fixture page for current build-time MathJax authoring patterns."
+                            in preview_state["text"]
+                        )
+                        assert "1 from this page" in preview_state["normalizedText"]
+                        assert "2 links here" in preview_state["normalizedText"]
+                        assert preview_state["openHref"] == "../math-authoring/index.html"
+                        assert (
+                            preview_state["graphHref"]
+                            == "../_raya/graph/index.html?page=math-authoring"
+                        )
+                        assert "recommend" not in preview_state["text"].lower()
+                        assert "progress" not in preview_state["text"].lower()
+                        assert "mastery" not in preview_state["text"].lower()
+                        assert preview_state["localStorageKeys"] == []
+                        assert preview_state["sessionStorageKeys"] == []
                         assert requested_urls == []
                     finally:
                         page.close()

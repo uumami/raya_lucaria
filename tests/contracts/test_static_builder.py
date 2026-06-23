@@ -2573,6 +2573,20 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Links here" in connections_panel
     assert 'href="../math-authoring/index.html"' in connections_panel
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
+    assert 'class="raya-connection-preview raya-connection-preview-rail"' in connections_panel
+    assert "<summary>Reader UX Fixture</summary>" in connections_panel
+    assert "Reader UX fixture for course-shell navigation" in connections_panel
+    assert '<span class="raya-connection-preview-status">ready</span>' in connections_panel
+    assert '<span><strong>1</strong> from this page</span>' in connections_panel
+    assert '<span><strong>2</strong> links here</span>' in connections_panel
+    assert (
+        'class="raya-connection-preview-open" href="../reader-ux/index.html"'
+        in connections_panel
+    )
+    assert (
+        'class="raya-connection-preview-graph" '
+        'href="../_raya/graph/index.html?page=reader-ux"'
+    ) in connections_panel
     assert "recommend" not in connections_panel.lower()
     assert "progress" not in connections_panel.lower()
     article_connections = _article_connections_html(last_html)
@@ -2591,6 +2605,29 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Links here" in article_connections
     assert 'href="../math-authoring/index.html"' in article_connections
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in article_connections
+    assert (
+        'class="raya-connection-preview raya-connection-preview-article"'
+        in article_connections
+    )
+    assert "<summary>Math Authoring Fixture</summary>" in article_connections
+    assert (
+        "Fixture page for current build-time MathJax authoring patterns."
+        in article_connections
+    )
+    assert (
+        '<span class="raya-connection-preview-status">ready</span>'
+        in article_connections
+    )
+    assert '<span><strong>1</strong> from this page</span>' in article_connections
+    assert '<span><strong>2</strong> links here</span>' in article_connections
+    assert (
+        'class="raya-connection-preview-open" href="../math-authoring/index.html"'
+        in article_connections
+    )
+    assert (
+        'class="raya-connection-preview-graph" '
+        'href="../_raya/graph/index.html?page=math-authoring"'
+    ) in article_connections
     assert (
         'class="raya-article-connections-graph" '
         'href="../_raya/graph/index.html?page=authoring-matrix"'
@@ -2634,6 +2671,40 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert root_html.index('<aside id="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
+
+
+def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+    math_page = course / "course" / "2_math_authoring" / "0_index.md"
+    original = math_page.read_text(encoding="utf-8")
+    math_page.write_text(
+        original.replace(
+            "title: Math Authoring Fixture\n"
+            "summary: Fixture page for current build-time MathJax authoring patterns.\n"
+            "status: ready\n",
+            "title: \"<script>Title</script>\"\n"
+            "summary: \"<img src=x onerror=alert(1)>\"\n"
+            "status: ready\n",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (
+        course / "artifact" / "site" / "authoring-matrix" / "index.html"
+    ).read_text(encoding="utf-8")
+    article_connections = _article_connections_html(html)
+    assert "&lt;script&gt;Title&lt;/script&gt;" in article_connections
+    assert "&lt;img src=x onerror=alert(1)&gt;" in article_connections
+    assert "<script>Title</script>" not in article_connections
+    assert "<img src=x onerror=alert(1)>" not in article_connections
+    assert '<span class="raya-connection-preview-status">ready</span>' in article_connections
+    assert 'href="../math-authoring/index.html"' in article_connections
+    assert 'href="../_raya/graph/index.html?page=math-authoring"' in article_connections
+    assert "fetch(" not in article_connections
+    assert "localStorage" not in article_connections
 
 
 def test_static_builder_renders_collapsible_shell_controls_and_page_position(
@@ -2865,15 +2936,14 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     assert 'href="../numbered-objects/index.html"' in panel
     assert 'href="../reader-ux/index.html"' in panel
     assert 'href="../index.html"' in panel
-    assert 'class="raya-rail-link-row"' in panel
-    assert 'class="raya-rail-context-link"' in panel
+    assert 'class="raya-connection-preview raya-connection-preview-rail"' in panel
+    assert 'class="raya-connection-preview-open"' in panel
+    assert 'class="raya-connection-preview-graph"' in panel
     assert 'href="../_raya/graph/index.html?page=numbered-objects"' in panel
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in panel
-    assert "navigation" not in visible
     assert "parent" not in visible
     assert "prerequisite" not in visible
     assert "recommended" not in visible
-    assert "practice" not in visible
     assert "progress" not in visible
     assert "mastery" not in visible
 
