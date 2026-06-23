@@ -50,14 +50,16 @@ Para checks de autoria de math, usa `examples/courses/render-fixture/course/2_ma
 Cuando un problema de rendering cruce math, objetos numerados, skins, referencias, entornos estaticos y assets locales, inspecciona primero `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md`, despues pasa a la pagina fixture especializada de la superficie que falla.
 
 Para la estructura del curso basada en ciencia del aprendizaje, conserva
-restricciones de fuente y autoridad actual del artifact. El riel derecho puede
+restricciones de fuente y autoridad actual del artifact. El articulo principal
+puede terminar con un bloque Page connections generado desde contexto explicito
+del grafo de enlaces de contenido entrantes y salientes. El riel derecho puede
 renderizar contenidos de pagina actuales, metadata normalizada, prerrequisitos
 por ID estable, enlaces anterior/siguiente, resumenes estaticos de Connections
-para contexto explicito de grafo entrante y saliente, y enlaces de foco en grafo para
-esas relaciones explicitas. Mantiene el limite: sin metas inferidas, sin practica
-relacionada falsa, sin progreso personal y sin MathJax en el browser. Usa checks
-render-debug cuando puedan fallar layout de la estructura del curso, recursos
-locales, capturas, overflow o math visible.
+para contexto explicito de grafo entrante y saliente, y enlaces de foco en grafo
+para esas relaciones explicitas. Mantiene el limite: sin metas inferidas, sin
+practica relacionada falsa, sin progreso personal y sin MathJax en el browser.
+Usa checks render-debug cuando puedan fallar layout de la estructura del curso,
+recursos locales, capturas, overflow o math visible.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
@@ -90,8 +92,13 @@ del grafo. Los conteos de vecindario deben derivarse de edges del grafo
 generado, y los resaltados de pagina conectada deben excluir el nodo
 seleccionado. Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
-a prerequisitos explicitos o contexto de grafo entrante/saliente. Trata color,
-tamano y texto de inspeccion del grafo como pistas de legibilidad estructural;
+a prerequisitos explicitos o contexto de grafo entrante/saliente.
+Los conteos y enlaces de Page connections del articulo tambien deben venir solo
+de contexto explicito del grafo de enlaces de contenido entrantes/salientes,
+permanecer dentro del articulo y evitar rutas de fuente, rutas privadas de
+soporte, URLs externas, requests fetch, llamadas a storage, progreso, dominio,
+recomendaciones y lenguaje de ranking. Trata color, tamano y texto de
+inspeccion del grafo como pistas de legibilidad estructural;
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente
 del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.

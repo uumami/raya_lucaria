@@ -54,6 +54,11 @@ focus that page so you can see its explicit links first. The learning rail may
 also show a Connections panel with counts for links from the current page and
 links into it; those counts describe authored static relationships, not
 recommendations or personal progress.
+Some pages may also end with a Page connections block inside the article. It
+uses the same static relationship data to show pages linked from the lesson,
+pages that link back to it, and an Open in course graph link. Use it as a
+reading map after finishing the page; it is not a progress tracker or a
+recommendation engine.
 Search and Graph pages use the same static discovery bar so you can return to
 the course, switch between those two workspaces, and keep Text size or
 OpenDyslexic available. Those controls are for reading comfort; Search and Graph

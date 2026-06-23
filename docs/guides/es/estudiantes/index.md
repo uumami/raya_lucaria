@@ -59,6 +59,11 @@ para ver primero sus enlaces explicitos. El riel de aprendizaje tambien puede
 mostrar un panel Connections con conteos de enlaces que salen de la pagina actual
 y enlaces que apuntan a ella; esos conteos describen relaciones estaticas
 autoradas, no recomendaciones ni progreso personal.
+Algunas paginas tambien pueden terminar con un bloque Page connections dentro
+del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
+enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace
+Open in course graph. Usalo como mapa de lectura despues de terminar la pagina;
+no es un tracker de progreso ni un motor de recomendaciones.
 Las paginas Search y Graph usan la misma barra estatica de descubrimiento para
 volver al curso, cambiar entre esos dos workspaces y mantener disponibles Text
 size u OpenDyslexic. Esos controles son de comodidad de lectura; Search y Graph

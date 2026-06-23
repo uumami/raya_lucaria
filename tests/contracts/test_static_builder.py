@@ -78,6 +78,8 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     }
     assert manifest["data"]["numbered_objects"] == "data/numbered-objects.json"
     assert manifest["data"]["graph"] == "data/graph.json"
+    index_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'class="raya-article-connections"' not in index_html
 
 
 def test_build_applies_course_skin_to_pages_and_writes_skin_css(
@@ -86,8 +88,7 @@ def test_build_applies_course_skin_to_pages_and_writes_skin_css(
     course = _copy_minimal(tmp_path)
     config = course / "raya.yaml"
     config.write_text(
-        config.read_text(encoding="utf-8")
-        + "\nrender:\n  skin: warm-academic\n",
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: warm-academic\n",
         encoding="utf-8",
     )
     skins_dir = course / "skins"
@@ -134,8 +135,7 @@ def test_build_applies_nearest_section_skin_to_descendant_pages(
     course = _copy_minimal(tmp_path)
     config = course / "raya.yaml"
     config.write_text(
-        config.read_text(encoding="utf-8")
-        + "\nrender:\n  skin: warm-academic\n",
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: warm-academic\n",
         encoding="utf-8",
     )
     _write_test_skin(course / "skins" / "warm-academic.yaml", "warm-academic")
@@ -144,9 +144,7 @@ def test_build_applies_nearest_section_skin_to_descendant_pages(
     selector = course / "course" / "1_unit" / "_raya" / "skin.yaml"
     selector.parent.mkdir(parents=True)
     selector.write_text("render:\n  skin: practice-lab\n", encoding="utf-8")
-    topic_selector = (
-        course / "course" / "1_unit" / "1_topic" / "_raya" / "skin.yaml"
-    )
+    topic_selector = course / "course" / "1_unit" / "1_topic" / "_raya" / "skin.yaml"
     topic_selector.parent.mkdir(parents=True)
     topic_selector.write_text("render:\n  skin: topic-lab\n", encoding="utf-8")
 
@@ -171,8 +169,7 @@ def test_build_fails_for_unknown_course_skin(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     config = course / "raya.yaml"
     config.write_text(
-        config.read_text(encoding="utf-8")
-        + "\nrender:\n  skin: missing-skin\n",
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: missing-skin\n",
         encoding="utf-8",
     )
 
@@ -205,8 +202,7 @@ def test_build_fails_for_invalid_skin_color(tmp_path: Path) -> None:
 
     assert not report.ok
     assert any(
-        "tokens.color.page" in diagnostic.format()
-        for diagnostic in report.diagnostics
+        "tokens.color.page" in diagnostic.format() for diagnostic in report.diagnostics
     )
 
 
@@ -223,8 +219,7 @@ def test_build_fails_for_section_skin_selector_without_section_index(
 
     assert not report.ok
     assert any(
-        "_raya/skin.yaml must live beside a section 0_index.md"
-        in diagnostic.format()
+        "_raya/skin.yaml must live beside a section 0_index.md" in diagnostic.format()
         for diagnostic in report.diagnostics
     )
 
@@ -376,8 +371,13 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Graph workspace" in graph_html
     assert 'href="../search/index.html"' in graph_html
     assert '<span class="raya-command-label">Search</span>' in graph_html
-    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in graph_html
-    assert '<button class="raya-command raya-command-font raya-font-toggle"' in graph_html
+    assert (
+        '<button class="raya-command raya-command-size raya-text-size-toggle"'
+        in graph_html
+    )
+    assert (
+        '<button class="raya-command raya-command-font raya-font-toggle"' in graph_html
+    )
     assert "shell.js" not in graph_html
     assert "localStorage" not in graph_html
     assert '<script type="application/json" id="raya-graph-data">' in graph_html
@@ -402,7 +402,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="selected"' in graph_html
     assert 'data-raya-graph-legend="neighbor"' in graph_html
     assert "Connected page" in graph_html
-    assert 'data-raya-graph-help' in graph_html
+    assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "raya-graph-detail" in graph_html
     assert "data-raya-graph-detail-empty" in graph_html
@@ -478,14 +478,22 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
 
     assert search_page.exists()
     assert search_js.exists()
-    assert 'href="_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"' in index_html
+    assert (
+        'href="_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"'
+        in index_html
+    )
     assert 'data-raya-surface="search"' in search_html
     assert "raya-discovery-command-bar" in search_html
     assert "Search workspace" in search_html
     assert 'href="../graph/index.html"' in search_html
     assert '<span class="raya-command-label">Graph</span>' in search_html
-    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in search_html
-    assert '<button class="raya-command raya-command-font raya-font-toggle"' in search_html
+    assert (
+        '<button class="raya-command raya-command-size raya-text-size-toggle"'
+        in search_html
+    )
+    assert (
+        '<button class="raya-command raya-command-font raya-font-toggle"' in search_html
+    )
     assert "shell.js" not in search_html
     assert "localStorage" not in search_html
     assert (
@@ -650,7 +658,7 @@ def test_build_collects_numbered_objects_with_page_hierarchy(tmp_path: Path) -> 
         "status: ready\n"
         "---\n"
         "# Vector Norms\n\n"
-        "::: theorem {#main title=\"Main theorem\"}\n"
+        '::: theorem {#main title="Main theorem"}\n'
         "Main theorem body.\n"
         ":::\n\n"
         "::: corollary {#consequence}\n"
@@ -756,8 +764,7 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     shutil.rmtree(course / "course" / "1_unit")
     home = course / "course" / "0_index.md"
     home.write_text(
-        home.read_text(encoding="utf-8")
-        + "\n\n"
+        home.read_text(encoding="utf-8") + "\n\n"
         "Use @pythagorean and a [named theorem](raya:ref/pythagorean).\n",
         encoding="utf-8",
     )
@@ -771,7 +778,7 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
         "status: ready\n"
         "---\n"
         "# Math\n\n"
-        "::: theorem {#pythagorean title=\"Pythagorean theorem\"}\n"
+        '::: theorem {#pythagorean title="Pythagorean theorem"}\n'
         "For a right triangle, $a^2 + b^2 = c^2$.\n"
         ":::\n",
         encoding="utf-8",
@@ -795,8 +802,7 @@ def test_numbered_objects_render_html_and_cross_references(tmp_path: Path) -> No
     assert 'id="raya-object-pythagorean"' in math_html
     assert (
         'class="raya-numbered-object raya-numbered-object--scannable '
-        'raya-numbered-object--theorem"'
-        in math_html
+        'raya-numbered-object--theorem"' in math_html
     )
     assert 'class="raya-numbered-object-layout"' in math_html
     assert 'class="raya-numbered-object-badge" aria-hidden="true"' in math_html
@@ -820,10 +826,10 @@ def test_numbered_objects_default_scannable_keeps_caption_and_equation_styles(
         "status: ready\n"
         "---\n"
         "# Style Demo\n\n"
-        "::: remark {#reader-remark title=\"Reader note\"}\n"
+        '::: remark {#reader-remark title="Reader note"}\n'
         "A remark should use the scannable reader style.\n"
         ":::\n\n"
-        "::: figure {#reader-figure title=\"Reader figure\"}\n"
+        '::: figure {#reader-figure title="Reader figure"}\n'
         "![Figure asset](_assets/style-demo.txt)\n"
         ":::\n\n"
         "::: equation {#reader-equation}\n"
@@ -851,10 +857,10 @@ def test_numbered_objects_default_scannable_keeps_caption_and_equation_styles(
     assert by_id["reader-figure"]["style"] == "caption"
     assert by_id["reader-equation"]["style"] == "equation"
     assert "Remark 1" in _visible_text(html)
-    assert 'raya-numbered-object--remark' in html
-    assert 'raya-numbered-object--scannable' in html
-    assert 'raya-numbered-object--caption' in html
-    assert 'raya-numbered-object--equation' in html
+    assert "raya-numbered-object--remark" in html
+    assert "raya-numbered-object--scannable" in html
+    assert "raya-numbered-object--caption" in html
+    assert "raya-numbered-object--equation" in html
 
 
 def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
@@ -938,16 +944,16 @@ def test_static_environments_render_targeted_headings_and_stay_out_of_numbered_i
         "status: ready\n"
         "---\n"
         "# Static Environments\n\n"
-        "::: problem {#residual-problem title=\"Residual check\"}\n"
+        '::: problem {#residual-problem title="Residual check"}\n'
         "Find the residual.\n"
         ":::\n\n"
-        "::: hint {#hint-residual of=\"residual-problem\"}\n"
+        '::: hint {#hint-residual of="residual-problem"}\n'
         "Use @residual-problem and compute $v-p$.\n"
         ":::\n\n"
-        "::: solution {#solution-residual of=\"residual-problem\" title=\"Worked residual\"}\n"
+        '::: solution {#solution-residual of="residual-problem" title="Worked residual"}\n'
         "$$v-p=\\begin{bmatrix}0\\\\3\\end{bmatrix}.$$\n"
         ":::\n\n"
-        "::: answer {#answer-residual of=\"residual-problem\"}\n"
+        '::: answer {#answer-residual of="residual-problem"}\n'
         "The residual is orthogonal to $u$.\n"
         ":::\n\n"
         "::: hint\n"
@@ -986,7 +992,7 @@ def test_static_environments_render_targeted_headings_and_stay_out_of_numbered_i
         'class="raya-static-environment raya-static-environment--answer">'
     ) in html
     assert '<summary class="raya-static-environment-heading">' in html
-    assert '<details open' not in html
+    assert "<details open" not in html
     assert 'id="raya-static-environment-hint-residual" open' not in html
     assert "raya-static-environment--hint" in html
     assert "raya-static-environment--solution" in html
@@ -1004,7 +1010,7 @@ def test_static_environment_rejects_unknown_target(tmp_path: Path) -> None:
     page.write_text(
         "---\nid: bad-static-target\ntitle: Bad Static Target\n---\n"
         "# Bad Static Target\n\n"
-        "::: solution {of=\"missing-problem\"}\nNo target.\n:::\n",
+        '::: solution {of="missing-problem"}\nNo target.\n:::\n',
         encoding="utf-8",
     )
 
@@ -1017,7 +1023,10 @@ def test_static_environment_rejects_unknown_target(tmp_path: Path) -> None:
         if item.message == "Unknown solution target 'missing-problem'"
     )
     assert diagnostic.field == "line:3"
-    assert diagnostic.next_action == 'Use of="object-id" with an existing numbered object ID'
+    assert (
+        diagnostic.next_action
+        == 'Use of="object-id" with an existing numbered object ID'
+    )
 
 
 def test_static_environment_ids_cannot_collide_with_numbered_objects(
@@ -1078,7 +1087,7 @@ def test_build_rejects_unknown_proof_target(tmp_path: Path) -> None:
         "status: ready\n"
         "---\n\n"
         "# Proof Demo\n\n"
-        "::: proof {of=\"missing-theorem\"}\n"
+        '::: proof {of="missing-theorem"}\n'
         "No target.\n"
         ":::\n",
         encoding="utf-8",
@@ -1152,7 +1161,10 @@ def test_build_reports_malformed_numbered_object_attrs_before_body_directives(
     assert diagnostic.message == "Numbered object directive attributes must use braces"
     assert diagnostic.path == page.resolve()
     assert diagnostic.field == "line:2"
-    assert diagnostic.next_action == 'Use attributes such as {#object-id title="Optional title"}'
+    assert (
+        diagnostic.next_action
+        == 'Use attributes such as {#object-id title="Optional title"}'
+    )
 
 
 def test_build_rejects_duplicate_proof_ids(tmp_path: Path) -> None:
@@ -1183,8 +1195,7 @@ def test_build_rejects_duplicate_proof_ids(tmp_path: Path) -> None:
     assert diagnostic.path == page
     assert diagnostic.field == "line:8"
     assert (
-        diagnostic.next_action
-        == f"Use a unique proof ID; first seen in {page} line:4"
+        diagnostic.next_action == f"Use a unique proof ID; first seen in {page} line:4"
     )
 
 
@@ -1195,8 +1206,7 @@ def test_shorthand_reference_escapes_configured_label_markdown(
     shutil.rmtree(course / "course" / "1_unit")
     config = course / "raya.yaml"
     config.write_text(
-        config.read_text(encoding="utf-8")
-        + "\n"
+        config.read_text(encoding="utf-8") + "\n"
         "render:\n"
         "  numbered_objects:\n"
         "    sequences:\n"
@@ -1224,7 +1234,7 @@ def test_shorthand_reference_escapes_configured_label_markdown(
         "status: ready\n"
         "---\n"
         "# Math\n\n"
-        "::: bracketed {#bracketed-result title=\"Bracketed result\"}\n"
+        '::: bracketed {#bracketed-result title="Bracketed result"}\n'
         "Body.\n"
         ":::\n",
         encoding="utf-8",
@@ -1245,12 +1255,11 @@ def test_adjacent_numbered_objects_render_as_separate_sections(tmp_path: Path) -
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
-        "::: theorem {#first-adjacent title=\"First adjacent theorem\"}\n"
+        index.read_text(encoding="utf-8") + "\n\n"
+        '::: theorem {#first-adjacent title="First adjacent theorem"}\n'
         "First body.\n"
         ":::\n"
-        "::: theorem {#second-adjacent title=\"Second adjacent theorem\"}\n"
+        '::: theorem {#second-adjacent title="Second adjacent theorem"}\n'
         "Second body.\n"
         ":::\n",
         encoding="utf-8",
@@ -1279,8 +1288,7 @@ def test_build_rejects_invalid_numbered_object_id(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "::: theorem {#bad/id}\n"
         "Invalid ID body.\n"
         ":::\n",
@@ -1306,8 +1314,7 @@ def test_build_rejects_unknown_explicit_numbered_object_reference(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "See [missing theorem](raya:ref/missing-theorem).\n",
         encoding="utf-8",
     )
@@ -1331,8 +1338,7 @@ def test_fenced_directive_text_does_not_create_numbered_object(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "```markdown\n"
         "::: theorem {#sample}\n"
         "Code sample body.\n"
@@ -1364,8 +1370,7 @@ def test_list_item_fenced_directive_text_does_not_create_numbered_object(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "- ```markdown\n"
         "  ::: theorem {#list-phantom}\n"
         "  Body.\n"
@@ -1396,8 +1401,7 @@ def test_fenced_directive_after_nonclosing_backticks_stays_code(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "```markdown\n"
         "```not a commonmark close\n"
         "::: theorem {#phantom}\n"
@@ -1432,10 +1436,9 @@ def test_invalid_backtick_fence_opener_does_not_hide_numbered_directive(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "``` info `bad`\n"
-        "::: theorem {#still-real title=\"Still real\"}\n"
+        '::: theorem {#still-real title="Still real"}\n'
         "Still real body.\n"
         ":::\n",
         encoding="utf-8",
@@ -1462,8 +1465,7 @@ def test_authored_numbered_object_placeholder_prefix_is_rejected(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "RAYA_NUMBERED_OBJECT_0\n\n"
         "::: theorem {#real-placeholder-test}\n"
         "Real object body.\n"
@@ -1490,8 +1492,7 @@ def test_numbered_object_body_placeholder_prefix_is_rejected(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "::: theorem {#body-placeholder-test}\n"
         "RAYA_NUMBERED_OBJECT_0\n"
         ":::\n",
@@ -1516,8 +1517,7 @@ def test_explicit_reference_to_fenced_directive_text_fails(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "```markdown\n"
         "::: theorem {#sample}\n"
         "Code sample body.\n"
@@ -1638,8 +1638,7 @@ def test_build_rejects_duplicate_numbered_object_ids_across_pages(
     course = _copy_minimal(tmp_path)
     first = course / "course" / "1_unit" / "0_index.md"
     first.write_text(
-        first.read_text(encoding="utf-8")
-        + "\n\n"
+        first.read_text(encoding="utf-8") + "\n\n"
         "::: theorem {#reused}\n"
         "First body.\n"
         ":::\n",
@@ -1647,8 +1646,7 @@ def test_build_rejects_duplicate_numbered_object_ids_across_pages(
     )
     second = course / "course" / "1_unit" / "1_topic" / "0_index.md"
     second.write_text(
-        second.read_text(encoding="utf-8")
-        + "\n\n"
+        second.read_text(encoding="utf-8") + "\n\n"
         "::: exercise {#reused}\n"
         "Second body.\n"
         ":::\n",
@@ -1675,8 +1673,7 @@ def test_build_rejects_unknown_numbered_object_family_without_crashing(
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "::: unsupported {#mystery}\n"
         "Mystery body.\n"
         ":::\n",
@@ -1706,10 +1703,7 @@ def test_numbered_object_collection_failure_keeps_existing_artifact(
     stale.write_text("keep", encoding="utf-8")
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
-        "::: theorem {#broken}\n"
-        "Broken body.\n",
+        index.read_text(encoding="utf-8") + "\n\n::: theorem {#broken}\nBroken body.\n",
         encoding="utf-8",
     )
 
@@ -1724,7 +1718,9 @@ def test_numbered_object_collection_failure_keeps_existing_artifact(
         for diagnostic in report.diagnostics
     )
     assert numbered_index.read_text(encoding="utf-8") == old_numbered_index
-    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
+    assert (course / "artifact" / "manifest.json").read_text(
+        encoding="utf-8"
+    ) == old_manifest
     assert stale.read_text(encoding="utf-8") == "keep"
 
 
@@ -1785,11 +1781,15 @@ def test_source_assets_are_copied(tmp_path: Path) -> None:
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    copied = course / "artifact" / "assets" / "_source" / "_local" / "notes" / "diagram.txt"
+    copied = (
+        course / "artifact" / "assets" / "_source" / "_local" / "notes" / "diagram.txt"
+    )
     assert copied.read_text(encoding="utf-8") == "asset fixture"
 
 
-def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Path) -> None:
+def test_render_fixture_local_asset_links_are_rewritten_and_copied(
+    tmp_path: Path,
+) -> None:
     course = _copy_render_fixture(tmp_path)
 
     report = build_course(course)
@@ -1811,12 +1811,7 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
         / "static-path.txt"
     )
     artifact_asset = (
-        artifact
-        / "assets"
-        / "_source"
-        / "_local"
-        / "diagrams"
-        / "static-path.txt"
+        artifact / "assets" / "_source" / "_local" / "diagrams" / "static-path.txt"
     )
     site_local_asset = (
         artifact
@@ -1840,7 +1835,9 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in root_html
     assert 'href="static-path/index.html"' in root_html
-    assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    assert (
+        'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    )
     assert (
         'href="../_raya/assets/_source/1_static_path/_local/local-static-path.txt"'
         in nested_html
@@ -1848,9 +1845,9 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(tmp_path: Pat
     assert site_asset.read_text(encoding="utf-8") == artifact_asset.read_text(
         encoding="utf-8"
     )
-    assert site_local_asset.read_text(encoding="utf-8") == artifact_local_asset.read_text(
+    assert site_local_asset.read_text(
         encoding="utf-8"
-    )
+    ) == artifact_local_asset.read_text(encoding="utf-8")
     assert "Raya Lucaria render fixture asset" in site_asset.read_text(encoding="utf-8")
     assert "colocated asset" in site_local_asset.read_text(encoding="utf-8")
 
@@ -1864,9 +1861,9 @@ def test_render_fixture_builds_rich_static_pages(
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
-    nested_html = (course / "artifact" / "site" / "static-path" / "index.html").read_text(
-        encoding="utf-8"
-    )
+    nested_html = (
+        course / "artifact" / "site" / "static-path" / "index.html"
+    ).read_text(encoding="utf-8")
     math_authoring_html = (
         course / "artifact" / "site" / "math-authoring" / "index.html"
     ).read_text(encoding="utf-8")
@@ -1878,11 +1875,7 @@ def test_render_fixture_builds_rich_static_pages(
         site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic.css"
     )
     accessibility_js = (
-        site_dir
-        / "_raya"
-        / "render"
-        / "accessibility"
-        / "open-dyslexic-toggle.js"
+        site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic-toggle.js"
     )
     accessibility_font = (
         site_dir
@@ -1945,9 +1938,9 @@ def test_render_fixture_builds_rich_static_pages(
     authoring_matrix_visible = _visible_text(authoring_matrix_html)
     math_authoring_visible = _visible_text(math_authoring_html)
     numbered_index = json.loads(
-        (
-            course / "artifact" / "data" / "numbered-objects.json"
-        ).read_text(encoding="utf-8")
+        (course / "artifact" / "data" / "numbered-objects.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     assert numbered_index["course_id"] == "render-fixture"
@@ -2056,8 +2049,7 @@ def test_render_fixture_builds_rich_static_pages(
 
     assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in nested_html
     assert (
-        '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">'
-        in nested_html
+        '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">' in nested_html
     )
     assert 'href="#nested-rich-content"' in nested_html
     assert 'id="nested-duplicate"' in nested_html
@@ -2068,7 +2060,9 @@ def test_render_fixture_builds_rich_static_pages(
     assert "display math remain static" not in _visible_text(nested_html)
     assert "pre-rendered display math" in _visible_text(nested_html)
 
-    assert '<link rel="stylesheet" href="../_raya/render/rich.css">' in math_authoring_html
+    assert (
+        '<link rel="stylesheet" href="../_raya/render/rich.css">' in math_authoring_html
+    )
     assert (
         '<link rel="stylesheet" href="../_raya/render/math/mathjax.css">'
         in math_authoring_html
@@ -2084,7 +2078,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert "mjx-container" in math_authoring_html
     assert "This theorem-like block is authored Markdown" in math_authoring_visible
     assert "Proof blocks are rendered statically" in math_authoring_visible
-    assert "Numbered objects and references are current renderer behavior" in math_authoring_visible
+    assert (
+        "Numbered objects and references are current renderer behavior"
+        in math_authoring_visible
+    )
     assert "@id shorthand references" in math_authoring_visible
     assert "raya:ref/id" in math_authoring_visible
     assert "numbered object fixture page" in math_authoring_visible
@@ -2125,17 +2122,35 @@ def test_render_fixture_builds_rich_static_pages(
     assert "Proof of Activity 3.1" in numbered_objects_visible
     assert "Proof of Activity 3.3" in numbered_objects_visible
     assert "Solution sketch" in numbered_objects_visible
-    assert 'class="raya-numbered-object raya-numbered-object--scannable ' in numbered_objects_html
-    assert 'class="raya-numbered-object raya-numbered-object--caption ' in numbered_objects_html
-    assert 'class="raya-numbered-object raya-numbered-object--equation ' in numbered_objects_html
+    assert (
+        'class="raya-numbered-object raya-numbered-object--scannable '
+        in numbered_objects_html
+    )
+    assert (
+        'class="raya-numbered-object raya-numbered-object--caption '
+        in numbered_objects_html
+    )
+    assert (
+        'class="raya-numbered-object raya-numbered-object--equation '
+        in numbered_objects_html
+    )
     assert 'class="raya-proof"' in numbered_objects_html
     assert 'id="raya-proof-proof-main"' in numbered_objects_html
     assert "raya-numbered-object-reference" in numbered_objects_html
     assert "raya-numbered-object-title" in numbered_objects_html
     assert "RAYA_PROOF_" not in numbered_objects_visible
-    assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}" in rich_css
-    assert ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}" in rich_css
-    assert ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n  overflow: hidden;\n}" not in rich_css
+    assert (
+        ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}"
+        in rich_css
+    )
+    assert (
+        ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}"
+        in rich_css
+    )
+    assert (
+        ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n  overflow: hidden;\n}"
+        not in rich_css
+    )
     assert (
         '<script src="../_raya/render/accessibility/open-dyslexic-toggle.js" defer></script>'
         in numbered_objects_html
@@ -2163,10 +2178,7 @@ def test_render_fixture_builds_rich_static_pages(
         "Scaling the direction vector changes the projection coefficient"
         in reader_ux_visible
     )
-    assert (
-        "before expanding the matrix product."
-        in reader_ux_visible
-    )
+    assert "before expanding the matrix product." in reader_ux_visible
     assert (
         "The residual vector is orthogonal to the direction vector."
         in reader_ux_visible
@@ -2190,9 +2202,15 @@ def test_render_fixture_builds_rich_static_pages(
     assert "<details open" not in reader_ux_html
     assert 'class="raya-proof"' in reader_ux_html
     assert '<details class="raya-proof"' not in reader_ux_html
-    assert 'class="raya-numbered-object raya-numbered-object--scannable ' in reader_ux_html
-    assert 'class="raya-numbered-object raya-numbered-object--caption ' in reader_ux_html
-    assert 'class="raya-numbered-object raya-numbered-object--equation ' in reader_ux_html
+    assert (
+        'class="raya-numbered-object raya-numbered-object--scannable ' in reader_ux_html
+    )
+    assert (
+        'class="raya-numbered-object raya-numbered-object--caption ' in reader_ux_html
+    )
+    assert (
+        'class="raya-numbered-object raya-numbered-object--equation ' in reader_ux_html
+    )
     assert "raya-numbered-object-badge" in reader_ux_html
     assert "mjx-container" in reader_ux_html
     assert "\\begin{bmatrix}" not in reader_ux_visible
@@ -2280,7 +2298,10 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "data-raya-map-node-toggle" in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
-    assert ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;" in css_text
+    assert (
+        ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;"
+        in css_text
+    )
 
 
 def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
@@ -2297,9 +2318,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'aria-label="Open course search"' in html
     assert '<a class="raya-command raya-command-graph"' in html
     assert 'aria-label="Open course graph"' in html
-    assert '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
+    assert (
+        '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
+    )
     assert 'aria-label="Collapse course map"' in html
-    assert '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
+    assert (
+        '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
+    )
     assert 'aria-label="Text size: normal"' in html
     assert '<span class="raya-command-label">Text size</span>' in html
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
@@ -2315,8 +2340,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert (
         '<span class="raya-reading-context-course">Render Fixture</span>'
         '<span class="raya-reading-context-separator">/</span>'
-        '<span class="raya-reading-context-page">Reader UX Fixture</span>'
-        in html
+        '<span class="raya-reading-context-page">Reader UX Fixture</span>' in html
     )
     assert (
         '<nav class="raya-reading-context-sequence" '
@@ -2333,7 +2357,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
-    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in html
+    assert (
+        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
+        in html
+    )
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert (
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
@@ -2350,7 +2377,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<section class="raya-rail-panel raya-page-summary"' in html
     assert '<section class="raya-rail-panel raya-page-status"' in html
     assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
-    assert '<button class="raya-rail-toggle" type="button" data-raya-rail-toggle' in html
+    assert (
+        '<button class="raya-rail-toggle" type="button" data-raya-rail-toggle' in html
+    )
     assert 'aria-expanded="false">Status</button>' in html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
@@ -2365,17 +2394,20 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-rail-context-link"' in prereq_panel
     assert 'href="../_raya/graph/index.html?page=render-root"' in prereq_panel
     assert (
-        'aria-label="View Raya Lucaria Render Fixture in course graph"'
-        in prereq_panel
+        'aria-label="View Raya Lucaria Render Fixture in course graph"' in prereq_panel
     )
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert 'class="raya-reading-context-link raya-reading-context-prev"' not in root_html
+    assert (
+        'class="raya-reading-context-link raya-reading-context-prev"' not in root_html
+    )
     last_html = (
         course / "artifact" / "site" / "authoring-matrix" / "index.html"
     ).read_text(encoding="utf-8")
-    assert 'class="raya-reading-context-link raya-reading-context-next"' not in last_html
+    assert (
+        'class="raya-reading-context-link raya-reading-context-next"' not in last_html
+    )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     connections_panel = _section_html(last_html, "raya-page-linked-pages")
     assert 'aria-expanded="false">Connections</button>' in connections_panel
@@ -2390,6 +2422,41 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
     assert "recommend" not in connections_panel.lower()
     assert "progress" not in connections_panel.lower()
+    article_connections = _article_connections_html(last_html)
+    assert '<section class="raya-article-connections"' in article_connections
+    assert (
+        '<h2 id="raya-article-connections-title">Page connections</h2>'
+        in article_connections
+    )
+    assert (
+        '<span class="raya-article-connections-count">3</span>' in article_connections
+    )
+    assert (
+        '<span class="raya-article-connections-count">1</span>' in article_connections
+    )
+    assert "From this page" in article_connections
+    assert "Links here" in article_connections
+    assert 'href="../math-authoring/index.html"' in article_connections
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in article_connections
+    assert (
+        'class="raya-article-connections-graph" '
+        'href="../_raya/graph/index.html?page=authoring-matrix"'
+    ) in article_connections
+    assert "recommend" not in article_connections.lower()
+    assert "progress" not in article_connections.lower()
+    assert "mastery" not in article_connections.lower()
+    assert "_official" not in article_connections
+    assert "course/" not in article_connections
+    assert "source_path" not in article_connections
+    assert "http://" not in article_connections
+    assert "https://" not in article_connections
+    assert "fetch(" not in article_connections
+    assert "localStorage" not in article_connections
+    assert "sessionStorage" not in article_connections
+    assert "<script" not in article_connections
+    assert last_html.index("Matrix norm fixture") < last_html.index(
+        '<section class="raya-article-connections"'
+    )
     toc = '<nav class="raya-page-toc" aria-label="Page contents">'
     assert root_html.count(toc) == 1
     assert root_html.index('<article id="raya-article"') < root_html.index(
@@ -2422,8 +2489,14 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     )
 
     assert '<html lang="en" data-raya-course-map="expanded">' in html
-    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in html
-    assert '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">' in html
+    assert (
+        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
+        in html
+    )
+    assert (
+        '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">'
+        in html
+    )
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
@@ -2432,7 +2505,10 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         in html
     )
     assert 'aria-expanded="true">Collapse map</button>' in html
-    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in html
+    assert (
+        'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"'
+        in html
+    )
     assert 'class="raya-course-map-filter"' in html
     assert 'id="raya-course-map-filter"' in html
     assert "data-raya-course-map-filter" in html
@@ -2441,9 +2517,18 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-map-parent="course-root"' in html
     assert 'data-raya-map-active="ancestor"' in middle_html
     assert "data-raya-map-children" in html
-    assert 'id="raya-map-children-1-course-root" data-raya-map-children aria-hidden="false"' in html
-    assert 'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"' in html
-    assert 'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="true"' in html
+    assert (
+        'id="raya-map-children-1-course-root" data-raya-map-children aria-hidden="false"'
+        in html
+    )
+    assert (
+        'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"'
+        in html
+    )
+    assert (
+        'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="true"'
+        in html
+    )
     assert "data-raya-map-node-toggle" in html
     assert "raya-map-filter-empty" in html
     assert 'data-raya-map-label="Raya Lucaria Render Fixture"' in render_html
@@ -2456,9 +2541,11 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'rel="next" data-raya-next-page href="unit/index.html"' in html
     assert 'rel="prev" data-raya-prev-page href="../index.html"' in middle_html
     assert 'rel="next" data-raya-next-page href="topic/index.html"' in middle_html
-    assert html.index('<nav id="raya-course-map"') < html.index(
-        '<article id="raya-article"'
-    ) < html.index('<aside id="raya-learning-rail"')
+    assert (
+        html.index('<nav id="raya-course-map"')
+        < html.index('<article id="raya-article"')
+        < html.index('<aside id="raya-learning-rail"')
+    )
 
 
 def test_static_builder_course_map_child_ids_do_not_collide_after_sanitizing(
@@ -2563,9 +2650,9 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    html = (
-        course / "artifact" / "site" / "authoring-matrix" / "index.html"
-    ).read_text(encoding="utf-8")
+    html = (course / "artifact" / "site" / "authoring-matrix" / "index.html").read_text(
+        encoding="utf-8"
+    )
     panel = _section_html(html, "raya-page-linked-pages")
     visible = _visible_text(panel).lower()
 
@@ -2601,9 +2688,9 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    css = (
-        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
-    ).read_text(encoding="utf-8")
+    css = (course / "artifact" / "site" / "_raya" / "render" / "rich.css").read_text(
+        encoding="utf-8"
+    )
     for selector in (
         ".raya-top-command-bar",
         ".raya-command",
@@ -2628,15 +2715,17 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     ):
         assert selector in css
     assert "min-width: 2.75rem" in css
-    assert "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);" in css
+    assert (
+        "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
+        in css
+    )
     assert "@media (min-width: 901px)" in css
     assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem);" in css
     assert "outline: 3px solid var(--raya-color-accent);" in css
     assert "@media (max-width: 900px)" in css
 
 
-def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning(
-) -> None:
+def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning() -> None:
     page = SimpleNamespace(
         output_path="reader-ux/index.html",
         prerequisites=("render-root", "missing-page-id"),
@@ -2690,8 +2779,7 @@ def test_callout_macro_definition_applies_to_later_page_math(tmp_path: Path) -> 
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "> [!NOTE]\n"
         "> $\\newcommand{\\calloutmacro}[1]{\\mathbf{#1}}$\n\n"
         "Later page math uses $\\calloutmacro{x}$.\n",
@@ -2710,8 +2798,7 @@ def test_callout_macro_use_before_later_page_definition_fails(tmp_path: Path) ->
     course = _copy_minimal(tmp_path)
     index = course / "course" / "0_index.md"
     index.write_text(
-        index.read_text(encoding="utf-8")
-        + "\n\n"
+        index.read_text(encoding="utf-8") + "\n\n"
         "> [!NOTE]\n"
         "> $\\latermacro{x}$\n\n"
         "$\\newcommand{\\latermacro}[1]{\\mathbf{#1}}$\n",
@@ -2738,23 +2825,28 @@ def test_failed_later_page_math_keeps_previous_artifact(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     topic = course / "course" / "1_unit" / "1_topic" / "0_index.md"
     topic.write_text(
-        topic.read_text(encoding="utf-8") + "\n\nLater invalid math $\\unknownmacro$.\n",
+        topic.read_text(encoding="utf-8")
+        + "\n\nLater invalid math $\\unknownmacro$.\n",
         encoding="utf-8",
     )
 
     report = build_course(course)
 
-    assert first_report.ok, [diagnostic.format() for diagnostic in first_report.diagnostics]
+    assert first_report.ok, [
+        diagnostic.format() for diagnostic in first_report.diagnostics
+    ]
     assert not report.ok
     assert any(
         diagnostic.message == "Math rendering failed"
         and "unknownmacro" in (diagnostic.next_action or "")
         for diagnostic in report.diagnostics
     )
-    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
-    assert (
-        course / "artifact" / "site" / "unit" / "topic" / "index.html"
-    ).read_text(encoding="utf-8") == old_topic_html
+    assert (course / "artifact" / "manifest.json").read_text(
+        encoding="utf-8"
+    ) == old_manifest
+    assert (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    ) == old_topic_html
 
 
 def test_missing_math_html_diagnostic_names_item_and_excerpt(tmp_path: Path) -> None:
@@ -2785,7 +2877,9 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
     build_report = build_course(course)
     inspect_report = inspect_artifact(course / "artifact")
 
-    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    assert build_report.ok, [
+        diagnostic.format() for diagnostic in build_report.diagnostics
+    ]
     assert inspect_report.ok, [
         diagnostic.format() for diagnostic in inspect_report.diagnostics
     ]
@@ -2807,9 +2901,7 @@ def test_render_fixture_artifact_assets_remain_inspectable(tmp_path: Path) -> No
         / "_local"
         / "local-static-path.txt"
     ).exists()
-    assert (
-        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
-    ).exists()
+    assert (course / "artifact" / "site" / "_raya" / "render" / "rich.css").exists()
     assert (
         course / "artifact" / "site" / "_raya" / "render" / "math" / "mathjax.css"
     ).exists()
@@ -2858,15 +2950,21 @@ def test_missing_math_fonts_keep_previous_artifact(
 
     report = build_course(course)
 
-    assert first_report.ok, [diagnostic.format() for diagnostic in first_report.diagnostics]
+    assert first_report.ok, [
+        diagnostic.format() for diagnostic in first_report.diagnostics
+    ]
     assert not report.ok
     assert any(
         diagnostic.message == "Missing local MathJax font assets"
         and diagnostic.path == missing_fonts
         for diagnostic in report.diagnostics
     )
-    assert (course / "artifact" / "manifest.json").read_text(encoding="utf-8") == old_manifest
-    assert (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8") == old_page
+    assert (course / "artifact" / "manifest.json").read_text(
+        encoding="utf-8"
+    ) == old_manifest
+    assert (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    ) == old_page
 
 
 def test_math_resource_writer_reports_css_referenced_missing_fonts(
@@ -2973,7 +3071,8 @@ def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
     )
     assert any(
         item["source_path"] == "1_analysis/scripts/clean_data.py"
-        and item["browser_path"] == "_raya/files/_source/1_analysis/scripts/clean_data.py"
+        and item["browser_path"]
+        == "_raya/files/_source/1_analysis/scripts/clean_data.py"
         and item["artifact_path"] == "files/_source/1_analysis/scripts/clean_data.py"
         for item in references["references"]
     )
@@ -2992,19 +3091,32 @@ def test_reference_fixture_builds_reference_artifacts(tmp_path: Path) -> None:
     ).exists()
     assert 'href="_raya/files/_source/code/shared_helper.py"' in root_html
     assert 'href="_raya/files/_source/notebooks/overview.ipynb"' in root_html
-    assert 'href="../_raya/files/_source/1_analysis/scripts/clean_data.py"' in nested_html
     assert (
-        'href="../_raya/files/_source/1_analysis/labs/exploration.ipynb"'
-        in nested_html
+        'href="../_raya/files/_source/1_analysis/scripts/clean_data.py"' in nested_html
+    )
+    assert (
+        'href="../_raya/files/_source/1_analysis/labs/exploration.ipynb"' in nested_html
     )
     assert not (
         artifact / "files" / "_source" / "unlinked" / "unused_helper.py"
     ).exists()
     assert not (
-        artifact / "site" / "_raya" / "files" / "_source" / "unlinked" / "unused_notebook.ipynb"
+        artifact
+        / "site"
+        / "_raya"
+        / "files"
+        / "_source"
+        / "unlinked"
+        / "unused_notebook.ipynb"
     ).exists()
-    assert '<section class="raya-reference-panel" aria-label="Referenced work"' in root_html
-    assert "These files are copied for reading and download. They were not executed during build." in root_html
+    assert (
+        '<section class="raya-reference-panel" aria-label="Referenced work"'
+        in root_html
+    )
+    assert (
+        "These files are copied for reading and download. They were not executed during build."
+        in root_html
+    )
     assert "Reference fixture helper" in root_html
     assert "1. markdown: # Overview notebook" in root_html
     assert "ignored output" not in root_html
@@ -3043,7 +3155,9 @@ def test_runtime_fixture_builds_metadata_without_execution(tmp_path: Path) -> No
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     artifact = course / "artifact"
     manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
-    runtime = json.loads((artifact / "data" / "runtime.json").read_text(encoding="utf-8"))
+    runtime = json.loads(
+        (artifact / "data" / "runtime.json").read_text(encoding="utf-8")
+    )
     execution = json.loads(
         (artifact / "data" / "execution.json").read_text(encoding="utf-8")
     )
@@ -3191,14 +3305,18 @@ def test_rendered_internal_urls_are_deployment_neutral(tmp_path: Path) -> None:
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    root_html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
-    nested_html = (course / "artifact" / "site" / "static-path" / "index.html").read_text(
+    root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
+    nested_html = (
+        course / "artifact" / "site" / "static-path" / "index.html"
+    ).read_text(encoding="utf-8")
     assert 'href="static-path/index.html"' in root_html
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert 'href="../index.html"' in nested_html
-    assert 'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    assert (
+        'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
+    )
     assert 'href="/_raya/' not in root_html
     assert 'href="/static-path/' not in root_html
 
@@ -3338,7 +3456,9 @@ def test_build_stops_when_local_source_link_is_broken(tmp_path: Path) -> None:
     report = build_course(course)
 
     assert not report.ok
-    assert any("Broken local content link" in item.message for item in report.diagnostics)
+    assert any(
+        "Broken local content link" in item.message for item in report.diagnostics
+    )
     assert not (course / "artifact" / "manifest.json").exists()
 
 
@@ -3381,7 +3501,9 @@ def _copy_render_fixture(tmp_path: Path) -> Path:
 
 def _copy_reference_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "reference-fixture"
-    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    shutil.copytree(
+        REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
     return course
 
 
@@ -3393,7 +3515,9 @@ def _copy_runtime_fixture(tmp_path: Path) -> Path:
 
 def _copy_execution_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "execution-fixture"
-    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    shutil.copytree(
+        EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
     return course
 
 
@@ -3442,6 +3566,12 @@ def _section_html(html_text: str, class_name: str) -> str:
     start = match.start()
     end = html_text.index("</section>", start) + len("</section>")
     return html_text[start:end]
+
+
+def _article_connections_html(html_text: str) -> str:
+    start = html_text.index('<section class="raya-article-connections"')
+    article_end = html_text.index("</article>", start)
+    return html_text[start:article_end]
 
 
 def _tag_html(html_text: str, tag_name: str, class_name: str) -> str:

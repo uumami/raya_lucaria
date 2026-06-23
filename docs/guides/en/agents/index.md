@@ -48,13 +48,15 @@ For math authoring checks, use `examples/courses/render-fixture/course/2_math_au
 When a rendering issue crosses math, numbered objects, skins, references, static environments, and local assets, inspect `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` first, then move to the specialized fixture page for the failing surface.
 
 For the learning-science course shell, preserve source constraints and current
-artifact authority. The right learning rail may render current page contents,
-normalized metadata, stable-ID prerequisites, previous/next links, static
-Connections summaries for explicit incoming/outgoing graph context, and
-graph-focus links for those explicit relationships. Keep the boundary explicit:
-no inferred goals, no fake related practice, no personal progress, and no
-browser-side MathJax. Use render-debug checks when course shell layout, local
-resources, screenshots, overflow, or visible math can regress.
+artifact authority. The main article may end with a Page connections block
+generated from explicit incoming/outgoing content-link graph context. The
+right learning rail may render current page contents, normalized metadata, stable-ID
+prerequisites, previous/next links, static Connections summaries for explicit
+incoming/outgoing graph context, and graph-focus links for those explicit
+relationships. Keep the boundary explicit: no inferred goals, no fake related
+practice, no personal progress, and no browser-side MathJax. Use render-debug
+checks when course shell layout, local resources, screenshots, overflow, or
+visible math can regress.
 
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
@@ -83,6 +85,10 @@ graph node. Neighborhood counts must be derived from generated graph edges, and
 connected-page highlights must exclude the selected node itself. Connections
 rail counts must come from explicit graph context only. Rail graph-focus links
 must point only to explicit prerequisites or incoming/outgoing graph context.
+Article Page connections counts and links must also come from explicit
+incoming/outgoing content-link graph context only, stay inside the article, and
+avoid source paths, private support paths, external URLs, fetch requests,
+storage calls, progress, mastery, recommendations, and ranking language.
 Treat graph color, size, and inspection text as structural readability cues; do
 not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.

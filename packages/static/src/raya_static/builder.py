@@ -113,7 +113,11 @@ from raya_static.skins import (
     render_skin_css,
     skin_id_for_source_path,
 )
-from raya_static.search import SEARCH_RESOURCE_PATH, SEARCH_SCRIPT_NAME, search_resources
+from raya_static.search import (
+    SEARCH_RESOURCE_PATH,
+    SEARCH_SCRIPT_NAME,
+    search_resources,
+)
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
 
 
@@ -588,7 +592,9 @@ def _copy_source_assets(
         if "_assets" not in source_path.relative_to(source_dir).parts:
             continue
         report.read_file(source_path)
-        target_path = target_assets / colocated_asset_output_path(source_dir, source_path)
+        target_path = target_assets / colocated_asset_output_path(
+            source_dir, source_path
+        )
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source_path, target_path)
         report.wrote_output(target_path)
@@ -648,7 +654,9 @@ def _collect_numbered_objects(
         if not report.ok:
             continue
 
-        course_relative_source_path = page.source_path.relative_to(course_root).as_posix()
+        course_relative_source_path = page.source_path.relative_to(
+            course_root
+        ).as_posix()
         source_relative_path = page.source_path.relative_to(source_dir).as_posix()
         page_objects = compute_numbered_objects_for_page(
             page_sources,
@@ -803,7 +811,9 @@ def _render_page(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
     )
-    reference_panel = _render_reference_panel(page, page_references, reviewed_by_reference)
+    reference_panel = _render_reference_panel(
+        page, page_references, reviewed_by_reference
+    )
     reviewed_output_panel = _render_reviewed_output_panel(
         page,
         [
@@ -835,6 +845,11 @@ def _render_page(
         proofs=proofs,
     )
     article_html, toc_html = _extract_page_toc(article_html)
+    article_connections_html = _render_article_connections(
+        page,
+        page_graph_context,
+        graph_href,
+    )
     learning_rail = _render_learning_rail(
         page,
         toc_html,
@@ -874,6 +889,7 @@ def _render_page(
             _render_article_sequence_nav(page, content_model),
             breadcrumbs,
             article_html,
+            article_connections_html,
             "</article>",
             learning_rail,
             "</main>",
@@ -1022,9 +1038,7 @@ def _render_reading_context(
     sequence = _reading_context_sequence_links(page, content_model)
     sequence_html = (
         '<nav class="raya-reading-context-sequence" '
-        'aria-label="Compact previous and next pages">'
-        + sequence
-        + "</nav>"
+        'aria-label="Compact previous and next pages">' + sequence + "</nav>"
         if sequence
         else ""
     )
@@ -1049,7 +1063,11 @@ def _reading_context_sequence_links(
 ) -> str:
     pages = content_model.pages
     current_index = next(
-        (index for index, target in enumerate(pages) if target.output_path == page.output_path),
+        (
+            index
+            for index, target in enumerate(pages)
+            if target.output_path == page.output_path
+        ),
         None,
     )
     if current_index is None:
@@ -1139,7 +1157,9 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
             f"raya-map-children-{sequence_index[target.id]}-"
             f"{_safe_map_fragment_id(target.id)}"
         )
-        current = ' aria-current="page"' if target.output_path == page.output_path else ""
+        current = (
+            ' aria-current="page"' if target.output_path == page.output_path else ""
+        )
         parent = (
             f'data-raya-map-parent="{html.escape(target.parent_id, quote=True)}" '
             if target.parent_id
@@ -1160,13 +1180,15 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
             children = (
                 f'<ol id="{html.escape(node_id, quote=True)}" '
                 "data-raya-map-children "
-                f'{"hidden " if not expanded else ""}'
+                f"{'hidden ' if not expanded else ''}"
                 f'aria-hidden="{"false" if expanded else "true"}">'
                 f"{children}"
                 "</ol>"
             )
         else:
-            toggle = '<span class="raya-course-map-node-spacer" aria-hidden="true"></span>'
+            toggle = (
+                '<span class="raya-course-map-node-spacer" aria-hidden="true"></span>'
+            )
         return "\n".join(
             [
                 (
@@ -1180,7 +1202,7 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
                 '<div class="raya-course-map-node-row">',
                 toggle,
                 (
-                    '<a '
+                    "<a "
                     f'href="{html.escape(href)}"{current} '
                     f'data-raya-map-index="{sequence_index[target.id]}" '
                     f'data-raya-map-label="{html.escape(label, quote=True)}">'
@@ -1216,7 +1238,7 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
             (
                 '<input id="raya-course-map-filter" '
                 'class="raya-course-map-filter" type="search" autocomplete="off" '
-                'data-raya-course-map-filter>'
+                "data-raya-course-map-filter>"
             ),
             '<p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>No map matches.</p>',
             '<div class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false">',
@@ -1342,7 +1364,9 @@ def _extract_page_toc(rendered_article_html: str) -> tuple[str, str]:
 def _render_page_contents_rail(toc_html: str) -> str:
     if not toc_html:
         return ""
-    return _render_rail_panel("raya-page-contents", "Page contents", toc_html, expanded=True)
+    return _render_rail_panel(
+        "raya-page-contents", "Page contents", toc_html, expanded=True
+    )
 
 
 def _render_page_summary_rail(page: ContentPage) -> str:
@@ -1442,6 +1466,96 @@ def _render_linked_pages_rail(
         "raya-page-linked-pages",
         "Connections",
         summary + "\n" + "\n".join(sections),
+    )
+
+
+def _render_article_connections(
+    page: ContentPage,
+    page_graph_context: dict[str, list[dict[str, str]]],
+    graph_href: str,
+) -> str:
+    outgoing = page_graph_context.get("outgoing", [])
+    incoming = page_graph_context.get("incoming", [])
+    if not outgoing and not incoming:
+        return ""
+
+    sections = []
+    if outgoing:
+        sections.append(_article_connection_section("From this page", outgoing, page))
+    if incoming:
+        sections.append(_article_connection_section("Links here", incoming, page))
+
+    return "\n".join(
+        [
+            (
+                '<section class="raya-article-connections" '
+                'aria-labelledby="raya-article-connections-title">'
+            ),
+            '<div class="raya-article-connections-header">',
+            "<div>",
+            '<p class="raya-article-connections-kicker">Course graph</p>',
+            '<h2 id="raya-article-connections-title">Page connections</h2>',
+            "</div>",
+            (
+                '<a class="raya-article-connections-graph" '
+                f'href="{html.escape(graph_href)}">Open in course graph</a>'
+            ),
+            "</div>",
+            '<p class="raya-article-connections-summary">',
+            (
+                '<span><span class="raya-article-connections-count">'
+                f"{len(outgoing)}</span> "
+                f"{_relationship_count_label(len(outgoing), 'from this page', 'from this page')}</span>"
+            ),
+            (
+                '<span><span class="raya-article-connections-count">'
+                f"{len(incoming)}</span> "
+                f"{_relationship_count_label(len(incoming), 'links here', 'link here')}</span>"
+            ),
+            "</p>",
+            '<div class="raya-article-connections-grid">',
+            "\n".join(sections),
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _article_connection_section(
+    title: str,
+    items: list[dict[str, str]],
+    page: ContentPage,
+) -> str:
+    rendered_items = "\n".join(_article_connection_item(page, item) for item in items)
+    return "\n".join(
+        [
+            '<section class="raya-article-connections-section">',
+            f"<h3>{html.escape(title)}</h3>",
+            f'<ul aria-label="{html.escape(title, quote=True)}">',
+            rendered_items,
+            "</ul>",
+            "</section>",
+        ]
+    )
+
+
+def _article_connection_item(page: ContentPage, item: dict[str, str]) -> str:
+    title = item["title"]
+    target_id = item["id"]
+    href = _relative_href(page.output_path, item["url"])
+    graph_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
+        {"page": target_id},
+    )
+    return (
+        '<li class="raya-article-connection-item">'
+        '<span class="raya-article-connection-title">'
+        f'<a href="{html.escape(href)}">{html.escape(title)}</a>'
+        "</span>"
+        f'<a class="raya-article-connection-context" href="{html.escape(graph_href)}" '
+        f'aria-label="View {html.escape(title, quote=True)} in course graph">'
+        "Graph</a>"
+        "</li>"
     )
 
 
@@ -1608,7 +1722,11 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
 def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
     pages = content_model.pages
     current_index = next(
-        (index for index, target in enumerate(pages) if target.output_path == page.output_path),
+        (
+            index
+            for index, target in enumerate(pages)
+            if target.output_path == page.output_path
+        ),
         None,
     )
     if current_index is None:
@@ -1637,9 +1755,7 @@ def _render_article_sequence_nav(page: ContentPage, content_model: ContentModel)
         return ""
     return (
         '<nav class="raya-article-sequence raya-article-sequence-top" '
-        'aria-label="Previous and next pages">'
-        + sequence
-        + "</nav>"
+        'aria-label="Previous and next pages">' + sequence + "</nav>"
     )
 
 
@@ -1957,7 +2073,9 @@ def _navigation_index(course_id: str, content_model: ContentModel) -> dict[str, 
                 "hierarchy_label": page.hierarchy_label,
                 "parent": page.parent_id,
                 "children": content_model.children_by_parent.get(page.id, []),
-                "breadcrumbs": [crumb.id for crumb in _breadcrumb_pages(page, content_model)],
+                "breadcrumbs": [
+                    crumb.id for crumb in _breadcrumb_pages(page, content_model)
+                ],
                 "previous": previous,
                 "next": next_page,
             }
@@ -1996,7 +2114,9 @@ def _indices_index(
             }
         )
     master = [
-        _index_entry(content_model.pages_by_id[child_id], official_counts, content_model)
+        _index_entry(
+            content_model.pages_by_id[child_id], official_counts, content_model
+        )
         for child_id in content_model.children_by_parent.get(content_model.root_id, [])
     ]
     return {
@@ -2018,7 +2138,9 @@ def _index_entry(
         "title": page.title,
         "summary": page.summary,
         "estimated_time": page.estimated_time,
-        "study_counts": _aggregate_study_counts(page.id, content_model, official_counts),
+        "study_counts": _aggregate_study_counts(
+            page.id, content_model, official_counts
+        ),
         "hierarchy_key": page.hierarchy_key,
         "hierarchy_label": page.hierarchy_label,
     }
@@ -2251,16 +2373,20 @@ def _render_reference_panel(
         )
     ]
     parts.append("<h2>Referenced Work</h2>")
-    parts.append("<p>These files are copied for reading and download. They were not executed during build.</p>")
+    parts.append(
+        "<p>These files are copied for reading and download. They were not executed during build.</p>"
+    )
     parts.append("<ul>")
     for reference in references:
         href = _relative_href(page.output_path, reference.browser_path)
         label = "Notebook" if reference.kind == "notebook" else "Script"
         reviewed = reviewed_by_reference.get(reference.id)
         status = "reviewed output current" if reviewed is not None else "not executed"
-        parts.append(f'<li class="raya-reference-item raya-reference-{html.escape(reference.kind)}">')
         parts.append(
-            f'<p><strong>{label}</strong>: '
+            f'<li class="raya-reference-item raya-reference-{html.escape(reference.kind)}">'
+        )
+        parts.append(
+            f"<p><strong>{label}</strong>: "
             f'<a href="{html.escape(href)}">{html.escape(Path(reference.source_rel_path).name)}</a> '
             f'<span class="raya-reference-status">{html.escape(status)}</span></p>'
         )
@@ -2286,7 +2412,9 @@ def _render_reviewed_output_panel(
         )
     ]
     parts.append("<h2>Reviewed Output</h2>")
-    parts.append("<p>Reviewed course support. Build and static serving did not execute code.</p>")
+    parts.append(
+        "<p>Reviewed course support. Build and static serving did not execute code.</p>"
+    )
     parts.append("<ul>")
     for reviewed in reviewed_outputs:
         parts.append('<li class="raya-reviewed-output-item">')
@@ -2297,10 +2425,12 @@ def _render_reviewed_output_panel(
         )
         parts.append("<ul>")
         for reviewed_file in reviewed.files:
-            href = _relative_href(page.output_path, reviewed_file.browser_path(reviewed))
+            href = _relative_href(
+                page.output_path, reviewed_file.browser_path(reviewed)
+            )
             parts.append(
                 f'<li><a href="{html.escape(href)}">{html.escape(reviewed_file.rel_path)}</a> '
-                f'<span>{html.escape(reviewed_file.kind)}</span></li>'
+                f"<span>{html.escape(reviewed_file.kind)}</span></li>"
             )
         parts.append("</ul>")
         excerpt = _reviewed_output_excerpt(reviewed)
@@ -2432,16 +2562,16 @@ def _render_inspection_surface(
             f"<dt>Profile</dt><dd>{html.escape(reviewed.profile or 'none')}</dd>"
             f"<dt>Review key</dt><dd>{html.escape(reviewed.review_key)}</dd>"
             "</dl>"
-            "<ul>"
-            + "\n".join(file_items)
-            + "</ul>"
+            "<ul>" + "\n".join(file_items) + "</ul>"
             "</li>"
         )
 
     asset_items = []
     if site_assets_dir.exists():
         site_root = site_assets_dir.parents[1]
-        for asset_path in sorted(path for path in site_assets_dir.rglob("*") if path.is_file()):
+        for asset_path in sorted(
+            path for path in site_assets_dir.rglob("*") if path.is_file()
+        ):
             browser_path = asset_path.relative_to(site_root).as_posix()
             href = _relative_href(STATIC_INSPECTION_PATH.as_posix(), browser_path)
             asset_items.append(
@@ -2475,7 +2605,9 @@ def _render_inspection_surface(
             "<p>Artifact data path: <code>data/graph.json</code></p>",
             "<h3>Edge kinds</h3>",
             "<ul>",
-            "\n".join(edge_kind_items) if edge_kind_items else "<li>No graph edges.</li>",
+            "\n".join(edge_kind_items)
+            if edge_kind_items
+            else "<li>No graph edges.</li>",
             "</ul>",
             "<h3>Groups</h3>",
             "<ul>",
@@ -2483,7 +2615,9 @@ def _render_inspection_surface(
             "</ul>",
             "<h3>Graph Pages</h3>",
             "<ul>",
-            "\n".join(graph_node_items) if graph_node_items else "<li>No graph nodes.</li>",
+            "\n".join(graph_node_items)
+            if graph_node_items
+            else "<li>No graph nodes.</li>",
             "</ul>",
             "<h2>Pages</h2>",
             "<ul>",
@@ -2491,11 +2625,15 @@ def _render_inspection_surface(
             "</ul>",
             "<h2>References</h2>",
             "<ul>",
-            "\n".join(reference_items) if reference_items else "<li>No references.</li>",
+            "\n".join(reference_items)
+            if reference_items
+            else "<li>No references.</li>",
             "</ul>",
             "<h2>Reviewed Outputs</h2>",
             "<ul>",
-            "\n".join(reviewed_items) if reviewed_items else "<li>No reviewed outputs.</li>",
+            "\n".join(reviewed_items)
+            if reviewed_items
+            else "<li>No reviewed outputs.</li>",
             "</ul>",
             "<h2>Browser Assets</h2>",
             "<ul>",
@@ -2543,7 +2681,9 @@ def _render_graph_surface(
     graph_index: dict[str, Any],
     skin_context: SkinContext,
 ) -> str:
-    stylesheet_href = _relative_href(STATIC_GRAPH_PATH.as_posix(), RENDER_STYLESHEET_PATH)
+    stylesheet_href = _relative_href(
+        STATIC_GRAPH_PATH.as_posix(), RENDER_STYLESHEET_PATH
+    )
     skin_stylesheet_href = _relative_href(
         STATIC_GRAPH_PATH.as_posix(),
         SKIN_STYLESHEET_PATH,
@@ -2560,7 +2700,9 @@ def _render_graph_surface(
         STATIC_GRAPH_PATH.as_posix(),
         Path(GRAPH_RESOURCE_PATH) / GRAPH_SCRIPT_NAME,
     )
-    root_skin = skin_id_for_source_path(content_model.pages[0].source_path, skin_context)
+    root_skin = skin_id_for_source_path(
+        content_model.pages[0].source_path, skin_context
+    )
     browser_graph = _browser_graph_payload(graph_index)
     graph_payload = _json_script_text(browser_graph)
     group_buttons = []
@@ -2573,7 +2715,7 @@ def _render_graph_surface(
                 f'data-raya-graph-group-filter="{html.escape(group["id"], quote=True)}" '
                 'aria-pressed="true">'
                 '<span class="raya-graph-group-swatch" aria-hidden="true"></span>'
-                f'{html.escape(group["title"])}'
+                f"{html.escape(group['title'])}"
                 "</button>"
             )
         )
@@ -2589,8 +2731,8 @@ def _render_graph_surface(
             f'<li data-raya-graph-node="{html.escape(node["id"], quote=True)}">'
             f'<a href="{html.escape(node["url"])}">{html.escape(node["title"])}</a>'
             '<span class="raya-graph-list-metrics">'
-            f'Status: {html.escape(node["status"])}; '
-            f'Edges: {edge_count}; Backlinks: {backlink_count}'
+            f"Status: {html.escape(node['status'])}; "
+            f"Edges: {edge_count}; Backlinks: {backlink_count}"
             "</span>"
             "</li>"
         )
@@ -2690,10 +2832,10 @@ def _render_graph_surface(
                 'data-raya-graph-hover-status aria-live="polite"></p>'
             ),
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
-            '<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>',
-            '<div data-raya-graph-detail-panel hidden>',
+            "<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>",
+            "<div data-raya-graph-detail-panel hidden>",
             '<div class="raya-graph-detail-header">',
-            '<h2 data-raya-graph-detail-title>Selected page</h2>',
+            "<h2 data-raya-graph-detail-title>Selected page</h2>",
             '<button type="button" data-raya-graph-detail-clear>Clear</button>',
             "</div>",
             '<p class="raya-graph-detail-meta" data-raya-graph-detail-meta></p>',
@@ -2705,11 +2847,11 @@ def _render_graph_surface(
             '<div class="raya-graph-detail-links">',
             "<section>",
             "<h3>Links from this page</h3>",
-            '<ul data-raya-graph-detail-outgoing></ul>',
+            "<ul data-raya-graph-detail-outgoing></ul>",
             "</section>",
             "<section>",
             "<h3>Links to this page</h3>",
-            '<ul data-raya-graph-detail-incoming></ul>',
+            "<ul data-raya-graph-detail-incoming></ul>",
             "</section>",
             "</div>",
             "</div>",
@@ -2764,7 +2906,9 @@ def _browser_graph_payload(graph_index: dict[str, Any]) -> dict[str, Any]:
             page_id: [
                 {
                     **backlink,
-                    "url": _relative_href(STATIC_GRAPH_PATH.as_posix(), backlink["url"]),
+                    "url": _relative_href(
+                        STATIC_GRAPH_PATH.as_posix(), backlink["url"]
+                    ),
                 }
                 for backlink in backlinks
             ]
@@ -2804,7 +2948,9 @@ def _render_search_surface(
     language: str,
     skin_context: SkinContext,
 ) -> str:
-    stylesheet_href = _relative_href(STATIC_SEARCH_PATH.as_posix(), RENDER_STYLESHEET_PATH)
+    stylesheet_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(), RENDER_STYLESHEET_PATH
+    )
     skin_stylesheet_href = _relative_href(
         STATIC_SEARCH_PATH.as_posix(),
         SKIN_STYLESHEET_PATH,
@@ -2821,7 +2967,9 @@ def _render_search_surface(
         STATIC_SEARCH_PATH.as_posix(),
         Path(SEARCH_RESOURCE_PATH) / SEARCH_SCRIPT_NAME,
     )
-    root_skin = skin_id_for_source_path(content_model.pages[0].source_path, skin_context)
+    root_skin = skin_id_for_source_path(
+        content_model.pages[0].source_path, skin_context
+    )
     browser_search = _browser_search_payload(content_model)
     search_payload = _json_script_text(browser_search)
     result_items = []
@@ -2833,7 +2981,7 @@ def _render_search_surface(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
             f'<a href="{html.escape(page["url"])}">{html.escape(page["title"])}</a>'
-            f'<p>{html.escape(page["summary"])}</p>'
+            f"<p>{html.escape(page['summary'])}</p>"
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
             "</li>"
         )
@@ -2997,7 +3145,9 @@ def _official_index(
     }
 
 
-def _official_counts(official_objects: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+def _official_counts(
+    official_objects: list[dict[str, Any]],
+) -> dict[str, dict[str, int]]:
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for item in official_objects:
         scope = item.get("scope")
@@ -3157,9 +3307,7 @@ def _prepare_math_render_resources(
     if not report.ok:
         return _MathRenderResources(css=css, font_files=())
     missing_fonts = [
-        name
-        for name in required_fonts
-        if not (MATH_FONT_SOURCE_DIR / name).is_file()
+        name for name in required_fonts if not (MATH_FONT_SOURCE_DIR / name).is_file()
     ]
     if missing_fonts:
         report.add_error(
@@ -3282,8 +3430,12 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
-        validate_reviewed_outputs_index(artifact_dir / "data" / "reviewed-outputs.json"),
-        validate_numbered_objects_index(artifact_dir / "data" / "numbered-objects.json"),
+        validate_reviewed_outputs_index(
+            artifact_dir / "data" / "reviewed-outputs.json"
+        ),
+        validate_numbered_objects_index(
+            artifact_dir / "data" / "numbered-objects.json"
+        ),
         validate_runtime_index(artifact_dir / "data" / "runtime.json"),
         validate_execution_index(artifact_dir / "data" / "execution.json"),
         validate_cache_index(artifact_dir / "data" / "cache.json"),

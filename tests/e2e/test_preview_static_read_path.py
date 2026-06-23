@@ -38,17 +38,23 @@ def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     from raya_cli.preview import create_preview
 
     course = tmp_path / "execution-fixture"
-    shutil.copytree(EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    shutil.copytree(
+        EXECUTION_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
         root_html = _fetch_text(f"{base_url}/index.html")
         inspection_html = _fetch_text(f"{base_url}/_raya/inspect/index.html")
-        manual_script = _fetch_text(f"{base_url}/_raya/files/_source/code/manual_task.py")
+        manual_script = _fetch_text(
+            f"{base_url}/_raya/files/_source/code/manual_task.py"
+        )
         reviewed_stdout = _fetch_text(
             f"{base_url}/_raya/reviewed/frozen-script/stdout.txt"
         )
@@ -73,7 +79,9 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
         root_html = _fetch_text(f"{base_url}/index.html")
@@ -108,7 +116,9 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -119,10 +129,15 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                 args=["--no-sandbox"],
             )
             try:
-                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
                     page = browser.new_page(viewport=viewport)
                     requested_urls: list[str] = []
-                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
                     try:
                         page.goto(f"{base_url}/index.html", wait_until="networkidle")
                         requested_urls.clear()
@@ -131,8 +146,16 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                         assert cards.count() >= 5
                         first_link = page.locator(".raya-section-card-link").first
                         assert first_link.is_visible()
-                        assert first_link.locator(".raya-section-card-title").inner_text().strip()
-                        assert first_link.locator(".raya-section-card-summary").inner_text().strip()
+                        assert (
+                            first_link.locator(".raya-section-card-title")
+                            .inner_text()
+                            .strip()
+                        )
+                        assert (
+                            first_link.locator(".raya-section-card-summary")
+                            .inner_text()
+                            .strip()
+                        )
                         box = first_link.bounding_box()
                         assert box is not None
                         assert box["width"] >= 180 or viewport["width"] < 500
@@ -141,7 +164,9 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                             first_link.click()
                         assert page.url == href
                         assert requested_urls
-                        assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+                        assert all(
+                            url.startswith(f"{base_url}/") for url in requested_urls
+                        )
                     finally:
                         page.close()
             finally:
@@ -160,7 +185,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
         graph_html = _fetch_text(f"{base_url}/_raya/graph/index.html")
@@ -180,12 +207,20 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                 args=["--no-sandbox"],
             )
             try:
-                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
                     page = browser.new_page(viewport=viewport)
                     requested_urls: list[str] = []
-                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
                     try:
-                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html",
+                            wait_until="networkidle",
+                        )
                         requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
@@ -195,20 +230,37 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).bounding_box()
                             assert discovery_box is not None
                             assert discovery_box["height"] <= 150
-                        assert page.locator(".raya-command-search").evaluate(
-                            "node => node.href"
-                        ).endswith("/_raya/search/index.html")
+                        assert (
+                            page.locator(".raya-command-search")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/search/index.html")
+                        )
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
                         assert page.locator(".raya-graph-legend").is_visible()
-                        assert page.locator("[data-raya-graph-legend='node']").is_visible()
-                        assert page.locator("[data-raya-graph-legend='match']").is_visible()
-                        assert page.locator("[data-raya-graph-legend='selected']").is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-legend='node']"
+                        ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-legend='match']"
+                        ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-legend='selected']"
+                        ).is_visible()
                         assert page.locator("[data-raya-graph-help]").is_visible()
-                        assert page.locator("[data-raya-graph-help]").get_attribute("open") is None
+                        assert (
+                            page.locator("[data-raya-graph-help]").get_attribute("open")
+                            is None
+                        )
                         page.locator("[data-raya-graph-help] summary").click()
-                        assert "Search" in page.locator("[data-raya-graph-help]").inner_text()
-                        assert page.locator("#raya-graph-canvas .raya-graph-node").count() > 0
+                        assert (
+                            "Search"
+                            in page.locator("[data-raya-graph-help]").inner_text()
+                        )
+                        assert (
+                            page.locator("#raya-graph-canvas .raya-graph-node").count()
+                            > 0
+                        )
                         before = page.locator(
                             "#raya-graph-list [data-raya-graph-node]:visible"
                         ).count()
@@ -223,7 +275,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "#raya-graph-list [data-raya-graph-node]:visible"
                         ).count()
                         assert after < before
-                        assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        assert (
+                            "matrix"
+                            in page.locator("#raya-graph-list").inner_text().lower()
+                        )
                         page.fill("#graph-search", "matrx")
                         page.wait_for_function(
                             """() => document
@@ -231,7 +286,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
-                        assert "matrix" in page.locator("#raya-graph-list").inner_text().lower()
+                        assert (
+                            "matrix"
+                            in page.locator("#raya-graph-list").inner_text().lower()
+                        )
                         page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
                         ).hover()
@@ -278,16 +336,32 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "#raya-graph-canvas [data-raya-graph-node]"
                         ).first
                         graph_node.hover()
-                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
-                        assert page.locator("[data-raya-graph-detail-panel]").is_hidden()
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_hidden()
                         graph_node.click()
-                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
-                        assert page.locator("[data-raya-graph-detail-title]").inner_text().strip()
-                        assert page.locator("[data-raya-graph-detail-link]").get_attribute("href")
-                        assert page.locator("[data-raya-graph-detail-empty]").is_hidden()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-detail-title]")
+                            .inner_text()
+                            .strip()
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-link]"
+                        ).get_attribute("href")
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_hidden()
                         outgoing_or_incoming = (
                             page.locator("[data-raya-graph-detail-outgoing] li").count()
-                            + page.locator("[data-raya-graph-detail-incoming] li").count()
+                            + page.locator(
+                                "[data-raya-graph-detail-incoming] li"
+                            ).count()
                         )
                         assert outgoing_or_incoming >= 1
                         page.fill("#graph-search", "zz-no-result")
@@ -297,8 +371,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.startsWith('0 visible node')"""
                         )
-                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
-                        assert page.locator("[data-raya-graph-detail-panel]").is_hidden()
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_hidden()
                         page.fill("#graph-search", "matrx")
                         page.wait_for_function(
                             """() => document
@@ -306,9 +384,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
-                        page.locator("#raya-graph-canvas [data-raya-graph-node]").first.click()
-                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
-                        before_height = page.locator("#raya-graph-canvas").bounding_box()["height"]
+                        page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).first.click()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        before_height = page.locator(
+                            "#raya-graph-canvas"
+                        ).bounding_box()["height"]
                         page.click("#graph-expand")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -316,10 +400,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "true"
                         )
-                        after_height = page.locator("#raya-graph-canvas").bounding_box()["height"]
+                        after_height = page.locator(
+                            "#raya-graph-canvas"
+                        ).bounding_box()["height"]
                         assert after_height >= before_height
                         page.click("[data-raya-graph-detail-clear]")
-                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
                         page.select_option("#graph-layout", "radial")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -348,7 +436,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "false"
                         )
-                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
                         assert requested_urls == []
                         first_list_link = page.locator(
                             "#raya-graph-list [data-raya-graph-node]:visible a"
@@ -357,16 +447,26 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         with page.expect_navigation():
                             first_list_link.click()
                         assert page.url == list_href
-                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
-                        page.locator("#raya-graph-canvas .raya-graph-node-hit").first.click()
-                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.locator(
+                            "#raya-graph-canvas .raya-graph-node-hit"
+                        ).first.click()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
                         detail_href = page.locator(
                             "[data-raya-graph-detail-link]"
                         ).evaluate("node => node.href")
                         with page.expect_navigation():
                             page.click("[data-raya-graph-detail-link]")
                         assert page.url == detail_href
-                        page.goto(f"{base_url}/_raya/graph/index.html", wait_until="networkidle")
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html",
+                            wait_until="networkidle",
+                        )
                         graph_href = page.locator(
                             "#raya-graph-canvas [data-raya-graph-node]"
                         ).first.evaluate(
@@ -382,10 +482,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             wait_until="networkidle",
                         )
                         requested_urls.clear()
-                        page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
-                        assert "Authoring Matrix Fixture" in page.locator(
-                            "[data-raya-graph-detail-title]"
-                        ).inner_text()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator(
+                                "[data-raya-graph-detail-title]"
+                            ).inner_text()
+                        )
                         assert (
                             "Neighborhood: 4 outgoing link(s), 2 incoming link(s), "
                             "4 connected page(s)."
@@ -432,7 +537,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
         search_html = _fetch_text(f"{base_url}/_raya/search/index.html")
@@ -453,14 +560,25 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                 args=["--no-sandbox"],
             )
             try:
-                for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
                     page = browser.new_page(viewport=viewport)
                     try:
                         browser_requests: list[str] = []
-                        page.on("request", lambda request: browser_requests.append(request.url))
-                        page.goto(f"{base_url}/_raya/search/index.html", wait_until="networkidle")
+                        page.on(
+                            "request",
+                            lambda request: browser_requests.append(request.url),
+                        )
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html",
+                            wait_until="networkidle",
+                        )
                         assert browser_requests
-                        assert all(url.startswith(f"{base_url}/") for url in browser_requests)
+                        assert all(
+                            url.startswith(f"{base_url}/") for url in browser_requests
+                        )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
                         if viewport["width"] < 520:
@@ -469,9 +587,11 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).bounding_box()
                             assert discovery_box is not None
                             assert discovery_box["height"] <= 150
-                        assert page.locator(".raya-command-graph").evaluate(
-                            "node => node.href"
-                        ).endswith("/_raya/graph/index.html")
+                        assert (
+                            page.locator(".raya-command-graph")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/graph/index.html")
+                        )
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
                         before = page.locator(
@@ -488,9 +608,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "#raya-search-results [data-raya-search-result]:visible"
                         ).count()
                         assert after < before
-                        assert "Authoring Matrix Fixture" in page.locator(
-                            "#raya-search-results"
-                        ).inner_text()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("#raya-search-results").inner_text()
+                        )
                         assert page.locator("#raya-search-empty").is_hidden()
                         page.fill("#raya-search-input", "matrx")
                         page.wait_for_function(
@@ -499,9 +620,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible result')"""
                         )
-                        assert "Authoring Matrix Fixture" in page.locator(
-                            "#raya-search-results"
-                        ).inner_text()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("#raya-search-results").inner_text()
+                        )
                         page.press("#raya-search-input", "ArrowDown")
                         active = page.locator(
                             '#raya-search-results [data-raya-search-active="true"]'
@@ -538,9 +660,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert page.input_value("#raya-search-input") == (
                             "Authoring Matrix Fixture"
                         )
-                        assert "Authoring Matrix Fixture" in page.locator(
-                            "#raya-search-results"
-                        ).inner_text()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("#raya-search-results").inner_text()
+                        )
                     finally:
                         page.close()
             finally:
@@ -557,7 +680,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
         index_url = f"{base_url}/index.html"
@@ -594,7 +719,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert '[data-raya-skin="eva-unit-03"]' in index_skin_css
     assert '[data-raya-skin="ghost-in-the-shell"]' in index_skin_css
     assert '[data-raya-skin="practice-lab"]' in reader_skin_css
-    assert '<button class="raya-command raya-command-font raya-font-toggle"' in index_html
+    assert (
+        '<button class="raya-command raya-command-font raya-font-toggle"' in index_html
+    )
     assert 'aria-pressed="false"' in index_html
     assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
     assert 'src="_raya/render/accessibility/open-dyslexic-toggle.js"' in index_html
@@ -608,18 +735,29 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         in index_html
     )
     assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
-    assert 'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"' in index_html
-    assert 'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"' in index_html
+    assert (
+        'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"'
+        in index_html
+    )
+    assert (
+        'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"'
+        in index_html
+    )
     assert 'data-raya-map-label="1 Static Path">1 Static Path</a>' in index_html
-    assert 'data-raya-rail-toggle' in reader_html
+    assert "data-raya-rail-toggle" in reader_html
     assert 'data-raya-rail-panel-state="collapsed"' in reader_html
     assert 'aria-hidden="true" inert' in reader_html
     assert "background: var(--raya-color-page)" in rich_css
     assert "background: var(--raya-color-surface)" in rich_css
     assert "max-width: 116rem" in rich_css
-    assert "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
+    assert (
+        "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)"
+        in rich_css
+    )
     assert "@media (min-width: 901px)" in rich_css
-    assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
+    assert (
+        "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
+    )
     assert "transition: grid-template-columns 180ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
     assert ".raya-rail-toggle:focus-visible" in rich_css
@@ -639,7 +777,9 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -653,7 +793,9 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
                 page = browser.new_page(viewport={"width": 1280, "height": 900})
                 try:
                     page.goto(f"{base_url}/index.html", wait_until="networkidle")
-                    before = page.evaluate("() => getComputedStyle(document.body).fontFamily")
+                    before = page.evaluate(
+                        "() => getComputedStyle(document.body).fontFamily"
+                    )
                     page.click(".raya-font-toggle")
                     after = page.evaluate(
                         """() => ({
@@ -694,7 +836,9 @@ def test_render_fixture_text_size_toggle_changes_reader_scale(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -873,7 +1017,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -945,7 +1091,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["searchHref"] == (
                             "_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"
                         )
-                        assert state["graphHref"] == "_raya/graph/index.html?page=render-root"
+                        assert (
+                            state["graphHref"]
+                            == "_raya/graph/index.html?page=render-root"
+                        )
                         assert state["mapExpanded"] == "true"
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
@@ -1032,7 +1181,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1048,13 +1199,18 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                 ):
                     page = browser.new_page(viewport=viewport)
                     try:
-                        page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
                         _assert_no_horizontal_overflow(page)
                         _assert_intersects_viewport(page, "header.raya-top-command-bar")
                         _assert_intersects_viewport(page, "article.raya-main-article")
                         if viewport["width"] > 900:
                             _assert_intersects_viewport(page, "nav.raya-course-map")
-                            _assert_intersects_viewport(page, "aside.raya-learning-rail")
+                            _assert_intersects_viewport(
+                                page, "aside.raya-learning-rail"
+                            )
                         course_map = _bounding_box(page, "nav.raya-course-map")
                         article = _bounding_box(page, "article.raya-main-article")
                         learning_rail = _bounding_box(page, "aside.raya-learning-rail")
@@ -1074,14 +1230,18 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         else:
                             assert article["y"] < course_map["y"] < learning_rail["y"]
                             _assert_bounded_scroll_region(page, "nav.raya-course-map")
-                            _assert_bounded_scroll_region(page, "aside.raya-learning-rail")
+                            _assert_bounded_scroll_region(
+                                page, "aside.raya-learning-rail"
+                            )
                             mobile_course_list = page.locator(
                                 "#raya-course-map .raya-course-map-list"
                             ).bounding_box()
                             assert mobile_course_list is not None
                             assert mobile_course_list["width"] > 100
                             assert mobile_course_list["height"] > 40
-                            mobile_course_link = page.locator("#raya-course-map a").first.bounding_box()
+                            mobile_course_link = page.locator(
+                                "#raya-course-map a"
+                            ).first.bounding_box()
                             assert mobile_course_link is not None
                             assert mobile_course_link["width"] > 0
                             assert mobile_course_link["height"] > 0
@@ -1093,9 +1253,16 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 ).gridTemplateColumns"""
                             )
                             assert len(mobile_grid_columns.split()) == 1
-                        assert page.locator("button.raya-font-toggle").get_attribute("aria-label") == "Toggle OpenDyslexic font"
+                        assert (
+                            page.locator("button.raya-font-toggle").get_attribute(
+                                "aria-label"
+                            )
+                            == "Toggle OpenDyslexic font"
+                        )
                         page.keyboard.press("Tab")
-                        focused = page.evaluate("() => document.activeElement && document.activeElement.className")
+                        focused = page.evaluate(
+                            "() => document.activeElement && document.activeElement.className"
+                        )
                         assert (
                             "raya-skip-link" in focused
                             or "raya-text-size-toggle" in focused
@@ -1103,7 +1270,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         )
                         page.locator(".raya-skip-link").focus()
                         page.keyboard.press("Enter")
-                        focused_id = page.evaluate("() => document.activeElement && document.activeElement.id")
+                        focused_id = page.evaluate(
+                            "() => document.activeElement && document.activeElement.id"
+                        )
                         assert focused_id == "raya-article"
                     finally:
                         page.close()
@@ -1125,7 +1294,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1251,7 +1422,10 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert before != after
                     page.fill("#raya-course-map-filter", "matrix")
                     assert page.locator("[data-raya-map-node]:visible").count() >= 1
-                    assert "matrix" in page.locator("#raya-course-map-list").inner_text().lower()
+                    assert (
+                        "matrix"
+                        in page.locator("#raya-course-map-list").inner_text().lower()
+                    )
                     assert page.locator("[data-raya-map-filter-empty]").is_hidden()
                     page.fill("#raya-course-map-filter", "zz-no-match")
                     assert page.locator("[data-raya-map-filter-empty]").is_visible()
@@ -1279,7 +1453,9 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1292,7 +1468,10 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                 requested_urls: list[str] = []
                 page.on("request", lambda request: requested_urls.append(request.url))
                 try:
-                    page.goto(f"{handle.base_url}/unit/topic/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/unit/topic/index.html",
+                        wait_until="networkidle",
+                    )
                     requested_urls.clear()
                     initial = page.evaluate(
                         """() => ({
@@ -1317,7 +1496,9 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         "filterVisible": True,
                     }
 
-                    page.click('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                    page.click(
+                        '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
+                    )
                     collapsed_unit = page.evaluate(
                         """() => ({
                           firstUnitExpanded: document
@@ -1365,7 +1546,9 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     }
 
                     page.click(".raya-course-map-toggle")
-                    page.click('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                    page.click(
+                        '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
+                    )
                     page.fill("#raya-course-map-filter", "topic")
                     filtered = page.evaluate(
                         """() => ({
@@ -1431,7 +1614,9 @@ def test_render_fixture_keyboard_shortcuts_move_between_sequence_pages(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1505,7 +1690,9 @@ def test_render_fixture_code_copy_button_copies_code_text(tmp_path: Path) -> Non
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1518,7 +1705,9 @@ def test_render_fixture_code_copy_button_copies_code_text(tmp_path: Path) -> Non
                 try:
                     page = context.new_page()
                     try:
-                        page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                        page.goto(
+                            f"{handle.base_url}/index.html", wait_until="networkidle"
+                        )
                         page.evaluate(
                             """() => {
                               window.__rayaCopiedText = "";
@@ -1535,17 +1724,24 @@ def test_render_fixture_code_copy_button_copies_code_text(tmp_path: Path) -> Non
 
                         copy_button = page.locator("[data-raya-copy-code]").first
                         copy_button.focus()
-                        assert copy_button.evaluate("button => document.activeElement === button")
+                        assert copy_button.evaluate(
+                            "button => document.activeElement === button"
+                        )
                         copy_button.click()
-                        page.wait_for_function("() => window.__rayaCopiedText.length > 0")
+                        page.wait_for_function(
+                            "() => window.__rayaCopiedText.length > 0"
+                        )
 
                         copied = page.evaluate("() => window.__rayaCopiedText")
                         assert copied == (
-                            'def fixture_value() -> str:\n'
+                            "def fixture_value() -> str:\n"
                             '    return "<rendered, not executed>"\n'
                         )
                         assert copy_button.inner_text() == "Copied"
-                        assert copy_button.get_attribute("aria-label") == "Code block copied"
+                        assert (
+                            copy_button.get_attribute("aria-label")
+                            == "Code block copied"
+                        )
                         assert page.url.endswith("/index.html")
 
                         page.reload(wait_until="networkidle")
@@ -1598,7 +1794,9 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1609,7 +1807,10 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(page)
                     initial = page.evaluate(
                         """() => ({
@@ -1652,7 +1853,9 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert set(initial["linkTabIndexes"]) == {None}
 
                     page.hover("#raya-course-map")
-                    after_hover = page.evaluate("() => document.documentElement.dataset.rayaCourseMap")
+                    after_hover = page.evaluate(
+                        "() => document.documentElement.dataset.rayaCourseMap"
+                    )
                     assert after_hover == "expanded"
 
                     page.click(".raya-course-map-toggle")
@@ -1765,7 +1968,10 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
-                    assert "raya-course-map-toggle" in escape_collapsed["activeElementClass"]
+                    assert (
+                        "raya-course-map-toggle"
+                        in escape_collapsed["activeElementClass"]
+                    )
                     assert escape_collapsed["activeElementText"] == "Expand map"
                     assert escape_collapsed["listHidden"] == "false"
                     assert escape_collapsed["listInert"] is False
@@ -1790,7 +1996,9 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1802,7 +2010,10 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 page.add_init_script("delete HTMLElement.prototype.inert;")
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     link_panel = page.locator(".raya-page-prerequisites").first
                     collapsed = link_panel.evaluate(
                         """(panel) => {
@@ -1877,7 +2088,9 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1888,7 +2101,10 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
             try:
                 page = browser.new_page(viewport={"width": 1280, "height": 900})
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(page)
                     initial = page.evaluate(
                         """() => {
@@ -2058,13 +2274,18 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     )
                     assert escape_collapsed["rootState"] == "collapsed"
                     assert escape_collapsed["activeControl"] is True
-                    assert escape_collapsed["expandWidth"] <= escape_collapsed["railWidth"]
+                    assert (
+                        escape_collapsed["expandWidth"] <= escape_collapsed["railWidth"]
+                    )
                 finally:
                     page.close()
 
                 mobile = browser.new_page(viewport={"width": 390, "height": 844})
                 try:
-                    mobile.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    mobile.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(mobile)
                     mobile_state = mobile.evaluate(
                         """() => {
@@ -2103,7 +2324,9 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -2195,12 +2418,113 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     with page.expect_navigation():
                         graph_link.click()
                     assert page.url == graph_href
-                    page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
-                    assert "Reader UX Fixture" in page.locator(
-                        "[data-raya-graph-detail-title]"
-                    ).inner_text()
+                    page.wait_for_selector(
+                        "[data-raya-graph-detail-panel]:not([hidden])"
+                    )
+                    assert (
+                        "Reader UX Fixture"
+                        in page.locator("[data-raya-graph-detail-title]").inner_text()
+                    )
                 finally:
                     page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_article_page_connections_are_visible_and_static(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1600, "height": 950},
+                    {"width": 1366, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/authoring-matrix/index.html",
+                            wait_until="networkidle",
+                        )
+                        requested_urls.clear()
+                        block = page.locator(".raya-article-connections").first
+                        assert block.is_visible()
+                        assert page.locator(".raya-article-connections").count() == 1
+                        block.scroll_into_view_if_needed()
+                        _assert_intersects_viewport(page, ".raya-article-connections")
+                        _assert_no_horizontal_overflow(page)
+                        block_box = block.bounding_box()
+                        article_box = page.locator(".raya-main-article").bounding_box()
+                        sequence_box = page.locator(
+                            ".raya-article-sequence"
+                        ).bounding_box()
+                        assert block_box is not None
+                        assert article_box is not None
+                        assert sequence_box is not None
+                        assert block_box["width"] <= article_box["width"]
+                        assert block_box["width"] > min(300, viewport["width"] - 32)
+                        if viewport["width"] >= 1200:
+                            assert abs(block_box["width"] - sequence_box["width"]) < 2
+                        state = block.evaluate(
+                            """(block) => {
+                              const graphLink = block.querySelector('.raya-article-connections-graph');
+                              return {
+                                text: block.innerText,
+                                counts: Array
+                                  .from(block.querySelectorAll('.raya-article-connections-count'))
+                                  .map((node) => node.innerText.trim()),
+                                graphHref: graphLink?.getAttribute('href'),
+                                sectionLabels: Array
+                                  .from(block.querySelectorAll('.raya-article-connections-section h3'))
+                                  .map((node) => node.innerText.trim()),
+                                localStorageKeys: Object.keys(localStorage),
+                                sessionStorageKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                        assert "Page connections" in state["text"]
+                        assert "From this page" in state["sectionLabels"]
+                        assert "Links here" in state["sectionLabels"]
+                        assert state["counts"] == ["3", "1"]
+                        assert (
+                            state["graphHref"]
+                            == "../_raya/graph/index.html?page=authoring-matrix"
+                        )
+                        assert "Math Authoring Fixture" in state["text"]
+                        assert "Reader UX Fixture" in state["text"]
+                        assert "recommend" not in state["text"].lower()
+                        assert "progress" not in state["text"].lower()
+                        assert "mastery" not in state["text"].lower()
+                        assert state["localStorageKeys"] == []
+                        assert state["sessionStorageKeys"] == []
+                        assert requested_urls == []
+                    finally:
+                        page.close()
             finally:
                 browser.close()
     finally:
@@ -2219,7 +2543,9 @@ def test_render_fixture_course_map_works_without_storage(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -2240,7 +2566,10 @@ def test_render_fixture_course_map_works_without_storage(
                     """
                 )
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     initial = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -2293,7 +2622,9 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         shell_js = _fetch_text(f"{handle.base_url}/_raya/render/shell.js")
         assert "raya.courseMapExpanded" not in shell_js
@@ -2312,7 +2643,10 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
                     """
                 )
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     stable = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -2343,7 +2677,9 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -2354,7 +2690,10 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 try:
-                    page.goto(f"{handle.base_url}/authoring-matrix/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(page)
                     hierarchy = page.evaluate(
                         """() => {
@@ -2401,7 +2740,9 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -2412,7 +2753,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
             try:
                 page = browser.new_page(viewport={"width": 1680, "height": 980})
                 try:
-                    page.goto(f"{handle.base_url}/authoring-matrix/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(page)
                     chrome = page.evaluate(
                         """() => {
@@ -2485,7 +2829,9 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -2496,14 +2842,24 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
             try:
                 page = browser.new_page(viewport={"width": 390, "height": 844})
                 try:
-                    page.goto(f"{handle.base_url}/reader-ux/index.html", wait_until="networkidle")
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
                     _assert_no_horizontal_overflow(page)
                     article = _bounding_box(page, "article.raya-main-article")
                     course_map = _bounding_box(page, "nav.raya-course-map")
                     rail = _bounding_box(page, "aside.raya-learning-rail")
                     assert article["y"] < course_map["y"] < rail["y"]
-                    assert not page.locator("#raya-course-map .raya-course-map-toggle").is_visible()
-                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "true"
+                    assert not page.locator(
+                        "#raya-course-map .raya-course-map-toggle"
+                    ).is_visible()
+                    assert (
+                        page.locator(".raya-course-map-toggle").first.get_attribute(
+                            "aria-expanded"
+                        )
+                        == "true"
+                    )
                     expanded = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -2519,7 +2875,12 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.click(".raya-course-map-toggle")
-                    assert page.locator(".raya-course-map-toggle").first.get_attribute("aria-expanded") == "false"
+                    assert (
+                        page.locator(".raya-course-map-toggle").first.get_attribute(
+                            "aria-expanded"
+                        )
+                        == "false"
+                    )
                     _assert_no_horizontal_overflow(page)
                     collapsed = page.evaluate(
                         """() => ({
@@ -2566,11 +2927,15 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     from raya_cli.preview import create_preview
 
     course = tmp_path / "reference-fixture"
-    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    shutil.copytree(
+        REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
         root_html = _fetch_text(f"{base_url}/index.html")
@@ -2579,17 +2944,28 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     finally:
         handle.close()
 
-    assert '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
-    assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in root_html
-    assert '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">' in root_html
-    assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in root_html
+    assert (
+        '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
+    )
+    assert (
+        '<a class="raya-skip-link" href="#raya-article">Skip to content</a>'
+        in root_html
+    )
+    assert (
+        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
+        in root_html
+    )
+    assert (
+        '<article id="raya-article" class="raya-main-article" tabindex="-1">'
+        in root_html
+    )
     assert (
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
         'aria-label="Learning context" data-raya-learning-rail="expanded">'
     ) in root_html
-    assert root_html.index('<nav id="raya-course-map" class="raya-course-map"') < root_html.index(
-        '<article id="raya-article"'
-    )
+    assert root_html.index(
+        '<nav id="raya-course-map" class="raya-course-map"'
+    ) < root_html.index('<article id="raya-article"')
     assert root_html.index('<article id="raya-article"') < root_html.index(
         '<aside id="raya-learning-rail"'
     )
@@ -2609,11 +2985,19 @@ def test_examples_gallery_has_reviewable_responsive_fixture_cards() -> None:
         gallery_html = _fetch_text(f"{base_url}/gallery/index.html")
 
     assert "fixture material" in gallery_html
-    assert "Foundation docs and accepted OpenSpec specs remain the authority" in gallery_html
-    assert '<section class="gallery-grid" aria-label="Fixture previews">' in gallery_html
+    assert (
+        "Foundation docs and accepted OpenSpec specs remain the authority"
+        in gallery_html
+    )
+    assert (
+        '<section class="gallery-grid" aria-label="Fixture previews">' in gallery_html
+    )
     assert "../courses/minimal/artifact/site/index.html" in gallery_html
     assert "../courses/minimal/artifact/site/_raya/inspect/index.html" in gallery_html
-    assert "../courses/execution-fixture/artifact/site/_raya/inspect/index.html" in gallery_html
+    assert (
+        "../courses/execution-fixture/artifact/site/_raya/inspect/index.html"
+        in gallery_html
+    )
     assert "@media (max-width: 720px)" in gallery_html
     assert "overflow-wrap: anywhere" in gallery_html
 
@@ -2625,12 +3009,16 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
     from raya_cli.preview import create_preview
 
     course = tmp_path / "reference-fixture"
-    shutil.copytree(REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    shutil.copytree(
+        REFERENCE_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -2642,10 +3030,15 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
                     args=["--no-sandbox"],
                 )
                 try:
-                    for viewport in ({"width": 1280, "height": 900}, {"width": 390, "height": 844}):
+                    for viewport in (
+                        {"width": 1280, "height": 900},
+                        {"width": 390, "height": 844},
+                    ):
                         page = browser.new_page(viewport=viewport)
                         try:
-                            page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                            page.goto(
+                                f"{base_url}/index.html", wait_until="networkidle"
+                            )
                             _assert_no_horizontal_overflow(page)
                             _assert_no_overlap(
                                 page,
@@ -2658,7 +3051,9 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
                                 wait_until="networkidle",
                             )
                             _assert_no_horizontal_overflow(page)
-                            assert page.locator("main.raya-inspection-main").bounding_box()
+                            assert page.locator(
+                                "main.raya-inspection-main"
+                            ).bounding_box()
 
                             page.goto(
                                 f"{examples_url}/gallery/index.html",
@@ -2693,7 +3088,9 @@ def test_render_fixture_numbered_objects_are_static_and_local(
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -2817,7 +3214,9 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -2910,17 +3309,22 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
     assert probe["visibleRawTex"] is False
     assert probe["mathjaxContainers"] >= 6
     assert any("Proof of Proposition 4.2" in text for text in probe["proofTexts"])
-    assert any("Solution sketch of Activity 4.1" in text for text in probe["proofTexts"])
+    assert any(
+        "Solution sketch of Activity 4.1" in text for text in probe["proofTexts"]
+    )
     assert probe["staticEnvironmentCount"] >= 4
-    assert "raya-static-environment-hint-orthogonal-activity" in probe[
-        "staticEnvironmentIds"
-    ]
-    assert "raya-static-environment-solution-orthogonal-activity" in probe[
-        "staticEnvironmentIds"
-    ]
-    assert "raya-static-environment-answer-orthogonal-activity" in probe[
-        "staticEnvironmentIds"
-    ]
+    assert (
+        "raya-static-environment-hint-orthogonal-activity"
+        in probe["staticEnvironmentIds"]
+    )
+    assert (
+        "raya-static-environment-solution-orthogonal-activity"
+        in probe["staticEnvironmentIds"]
+    )
+    assert (
+        "raya-static-environment-answer-orthogonal-activity"
+        in probe["staticEnvironmentIds"]
+    )
     static_environment_text = " ".join(probe["staticEnvironmentTexts"])
     assert "Hint for Activity 4.1" in static_environment_text
     assert "Solution of Activity 4.1" in static_environment_text
@@ -2950,7 +3354,9 @@ def test_render_fixture_optional_static_environments_are_spoiler_safe(
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -2998,9 +3404,14 @@ def test_render_fixture_optional_static_environments_are_spoiler_safe(
                     assert closed_probe["summaryTag"] == "SUMMARY"
                     assert closed_probe["open"] is False
                     assert closed_probe["summaryCursor"] == "pointer"
-                    assert closed_probe["summaryText"].startswith("Hint for Activity 4.1")
+                    assert closed_probe["summaryText"].startswith(
+                        "Hint for Activity 4.1"
+                    )
                     assert closed_probe["bodyHeight"] == 0
-                    assert "Compare the projection formula" in closed_probe["bodyTextContent"]
+                    assert (
+                        "Compare the projection formula"
+                        in closed_probe["bodyTextContent"]
+                    )
                     assert closed_probe["location"] == before_url
 
                     page.locator(
@@ -3067,7 +3478,9 @@ def _run_render_fixture_math_check(tmp_path: Path) -> None:
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     external_requests: list[str] = []
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         base_url = handle.base_url
         assert base_url is not None
 
@@ -3176,9 +3589,7 @@ def test_render_fixture_debug_artifacts_are_written_when_enabled(
     assert captured_shell_names == expected_shell_screenshots
     assert all(capture["raw_tex_visible"] is False for capture in summary["captures"])
     assert all(capture["raw_tex_markers"] == [] for capture in summary["captures"])
-    assert all(
-        capture["horizontal_overflow"] <= 1 for capture in summary["captures"]
-    )
+    assert all(capture["horizontal_overflow"] <= 1 for capture in summary["captures"])
     assert all(capture["external_requests"] == [] for capture in summary["captures"])
 
 
@@ -3198,7 +3609,9 @@ def test_render_fixture_debug_summary_is_reset_between_runs(
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         result = capture_render_debug(
             base_url=handle.base_url,
@@ -3225,7 +3638,9 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     try:
-        assert handle.report.ok, [diagnostic.format() for diagnostic in handle.report.diagnostics]
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
         assert handle.base_url is not None
         result = capture_render_debug(
             base_url=handle.base_url,
@@ -3305,8 +3720,7 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
     reader_capture = next(
         capture
         for capture in summary["captures"]
-        if capture["page"] == "reader-ux"
-        and capture["viewport"]["name"] == "desktop"
+        if capture["page"] == "reader-ux" and capture["viewport"]["name"] == "desktop"
     )
     reader_evidence = reader_capture["numbered_content"]
     assert {item["id"] for item in reader_evidence["objects"]} >= {
@@ -3326,8 +3740,7 @@ def test_capture_render_debug_writes_screenshots_and_summary(tmp_path: Path) -> 
     mobile_reader_capture = next(
         capture
         for capture in summary["captures"]
-        if capture["page"] == "reader-ux"
-        and capture["viewport"]["name"] == "mobile"
+        if capture["page"] == "reader-ux" and capture["viewport"]["name"] == "mobile"
     )
     mobile_static_environments = mobile_reader_capture["staticEnvironments"]
     assert {item["id"] for item in mobile_static_environments} >= {
@@ -3459,9 +3872,7 @@ def _fetch_bytes(url: str) -> bytes:
 
 def _fetch_stylesheet_containing(page_url: str, html: str, href_part: str) -> str:
     stylesheet_urls = [
-        urljoin(page_url, href)
-        for href in _stylesheet_hrefs(html)
-        if href_part in href
+        urljoin(page_url, href) for href in _stylesheet_hrefs(html) if href_part in href
     ]
     assert stylesheet_urls, html
     return _fetch_text(stylesheet_urls[0])
@@ -3487,10 +3898,7 @@ class _StylesheetParser(HTMLParser):
         if tag.lower() != "link":
             return
         attributes = {name.lower(): value or "" for name, value in attrs}
-        rel_values = {
-            value.lower()
-            for value in attributes.get("rel", "").split()
-        }
+        rel_values = {value.lower() for value in attributes.get("rel", "").split()}
         href = attributes.get("href", "")
         if "stylesheet" in rel_values and href:
             self.hrefs.append(href)
