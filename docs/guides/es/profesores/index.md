@@ -173,6 +173,17 @@ practica que estudiantes puedan usar sin progreso falso. Usa checkpoints y
 metas como material docente visible hasta que un contrato futuro los acepte como
 metadata.
 
+El renderizador estatico de practica oficial muestra objetos de nivel
+pagina desde archivos `_official/` colocados junto a su pagina en una seccion
+`Official practice`. Por ahora, escribe cards, prompts, quizzes y campos
+genericos de objetos oficiales como campos planos. Trata la seccion renderizada
+como conveniencia para lectura; los archivos `_official/` autorados siguen
+siendo autoridad de fuente del curso, y superficies machine-readable como
+`data/official.json` y `manifest.json` siguen siendo las superficies de contrato
+para herramientas. No disenes estos objetos alrededor de scoring, grading,
+submissions, attempts, progreso, dominio, recomendaciones, llamadas a backend,
+fetching en el browser, storage, renderers externos ni MathJax en el browser.
+
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
 y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto

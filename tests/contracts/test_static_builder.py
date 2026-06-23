@@ -80,6 +80,137 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert manifest["data"]["graph"] == "data/graph.json"
     index_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
     assert 'class="raya-article-connections"' not in index_html
+    topic_html = (artifact / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<section class="raya-official-practice"' in topic_html
+    assert 'aria-label="Official practice"' in topic_html
+    assert 'id="raya-official-first-topic-card"' in topic_html
+    assert "What loop does Raya Lucaria support?" in topic_html
+    assert "Read, retrieve, reflect, adapt, revisit, and contribute." in topic_html
+    assert 'id="raya-official-first-topic-prompt"' in topic_html
+    assert "Explain how retrieval practice differs from rereading." in topic_html
+    assert 'id="raya-official-first-topic-quiz"' in topic_html
+    assert "Which action is part of the Raya Lucaria learning loop?" in topic_html
+    assert "Retrieve" in topic_html
+    assert "Vendor lock-in" in topic_html
+    assert "Correct option" in topic_html
+    assert "_official" not in topic_html
+    assert "source_path" not in topic_html
+    assert "localStorage" not in topic_html
+    assert "fetch(" not in topic_html
+
+
+def test_official_practice_escapes_nested_mapping_keys(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    prompt_path = (
+        course
+        / "course"
+        / "1_unit"
+        / "1_topic"
+        / "_official"
+        / "prompts"
+        / "2_unsafe_prompt.yaml"
+    )
+    prompt_path.write_text(
+        "id: unsafe-prompt\n"
+        "type: prompt\n"
+        "authority: official\n"
+        "content:\n"
+        "  prompt:\n"
+        "    \"<img src=x onerror=alert(1)>\": \"<script>alert(2)</script>\"\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    topic_html = (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'id="raya-official-unsafe-prompt"' in topic_html
+    assert "&lt;img src=x onerror=alert(1)&gt;" in topic_html
+    assert "&lt;script&gt;alert(2)&lt;/script&gt;" in topic_html
+    assert "<img src=x onerror=alert(1)>" not in topic_html
+    assert "<script>alert(2)</script>" not in topic_html
+
+
+def test_official_practice_renders_explicit_alias_and_source_path_scopes(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    topic_path = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic_path.write_text(
+        topic_path.read_text(encoding="utf-8").replace(
+            "prerequisites:\n  - first-unit\n",
+            "aliases:\n  - topic-alias\nprerequisites:\n  - first-unit\n",
+        ),
+        encoding="utf-8",
+    )
+    root_official = course / "course" / "_official" / "prompts"
+    root_official.mkdir(parents=True)
+    (root_official / "1_alias_scope.yaml").write_text(
+        "id: alias-scope-prompt\n"
+        "type: prompt\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: topic-alias\n"
+        "content:\n"
+        "  prompt: Rendered from an alias scope.\n",
+        encoding="utf-8",
+    )
+    (root_official / "2_path_scope.yaml").write_text(
+        "id: path-scope-prompt\n"
+        "type: prompt\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: 1_unit/1_topic/0_index.md\n"
+        "content:\n"
+        "  prompt: Rendered from a source path scope.\n",
+        encoding="utf-8",
+    )
+    (root_official / "3_course_path_scope.yaml").write_text(
+        "id: course-path-scope-prompt\n"
+        "type: prompt\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: minimal-course:1_unit/1_topic/0_index.md\n"
+        "content:\n"
+        "  prompt: Rendered from a course-qualified source path scope.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    indices = json.loads(
+        (course / "artifact" / "data" / "indices.json").read_text(encoding="utf-8")
+    )
+    topic_html = (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert 'id="raya-official-alias-scope-prompt"' in topic_html
+    assert "Rendered from an alias scope." in topic_html
+    assert 'id="raya-official-path-scope-prompt"' in topic_html
+    assert "Rendered from a source path scope." in topic_html
+    assert 'id="raya-official-course-path-scope-prompt"' in topic_html
+    assert "Rendered from a course-qualified source path scope." in topic_html
+    topic_counts = _local_index_study_counts(indices, "first-topic")
+    unit_counts = _local_index_study_counts(indices, "first-unit")
+    assert topic_counts["prompt"] == 4
+    assert unit_counts["prompt"] == 4
+    unit_html = (course / "artifact" / "site" / "unit" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert "Prompts: 4" in unit_html
+    root_html = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert "alias-scope-prompt" not in root_html
+    assert "path-scope-prompt" not in root_html
+    assert "course-path-scope-prompt" not in root_html
 
 
 def test_build_applies_course_skin_to_pages_and_writes_skin_css(
@@ -3643,6 +3774,18 @@ def _article_sequence_cards_html(html_text: str) -> str:
     start = html_text.index('<nav class="raya-article-sequence-cards"')
     end = html_text.index("</nav>", start) + len("</nav>")
     return html_text[start:end]
+
+
+def _local_index_study_counts(indices: dict[str, object], page_id: str) -> dict[str, int]:
+    for section in indices["local"]:
+        assert isinstance(section, dict)
+        if section.get("id") == page_id:
+            return dict(section["study_counts"])
+        for entry in section.get("entries", []):
+            assert isinstance(entry, dict)
+            if entry.get("id") == page_id:
+                return dict(entry["study_counts"])
+    raise AssertionError(f"Missing local index entry for {page_id}")
 
 
 def _tag_html(html_text: str, tag_name: str, class_name: str) -> str:

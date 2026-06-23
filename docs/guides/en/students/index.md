@@ -100,6 +100,13 @@ ask your browser to render MathJax. When a block names a theorem, problem,
 activity, homework, figure, table, or equation, that heading should already be
 resolved before the page reaches your browser.
 
+Some pages may include an `Official practice` section rendered from the page's
+own `_official/` material. Cards, prompts, quizzes, and other official fields
+are shown as static reading support on the owning page. Reveal controls are
+local browser controls; opening one does not submit work, save answers, create
+attempts, update progress, change mastery, contact a backend, fetch more data,
+or ask your browser to render MathJax.
+
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Fenced code examples may include a `Copy` button. Copying puts the displayed code text on your clipboard; it does not run the code, save progress, or contact a backend.

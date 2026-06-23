@@ -66,6 +66,20 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
+The official practice section is a current static rendering surface for
+page-level objects from colocated `_official/` data on their owning page.
+Review it as reader-facing convenience over existing source and
+artifact authority: `_official/` remains source truth, while `data/official.json`
+and `manifest.json` remain machine surfaces. Verification should cover cards,
+prompts, quizzes, generic official object fields, escaped text, native
+`details` reveal controls where appropriate, deterministic ordering, and
+source-path/privacy boundaries. Do not add scoring, grading, submissions,
+attempts, progress, mastery, recommendations, backend calls, runtime `fetch`,
+localStorage/sessionStorage, external/CDN renderer requests, or browser-side
+MathJax. Changes to this surface should include static-read-path coverage,
+focused escaping/privacy assertions, no-storage/no-fetch checks, and role-doc
+impact for students, professors, contributors, and agents.
+
 Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
 on desktop, can filter the rendered

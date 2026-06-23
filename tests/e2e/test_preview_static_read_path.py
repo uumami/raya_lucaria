@@ -82,6 +82,94 @@ def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     assert not (course / "artifact" / "data" / "execution-results.json").exists()
 
 
+def test_minimal_fixture_official_practice_is_static_and_revealable(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
+                    try:
+                        page.goto(
+                            f"{base_url}/unit/topic/index.html",
+                            wait_until="networkidle",
+                        )
+                        requested_urls.clear()
+                        _assert_no_horizontal_overflow(page)
+                        practice = page.locator(".raya-official-practice")
+                        assert practice.is_visible()
+                        assert page.locator("#raya-official-first-topic-card").is_visible()
+                        assert page.locator(
+                            "#raya-official-first-topic-prompt"
+                        ).is_visible()
+                        assert page.locator("#raya-official-first-topic-quiz").is_visible()
+                        assert (
+                            page.locator(
+                                "#raya-official-first-topic-card details"
+                            ).get_attribute("open")
+                            is None
+                        )
+                        page.locator(
+                            "#raya-official-first-topic-card details summary"
+                        ).click()
+                        assert (
+                            page.locator(
+                                "#raya-official-first-topic-card details"
+                            ).get_attribute("open")
+                            == ""
+                        )
+                        assert (
+                            "Read, retrieve, reflect, adapt, revisit, and contribute."
+                            in page.locator("#raya-official-first-topic-card").inner_text()
+                        )
+                        page.locator(
+                            "#raya-official-first-topic-quiz details summary"
+                        ).click()
+                        assert (
+                            page.locator(
+                                "#raya-official-first-topic-quiz details"
+                            ).get_attribute("open")
+                            == ""
+                        )
+                        assert "Correct option" in page.locator(
+                            "#raya-official-first-topic-quiz"
+                        ).inner_text()
+                        assert requested_urls == []
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_serves_local_assets(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 

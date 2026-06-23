@@ -269,7 +269,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
         **content_model.pages_by_id,
         **content_model.pages_by_alias,
     }
-    official_counts = _official_counts(official_objects)
+    official_counts = _official_counts(
+        official_objects,
+        content_model=content_model,
+        course_id=course_id,
+    )
     references = _collect_source_references(
         course_id,
         content_model,
@@ -300,6 +304,11 @@ def build_course(course_path: str | Path) -> ValidationReport:
     )
     graph_index = _graph_index(course_id, content_model, links_index)
     graph_context_by_page = _graph_context_by_page(content_model, graph_index)
+    official_by_page = _official_objects_by_page(
+        official_objects,
+        content_model=content_model,
+        course_id=course_id,
+    )
     math_renderer = MathRenderer()
     numbered_object_collection = _collect_numbered_objects(
         course_root=root,
@@ -345,6 +354,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             course_title=str(config["title"]),
             language=str(config["language"]),
             official_counts=official_counts,
+            official_objects=official_by_page.get(page.id, []),
             page_references=references_by_page.get(page.id, []),
             reviewed_by_reference=reviewed_by_reference,
             report=report,
@@ -771,6 +781,7 @@ def _render_page(
     course_title: str,
     language: str,
     official_counts: dict[str, dict[str, int]],
+    official_objects: list[dict[str, Any]],
     page_references: list[SourceReference],
     reviewed_by_reference: dict[str, ReviewedOutput],
     report: ValidationReport,
@@ -850,6 +861,7 @@ def _render_page(
         page_graph_context,
         graph_href,
     )
+    official_practice_html = _render_official_practice_section(official_objects)
     learning_rail = _render_learning_rail(
         page,
         toc_html,
@@ -890,6 +902,7 @@ def _render_page(
             breadcrumbs,
             article_html,
             article_connections_html,
+            official_practice_html,
             _render_article_sequence_cards(page, content_model),
             "</article>",
             learning_rail,
@@ -1841,6 +1854,200 @@ def _render_sequence_nav(page: ContentPage, content_model: ContentModel) -> str:
     if not sequence:
         return ""
     return '<nav aria-label="Previous and next">' + sequence + "</nav>"
+
+
+def _render_official_practice_section(objects: list[dict[str, Any]]) -> str:
+    if not objects:
+        return ""
+    ordered = sorted(
+        objects,
+        key=lambda item: (
+            item.get("source_order") if isinstance(item.get("source_order"), int) else 0,
+            str(item.get("id") or ""),
+        ),
+    )
+    rendered_objects = [
+        _render_official_object(item) for item in ordered if isinstance(item, dict)
+    ]
+    rendered_objects = [item for item in rendered_objects if item]
+    if not rendered_objects:
+        return ""
+    return "\n".join(
+        [
+            '<section class="raya-official-practice" aria-label="Official practice">',
+            "<h2>Official practice</h2>",
+            (
+                "<p>Official course prompts and checks for this page. Reveal support "
+                "when you want it; nothing is submitted or saved.</p>"
+            ),
+            *rendered_objects,
+            "</section>",
+        ]
+    )
+
+
+def _render_official_object(item: dict[str, Any]) -> str:
+    object_id = str(item.get("id") or "official-object")
+    object_type = str(item.get("type") or "practice")
+    object_type_class = _safe_map_fragment_id(object_type)
+    body = _render_official_content(item)
+    if not body:
+        return ""
+    return "\n".join(
+        [
+            (
+                f'<article class="raya-official-object raya-official-{html.escape(object_type_class, quote=True)}" '
+                f'id="raya-official-{html.escape(_safe_map_fragment_id(object_id), quote=True)}">'
+            ),
+            '<header class="raya-official-object-header">',
+            (
+                f'<span class="raya-official-kind">'
+                f"{html.escape(_official_type_label(object_type))}</span>"
+            ),
+            '<span class="raya-official-authority">official</span>',
+            "</header>",
+            body,
+            "</article>",
+        ]
+    )
+
+
+def _render_official_content(item: dict[str, Any]) -> str:
+    content = item.get("content")
+    if not isinstance(content, dict):
+        return ""
+    object_type = str(item.get("type") or "")
+    if object_type == "card":
+        front = _official_text(content.get("front"))
+        back = _official_text(content.get("back"))
+        parts = []
+        if front:
+            parts.append(f'<p class="raya-official-prompt">{front}</p>')
+        if back:
+            parts.append(_official_reveal("Reveal answer", back, "raya-official-answer"))
+        return "\n".join(parts)
+    if object_type == "prompt":
+        prompt = _official_text(content.get("prompt"))
+        return f'<p class="raya-official-prompt">{prompt}</p>' if prompt else ""
+    if object_type == "quiz":
+        return _render_official_quiz(content)
+    return _render_generic_official_content(content)
+
+
+def _render_official_quiz(content: dict[str, Any]) -> str:
+    questions = content.get("questions")
+    if not isinstance(questions, list):
+        return ""
+    rendered_questions = []
+    for index, question in enumerate(questions, start=1):
+        if not isinstance(question, dict):
+            continue
+        prompt = _official_text(question.get("prompt"))
+        options = question.get("options")
+        if not prompt and not isinstance(options, list):
+            continue
+        parts = [f'<section class="raya-official-question" aria-label="Question {index}">']
+        if prompt:
+            parts.append(f'<p class="raya-official-prompt">{prompt}</p>')
+        if isinstance(options, list):
+            option_items = []
+            correct_labels = []
+            for option in options:
+                if not isinstance(option, dict):
+                    continue
+                label = _official_text(option.get("label"))
+                if not label:
+                    continue
+                option_items.append(f"<li>{label}</li>")
+                if option.get("correct") is True:
+                    correct_labels.append(label)
+            if option_items:
+                parts.append(
+                    '<ol class="raya-official-options">' + "".join(option_items) + "</ol>"
+                )
+            if correct_labels:
+                parts.append(
+                    _official_reveal(
+                        "Reveal correct option",
+                        _official_list(correct_labels, label="Correct option"),
+                        "raya-official-answer",
+                    )
+                )
+        parts.append("</section>")
+        rendered_questions.append("\n".join(parts))
+    return "\n".join(rendered_questions)
+
+
+def _render_generic_official_content(content: dict[str, Any]) -> str:
+    visible_fields = [
+        ("title", "Title"),
+        ("summary", "Summary"),
+        ("prompt", "Prompt"),
+        ("instructions", "Instructions"),
+        ("body", "Details"),
+        ("question", "Question"),
+    ]
+    support_fields = [("answer", "Reveal answer"), ("solution", "Reveal solution")]
+    parts: list[str] = []
+    for field, label in visible_fields:
+        value = _official_text(content.get(field))
+        if value:
+            parts.append(f'<p><strong>{html.escape(label)}:</strong> {value}</p>')
+    for field, summary in support_fields:
+        value = _official_text(content.get(field))
+        if value:
+            parts.append(_official_reveal(summary, value, "raya-official-answer"))
+    return "\n".join(parts)
+
+
+def _official_type_label(object_type: str) -> str:
+    labels = {
+        "assignment": "Assignment",
+        "card": "Card",
+        "exam": "Exam",
+        "example": "Example",
+        "project": "Project",
+        "prompt": "Prompt",
+        "quiz": "Quiz",
+        "task": "Task",
+    }
+    return labels.get(object_type, "Practice")
+
+
+def _official_text(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (list, tuple)):
+        return "; ".join(
+            text for text in (_official_text(item) for item in value) if text
+        )
+    if isinstance(value, dict):
+        return "; ".join(
+            f"{html.escape(str(key))}: {text}"
+            for key, text in (
+                (str(key), _official_text(item)) for key, item in value.items()
+            )
+            if text
+        )
+    return html.escape(str(value))
+
+
+def _official_list(values: list[str], *, label: str) -> str:
+    items = "".join(
+        f"<li><strong>{html.escape(label)}:</strong> {value}</li>" for value in values
+    )
+    return f'<ul class="raya-official-answer-list">{items}</ul>'
+
+
+def _official_reveal(summary: str, body: str, class_name: str) -> str:
+    return "\n".join(
+        [
+            f'<details class="raya-official-reveal {html.escape(class_name, quote=True)}">',
+            f"<summary>{html.escape(summary)}</summary>",
+            f'<div class="raya-official-reveal-body">{body}</div>',
+            "</details>",
+        ]
+    )
 
 
 def _render_generated_index(
@@ -3244,15 +3451,53 @@ def _official_index(
 
 def _official_counts(
     official_objects: list[dict[str, Any]],
+    *,
+    content_model: ContentModel,
+    course_id: str,
 ) -> dict[str, dict[str, int]]:
+    page_ids_by_scope = _official_page_ids_by_scope(content_model, course_id)
     counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     for item in official_objects:
         scope = item.get("scope")
         quantum = scope.get("quantum") if isinstance(scope, dict) else None
         object_type = item.get("type")
         if isinstance(quantum, str) and isinstance(object_type, str):
-            counts[quantum][object_type] += 1
+            page_id = page_ids_by_scope.get(quantum)
+            if page_id is not None:
+                counts[page_id][object_type] += 1
     return {quantum: dict(values) for quantum, values in counts.items()}
+
+
+def _official_objects_by_page(
+    official_objects: list[dict[str, Any]],
+    *,
+    content_model: ContentModel,
+    course_id: str,
+) -> dict[str, list[dict[str, Any]]]:
+    page_ids_by_scope = _official_page_ids_by_scope(content_model, course_id)
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in official_objects:
+        scope = item.get("scope")
+        quantum = scope.get("quantum") if isinstance(scope, dict) else None
+        if isinstance(quantum, str):
+            page_id = page_ids_by_scope.get(quantum)
+            if page_id is not None:
+                grouped[page_id].append(item)
+    return {page_id: list(values) for page_id, values in grouped.items()}
+
+
+def _official_page_ids_by_scope(
+    content_model: ContentModel,
+    course_id: str,
+) -> dict[str, str]:
+    page_ids: dict[str, str] = {}
+    for page in content_model.pages:
+        page_ids[page.id] = page.id
+        page_ids[page.rel_path] = page.id
+        page_ids[f"{course_id}:{page.rel_path}"] = page.id
+        for alias in page.aliases:
+            page_ids[alias] = page.id
+    return page_ids
 
 
 def _aggregate_study_counts(

@@ -61,6 +61,18 @@ practica relacionada falsa, sin progreso personal y sin MathJax en el browser.
 Usa checks render-debug cuando puedan fallar layout de la estructura del curso,
 recursos locales, capturas, overflow o math visible.
 
+Para el rendering de practica oficial, inspecciona el objeto fuente
+`_official/`, la entrada generada en `data/official.json`, la pagina renderizada
+que lo posee y `manifest.json` en vez de tratar HTML normal como autoridad.
+Verifica que cards, prompts, quizzes y campos genericos se rendericen solo en la
+pagina propietaria como texto escapado, con controles nativos `details` cuando
+corresponda y sin rutas privadas de fuente. Confirma que la pagina no agregue
+scoring, grading, submissions, attempts, progreso, dominio, recomendaciones,
+llamadas a backend, `fetch` en runtime, localStorage/sessionStorage, requests
+externos/CDN del renderer ni MathJax en el browser. Cuando cambie esta
+superficie, incluye checks static-read-path, checks de escaping/privacidad,
+inspeccion no-storage/no-fetch e impacto de docs de rol.
+
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
 la orientacion de pagina actual dentro del mapa, el comportamiento del filtro

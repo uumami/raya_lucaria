@@ -58,6 +58,17 @@ practice, no personal progress, and no browser-side MathJax. Use render-debug
 checks when course shell layout, local resources, screenshots, overflow, or
 visible math can regress.
 
+For official practice rendering, inspect the source `_official/` object,
+the generated `data/official.json` entry, the owning rendered page, and
+`manifest.json` instead of treating normal HTML as authority. Verify that cards,
+prompts, quizzes, and generic fields render only on the owning page as escaped
+text, with native `details` reveal controls where appropriate and no private
+source paths. Confirm the page does not add scoring, grading, submissions,
+attempts, progress, mastery, recommendations, backend calls, runtime `fetch`,
+localStorage/sessionStorage, external/CDN renderer requests, or browser-side
+MathJax. When this surface changes, include static-read-path checks,
+escaping/privacy checks, no-storage/no-fetch inspection, and role-doc impact.
+
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
 current-page map orientation, map filter behavior, sticky reading context,

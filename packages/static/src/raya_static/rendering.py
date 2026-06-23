@@ -1385,6 +1385,95 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   margin: 0.65rem 0 0;
   padding: 0;
 }
+.raya-official-practice {
+  border-top: 1px solid var(--raya-color-border);
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+}
+.raya-official-practice > h2 {
+  margin-bottom: 0;
+}
+.raya-official-practice > p {
+  color: var(--raya-color-muted);
+  margin: 0;
+}
+.raya-official-object {
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, var(--raya-color-accent));
+  border-left: 0.35rem solid var(--raya-color-accent);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+.raya-official-object-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.raya-official-kind,
+.raya-official-authority {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 0.35rem 0.55rem;
+  text-transform: uppercase;
+}
+.raya-official-kind {
+  background: var(--raya-color-accent);
+  color: var(--raya-color-accent-text);
+}
+.raya-official-authority {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  color: var(--raya-color-text);
+}
+.raya-official-prompt {
+  font-weight: 800;
+  margin: 0;
+}
+.raya-official-question {
+  display: grid;
+  gap: 0.65rem;
+}
+.raya-official-options,
+.raya-official-answer-list {
+  margin: 0;
+  padding-left: 1.35rem;
+}
+.raya-official-options {
+  display: grid;
+  gap: 0.3rem;
+}
+.raya-official-reveal {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 48%, var(--raya-color-surface));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  padding: 0.55rem 0.75rem;
+}
+.raya-official-reveal summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+.raya-official-reveal summary:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-official-reveal-body {
+  margin-top: 0.55rem;
+}
+.raya-official-reveal-body > :first-child {
+  margin-top: 0;
+}
+.raya-official-reveal-body > :last-child {
+  margin-bottom: 0;
+}
 .raya-article-connection-item {
   align-items: baseline;
   border-top: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);

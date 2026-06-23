@@ -68,6 +68,21 @@ dinamico de estudio fuera del renderizador estatico. Conserva las reglas: sin
 MathJax en el browser, sin assets externos, sin metas inferidas y sin practica
 relacionada inventada desde la prosa.
 
+La seccion de practica oficial es una superficie actual de rendering estatico
+para objetos de nivel pagina desde datos `_official/` colocados junto a su
+pagina. Implementala y revisala como conveniencia de lectura sobre autoridad de
+fuente y artifact existente: `_official/` sigue siendo fuente de verdad, mientras
+`data/official.json` y `manifest.json` siguen siendo superficies machine-readable.
+La verificacion debe cubrir cards, prompts, quizzes, campos genericos de objetos
+oficiales, texto escapado, controles nativos `details` cuando correspondan,
+orden determinista y limites de privacidad/rutas de fuente. No agregues scoring,
+grading, submissions, attempts, progreso, dominio, recomendaciones, llamadas a
+backend, `fetch` en runtime, localStorage/sessionStorage, requests externos/CDN
+del renderer ni MathJax en el browser. Los cambios en esta superficie deben
+incluir cobertura static-read-path, asserts enfocados de escaping/privacidad,
+checks no-storage/no-fetch e impacto de docs de rol para estudiantes,
+profesores, colaboradores y agentes.
+
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
 curso expandido por defecto en escritorio,

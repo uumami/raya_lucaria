@@ -172,6 +172,17 @@ prompts, and practice links that students can use without fake progress. Use
 checkpoints and goals as visible teaching material until a later source contract
 accepts them as metadata.
 
+The static official practice renderer shows page-level objects from
+colocated `_official/` files on their owning page in an `Official practice`
+section. Author official cards, prompts, quizzes, and generic official object
+fields as plain fields for now. Treat the rendered section as reader-facing
+convenience; the authored `_official/` files remain course source authority, and
+machine surfaces such as `data/official.json` and `manifest.json` remain the
+contract surfaces for tools. Do not design these objects around scoring,
+grading, submissions, attempts, progress, mastery, recommendations, backend
+calls, browser-side fetching, storage, external renderers, or browser-side
+MathJax.
+
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
 students filter visible page labels or collapse the map to an operable compact map rail

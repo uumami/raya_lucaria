@@ -110,6 +110,14 @@ Cuando un bloque nombra un teorema, problema, actividad, tarea, figura, tabla o
 ecuacion, ese encabezado ya debe estar resuelto antes de que la pagina llegue al
 navegador.
 
+Algunas paginas pueden incluir una seccion `Official practice` renderizada desde
+el material `_official/` propio de esa pagina. Cards, prompts, quizzes y otros
+campos oficiales se muestran como apoyo estatico de lectura en la pagina que los
+posee. Los controles de revelar son controles locales del browser; abrir uno no
+envia trabajo, no guarda respuestas, no crea attempts, no actualiza progreso, no
+cambia dominio, no contacta un backend, no hace fetch de mas datos y no pide al
+browser renderizar MathJax.
+
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Los ejemplos de codigo fenced pueden incluir un boton `Copy`. Copiar pone el texto de codigo mostrado en tu clipboard; no ejecuta el codigo, no guarda progreso ni contacta un backend.
