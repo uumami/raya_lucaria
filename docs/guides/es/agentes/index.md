@@ -166,6 +166,10 @@ atenuacion de spotlight y texto de inspeccion del grafo como pistas de legibilid
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente
 del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.
+Al cambiar Graph, verifica movimiento con teclado en graph search sobre
+resultados de pagina visibles, inspeccion de active result, Enter para abrir,
+pan del viewport del grafo y detalles de pagina seleccionada como ayudas
+locales y transitorias de navegacion solamente.
 
 Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
 teclado por resultados, inspeccion de resultado activo por hover/foco, Enter

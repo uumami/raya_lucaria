@@ -3475,6 +3475,10 @@ def _render_graph_surface(
                 "guidance.</p>"
             ),
             (
+                "<p>When graph search is focused, Arrow keys move through "
+                "visible page results and Enter opens the active result.</p>"
+            ),
+            (
                 "<p>Connections is the default layout. It arranges pages from "
                 "explicit links and course order; positions are structural reading "
                 "cues, not learner state or personal guidance.</p>"

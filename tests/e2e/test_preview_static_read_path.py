@@ -445,7 +445,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         ]
         base_url = handle.base_url
         assert base_url is not None
-        graph_html = _fetch_text(f"{base_url}/_raya/graph/index.html")
+        graph_url = f"{base_url}/_raya/graph/index.html"
+        graph_html = _fetch_text(graph_url)
         graph_js = _fetch_text(f"{base_url}/_raya/render/graph.js")
 
         assert 'data-raya-surface="graph"' in graph_html
@@ -685,6 +686,70 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "matrix"
                             in page.locator("#raya-graph-list").inner_text().lower()
                         )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-list [data-raya-graph-node].is-active-result')
+                              ?.getAttribute('data-raya-graph-node')"""
+                        )
+                        first_active = page.locator(
+                            "#raya-graph-list [data-raya-graph-node].is-active-result"
+                        ).get_attribute("data-raya-graph-node")
+                        assert first_active
+                        assert (
+                            page.locator(
+                                f'#raya-graph-list [data-raya-graph-node="{first_active}"] a'
+                            ).get_attribute("aria-current")
+                            == "true"
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
+                        assert page.locator(
+                            f'#raya-graph-canvas [data-raya-graph-node="{first_active}"] g'
+                        ).evaluate("node => node.classList.contains('is-inspected')")
+                        page.press("#graph-search", "ArrowDown")
+                        second_active = page.locator(
+                            "#raya-graph-list [data-raya-graph-node].is-active-result"
+                        ).get_attribute("data-raya-graph-node")
+                        assert second_active
+                        assert second_active != first_active
+                        page.press("#graph-search", "ArrowDown")
+                        assert (
+                            page.locator(
+                                "#raya-graph-list [data-raya-graph-node].is-active-result"
+                            ).get_attribute("data-raya-graph-node")
+                            == first_active
+                        )
+                        page.press("#graph-search", "ArrowUp")
+                        assert (
+                            page.locator(
+                                "#raya-graph-list [data-raya-graph-node].is-active-result"
+                            ).get_attribute("data-raya-graph-node")
+                            == second_active
+                        )
+                        page.press("#graph-search", "ArrowUp")
+                        assert (
+                            page.locator(
+                                "#raya-graph-list [data-raya-graph-node].is-active-result"
+                            ).get_attribute("data-raya-graph-node")
+                            == first_active
+                        )
+                        page.locator(
+                            f'#raya-graph-list [data-raya-graph-node="{second_active}"] a'
+                        ).focus()
+                        page.wait_for_function(
+                            f"""() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="{second_active}"] g')
+                              ?.classList
+                              ?.contains('is-inspected')"""
+                        )
+                        page.locator("#graph-search").focus()
+                        page.wait_for_function(
+                            f"""() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="{first_active}"] g')
+                              ?.classList
+                              ?.contains('is-inspected')"""
+                        )
                         page.fill("#graph-search", "matrx")
                         page.wait_for_function(
                             """() => document
@@ -696,6 +761,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "matrix"
                             in page.locator("#raya-graph-list").inner_text().lower()
                         )
+                        assert page.locator(
+                            "#raya-graph-list [data-raya-graph-node].is-active-result"
+                        ).count()
                         page.fill("#graph-search", "")
                         page.wait_for_function(
                             """() => document
@@ -943,6 +1011,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-panel]"
                         ).is_hidden()
+                        before_no_result_url = page.url
+                        page.press("#graph-search", "Enter")
+                        assert page.url == before_no_result_url
                         page.fill("#graph-search", "matrx")
                         page.wait_for_function(
                             """() => document
@@ -984,6 +1055,26 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).count()
                             > 0
                         )
+                        page.goto(graph_url, wait_until="networkidle")
+                        page.fill("#graph-search", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-list [data-raya-graph-node].is-active-result a')"""
+                        )
+                        target_href = page.locator(
+                            "#raya-graph-list [data-raya-graph-node].is-active-result a"
+                        ).evaluate("node => node.href")
+                        page.press("#graph-search", "Enter")
+                        page.wait_for_url(target_href)
+                        page.goto(graph_url, wait_until="networkidle")
+                        page.fill("#graph-search", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] g')
+                              ?.classList
+                              ?.contains('is-match')"""
+                        )
+                        requested_urls.clear()
                         page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="static-path"]'
                         ).dispatch_event("focus")
@@ -1337,8 +1428,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.getAttribute('data-raya-graph-neighborhood-focus') === 'false'"""
                         )
                         assert page.locator(
-                            "[data-raya-graph-detail-empty]"
+                            "[data-raya-graph-detail-panel]"
                         ).is_visible()
+                        assert page.locator(
+                            "#raya-graph-list [data-raya-graph-node].is-active-result"
+                        ).count()
                         assert page.locator(
                             '#raya-graph-list [data-raya-graph-node="static-path"]'
                         ).is_visible()

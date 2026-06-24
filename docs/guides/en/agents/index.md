@@ -148,6 +148,9 @@ Treat graph color, source-group edge color, size, search spotlighting,
 spotlight dimming, and inspection text as structural readability cues; do
 not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.
+When changing Graph, verify graph-search keyboard movement over visible page
+results, active-result inspection, Enter-to-open behavior, graph viewport
+panning, and selected-page details as transient local navigation aids only.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, hover/focus active-result inspection, Enter-to-open behavior, clear

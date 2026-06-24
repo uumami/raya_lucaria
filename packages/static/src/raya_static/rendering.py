@@ -1324,6 +1324,11 @@ img {
   color: var(--raya-color-success);
   font-weight: 700;
 }
+.raya-graph-list li.is-active-result a {
+  background: color-mix(in srgb, var(--raya-color-accent) 12%, transparent);
+  outline: 2px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
 .raya-graph-list li.is-neighbor a {
   font-weight: 700;
   text-decoration: underline;

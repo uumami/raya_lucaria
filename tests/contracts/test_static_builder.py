@@ -732,7 +732,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "panGraphView" in graph_script
     assert "startGraphPan" in graph_script
     assert "data-raya-graph-pan" in graph_script
+    assert "activeResultId" in graph_script
+    assert "setActiveResult" in graph_script
+    assert "moveActiveResult" in graph_script
+    assert "is-active-result" in graph_script
     assert ".raya-graph-pan-controls" in stylesheet
+    assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",
