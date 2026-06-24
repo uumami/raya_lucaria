@@ -306,9 +306,13 @@ _GRAPH_JAVASCRIPT = r"""
   function compareNodesByOrder(a, b) {
     const aOrder = Number(a.order || 0);
     const bOrder = Number(b.order || 0);
+    const aTitle = String(a.title || a.nav_title || a.id);
+    const bTitle = String(b.title || b.nav_title || b.id);
+    const aId = String(a.id);
+    const bId = String(b.id);
     return aOrder - bOrder ||
-      String(a.title || a.nav_title || a.id).localeCompare(String(b.title || b.nav_title || b.id)) ||
-      String(a.id).localeCompare(String(b.id));
+      (aTitle < bTitle ? -1 : aTitle > bTitle ? 1 : 0) ||
+      (aId < bId ? -1 : aId > bId ? 1 : 0);
   }
 
   function layoutEdgesFor(activeNodes) {
@@ -402,7 +406,118 @@ _GRAPH_JAVASCRIPT = r"""
     return { depths, incomingByNode, outgoingByNode };
   }
 
-  function positionsFor(activeNodes, mode) {
+  function topologyEdgesFor(activeNodes, activeEdges) {
+    const activeIds = new Set(activeNodes.map((node) => node.id));
+    const seen = new Set();
+    const topologyEdges = [];
+    activeEdges.forEach((edge) => {
+      if (!activeIds.has(edge.from) || !activeIds.has(edge.to)) return;
+      const key = `${edge.from}\u0000${edge.to}\u0000${edgeKind(edge)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      topologyEdges.push(edge);
+    });
+    return topologyEdges;
+  }
+
+  function clampTopologyPosition(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function topologyPositionsFor(activeNodes, activeEdges) {
+    const width = 960;
+    const height = 560;
+    const safePadding = 42;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const orderedNodes = activeNodes.slice().sort(compareNodesByOrder);
+    const positions = new Map();
+    if (orderedNodes.length === 0) {
+      return { width, height, positions };
+    }
+    if (orderedNodes.length === 1) {
+      positions.set(orderedNodes[0].id, { x: centerX, y: centerY });
+      return { width, height, positions };
+    }
+
+    const radius = Math.min(width - safePadding * 2, height - safePadding * 2) * 0.42;
+    orderedNodes.forEach((node, index) => {
+      const angle = (Math.PI * 2 * index) / orderedNodes.length - Math.PI / 2;
+      positions.set(node.id, {
+        x: centerX + Math.cos(angle) * radius,
+        y: centerY + Math.sin(angle) * radius,
+      });
+    });
+
+    const nodeIds = orderedNodes.map((node) => node.id);
+    const topologyEdges = topologyEdgesFor(orderedNodes, activeEdges);
+    const forces = new Map();
+    const resetForces = () => {
+      forces.clear();
+      nodeIds.forEach((id) => forces.set(id, { x: 0, y: 0 }));
+    };
+    const addForce = (id, x, y) => {
+      const force = forces.get(id);
+      if (!force) return;
+      force.x += x;
+      force.y += y;
+    };
+
+    for (let iteration = 0; iteration < 70; iteration += 1) {
+      resetForces();
+      for (let leftIndex = 0; leftIndex < nodeIds.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < nodeIds.length; rightIndex += 1) {
+          const leftId = nodeIds[leftIndex];
+          const rightId = nodeIds[rightIndex];
+          const left = positions.get(leftId);
+          const right = positions.get(rightId);
+          const dx = right.x - left.x;
+          const dy = right.y - left.y;
+          const distanceSquared = Math.max(64, dx * dx + dy * dy);
+          const distance = Math.sqrt(distanceSquared);
+          const strength = 5200 / distanceSquared;
+          const fx = (dx / distance) * strength;
+          const fy = (dy / distance) * strength;
+          addForce(leftId, -fx, -fy);
+          addForce(rightId, fx, fy);
+        }
+      }
+
+      topologyEdges.forEach((edge) => {
+        const from = positions.get(edge.from);
+        const to = positions.get(edge.to);
+        if (!from || !to) return;
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const distance = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        const desired = edgeKind(edge) === "parent" ? 145 : 118;
+        const strength = (distance - desired) * 0.016;
+        const fx = (dx / distance) * strength;
+        const fy = (dy / distance) * strength;
+        addForce(edge.from, fx, fy);
+        addForce(edge.to, -fx, -fy);
+      });
+
+      nodeIds.forEach((id) => {
+        const position = positions.get(id);
+        addForce(id, (centerX - position.x) * 0.004, (centerY - position.y) * 0.004);
+      });
+
+      const cooling = 0.94 - iteration * 0.008;
+      nodeIds.forEach((id) => {
+        const position = positions.get(id);
+        const force = forces.get(id);
+        positions.set(id, {
+          x: clampTopologyPosition(position.x + force.x * cooling, safePadding, width - safePadding),
+          y: clampTopologyPosition(position.y + force.y * cooling, safePadding, height - safePadding),
+        });
+      });
+    }
+
+    return { width, height, positions };
+  }
+
+  function positionsFor(activeNodes, mode, activeEdges = []) {
     const width = 960;
     const height = 560;
     const positions = new Map();
@@ -440,6 +555,9 @@ _GRAPH_JAVASCRIPT = r"""
         });
       });
       return { width, height, positions };
+    }
+    if (mode === "topology") {
+      return topologyPositionsFor(activeNodes, activeEdges);
     }
     if (mode === "cluster") {
       const centerX = width / 2;
@@ -1327,7 +1445,7 @@ _GRAPH_JAVASCRIPT = r"""
       : new Set();
     const searchSpotlight = searchSpotlightIds();
     const searchContext = searchContextNodeIds();
-    const geometry = positionsFor(activeNodes, mode);
+    const geometry = positionsFor(activeNodes, mode, activeEdges);
 
     fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
     if (!graphViewBox) {

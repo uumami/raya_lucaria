@@ -182,7 +182,7 @@ contexto directamente conectado, tamano de nodo acotado por grado, estado de ins
 inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, layout determinista `Connections` por defecto,
-layouts alternos `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
+layouts alternos `Topology`, `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
 expandida del grafo, controles SVG de viewport incluyendo botones de pan,
 pan con `Arrow keys` cuando el grafo tiene foco, pan por arrastre del puntero, chrome compartido de
 descubrimiento, chrome movil compacto, comportamiento movil sin overflow y sin
@@ -197,7 +197,9 @@ visibles a la pagina seleccionada mas paginas directamente conectadas, pero debe
 seguir transitorio, reversible y sin almacenamiento de estado del grafo, llamadas `fetch`,
 librerias externas de grafo, lenguaje de recomendacion, progreso, ranking o
 dominio. Las posiciones de la disposicion del grafo son solo ayudas de lectura sobre
-datos generados explicitos; no deben venir de librerias externas de grafo ni
+datos generados explicitos. `Topology` es una vista estatica de lectura sobre
+relaciones explicitas generadas del grafo y el conjunto actual de edges visibles;
+las posiciones no deben venir de librerias externas de grafo ni
 implicar recomendacion, progreso, ranking, importancia, dominio o autoridad.
 Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo

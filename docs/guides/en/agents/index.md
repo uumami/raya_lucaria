@@ -163,13 +163,15 @@ directly connected context, bounded degree-based node sizing, hover/focus inspec
 status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
 normal page links, the default deterministic `Connections` layout, alternate
-`Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
+`Topology`, `Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
 SVG viewport controls including pan buttons, focused graph Arrow-key panning,
 pointer drag panning, shared discovery chrome, compact mobile discovery
 chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
-Graph layout positions are readability cues over explicit generated graph data;
+Graph layout positions are readability cues over explicit generated graph data.
+`Topology` is a static readability view over explicit generated graph
+relationships and the current visible edge set;
 they must not come from external graph libraries or imply recommendation,
 progress, ranking, importance, mastery, or authority.
 Pan, Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must

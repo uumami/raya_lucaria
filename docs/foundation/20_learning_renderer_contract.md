@@ -98,8 +98,10 @@ progress, authority, recommendation rank, importance rank, mastery, or
 completion signals. Pan, Zoom in, Zoom out, Fit, and Reset view change only the visual graph viewport;
 they must not clear search, filters, selected-page details, or authored graph
 data. The default `Connections` layout may arrange visible pages by normalized
-explicit graph relationships and course order so students can read link flow,
-while `Cluster` may group visible pages by generated course group, and `Map`,
+explicit graph relationships and course order so students can read link flow.
+`Topology` may place visible pages by explicit generated graph relationships
+using a deterministic local layout over the current visible edge set, while
+`Cluster` may group visible pages by generated course group, and `Map`,
 `Radial`, and `List` remain alternate local views. Layout position is only a
 readability cue over generated graph data, not recommendation rank, progress,
 importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. It must not fetch graph data at runtime, load external graph

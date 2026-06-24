@@ -764,6 +764,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-search" in graph_html
     assert "graph-layout" in graph_html
     assert '<option value="connections" selected>Connections</option>' in graph_html
+    assert '<option value="topology">Topology</option>' in graph_html
     assert '<option value="cluster">Cluster</option>' in graph_html
     assert '<option value="map">Map</option>' in graph_html
     assert '<option value="radial">Radial</option>' in graph_html
@@ -835,6 +836,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
+    assert "Topology groups visible pages by explicit graph relationships" in graph_html
     assert "Cluster groups visible pages by generated course group" in graph_html
     assert "not learner state or personal guidance" in graph_html
     assert "raya-graph-detail" in graph_html
@@ -1037,8 +1039,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-edge-kind-" in graph_script
     assert "hiddenEdgeKinds" in graph_script
     assert "visibleGraphEdges" in graph_script
+    assert "topologyPositionsFor" in graph_script
+    assert "topologyEdgesFor" in graph_script
     assert "data-raya-graph-edge-kind-filter" in graph_script
     assert "edge kind" in graph_script.lower()
+    assert "Math.random" not in graph_script
+    assert "requestAnimationFrame" not in graph_script
     assert "is-dimmed" in graph_script
     assert "searchSpotlightIds" in graph_script
     assert "searchContextNodeIds" in graph_script

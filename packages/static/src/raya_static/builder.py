@@ -3667,6 +3667,7 @@ def _render_graph_surface(
             (
                 '<select id="graph-layout">'
                 '<option value="connections" selected>Connections</option>'
+                '<option value="topology">Topology</option>'
                 '<option value="cluster">Cluster</option>'
                 '<option value="map">Map</option>'
                 '<option value="radial">Radial</option>'
@@ -3916,6 +3917,11 @@ def _render_graph_surface(
                 "<p>Connections is the default layout. It arranges pages from "
                 "explicit links and course order; positions are structural reading "
                 "cues, not learner state or personal guidance.</p>"
+            ),
+            (
+                "<p>Topology groups visible pages by explicit graph relationships. "
+                "It is a structural readability cue only, not learner state "
+                "or personal guidance.</p>"
             ),
             (
                 "<p>Cluster groups visible pages by generated course group so "

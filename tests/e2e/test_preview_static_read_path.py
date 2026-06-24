@@ -1617,6 +1617,64 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             30 <= position["y"] <= cluster_canvas_height - 30
                             for position in cluster_node_positions
                         )
+                        page.select_option("#graph-layout", "topology")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "topology"
+                        )
+                        topology_root = _graph_node_translate(page, "render-root")
+                        topology_matrix = _graph_node_translate(
+                            page, "authoring-matrix"
+                        )
+                        topology_static = _graph_node_translate(page, "static-path")
+                        topology_reader = _graph_node_translate(page, "reader-ux")
+                        assert _point_distance(
+                            topology_root, topology_matrix
+                        ) < _point_distance(topology_static, topology_reader)
+                        topology_viewbox = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        topology_node_positions = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node] g"
+                        ).evaluate_all(
+                            """nodes => nodes.map((node) => {
+                              const match = node
+                                .getAttribute('transform')
+                                .match(/translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/);
+                              return {
+                                x: Number(match[1]),
+                                y: Number(match[2]),
+                              };
+                            })"""
+                        )
+                        assert all(
+                            30 <= position["x"] <= topology_viewbox[2] - 30
+                            for position in topology_node_positions
+                        )
+                        assert all(
+                            30 <= position["y"] <= topology_viewbox[3] - 30
+                            for position in topology_node_positions
+                        )
+                        before_filter_position = _graph_node_translate(
+                            page, "authoring-matrix"
+                        )
+                        page.locator(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-edge-kind-filter="content"]')
+                              ?.getAttribute('aria-pressed') === 'false'"""
+                        )
+                        after_filter_position = _graph_node_translate(
+                            page, "authoring-matrix"
+                        )
+                        assert after_filter_position != before_filter_position
+                        page.locator(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                        ).click()
                         page.select_option("#graph-layout", "map")
                         page.select_option("#graph-layout", "connections")
                         assert (
