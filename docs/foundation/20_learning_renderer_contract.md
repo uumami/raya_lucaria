@@ -60,7 +60,8 @@ selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, connected-page visual states, transient
 page focus from generated URL context, structural group color, bounded node
 size derived from static link degree, source-group edge colors,
-transient hover/focus spotlight dimming, hover/focus inspection text, keyboard
+transient search spotlighting over matched pages and directly connected
+context, transient hover/focus spotlight dimming, hover/focus inspection text, keyboard
 inspection parity, public selected-page discovery card metadata, non-persistent selected-neighborhood focus mode,
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom

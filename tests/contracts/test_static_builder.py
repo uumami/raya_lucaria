@@ -591,6 +591,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Connected page" in graph_html
     assert "Edge color follows the source page group" in graph_html
     assert "source-group edge colors" in graph_html
+    assert "Search spotlight" in graph_html
+    assert "search spotlight is a structural readability cue" in graph_html
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
@@ -717,6 +719,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "edgeColorFor" in graph_script
     assert "--raya-graph-edge-color" in graph_script
     assert "is-dimmed" in graph_script
+    assert "searchSpotlightIds" in graph_script
+    assert "searchContextNodeIds" in graph_script
+    assert "is-search-context" in graph_script
+    assert "is-search-dimmed" in graph_script
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

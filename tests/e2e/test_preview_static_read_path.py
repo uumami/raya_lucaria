@@ -897,6 +897,75 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
+                        page.fill("#graph-search", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] g')
+                              ?.classList
+                              ?.contains('is-match')"""
+                        )
+                        assert page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="render-root"] g'
+                        ).evaluate("node => node.classList.contains('is-search-context')")
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="render-root"]'
+                        ).dispatch_event("focus")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="render-root"] g')
+                              ?.classList
+                              ?.contains('is-inspected')"""
+                        )
+                        assert not page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="render-root"] g'
+                        ).evaluate("node => node.classList.contains('is-search-context')")
+                        assert page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="static-path"] g'
+                        ).evaluate("node => node.classList.contains('is-search-dimmed')")
+                        assert page.locator(
+                            '#raya-graph-canvas .raya-graph-edge[data-raya-graph-from="render-root"][data-raya-graph-to="authoring-matrix"]'
+                        ).first.evaluate("edge => edge.classList.contains('is-search-context')")
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-edge.is-search-dimmed"
+                            ).count()
+                            > 0
+                        )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="static-path"]'
+                        ).dispatch_event("focus")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="static-path"] g')
+                              ?.classList
+                              ?.contains('is-inspected')"""
+                        )
+                        assert not page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="static-path"] g'
+                        ).evaluate("node => node.classList.contains('is-search-dimmed')")
+                        assert not page.locator(
+                            '#raya-graph-canvas .raya-graph-edge.is-inspected'
+                        ).first.evaluate("edge => edge.classList.contains('is-search-dimmed')")
+                        page.click("#graph-reset")
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-node.is-search-dimmed"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-edge.is-search-dimmed"
+                            ).count()
+                            == 0
+                        )
+                        page.fill("#graph-search", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
                         page.locator(
                             "#raya-graph-canvas [data-raya-graph-node]"
                         ).first.click()

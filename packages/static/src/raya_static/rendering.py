@@ -1228,6 +1228,12 @@ img {
   stroke-opacity: 0.86;
   stroke-width: 3;
 }
+.raya-graph-edge.is-search-context {
+  stroke-opacity: 0.82;
+}
+.raya-graph-edge.is-search-dimmed {
+  stroke-opacity: 0.12;
+}
 .raya-graph-edge.is-inspected {
   stroke: var(--raya-graph-edge-color, var(--raya-color-success));
   stroke-opacity: 0.94;
@@ -1269,6 +1275,9 @@ img {
 .raya-graph-node.is-match circle {
   stroke-width: 4;
 }
+.raya-graph-node.is-search-context circle {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 34%, var(--raya-color-surface));
+}
 .raya-graph-node text {
   fill: var(--raya-color-text);
   font-size: 0.78rem;
@@ -1280,6 +1289,9 @@ img {
 }
 .raya-graph-node.is-dimmed {
   opacity: 0.16;
+}
+.raya-graph-node.is-search-dimmed {
+  opacity: 0.18;
 }
 .raya-graph-list {
   columns: 1;

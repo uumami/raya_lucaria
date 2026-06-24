@@ -121,7 +121,8 @@ Al cambiar el grafo del curso, verifica busqueda aproximada, detalles de pagina
 seleccionada, resumenes de vecindario de pagina seleccionada, estados visuales
 de paginas conectadas, filtros de grupo, semantica de color por grupo, colores
 de arista por grupo de pagina fuente, atenuacion transitoria por spotlight
-hover/foco, tamano de nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
+hover/foco, spotlight transitorio de busqueda sobre paginas coincidentes y
+contexto directamente conectado, tamano de nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
 inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, layout determinista `Connections` por defecto,
@@ -159,8 +160,8 @@ la pagina, URL de foco en grafo y conteos explicitos entrantes/salientes.
 Verifica comportamiento de controles nativos de despliegue, texto escapado, sin
 rutas privadas, sin almacenamiento del navegador, sin fetch, sin solicitudes
 externas y sin lenguaje de recomendacion, avance o maestria.
-Trata color, color de arista por grupo fuente, tamano, atenuacion de spotlight
-y texto de inspeccion del grafo como pistas de legibilidad estructural;
+Trata color, color de arista por grupo fuente, tamano, spotlight de busqueda,
+atenuacion de spotlight y texto de inspeccion del grafo como pistas de legibilidad estructural;
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente
 del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.

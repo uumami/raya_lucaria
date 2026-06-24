@@ -143,7 +143,11 @@ _GRAPH_JAVASCRIPT = r"""
     return fuzzyMatch(query, nodeSearchText(node));
   }
 
-  function visibleNodes() {
+  function groupVisibleNodes() {
+    return nodes.filter((node) => !hiddenGroups.has(node.group || ""));
+  }
+
+  function visibleListNodes() {
     const directlyVisible = nodes.filter(matchesNode);
     matchIds = new Set(query ? directlyVisible.map((node) => node.id) : []);
     if (!query) {
@@ -159,6 +163,32 @@ _GRAPH_JAVASCRIPT = r"""
       });
     });
     return applyNeighborhoodFocus(nodes.filter((node) => expandedIds.has(node.id)));
+  }
+
+  function visibleGraphNodes(listNodes) {
+    if (!query) return listNodes;
+    return applyNeighborhoodFocus(groupVisibleNodes());
+  }
+
+  function searchSpotlightIds() {
+    if (!query || matchIds.size === 0) return new Set();
+    const ids = new Set(matchIds);
+    matchIds.forEach((id) => {
+      neighborsOf(id).forEach((neighborId) => {
+        const neighbor = nodesById.get(neighborId);
+        if (neighbor && !hiddenGroups.has(neighbor.group || "")) {
+          ids.add(neighborId);
+        }
+      });
+    });
+    return ids;
+  }
+
+  function searchContextNodeIds() {
+    if (!query || matchIds.size === 0) return new Set();
+    const ids = searchSpotlightIds();
+    matchIds.forEach((id) => ids.delete(id));
+    return ids;
   }
 
   function applyNeighborhoodFocus(activeNodes) {
@@ -574,11 +604,21 @@ _GRAPH_JAVASCRIPT = r"""
     const inspectedSpotlightIds = inspectedId
       ? new Set([inspectedId, ...inspectedConnectedIds])
       : new Set();
+    const searchSpotlight = searchSpotlightIds();
+    const searchContext = searchContextNodeIds();
     canvas.querySelectorAll("[data-raya-graph-node] g").forEach((nodeGroup) => {
       const link = nodeGroup.closest("[data-raya-graph-node]");
       const id = link ? link.getAttribute("data-raya-graph-node") || "" : "";
       nodeGroup.classList.toggle("is-inspected", id === inspectedId);
       nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+      nodeGroup.classList.toggle(
+        "is-search-context",
+        searchContext.has(id) && id !== inspectedId
+      );
+      nodeGroup.classList.toggle(
+        "is-search-dimmed",
+        Boolean(query) && !searchSpotlight.has(id) && id !== inspectedId
+      );
       nodeGroup.classList.toggle(
         "is-dimmed",
         Boolean(inspectedId) && !inspectedSpotlightIds.has(id)
@@ -594,6 +634,16 @@ _GRAPH_JAVASCRIPT = r"""
       edge.classList.toggle(
         "is-dimmed",
         Boolean(inspectedId) && !(from === inspectedId || to === inspectedId)
+      );
+      edge.classList.toggle(
+        "is-search-context",
+        Boolean(query) && (matchIds.has(from) || matchIds.has(to))
+      );
+      edge.classList.toggle(
+        "is-search-dimmed",
+        Boolean(query) &&
+          !(matchIds.has(from) || matchIds.has(to)) &&
+          !(from === inspectedId || to === inspectedId)
       );
     });
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
@@ -828,24 +878,26 @@ _GRAPH_JAVASCRIPT = r"""
     const mode = layout ? layout.value : "map";
     root.setAttribute("data-raya-graph-layout", mode);
     query = normalize(search ? search.value : "");
-    let activeNodes = visibleNodes();
-    let activeIds = new Set(activeNodes.map((node) => node.id));
-    let activeEdges = visibleEdges(activeIds);
-    if (selectedId && !activeIds.has(selectedId)) {
+    let listNodes = visibleListNodes();
+    let listIds = new Set(listNodes.map((node) => node.id));
+    if (selectedId && !listIds.has(selectedId)) {
       selectedId = "";
       renderDetail();
-      activeNodes = visibleNodes();
-      activeIds = new Set(activeNodes.map((node) => node.id));
-      activeEdges = visibleEdges(activeIds);
+      listNodes = visibleListNodes();
+      listIds = new Set(listNodes.map((node) => node.id));
     }
-    renderList(activeIds);
+    const activeNodes = visibleGraphNodes(listNodes);
+    const activeIds = new Set(activeNodes.map((node) => node.id));
+    const activeEdges = visibleEdges(activeIds);
+    const listEdges = visibleEdges(listIds);
+    renderList(listIds);
     if (status) {
       const statusPrefix = neighborhoodFocus ? "Neighborhood focus: " : "";
       if (query) {
-        const contextCount = Math.max(0, activeNodes.length - matchIds.size);
-        status.textContent = `${statusPrefix}${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+        const contextCount = Math.max(0, listNodes.length - matchIds.size);
+        status.textContent = `${statusPrefix}${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s) in graph, ${activeEdges.length} visible edge(s) in graph.`;
       } else {
-        status.textContent = `${statusPrefix}${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+        status.textContent = `${statusPrefix}${activeNodes.length} visible node(s), ${listEdges.length} visible edge(s).`;
       }
     }
     if (mode === "list") {
@@ -863,6 +915,8 @@ _GRAPH_JAVASCRIPT = r"""
     const inspectedSpotlightIds = inspectedId
       ? new Set([inspectedId, ...inspectedConnectedIds])
       : new Set();
+    const searchSpotlight = searchSpotlightIds();
+    const searchContext = searchContextNodeIds();
     const geometry = positionsFor(activeNodes, mode);
 
     fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
@@ -897,6 +951,13 @@ _GRAPH_JAVASCRIPT = r"""
           inspectedId && !(edge.from === inspectedId || edge.to === inspectedId)
             ? "is-dimmed"
             : "",
+          query && (matchIds.has(edge.from) || matchIds.has(edge.to))
+            ? "is-search-context"
+            : "",
+          query && !(matchIds.has(edge.from) || matchIds.has(edge.to))
+            && !(edge.from === inspectedId || edge.to === inspectedId)
+            ? "is-search-dimmed"
+            : "",
         ].filter(Boolean).join(" ")
       );
       canvas.appendChild(line);
@@ -926,6 +987,8 @@ _GRAPH_JAVASCRIPT = r"""
           isInspectedNeighbor ? "is-inspected-neighbor" : "",
           inspectedId && !inspectedSpotlightIds.has(node.id) ? "is-dimmed" : "",
           matchIds.has(node.id) ? "is-match" : "",
+          searchContext.has(node.id) && node.id !== inspectedId ? "is-search-context" : "",
+          query && !searchSpotlight.has(node.id) && node.id !== inspectedId ? "is-search-dimmed" : "",
         ].filter(Boolean).join(" ")
       );
       group.setAttribute("transform", `translate(${point.x} ${point.y})`);

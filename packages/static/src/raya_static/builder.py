@@ -3462,6 +3462,13 @@ def _render_graph_surface(
                 "groups, tags, and status metadata.</p>"
             ),
             (
+                "<p>Search spotlight keeps matching pages visually primary, "
+                "keeps directly connected pages visible as context, and dims "
+                "unrelated visible graph structure. The search spotlight is a "
+                "structural readability cue only, not learner state or personal "
+                "guidance.</p>"
+            ),
+            (
                 "<p>Connections is the default layout. It arranges pages from "
                 "explicit links and course order; positions are structural reading "
                 "cues, not learner state or personal guidance.</p>"

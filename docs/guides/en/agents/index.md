@@ -109,7 +109,8 @@ of recommendation/progress/mastery wording inside the generated index surface.
 When changing the Course graph, verify fuzzy search, selected-page details,
 selected-page neighborhood summaries, connected-page visual states, group
 filters, group color semantics, source-group edge colors, transient hover/focus
-spotlight dimming, bounded degree-based node sizing, hover/focus inspection
+spotlight dimming, transient search spotlighting over matching pages and
+directly connected context, bounded degree-based node sizing, hover/focus inspection
 status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
 normal page links, the default deterministic `Connections` layout, alternate
@@ -142,8 +143,8 @@ metadata only: title, summary, status, local page URL, graph-focus URL, and
 explicit incoming/outgoing counts. Verify native disclosure behavior, escaped
 text, no private paths, no browser storage, no fetch, no external requests, and
 no recommendation/progress/mastery wording.
-Treat graph color, source-group edge color, size, spotlight dimming, and
-inspection text as structural readability cues; do
+Treat graph color, source-group edge color, size, search spotlighting,
+spotlight dimming, and inspection text as structural readability cues; do
 not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.
 
