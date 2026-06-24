@@ -177,6 +177,11 @@ pointer drag panning, shared discovery chrome, compact mobile discovery
 chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
+Graph URL state may encode selected page, search query, layout, visible groups,
+visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
+Verify the compact graph-state readout and browser URL stay synchronized after
+control changes, use only public structural state, and do not write
+`localStorage` or `sessionStorage`.
 For desktop page-focused graph handoffs such as `?page=<page-id>`, verify that
 the selected SVG node and at least one graph edge are actually visible inside
 the first-paint graph canvas. Do not accept DOM-only checks that pass while the

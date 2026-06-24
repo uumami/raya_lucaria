@@ -3817,6 +3817,27 @@ def _render_graph_surface(
                 '<p class="raya-graph-hover-status" '
                 'data-raya-graph-hover-status aria-live="polite"></p>'
             ),
+            (
+                '<section class="raya-graph-state" '
+                'data-raya-graph-state-readout aria-label="Graph state">'
+                "<h3>Graph state</h3>"
+                "<dl>"
+                "<div><dt>Selected</dt><dd data-raya-graph-state-selected>none</dd></div>"
+                "<div><dt>Search</dt><dd data-raya-graph-state-query>none</dd></div>"
+                "<div><dt>Layout</dt><dd data-raya-graph-state-layout>connections</dd></div>"
+                "<div><dt>Visible</dt><dd data-raya-graph-state-visible>"
+                "0 visible node(s), 0 visible edge(s)</dd></div>"
+                "<div><dt>Hidden groups</dt><dd data-raya-graph-state-hidden-groups>"
+                "none</dd></div>"
+                "<div><dt>Hidden edges</dt><dd data-raya-graph-state-hidden-edges>"
+                "none</dd></div>"
+                "<div><dt>Neighborhood</dt><dd data-raya-graph-state-neighborhood>"
+                "off</dd></div>"
+                "<div><dt>Share URL</dt><dd><code data-raya-graph-state-url>"
+                "</code></dd></div>"
+                "</dl>"
+                "</section>"
+            ),
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
             "<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>",
             "<div data-raya-graph-detail-panel hidden>",

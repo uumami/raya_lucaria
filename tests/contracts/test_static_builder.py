@@ -881,6 +881,16 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-clear" in graph_html
     assert "data-raya-graph-focus-neighborhood" in graph_html
     assert "Focus neighborhood" in graph_html
+    assert "raya-graph-state" in graph_html
+    assert "data-raya-graph-state-readout" in graph_html
+    assert "data-raya-graph-state-selected" in graph_html
+    assert "data-raya-graph-state-query" in graph_html
+    assert "data-raya-graph-state-layout" in graph_html
+    assert "data-raya-graph-state-visible" in graph_html
+    assert "data-raya-graph-state-hidden-groups" in graph_html
+    assert "data-raya-graph-state-hidden-edges" in graph_html
+    assert "data-raya-graph-state-neighborhood" in graph_html
+    assert "data-raya-graph-state-url" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html
     assert 'style="--raya-graph-group-color:' in graph_html
@@ -1054,6 +1064,15 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "setActiveResult" in graph_script
     assert "moveActiveResult" in graph_script
     assert "is-active-result" in graph_script
+    assert "initializeGraphStateFromUrl" in graph_script
+    assert "updateGraphUrlState" in graph_script
+    assert "updateGraphStateReadout" in graph_script
+    assert "history.replaceState" in graph_script
+    assert 'params.get("q")' in graph_script
+    assert 'params.get("layout")' in graph_script
+    assert 'params.get("groups")' in graph_script
+    assert 'params.get("edges")' in graph_script
+    assert 'params.get("neighborhood")' in graph_script
     assert ".raya-graph-pan-controls" in stylesheet
     assert ".raya-graph-edge-kind-navigation" in stylesheet
     assert ".raya-graph-edge-kind-content" in stylesheet

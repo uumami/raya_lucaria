@@ -96,7 +96,11 @@ dimming, hover/focus inspection text, keyboard inspection parity, public selecte
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
 out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,
-and Reset view, and a non-persistent expanded workspace mode. Desktop
+and Reset view, a non-persistent expanded workspace mode, and URL-addressable
+static graph state for selected page, search query, layout, visible groups,
+visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
+The graph may show a compact state readout and share URL for debugging and
+orientation over the already loaded static artifact data. Desktop
 page-focused graph handoffs such as `?page=<page-id>` must first-paint visible
 selected graph content in the graph canvas when graph data exists; graph canvas
 height should remain bounded relative to the viewport so side-panel height
@@ -112,8 +116,8 @@ using a deterministic local layout over the current visible edge set, while
 `Cluster` may group visible pages by generated course group, and `Map`,
 `Radial`, and `List` remain alternate local views. Layout position is only a
 readability cue over generated graph data, not recommendation rank, progress,
-importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. It must not fetch graph data at runtime, load external graph
-libraries, persist graph state, infer
+importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. URL graph state is shareable page state, not browser storage or learner state. It must not fetch graph data at runtime, load external graph
+libraries, persist graph state in browser storage, infer
 recommendations, or present graph position as personal progress.
 
 Generated Search, Graph, Practice, Tasks, and Schedule pages may share discovery workspace chrome that shows the current course title, identifies the workspace, links back to the course, links between discovery workspaces, and exposes local volatile text-size and `OpenDyslexic` controls. Search, Practice, Tasks, and Schedule may also use static workspace regions for controls, results, and public context summaries so desktop readers can scan without leaving the page. Search result context, Practice object context, Tasks object context, and Schedule item context may follow transient active cards selected by keyboard movement, pointer hover, or focus on existing links. This chrome and active context are static page structure. They must not load the course shell script, show a course map control without a course map, store search, graph, practice, task, or schedule state, fetch external resources, or turn structural workspace labels into progress, ranking, or recommendation language.

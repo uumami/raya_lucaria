@@ -1664,6 +1664,40 @@ img {
   border-color: var(--raya-color-accent);
   color: var(--raya-color-accent-contrast);
 }
+.raya-graph-state {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+}
+.raya-graph-state h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem;
+}
+.raya-graph-state dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+.raya-graph-state div {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: minmax(5.5rem, 0.42fr) minmax(0, 1fr);
+}
+.raya-graph-state dt {
+  color: var(--raya-color-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.raya-graph-state dd {
+  margin: 0;
+  min-width: 0;
+}
+.raya-graph-state code {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .raya-graph-detail-focus-node {
   margin-left: 0.4rem;
 }

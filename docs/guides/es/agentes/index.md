@@ -197,8 +197,13 @@ pan con `Arrow keys` cuando el grafo tiene foco, pan por arrastre del puntero, c
 descubrimiento, chrome movil compacto, comportamiento movil sin overflow y sin
 solicitudes externas despues de cargar la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos
-del artifact, no de HTML scrapeado ni almacenamiento del navegador. El contexto de URL
-generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
+del artifact, no de HTML scrapeado ni almacenamiento del navegador. El estado
+del grafo en la URL puede codificar pagina seleccionada, busqueda, layout,
+grupos visibles, tipos de edge visibles, foco de vecindario seleccionado, modo
+expandido y estado de paneles. Verifica que el readout compacto de estado del
+grafo y la URL del navegador se mantengan sincronizados despues de cambios de
+controles, que usen solo estado estructural publico, y que no escriban
+`localStorage` ni `sessionStorage`. El contexto de URL generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
 del grafo. Los conteos de vecindario deben derivarse de edges del grafo
 generado, y los resaltados de pagina conectada deben excluir el nodo
 seleccionado. El foco de vecindario seleccionado puede reducir el grafo y la lista

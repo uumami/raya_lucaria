@@ -61,6 +61,14 @@ _GRAPH_JAVASCRIPT = r"""
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
   const detailClear = document.querySelector("[data-raya-graph-detail-clear]");
+  const stateSelected = document.querySelector("[data-raya-graph-state-selected]");
+  const stateQuery = document.querySelector("[data-raya-graph-state-query]");
+  const stateLayout = document.querySelector("[data-raya-graph-state-layout]");
+  const stateVisible = document.querySelector("[data-raya-graph-state-visible]");
+  const stateHiddenGroups = document.querySelector("[data-raya-graph-state-hidden-groups]");
+  const stateHiddenEdges = document.querySelector("[data-raya-graph-state-hidden-edges]");
+  const stateNeighborhood = document.querySelector("[data-raya-graph-state-neighborhood]");
+  const stateUrl = document.querySelector("[data-raya-graph-state-url]");
 
   if (!root || !dataEl || !canvas || !list) {
     return;
@@ -82,6 +90,9 @@ _GRAPH_JAVASCRIPT = r"""
   const groupsById = new Map(groups.map((group) => [group.id, group]));
   const hiddenGroups = new Set();
   const hiddenEdgeKinds = new Set();
+  const defaultLayout = "connections";
+  const graphLayouts = new Set(["connections", "topology", "cluster", "map", "radial", "list"]);
+  const graphEdgeKinds = new Set(["navigation", "content", "prerequisite", "parent"]);
   let query = "";
   let selectedId = "";
   let inspectedId = "";
@@ -92,6 +103,8 @@ _GRAPH_JAVASCRIPT = r"""
   let fullViewBox = null;
   let graphViewBox = null;
   let graphPanStart = null;
+  let lastActiveNodes = [];
+  let lastActiveEdges = [];
 
   function normalize(value) {
     return String(value || "")
@@ -239,6 +252,133 @@ _GRAPH_JAVASCRIPT = r"""
       const kind = button.getAttribute("data-raya-graph-edge-kind-filter") || "";
       button.setAttribute("aria-pressed", hiddenEdgeKinds.has(kind) ? "false" : "true");
     });
+  }
+
+  function updateGroupFilters() {
+    groupFilters.forEach((button) => {
+      const group = button.getAttribute("data-raya-graph-group-filter") || "";
+      button.setAttribute("aria-pressed", hiddenGroups.has(group) ? "false" : "true");
+    });
+  }
+
+  function currentUrlParams() {
+    try {
+      return new URLSearchParams(window.location.search || "");
+    } catch {
+      return new URLSearchParams();
+    }
+  }
+
+  function parseCommaList(value, allowedIds) {
+    if (!value) return null;
+    const parsed = String(value)
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .filter((item) => allowedIds.has(item));
+    return parsed.length ? new Set(parsed) : null;
+  }
+
+  function allGroupIds() {
+    return new Set(groups.map((group) => group.id).filter(Boolean));
+  }
+
+  function visibleGroupIds() {
+    return groups
+      .map((group) => group.id)
+      .filter((id) => id && !hiddenGroups.has(id));
+  }
+
+  function visibleEdgeKinds() {
+    return Array.from(graphEdgeKinds).filter((kind) => !hiddenEdgeKinds.has(kind));
+  }
+
+  function applyVisibleGroupsFromUrl(value) {
+    const allowedGroups = allGroupIds();
+    const visibleGroups = parseCommaList(value, allowedGroups);
+    if (!visibleGroups) return;
+    hiddenGroups.clear();
+    allowedGroups.forEach((groupId) => {
+      if (!visibleGroups.has(groupId)) {
+        hiddenGroups.add(groupId);
+      }
+    });
+    updateGroupFilters();
+  }
+
+  function applyVisibleEdgeKindsFromUrl(value) {
+    const visibleKinds = parseCommaList(value, graphEdgeKinds);
+    if (!visibleKinds) return;
+    hiddenEdgeKinds.clear();
+    graphEdgeKinds.forEach((kind) => {
+      if (!visibleKinds.has(kind)) {
+        hiddenEdgeKinds.add(kind);
+      }
+    });
+    updateEdgeKindFilters();
+  }
+
+  function edgeKindLabel(kind) {
+    if (kind === "navigation") return "Navigation";
+    if (kind === "content") return "Content";
+    if (kind === "prerequisite") return "Prerequisite";
+    if (kind === "parent") return "Parent";
+    return kind || "Edge";
+  }
+
+  function hiddenGroupText() {
+    if (hiddenGroups.size === 0) return "none";
+    const labels = groups
+      .filter((group) => hiddenGroups.has(group.id))
+      .map((group) => group.title || group.id);
+    return `${hiddenGroups.size} hidden: ${labels.join(", ")}`;
+  }
+
+  function hiddenEdgeText() {
+    if (hiddenEdgeKinds.size === 0) return "none";
+    const labels = Array.from(hiddenEdgeKinds).map(edgeKindLabel);
+    return `${hiddenEdgeKinds.size} hidden: ${labels.join(", ")}`;
+  }
+
+  function updateGraphUrlState() {
+    if (!window.history || !window.history.replaceState) return;
+    const params = new URLSearchParams();
+    const searchValue = search ? search.value.trim() : "";
+    const layoutValue = layout ? layout.value : defaultLayout;
+    if (selectedId) params.set("page", selectedId);
+    if (searchValue) params.set("q", searchValue);
+    if (layoutValue && layoutValue !== defaultLayout) params.set("layout", layoutValue);
+    if (hiddenGroups.size > 0) params.set("groups", visibleGroupIds().join(","));
+    if (hiddenEdgeKinds.size > 0) params.set("edges", visibleEdgeKinds().join(","));
+    if (neighborhoodFocus && selectedId) params.set("neighborhood", "1");
+    if (root.dataset.rayaGraphExpanded === "true") params.set("expanded", "1");
+    if (root.getAttribute("data-raya-graph-list-state") === "collapsed") {
+      params.set("list", "0");
+    }
+    if (root.getAttribute("data-raya-graph-inspector-state") === "collapsed") {
+      params.set("inspector", "0");
+    }
+    const queryString = params.toString();
+    const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash || ""}`;
+    window.history.replaceState(null, "", nextUrl);
+  }
+
+  function updateGraphStateReadout(activeNodes, activeEdges) {
+    if (stateSelected) stateSelected.textContent = selectedId || "none";
+    if (stateQuery) stateQuery.textContent = (search ? search.value.trim() : "") || "none";
+    if (stateLayout) stateLayout.textContent = layout ? layout.value : defaultLayout;
+    if (stateVisible) {
+      stateVisible.textContent = `${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s)`;
+    }
+    if (stateHiddenGroups) stateHiddenGroups.textContent = hiddenGroupText();
+    if (stateHiddenEdges) stateHiddenEdges.textContent = hiddenEdgeText();
+    if (stateNeighborhood) stateNeighborhood.textContent = neighborhoodFocus ? "on" : "off";
+    if (stateUrl) stateUrl.textContent = window.location.href;
+  }
+
+  function syncGraphStateReadout() {
+    updateGraphUrlState();
+    updateGraphStateReadout(lastActiveNodes, lastActiveEdges);
   }
 
   function hiddenEdgeKindStatusText() {
@@ -988,6 +1128,7 @@ _GRAPH_JAVASCRIPT = r"""
       inspectedId = activeResultId;
       renderDetail();
       updateInspectionDom();
+      syncGraphStateReadout();
     } else {
       clearGraphInspection();
     }
@@ -1364,6 +1505,36 @@ _GRAPH_JAVASCRIPT = r"""
     }
   }
 
+  function initializeGraphStateFromUrl() {
+    const params = currentUrlParams();
+    const pageId = params.get("page") || "";
+    selectedId = nodesById.has(pageId) ? pageId : "";
+    const queryText = params.get("q") || "";
+    if (search && queryText) {
+      search.value = queryText;
+    }
+    const layoutParam = params.get("layout") || "";
+    if (layout && graphLayouts.has(layoutParam)) {
+      layout.value = layoutParam;
+    } else if (layout) {
+      layout.value = defaultLayout;
+    }
+    applyVisibleGroupsFromUrl(params.get("groups") || "");
+    applyVisibleEdgeKindsFromUrl(params.get("edges") || "");
+    if (params.get("expanded") === "1") {
+      setGraphExpanded(true);
+    }
+    if (params.get("list") === "0") {
+      setGraphPanelState("list", false);
+    }
+    if (params.get("inspector") === "0") {
+      setGraphPanelState("inspector", false);
+    }
+    if (params.get("neighborhood") === "1" && selectedId) {
+      setGraphNeighborhoodFocus(true);
+    }
+  }
+
   function renderList(activeIds) {
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
@@ -1411,6 +1582,8 @@ _GRAPH_JAVASCRIPT = r"""
     const activeNodes = visibleGraphNodes(listNodes);
     const activeIds = new Set(activeNodes.map((node) => node.id));
     const activeEdges = visibleGraphEdges(activeIds);
+    lastActiveNodes = activeNodes;
+    lastActiveEdges = activeEdges;
     if (activeResultId && !listIds.has(activeResultId)) {
       activeResultId = "";
     }
@@ -1427,6 +1600,7 @@ _GRAPH_JAVASCRIPT = r"""
         status.textContent = [baseStatusText, edgeKindText].filter(Boolean).join(" ");
       }
     }
+    syncGraphStateReadout();
     if (mode === "list") {
       canvas.setAttribute("hidden", "hidden");
       canvas.replaceChildren();
@@ -1673,6 +1847,7 @@ _GRAPH_JAVASCRIPT = r"""
         ? "data-raya-graph-inspector-state"
         : "data-raya-graph-list-state";
       setGraphPanelState(panelName, root.getAttribute(attr) === "collapsed");
+      syncGraphStateReadout();
     });
   });
   if (detailClear) {
@@ -1753,12 +1928,13 @@ _GRAPH_JAVASCRIPT = r"""
     render();
   });
 
-  selectedId = initialPageFocus();
   root.setAttribute("data-raya-graph-neighborhood-focus", "false");
   setGraphPanelState("list", true);
   setGraphPanelState("inspector", true);
   setGraphExpanded(false);
   updateEdgeKindFilters();
+  updateGroupFilters();
+  initializeGraphStateFromUrl();
   renderDetail();
   render();
 })();

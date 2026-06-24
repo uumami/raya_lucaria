@@ -1948,7 +1948,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             '#raya-graph-list [data-raya-graph-node="math-authoring"]'
                         ).evaluate("node => node.classList.contains('is-active')")
                         assert page.url.endswith(
-                            "/_raya/graph/index.html?page=authoring-matrix"
+                            "/_raya/graph/index.html?page=math-authoring"
+                        )
+                        assert (
+                            "math-authoring"
+                            in page.locator(
+                                "[data-raya-graph-state-selected]"
+                            ).inner_text()
                         )
                         page.click("#graph-reset")
                         assert (
@@ -2014,6 +2020,130 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         for edge_box in edge_boxes
                     )
                     assert canvas_box["height"] <= 700
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html"
+                        "?page=reader-ux&q=projection&layout=connections",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    assert page.locator("#graph-search").input_value() == "projection"
+                    assert page.locator("#graph-layout").input_value() == "connections"
+                    assert "Projection Residuals" in page.locator(
+                        "[data-raya-graph-detail-title]"
+                    ).inner_text()
+                    assert "reader-ux" in page.locator(
+                        "[data-raya-graph-state-selected]"
+                    ).inner_text()
+                    assert "projection" in page.locator(
+                        "[data-raya-graph-state-query]"
+                    ).inner_text()
+                    assert "connections" in page.locator(
+                        "[data-raya-graph-state-layout]"
+                    ).inner_text().lower()
+                    assert "visible node" in page.locator(
+                        "[data-raya-graph-state-visible]"
+                    ).inner_text()
+                    assert "page=reader-ux" in page.url
+                    assert "q=projection" in page.url
+                    assert "layout=connections" not in page.url
+
+                    page.click('[data-raya-graph-toggle-panel="list"]')
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('list') === '0'"
+                    )
+                    assert "list=0" in page.locator(
+                        "[data-raya-graph-state-url]"
+                    ).inner_text()
+                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('inspector') === '0'"
+                    )
+                    assert "inspector=0" in page.locator(
+                        "[data-raya-graph-state-url]"
+                    ).inner_text()
+                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    page.click('[data-raya-graph-toggle-panel="list"]')
+
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.fill("#graph-search", "projection")
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('page') === 'reader-ux'"
+                    )
+                    assert "reader-ux" in page.locator(
+                        "[data-raya-graph-state-selected]"
+                    ).inner_text()
+                    assert "Projection Residuals" in page.locator(
+                        "[data-raya-graph-detail-title]"
+                    ).inner_text()
+
+                    page.click('[data-raya-graph-edge-kind-filter="parent"]')
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('edges')"
+                    )
+                    assert "Parent" in page.locator(
+                        "[data-raya-graph-state-hidden-edges]"
+                    ).inner_text()
+                    assert "edges=" in page.url
+
+                    page.locator("[data-raya-graph-group-filter]").first.click()
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('groups')"
+                    )
+                    assert "hidden" in page.locator(
+                        "[data-raya-graph-state-hidden-groups]"
+                    ).inner_text().lower()
+                    assert handle.base_url in page.locator(
+                        "[data-raya-graph-state-url]"
+                    ).inner_text()
+
+                    storage_state = page.evaluate(
+                        """() => ({
+                          local: Object.keys(localStorage),
+                          session: Object.keys(sessionStorage),
+                        })"""
+                    )
+                    assert storage_state == {"local": [], "session": []}
+                    assert requested_urls
+                    assert all(
+                        url.startswith(f"{handle.base_url}/")
+                        for url in requested_urls
+                    )
                 finally:
                     page.close()
             finally:
