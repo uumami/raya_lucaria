@@ -3547,6 +3547,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "glintstone-nav-expanded" not in script_text
     assert "data-raya-course-map-filter" in script_text
     assert "data-raya-map-node-toggle" in script_text
+    assert 'link.getAttribute("data-raya-map-label")' in script_text
+    assert 'node.getAttribute("data-raya-map-node") || ""' not in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
     assert (
@@ -3632,6 +3634,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert 'href="../_raya/practice/index.html"' in html
     assert 'href="../_raya/tasks/index.html"' in html
+    assert 'href="../_raya/tasks/index.html?page=reader-ux"' not in html
+    assert 'href="../_raya/schedule/index.html?page=reader-ux"' not in html
     assert (
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html

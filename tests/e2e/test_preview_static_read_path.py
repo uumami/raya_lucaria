@@ -4491,6 +4491,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         in page.locator("#raya-course-map-list").inner_text().lower()
                     )
                     assert page.locator("[data-raya-map-filter-empty]").is_hidden()
+                    page.fill("#raya-course-map-filter", "reader-ux")
+                    assert page.locator("[data-raya-map-node]:visible").count() == 0
+                    assert page.locator("[data-raya-map-filter-empty]").is_visible()
                     page.fill("#raya-course-map-filter", "zz-no-match")
                     assert page.locator("[data-raya-map-filter-empty]").is_visible()
                     page.fill("#raya-course-map-filter", "")
@@ -4567,6 +4570,12 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                           practiceHref: document
                             .querySelector('.raya-course-map-workspace-practice')
                             ?.getAttribute('href'),
+                          tasksHref: document
+                            .querySelector('.raya-course-map-workspace-tasks')
+                            ?.getAttribute('href'),
+                          scheduleHref: document
+                            .querySelector('.raya-course-map-workspace-schedule')
+                            ?.getAttribute('href'),
                         })"""
                     )
                     assert initial["firstUnitExpanded"] == "true"
@@ -4585,6 +4594,12 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     assert initial["workspaceBadges"][4] == "3 dated"
                     assert initial["practiceHref"].endswith(
                         "_raya/practice/index.html?page=first-topic"
+                    )
+                    assert initial["tasksHref"].endswith(
+                        "_raya/tasks/index.html?page=first-topic"
+                    )
+                    assert initial["scheduleHref"].endswith(
+                        "_raya/schedule/index.html?page=first-topic"
                     )
 
                     page.click(

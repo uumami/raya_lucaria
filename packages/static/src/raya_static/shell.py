@@ -140,7 +140,6 @@ _SHELL_JAVASCRIPT = r"""
       [
         link ? link.textContent : "",
         link ? link.getAttribute("data-raya-map-label") : "",
-        node.getAttribute("data-raya-map-node") || "",
       ].join(" ")
     );
   }

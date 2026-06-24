@@ -1423,6 +1423,18 @@ def _render_course_map(
     direct_link_count = len(page_graph_context.get("outgoing", [])) + len(
         page_graph_context.get("incoming", [])
     )
+    course_map_tasks_href = tasks_href
+    if direct_task_count:
+        course_map_tasks_href = _href_with_query(
+            course_map_tasks_href,
+            {"page": page.id},
+        )
+    course_map_schedule_href = schedule_href
+    if direct_dated_task_count:
+        course_map_schedule_href = _href_with_query(
+            course_map_schedule_href,
+            {"page": page.id},
+        )
     workspace_links = [
         ("search", "Search", search_href, "Course"),
         ("graph", "Graph", graph_href, _count_label(direct_link_count, "link")),
@@ -1437,13 +1449,13 @@ def _render_course_map(
         (
             "tasks",
             "Tasks",
-            tasks_href,
+            course_map_tasks_href,
             _count_label(direct_task_count, "task") if direct_task_count else "Course",
         ),
         (
             "schedule",
             "Schedule",
-            schedule_href,
+            course_map_schedule_href,
             f"{direct_dated_task_count} dated" if direct_dated_task_count else "Course",
         ),
     ]
