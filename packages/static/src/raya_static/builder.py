@@ -130,6 +130,11 @@ from raya_static.search import (
     SEARCH_SCRIPT_NAME,
     search_resources,
 )
+from raya_static.schedule import (
+    SCHEDULE_RESOURCE_PATH,
+    SCHEDULE_SCRIPT_NAME,
+    schedule_resources,
+)
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
 from raya_static.tasks import TASKS_RESOURCE_PATH, TASKS_SCRIPT_NAME, tasks_resources
 
@@ -146,6 +151,7 @@ STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
 STATIC_SEARCH_PATH = Path(STATIC_RESOURCE_DIR) / "search" / "index.html"
 STATIC_PRACTICE_PATH = Path(STATIC_RESOURCE_DIR) / "practice" / "index.html"
 STATIC_TASKS_PATH = Path(STATIC_RESOURCE_DIR) / "tasks" / "index.html"
+STATIC_SCHEDULE_PATH = Path(STATIC_RESOURCE_DIR) / "schedule" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
 GRAPH_GROUP_COLORS = (
     "var(--raya-graph-group-1)",
@@ -407,6 +413,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_search_resources(site_dir, report)
     _write_practice_resources(site_dir, report)
     _write_tasks_resources(site_dir, report)
+    _write_schedule_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -520,6 +527,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
         report=report,
     )
     _write_tasks_surface(
+        site_dir=site_dir,
+        content_model=content_model,
+        official_by_page=official_by_page,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
+        skin_context=skin_context,
+        report=report,
+    )
+    _write_schedule_surface(
         site_dir=site_dir,
         content_model=content_model,
         official_by_page=official_by_page,
@@ -872,6 +888,7 @@ def _render_page(
             {"page": page.id},
         )
     tasks_href = _relative_href(page.output_path, STATIC_TASKS_PATH.as_posix())
+    schedule_href = _relative_href(page.output_path, STATIC_SCHEDULE_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -961,6 +978,7 @@ def _render_page(
                 graph_href,
                 practice_href,
                 tasks_href,
+                schedule_href,
             ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(
@@ -970,6 +988,7 @@ def _render_page(
                 graph_href=graph_href,
                 practice_href=course_map_practice_href,
                 tasks_href=tasks_href,
+                schedule_href=schedule_href,
                 official_counts=official_counts,
                 official_objects=official_objects,
                 page_graph_context=page_graph_context,
@@ -1002,6 +1021,7 @@ def _render_top_command_bar(
     graph_href: str,
     practice_href: str,
     tasks_href: str,
+    schedule_href: str,
 ) -> str:
     return "\n".join(
         [
@@ -1035,6 +1055,13 @@ def _render_top_command_bar(
                 f'href="{html.escape(tasks_href)}" '
                 'aria-label="Open official tasks">'
                 '<span class="raya-command-label">Tasks</span>'
+                "</a>"
+            ),
+            (
+                f'<a class="raya-command raya-command-schedule" '
+                f'href="{html.escape(schedule_href)}" '
+                'aria-label="Open official schedule">'
+                '<span class="raya-command-label">Schedule</span>'
                 "</a>"
             ),
             _render_course_map_toggle(
@@ -1072,6 +1099,7 @@ def _render_discovery_command_bar(
     graph_href: str | None,
     practice_href: str | None,
     tasks_href: str | None,
+    schedule_href: str | None,
 ) -> str:
     commands = [
         (
@@ -1118,6 +1146,16 @@ def _render_discovery_command_bar(
                 f'href="{html.escape(tasks_href)}" '
                 'aria-label="Open official tasks">'
                 '<span class="raya-command-label">Tasks</span>'
+                "</a>"
+            )
+        )
+    if schedule_href is not None:
+        commands.append(
+            (
+                f'<a class="raya-command raya-command-schedule" '
+                f'href="{html.escape(schedule_href)}" '
+                'aria-label="Open official schedule">'
+                '<span class="raya-command-label">Schedule</span>'
                 "</a>"
             )
         )
@@ -1267,6 +1305,7 @@ def _render_course_map(
     graph_href: str,
     practice_href: str,
     tasks_href: str,
+    schedule_href: str,
     official_counts: dict[str, dict[str, int]],
     official_objects: list[dict[str, Any]],
     page_graph_context: dict[str, list[dict[str, str]]],
@@ -1369,7 +1408,15 @@ def _render_course_map(
     position = html.escape(_page_position(page, content_model))
     direct_official_count = sum(official_counts.get(page.id, {}).values())
     direct_task_count = sum(
-        1 for item in official_objects if str(item.get("type", "")) in _OFFICIAL_TASK_TYPES
+        1
+        for item in official_objects
+        if _official_public_task_summary(item) is not None
+    )
+    direct_dated_task_count = sum(
+        1
+        for item in official_objects
+        if _official_public_task_summary(item) is not None
+        and _official_task_event_date(item)
     )
     direct_link_count = len(page_graph_context.get("outgoing", [])) + len(
         page_graph_context.get("incoming", [])
@@ -1390,6 +1437,12 @@ def _render_course_map(
             "Tasks",
             tasks_href,
             _count_label(direct_task_count, "task") if direct_task_count else "Course",
+        ),
+        (
+            "schedule",
+            "Schedule",
+            schedule_href,
+            f"{direct_dated_task_count} dated" if direct_dated_task_count else "Course",
         ),
     ]
     workspace_html = "\n".join(
@@ -3588,6 +3641,7 @@ def _render_graph_surface(
                 graph_href=None,
                 practice_href="../practice/index.html",
                 tasks_href="../tasks/index.html",
+                schedule_href="../schedule/index.html",
             ),
             '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
             '<header class="raya-graph-header">',
@@ -4014,6 +4068,7 @@ def _render_search_surface(
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
                 tasks_href="../tasks/index.html",
+                schedule_href="../schedule/index.html",
             ),
             (
                 '<main id="raya-search-main" class="raya-search-page" '
@@ -4265,6 +4320,7 @@ def _render_practice_surface(
                 graph_href="../graph/index.html",
                 practice_href=None,
                 tasks_href="../tasks/index.html",
+                schedule_href="../schedule/index.html",
             ),
             (
                 '<main id="raya-practice-main" class="raya-practice-page" '
@@ -4572,6 +4628,7 @@ def _render_tasks_surface(
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
                 tasks_href=None,
+                schedule_href="../schedule/index.html",
             ),
             (
                 '<main id="raya-tasks-main" class="raya-tasks-page" '
@@ -4646,6 +4703,269 @@ def _render_tasks_surface(
     )
 
 
+def _write_schedule_surface(
+    *,
+    site_dir: Path,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+    report: ValidationReport,
+) -> None:
+    schedule_path = site_dir / STATIC_SCHEDULE_PATH
+    schedule_path.parent.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(schedule_path.parent)
+    schedule_path.write_text(
+        _render_schedule_surface(
+            content_model=content_model,
+            official_by_page=official_by_page,
+            course_title=course_title,
+            language=language,
+            skin_context=skin_context,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(schedule_path)
+
+
+def _render_schedule_surface(
+    *,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+) -> str:
+    stylesheet_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(), RENDER_STYLESHEET_PATH
+    )
+    skin_stylesheet_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
+    accessibility_css_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
+    )
+    schedule_js_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(),
+        Path(SCHEDULE_RESOURCE_PATH) / SCHEDULE_SCRIPT_NAME,
+    )
+    root_skin = skin_id_for_source_path(
+        content_model.pages[0].source_path, skin_context
+    )
+    schedule_payload = _browser_schedule_payload(content_model, official_by_page)
+    schedule_payload_text = _json_script_text(schedule_payload)
+    type_buttons = [
+        (
+            '<button class="raya-schedule-chip" type="button" '
+            'data-raya-schedule-type-filter="all" aria-pressed="true">'
+            f"All ({len(schedule_payload['items'])})"
+            "</button>"
+        )
+    ]
+    for type_info in schedule_payload["types"]:
+        type_buttons.append(
+            (
+                '<button class="raya-schedule-chip" type="button" '
+                f'data-raya-schedule-type-filter="{html.escape(type_info["type"], quote=True)}" '
+                'aria-pressed="false">'
+                f"{html.escape(type_info['label'])} ({type_info['count']})"
+                "</button>"
+            )
+        )
+    kind_buttons = [
+        (
+            '<button class="raya-schedule-chip" type="button" '
+            'data-raya-schedule-kind-filter="all" aria-pressed="true">'
+            f"All dated ({len(schedule_payload['items'])})"
+            "</button>"
+        ),
+        (
+            '<button class="raya-schedule-chip" type="button" '
+            'data-raya-schedule-kind-filter="due" aria-pressed="false">'
+            f"Due ({schedule_payload['event_counts'].get('due', 0)})"
+            "</button>"
+        ),
+        (
+            '<button class="raya-schedule-chip" type="button" '
+            'data-raya-schedule-kind-filter="available" aria-pressed="false">'
+            f"Available ({schedule_payload['event_counts'].get('available', 0)})"
+            "</button>"
+        ),
+    ]
+
+    cards = []
+    for order, item in enumerate(schedule_payload["items"]):
+        tags_html = "".join(
+            f'<span class="raya-schedule-tag">{html.escape(tag)}</span>'
+            for tag in item["tags"]
+        )
+        meta_bits = [
+            item["event_label"],
+            item["type_label"],
+            f"From {item['page_title']}",
+            item["points"],
+            f"Weight {item['weight']}" if item["weight"] else "",
+            f"Status {item['status']}" if item["status"] else "",
+        ]
+        cards.append(
+            "\n".join(
+                [
+                    (
+                        '<article class="raya-schedule-item" '
+                        f'data-raya-schedule-item="{html.escape(item["id"], quote=True)}" '
+                        f'data-raya-schedule-type="{html.escape(item["type"], quote=True)}" '
+                        f'data-raya-schedule-kind="{html.escape(item["event_kind"], quote=True)}" '
+                        f'data-raya-schedule-order="{order}" '
+                        'data-raya-schedule-active="false">'
+                    ),
+                    '<header class="raya-schedule-item-header">',
+                    (
+                        '<span class="raya-schedule-date">'
+                        f"{html.escape(item['event_date'])}</span>"
+                    ),
+                    (
+                        '<span class="raya-schedule-kind">'
+                        f"{html.escape(item['event_kind_label'])}</span>"
+                    ),
+                    "</header>",
+                    f"<h3>{html.escape(item['title'] or item['preview'])}</h3>",
+                    (
+                        '<p class="raya-schedule-preview">'
+                        f"{html.escape(item['preview'])}</p>"
+                        if item["preview"] and item["preview"] != item["title"]
+                        else ""
+                    ),
+                    (
+                        '<p class="raya-schedule-meta">'
+                        f"{html.escape(' | '.join(bit for bit in meta_bits if bit))}"
+                        "</p>"
+                    ),
+                    (
+                        f'<p class="raya-schedule-tags">{tags_html}</p>'
+                        if tags_html
+                        else ""
+                    ),
+                    '<p class="raya-schedule-actions">',
+                    (
+                        '<a class="raya-schedule-open" '
+                        f'href="{html.escape(item["page_url"])}">Open page</a>'
+                    ),
+                    (
+                        '<a class="raya-schedule-graph" '
+                        f'href="{html.escape(item["graph_url"])}" '
+                        f'aria-label="View {html.escape(item["page_title"], quote=True)} in course graph">'
+                        "View in graph</a>"
+                    ),
+                    "</p>",
+                    "</article>",
+                ]
+            )
+        )
+
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Official Schedule - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
+            "</head>",
+            (
+                f'<body data-raya-surface="schedule" '
+                f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
+            ),
+            '<a class="raya-skip-link" href="#raya-schedule-main">Skip to schedule</a>',
+            _render_discovery_command_bar(
+                course_title=course_title,
+                workspace_label="Official schedule workspace",
+                home_href="../../index.html",
+                search_href="../search/index.html",
+                graph_href="../graph/index.html",
+                practice_href="../practice/index.html",
+                tasks_href="../tasks/index.html",
+                schedule_href=None,
+            ),
+            (
+                '<main id="raya-schedule-main" class="raya-schedule-page" '
+                'data-raya-schedule-page tabindex="-1">'
+            ),
+            '<header class="raya-schedule-header">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            "<h1>Official Schedule</h1>",
+            (
+                "<p>Scan dated official assignments, projects, exams, and tasks. "
+                "Dates are authored course metadata from accepted official objects.</p>"
+            ),
+            "</header>",
+            '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
+            '<aside class="raya-schedule-control-panel" aria-label="Official schedule controls">',
+            "<h2>Find schedule items</h2>",
+            '<section class="raya-schedule-controls" aria-label="Official schedule controls">',
+            '<label for="raya-schedule-search">Search</label>',
+            '<input id="raya-schedule-search" type="search" autocomplete="off">',
+            '<div class="raya-schedule-filters" aria-label="Schedule event filters">',
+            "\n".join(kind_buttons),
+            "</div>",
+            '<div class="raya-schedule-filters" aria-label="Schedule type filters">',
+            "\n".join(type_buttons),
+            "</div>",
+            '<button id="raya-schedule-clear" type="button">Clear</button>',
+            '<p id="raya-schedule-status" class="raya-schedule-status" aria-live="polite"></p>',
+            "</section>",
+            (
+                '<p class="raya-discovery-summary" '
+                f"data-raya-schedule-summary-count>{len(schedule_payload['items'])} visible schedule item(s).</p>"
+            ),
+            "</aside>",
+            '<section class="raya-schedule-results-panel" aria-label="Official schedule results">',
+            (
+                '<p id="raya-schedule-empty" class="raya-schedule-empty" hidden>'
+                "No matching dated official work.</p>"
+            ),
+            (
+                '<section class="raya-schedule-results" data-raya-schedule-results '
+                'aria-label="Official schedule results">'
+            ),
+            "\n".join(cards),
+            "</section>",
+            "</section>",
+            (
+                '<aside class="raya-schedule-context-panel" data-raya-schedule-context '
+                'aria-label="Official schedule context" aria-live="polite">'
+            ),
+            "<h2>Context</h2>",
+            "<p data-raya-schedule-context-title>Select or filter a dated official item.</p>",
+            (
+                '<p class="raya-discovery-context-meta" '
+                "data-raya-schedule-context-meta>Accepted public dated task metadata only.</p>"
+            ),
+            "</aside>",
+            "</section>",
+            '<script type="application/json" id="raya-schedule-data">',
+            schedule_payload_text,
+            "</script>",
+            "</main>",
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(schedule_js_href)}" defer></script>',
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
 def _browser_tasks_payload(
     content_model: ContentModel,
     official_by_page: dict[str, list[dict[str, Any]]],
@@ -4663,28 +4983,14 @@ def _browser_tasks_payload(
             ),
         )
         for item in page_objects:
-            if not isinstance(item, dict):
+            task_summary = _official_public_task_summary(item)
+            if task_summary is None:
                 continue
-            object_type = str(item.get("type") or "").strip()
-            if object_type not in _OFFICIAL_TASK_TYPES:
-                continue
-            object_id = str(item.get("id") or "").strip()
-            authority = str(item.get("authority") or "official").strip() or "official"
-            if not object_id:
-                continue
-            content = item.get("content")
-            content_map = content if isinstance(content, dict) else {}
-            title = _official_public_text(content_map, ("title",))
-            preview = _official_public_text(
-                content_map,
-                ("summary", "prompt", "instructions", "body", "question"),
-            )
-            if not title and preview:
-                title = preview
-            if not preview:
-                preview = title
-            if not title and not preview:
-                continue
+            object_type = task_summary["type"]
+            object_id = task_summary["id"]
+            content_map = task_summary["content"]
+            title = task_summary["title"]
+            preview = task_summary["preview"]
             anchor = f"raya-official-{_safe_map_fragment_id(object_id)}"
             page_url = (
                 _relative_href(STATIC_TASKS_PATH.as_posix(), page.output_path)
@@ -4698,7 +5004,7 @@ def _browser_tasks_payload(
             objects.append(
                 {
                     "anchor": anchor,
-                    "authority": authority,
+                    "authority": task_summary["authority"],
                     "available": _official_public_text(content_map, ("available",)),
                     "due": _official_public_text(content_map, ("due",)),
                     "graph_url": graph_url,
@@ -4732,6 +5038,112 @@ def _browser_tasks_payload(
         "types": types,
         "version": 1,
     }
+
+
+def _official_public_task_summary(item: dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(item, dict):
+        return None
+    object_type = str(item.get("type") or "").strip()
+    if object_type not in _OFFICIAL_TASK_TYPES:
+        return None
+    object_id = str(item.get("id") or "").strip()
+    if not object_id:
+        return None
+    content = item.get("content")
+    content_map = content if isinstance(content, dict) else {}
+    title = _official_public_text(content_map, ("title",))
+    preview = _official_public_text(
+        content_map,
+        ("summary", "prompt", "instructions", "body", "question"),
+    )
+    if not title and preview:
+        title = preview
+    if not preview:
+        preview = title
+    if not title and not preview:
+        return None
+    authority = str(item.get("authority") or "official").strip() or "official"
+    return {
+        "authority": authority,
+        "content": content_map,
+        "id": object_id,
+        "preview": preview,
+        "title": title,
+        "type": object_type,
+    }
+
+
+def _browser_schedule_payload(
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+) -> dict[str, Any]:
+    tasks_payload = _browser_tasks_payload(content_model, official_by_page)
+    type_counts: dict[str, int] = defaultdict(int)
+    event_counts: dict[str, int] = defaultdict(int)
+    items: list[dict[str, Any]] = []
+    for task in tasks_payload["objects"]:
+        event_kind, event_date = _task_payload_event(task)
+        if not event_date:
+            continue
+        type_counts[task["type"]] += 1
+        event_counts[event_kind] += 1
+        event_kind_label = "Due" if event_kind == "due" else "Available"
+        item = dict(task)
+        item["event_date"] = event_date
+        item["event_kind"] = event_kind
+        item["event_kind_label"] = event_kind_label
+        item["event_label"] = f"{event_kind_label} {event_date}"
+        items.append(item)
+    items.sort(
+        key=lambda item: (
+            item["event_date"],
+            _page_sequence_index(content_model, str(item["page_id"])),
+            str(item["id"]),
+        )
+    )
+    types = [
+        {
+            "count": count,
+            "label": _official_type_label(object_type),
+            "type": object_type,
+        }
+        for object_type, count in sorted(
+            type_counts.items(),
+            key=lambda pair: (_official_type_label(pair[0]), pair[0]),
+        )
+    ]
+    return {
+        "event_counts": dict(event_counts),
+        "items": items,
+        "types": types,
+        "version": 1,
+    }
+
+
+def _task_payload_event(task: dict[str, Any]) -> tuple[str, str]:
+    due = str(task.get("due") or "").strip()
+    if due:
+        return "due", due
+    available = str(task.get("available") or "").strip()
+    if available:
+        return "available", available
+    return "", ""
+
+
+def _official_task_event_date(item: dict[str, Any]) -> str:
+    content = item.get("content")
+    content_map = content if isinstance(content, dict) else {}
+    due = _official_public_text(content_map, ("due",))
+    if due:
+        return due
+    return _official_public_text(content_map, ("available",))
+
+
+def _page_sequence_index(content_model: ContentModel, page_id: str) -> int:
+    for index, page in enumerate(content_model.pages):
+        if page.id == page_id:
+            return index
+    return 0
 
 
 def _official_public_text(
@@ -5095,6 +5507,16 @@ def _write_tasks_resources(site_dir: Path, report: ValidationReport) -> None:
     tasks_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(tasks_dir)
     script_path = tasks_dir / TASKS_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_schedule_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = schedule_resources()
+    schedule_dir = site_dir / SCHEDULE_RESOURCE_PATH
+    schedule_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(schedule_dir)
+    script_path = schedule_dir / SCHEDULE_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 

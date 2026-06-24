@@ -123,6 +123,17 @@ responsivos, sin rutas privadas, sin `fetch` en runtime, sin requests externos,
 sin browser storage y sin lenguaje de grading, entregas, progreso, dominio,
 recomendacion o estado del estudiante.
 
+Para el workspace Official Schedule, inspecciona los mismos objetos aceptados
+de familia task y verifica que solo objetos con `content.due` o
+`content.available` publico aparezcan en `_raya/schedule/index.html`. Compara
+el payload embebido con la semantica de `data/tasks.json` y el script local
+`schedule.js`. Verifica filtros por tipo y evento, busqueda, Enter por teclado
+para abrir, anchors de pagina propietaria, links de foco en grafo, paneles
+responsivos, sin rutas privadas, sin `fetch` en runtime, sin requests externos,
+sin browser storage, y sin sincronizacion de calendario, recordatorios,
+grading, entregas, progreso, dominio, recomendacion o lenguaje de estado del
+estudiante.
+
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido, los numeros estructurales
 generados del mapa,
@@ -142,7 +153,9 @@ en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
 Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
 estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
-pagina solo cuando haya propiedad directa de objetos oficiales, ocultamiento en
+pagina solo cuando haya propiedad directa de objetos oficiales, hrefs de
+Schedule y badges de tareas fechadas solo desde tasks oficiales fechadas
+directas, ocultamiento en
 mapa colapsado, comportamiento desktop/movil sin overflow, y ausencia de
 storage, fetch, progreso, ranking, recomendacion o lenguaje de estado del
 estudiante.

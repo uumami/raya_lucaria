@@ -2183,18 +2183,32 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
         assert base_url is not None
         tasks_html = _fetch_text(f"{base_url}/_raya/tasks/index.html")
         tasks_js = _fetch_text(f"{base_url}/_raya/render/tasks.js")
+        schedule_html = _fetch_text(f"{base_url}/_raya/schedule/index.html")
+        schedule_js = _fetch_text(f"{base_url}/_raya/render/schedule.js")
         script_hrefs = re.findall(r'<script src="([^"]+)"', tasks_html)
 
         assert 'data-raya-surface="tasks"' in tasks_html
         assert "raya-tasks-data" in tasks_html
+        assert 'data-raya-surface="schedule"' in schedule_html
+        assert "raya-schedule-data" in schedule_html
         assert "https://" not in tasks_html
         assert "http://" not in tasks_html
         assert "fetch(" not in tasks_js
         assert "XMLHttpRequest" not in tasks_js
         assert "localStorage" not in tasks_js
         assert "sessionStorage" not in tasks_js
+        assert "fetch(" not in schedule_js
+        assert "XMLHttpRequest" not in schedule_js
+        assert "localStorage" not in schedule_js
+        assert "sessionStorage" not in schedule_js
         assert "private-task" not in tasks_html
+        assert "private-task" not in schedule_html
+        assert "unit-task" not in schedule_html
+        assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
+        assert 'data-raya-schedule-item="unit-project"' in schedule_html
+        assert 'data-raya-schedule-item="unit-exam"' in schedule_html
         assert "SHOULD_NOT_LEAK" not in tasks_html
+        assert "SHOULD_NOT_LEAK" not in schedule_html
         for script_href in script_hrefs:
             loaded_script = _fetch_text(urljoin(f"{base_url}/_raya/tasks/", script_href))
             assert "fetch(" not in loaded_script
@@ -2253,6 +2267,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-command-practice").is_visible()
+                        assert page.locator(".raya-command-schedule").is_visible()
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
                         page.click(".raya-command-font")
@@ -2337,6 +2352,88 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         task_anchor = page.url.rsplit("#", 1)[1]
                         assert page.locator(f"#{task_anchor}").is_visible()
                         _assert_no_horizontal_overflow(page)
+
+                        schedule = browser.new_page(viewport=viewport)
+                        try:
+                            schedule_requests: list[str] = []
+                            schedule.on(
+                                "request",
+                                lambda request: schedule_requests.append(request.url),
+                            )
+                            schedule.goto(
+                                f"{base_url}/_raya/schedule/index.html",
+                                wait_until="networkidle",
+                            )
+                            assert schedule_requests
+                            assert all(
+                                url.startswith(f"{base_url}/")
+                                for url in schedule_requests
+                            )
+                            _assert_no_horizontal_overflow(schedule)
+                            assert schedule.locator(
+                                ".raya-discovery-command-bar"
+                            ).is_visible()
+                            assert schedule.locator(
+                                ".raya-schedule-workspace"
+                            ).is_visible()
+                            assert schedule.locator(
+                                ".raya-schedule-control-panel"
+                            ).is_visible()
+                            assert schedule.locator(
+                                ".raya-schedule-results-panel"
+                            ).is_visible()
+                            assert schedule.locator(
+                                ".raya-schedule-context-panel"
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-assignment"]'
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-project"]'
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-exam"]'
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-task"]'
+                            ).count() == 0
+                            schedule.click('[data-raya-schedule-kind-filter="available"]')
+                            schedule.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-schedule-status')
+                                  ?.textContent
+                                  ?.includes('1 visible schedule item')"""
+                            )
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-exam"]'
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-assignment"]'
+                            ).is_hidden()
+                            schedule.click("#raya-schedule-clear")
+                            schedule.fill("#raya-schedule-search", "retrieval")
+                            schedule.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-schedule-status')
+                                  ?.textContent
+                                  ?.includes('2 visible schedule items')"""
+                            )
+                            schedule.locator("#raya-schedule-search").focus()
+                            schedule.press("#raya-schedule-search", "ArrowDown")
+                            active_item = schedule.locator(
+                                '[data-raya-schedule-active="true"]'
+                            )
+                            assert active_item.count() == 1
+                            assert (
+                                "2026-09-15"
+                                in schedule.locator(
+                                    "[data-raya-schedule-context-meta]"
+                                ).inner_text()
+                            )
+                            assert schedule.evaluate("() => localStorage.length") == 0
+                            assert schedule.evaluate("() => sessionStorage.length") == 0
+                        finally:
+                            schedule.close()
                     finally:
                         page.close()
             finally:
@@ -2743,6 +2840,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 tasksHref: document
                                   .querySelector('.raya-command-tasks')
                                   ?.getAttribute('href'),
+                                scheduleHref: document
+                                  .querySelector('.raya-command-schedule')
+                                  ?.getAttribute('href'),
                                 mapExpanded: document
                                   .querySelector('.raya-command-map')
                                   ?.getAttribute('aria-expanded'),
@@ -2770,7 +2870,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 7
+                        assert state["count"] == 8
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
                         if viewport["width"] >= 1024:
@@ -2787,6 +2887,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         )
                         assert state["practiceHref"] == "_raya/practice/index.html"
                         assert state["tasksHref"] == "_raya/tasks/index.html"
+                        assert state["scheduleHref"] == "_raya/schedule/index.html"
                         assert state["mapExpanded"] == "true"
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
@@ -2988,11 +3089,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "Graph",
                                 "Practice",
                                 "Tasks",
+                                "Schedule",
                             ]
                             assert workspace["badges"][0] == "Course"
                             assert re.fullmatch(r"\d+ links?", workspace["badges"][1])
                             assert workspace["badges"][2] == "Course"
                             assert workspace["badges"][3] == "Course"
+                            assert workspace["badges"][4] == "Course"
                             assert any(
                                 "../_raya/search/index.html?q=" in href
                                 for href in workspace["hrefs"]
@@ -3004,6 +3107,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert "../_raya/practice/index.html" in workspace["hrefs"]
                             assert any(
                                 "../_raya/tasks/index.html" in href
+                                for href in workspace["hrefs"]
+                            )
+                            assert any(
+                                "../_raya/schedule/index.html" in href
                                 for href in workspace["hrefs"]
                             )
                             page.click(".raya-course-map-toggle")
@@ -3398,9 +3505,11 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         "Graph",
                         "Practice",
                         "Tasks",
+                        "Schedule",
                     ]
                     assert initial["workspaceBadges"][2] == "8 official"
-                    assert initial["workspaceBadges"][3] == "5 tasks"
+                    assert initial["workspaceBadges"][3] == "4 tasks"
+                    assert initial["workspaceBadges"][4] == "3 dated"
                     assert initial["practiceHref"].endswith(
                         "_raya/practice/index.html?page=first-topic"
                     )
@@ -6283,6 +6392,7 @@ def _add_official_task_objects(course: Path) -> None:
                 "    solution: SHOULD_NOT_LEAK_TASK_SOLUTION",
                 "  body:",
                 "    answer: SHOULD_NOT_LEAK_TASK_ANSWER",
+                "  due: '2026-11-01'",
                 "  tags:",
                 "    - public",
                 "    - hidden: SHOULD_NOT_LEAK_TASK_TAG",

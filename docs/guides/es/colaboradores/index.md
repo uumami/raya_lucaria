@@ -107,6 +107,17 @@ inspeccion por teclado, layout desktop/movil, sin requests externos, sin
 `fetch` en runtime, sin browser storage y sin lenguaje de grading, entregas,
 progreso, dominio o recomendaciones.
 
+El workspace Official Schedule tambien es comportamiento actual del renderer
+estatico sobre los mismos objetos aceptados de familia task cuando incluyen
+`content.due` o `content.available`. Revisalo como vista fechada de browser
+sobre la semantica de `data/tasks.json`, no como nuevo index de artifact,
+calendar feed, sincronizacion de calendario, sistema de recordatorios ni
+superficie de estado del estudiante. La verificacion debe cubrir
+`_raya/schedule/index.html`, el recurso local `schedule.js`, filtrado solo de
+objetos fechados, anchors de pagina propietaria, links de foco en grafo, sin
+rutas privadas, sin `fetch` en runtime, sin browser storage y sin lenguaje de
+grading, entregas, progreso, dominio o recomendaciones.
+
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
 curso expandido por defecto en escritorio,

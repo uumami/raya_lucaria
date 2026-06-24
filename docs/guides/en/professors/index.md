@@ -243,6 +243,13 @@ return to the owning page anchor. It is not a submission system, gradebook,
 personal calendar sync, progress tracker, recommendation engine, or hidden
 answer surface.
 
+The Official Schedule workspace at `_raya/schedule/index.html` is generated
+from the same accepted task-family objects when they include `content.due` or
+`content.available`. It helps students scan dated official work and return to
+the owning page anchor. It is not a separate calendar source, personal
+calendar sync, reminder system, submission system, gradebook, progress tracker,
+or recommendation engine.
+
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
 students filter visible page labels or collapse the map to an operable compact map rail

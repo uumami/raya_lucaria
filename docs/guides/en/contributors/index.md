@@ -102,6 +102,16 @@ keyboard inspection, desktop/mobile layout, no external requests, no runtime
 fetch, no browser storage, and no grading, submission, progress, mastery, or
 recommendation language.
 
+The Official Schedule workspace is current static renderer behavior over the
+same accepted task-family objects when they include `content.due` or
+`content.available`. Review it as a browser-facing dated view over
+`data/tasks.json` semantics, not as a new artifact index, calendar feed,
+calendar sync, reminder system, or learner-state surface. Verification should
+cover `_raya/schedule/index.html`, the local `schedule.js` resource, dated-only
+filtering, owning page anchors, graph focus links, no private paths, no
+runtime fetch, no browser storage, and no grading, submission, progress,
+mastery, or recommendation language.
+
 Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
 on desktop, can filter the rendered

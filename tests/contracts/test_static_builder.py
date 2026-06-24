@@ -1342,6 +1342,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Search</span>' in tasks_html
     assert '<span class="raya-command-label">Graph</span>' in tasks_html
     assert '<span class="raya-command-label">Practice</span>' in tasks_html
+    assert '<span class="raya-command-label">Schedule</span>' in tasks_html
     assert 'src="../render/tasks.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in tasks_html
@@ -1429,6 +1430,105 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
         assert private_token not in tasks_html
 
 
+def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    _add_official_task_objects(course)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    site = artifact / "site"
+    schedule_page = site / "_raya" / "schedule" / "index.html"
+    schedule_js = site / "_raya" / "render" / "schedule.js"
+
+    assert schedule_page.exists()
+    assert schedule_js.exists()
+
+    schedule_html = schedule_page.read_text(encoding="utf-8")
+    schedule_script = schedule_js.read_text(encoding="utf-8")
+    payload_match = re.search(
+        r'<script type="application/json" id="raya-schedule-data">\n(.*?)\n</script>',
+        schedule_html,
+        re.DOTALL,
+    )
+
+    assert 'data-raya-surface="schedule"' in schedule_html
+    assert "raya-discovery-command-bar" in schedule_html
+    assert "Official schedule workspace" in schedule_html
+    assert 'href="../search/index.html"' in schedule_html
+    assert 'href="../graph/index.html"' in schedule_html
+    assert 'href="../practice/index.html"' in schedule_html
+    assert 'href="../tasks/index.html"' in schedule_html
+    assert '<span class="raya-command-label">Search</span>' in schedule_html
+    assert '<span class="raya-command-label">Graph</span>' in schedule_html
+    assert '<span class="raya-command-label">Practice</span>' in schedule_html
+    assert '<span class="raya-command-label">Tasks</span>' in schedule_html
+    assert '<span class="raya-command-label">Schedule</span>' not in schedule_html
+    assert 'src="../render/schedule.js"' in schedule_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in schedule_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in schedule_html
+    assert 'href="../render/rich.css"' in schedule_html
+    assert 'href="../render/skin.css"' in schedule_html
+    assert "shell.js" not in schedule_html
+    assert "https://" not in schedule_html
+    assert "http://" not in schedule_html
+    assert "fetch(" not in schedule_script
+    assert "XMLHttpRequest" not in schedule_script
+    assert "localStorage" not in schedule_script
+    assert "sessionStorage" not in schedule_script
+    assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
+    assert 'data-raya-schedule-item="unit-project"' in schedule_html
+    assert 'data-raya-schedule-item="unit-exam"' in schedule_html
+    assert 'data-raya-schedule-item="unit-task"' not in schedule_html
+    assert 'data-raya-schedule-item="private-task"' not in schedule_html
+    assert "2026-09-15" in schedule_html
+    assert "2026-10-01" in schedule_html
+    assert "2026-10-15" in schedule_html
+    topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
+    assert 'aria-label="Tasks workspace, 4 tasks"' in topic_html
+    assert 'aria-label="Schedule workspace, 3 dated"' in topic_html
+    assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in schedule_html
+    assert 'href="../graph/index.html?page=first-topic"' in schedule_html
+
+    assert payload_match is not None
+    schedule_payload = json.loads(payload_match.group(1))
+    assert schedule_payload["version"] == 1
+    by_id = {item["id"]: item for item in schedule_payload["items"]}
+    assert set(by_id) == {"unit-assignment", "unit-project", "unit-exam"}
+    assert by_id["unit-assignment"]["event_kind"] == "due"
+    assert by_id["unit-assignment"]["event_date"] == "2026-09-15"
+    assert by_id["unit-project"]["event_kind"] == "due"
+    assert by_id["unit-project"]["event_date"] == "2026-10-01"
+    assert by_id["unit-exam"]["event_kind"] == "available"
+    assert by_id["unit-exam"]["event_date"] == "2026-10-15"
+    serialized_payload = json.dumps(schedule_payload)
+    for private_token in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "cache_key",
+        "course/",
+        "answer",
+        "solution",
+        "correct",
+        "personal",
+        "progress",
+        "mastery",
+        "recommend",
+        "overdue",
+        "reminder",
+        "sync",
+        "SHOULD_NOT_LEAK",
+        "Private support sentinel",
+        "Public nested prompt should not be flattened",
+    ):
+        assert private_token not in serialized_payload
+        assert private_token not in schedule_html
+
+
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
     tmp_path: Path,
 ) -> None:
@@ -1442,6 +1542,8 @@ def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_stat
         (site / "_raya" / "search" / "index.html").read_text(encoding="utf-8"),
         (site / "_raya" / "graph" / "index.html").read_text(encoding="utf-8"),
         (site / "_raya" / "practice" / "index.html").read_text(encoding="utf-8"),
+        (site / "_raya" / "tasks" / "index.html").read_text(encoding="utf-8"),
+        (site / "_raya" / "schedule" / "index.html").read_text(encoding="utf-8"),
         _tag_html(
             (site / "reader-ux" / "index.html").read_text(encoding="utf-8"),
             "nav",
@@ -1459,6 +1561,9 @@ def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_stat
         "confidence",
         "review history",
         "related practice",
+        "overdue",
+        "reminder",
+        "calendar sync",
     ):
         assert forbidden_text not in visible_text
 
@@ -4653,6 +4758,7 @@ def _add_official_task_objects(course: Path) -> None:
                 "    solution: SHOULD_NOT_LEAK_TASK_SOLUTION",
                 "  body:",
                 "    answer: SHOULD_NOT_LEAK_TASK_ANSWER",
+                "  due: '2026-11-01'",
                 "  tags:",
                 "    - public",
                 "    - hidden: SHOULD_NOT_LEAK_TASK_TAG",

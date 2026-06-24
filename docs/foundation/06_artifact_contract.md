@@ -132,6 +132,12 @@ authored under the object `content`. It is not source authority, learner state,
 submission state, grading state, personal progress, recommendation data, or a
 calendar integration feed.
 
+The static renderer may also publish a browser-facing Schedule workspace over
+the same `data/tasks.json` payload. That page is a dated view of accepted
+official task metadata only; it is not a separate machine authority surface,
+calendar feed, reminder system, synchronization contract, or learner-state
+record.
+
 ## Study Seed Data
 
 Artifacts should expose official learning objects as seed data for future study systems. Static artifacts may include cards, quizzes, prompts, tasks, and quanta scopes, but they should not contain private review history or personal mastery state.

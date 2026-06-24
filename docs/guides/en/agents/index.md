@@ -115,6 +115,16 @@ Enter-to-open behavior, responsive panels, no private paths, no runtime fetch,
 no external requests, no browser storage, and no grading, submission, progress,
 mastery, recommendation, or learner-state language.
 
+For the Official Schedule workspace, inspect the same accepted task-family
+objects and verify that only objects with public `content.due` or
+`content.available` appear in `_raya/schedule/index.html`. Compare the embedded
+payload with `data/tasks.json` semantics and the local `schedule.js` script.
+Verify event-kind and type filters, search, keyboard Enter-to-open behavior,
+owning page anchors, graph focus links, responsive panels, no private paths, no
+runtime fetch, no external requests, no browser storage, and no calendar sync,
+reminder, grading, submission, progress, mastery, recommendation, or
+learner-state language.
+
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure, generated structural map numbers,
 current-page map orientation, map filter behavior, sticky reading context,
@@ -130,7 +140,8 @@ position in the top bar and sequence cards as structural course orientation, not
 learner progress.
 When changing Course workspace shortcut cards, verify labels, structural badges,
 deployment-neutral hrefs, page-focused Practice hrefs only for direct official
-ownership, collapsed-map hiding, desktop/mobile no-overflow behavior, and no
+ownership, Schedule hrefs and dated-task badges only from direct dated official
+tasks, collapsed-map hiding, desktop/mobile no-overflow behavior, and no
 storage, fetch, progress, ranking, recommendation, or learner-state language.
 
 The Page brief is part of the reader shell. Verify it appears before authored

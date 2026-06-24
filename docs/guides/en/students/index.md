@@ -59,10 +59,11 @@ context, or end-of-page cards to move through the ordered material, and use Text
 size or OpenDyslexic when those settings are more comfortable. End-of-page cards
 are course-order links; they are not recommendations or progress markers.
 The expanded course map may also show static links to Course Search, Course
-Graph, Official Practice, and Official Tasks. They are shortcuts to generated
-workspaces, not progress, ranking, or personalized guidance. Some shortcut
+Graph, Official Practice, Official Tasks, and Official Schedule. They are
+shortcuts to generated workspaces, not progress, ranking, or personalized guidance. Some shortcut
 cards include small structural badges such as course scope, explicit link
-counts, accepted official-object counts, or accepted task counts for the current
+counts, accepted official-object counts, accepted task counts, or dated
+official-task counts for the current
 page. Those badges describe authored static course structure; they are not
 completion, importance, grade, or recommendation signals.
 
@@ -83,10 +84,10 @@ can open native previews with the linked page summary, status, and explicit link
 counts when the course has that metadata. Use them as a reading map after
 finishing the page; they are not a progress tracker, ranking, or recommendation
 engine.
-Search, Graph, Practice, and Tasks pages use the same static discovery bar so
+Search, Graph, Practice, Tasks, and Schedule pages use the same static discovery bar so
 you can return to the course, switch between those workspaces, and keep Text
 size or OpenDyslexic available for the current page. Search, Practice, and
-Tasks may also show controls, results, and a context panel on wider screens.
+Tasks, and Schedule may also show controls, results, and a context panel on wider screens.
 Those controls are for reading and scanning comfort; the workspaces do not
 store your query, selected node, graph layout, practice filters, or task
 filters as study state.
@@ -162,6 +163,13 @@ context. It may show public planning fields such as title, page, due date,
 points, status, and tags when the course team authored them. It is not a
 personal progress tracker, submission system, gradebook, adaptive
 recommendation page, calendar sync, or hidden answer surface.
+
+Some courses may also include an Official Schedule workspace under
+`_raya/schedule/`. Use it to scan accepted assignments, projects, exams, and
+tasks that have authored due or available dates, then open the owning page for
+full context. It is a static dated view over course metadata; it is not a
+personal calendar, reminder system, progress tracker, recommendation page,
+submission system, or gradebook.
 
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 

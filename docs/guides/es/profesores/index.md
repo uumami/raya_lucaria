@@ -247,6 +247,14 @@ fecha de entrega, y despues volver al anchor de la pagina propietaria. No es
 sistema de entregas, gradebook, sincronizacion de calendario personal, registro
 de progreso, motor de recomendaciones ni superficie de respuestas ocultas.
 
+El workspace Official Schedule en `_raya/schedule/index.html` se genera desde
+los mismos objetos aceptados de familia task cuando incluyen `content.due` o
+`content.available`. Ayuda a estudiantes a escanear trabajo oficial fechado y
+volver al anchor de la pagina propietaria. No es una fuente de calendario
+separada, sincronizacion de calendario personal, sistema de recordatorios,
+sistema de entregas, gradebook, registro de progreso ni motor de
+recomendaciones.
+
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
 y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto

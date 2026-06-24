@@ -65,11 +65,11 @@ para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando
 esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
 orden del curso; no son recomendaciones ni marcadores de progreso.
 El mapa expandido del curso tambien puede mostrar enlaces estaticos a Course
-Search, Course Graph, Official Practice y Official Tasks. Son atajos a
+Search, Course Graph, Official Practice, Official Tasks y Official Schedule. Son atajos a
 workspaces generados, no progreso, ranking ni guia personalizada. Algunas cards
 de atajo incluyen badges estructurales pequenos como alcance de curso, conteos
 de enlaces explicitos, conteos de objetos oficiales aceptados o conteos de
-tareas aceptadas para la pagina actual. Esos badges describen estructura
+tareas aceptadas o tareas oficiales fechadas para la pagina actual. Esos badges describen estructura
 estatica autorada del curso; no son senales de finalizacion, importancia, nota
 ni recomendacion.
 
@@ -93,13 +93,13 @@ nativas con el resumen, estado y conteos de enlaces explicitos de la pagina
 enlazada cuando el curso tiene esos metadatos. Usalos como mapa de lectura
 despues de terminar la pagina; no son un registro de avance, ranking ni motor
 de recomendaciones.
-Las paginas Search, Graph, Practice y Tasks usan la misma barra estatica de
+Las paginas Search, Graph, Practice, Tasks y Schedule usan la misma barra estatica de
 descubrimiento para volver al curso, cambiar entre esos workspaces y mantener
 disponibles Text size u OpenDyslexic para la pagina actual. Search, Practice y
-Tasks tambien pueden mostrar controles, resultados y un panel de contexto en
+Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de contexto en
 pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los
 workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros
-de practica ni filtros de tareas como estado de estudio.
+de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
@@ -178,6 +178,14 @@ publicos de planeacion como titulo, pagina, fecha de entrega, puntos, status y
 tags cuando el equipo del curso los escribio. No es registro de progreso
 personal, sistema de entregas, gradebook, pagina adaptativa de recomendaciones,
 sincronizacion de calendario ni superficie de respuestas ocultas.
+
+Algunos cursos tambien pueden incluir un workspace Official Schedule bajo
+`_raya/schedule/`. Usalo para escanear assignments, projects, exams y tasks
+aceptados que tienen fechas `due` o `available`, y despues abre la pagina que
+los posee para ver el contexto completo. Es una vista estatica fechada sobre
+metadata del curso; no es calendario personal, sistema de recordatorios,
+registro de progreso, pagina de recomendaciones, sistema de entregas ni
+gradebook.
 
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
