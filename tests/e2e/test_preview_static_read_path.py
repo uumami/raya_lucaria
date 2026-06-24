@@ -74,6 +74,57 @@ def _intersection_box(left: dict, right: dict) -> dict:
     return {"x": x, "y": y, "width": width, "height": height}
 
 
+def _visible_graph_context(page, node_id: str, viewport: dict[str, int]) -> dict:
+    return page.evaluate(
+        """({ nodeId, viewport }) => {
+          const canvas = document.querySelector('#raya-graph-canvas');
+          const selected = document.querySelector(
+            `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+          );
+          const canvasBox = canvas.getBoundingClientRect();
+          const selectedBox = selected.getBoundingClientRect();
+          const visible = {
+            x: Math.max(canvasBox.x, 0),
+            y: Math.max(canvasBox.y, 0),
+            right: Math.min(canvasBox.right, viewport.width),
+            bottom: Math.min(canvasBox.bottom, viewport.height),
+          };
+          visible.width = Math.max(0, visible.right - visible.x);
+          visible.height = Math.max(0, visible.bottom - visible.y);
+          const intersects = (box) => !(
+            box.right < visible.x ||
+            box.x > visible.right ||
+            box.bottom < visible.y ||
+            box.y > visible.bottom
+          );
+          const edgeVisible = Array.from(
+            document.querySelectorAll('#raya-graph-canvas .raya-graph-edge.is-active')
+          ).some((edge) => (
+            edge.getAttribute('data-raya-graph-from') === nodeId ||
+            edge.getAttribute('data-raya-graph-to') === nodeId
+          ) && intersects(edge.getBoundingClientRect()));
+          return {
+            canvas: {
+              x: canvasBox.x,
+              y: canvasBox.y,
+              width: canvasBox.width,
+              height: canvasBox.height,
+            },
+            visible,
+            selected: {
+              x: selectedBox.x,
+              y: selectedBox.y,
+              width: selectedBox.width,
+              height: selectedBox.height,
+            },
+            selectedVisible: intersects(selectedBox),
+            activeEdgeVisible: edgeVisible,
+          };
+        }""",
+        {"nodeId": node_id, "viewport": viewport},
+    )
+
+
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     tmp_path: Path,
 ) -> None:
@@ -1189,6 +1240,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-panel]"
                         ).is_hidden()
+                        assert page.locator("#graph-fit-selection").is_disabled()
                         graph_node.click()
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
@@ -1208,6 +1260,48 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.get_by_role(
                             "button", name="Reset graph view"
                         ).is_visible()
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.includes('authoring-matrix')"""
+                        )
+                        initial_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        fit_selection = page.locator("#graph-fit-selection")
+                        assert fit_selection.is_enabled()
+                        page.click("#graph-zoom-in")
+                        page.click('[data-raya-graph-pan="right"]')
+                        drifted_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        fit_selection.click()
+                        fitted_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert fitted_viewbox != initial_viewbox
+                        assert fitted_viewbox != drifted_viewbox
+                        assert _viewbox_width(fitted_viewbox) < _viewbox_width(
+                            initial_viewbox
+                        )
+                        context = _visible_graph_context(
+                            page, "authoring-matrix", viewport
+                        )
+                        assert context["selectedVisible"]
+                        assert context["activeEdgeVisible"]
+                        assert page.input_value("#graph-search") == ""
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
+                        page.click("#graph-fit")
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == initial_viewbox
+                        )
                         page.click("#graph-zoom-in")
                         zoomed_viewbox = page.locator(
                             "#raya-graph-canvas"
@@ -1578,6 +1672,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator("#graph-zoom-in").is_disabled()
                         assert page.locator("#graph-zoom-out").is_disabled()
                         assert page.locator("#graph-reset-view").is_disabled()
+                        assert page.locator("#graph-fit-selection").is_disabled()
                         page.fill("#graph-search", "")
                         page.wait_for_function(
                             """() => document

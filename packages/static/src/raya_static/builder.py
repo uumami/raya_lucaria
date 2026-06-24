@@ -3733,6 +3733,8 @@ def _render_graph_surface(
                 'role="group" aria-label="Graph viewport controls">'
             ),
             '<button id="graph-fit" type="button">Fit</button>',
+            '<button id="graph-fit-selection" type="button" disabled>'
+            "Fit selection</button>",
             '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">Zoom in</button>',
             '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">Zoom out</button>',
             '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset view</button>',
@@ -4008,6 +4010,12 @@ def _render_graph_surface(
             (
                 "<p>Fit redraws the current layout. Reset graph clears search, group "
                 "filters, selected page, and expanded graph workspace.</p>"
+            ),
+            (
+                "<p>Fit selection frames the selected page and visible directly "
+                "connected graph context. Fit selection changes only the SVG "
+                "viewport; it does not change filters, selection, graph data, "
+                "or learner state.</p>"
             ),
             (
                 "<p>Zoom and Reset view change only the visual SVG graph view; "

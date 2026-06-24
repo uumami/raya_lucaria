@@ -96,7 +96,7 @@ dimming, hover/focus inspection text, keyboard inspection parity, public selecte
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
 out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,
-and Reset view, a non-persistent expanded workspace mode, and URL-addressable
+Fit selection, and Reset view, a non-persistent expanded workspace mode, and URL-addressable
 static graph state for selected page, search query, layout, visible groups,
 visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
 The graph may show a compact state readout and share URL for debugging and
@@ -107,9 +107,13 @@ height should remain bounded relative to the viewport so side-panel height
 cannot stretch the canvas and hide the graph below the first visible area. These visual
 semantics are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
-completion signals. Pan, Zoom in, Zoom out, Fit, and Reset view change only the visual graph viewport;
-they must not clear search, filters, selected-page details, or authored graph
-data. The default `Connections` layout may arrange visible pages by normalized
+completion signals. Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view
+change only the visual graph viewport; they must not clear search, filters,
+selected-page details, or authored graph data. Fit selection may frame the
+selected page and visible directly connected graph context, and may scroll the
+graph canvas into view as a local viewport affordance, but it must not change
+graph data, selection, filters, URL state, storage, progress, ranking,
+recommendation, or mastery semantics. The default `Connections` layout may arrange visible pages by normalized
 explicit graph relationships and course order so students can read link flow.
 `Topology` may place visible pages by explicit generated graph relationships
 using a deterministic local layout over the current visible edge set, while

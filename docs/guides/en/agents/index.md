@@ -191,9 +191,15 @@ Graph layout positions are readability cues over explicit generated graph data.
 relationships and the current visible edge set;
 they must not come from external graph libraries or imply recommendation,
 progress, ranking, importance, mastery, or authority.
-Pan, Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must
-not fetch graph data, persist graph state, clear selected-page details, or remain
-enabled when the SVG graph is hidden by list layout.
+Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view may change the SVG
+`viewBox`; they must not fetch graph data, persist graph state, clear
+selected-page details, or remain enabled when the SVG graph is hidden by list
+layout. For selected-page fit behavior, verify that `Fit selection` is disabled
+without a selected page and in list layout, becomes enabled after page
+selection, keeps selected-page details/search/filter/URL state intact, frames
+the selected page plus at least one visible connected edge when such an edge
+exists, and brings the graph canvas into the visible browser viewport when the
+canvas has been pushed below the fold.
 Generated URL context may select a page only when it resolves to an embedded
 graph node. Neighborhood counts must be derived from generated graph edges, and
 connected-page highlights must exclude the selected node itself.

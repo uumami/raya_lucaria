@@ -218,10 +218,16 @@ implicar recomendacion, progreso, ranking, importancia, dominio o autoridad.
 Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
 a prerequisitos explicitos o contexto de grafo entrante/saliente.
-Zoom in, Zoom out, Fit y Reset view pueden cambiar el `viewBox` SVG; no deben
-pedir datos del grafo, persistir estado del grafo, limpiar detalles de pagina
-seleccionada ni quedar habilitados cuando el grafo SVG esta oculto por el layout
-de lista.
+Zoom in, Zoom out, Fit, Fit selection y Reset view pueden cambiar el `viewBox`
+SVG; no deben pedir datos del grafo, persistir estado del grafo, limpiar
+detalles de pagina seleccionada ni quedar habilitados cuando el grafo SVG esta
+oculto por el layout de lista. Para el ajuste de pagina seleccionada, verifica
+que `Fit selection` este deshabilitado sin pagina seleccionada y en layout de
+lista, se habilite despues de seleccionar una pagina, mantenga intactos
+detalles de pagina seleccionada, busqueda, filtros y estado de URL, encuadre la
+pagina seleccionada mas al menos una arista conectada visible cuando exista, y
+lleve el canvas del grafo al viewport visible del navegador cuando el canvas
+haya quedado debajo del area visible inicial.
 Los conteos y enlaces de Page connections del articulo tambien deben venir solo
 de contexto explicito del grafo de enlaces de contenido entrantes/salientes,
 permanecer dentro del articulo y evitar rutas de fuente, rutas privadas de

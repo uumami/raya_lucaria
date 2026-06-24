@@ -4,7 +4,7 @@
 
 **Goal:** Add a static SVG graph `Fit selection` viewport command that frames the selected page and its visible direct graph context.
 
-**Architecture:** Keep current graph data and layouts unchanged. Add one toolbar button, store the latest rendered graph geometry in the local graph script, compute padded selected-neighborhood bounds from that geometry, and set only the SVG `viewBox`. Preserve global `Fit`, `Reset view`, URL state, selection, search, filters, and no-storage/no-fetch constraints.
+**Architecture:** Keep current graph data and layouts unchanged. Add one toolbar button, store the latest rendered graph geometry in the local graph script, compute padded selected-context bounds from that geometry, set the SVG `viewBox`, and scroll the canvas into view when necessary. Preserve global `Fit`, `Reset view`, URL state, selection, search, filters, and no-storage/no-fetch constraints.
 
 **Tech Stack:** Python 3.10 static builder, generated HTML/CSS/JavaScript, pytest, Playwright.
 
@@ -38,7 +38,7 @@
 **Files:**
 - Modify: `tests/contracts/test_static_builder.py`
 
-- [ ] **Step 1: Add failing graph HTML and script assertions**
+- [x] **Step 1: Add failing graph HTML and script assertions**
 
 In `test_build_writes_local_visual_graph_surface`, near the existing viewport
 toolbar assertions, add:
@@ -63,7 +63,7 @@ Near the graph script token assertions, add:
     assert "latestRenderedEdges" in graph_script
 ```
 
-- [ ] **Step 2: Run contract test to verify RED**
+- [x] **Step 2: Run contract test to verify RED**
 
 Run:
 
@@ -74,12 +74,15 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 Expected: fails because `graph-fit-selection` and the selected-fit helper
 symbols do not exist yet.
 
+Actual: failed because generated graph HTML did not contain
+`graph-fit-selection`.
+
 ### Task 2: Browser Tests For Selected Viewport Fitting
 
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add helper for visible selected graph context**
+- [x] **Step 1: Add helper for visible selected graph context**
 
 Near existing graph/viewBox helpers, add:
 
@@ -132,7 +135,7 @@ def _visible_graph_context(page, node_id: str, viewport: dict[str, int]) -> dict
     )
 ```
 
-- [ ] **Step 2: Add selected-fit browser assertions**
+- [x] **Step 2: Add selected-fit browser assertions**
 
 Inside `test_preview_serves_local_visual_graph_surface`, in the existing
 desktop/mobile viewport loop after the generic graph click and viewport control
@@ -183,7 +186,7 @@ assertions, select the `authoring-matrix` fixture node and add:
                         )
 ```
 
-- [ ] **Step 3: Add no-selection and list-layout disabled assertions**
+- [x] **Step 3: Add no-selection and list-layout disabled assertions**
 
 In the same browser flow, before the first graph selection, add:
 
@@ -198,7 +201,7 @@ After the existing list-layout assertions where `#graph-zoom-in` and
                         assert page.locator("#graph-fit-selection").is_disabled()
 ```
 
-- [ ] **Step 4: Run browser test to verify RED**
+- [x] **Step 4: Run browser test to verify RED**
 
 Run:
 
@@ -208,13 +211,16 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: fails because the selected-fit button does not exist yet.
 
+Actual: failed because Playwright timed out waiting for
+`#graph-fit-selection`.
+
 ### Task 3: Implement Fit Selection
 
 **Files:**
 - Modify: `packages/static/src/raya_static/builder.py`
 - Modify: `packages/static/src/raya_static/graph.py`
 
-- [ ] **Step 1: Add generated button markup**
+- [x] **Step 1: Add generated button markup**
 
 In `_render_static_graph_page()`, inside the viewport toolbar group after the
 global `Fit` button, add:
@@ -235,7 +241,7 @@ Update the graph help copy after the current global Fit paragraph:
             ),
 ```
 
-- [ ] **Step 2: Wire script state and control lookup**
+- [x] **Step 2: Wire script state and control lookup**
 
 In `packages/static/src/raya_static/graph.py`, after:
 
@@ -262,7 +268,7 @@ add:
   let latestRenderedEdges = [];
 ```
 
-- [ ] **Step 3: Add selected-neighborhood bounds helpers**
+- [x] **Step 3: Add selected-neighborhood bounds helpers**
 
 After `resetGraphView()`, add:
 
@@ -321,7 +327,7 @@ After `resetGraphView()`, add:
   }
 ```
 
-- [ ] **Step 4: Store rendered geometry and update disabled state**
+- [x] **Step 4: Store rendered geometry and update disabled state**
 
 In `render()`, after:
 
@@ -350,7 +356,7 @@ At the end of the SVG render path, after `updateInspectionDom();`, add:
     setFitSelectionEnabled();
 ```
 
-- [ ] **Step 5: Add event listener**
+- [x] **Step 5: Add event listener**
 
 After the existing global fit listener:
 
@@ -371,7 +377,7 @@ add:
   }
 ```
 
-- [ ] **Step 6: Run focused tests and verify GREEN**
+- [x] **Step 6: Run focused tests and verify GREEN**
 
 Run:
 
@@ -381,6 +387,17 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 
 Expected: both tests pass.
 
+Actual: both tests passed in 37.57 seconds. Debugging found that selected-fit
+needed both selected-centered capped SVG bounds and a local scroll affordance so
+narrow viewports could actually see the fitted graph canvas.
+
+Review follow-up: the first code review found that capped bounds were being used
+to decide whether additional connected neighbors fit, which could include too
+much context and then clip it. The implementation now tests the uncapped padded
+extent before adding each directly connected rendered neighbor, and the browser
+assertion requires a directly connected active edge for the selected page rather
+than any active edge.
+
 ### Task 4: Documentation
 
 **Files:**
@@ -388,7 +405,7 @@ Expected: both tests pass.
 - Modify: `docs/guides/en/agents/index.md`
 - Modify: `docs/guides/es/agentes/index.md`
 
-- [ ] **Step 1: Update foundation contract**
+- [x] **Step 1: Update foundation contract**
 
 In `docs/foundation/20_learning_renderer_contract.md`, update the graph
 contract sentence that names viewport controls from:
@@ -409,7 +426,7 @@ Add one sentence after that paragraph:
 Fit selection may frame the selected page and visible directly connected graph context, but it must not change graph data, selection, filters, URL state, storage, progress, ranking, recommendation, or mastery semantics.
 ```
 
-- [ ] **Step 2: Update English agent guide**
+- [x] **Step 2: Update English agent guide**
 
 In `docs/guides/en/agents/index.md`, update the graph viewport control guidance
 to name `Fit selection` and add:
@@ -418,7 +435,7 @@ to name `Fit selection` and add:
 For selected-page fit behavior, verify that `Fit selection` is disabled without a selected page and in list layout, becomes enabled after page selection, changes only the SVG `viewBox`, keeps selected-page details/search/filter/URL state intact, and frames the selected page plus at least one visible connected edge when such an edge exists.
 ```
 
-- [ ] **Step 3: Update Spanish agent guide**
+- [x] **Step 3: Update Spanish agent guide**
 
 In `docs/guides/es/agentes/index.md`, update the equivalent graph viewport
 control guidance to name `Fit selection` and add:

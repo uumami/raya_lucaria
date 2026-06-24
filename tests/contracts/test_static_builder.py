@@ -767,6 +767,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert '<option value="radial">Radial</option>' in graph_html
     assert '<option value="list">List</option>' in graph_html
     assert "graph-fit" in graph_html
+    assert "graph-fit-selection" in graph_html
+    assert (
+        '<button id="graph-fit-selection" type="button" disabled>'
+        "Fit selection</button>"
+    ) in graph_html
     assert "graph-zoom-in" in graph_html
     assert "graph-zoom-out" in graph_html
     assert "graph-reset-view" in graph_html
@@ -830,6 +835,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Search spotlight" in graph_html
     assert "search spotlight is a structural readability cue" in graph_html
     assert "Pan changes only the viewport" in graph_html
+    assert "Fit selection frames the selected page" in graph_html
+    assert "Fit selection changes only the SVG viewport" in graph_html
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
@@ -1017,6 +1024,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "setGraphViewBox" in graph_script
     assert "zoomGraphView" in graph_script
     assert "resetGraphView" in graph_script
+    assert "fitSelection" in graph_script
+    assert "selectedNeighborhoodBounds" in graph_script
+    assert "setFitSelectionEnabled" in graph_script
+    assert "latestRenderedPositions" in graph_script
+    assert "latestRenderedEdges" in graph_script
     assert "setGraphViewportControlsEnabled" in graph_script
     assert "connectionDepthsFor" in graph_script
     assert "layoutEdgesFor" in graph_script

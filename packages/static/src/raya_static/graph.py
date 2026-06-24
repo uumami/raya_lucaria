@@ -25,6 +25,7 @@ _GRAPH_JAVASCRIPT = r"""
   const search = document.getElementById("graph-search");
   const layout = document.getElementById("graph-layout");
   const fit = document.getElementById("graph-fit");
+  const fitSelection = document.getElementById("graph-fit-selection");
   const zoomIn = document.getElementById("graph-zoom-in");
   const zoomOut = document.getElementById("graph-zoom-out");
   const resetView = document.getElementById("graph-reset-view");
@@ -105,6 +106,8 @@ _GRAPH_JAVASCRIPT = r"""
   let graphPanStart = null;
   let lastActiveNodes = [];
   let lastActiveEdges = [];
+  let latestRenderedPositions = new Map();
+  let latestRenderedEdges = [];
 
   function normalize(value) {
     return String(value || "")
@@ -850,10 +853,103 @@ _GRAPH_JAVASCRIPT = r"""
     setGraphViewBox({ ...fullViewBox });
   }
 
+  function paddedPointExtent(points, padding) {
+    if (!points.length || !fullViewBox) return null;
+    const xs = points.map((point) => point.x);
+    const ys = points.map((point) => point.y);
+    const minX = Math.min(...xs) - padding;
+    const maxX = Math.max(...xs) + padding;
+    const minY = Math.min(...ys) - padding;
+    const maxY = Math.max(...ys) + padding;
+    return {
+      width: Math.max(120, maxX - minX),
+      height: Math.max(96, maxY - minY),
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2,
+    };
+  }
+
+  function paddedGraphBounds(points, padding, limits = {}) {
+    const extent = paddedPointExtent(points, padding);
+    if (!extent || !fullViewBox) return null;
+    const maxWidth = Number(limits.maxWidth || fullViewBox.width);
+    const maxHeight = Number(limits.maxHeight || fullViewBox.height);
+    const nextWidth = Math.min(fullViewBox.width, maxWidth, extent.width);
+    const nextHeight = Math.min(fullViewBox.height, maxHeight, extent.height);
+    const x = Math.max(
+      fullViewBox.x,
+      Math.min(fullViewBox.x + fullViewBox.width - nextWidth, extent.centerX - nextWidth / 2)
+    );
+    const y = Math.max(
+      fullViewBox.y,
+      Math.min(fullViewBox.y + fullViewBox.height - nextHeight, extent.centerY - nextHeight / 2)
+    );
+    return { x, y, width: nextWidth, height: nextHeight };
+  }
+
+  function selectedFitPoints() {
+    if (!selectedId) return [];
+    const selectedPoint = latestRenderedPositions.get(selectedId);
+    if (!selectedPoint) return [];
+    const connectedPoints = [];
+    latestRenderedEdges.forEach((edge) => {
+      if (edge.from !== selectedId && edge.to !== selectedId) return;
+      const neighborId = edge.from === selectedId ? edge.to : edge.from;
+      const point = latestRenderedPositions.get(neighborId);
+      if (!point) return;
+      const dx = point.x - selectedPoint.x;
+      const dy = point.y - selectedPoint.y;
+      connectedPoints.push({ point, distance: Math.sqrt(dx * dx + dy * dy) });
+    });
+    connectedPoints.sort((left, right) => left.distance - right.distance);
+
+    const maxWidth = fullViewBox.width * 0.72;
+    const maxHeight = fullViewBox.height * 0.76;
+    const points = [selectedPoint];
+    connectedPoints.forEach((candidate) => {
+      const candidatePoints = [...points, candidate.point];
+      const extent = paddedPointExtent(candidatePoints, 72);
+      if (extent && extent.width <= maxWidth && extent.height <= maxHeight) {
+        points.push(candidate.point);
+      }
+    });
+    return points;
+  }
+
+  function selectedNeighborhoodBounds() {
+    if (!selectedId || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
+      return null;
+    }
+    const points = selectedFitPoints();
+    return paddedGraphBounds(points, 72, {
+      maxWidth: fullViewBox.width * 0.72,
+      maxHeight: fullViewBox.height * 0.76,
+    });
+  }
+
+  function setFitSelectionEnabled() {
+    if (!fitSelection) return;
+    const enabled = Boolean(
+      selectedId &&
+      fullViewBox &&
+      root.getAttribute("data-raya-graph-layout") !== "list" &&
+      latestRenderedPositions.has(selectedId)
+    );
+    fitSelection.disabled = !enabled;
+  }
+
+  function fitSelectedGraphContext() {
+    const box = selectedNeighborhoodBounds();
+    if (!box) return;
+    setGraphViewBox(box);
+    canvas.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+
   function setGraphViewportControlsEnabled(enabled) {
     [zoomIn, zoomOut, resetView, ...panButtons].forEach((button) => {
       if (button) button.disabled = !enabled;
     });
+    setFitSelectionEnabled();
   }
 
   function focusablePanelElements(body) {
@@ -1606,7 +1702,10 @@ _GRAPH_JAVASCRIPT = r"""
       canvas.replaceChildren();
       fullViewBox = null;
       graphViewBox = null;
+      latestRenderedPositions = new Map();
+      latestRenderedEdges = [];
       setGraphViewportControlsEnabled(false);
+      setFitSelectionEnabled();
       if (activeResultId) setActiveResult(activeResultId, { scroll: false });
       return;
     }
@@ -1620,6 +1719,8 @@ _GRAPH_JAVASCRIPT = r"""
     const searchSpotlight = searchSpotlightIds();
     const searchContext = searchContextNodeIds();
     const geometry = positionsFor(activeNodes, mode, activeEdges);
+    latestRenderedPositions = geometry.positions;
+    latestRenderedEdges = activeEdges;
 
     fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
     if (!graphViewBox) {
@@ -1719,8 +1820,9 @@ _GRAPH_JAVASCRIPT = r"""
       link.addEventListener("blur", () => clearGraphInspection(node.id));
       canvas.appendChild(link);
     });
-    updateInspectionDom();
     if (activeResultId) setActiveResult(activeResultId, { scroll: false });
+    updateInspectionDom();
+    setFitSelectionEnabled();
   }
 
   if (search) {
@@ -1772,6 +1874,9 @@ _GRAPH_JAVASCRIPT = r"""
       graphViewBox = null;
       render();
     });
+  }
+  if (fitSelection) {
+    fitSelection.addEventListener("click", fitSelectedGraphContext);
   }
   if (zoomIn) zoomIn.addEventListener("click", () => zoomGraphView(0.82));
   if (zoomOut) zoomOut.addEventListener("click", () => zoomGraphView(1.22));
