@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `tests/contracts/test_static_builder.py`
 
-- [ ] **Step 1: Add failing contract assertions**
+- [x] **Step 1: Add failing contract assertions**
 
 In `test_build_writes_local_course_search_surface`, change the generated Search
 payload and script assertions so Search page URLs and script tokens require
@@ -44,7 +44,7 @@ with:
         assert node["id"] in node["search_url"]
 ```
 
-- [ ] **Step 2: Run contract test to verify RED**
+- [x] **Step 2: Run contract test to verify RED**
 
 Run:
 
@@ -55,12 +55,15 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 Expected: fails because graph/search payload links still use `q=` and the
 Search script does not parse `page`.
 
+Actual: failed because Graph/Search payload `search_url` values still used
+`q=` title queries.
+
 ### Task 2: Browser Test For Search `?page=` Focus
 
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add a matrix-like distractor page to the Search fixture setup**
+- [x] **Step 1: Add a matrix-like distractor page to the Search fixture setup**
 
 Inside `test_preview_serves_local_course_search_surface`, before preview
 creation, add:
@@ -88,7 +91,7 @@ creation, add:
     )
 ```
 
-- [ ] **Step 2: Add exact page-focus browser assertions**
+- [x] **Step 2: Add exact page-focus browser assertions**
 
 After the existing `q=Authoring Matrix Fixture` Search assertions and before the
 Graph navigation assertion, add:
@@ -122,6 +125,28 @@ Graph navigation assertion, add:
                                 "[data-raya-search-context-title]"
                             ).inner_text()
                         )
+                        page.goto(
+                            (
+                                f"{base_url}/_raya/search/index.html"
+                                "?page=authoring-matrix&q=Matrix"
+                            ),
+                            wait_until="networkidle",
+                        )
+                        assert page.input_value("#raya-search-input") == "Matrix"
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            == 1
+                        )
+                        page.goto(
+                            (
+                                f"{base_url}/_raya/search/index.html"
+                                "?page=authoring-matrix&q=zz-no-result"
+                            ),
+                            wait_until="networkidle",
+                        )
+                        assert page.locator("#raya-search-empty").is_visible()
                         page.click("#raya-search-clear")
                         assert (
                             page.locator(
@@ -141,7 +166,7 @@ Graph navigation assertion, add:
                         assert page.locator("#raya-search-empty").is_hidden()
 ```
 
-- [ ] **Step 3: Update Graph-to-Search browser assertion**
+- [x] **Step 3: Update Graph-to-Search browser assertion**
 
 Replace the existing Graph detail Search link assertion:
 
@@ -172,7 +197,7 @@ Then click the link and assert Search opens scoped:
                         )
 ```
 
-- [ ] **Step 4: Run browser test to verify RED**
+- [x] **Step 4: Run browser test to verify RED**
 
 Run:
 
@@ -182,13 +207,16 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: fails because Search ignores `page=` and Graph still links to `q=`.
 
+Actual: failed because `?page=authoring-matrix` still showed all visible Search
+results.
+
 ### Task 3: Implement Search Page Focus
 
 **Files:**
 - Modify: `packages/static/src/raya_static/builder.py`
 - Modify: `packages/static/src/raya_static/search.py`
 
-- [ ] **Step 1: Change generated public search URLs**
+- [x] **Step 1: Change generated public search URLs**
 
 In `_public_discovery_page_payload()`, replace:
 
@@ -208,7 +236,7 @@ with:
         ),
 ```
 
-- [ ] **Step 2: Add page-focus state to Search script**
+- [x] **Step 2: Add page-focus state to Search script**
 
 In `packages/static/src/raya_static/search.py`, after `let activeIndex = -1;`,
 add:
@@ -232,7 +260,7 @@ Update `render()` so the matched expression composes page focus and query:
       const matched = matchesPage(item) && (text ? fuzzyMatch(query, text) : false);
 ```
 
-- [ ] **Step 3: Parse initial `page` and reset it**
+- [x] **Step 3: Parse initial `page` and reset it**
 
 Replace `initialQuery()` with:
 
@@ -271,7 +299,7 @@ Update startup:
   render();
 ```
 
-- [ ] **Step 4: Auto-activate the focused page result**
+- [x] **Step 4: Auto-activate the focused page result**
 
 In `render()`, before `setActiveResult(...)`, set the active index from the
 focused page when present:
@@ -285,7 +313,7 @@ focused page when present:
     }
 ```
 
-- [ ] **Step 5: Run focused tests and verify GREEN**
+- [x] **Step 5: Run focused tests and verify GREEN**
 
 Run:
 
@@ -295,6 +323,10 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 
 Expected: both pass.
 
+Actual: passed with `test_build_writes_local_visual_graph_surface`,
+`test_build_writes_local_course_search_surface`, and
+`test_preview_serves_local_course_search_surface`.
+
 ### Task 4: Documentation
 
 **Files:**
@@ -302,7 +334,7 @@ Expected: both pass.
 - Modify: `docs/guides/en/agents/index.md`
 - Modify: `docs/guides/es/agentes/index.md`
 
-- [ ] **Step 1: Update renderer contract**
+- [x] **Step 1: Update renderer contract**
 
 Add Search page-focus language where Local course search and generated discovery
 cards are described:
@@ -314,7 +346,7 @@ results to that public page ID until Clear or Escape restores all visible
 results. This is structural URL state only, not learner state.
 ```
 
-- [ ] **Step 2: Update agent guides**
+- [x] **Step 2: Update agent guides**
 
 In the English and Spanish agent guide pages, add guidance that agents should
 verify `?page=<page-id>` Search focus as exact structural state, while also
@@ -326,12 +358,16 @@ mastery, or recommendation wording is introduced.
 **Files:**
 - All modified files from prior tasks.
 
-- [ ] **Step 1: Request code review**
+- [x] **Step 1: Request code review**
 
 Use `superpowers:requesting-code-review` with a focused reviewer prompt covering
 the current diff and exact Search page focus requirements.
 
-- [ ] **Step 2: Run focused checks**
+Actual: reviewer found no blocking issues and identified one residual direct
+test gap for `?page=<page-id>&q=<query>` composition. The gap was addressed in
+the browser test.
+
+- [x] **Step 2: Run focused checks**
 
 Run:
 
@@ -339,7 +375,12 @@ Run:
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_writes_local_course_search_surface tests/e2e/test_preview_static_read_path.py::test_preview_serves_local_course_search_surface -q
 ```
 
-- [ ] **Step 3: Run canonical gates sequentially**
+Actual: passed with `test_build_writes_local_visual_graph_surface`,
+`test_build_writes_local_course_search_surface`, and
+`test_preview_serves_local_course_search_surface` after adding page+query
+composition coverage.
+
+- [x] **Step 3: Run canonical gates sequentially**
 
 Run:
 
@@ -347,6 +388,19 @@ Run:
 ./scripts/check-render-debug.sh
 ./scripts/check.sh
 ./scripts/check-docker.sh
+```
+
+Actual:
+
+```text
+./scripts/check-render-debug.sh
+passed; render-debug-report passed with 129 checks
+
+./scripts/check.sh
+passed; pytest reported 479 passed in 524.67s
+
+./scripts/check-docker.sh
+passed; container pytest reported 479 passed in 700.34s
 ```
 
 - [ ] **Step 4: Commit and push**

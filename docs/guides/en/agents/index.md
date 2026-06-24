@@ -226,12 +226,15 @@ controls, shared discovery chrome, control/results/context workspace regions,
 compact mobile discovery chrome, no
 external requests, and no persistent search state. Search payloads stay
 metadata-only, and generated query context and context-panel summaries must
-remain transient. Search result graph-focus links must come from stable page IDs
-and generated local graph URLs, preserve Enter-to-open-page behavior, and avoid
-recommendation or progress language. Search, Graph, Practice, and Tasks discovery
-pages may load local accessibility resources for Text size and `OpenDyslexic`,
-but must not load `shell.js`, a course-map toggle, external workspace assets, or
-persisted graph/search/practice/tasks state.
+remain transient. Exact Search page focus from `?page=<page-id>` may initially
+narrow visible results to one public page ID; Clear and Escape must restore all
+visible results without writing browser storage or changing source authority.
+Search result graph-focus links must come from stable page IDs and generated
+local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
+or progress language. Search, Graph, Practice, and Tasks discovery pages may load
+local accessibility resources for Text size and `OpenDyslexic`, but must not
+load `shell.js`, a course-map toggle, external workspace assets, or persisted
+graph/search/practice/tasks state.
 
 When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
 Search or Graph. The destination workspace may initially narrow visible public
@@ -250,9 +253,10 @@ answer/support content, runtime `fetch`, search/graph storage, external
 requests, recommendation, progress, mastery, completion, ranking, or fake
 related-practice language. Search Enter must still open the page result, while
 Graph selected-page details may offer separate Search and Practice handoff
-links. Practice handoff links should include `?page=<page-id>` only when the
-page owns accepted official objects, and that page focus must remain URL-only
-state.
+links. Search handoff links should include `?page=<page-id>` for exact public
+page focus. Practice handoff links should include `?page=<page-id>` only when
+the page owns accepted official objects, and that page focus must remain
+URL-only state.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 

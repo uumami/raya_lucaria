@@ -2196,6 +2196,26 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    distractor = course / "course" / "6_matrix_reference" / "0_index.md"
+    distractor.parent.mkdir(parents=True)
+    distractor.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: matrix-reference",
+                "title: Matrix Reference",
+                "summary: Matrix vocabulary without authoring matrix tasks.",
+                "status: ready",
+                "---",
+                "",
+                "# Matrix Reference",
+                "",
+                "This page makes fuzzy matrix search broader than exact page focus.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -2314,6 +2334,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert after < before
                         assert (
                             "Authoring Matrix Fixture"
+                            in page.locator("#raya-search-results").inner_text()
+                        )
+                        assert (
+                            "Matrix Reference"
                             in page.locator("#raya-search-results").inner_text()
                         )
                         result_card = page.locator(
@@ -2440,6 +2464,75 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "Authoring Matrix Fixture"
                             in page.locator("#raya-search-results").inner_text()
                         )
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html?page=authoring-matrix",
+                            wait_until="networkidle",
+                        )
+                        assert page.input_value("#raya-search-input") == ""
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            == 1
+                        )
+                        exact_card = page.locator(
+                            '[data-raya-search-result="authoring-matrix"]'
+                        )
+                        assert exact_card.is_visible()
+                        assert (
+                            exact_card.get_attribute("data-raya-search-active")
+                            == "true"
+                        )
+                        assert page.locator(
+                            '[data-raya-search-result="matrix-reference"]'
+                        ).is_hidden()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator(
+                                "[data-raya-search-context-title]"
+                            ).inner_text()
+                        )
+                        page.goto(
+                            (
+                                f"{base_url}/_raya/search/index.html"
+                                "?page=authoring-matrix&q=Matrix"
+                            ),
+                            wait_until="networkidle",
+                        )
+                        assert page.input_value("#raya-search-input") == "Matrix"
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            == 1
+                        )
+                        assert exact_card.is_visible()
+                        page.goto(
+                            (
+                                f"{base_url}/_raya/search/index.html"
+                                "?page=authoring-matrix&q=zz-no-result"
+                            ),
+                            wait_until="networkidle",
+                        )
+                        assert page.input_value("#raya-search-input") == "zz-no-result"
+                        assert page.locator("#raya-search-empty").is_visible()
+                        page.click("#raya-search-clear")
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            > 1
+                        )
+                        assert page.locator(
+                            '[data-raya-search-result="matrix-reference"]'
+                        ).is_visible()
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html?page=missing-page",
+                            wait_until="networkidle",
+                        )
+                        assert page.locator("#raya-search-empty").is_visible()
+                        page.press("#raya-search-input", "Escape")
+                        assert page.locator("#raya-search-empty").is_hidden()
                         page.click(
                             '[data-raya-search-result="authoring-matrix"] '
                             ".raya-search-result-graph"
@@ -2472,7 +2565,7 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             page.locator("[data-raya-graph-detail-search-link]")
                             .evaluate("node => node.href")
                             .endswith(
-                                "/_raya/search/index.html?q=Authoring%20Matrix%20Fixture"
+                                "/_raya/search/index.html?page=authoring-matrix"
                             )
                         )
                         assert (
@@ -2481,6 +2574,16 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             .endswith(
                                 "/_raya/practice/index.html?page=authoring-matrix"
                             )
+                        )
+                        page.click("[data-raya-graph-detail-search-link]")
+                        page.wait_for_url(
+                            "**/_raya/search/index.html?page=authoring-matrix"
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            == 1
                         )
                         _assert_no_horizontal_overflow(page)
                     finally:

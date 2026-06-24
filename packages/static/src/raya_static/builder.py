@@ -3477,7 +3477,7 @@ def _public_discovery_page_payload(
         ),
         "search_url": _href_with_query(
             _relative_href(search_from_path, STATIC_SEARCH_PATH.as_posix()),
-            {"q": page.title},
+            {"page": page.id},
         ),
         "practice_url": (
             _href_with_query(

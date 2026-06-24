@@ -938,7 +938,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert node["stable_id"] == node["id"]
         assert set(node["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not node["url"].startswith("../../data/")
-        assert node["search_url"].startswith("../search/index.html?q=")
+        assert node["search_url"].startswith("../search/index.html?page=")
+        assert node["id"] in node["search_url"]
     assert root_node["study_counts"] == {
         "assignment": 2,
         "card": 1,
@@ -954,11 +955,15 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert static_path_node["schedule_url"] == ""
     assert reader_node["study_counts"] == {"assignment": 1, "card": 1, "quiz": 1}
     assert reader_node["practice_url"] == "../practice/index.html?page=reader-ux"
+    assert reader_node["search_url"] == "../search/index.html?page=reader-ux"
     assert reader_node["tasks_url"] == "../tasks/index.html?page=reader-ux"
     assert reader_node["schedule_url"] == ""
     assert authoring_node["study_counts"] == {"assignment": 1, "prompt": 2}
     assert authoring_node["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
+    )
+    assert authoring_node["search_url"] == (
+        "../search/index.html?page=authoring-matrix"
     )
     assert authoring_node["tasks_url"] == "../tasks/index.html?page=authoring-matrix"
     assert authoring_node["schedule_url"] == (
@@ -1349,6 +1354,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert pages_by_id["authoring-matrix"]["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
     )
+    assert pages_by_id["authoring-matrix"]["search_url"] == (
+        "index.html?page=authoring-matrix"
+    )
     assert pages_by_id["authoring-matrix"]["tasks_url"] == (
         "../tasks/index.html?page=authoring-matrix"
     )
@@ -1378,6 +1386,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-clear" in search_script
     assert "URLSearchParams" in search_script
     assert 'params.get("q")' in search_script
+    assert 'params.get("page")' in search_script
+    assert "activePage" in search_script
+    assert "matchesPage" in search_script
     assert "window.location.href" in search_script
     for forbidden_search_state_token in ("localStorage", "sessionStorage"):
         assert forbidden_search_state_token not in search_script

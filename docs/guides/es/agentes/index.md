@@ -254,14 +254,16 @@ para abrir, controles de limpiar, chrome compartido de descubrimiento, regiones
 de workspace de controles, resultados y contexto, chrome movil compacto, sin solicitudes externas y sin estado
 persistente de busqueda. Los payloads de busqueda siguen siendo solo metadata,
 y el contexto de consulta generado y los resumenes del panel de contexto deben
-permanecer transitorios. Los
-enlaces graph-focus de resultados de busqueda deben venir de stable IDs y URLs
-locales generadas del grafo, preservar Enter para abrir la pagina, y evitar
-lenguaje de recomendacion o progreso. Las paginas de descubrimiento Search,
-Graph, Practice y Tasks pueden cargar recursos locales de accesibilidad para
-Text size y `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa
-del curso, assets externos de workspace ni estado persistente de
-graph/search/practice/tasks.
+permanecer transitorios. El foco exacto de pagina Search desde
+`?page=<page-id>` puede reducir inicialmente los resultados visibles a un ID
+publico de pagina; Clear y Escape deben restaurar todos los resultados visibles
+sin escribir storage del navegador ni cambiar autoridad de fuente. Los enlaces
+graph-focus de resultados de busqueda deben venir de stable IDs y URLs locales
+generadas del grafo, preservar Enter para abrir la pagina, y evitar lenguaje de
+recomendacion o progreso. Las paginas de descubrimiento Search, Graph, Practice
+y Tasks pueden cargar recursos locales de accesibilidad para Text size y
+`OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
+assets externos de workspace ni estado persistente de graph/search/practice/tasks.
 
 Al cambiar Tasks o Schedule, verifica handoffs solo por URL
 `?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
@@ -283,9 +285,10 @@ requests externos, recomendacion, progreso, dominio, completion, ranking ni
 lenguaje falso de practica relacionada. Enter en Search debe seguir abriendo la
 pagina del resultado, mientras los detalles de pagina seleccionada en Graph
 pueden ofrecer enlaces separados hacia Search y Practice. Los enlaces de
-handoff a Practice deben incluir `?page=<page-id>` solo cuando la pagina posee
-objetos oficiales aceptados, y ese foco de pagina debe permanecer como estado
-solo de URL.
+handoff a Search deben incluir `?page=<page-id>` para foco exacto en una pagina
+publica. Los enlaces de handoff a Practice deben incluir `?page=<page-id>` solo
+cuando la pagina posee objetos oficiales aceptados, y ese foco de pagina debe
+permanecer como estado solo de URL.
 
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 

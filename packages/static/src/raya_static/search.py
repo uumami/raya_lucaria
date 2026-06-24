@@ -52,6 +52,7 @@ _SEARCH_JAVASCRIPT = r"""
   const pages = Array.isArray(payload.pages) ? payload.pages : [];
   const pagesById = new Map(pages.map((page) => [page.id, page]));
   let activeIndex = -1;
+  let activePage = "";
   const pageText = new Map(
     pages.map((page) => [
       page.id,
@@ -112,6 +113,11 @@ _SEARCH_JAVASCRIPT = r"""
 
   function visibleResults() {
     return results.filter((item) => !item.hidden);
+  }
+
+  function matchesPage(item) {
+    return !activePage ||
+      (item.getAttribute("data-raya-search-result") || "") === activePage;
   }
 
   function indexForResult(item) {
@@ -195,17 +201,21 @@ _SEARCH_JAVASCRIPT = r"""
 
   function clearSearch() {
     input.value = "";
+    activePage = "";
     activeIndex = -1;
     render();
     input.focus();
   }
 
-  function initialQuery() {
+  function initialParams() {
     try {
       const params = new URLSearchParams(window.location.search || "");
-      return params.get("q") || "";
+      return {
+        page: params.get("page") || "",
+        query: params.get("q") || "",
+      };
     } catch {
-      return "";
+      return { page: "", query: "" };
     }
   }
 
@@ -215,10 +225,16 @@ _SEARCH_JAVASCRIPT = r"""
     results.forEach((item) => {
       const id = item.getAttribute("data-raya-search-result") || "";
       const text = pageText.get(id);
-      const matched = text ? fuzzyMatch(query, text) : false;
+      const matched = matchesPage(item) && (text ? fuzzyMatch(query, text) : false);
       item.hidden = !matched;
       if (matched) visible += 1;
     });
+    if (activePage) {
+      const visibleItems = visibleResults();
+      activeIndex = visibleItems.findIndex((item) => (
+        (item.getAttribute("data-raya-search-result") || "") === activePage
+      ));
+    }
     setActiveResult(Math.min(activeIndex, visible - 1));
     if (empty) {
       empty.hidden = visible !== 0;
@@ -264,7 +280,9 @@ _SEARCH_JAVASCRIPT = r"""
   if (clear) {
     clear.addEventListener("click", clearSearch);
   }
-  input.value = initialQuery();
+  const params = initialParams();
+  activePage = params.page;
+  input.value = params.query;
   render();
 })();
 """
