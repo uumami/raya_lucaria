@@ -945,6 +945,116 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert page.locator(
                                 f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
                             ).evaluate("node => node.classList.contains('is-neighbor')")
+                        focus_button = page.locator(
+                            "[data-raya-graph-focus-neighborhood]"
+                        )
+                        assert focus_button.is_visible()
+                        assert focus_button.inner_text() == "Focus neighborhood"
+                        focus_button.click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-neighborhood-focus') === 'true'"""
+                        )
+                        assert focus_button.inner_text() == "Show full graph"
+                        assert (
+                            "Neighborhood focus:"
+                            in page.locator("#graph-status").inner_text()
+                        )
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="render-root"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="static-path"]'
+                        ).is_hidden()
+                        page.fill("#graph-search", "nested")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-neighborhood-focus') === 'false'"""
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="static-path"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
+                        ).is_hidden()
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
+                            wait_until="networkidle",
+                        )
+                        requested_urls.clear()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        focus_button = page.locator(
+                            "[data-raya-graph-focus-neighborhood]"
+                        )
+                        focus_button.click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-neighborhood-focus') === 'true'"""
+                        )
+                        page.locator(
+                            '[data-raya-graph-group-filter="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-neighborhood-focus') === 'false'"""
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
+                        ).is_hidden()
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="static-path"]'
+                        ).is_visible()
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
+                            wait_until="networkidle",
+                        )
+                        requested_urls.clear()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        focus_button = page.locator(
+                            "[data-raya-graph-focus-neighborhood]"
+                        )
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="static-path"]'
+                        ).is_visible()
+                        page.locator(
+                            '[data-raya-graph-focus-node="math-authoring"]'
+                        ).first.click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-detail-title]')
+                              ?.textContent
+                              ?.includes('Math Authoring Fixture')"""
+                        )
+                        assert page.locator(
+                            '#raya-graph-list [data-raya-graph-node="math-authoring"]'
+                        ).evaluate("node => node.classList.contains('is-active')")
+                        assert page.url.endswith(
+                            "/_raya/graph/index.html?page=authoring-matrix"
+                        )
+                        page.click("#graph-reset")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-neighborhood-focus"
+                            )
+                            == "false"
+                        )
                         assert requested_urls == []
                     finally:
                         page.close()

@@ -3401,6 +3401,7 @@ def _render_graph_surface(
             '<a data-raya-graph-detail-link href="../../index.html">Open page</a>',
             '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
             '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
+            '<button type="button" data-raya-graph-focus-neighborhood hidden>Focus neighborhood</button>',
             "</p>",
             '<div class="raya-graph-detail-links">',
             "<section>",

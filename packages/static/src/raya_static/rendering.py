@@ -1140,6 +1140,14 @@ img {
   min-height: 2.25rem;
   padding: 0.35rem 0.65rem;
 }
+.raya-graph-detail button[aria-pressed="true"] {
+  background: var(--raya-color-accent);
+  border-color: var(--raya-color-accent);
+  color: var(--raya-color-accent-contrast);
+}
+.raya-graph-detail-focus-node {
+  margin-left: 0.4rem;
+}
 .raya-graph-detail-meta,
 .raya-graph-detail-summary,
 .raya-graph-detail-study-counts,

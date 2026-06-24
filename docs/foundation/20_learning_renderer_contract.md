@@ -60,13 +60,15 @@ selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, connected-page visual states, transient
 page focus from generated URL context, structural group color, bounded node
 size derived from static link degree, hover/focus inspection text, keyboard
-inspection parity, public selected-page discovery card metadata, non-persistent SVG viewport controls such as Zoom in, Zoom
+inspection parity, public selected-page discovery card metadata, non-persistent selected-neighborhood focus mode,
+detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
+non-persistent SVG viewport controls such as Zoom in, Zoom
 out, Fit, and Reset view, and a non-persistent expanded workspace mode. These visual
 semantics are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
 completion signals. Fit and Reset view change only the visual graph viewport;
 they must not clear search, filters, selected-page details, or authored graph
-data. It must not fetch graph data at runtime, load external graph
+data. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. It must not fetch graph data at runtime, load external graph
 libraries, persist graph state, infer
 recommendations, or present graph position as personal progress.
 

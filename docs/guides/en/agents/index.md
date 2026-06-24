@@ -109,9 +109,11 @@ of recommendation/progress/mastery wording inside the generated index surface.
 When changing the Course graph, verify fuzzy search, selected-page details,
 selected-page neighborhood summaries, connected-page visual states, group
 filters, group color semantics, bounded degree-based node sizing, hover/focus
-inspection status, keyboard inspection parity, expanded graph workspace state,
-SVG viewport controls, shared discovery chrome, compact mobile discovery chrome,
-mobile no-overflow behavior, and no external requests after page load. Graph UI
+inspection status, keyboard inspection parity, selected-neighborhood focus mode,
+connected-page detail controls that change graph selection without replacing
+normal page links, expanded graph workspace state, SVG viewport controls, shared
+discovery chrome, compact mobile discovery chrome, mobile no-overflow behavior,
+and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must
@@ -119,7 +121,11 @@ not fetch graph data, persist graph state, clear selected-page details, or remai
 enabled when the SVG graph is hidden by list layout.
 Generated URL context may select a page only when it resolves to an embedded
 graph node. Neighborhood counts must be derived from generated graph edges, and
-connected-page highlights must exclude the selected node itself. Connections
+connected-page highlights must exclude the selected node itself.
+Selected-neighborhood focus may narrow the visible graph and list to the selected
+page plus directly connected pages, but it must remain transient, reversible, and
+free of graph-state storage, fetch calls, external graph libraries,
+recommendation language, progress language, ranking, and mastery claims. Connections
 rail counts must come from explicit graph context only. Rail graph-focus links
 must point only to explicit prerequisites or incoming/outgoing graph context.
 Article Page connections counts and links must also come from explicit

@@ -44,6 +44,7 @@ _GRAPH_JAVASCRIPT = r"""
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
+  const focusNeighborhood = document.querySelector("[data-raya-graph-focus-neighborhood]");
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
   const detailClear = document.querySelector("[data-raya-graph-detail-clear]");
@@ -70,6 +71,7 @@ _GRAPH_JAVASCRIPT = r"""
   let query = "";
   let selectedId = "";
   let inspectedId = "";
+  let neighborhoodFocus = false;
   let matchIds = new Set();
   let pendingSelectTimer = 0;
   let fullViewBox = null;
@@ -145,7 +147,7 @@ _GRAPH_JAVASCRIPT = r"""
     const directlyVisible = nodes.filter(matchesNode);
     matchIds = new Set(query ? directlyVisible.map((node) => node.id) : []);
     if (!query) {
-      return directlyVisible;
+      return applyNeighborhoodFocus(directlyVisible);
     }
     const expandedIds = new Set(matchIds);
     directlyVisible.forEach((node) => {
@@ -156,7 +158,13 @@ _GRAPH_JAVASCRIPT = r"""
         }
       });
     });
-    return nodes.filter((node) => expandedIds.has(node.id));
+    return applyNeighborhoodFocus(nodes.filter((node) => expandedIds.has(node.id)));
+  }
+
+  function applyNeighborhoodFocus(activeNodes) {
+    if (!neighborhoodFocus || !selectedId) return activeNodes;
+    const focusIds = neighborsOf(selectedId);
+    return activeNodes.filter((node) => focusIds.has(node.id));
   }
 
   function visibleEdges(visibleIds) {
@@ -439,6 +447,12 @@ _GRAPH_JAVASCRIPT = r"""
     return kind.replace(/-/g, " ");
   }
 
+  function focusGraphDetailNode(nodeId) {
+    if (!nodesById.has(nodeId)) return;
+    graphViewBox = null;
+    selectGraphNode(nodeId);
+  }
+
   function renderDetailList(listEl, items, emptyText) {
     if (!listEl) return;
     listEl.replaceChildren();
@@ -457,6 +471,15 @@ _GRAPH_JAVASCRIPT = r"""
       meta.className = "raya-graph-detail-edge-kind";
       meta.textContent = ` ${item.kind || "link"}`;
       li.append(link, meta);
+      if (nodesById.has(item.id)) {
+        const focus = document.createElement("button");
+        focus.type = "button";
+        focus.className = "raya-graph-detail-focus-node";
+        focus.setAttribute("data-raya-graph-focus-node", item.id);
+        focus.textContent = "Focus";
+        focus.addEventListener("click", () => focusGraphDetailNode(item.id));
+        li.appendChild(focus);
+      }
       listEl.appendChild(li);
     });
   }
@@ -470,9 +493,25 @@ _GRAPH_JAVASCRIPT = r"""
     }).join(", ");
   }
 
+  function setGraphNeighborhoodFocus(enabled) {
+    neighborhoodFocus = Boolean(enabled && selectedId);
+    root.setAttribute(
+      "data-raya-graph-neighborhood-focus",
+      neighborhoodFocus ? "true" : "false"
+    );
+    if (focusNeighborhood) {
+      focusNeighborhood.hidden = !selectedId;
+      focusNeighborhood.textContent = neighborhoodFocus
+        ? "Show full graph"
+        : "Focus neighborhood";
+      focusNeighborhood.setAttribute("aria-pressed", neighborhoodFocus ? "true" : "false");
+    }
+  }
+
   function renderDetail() {
     const node = selectedId ? nodesById.get(selectedId) : null;
     if (!node) {
+      setGraphNeighborhoodFocus(false);
       if (detailEmpty) detailEmpty.hidden = false;
       if (detailPanel) detailPanel.hidden = true;
       if (detailSummary) detailSummary.textContent = "";
@@ -483,6 +522,7 @@ _GRAPH_JAVASCRIPT = r"""
     const group = groupsById.get(node.group || "");
     if (detailEmpty) detailEmpty.hidden = true;
     if (detailPanel) detailPanel.hidden = false;
+    setGraphNeighborhoodFocus(neighborhoodFocus);
     if (detailTitle) detailTitle.textContent = node.title || node.nav_title || node.id;
     if (detailSummary) detailSummary.textContent = node.summary || "";
     if (detailMeta) {
@@ -544,6 +584,7 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function selectGraphNode(nodeId) {
+    neighborhoodFocus = false;
     selectedId = nodeId;
     renderDetail();
     render();
@@ -551,6 +592,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function clearGraphSelection() {
     selectedId = "";
+    setGraphNeighborhoodFocus(false);
     renderDetail();
     render();
   }
@@ -592,20 +634,24 @@ _GRAPH_JAVASCRIPT = r"""
     const mode = layout ? layout.value : "map";
     root.setAttribute("data-raya-graph-layout", mode);
     query = normalize(search ? search.value : "");
-    const activeNodes = visibleNodes();
-    const activeIds = new Set(activeNodes.map((node) => node.id));
-    const activeEdges = visibleEdges(activeIds);
+    let activeNodes = visibleNodes();
+    let activeIds = new Set(activeNodes.map((node) => node.id));
+    let activeEdges = visibleEdges(activeIds);
     if (selectedId && !activeIds.has(selectedId)) {
       selectedId = "";
       renderDetail();
+      activeNodes = visibleNodes();
+      activeIds = new Set(activeNodes.map((node) => node.id));
+      activeEdges = visibleEdges(activeIds);
     }
     renderList(activeIds);
     if (status) {
+      const statusPrefix = neighborhoodFocus ? "Neighborhood focus: " : "";
       if (query) {
         const contextCount = Math.max(0, activeNodes.length - matchIds.size);
-        status.textContent = `${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+        status.textContent = `${statusPrefix}${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
       } else {
-        status.textContent = `${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+        status.textContent = `${statusPrefix}${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
       }
     }
     if (mode === "list") {
@@ -745,6 +791,7 @@ _GRAPH_JAVASCRIPT = r"""
       hiddenGroups.clear();
       selectedId = "";
       inspectedId = "";
+      setGraphNeighborhoodFocus(false);
       graphViewBox = null;
       if (hoverStatus) hoverStatus.textContent = "";
       setGraphExpanded(false);
@@ -777,6 +824,13 @@ _GRAPH_JAVASCRIPT = r"""
   });
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
+  }
+  if (focusNeighborhood) {
+    focusNeighborhood.addEventListener("click", () => {
+      setGraphNeighborhoodFocus(!neighborhoodFocus);
+      graphViewBox = null;
+      render();
+    });
   }
   groupFilters.forEach((button) => {
     button.addEventListener("click", () => {
@@ -831,6 +885,7 @@ _GRAPH_JAVASCRIPT = r"""
   });
 
   selectedId = initialPageFocus();
+  root.setAttribute("data-raya-graph-neighborhood-focus", "false");
   setGraphPanelState("list", true);
   setGraphPanelState("inspector", true);
   setGraphExpanded(false);

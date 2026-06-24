@@ -117,20 +117,26 @@ navegacion normal con enlaces locales, comportamiento desktop/mobile sin
 overflow y ausencia de lenguaje de recomendaciones/progreso/dominio dentro de la
 superficie del indice generado.
 
-Al cambiar el Course graph, verifica busqueda aproximada, detalles de pagina
+Al cambiar el grafo del curso, verifica busqueda aproximada, detalles de pagina
 seleccionada, resumenes de vecindario de pagina seleccionada, estados visuales
 de paginas conectadas, filtros de grupo, semantica de color por grupo, tamano de
 nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
-inspeccion con teclado, estado de workspace expandido del grafo, controles SVG
+inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
+conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
+enlaces normales de pagina, estado de area de trabajo expandida del grafo, controles SVG
 de viewport, chrome compartido de descubrimiento, chrome movil compacto,
 comportamiento movil sin overflow y sin solicitudes externas despues de cargar
 la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos
-del artifact, no de HTML scrapeado ni browser storage. El contexto de URL
+del artifact, no de HTML scrapeado ni almacenamiento del navegador. El contexto de URL
 generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
 del grafo. Los conteos de vecindario deben derivarse de edges del grafo
 generado, y los resaltados de pagina conectada deben excluir el nodo
-seleccionado. Los conteos del riel Connections deben venir solo de contexto
+seleccionado. El foco de vecindario seleccionado puede reducir el grafo y la lista
+visibles a la pagina seleccionada mas paginas directamente conectadas, pero debe
+seguir transitorio, reversible y sin almacenamiento de estado del grafo, llamadas `fetch`,
+librerias externas de grafo, lenguaje de recomendacion, progreso, ranking o
+dominio. Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
 a prerequisitos explicitos o contexto de grafo entrante/saliente.
 Zoom in, Zoom out, Fit y Reset view pueden cambiar el `viewBox` SVG; no deben

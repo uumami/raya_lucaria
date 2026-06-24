@@ -605,6 +605,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-outgoing" in graph_html
     assert "data-raya-graph-detail-incoming" in graph_html
     assert "data-raya-graph-detail-clear" in graph_html
+    assert "data-raya-graph-focus-neighborhood" in graph_html
+    assert "Focus neighborhood" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html
     assert 'style="--raya-graph-group-color:' in graph_html
@@ -687,6 +689,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "14 + Math.min(8" in graph_script
     assert "raya-graph-node-hit" in graph_script
     assert "inspectGraphNode" in graph_script
+    assert "setGraphNeighborhoodFocus" in graph_script
+    assert "neighborhoodFocus" in graph_script
+    assert "data-raya-graph-focus-node" in graph_script
+    assert "focusGraphDetailNode" in graph_script
     assert "is-inspected" in graph_script
     assert "is-inspected-neighbor" in graph_script
     assert "cytoscape" not in graph_script.lower()
