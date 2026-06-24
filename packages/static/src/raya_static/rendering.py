@@ -733,6 +733,57 @@ img {
   min-width: 0;
   padding: 0.9rem;
 }
+.raya-search-workspace,
+.raya-practice-workspace {
+  align-items: start;
+  display: grid;
+  gap: var(--raya-space-block);
+  grid-template-columns: minmax(16rem, 22rem) minmax(28rem, 1fr) minmax(17rem, 23rem);
+  margin-top: var(--raya-space-block);
+}
+.raya-search-control-panel,
+.raya-search-results-panel,
+.raya-search-context-panel,
+.raya-practice-control-panel,
+.raya-practice-results-panel,
+.raya-practice-context-panel {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: 0.9rem;
+}
+.raya-search-control-panel,
+.raya-search-context-panel,
+.raya-practice-control-panel,
+.raya-practice-context-panel {
+  position: sticky;
+  top: calc(var(--raya-topbar-height, 4rem) + 1rem);
+}
+.raya-search-control-panel h2,
+.raya-search-context-panel h2,
+.raya-practice-control-panel h2,
+.raya-practice-context-panel h2 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+.raya-search-results-panel,
+.raya-practice-results-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+.raya-discovery-summary,
+.raya-discovery-context-meta {
+  color: var(--raya-color-muted);
+  font-size: 0.9rem;
+  margin: 0.65rem 0 0;
+}
+.raya-search-context-panel [data-raya-search-context-title],
+.raya-practice-context-panel [data-raya-practice-context-title] {
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
 .raya-graph-map-panel {
   display: flex;
   flex-direction: column;
@@ -796,6 +847,12 @@ img {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+.raya-search-control-panel .raya-search-controls,
+.raya-practice-control-panel .raya-practice-controls {
+  align-items: stretch;
+  display: grid;
+  gap: 0.65rem;
+}
 .raya-graph-controls input,
 .raya-search-controls input,
 .raya-practice-controls input,
@@ -818,10 +875,12 @@ img {
   opacity: 0.52;
 }
 .raya-search-controls input {
-  min-width: min(100%, 24rem);
+  min-width: 0;
+  width: 100%;
 }
 .raya-practice-controls input {
-  min-width: min(100%, 28rem);
+  min-width: 0;
+  width: 100%;
 }
 .raya-practice-filters {
   align-items: center;
@@ -2484,6 +2543,16 @@ mjx-container[display="true"] {
   [data-raya-graph-list-state="collapsed"][data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace,
   [data-raya-graph-expanded="true"] .raya-graph-workspace {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .raya-search-workspace,
+  .raya-practice-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .raya-search-control-panel,
+  .raya-search-context-panel,
+  .raya-practice-control-panel,
+  .raya-practice-context-panel {
+    position: static;
   }
   [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
   [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {

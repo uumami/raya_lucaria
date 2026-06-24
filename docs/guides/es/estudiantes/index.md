@@ -72,11 +72,13 @@ nativas con el resumen, estado y conteos de enlaces explicitos de la pagina
 enlazada cuando el curso tiene esos metadatos. Usalos como mapa de lectura
 despues de terminar la pagina; no son un registro de avance, ranking ni motor
 de recomendaciones.
-Las paginas Search y Graph usan la misma barra estatica de descubrimiento para
-volver al curso, cambiar entre esos dos workspaces y mantener disponibles Text
-size u OpenDyslexic. Esos controles son de comodidad de lectura; Search y Graph
-no guardan tu consulta, nodo seleccionado ni layout del grafo como estado de
-estudio.
+Las paginas Search, Graph y Practice usan la misma barra estatica de
+descubrimiento para volver al curso, cambiar entre esos workspaces y mantener
+disponibles Text size u OpenDyslexic. Search y Practice tambien pueden mostrar
+controles, resultados y un panel de contexto en pantallas anchas. Esos
+controles son de comodidad de lectura y escaneo; los workspaces no guardan tu
+consulta, nodo seleccionado, layout del grafo ni filtros de practica como
+estado de estudio.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
@@ -92,7 +94,9 @@ movimiento con teclado por resultados visibles, y no busca rutas ocultas de
 fuente ni guarda tu consulta. Abrirlo desde una pagina del curso puede precargar
 el titulo de esa pagina como consulta temporal. Un resultado tambien puede
 ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
-inspeccionar su posicion en el curso y sus enlaces explicitos.
+inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
+contexto de Search resume metadata publica de un resultado visible; no es un
+ranking ni una recomendacion.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
@@ -126,11 +130,12 @@ Algunos cursos tambien pueden incluir un workspace Official Practice bajo
 objetos oficiales aceptados en todo el curso, y despues vuelve a la pagina que
 los posee para ver el contexto. Los items de Practice deben enlazar a anchors
 de pagina como `#raya-official-<id>` y pueden ofrecer links `View in graph`. El
-workspace es una superficie estatica de descubrimiento, no un motor de
-recomendaciones, registro de progreso, sistema de entregas, sistema de
-evaluacion, scoring, registro de attempts, estimacion de dominio, estado de
-practica guardado, workflow de requests externos, visor de rutas privadas de
-fuente ni cola personal de repaso.
+workspace es una superficie estatica de descubrimiento con filtros, resultados
+y resumenes publicos de contexto, no un motor de recomendaciones, registro de
+progreso, sistema de entregas, sistema de evaluacion, scoring, registro de
+attempts, estimacion de dominio, estado de practica guardado, workflow de
+requests externos, visor de rutas privadas de fuente ni cola personal de
+repaso.
 
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 

@@ -78,11 +78,14 @@ fuente `_official/`, `data/official.json`, `manifest.json`,
 `_raya/practice/index.html` y el script local del workspace. Verifica que el
 workspace liste solo objetos oficiales aceptados, enlace cada item de vuelta al
 anchor de su pagina propietaria como `#raya-official-<id>` y use links de foco
-en grafo solo cuando exista contexto de grafo. Confirma que no haya rutas
-privadas de fuente, rutas de soporte, duplicados ocultos de respuestas,
-requests externos, `fetch` en runtime, localStorage/sessionStorage, scoring,
-submissions, attempts, grading, progreso, dominio, recomendacion, adaptacion ni
-lenguaje de estado del estudiante.
+en grafo solo cuando exista contexto de grafo. Verifica las regiones de
+workspace de controles, resultados y contexto en desktop y movil. Confirma que
+no haya rutas privadas de fuente, rutas de soporte, duplicados ocultos de
+respuestas, requests externos, `fetch` en runtime, localStorage/sessionStorage
+de estado de practica, scoring, submissions, attempts, grading, progreso,
+dominio, recomendacion, adaptacion ni lenguaje de estado del estudiante. Las
+preferencias compartidas Text size y `OpenDyslexic` pueden usar solo el recurso
+local de accesibilidad.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido,
@@ -141,15 +144,17 @@ runtime.
 
 Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
 teclado por resultados, Enter para abrir, controles de limpiar, chrome
-compartido de descubrimiento, chrome movil compacto, sin solicitudes externas y
-sin estado persistente de busqueda. Los payloads de busqueda siguen siendo solo
-metadata, y el contexto de consulta generado debe permanecer transitorio. Los
+compartido de descubrimiento, regiones de workspace de controles, resultados y
+contexto, chrome movil compacto, sin solicitudes externas y sin estado
+persistente de busqueda. Los payloads de busqueda siguen siendo solo metadata,
+y el contexto de consulta generado y los resumenes del panel de contexto deben
+permanecer transitorios. Los
 enlaces graph-focus de resultados de busqueda deben venir de stable IDs y URLs
 locales generadas del grafo, preservar Enter para abrir la pagina, y evitar
-lenguaje de recomendacion o progreso. Las paginas de descubrimiento Search y
-Graph pueden cargar recursos locales de accesibilidad para Text size y
-`OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
-assets externos de workspace ni estado persistente de graph/search.
+lenguaje de recomendacion o progreso. Las paginas de descubrimiento Search,
+Graph y Practice pueden cargar recursos locales de accesibilidad para Text size
+y `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
+assets externos de workspace ni estado persistente de graph/search/practice.
 
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
 embebidos y las cards visibles usen solo metadata publica generada: titulo de

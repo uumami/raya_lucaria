@@ -64,10 +64,12 @@ can open native previews with the linked page summary, status, and explicit link
 counts when the course has that metadata. Use them as a reading map after
 finishing the page; they are not a progress tracker, ranking, or recommendation
 engine.
-Search and Graph pages use the same static discovery bar so you can return to
-the course, switch between those two workspaces, and keep Text size or
-OpenDyslexic available. Those controls are for reading comfort; Search and Graph
-do not store your query, selected node, or graph layout as study state.
+Search, Graph, and Practice pages use the same static discovery bar so you can
+return to the course, switch between those workspaces, and keep Text size or
+OpenDyslexic available. Search and Practice may also show controls, results,
+and a context panel on wider screens. Those controls are for reading and
+scanning comfort; the workspaces do not store your query, selected node, graph
+layout, or practice filters as study state.
 When a page is selected in the graph, connected pages may be highlighted and
 summarized as outgoing links, incoming links, and connected pages. Those numbers
 describe the current static graph, not how far you have progressed.
@@ -82,7 +84,8 @@ keyboard movement through visible results, and does not search hidden source
 paths or store your query. Opening it from a course page may preload that page
 title as a temporary query. A result can also offer `View in graph`, which opens
 the Course Graph focused on that same page so you can inspect its course
-position and explicit links.
+position and explicit links. The Search context panel summarizes public
+metadata for a visible result; it is not a ranking or recommendation.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 
@@ -114,10 +117,11 @@ Some courses may also include an Official Practice workspace under
 tasks, and other official objects across the course, then return to the owning
 page for context. Practice items should link to page anchors such as
 `#raya-official-<id>` and may offer `View in graph` links. The workspace is a
-static discovery surface, not a recommendation engine, progress tracker,
-submission system, grading system, scoring system, attempt log, mastery
-estimate, stored practice state, external request workflow, private source-path
-viewer, or personal review queue.
+static discovery surface with filters, results, and public context summaries,
+not a recommendation engine, progress tracker, submission system, grading
+system, scoring system, attempt log, mastery estimate, stored practice state,
+external request workflow, private source-path viewer, or personal review
+queue.
 
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 

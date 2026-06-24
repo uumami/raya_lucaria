@@ -190,8 +190,10 @@ pagina que lo posee; Glintstone puede renderizar la seccion de pagina y una
 superficie estatica de descubrimiento `_raya/practice/index.html` desde
 `data/official.json`. Mantiene labels, resumenes, tags, status e IDs estables
 utiles para escanear, y espera que los links de Practice devuelvan a estudiantes
-a anchors de la pagina propietaria como `#raya-official-<id>`. No escribas
-respuestas ocultas duplicadas para el workspace ni lo presentes como adaptativo,
+a anchors de la pagina propietaria como `#raya-official-<id>`. El workspace
+generado puede organizar controles, resultados y resumenes publicos de contexto
+para escanear, pero no debe exponer respuestas ocultas. No escribas respuestas
+ocultas duplicadas para el workspace ni lo presentes como adaptativo,
 recomendado, con scoring, evaluado, entregado, intentado, progreso personal,
 dominio, estado guardado del estudiante, fetching en runtime, requests externos
 o vista de rutas privadas de fuente.
@@ -222,7 +224,10 @@ prosa renderizada, output de math ni estado personal del estudiante. Los links
 generados de pagina pueden precargar una consulta temporal, pero el renderer no
 la guarda. Los resultados tambien pueden incluir links `View in graph`
 generados desde stable IDs para que estudiantes inspeccionen donde queda una
-pagina encontrada dentro del grafo del curso.
+pagina encontrada dentro del grafo del curso. El workspace de Search puede
+mostrar regiones de controles, resultados y contexto desde metadata publica;
+esos resumenes son ayudas estructurales para escanear, no rankings ni
+recomendaciones.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 

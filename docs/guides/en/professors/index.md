@@ -189,10 +189,12 @@ directory; Glintstone can render both the page section and a static
 `_raya/practice/index.html` discovery surface from `data/official.json`. Keep
 object labels, summaries, tags, status, and stable IDs useful for scanning, and
 expect Practice links to return students to owning page anchors such as
-`#raya-official-<id>`. Do not author duplicate hidden answers for the workspace
-or frame it as adaptive, recommended, scored, graded, submitted, attempted,
-personal progress, mastery, stored learner state, runtime fetching, external
-requests, or a private source-path view.
+`#raya-official-<id>`. The generated workspace may organize controls, results,
+and public context summaries for scanning, but it should not expose hidden
+answers. Do not author duplicate hidden answers for the workspace or frame it as
+adaptive, recommended, scored, graded, submitted, attempted, personal progress,
+mastery, stored learner state, runtime fetching, external requests, or a private
+source-path view.
 
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
@@ -218,7 +220,9 @@ approximately, but it does not index hidden source paths, rendered prose, math
 output, or personal learner state. Generated page links may preload a temporary
 query, but the renderer does not store it. Search results may also include
 `View in graph` links generated from stable page IDs so students can inspect
-where a found page sits in the course graph.
+where a found page sits in the course graph. The Search workspace may show
+control, results, and context regions from public metadata; those summaries are
+structural scanning aids, not rankings or recommendations.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

@@ -23,6 +23,9 @@ _SEARCH_JAVASCRIPT = r"""
   const input = document.getElementById("raya-search-input");
   const clear = document.getElementById("raya-search-clear");
   const status = document.getElementById("raya-search-status");
+  const summaryCount = document.querySelector("[data-raya-search-summary-count]");
+  const contextTitle = document.querySelector("[data-raya-search-context-title]");
+  const contextMeta = document.querySelector("[data-raya-search-context-meta]");
   const results = Array.from(document.querySelectorAll("[data-raya-search-result]"));
   const empty = document.getElementById("raya-search-empty");
 
@@ -47,6 +50,7 @@ _SEARCH_JAVASCRIPT = r"""
   }
 
   const pages = Array.isArray(payload.pages) ? payload.pages : [];
+  const pagesById = new Map(pages.map((page) => [page.id, page]));
   let activeIndex = -1;
   const pageText = new Map(
     pages.map((page) => [
@@ -124,6 +128,64 @@ _SEARCH_JAVASCRIPT = r"""
     if (activeIndex >= 0 && visible[activeIndex]) {
       visible[activeIndex].dataset.rayaSearchActive = "true";
       visible[activeIndex].setAttribute("data-raya-search-active", "true");
+    }
+    updateContext();
+  }
+
+  function pageForResult(item) {
+    if (!item) return null;
+    const id = item.getAttribute("data-raya-search-result") || "";
+    return pagesById.get(id) || null;
+  }
+
+  function bestContextItem(visible) {
+    if (activeIndex >= 0) {
+      return visible[activeIndex];
+    }
+    const query = normalize(input.value);
+    if (!query) {
+      return visible[0];
+    }
+    return visible.find((item) => {
+      const page = pageForResult(item);
+      if (!page) return false;
+      return normalize([
+        page.id,
+        page.stable_id,
+        page.title,
+        page.nav_title,
+      ].join(" ")).includes(query);
+    }) || visible[0];
+  }
+
+  function updateContext() {
+    const visible = visibleResults();
+    const selectedItem = bestContextItem(visible);
+    const page = pageForResult(selectedItem);
+    if (summaryCount) {
+      summaryCount.textContent = `${visible.length} visible result(s).`;
+    }
+    if (!page) {
+      if (contextTitle) contextTitle.textContent = "No visible result.";
+      if (contextMeta) contextMeta.textContent = "Try a different page title, stable ID, tag, or status.";
+      return;
+    }
+    const counts = page.link_counts || {};
+    const studyCounts = page.study_counts || {};
+    const studyTotal = Object.keys(studyCounts).reduce(
+      (total, key) => total + Number(studyCounts[key] || 0),
+      0
+    );
+    if (contextTitle) {
+      contextTitle.textContent = page.title || page.nav_title || page.id || "Visible page";
+    }
+    if (contextMeta) {
+      contextMeta.textContent = [
+        page.hierarchy_label || "",
+        page.status ? `Status ${page.status}` : "",
+        `Explicit links: ${counts.outgoing || 0} outgoing, ${counts.incoming || 0} incoming`,
+        `Official objects: ${studyTotal}`,
+      ].filter(Boolean).join(" | ");
     }
   }
 

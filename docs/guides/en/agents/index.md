@@ -74,10 +74,13 @@ For the Official Practice workspace, inspect the same source
 `_raya/practice/index.html`, and the local workspace script. Verify that the
 workspace lists only accepted official objects, links each item back to its
 owning page anchor such as `#raya-official-<id>`, and uses generated graph focus
-links only when graph context exists. Confirm there are no private source paths,
-support paths, hidden answer duplicates, external requests, runtime `fetch`,
-localStorage/sessionStorage, scoring, submissions, attempts, grading, progress,
-mastery, recommendation, adaptive, or learner-state language.
+links only when graph context exists. Verify the control, results, and context
+workspace regions on desktop and mobile. Confirm there are no private source
+paths, support paths, hidden answer duplicates, external requests, runtime
+`fetch`, practice-state localStorage/sessionStorage, scoring, submissions,
+attempts, grading, progress, mastery, recommendation, adaptive, or learner-state
+language. Shared Text size and `OpenDyslexic` comfort preferences may use the
+local accessibility resource only.
 
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure,
@@ -125,14 +128,15 @@ state, external graph libraries, fetch requests, or runtime graph payloads.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, Enter-to-open behavior, clear controls, shared discovery chrome,
-compact mobile discovery chrome, no external requests, and no persistent search
-state. Search payloads stay metadata-only, and generated query context must
+control/results/context workspace regions, compact mobile discovery chrome, no
+external requests, and no persistent search state. Search payloads stay
+metadata-only, and generated query context and context-panel summaries must
 remain transient. Search result graph-focus links must come from stable page IDs
 and generated local graph URLs, preserve Enter-to-open-page behavior, and avoid
-recommendation or progress language. Search and Graph discovery pages may load
-local accessibility resources for Text size and `OpenDyslexic`, but must not
-load `shell.js`, a course-map toggle, external workspace assets, or persisted
-graph/search state.
+recommendation or progress language. Search, Graph, and Practice discovery
+pages may load local accessibility resources for Text size and `OpenDyslexic`,
+but must not load `shell.js`, a course-map toggle, external workspace assets, or
+persisted graph/search/practice state.
 
 When changing Search or Graph discovery cards, verify that embedded payloads and
 visible cards use only public generated metadata: page title, nav title, stable

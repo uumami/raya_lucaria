@@ -105,7 +105,10 @@ page metadata only. Do not index rendered prose, source paths, artifact paths,
 MathJax output, cache keys, or learner state. Generated query context may preload
 the search box without becoming stored search state. Search result graph-focus
 links must be generated from stable page IDs and local graph URLs only; keep
-their wording structural, such as `View in graph`.
+their wording structural, such as `View in graph`. Search and Practice discovery
+workspaces may use control, results, and context regions on desktop, but those
+regions must stay public-metadata-only, responsive, and free of stored discovery
+state.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

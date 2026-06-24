@@ -24,11 +24,12 @@ _PRACTICE_JAVASCRIPT = r"""
   const clear = document.getElementById("raya-practice-clear");
   const status = document.getElementById("raya-practice-status");
   const empty = document.getElementById("raya-practice-empty");
+  const summaryCount = document.querySelector("[data-raya-practice-summary-count]");
+  const contextTitle = document.querySelector("[data-raya-practice-context-title]");
+  const contextMeta = document.querySelector("[data-raya-practice-context-meta]");
   const filters = Array.from(document.querySelectorAll("[data-raya-practice-filter]"));
   const objects = Array.from(document.querySelectorAll("[data-raya-practice-object]"));
   const groups = Array.from(document.querySelectorAll("[data-raya-practice-group]"));
-  const fontButtons = Array.from(document.querySelectorAll(".raya-font-toggle"));
-  const textSizeButtons = Array.from(document.querySelectorAll(".raya-text-size-toggle"));
 
   if (!root || !dataEl || !input) {
     return;
@@ -51,6 +52,7 @@ _PRACTICE_JAVASCRIPT = r"""
   }
 
   const items = Array.isArray(payload.objects) ? payload.objects : [];
+  const itemsById = new Map(items.map((item) => [item.id, item]));
   const searchableText = new Map(
     items.map((item) => [
       item.id,
@@ -67,9 +69,6 @@ _PRACTICE_JAVASCRIPT = r"""
   );
 
   let activeType = "all";
-  const textSizes = ["normal", "large", "x-large"];
-  let textSize = "normal";
-  let dyslexicEnabled = false;
 
   function matchesType(item) {
     return activeType === "all" || item.dataset.rayaPracticeType === activeType;
@@ -96,6 +95,40 @@ _PRACTICE_JAVASCRIPT = r"""
     });
   }
 
+  function itemForObject(object) {
+    if (!object) return null;
+    const id = object.getAttribute("data-raya-practice-object") || "";
+    return itemsById.get(id) || null;
+  }
+
+  function visibleObjects() {
+    return objects.filter((object) => !object.hidden);
+  }
+
+  function updateContext() {
+    const visible = visibleObjects();
+    const item = itemForObject(visible[0]);
+    if (summaryCount) {
+      summaryCount.textContent = `${visible.length} visible practice object(s).`;
+    }
+    if (!item) {
+      if (contextTitle) contextTitle.textContent = "No visible practice object.";
+      if (contextMeta) contextMeta.textContent = "Clear the search or choose another object type.";
+      return;
+    }
+    if (contextTitle) {
+      contextTitle.textContent = item.preview || item.id || "Official object";
+    }
+    if (contextMeta) {
+      contextMeta.textContent = [
+        item.type_label || item.type || "Practice",
+        item.page_title ? `From ${item.page_title}` : "",
+        item.authority ? `Authority ${item.authority}` : "",
+        item.id ? `ID ${item.id}` : "",
+      ].filter(Boolean).join(" | ");
+    }
+  }
+
   function render() {
     const query = normalize(input.value);
     let visible = 0;
@@ -112,6 +145,7 @@ _PRACTICE_JAVASCRIPT = r"""
     if (status) {
       status.textContent = `${visible} visible practice object(s).`;
     }
+    updateContext();
   }
 
   filters.forEach((button) => {
@@ -140,41 +174,6 @@ _PRACTICE_JAVASCRIPT = r"""
     });
   }
 
-  function applyDyslexic(enabled) {
-    dyslexicEnabled = Boolean(enabled);
-    document.documentElement.setAttribute(
-      "data-raya-open-dyslexic",
-      dyslexicEnabled ? "true" : "false"
-    );
-    fontButtons.forEach((button) => {
-      button.setAttribute("aria-pressed", dyslexicEnabled ? "true" : "false");
-    });
-  }
-
-  function applyTextSize(size) {
-    textSize = textSizes.includes(size) ? size : "normal";
-    document.documentElement.setAttribute("data-raya-text-size", textSize);
-    textSizeButtons.forEach((button) => {
-      button.setAttribute("aria-pressed", textSize === "normal" ? "false" : "true");
-      button.setAttribute("aria-label", `Text size: ${textSize}`);
-    });
-  }
-
-  fontButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      applyDyslexic(!dyslexicEnabled);
-    });
-  });
-
-  textSizeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const index = textSizes.indexOf(textSize);
-      applyTextSize(textSizes[(index + 1) % textSizes.length]);
-    });
-  });
-
-  applyDyslexic(false);
-  applyTextSize("normal");
   render();
 })();
 """

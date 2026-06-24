@@ -112,7 +112,10 @@ rutas de fuente, rutas de artifact, output MathJax, cache keys ni estado del
 estudiante. El contexto de consulta generado puede precargar la caja de busqueda
 sin convertirse en estado guardado. Los enlaces graph-focus de resultados de
 busqueda deben generarse solo desde stable IDs y URLs locales del grafo; conserva
-lenguaje estructural como `View in graph`.
+lenguaje estructural como `View in graph`. Los workspaces de descubrimiento
+Search y Practice pueden usar regiones de controles, resultados y contexto en
+desktop, pero esas regiones deben quedarse solo en metadata publica, ser
+responsivas y no guardar estado de descubrimiento.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

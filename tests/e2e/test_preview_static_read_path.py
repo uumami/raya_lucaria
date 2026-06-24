@@ -953,6 +953,24 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(".raya-search-workspace").is_visible()
+                        assert page.locator(".raya-search-control-panel").is_visible()
+                        assert page.locator(".raya-search-results-panel").is_visible()
+                        assert page.locator(".raya-search-context-panel").is_visible()
+                        if viewport["width"] >= 1280:
+                            control_box = page.locator(
+                                ".raya-search-control-panel"
+                            ).bounding_box()
+                            results_box = page.locator(
+                                ".raya-search-results-panel"
+                            ).bounding_box()
+                            context_box = page.locator(
+                                ".raya-search-context-panel"
+                            ).bounding_box()
+                            assert control_box is not None
+                            assert results_box is not None
+                            assert context_box is not None
+                            assert control_box["x"] < results_box["x"] < context_box["x"]
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
                                 ".raya-discovery-command-bar"
@@ -976,6 +994,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible result')"""
                         )
+                        assert (
+                            "visible result"
+                            in page.locator("[data-raya-search-summary-count]").inner_text()
+                        )
                         after = page.locator(
                             "#raya-search-results [data-raya-search-result]:visible"
                         ).count()
@@ -988,6 +1010,14 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             '[data-raya-search-result="authoring-matrix"]'
                         )
                         assert "Stable ID authoring-matrix" in result_card.inner_text()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("[data-raya-search-context-title]").inner_text()
+                        )
+                        assert (
+                            "Explicit links"
+                            in page.locator("[data-raya-search-context-meta]").inner_text()
+                        )
                         assert "Explicit links" in result_card.inner_text()
                         assert "Official objects: Prompt: 1" in result_card.inner_text()
                         assert (
@@ -1045,6 +1075,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             """() => document
                               .querySelector('#raya-search-empty')
                               ?.hidden === false"""
+                        )
+                        assert (
+                            "No visible result"
+                            in page.locator("[data-raya-search-context-title]").inner_text()
                         )
                         page.goto(
                             f"{base_url}/_raya/search/index.html?q=Authoring%20Matrix%20Fixture",
@@ -1159,10 +1193,36 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(".raya-practice-workspace").is_visible()
+                        assert page.locator(".raya-practice-control-panel").is_visible()
+                        assert page.locator(".raya-practice-results-panel").is_visible()
+                        assert page.locator(".raya-practice-context-panel").is_visible()
+                        if viewport["width"] >= 1280:
+                            control_box = page.locator(
+                                ".raya-practice-control-panel"
+                            ).bounding_box()
+                            results_box = page.locator(
+                                ".raya-practice-results-panel"
+                            ).bounding_box()
+                            context_box = page.locator(
+                                ".raya-practice-context-panel"
+                            ).bounding_box()
+                            assert control_box is not None
+                            assert results_box is not None
+                            assert context_box is not None
+                            assert control_box["x"] < results_box["x"] < context_box["x"]
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
+                        page.click(".raya-command-font")
+                        assert page.locator("html").get_attribute(
+                            "data-raya-open-dyslexic"
+                        ) == "true"
+                        page.click(".raya-command-size")
+                        assert page.locator("html").get_attribute(
+                            "data-raya-text-size"
+                        ) == "large"
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-card"]'
                         ).is_visible()
@@ -1180,6 +1240,14 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               ?.textContent
                               ?.includes('1 visible practice object')"""
                         )
+                        assert (
+                            "1 visible practice object"
+                            in page.locator("[data-raya-practice-summary-count]").inner_text()
+                        )
+                        assert (
+                            "Explain how retrieval practice differs from rereading."
+                            in page.locator("[data-raya-practice-context-title]").inner_text()
+                        )
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-prompt"]'
                         ).is_visible()
@@ -1195,6 +1263,10 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               ?.includes('0 visible practice object')"""
                         )
                         assert page.locator("#raya-practice-empty").is_visible()
+                        assert (
+                            "No visible practice object"
+                            in page.locator("[data-raya-practice-context-title]").inner_text()
+                        )
 
                         page.click("#raya-practice-clear")
                         page.click('[data-raya-practice-filter="quiz"]')

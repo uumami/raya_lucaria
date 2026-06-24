@@ -3637,16 +3637,38 @@ def _render_search_surface(
             "<h1>Course Search</h1>",
             "<p>Search page titles, summaries, stable IDs, tags, and status metadata.</p>",
             "</header>",
+            '<section class="raya-search-workspace" aria-label="Search workspace">',
+            '<aside class="raya-search-control-panel" aria-label="Search controls">',
+            '<h2>Find pages</h2>',
             '<section class="raya-search-controls" aria-label="Course search controls">',
             '<label for="raya-search-input">Search</label>',
             '<input id="raya-search-input" type="search" autocomplete="off">',
             '<button id="raya-search-clear" type="button">Clear</button>',
             '<p id="raya-search-status" class="raya-search-status" aria-live="polite"></p>',
             "</section>",
+            (
+                '<p class="raya-discovery-summary" '
+                f'data-raya-search-summary-count>{len(browser_search["pages"])} visible result(s).</p>'
+            ),
+            "</aside>",
+            '<section class="raya-search-results-panel" aria-label="Search results">',
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
             '<ol id="raya-search-results" class="raya-search-results">',
             "\n".join(result_items),
             "</ol>",
+            "</section>",
+            (
+                '<aside class="raya-search-context-panel" data-raya-search-context '
+                'aria-label="Search context" aria-live="polite">'
+            ),
+            "<h2>Context</h2>",
+            "<p data-raya-search-context-title>Select or filter a page.</p>",
+            (
+                '<p class="raya-discovery-context-meta" '
+                'data-raya-search-context-meta>Public page metadata only.</p>'
+            ),
+            "</aside>",
+            "</section>",
             '<script type="application/json" id="raya-search-data">',
             search_payload,
             "</script>",
@@ -3727,6 +3749,10 @@ def _render_practice_surface(
     accessibility_css_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
     )
     practice_js_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
@@ -3858,10 +3884,13 @@ def _render_practice_surface(
             '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
             "<h1>Official Practice</h1>",
             (
-                "<p>Find accepted course practice objects by page and type. "
-                "Open the owning page when you are ready to work with the full context.</p>"
+            "<p>Find accepted course practice objects by page and type. "
+            "Open the owning page when you are ready to work with the full context.</p>"
             ),
             "</header>",
+            '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
+            '<aside class="raya-practice-control-panel" aria-label="Official practice controls">',
+            "<h2>Find practice</h2>",
             '<section class="raya-practice-controls" aria-label="Official practice controls">',
             '<label for="raya-practice-search">Search</label>',
             '<input id="raya-practice-search" type="search" autocomplete="off">',
@@ -3872,16 +3901,36 @@ def _render_practice_surface(
             '<p id="raya-practice-status" class="raya-practice-status" aria-live="polite"></p>',
             "</section>",
             (
+                '<p class="raya-discovery-summary" '
+                f'data-raya-practice-summary-count>{len(browser_practice["objects"])} visible practice object(s).</p>'
+            ),
+            "</aside>",
+            '<section class="raya-practice-results-panel" aria-label="Official practice results">',
+            (
                 '<p id="raya-practice-empty" class="raya-practice-empty" hidden>'
                 "No matching official practice objects.</p>"
             ),
             '<section class="raya-practice-results" aria-label="Official practice results">',
             "\n".join(group_sections),
             "</section>",
+            "</section>",
+            (
+                '<aside class="raya-practice-context-panel" data-raya-practice-context '
+                'aria-label="Official practice context" aria-live="polite">'
+            ),
+            "<h2>Context</h2>",
+            "<p data-raya-practice-context-title>Select or filter an official object.</p>",
+            (
+                '<p class="raya-discovery-context-meta" '
+                'data-raya-practice-context-meta>Accepted public object metadata only.</p>'
+            ),
+            "</aside>",
+            "</section>",
             '<script type="application/json" id="raya-practice-data">',
             practice_payload,
             "</script>",
             "</main>",
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             f'<script src="{html.escape(practice_js_href)}" defer></script>',
             "</body>",
             "</html>",

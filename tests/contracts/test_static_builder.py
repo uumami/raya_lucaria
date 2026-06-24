@@ -667,8 +667,6 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     for forbidden_runtime_token in (
         "fetch(",
         "XMLHttpRequest",
-        "localStorage",
-        "sessionStorage",
         "indexedDB",
         "caches.",
         "navigator.sendBeacon",
@@ -801,6 +799,15 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "graph-search" not in search_html
     assert 'id="raya-search-clear"' in search_html
     assert 'data-raya-search-active="false"' in search_html
+    assert "raya-search-workspace" in search_html
+    assert "raya-search-control-panel" in search_html
+    assert "raya-search-results-panel" in search_html
+    assert "raya-search-context-panel" in search_html
+    assert "data-raya-search-summary-count" in search_html
+    assert "data-raya-search-context" in search_html
+    assert "data-raya-search-context-title" in search_html
+    assert "data-raya-search-context-meta" in search_html
+    assert 'aria-label="Search context" aria-live="polite"' in search_html
     assert "course/5_authoring_matrix" not in search_html
     assert "raya-search-results" in search_html
     assert "Authoring Matrix Fixture" in search_html
@@ -880,11 +887,11 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "URLSearchParams" in search_script
     assert 'params.get("q")' in search_script
     assert "window.location.href" in search_script
+    for forbidden_search_state_token in ("localStorage", "sessionStorage"):
+        assert forbidden_search_state_token not in search_script
     for forbidden_runtime_token in (
         "fetch(",
         "XMLHttpRequest",
-        "localStorage",
-        "sessionStorage",
         "indexedDB",
         "caches.",
         "navigator.sendBeacon",
@@ -925,6 +932,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "localStorage" not in practice_html
     assert '<script type="application/json" id="raya-practice-data">' in practice_html
     assert 'src="../render/practice.js"' in practice_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' in practice_html
     assert 'href="../render/rich.css"' in practice_html
     assert 'href="../render/skin.css"' in practice_html
     assert 'href="../../data/official.json"' not in practice_html
@@ -932,6 +940,17 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "http://" not in practice_html
     assert 'id="raya-practice-search"' in practice_html
     assert 'id="raya-practice-clear"' in practice_html
+    assert "raya-practice-workspace" in practice_html
+    assert "raya-practice-control-panel" in practice_html
+    assert "raya-practice-results-panel" in practice_html
+    assert "raya-practice-context-panel" in practice_html
+    assert "data-raya-practice-summary-count" in practice_html
+    assert "data-raya-practice-context" in practice_html
+    assert "data-raya-practice-context-title" in practice_html
+    assert "data-raya-practice-context-meta" in practice_html
+    assert (
+        'aria-label="Official practice context" aria-live="polite"' in practice_html
+    )
     assert 'data-raya-practice-filter="quiz"' in practice_html
     assert 'data-raya-practice-object="first-topic-card"' in practice_html
     assert 'data-raya-practice-object="first-topic-prompt"' in practice_html
@@ -996,8 +1015,6 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     for forbidden_runtime_token in (
         "fetch(",
         "XMLHttpRequest",
-        "localStorage",
-        "sessionStorage",
         "indexedDB",
         "caches.",
         "navigator.sendBeacon",
@@ -1011,6 +1028,8 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
             script_path = practice_page.parent / script_href
             loaded_script = script_path.resolve().read_text(encoding="utf-8")
             assert forbidden_runtime_token not in loaded_script
+    for forbidden_practice_state_token in ("localStorage", "sessionStorage"):
+        assert forbidden_practice_state_token not in practice_script
 
 
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
