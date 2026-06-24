@@ -1972,6 +1972,27 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    assignment_dir = (
+        course / "course" / "5_authoring_matrix" / "_official" / "assignments"
+    )
+    assignment_dir.mkdir(parents=True)
+    (assignment_dir / "1_matrix_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: authoring-matrix",
+                "content:",
+                "  title: Matrix graph check",
+                "  summary: Trace the graph context for matrix notation.",
+                "  due: '2026-11-03'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -2125,12 +2146,27 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).inner_text()
                         )
                         assert "Explicit links" in result_card.inner_text()
-                        assert "Official objects: Prompt: 1" in result_card.inner_text()
+                        assert (
+                            "Official objects: Assignment: 1, Prompt: 1"
+                            in result_card.inner_text()
+                        )
                         assert (
                             result_card.locator(".raya-search-result-practice")
                             .evaluate("node => node.href")
                             .endswith(
                                 "/_raya/practice/index.html?page=authoring-matrix"
+                            )
+                        )
+                        assert (
+                            result_card.locator(".raya-search-result-tasks")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/tasks/index.html?page=authoring-matrix")
+                        )
+                        assert (
+                            result_card.locator(".raya-search-result-schedule")
+                            .evaluate("node => node.href")
+                            .endswith(
+                                "/_raya/schedule/index.html?page=authoring-matrix"
                             )
                         )
                         assert page.locator("#raya-search-empty").is_hidden()
@@ -2218,7 +2254,7 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).inner_text()
                         )
                         assert (
-                            "Official objects: Prompt: 1"
+                            "Official objects: Assignment: 1, Prompt: 1"
                             in page.locator(
                                 "[data-raya-graph-detail-study-counts]"
                             ).inner_text()
@@ -2613,6 +2649,47 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
     course = tmp_path / "minimal"
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
     _add_official_task_objects(course)
+    extension_page = course / "course" / "2_extension" / "0_index.md"
+    extension_page.parent.mkdir(parents=True)
+    extension_page.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: extension-topic",
+                "title: Extension Topic",
+                "summary: A second task page for scoped task workspace tests.",
+                "status: ready",
+                "---",
+                "",
+                "# Extension Topic",
+                "",
+                "This page exists so page-scoped workspace links can hide unrelated work.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    extension_assignment_dir = (
+        extension_page.parent / "_official" / "assignments"
+    )
+    extension_assignment_dir.mkdir(parents=True)
+    (extension_assignment_dir / "1_extension_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: extension-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: extension-topic",
+                "content:",
+                "  title: Extension assignment",
+                "  summary: An unrelated dated assignment for page-scope tests.",
+                "  due: '2026-12-01'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -2748,15 +2825,59 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         assert page.locator(
                             '[data-raya-task-object="unit-project"]'
                         ).is_visible()
+                        scoped_tasks = browser.new_page(viewport=viewport)
+                        try:
+                            scoped_tasks.goto(
+                                f"{base_url}/_raya/tasks/index.html?page=first-topic",
+                                wait_until="networkidle",
+                            )
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('4 visible tasks')"""
+                            )
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="unit-assignment"]'
+                            ).is_visible()
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="unit-project"]'
+                            ).is_visible()
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="extension-assignment"]'
+                            ).is_hidden()
+                            assert (
+                                "4 visible tasks"
+                                in scoped_tasks.locator(
+                                    "[data-raya-tasks-summary-count]"
+                                ).inner_text()
+                            )
+                            assert scoped_tasks.evaluate("() => localStorage.length") == 0
+                            assert scoped_tasks.evaluate("() => sessionStorage.length") == 0
+                            scoped_tasks.click("#raya-tasks-clear")
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('5 visible tasks')"""
+                            )
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="extension-assignment"]'
+                            ).is_visible()
+                        finally:
+                            scoped_tasks.close()
                         page.click('[data-raya-task-filter="assignment"]')
                         page.wait_for_function(
                             """() => document
                               .querySelector('#raya-tasks-status')
                               ?.textContent
-                              ?.includes('1 visible task')"""
+                              ?.includes('2 visible tasks')"""
                         )
                         assert page.locator(
                             '[data-raya-task-object="unit-assignment"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-task-object="extension-assignment"]'
                         ).is_visible()
                         assert page.locator(
                             '[data-raya-task-object="unit-project"]'
@@ -2859,6 +2980,58 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             assert schedule.locator(
                                 '[data-raya-schedule-item="unit-exam"]'
                             ).is_visible()
+                            scoped_schedule = browser.new_page(viewport=viewport)
+                            try:
+                                scoped_schedule.goto(
+                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
+                                    wait_until="networkidle",
+                                )
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('3 visible schedule items')"""
+                                )
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="unit-assignment"]'
+                                ).is_visible()
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="unit-project"]'
+                                ).is_visible()
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="extension-assignment"]'
+                                ).is_hidden()
+                                assert (
+                                    "3 visible schedule items"
+                                    in scoped_schedule.locator(
+                                        "[data-raya-schedule-summary-count]"
+                                    ).inner_text()
+                                )
+                                scoped_schedule.locator("#raya-schedule-search").focus()
+                                scoped_schedule.press("#raya-schedule-search", "Escape")
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('4 visible schedule items')"""
+                                )
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="extension-assignment"]'
+                                ).is_visible()
+                                assert (
+                                    scoped_schedule.evaluate(
+                                        "() => localStorage.length"
+                                    )
+                                    == 0
+                                )
+                                assert (
+                                    scoped_schedule.evaluate(
+                                        "() => sessionStorage.length"
+                                    )
+                                    == 0
+                                )
+                            finally:
+                                scoped_schedule.close()
                             assert schedule.locator(
                                 '[data-raya-schedule-item="unit-task"]'
                             ).count() == 0

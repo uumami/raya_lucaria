@@ -77,10 +77,20 @@ _TASKS_JAVASCRIPT = r"""
   );
 
   let activeType = "all";
+  let activePage = "";
+  try {
+    activePage = new URLSearchParams(window.location.search || "").get("page") || "";
+  } catch {
+    activePage = "";
+  }
   let activeIndex = -1;
 
   function matchesType(object) {
     return activeType === "all" || object.dataset.rayaTaskType === activeType;
+  }
+
+  function matchesPage(object) {
+    return !activePage || object.dataset.rayaTaskPage === activePage;
   }
 
   function matchesSearch(object, query) {
@@ -195,7 +205,7 @@ _TASKS_JAVASCRIPT = r"""
     const query = normalize(input.value);
     let visible = 0;
     objects.forEach((object) => {
-      const matched = matchesType(object) && matchesSearch(object, query);
+      const matched = matchesPage(object) && matchesType(object) && matchesSearch(object, query);
       object.hidden = !matched;
       if (matched) visible += 1;
     });
@@ -252,6 +262,7 @@ _TASKS_JAVASCRIPT = r"""
       event.preventDefault();
       input.value = "";
       activeType = "all";
+      activePage = "";
       activeIndex = -1;
       render();
     }
@@ -268,6 +279,7 @@ _TASKS_JAVASCRIPT = r"""
     clear.addEventListener("click", () => {
       input.value = "";
       activeType = "all";
+      activePage = "";
       activeIndex = -1;
       if (sort) sort.value = "course";
       render();

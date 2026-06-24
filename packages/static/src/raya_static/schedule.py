@@ -78,6 +78,12 @@ _SCHEDULE_JAVASCRIPT = r"""
 
   let activeType = "all";
   let activeKind = "all";
+  let activePage = "";
+  try {
+    activePage = new URLSearchParams(window.location.search || "").get("page") || "";
+  } catch {
+    activePage = "";
+  }
   let activeIndex = -1;
 
   function itemForObject(object) {
@@ -100,6 +106,10 @@ _SCHEDULE_JAVASCRIPT = r"""
 
   function matchesKind(object) {
     return activeKind === "all" || object.dataset.rayaScheduleKind === activeKind;
+  }
+
+  function matchesPage(object) {
+    return !activePage || object.dataset.rayaSchedulePage === activePage;
   }
 
   function matchesSearch(object, query) {
@@ -192,7 +202,7 @@ _SCHEDULE_JAVASCRIPT = r"""
     const query = normalize(input.value);
     let visible = 0;
     items.forEach((item) => {
-      const matched = matchesType(item) && matchesKind(item) && matchesSearch(item, query);
+      const matched = matchesPage(item) && matchesType(item) && matchesKind(item) && matchesSearch(item, query);
       item.hidden = !matched;
       if (matched) visible += 1;
     });
@@ -259,6 +269,7 @@ _SCHEDULE_JAVASCRIPT = r"""
       input.value = "";
       activeType = "all";
       activeKind = "all";
+      activePage = "";
       activeIndex = -1;
       render();
     }
@@ -269,6 +280,7 @@ _SCHEDULE_JAVASCRIPT = r"""
       input.value = "";
       activeType = "all";
       activeKind = "all";
+      activePage = "";
       activeIndex = -1;
       render();
       input.focus();

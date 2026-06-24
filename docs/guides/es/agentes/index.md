@@ -244,6 +244,14 @@ Text size y `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa
 del curso, assets externos de workspace ni estado persistente de
 graph/search/practice/tasks.
 
+Al cambiar Tasks o Schedule, verifica handoffs solo por URL
+`?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
+inicialmente los objetos publicos de la familia task a la pagina solicitada,
+pero Clear y Escape deben restaurar el workspace estatico completo sin escribir
+storage del navegador ni cambiar la autoridad de fuente. Trata el query de
+pagina como contexto transitorio de navegacion, no como progreso,
+recomendacion, dominio, calificacion ni estado personal de fechas.
+
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
 embebidos y las cards visibles usen solo metadata publica generada: titulo de
 pagina, nav title, stable ID, hierarchy label, status, summary, tags, enlaces

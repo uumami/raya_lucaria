@@ -664,24 +664,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-    (official_dir / "2_nested_secret_prompt.yaml").write_text(
-        "\n".join(
-            [
-                "id: nested-secret-prompt",
-                "type: prompt",
-                "authority: official",
-                "content:",
-                "  prompt:",
-                "    question: Public nested prompt should not be flattened here.",
-                "    answer: GRAPH_SECRET_ANSWER",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    assignment_dir = (
-        course / "course" / "5_authoring_matrix" / "_official" / "assignments"
-    )
+    assignment_dir = course / "course" / "5_authoring_matrix" / "_official" / "assignments"
     assignment_dir.mkdir(parents=True)
     (assignment_dir / "1_matrix_assignment.yaml").write_text(
         "\n".join(
@@ -695,6 +678,21 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
                 "  title: Matrix graph check",
                 "  summary: Trace the graph context for matrix notation.",
                 "  due: '2026-11-03'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (official_dir / "2_nested_secret_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: nested-secret-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt:",
+                "    question: Public nested prompt should not be flattened here.",
+                "    answer: GRAPH_SECRET_ANSWER",
                 "",
             ]
         ),
@@ -720,7 +718,6 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
-
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
@@ -1175,6 +1172,27 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    assignment_dir = (
+        course / "course" / "5_authoring_matrix" / "_official" / "assignments"
+    )
+    assignment_dir.mkdir(parents=True)
+    (assignment_dir / "1_matrix_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: authoring-matrix",
+                "content:",
+                "  title: Matrix graph check",
+                "  summary: Trace the graph context for matrix notation.",
+                "  due: '2026-11-03'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -1244,7 +1262,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "Stable ID" in search_html
     assert "Explicit links" in search_html
     assert "Official objects" in search_html
-    assert "Prompt: 1" in search_html
+    assert "Assignment: 1, Prompt: 1" in search_html
     assert 'class="raya-search-result-actions"' in search_html
     assert "Open page" in search_html
     assert 'class="raya-search-result-graph"' in search_html
@@ -1253,6 +1271,12 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert 'class="raya-search-result-practice"' in search_html
     assert 'href="../practice/index.html?page=authoring-matrix"' in search_html
     assert "Open practice" in search_html
+    assert 'class="raya-search-result-tasks"' in search_html
+    assert 'href="../tasks/index.html?page=authoring-matrix"' in search_html
+    assert "Open tasks" in search_html
+    assert 'class="raya-search-result-schedule"' in search_html
+    assert 'href="../schedule/index.html?page=authoring-matrix"' in search_html
+    assert "Open schedule" in search_html
     search_payload_match = re.search(
         r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
         search_html,
@@ -1273,11 +1297,13 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         "practice_url",
         "previous_url",
         "search_url",
+        "schedule_url",
         "stable_id",
         "status",
         "study_counts",
         "summary",
         "tags",
+        "tasks_url",
         "title",
         "url",
     }
@@ -1291,14 +1317,24 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert not page["graph_url"].startswith("../../data/")
     pages_by_id = {page["id"]: page for page in search_payload["pages"]}
     assert pages_by_id["render-root"]["study_counts"] == {
+        "assignment": 1,
         "card": 1,
         "prompt": 1,
         "quiz": 1,
     }
     assert pages_by_id["render-root"]["practice_url"] == ""
-    assert pages_by_id["authoring-matrix"]["study_counts"] == {"prompt": 1}
+    assert pages_by_id["authoring-matrix"]["study_counts"] == {
+        "assignment": 1,
+        "prompt": 1,
+    }
     assert pages_by_id["authoring-matrix"]["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
+    )
+    assert pages_by_id["authoring-matrix"]["tasks_url"] == (
+        "../tasks/index.html?page=authoring-matrix"
+    )
+    assert pages_by_id["authoring-matrix"]["schedule_url"] == (
+        "../schedule/index.html?page=authoring-matrix"
     )
     assert pages_by_id["authoring-matrix"]["previous_url"].endswith(
         "../../reader-ux/index.html"
@@ -1539,8 +1575,11 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "XMLHttpRequest" not in tasks_script
     assert "localStorage" not in tasks_script
     assert "sessionStorage" not in tasks_script
+    assert "URLSearchParams" in tasks_script
+    assert "matchesPage" in tasks_script
     assert 'data-raya-task-object="private-task"' not in tasks_html
     assert 'data-raya-task-object="unit-assignment"' in tasks_html
+    assert 'data-raya-task-page="first-topic"' in tasks_html
     assert 'data-raya-task-object="unit-project"' in tasks_html
     assert 'data-raya-task-object="unit-exam"' in tasks_html
     assert 'data-raya-task-object="unit-task"' in tasks_html
@@ -1661,7 +1700,10 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "XMLHttpRequest" not in schedule_script
     assert "localStorage" not in schedule_script
     assert "sessionStorage" not in schedule_script
+    assert "URLSearchParams" in schedule_script
+    assert "matchesPage" in schedule_script
     assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
+    assert 'data-raya-schedule-page="first-topic"' in schedule_html
     assert 'data-raya-schedule-item="unit-project"' in schedule_html
     assert 'data-raya-schedule-item="unit-exam"' in schedule_html
     assert 'data-raya-schedule-item="unit-task"' not in schedule_html

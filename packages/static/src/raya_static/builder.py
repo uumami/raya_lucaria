@@ -515,6 +515,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         language=str(config["language"]),
         graph_index=graph_index,
         official_counts=official_counts,
+        official_by_page=official_by_page,
         skin_context=skin_context,
         report=report,
     )
@@ -3436,10 +3437,20 @@ def _public_discovery_page_payload(
     search_from_path: str,
     graph_from_path: str,
     practice_from_path: str,
+    tasks_from_path: str | None = None,
+    schedule_from_path: str | None = None,
+    official_by_page: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     previous_page, next_page = _previous_next_pages(page, content_model)
     counts = _aggregate_study_counts(page.id, content_model, official_counts)
     direct_counts = official_counts.get(page.id, {})
+    page_objects = (official_by_page or {}).get(page.id, [])
+    public_task_objects = [
+        item for item in page_objects if _official_public_task_summary(item) is not None
+    ]
+    dated_task_objects = [
+        item for item in public_task_objects if _official_task_event_date(item)
+    ]
     return {
         "id": page.id,
         "stable_id": page.id,
@@ -3474,6 +3485,22 @@ def _public_discovery_page_payload(
                 {"page": page.id},
             )
             if direct_counts
+            else ""
+        ),
+        "tasks_url": (
+            _href_with_query(
+                _relative_href(tasks_from_path, STATIC_TASKS_PATH.as_posix()),
+                {"page": page.id},
+            )
+            if tasks_from_path is not None and public_task_objects
+            else ""
+        ),
+        "schedule_url": (
+            _href_with_query(
+                _relative_href(schedule_from_path, STATIC_SCHEDULE_PATH.as_posix()),
+                {"page": page.id},
+            )
+            if schedule_from_path is not None and dated_task_objects
             else ""
         ),
         "study_counts": counts,
@@ -4069,6 +4096,7 @@ def _write_search_surface(
     language: str,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -4082,6 +4110,7 @@ def _write_search_surface(
             language=language,
             graph_index=graph_index,
             official_counts=official_counts,
+            official_by_page=official_by_page,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -4096,6 +4125,7 @@ def _render_search_surface(
     language: str,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -4124,6 +4154,7 @@ def _render_search_surface(
         content_model,
         graph_index,
         official_counts,
+        official_by_page,
     )
     search_payload = _json_script_text(browser_search)
     result_items = []
@@ -4156,6 +4187,18 @@ def _render_search_surface(
             if page["practice_url"]
             else ""
         )
+        tasks_action = (
+            f'<a class="raya-search-result-tasks" href="{html.escape(page["tasks_url"])}">'
+            "Open tasks</a>"
+            if page["tasks_url"]
+            else ""
+        )
+        schedule_action = (
+            f'<a class="raya-search-result-schedule" href="{html.escape(page["schedule_url"])}">'
+            "Open schedule</a>"
+            if page["schedule_url"]
+            else ""
+        )
         result_items.append(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
@@ -4172,6 +4215,8 @@ def _render_search_surface(
             f'aria-label="View {html.escape(page["title"], quote=True)} in course graph">'
             "View in graph</a>"
             f"{practice_action}"
+            f"{tasks_action}"
+            f"{schedule_action}"
             "</p>"
             "</li>"
         )
@@ -4259,6 +4304,7 @@ def _browser_search_payload(
     content_model: ContentModel,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]],
 ) -> dict[str, Any]:
     return {
         "version": 1,
@@ -4272,6 +4318,9 @@ def _browser_search_payload(
                 search_from_path=STATIC_SEARCH_PATH.as_posix(),
                 graph_from_path=STATIC_SEARCH_PATH.as_posix(),
                 practice_from_path=STATIC_SEARCH_PATH.as_posix(),
+                tasks_from_path=STATIC_SEARCH_PATH.as_posix(),
+                schedule_from_path=STATIC_SEARCH_PATH.as_posix(),
+                official_by_page=official_by_page,
             )
             for page in content_model.pages
         ],
@@ -4684,6 +4733,7 @@ def _render_tasks_surface(
                         '<article class="raya-task-object" '
                         f'data-raya-task-object="{html.escape(item["id"], quote=True)}" '
                         f'data-raya-task-type="{html.escape(item["type"], quote=True)}" '
+                        f'data-raya-task-page="{html.escape(item["page_id"], quote=True)}" '
                         f'data-raya-task-order="{order}" '
                         'data-raya-task-active="false">'
                     ),
@@ -4948,6 +4998,7 @@ def _render_schedule_surface(
                         f'data-raya-schedule-item="{html.escape(item["id"], quote=True)}" '
                         f'data-raya-schedule-type="{html.escape(item["type"], quote=True)}" '
                         f'data-raya-schedule-kind="{html.escape(item["event_kind"], quote=True)}" '
+                        f'data-raya-schedule-page="{html.escape(item["page_id"], quote=True)}" '
                         f'data-raya-schedule-order="{order}" '
                         'data-raya-schedule-active="false">'
                     ),

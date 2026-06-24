@@ -216,6 +216,13 @@ pages may load local accessibility resources for Text size and `OpenDyslexic`,
 but must not load `shell.js`, a course-map toggle, external workspace assets, or
 persisted graph/search/practice/tasks state.
 
+When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
+Search or Graph. The destination workspace may initially narrow visible public
+task-family objects to the requested page, but Clear and Escape must restore the
+full static workspace without writing browser storage or changing source
+authority. Treat the page query as transient navigation context, not progress,
+recommendation, mastery, grading, or personal due state.
+
 When changing Search or Graph discovery cards, verify that embedded payloads and
 visible cards use only public generated metadata: page title, nav title, stable
 ID, hierarchy label, status, summary, tags, previous/next course-order links,
