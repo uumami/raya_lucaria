@@ -34,7 +34,8 @@ etiquetas de autoridad.
 
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
 el mapa del curso expandido se renderiza como un mapa jerarquico del curso
-expandido y da orientacion por defecto, la barra superior mantiene visibles el
+expandido y puede mostrar numeros estructurales de secuencia del orden del
+curso. Da orientacion por defecto, la barra superior mantiene visibles el
 titulo del curso, el titulo de la pagina actual y la posicion estructural de la
 pagina, el articulo principal sigue siendo la leccion, y el riel de aprendizaje
 ofrece contenidos de pagina y contexto cercano. Puedes colapsar el mapa a un

@@ -88,7 +88,8 @@ preferencias compartidas Text size y `OpenDyslexic` pueden usar solo el recurso
 local de accesibilidad.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
-la estructura de mapa jerarquico del curso expandido,
+la estructura de mapa jerarquico del curso expandido, los numeros estructurales
+generados del mapa,
 la orientacion de pagina actual dentro del mapa, el comportamiento del filtro
 del mapa, el contexto superior de lectura, los links compactos
 anterior/siguiente, las cards Previous/Next al final del articulo, la metadata

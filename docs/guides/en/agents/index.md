@@ -83,7 +83,7 @@ language. Shared Text size and `OpenDyslexic` comfort preferences may use the
 local accessibility resource only.
 
 When changing the shell, verify the expanded course map default, including the
-expanded hierarchical course map structure,
+expanded hierarchical course map structure, generated structural map numbers,
 current-page map orientation, map filter behavior, sticky reading context,
 compact previous/next links, article-end Previous/Next sequence cards, compact
 rail metadata, render-debug output, mobile no-overflow behavior, and no external

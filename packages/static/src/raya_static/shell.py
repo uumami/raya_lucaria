@@ -30,7 +30,7 @@ _SHELL_JAVASCRIPT = r"""
   const mapNodeToggles = Array.from(document.querySelectorAll("[data-raya-map-node-toggle]"));
   const mapFilter = document.querySelector("[data-raya-course-map-filter]");
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
-  const desktopMapQuery = window.matchMedia("(min-width: 901px)");
+  const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const headings = tocLinks
     .map((link) => {
@@ -228,6 +228,19 @@ _SHELL_JAVASCRIPT = r"""
         scrollContainer.clientHeight / 2 +
         currentLink.offsetHeight / 2;
       scrollContainer.scrollTop = Math.max(0, offset);
+      const adjustedContainerRect = scrollContainer.getBoundingClientRect();
+      const adjustedLinkRect = currentLink.getBoundingClientRect();
+      if (adjustedLinkRect.top < adjustedContainerRect.top) {
+        scrollContainer.scrollTop = Math.max(
+          0,
+          scrollContainer.scrollTop + adjustedLinkRect.top - adjustedContainerRect.top
+        );
+      } else if (adjustedLinkRect.bottom > adjustedContainerRect.bottom) {
+        scrollContainer.scrollTop = Math.max(
+          0,
+          scrollContainer.scrollTop + adjustedLinkRect.bottom - adjustedContainerRect.bottom
+        );
+      }
     }
     scrollContainer.dataset.rayaCourseMapOriented = "true";
     return true;

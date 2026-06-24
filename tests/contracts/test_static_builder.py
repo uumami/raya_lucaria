@@ -2742,6 +2742,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "localStorage" not in script_text
     assert "sessionStorage" not in script_text
     assert "setExpanded(true)" in script_text
+    assert 'window.matchMedia("(min-width: 1280px)")' in script_text
+    assert 'window.matchMedia("(min-width: 901px)")' not in script_text
     assert "data-raya-prev-page" in script_text
     assert "data-raya-next-page" in script_text
     assert "ArrowLeft" in script_text
@@ -3273,6 +3275,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-command-graph::before",
         ".raya-command-map::before",
         ".raya-command-font::before",
+        ".raya-course-map a::before",
         ".raya-learning-shell",
         ".raya-course-map",
         ".raya-main-article",
@@ -3280,6 +3283,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-learning-rail-header",
         ".raya-learning-rail-body",
         ".raya-learning-rail-expand",
+        ".raya-learning-rail-expand::after",
         ".raya-rail-panel",
         ".raya-status-chip",
         ".raya-command:focus-visible",
@@ -3293,11 +3297,26 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
         in css
     )
+    assert (
+        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);"
+        in css
+    )
+    assert (
+        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);"
+        in css
+    )
+    assert "grid-template-columns: minmax(0, 1fr);" in css
+    assert "border-left: 0;" in css
+    assert "backdrop-filter: blur(18px);" in css
+    assert (
+        "transition: grid-template-rows 220ms ease, opacity 180ms ease, margin-top 220ms ease;"
+        in css
+    )
     assert "@media (max-width: 1500px)" in css
-    assert "@media (min-width: 1100px)" in css
-    assert "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem);" in css
+    assert "@media (min-width: 1280px)" in css
+    assert "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
     assert "outline: 3px solid var(--raya-color-accent);" in css
-    assert "@media (max-width: 1099px)" in css
+    assert "@media (max-width: 1279px)" in css
     assert "max-width: 68rem;" in css
 
 

@@ -31,8 +31,8 @@ static site; they change text scale or page font for easier reading but do not
 change course content, grading, links, skin identity, or authority labels.
 
 The current course shell is a static reading aid. On desktop, the expanded course map
-is rendered as an expanded hierarchical course map and gives
-orientation by default, the top bar keeps the current course/page title and
+is rendered as an expanded hierarchical course map and may show structural
+sequence numbers from the course order. It gives orientation by default, the top bar keeps the current course/page title and
 structural page position visible, the main article remains the lesson, and the
 learning rail provides page contents and nearby course context. You can collapse
 the map to an operable compact map rail when you want more reading space; that

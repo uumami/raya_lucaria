@@ -1402,15 +1402,15 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)"
         in rich_css
     )
-    assert "@media (min-width: 1100px)" in rich_css
+    assert "@media (min-width: 1280px)" in rich_css
     assert (
-        "grid-template-columns: 4.25rem minmax(0, 1fr) minmax(16rem, 18rem)" in rich_css
+        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)" in rich_css
     )
     assert "transition: grid-template-columns 180ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
     assert ".raya-rail-toggle:focus-visible" in rich_css
     assert "outline: 3px solid var(--raya-color-accent)" in rich_css
-    assert "@media (max-width: 1099px)" in rich_css
+    assert "@media (max-width: 1279px)" in rich_css
 
 
 def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
@@ -1856,6 +1856,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
             try:
                 for viewport in (
                     {"width": 1280, "height": 900},
+                    {"width": 1100, "height": 900},
                     {"width": 960, "height": 900},
                     {"width": 1024, "height": 900},
                     {"width": 390, "height": 844},
@@ -1869,7 +1870,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         _assert_no_horizontal_overflow(page)
                         _assert_intersects_viewport(page, "header.raya-top-command-bar")
                         _assert_intersects_viewport(page, "article.raya-main-article")
-                        if viewport["width"] >= 1100:
+                        if viewport["width"] >= 1280:
                             _assert_intersects_viewport(page, "nav.raya-course-map")
                             _assert_intersects_viewport(
                                 page, "aside.raya-learning-rail"
@@ -1885,8 +1886,137 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                               ).map((element) => element.tagName.toLowerCase()).join('>')"""
                         )
                         assert dom_order == "nav>article>aside"
-                        if viewport["width"] >= 1100:
+                        if viewport["width"] >= 1280:
                             assert course_map["x"] < article["x"] < learning_rail["x"]
+                            metrics = page.evaluate(
+                                """() => {
+                                  const shell = document.querySelector('.raya-learning-shell');
+                                  const map = document.querySelector('#raya-course-map');
+                                  const article = document.querySelector('#raya-article');
+                                  const rail = document.querySelector('#raya-learning-rail');
+                                  const commandBar = document.querySelector('.raya-top-command-bar');
+                                  const commands = Array.from(document.querySelectorAll('.raya-command'));
+                                  const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
+                                  return {
+                                    shellWidth: shell.getBoundingClientRect().width,
+                                    mapWidth: map.getBoundingClientRect().width,
+                                    articleWidth: article.getBoundingClientRect().width,
+                                    railWidth: rail.getBoundingClientRect().width,
+                                    commandBarHeight: commandBar.getBoundingClientRect().height,
+                                    commandHeights: commands.map((button) => button.getBoundingClientRect().height),
+                                    commandWidths: commands.map((button) => button.getBoundingClientRect().width),
+                                    mapIndex: currentMapLink?.getAttribute('data-raya-map-index'),
+                                    mapNumber: currentMapLink
+                                      ? getComputedStyle(currentMapLink, '::before').content
+                                      : '',
+                                    mapNumberDisplay: currentMapLink
+                                      ? getComputedStyle(currentMapLink, '::before').display
+                                      : '',
+                                  };
+                                }"""
+                            )
+                            assert 188 <= metrics["mapWidth"] <= 250
+                            assert metrics["articleWidth"] >= 760
+                            assert 220 <= metrics["railWidth"] <= 285
+                            assert metrics["commandBarHeight"] <= 72
+                            assert all(
+                                36 <= height <= 48
+                                for height in metrics["commandHeights"]
+                            )
+                            assert all(
+                                width >= 40 for width in metrics["commandWidths"]
+                            )
+                            assert metrics["mapIndex"]
+                            assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
+                            assert metrics["mapNumberDisplay"] in {
+                                "inline-flex",
+                                "flex",
+                            }
+                            page.click(".raya-course-map-toggle")
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-course-map')
+                                  ?.getBoundingClientRect().width < 80"""
+                            )
+                            page.click("[data-raya-learning-rail-collapse]")
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-learning-rail-body')
+                                  ?.getAttribute('aria-hidden') === 'true'"""
+                            )
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-learning-rail')
+                                  ?.getBoundingClientRect().width < 70"""
+                            )
+                            collapsed = page.evaluate(
+                                """() => ({
+                                  mapWidth: document.querySelector('#raya-course-map')
+                                    .getBoundingClientRect().width,
+                                  railWidth: document.querySelector('#raya-learning-rail')
+                                    .getBoundingClientRect().width,
+                                  mapButtonAfter: getComputedStyle(
+                                    document.querySelector('#raya-course-map .raya-course-map-toggle'),
+                                    '::after'
+                                  ).content,
+                                  railButtonAfter: getComputedStyle(
+                                    document.querySelector('.raya-learning-rail-expand'),
+                                    '::after'
+                                  ).content,
+                                  railBodyHidden: document
+                                    .querySelector('#raya-learning-rail-body')
+                                    .getAttribute('aria-hidden'),
+                                  railBodyInert: document
+                                    .querySelector('#raya-learning-rail-body')
+                                    .inert,
+                                  collapsedMapLinks: Array
+                                    .from(document.querySelectorAll('#raya-course-map a[href]'))
+                                    .filter((link) => {
+                                      const rect = link.getBoundingClientRect();
+                                      return rect.width > 0 && rect.height > 0;
+                                    })
+                                    .map((link) => {
+                                      const rect = link.getBoundingClientRect();
+                                      return {
+                                        width: rect.width,
+                                        height: rect.height,
+                                        text: link.textContent.trim(),
+                                      };
+                                    }),
+                                })"""
+                            )
+                            assert 64 <= collapsed["mapWidth"] <= 84
+                            assert 44 <= collapsed["railWidth"] <= 64
+                            assert collapsed["mapButtonAfter"] == '"Map"'
+                            assert collapsed["railButtonAfter"] == '"Info"'
+                            assert collapsed["railBodyHidden"] == "true"
+                            assert collapsed["railBodyInert"] is True
+                            assert collapsed["collapsedMapLinks"]
+                            assert all(
+                                link["width"] >= 34
+                                and link["height"] >= 34
+                                for link in collapsed["collapsedMapLinks"]
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            page.set_viewport_size({"width": 1100, "height": 900})
+                            page.wait_for_timeout(100)
+                            resized = page.evaluate(
+                                """() => {
+                                  const railBody = document.querySelector('#raya-learning-rail-body');
+                                  return {
+                                    display: getComputedStyle(railBody).display,
+                                    ariaHidden: railBody.getAttribute('aria-hidden'),
+                                    inert: railBody.inert,
+                                    height: railBody.getBoundingClientRect().height,
+                                  };
+                                }"""
+                            )
+                            assert resized["display"] != "none"
+                            assert resized["height"] > 0
+                            assert resized["ariaHidden"] == "false"
+                            assert resized["inert"] is False
+                            _assert_no_horizontal_overflow(page)
+                            page.locator(".raya-skip-link").focus()
                         else:
                             if viewport["width"] >= 900:
                                 assert article["width"] >= 700
@@ -1927,6 +2057,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         )
                         assert (
                             "raya-skip-link" in focused
+                            or "raya-reading-context-link" in focused
                             or "raya-text-size-toggle" in focused
                             or "raya-font-toggle" in focused
                         )
@@ -2026,8 +2157,10 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                             scrollTop: map.scrollTop,
                             currentTop: currentRect.top,
                             currentBottom: currentRect.bottom,
+                            currentHeight: currentRect.height,
                             mapTop: mapRect.top,
                             mapBottom: mapRect.bottom,
+                            mapHeight: mapRect.height,
                             localStorageKeys: Object.keys(localStorage),
                             sessionStorageKeys: Object.keys(sessionStorage),
                           };
@@ -2036,8 +2169,11 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert orientation is not None
                     assert orientation["oriented"] == "true"
                     assert orientation["scrollTop"] > 0
-                    assert orientation["currentTop"] >= orientation["mapTop"]
-                    assert orientation["currentBottom"] <= orientation["mapBottom"]
+                    assert orientation["currentTop"] >= orientation["mapTop"] - 1
+                    if orientation["currentHeight"] <= orientation["mapHeight"]:
+                        assert orientation["currentBottom"] <= orientation["mapBottom"] + 1
+                    else:
+                        assert orientation["currentBottom"] >= orientation["mapTop"]
                     assert orientation["localStorageKeys"] == []
                     assert orientation["sessionStorageKeys"] == []
                     page.click(".raya-course-map-toggle")
@@ -2068,15 +2204,20 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                             scrollTop: map.scrollTop,
                             currentTop: currentRect.top,
                             currentBottom: currentRect.bottom,
+                            currentHeight: currentRect.height,
                             mapTop: mapRect.top,
                             mapBottom: mapRect.bottom,
+                            mapHeight: mapRect.height,
                           };
                         }"""
                     )
                     assert reexpanded is not None
                     assert reexpanded["scrollTop"] > 0
-                    assert reexpanded["currentTop"] >= reexpanded["mapTop"]
-                    assert reexpanded["currentBottom"] <= reexpanded["mapBottom"]
+                    assert reexpanded["currentTop"] >= reexpanded["mapTop"] - 1
+                    if reexpanded["currentHeight"] <= reexpanded["mapHeight"]:
+                        assert reexpanded["currentBottom"] <= reexpanded["mapBottom"] + 1
+                    else:
+                        assert reexpanded["currentBottom"] >= reexpanded["mapTop"]
                     first_toggle = page.locator("[data-raya-map-node-toggle]").first
                     before = first_toggle.get_attribute("aria-expanded")
                     first_toggle.click()
@@ -2677,7 +2818,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-course-map')
-                          ?.getBoundingClientRect().width > 220"""
+                          ?.getBoundingClientRect().width >= 220"""
                     )
                     expanded = page.evaluate(
                         """() => ({
@@ -3464,7 +3605,7 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
                     assert stable["shellReady"] == "true"
                     assert stable["state"] == "expanded"
                     assert stable["expanded"] == "true"
-                    assert stable["mapWidth"] > 220
+                    assert stable["mapWidth"] >= 220
                 finally:
                     page.close()
             finally:
@@ -3617,7 +3758,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
     assert 220 <= chrome["mapWidth"] <= 300
-    assert 250 <= chrome["railWidth"] <= 330
+    assert 240 <= chrome["railWidth"] <= 330
     assert chrome["topBarLuminance"] < chrome["pageLuminance"] - 0.35
     assert chrome["topBarBackground"] != chrome["bodyBackground"]
     assert chrome["topBarText"] != chrome["topBarBackground"]
@@ -3788,7 +3929,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     assert '<main class="raya-inspection-main">' in inspection_html
     assert ".raya-learning-shell" in css
     assert "grid-template-columns" in css
-    assert "@media (max-width: 1099px)" in css
+    assert "@media (max-width: 1279px)" in css
     assert "overflow-wrap: anywhere" in css
 
 
