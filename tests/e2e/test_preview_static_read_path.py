@@ -859,6 +859,59 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-panel]"
                         ).is_visible()
+                        before_key_pan = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        page.locator("#raya-graph-canvas").focus()
+                        page.keyboard.press("ArrowRight")
+                        after_key_pan = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        assert after_key_pan[0] > before_key_pan[0]
+                        assert page.input_value("#graph-search") == "matrx"
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
+                        page.click('[data-raya-graph-pan="left"]')
+                        after_button_pan = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        assert after_button_pan[0] < after_key_pan[0]
+                        canvas_box = page.locator("#raya-graph-canvas").bounding_box()
+                        assert canvas_box is not None
+                        before_drag_pan = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "mousedown",
+                            {
+                                "button": 0,
+                                "clientX": canvas_box["x"] + canvas_box["width"] * 0.08,
+                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                            },
+                        )
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "mousemove",
+                            {
+                                "clientX": canvas_box["x"] + canvas_box["width"] * 0.02,
+                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                            },
+                        )
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "mouseup",
+                            {
+                                "clientX": canvas_box["x"] + canvas_box["width"] * 0.02,
+                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                            },
+                        )
+                        after_drag_pan = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )
+                        assert after_drag_pan[0] > before_drag_pan[0]
+                        assert page.input_value("#graph-search") == "matrx"
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
                         assert (
                             page.locator("[data-raya-graph-detail-title]")
                             .inner_text()

@@ -3316,6 +3316,12 @@ def _render_graph_surface(
             '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">Zoom in</button>',
             '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">Zoom out</button>',
             '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset view</button>',
+            '<span class="raya-graph-pan-controls" aria-label="Pan graph">',
+            '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">Left</button>',
+            '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">Right</button>',
+            '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">Up</button>',
+            '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">Down</button>',
+            "</span>",
             '<button id="graph-reset" type="button">Reset graph</button>',
             '<button id="graph-expand" type="button" aria-pressed="false">Expand graph</button>',
             "</section>",
@@ -3357,7 +3363,7 @@ def _render_graph_surface(
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             (
                 '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
-                'role="img" aria-label="Course graph"></svg>'
+                'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
             "</section>",
             (
@@ -3499,6 +3505,11 @@ def _render_graph_surface(
             (
                 "<p>Zoom and Reset view change only the visual SVG graph view; "
                 "the list and selected-page details remain complete.</p>"
+            ),
+            (
+                "<p>Drag the graph canvas, use pan buttons, or focus the graph "
+                "and use Arrow keys to move the viewport. Pan changes only the "
+                "viewport.</p>"
             ),
             "</details>",
             "</div>",

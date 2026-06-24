@@ -65,10 +65,11 @@ context, transient hover/focus spotlight dimming, hover/focus inspection text, k
 inspection parity, public selected-page discovery card metadata, non-persistent selected-neighborhood focus mode,
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
-out, Fit, and Reset view, and a non-persistent expanded workspace mode. These visual
+out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,
+and Reset view, and a non-persistent expanded workspace mode. These visual
 semantics are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
-completion signals. Fit and Reset view change only the visual graph viewport;
+completion signals. Pan, Zoom in, Zoom out, Fit, and Reset view change only the visual graph viewport;
 they must not clear search, filters, selected-page details, or authored graph
 data. The default `Connections` layout may arrange visible pages by normalized
 explicit graph relationships and course order so students can read link flow,

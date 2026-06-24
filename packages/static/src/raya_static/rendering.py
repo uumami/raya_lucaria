@@ -1203,14 +1203,28 @@ img {
   margin: 0;
   padding-left: 1.2rem;
 }
+.raya-graph-pan-controls {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
 .raya-graph-canvas {
   background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
+  cursor: grab;
   display: block;
   flex: 1 1 auto;
   min-height: 34rem;
   width: 100%;
+}
+.raya-graph-canvas.is-panning {
+  cursor: grabbing;
+}
+.raya-graph-canvas:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
 }
 [data-raya-graph-expanded="true"] .raya-graph-canvas {
   min-height: clamp(34rem, 72vh, 48rem);

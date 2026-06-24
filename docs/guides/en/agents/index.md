@@ -115,14 +115,15 @@ status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
 normal page links, the default deterministic `Connections` layout, alternate
 `Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
-SVG viewport controls, shared discovery chrome, compact mobile discovery
+SVG viewport controls including pan buttons, focused graph Arrow-key panning,
+pointer drag panning, shared discovery chrome, compact mobile discovery
 chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Graph layout positions are readability cues over explicit generated graph data;
 they must not come from external graph libraries or imply recommendation,
 progress, ranking, importance, mastery, or authority.
-Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must
+Pan, Zoom in, Zoom out, Fit, and Reset view may change the SVG `viewBox`; they must
 not fetch graph data, persist graph state, clear selected-page details, or remain
 enabled when the SVG graph is hidden by list layout.
 Generated URL context may select a page only when it resolves to an embedded

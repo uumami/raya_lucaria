@@ -536,6 +536,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     index_html = (site / "index.html").read_text(encoding="utf-8")
     graph_html = graph_page.read_text(encoding="utf-8")
     graph_script = graph_js.read_text(encoding="utf-8")
+    stylesheet = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
 
     assert graph_page.exists()
     assert graph_js.exists()
@@ -579,6 +580,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Zoom out" in graph_html
     assert "Reset view" in graph_html
     assert "Reset graph" in graph_html
+    assert "Pan graph left" in graph_html
+    assert "Pan graph right" in graph_html
+    assert 'data-raya-graph-pan="left"' in graph_html
+    assert 'tabindex="0"' in graph_html
     assert "raya-graph-instructions" in graph_html
     assert "Hover or focus a page" in graph_html
     assert "data-raya-graph-hover-status" in graph_html
@@ -593,6 +598,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "source-group edge colors" in graph_html
     assert "Search spotlight" in graph_html
     assert "search spotlight is a structural readability cue" in graph_html
+    assert "Pan changes only the viewport" in graph_html
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
@@ -723,6 +729,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "searchContextNodeIds" in graph_script
     assert "is-search-context" in graph_script
     assert "is-search-dimmed" in graph_script
+    assert "panGraphView" in graph_script
+    assert "startGraphPan" in graph_script
+    assert "data-raya-graph-pan" in graph_script
+    assert ".raya-graph-pan-controls" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

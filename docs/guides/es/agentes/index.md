@@ -127,7 +127,8 @@ inspeccion con teclado, modo de foco de vecindario seleccionado, controles de pa
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, layout determinista `Connections` por defecto,
 layouts alternos `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
-expandida del grafo, controles SVG de viewport, chrome compartido de
+expandida del grafo, controles SVG de viewport incluyendo botones de pan,
+pan con `Arrow keys` cuando el grafo tiene foco, pan por arrastre del puntero, chrome compartido de
 descubrimiento, chrome movil compacto, comportamiento movil sin overflow y sin
 solicitudes externas despues de cargar la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos

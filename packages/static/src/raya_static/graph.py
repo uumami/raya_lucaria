@@ -28,6 +28,7 @@ _GRAPH_JAVASCRIPT = r"""
   const zoomIn = document.getElementById("graph-zoom-in");
   const zoomOut = document.getElementById("graph-zoom-out");
   const resetView = document.getElementById("graph-reset-view");
+  const panButtons = Array.from(document.querySelectorAll("[data-raya-graph-pan]"));
   const reset = document.getElementById("graph-reset");
   const graphExpand = document.getElementById("graph-expand");
   const panelToggles = Array.from(document.querySelectorAll("[data-raya-graph-toggle-panel]"));
@@ -76,6 +77,7 @@ _GRAPH_JAVASCRIPT = r"""
   let pendingSelectTimer = 0;
   let fullViewBox = null;
   let graphViewBox = null;
+  let graphPanStart = null;
 
   function normalize(value) {
     return String(value || "")
@@ -507,7 +509,7 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function setGraphViewportControlsEnabled(enabled) {
-    [zoomIn, zoomOut, resetView].forEach((button) => {
+    [zoomIn, zoomOut, resetView, ...panButtons].forEach((button) => {
       if (button) button.disabled = !enabled;
     });
   }
@@ -589,6 +591,72 @@ _GRAPH_JAVASCRIPT = r"""
       width: nextWidth,
       height: nextHeight,
     });
+  }
+
+  function panGraphView(dxRatio, dyRatio) {
+    if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
+      return;
+    }
+    setGraphViewBox({
+      x: graphViewBox.x + graphViewBox.width * dxRatio,
+      y: graphViewBox.y + graphViewBox.height * dyRatio,
+      width: graphViewBox.width,
+      height: graphViewBox.height,
+    });
+  }
+
+  function startGraphPan(event) {
+    if (
+      graphPanStart ||
+      !graphViewBox ||
+      event.button !== 0 ||
+      root.getAttribute("data-raya-graph-layout") === "list"
+    ) {
+      return;
+    }
+    if (event.target.closest && event.target.closest("[data-raya-graph-node]")) {
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    graphPanStart = {
+      pointerId: event.pointerId ?? "mouse",
+      clientX: event.clientX,
+      clientY: event.clientY,
+      rectWidth: Math.max(1, rect.width),
+      rectHeight: Math.max(1, rect.height),
+      box: { ...graphViewBox },
+    };
+    if (event.pointerId !== undefined && canvas.setPointerCapture) {
+      canvas.setPointerCapture(event.pointerId);
+    }
+    canvas.classList.add("is-panning");
+  }
+
+  function moveGraphPan(event) {
+    const pointerId = event.pointerId ?? "mouse";
+    if (!graphPanStart || graphPanStart.pointerId !== pointerId) return;
+    const dx = ((event.clientX - graphPanStart.clientX) / graphPanStart.rectWidth) * graphPanStart.box.width;
+    const dy = ((event.clientY - graphPanStart.clientY) / graphPanStart.rectHeight) * graphPanStart.box.height;
+    setGraphViewBox({
+      x: graphPanStart.box.x - dx,
+      y: graphPanStart.box.y - dy,
+      width: graphPanStart.box.width,
+      height: graphPanStart.box.height,
+    });
+  }
+
+  function endGraphPan(event) {
+    const pointerId = event.pointerId ?? "mouse";
+    if (!graphPanStart || graphPanStart.pointerId !== pointerId) return;
+    graphPanStart = null;
+    canvas.classList.remove("is-panning");
+    if (event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may already be released by the browser.
+      }
+    }
   }
 
   function inspectionTextFor(nodeId) {
@@ -1049,6 +1117,38 @@ _GRAPH_JAVASCRIPT = r"""
   if (zoomIn) zoomIn.addEventListener("click", () => zoomGraphView(0.82));
   if (zoomOut) zoomOut.addEventListener("click", () => zoomGraphView(1.22));
   if (resetView) resetView.addEventListener("click", resetGraphView);
+  panButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const direction = button.getAttribute("data-raya-graph-pan") || "";
+      if (direction === "left") panGraphView(-0.16, 0);
+      if (direction === "right") panGraphView(0.16, 0);
+      if (direction === "up") panGraphView(0, -0.16);
+      if (direction === "down") panGraphView(0, 0.16);
+    });
+  });
+  canvas.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      panGraphView(-0.12, 0);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      panGraphView(0.12, 0);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      panGraphView(0, -0.12);
+    } else if (event.key === "ArrowDown") {
+      event.preventDefault();
+      panGraphView(0, 0.12);
+    }
+  });
+  canvas.addEventListener("pointerdown", startGraphPan);
+  canvas.addEventListener("pointermove", moveGraphPan);
+  canvas.addEventListener("pointerup", endGraphPan);
+  canvas.addEventListener("pointercancel", endGraphPan);
+  canvas.addEventListener("mousedown", startGraphPan);
+  canvas.addEventListener("mousemove", moveGraphPan);
+  canvas.addEventListener("mouseup", endGraphPan);
+  canvas.addEventListener("mouseleave", endGraphPan);
   if (reset) {
     reset.addEventListener("click", () => {
       if (search) search.value = "";
