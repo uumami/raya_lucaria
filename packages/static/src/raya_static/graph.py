@@ -181,10 +181,133 @@ _GRAPH_JAVASCRIPT = r"""
     return index >= 0 ? (index % 8) + 1 : 1;
   }
 
+  function compareNodesByOrder(a, b) {
+    const aOrder = Number(a.order || 0);
+    const bOrder = Number(b.order || 0);
+    return aOrder - bOrder ||
+      String(a.title || a.nav_title || a.id).localeCompare(String(b.title || b.nav_title || b.id)) ||
+      String(a.id).localeCompare(String(b.id));
+  }
+
+  function layoutEdgesFor(activeNodes) {
+    const activeIds = new Set(activeNodes.map((node) => node.id));
+    const seen = new Set();
+    const layoutEdges = [];
+    edges.forEach((edge) => {
+      if (!activeIds.has(edge.from) || !activeIds.has(edge.to)) return;
+      if (edge.kind === "parent") return;
+      const fromNode = nodesById.get(edge.from);
+      const toNode = nodesById.get(edge.to);
+      const fromOrder = Number(fromNode ? fromNode.order || 0 : 0);
+      const toOrder = Number(toNode ? toNode.order || 0 : 0);
+      let from = edge.from;
+      let to = edge.to;
+      if (fromOrder > toOrder) {
+        if (edge.kind !== "content" && edge.kind !== "prerequisite") return;
+        from = edge.to;
+        to = edge.from;
+      }
+      const key = `${from}\u0000${to}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      layoutEdges.push({ from, to });
+    });
+    return layoutEdges;
+  }
+
+  function connectionDepthsFor(activeNodes) {
+    const incomingByNode = new Map(activeNodes.map((node) => [node.id, []]));
+    const outgoingByNode = new Map(activeNodes.map((node) => [node.id, []]));
+    const layoutEdges = layoutEdgesFor(activeNodes);
+    layoutEdges.forEach((edge) => {
+      incomingByNode.get(edge.to).push(edge.from);
+      outgoingByNode.get(edge.from).push(edge.to);
+    });
+
+    const orderedNodes = activeNodes.slice().sort(compareNodesByOrder);
+    let roots = orderedNodes.filter((node) => (incomingByNode.get(node.id) || []).length === 0);
+    if (roots.length === 0 && orderedNodes.length > 0) {
+      roots = [orderedNodes[0]];
+    }
+
+    const depths = new Map();
+    roots.forEach((node) => depths.set(node.id, 0));
+    const queue = roots.map((node) => node.id);
+    while (queue.length > 0) {
+      const id = queue.shift();
+      const baseDepth = depths.get(id) || 0;
+      (outgoingByNode.get(id) || []).forEach((targetId) => {
+        if (!depths.has(targetId)) {
+          depths.set(targetId, baseDepth + 1);
+          queue.push(targetId);
+        }
+      });
+    }
+
+    for (let pass = 0; pass < activeNodes.length; pass += 1) {
+      let changed = false;
+      layoutEdges.forEach((edge) => {
+        if (!depths.has(edge.from)) return;
+        const nextDepth = (depths.get(edge.from) || 0) + 1;
+        const currentDepth = depths.has(edge.to) ? depths.get(edge.to) : -1;
+        if (nextDepth > currentDepth && nextDepth <= activeNodes.length) {
+          depths.set(edge.to, nextDepth);
+          changed = true;
+        }
+      });
+      if (!changed) break;
+    }
+
+    orderedNodes.forEach((node) => {
+      if (depths.has(node.id)) return;
+      const incomingDepths = (incomingByNode.get(node.id) || [])
+        .filter((id) => depths.has(id))
+        .map((id) => (depths.get(id) || 0) + 1);
+      depths.set(node.id, incomingDepths.length ? Math.min(...incomingDepths) : 0);
+    });
+
+    return { depths, incomingByNode, outgoingByNode };
+  }
+
   function positionsFor(activeNodes, mode) {
     const width = 960;
     const height = 560;
     const positions = new Map();
+    if (mode === "connections") {
+      const { depths } = connectionDepthsFor(activeNodes);
+      const byDepth = new Map();
+      activeNodes.forEach((node) => {
+        const depth = depths.get(node.id) || 0;
+        if (!byDepth.has(depth)) byDepth.set(depth, []);
+        byDepth.get(depth).push(node);
+      });
+      const orderedDepths = Array.from(byDepth.keys()).sort((a, b) => a - b);
+      const sidePadding = 64;
+      const availableWidth = Math.max(1, width - sidePadding * 2);
+      const columnGap = orderedDepths.length <= 1
+        ? 0
+        : availableWidth / (orderedDepths.length - 1);
+      orderedDepths.forEach((depth, depthIndex) => {
+        const columnNodes = (byDepth.get(depth) || []).slice().sort(compareNodesByOrder);
+        const topPadding = 76;
+        const bottomPadding = 76;
+        const availableHeight = Math.max(1, height - topPadding - bottomPadding);
+        const rowGap = columnNodes.length <= 1
+          ? 0
+          : availableHeight / (columnNodes.length - 1);
+        columnNodes.forEach((node, nodeIndex) => {
+          positions.set(node.id, {
+            x: orderedDepths.length <= 1
+              ? width / 2
+              : sidePadding + depthIndex * columnGap,
+            y: columnNodes.length <= 1
+              ? height / 2
+              : topPadding + nodeIndex * rowGap,
+          });
+        });
+      });
+      return { width, height, positions };
+    }
     if (mode === "radial") {
       const centerX = width / 2;
       const centerY = height / 2;
@@ -787,7 +910,7 @@ _GRAPH_JAVASCRIPT = r"""
   if (reset) {
     reset.addEventListener("click", () => {
       if (search) search.value = "";
-      if (layout) layout.value = "map";
+      if (layout) layout.value = "connections";
       hiddenGroups.clear();
       selectedId = "";
       inspectedId = "";

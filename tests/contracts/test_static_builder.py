@@ -564,6 +564,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "cytoscape" not in graph_html.lower()
     assert "graph-search" in graph_html
     assert "graph-layout" in graph_html
+    assert '<option value="connections" selected>Connections</option>' in graph_html
+    assert '<option value="map">Map</option>' in graph_html
+    assert '<option value="radial">Radial</option>' in graph_html
+    assert '<option value="list">List</option>' in graph_html
     assert "graph-fit" in graph_html
     assert "graph-zoom-in" in graph_html
     assert "graph-zoom-out" in graph_html
@@ -585,6 +589,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Connected page" in graph_html
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
+    assert "Connections is the default layout" in graph_html
+    assert "not learner state or personal guidance" in graph_html
     assert "raya-graph-detail" in graph_html
     assert "raya-graph-workspace" in graph_html
     assert "raya-graph-map-panel" in graph_html
@@ -679,6 +685,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "zoomGraphView" in graph_script
     assert "resetGraphView" in graph_script
     assert "setGraphViewportControlsEnabled" in graph_script
+    assert "connectionDepthsFor" in graph_script
+    assert "layoutEdgesFor" in graph_script
+    assert 'mode === "connections"' in graph_script
+    assert "incomingByNode" in graph_script
+    assert "outgoingByNode" in graph_script
     assert "setGraphPanelState" in graph_script
     assert "data-raya-graph-list-state" in graph_script
     assert "data-raya-graph-inspector-state" in graph_script

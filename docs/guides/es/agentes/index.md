@@ -123,10 +123,11 @@ de paginas conectadas, filtros de grupo, semantica de color por grupo, tamano de
 nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
 inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
-enlaces normales de pagina, estado de area de trabajo expandida del grafo, controles SVG
-de viewport, chrome compartido de descubrimiento, chrome movil compacto,
-comportamiento movil sin overflow y sin solicitudes externas despues de cargar
-la pagina. El
+enlaces normales de pagina, layout determinista `Connections` por defecto,
+layouts alternos `Map`, `Radial` y `List`, estado de area de trabajo expandida
+del grafo, controles SVG de viewport, chrome compartido de descubrimiento,
+chrome movil compacto, comportamiento movil sin overflow y sin solicitudes
+externas despues de cargar la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos
 del artifact, no de HTML scrapeado ni almacenamiento del navegador. El contexto de URL
 generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
@@ -136,7 +137,10 @@ seleccionado. El foco de vecindario seleccionado puede reducir el grafo y la lis
 visibles a la pagina seleccionada mas paginas directamente conectadas, pero debe
 seguir transitorio, reversible y sin almacenamiento de estado del grafo, llamadas `fetch`,
 librerias externas de grafo, lenguaje de recomendacion, progreso, ranking o
-dominio. Los conteos del riel Connections deben venir solo de contexto
+dominio. Las posiciones de la disposicion del grafo son solo ayudas de lectura sobre
+datos generados explicitos; no deben venir de librerias externas de grafo ni
+implicar recomendacion, progreso, ranking, importancia, dominio o autoridad.
+Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
 a prerequisitos explicitos o contexto de grafo entrante/saliente.
 Zoom in, Zoom out, Fit y Reset view pueden cambiar el `viewBox` SVG; no deben

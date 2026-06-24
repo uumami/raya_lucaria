@@ -3305,6 +3305,7 @@ def _render_graph_surface(
             '<label for="graph-layout">Layout</label>',
             (
                 '<select id="graph-layout">'
+                '<option value="connections" selected>Connections</option>'
                 '<option value="map">Map</option>'
                 '<option value="radial">Radial</option>'
                 '<option value="list">List</option>'
@@ -3452,6 +3453,11 @@ def _render_graph_surface(
             (
                 "<p>Search filters pages by generated titles, labels, stable IDs, "
                 "groups, tags, and status metadata.</p>"
+            ),
+            (
+                "<p>Connections is the default layout. It arranges pages from "
+                "explicit links and course order; positions are structural reading "
+                "cues, not learner state or personal guidance.</p>"
             ),
             (
                 "<p>Map groups pages by course structure, radial places visible "

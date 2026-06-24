@@ -43,6 +43,16 @@ def _viewbox_width(value: str | None) -> float:
     return _viewbox_values(value)[2]
 
 
+def _graph_node_translate(page, node_id: str) -> tuple[float, float]:
+    transform = page.locator(
+        f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
+    ).get_attribute("transform")
+    assert transform is not None
+    match = re.search(r"translate\(([-0-9.]+)\s+([-0-9.]+)\)", transform)
+    assert match is not None
+    return float(match.group(1)), float(match.group(2))
+
+
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     tmp_path: Path,
 ) -> None:
@@ -371,6 +381,27 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    for index in range(6, 18):
+        crowded_page = course / "course" / f"{index}_crowded_{index}" / "0_index.md"
+        crowded_page.parent.mkdir(parents=True)
+        crowded_page.write_text(
+            "\n".join(
+                [
+                    "---",
+                    f"id: crowded-{index}",
+                    f"title: Crowded Page {index}",
+                    f"summary: Crowded layout fixture page {index}.",
+                    "status: ready",
+                    "---",
+                    "",
+                    f"# Crowded Page {index}",
+                    "",
+                    "Crowded layout fixture content.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -442,6 +473,55 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             ".raya-graph-inspector-panel"
                         ).is_visible()
+                        assert page.locator("#graph-layout").input_value() == "connections"
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "connections"
+                        )
+                        root_x, _ = _graph_node_translate(page, "render-root")
+                        static_x, _ = _graph_node_translate(page, "static-path")
+                        math_x, _ = _graph_node_translate(page, "math-authoring")
+                        reader_x, _ = _graph_node_translate(page, "reader-ux")
+                        matrix_x, _ = _graph_node_translate(
+                            page, "authoring-matrix"
+                        )
+                        assert root_x < static_x
+                        assert root_x < reader_x
+                        assert root_x < matrix_x
+                        assert math_x < matrix_x
+                        canvas_height = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )[3]
+                        canvas_width = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )[2]
+                        graph_node_positions = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node] g"
+                        ).evaluate_all(
+                            """nodes => nodes.map((node) => {
+                              const match = node
+                                .getAttribute('transform')
+                                .match(/translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/);
+                              return {
+                                x: Number(match[1]),
+                                y: Number(match[2]),
+                              };
+                            })"""
+                        )
+                        crowded_count = page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node^="crowded-"] g'
+                        ).count()
+                        assert crowded_count == 12
+                        assert all(
+                            30 <= position["x"] <= canvas_width - 30
+                            for position in graph_node_positions
+                        )
+                        assert all(
+                            30 <= position["y"] <= canvas_height - 30
+                            for position in graph_node_positions
+                        )
                         if viewport["width"] >= 1280:
                             graph_box = page.locator(
                                 ".raya-graph-map-panel"
@@ -820,6 +900,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator("#graph-zoom-out").is_disabled()
                         assert page.locator("#graph-reset-view").is_disabled()
                         page.select_option("#graph-layout", "map")
+                        page.select_option("#graph-layout", "connections")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "connections"
+                        )
+                        page.select_option("#graph-layout", "map")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
                                 "data-raya-graph-layout"
@@ -843,7 +931,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             page.locator("[data-raya-graph-page]").get_attribute(
                                 "data-raya-graph-layout"
                             )
-                            == "map"
+                            == "connections"
                         )
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
