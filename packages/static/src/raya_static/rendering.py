@@ -1651,12 +1651,27 @@ html[data-raya-shell-ready="true"] .raya-course-map {
 .raya-course-map-workspace-link {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
-  justify-content: center;
+  display: grid;
+  gap: 0.1rem;
+  justify-content: stretch;
   min-height: 2.15rem;
-  padding: 0.35rem 0.45rem;
+  padding: 0.4rem 0.45rem;
+  text-decoration: none;
 }
 .raya-course-map-workspace-link::before {
   display: none;
+}
+.raya-course-map-workspace-label {
+  color: var(--raya-color-text);
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.raya-course-map-workspace-badge {
+  color: var(--raya-color-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 .raya-course-map-toggle {
   background: var(--raya-color-accent-soft);

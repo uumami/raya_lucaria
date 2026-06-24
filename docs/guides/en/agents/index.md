@@ -128,6 +128,10 @@ non-persistent UI state; current-page map orientation must also remain
 non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not
 learner progress.
+When changing Course workspace shortcut cards, verify labels, structural badges,
+deployment-neutral hrefs, page-focused Practice hrefs only for direct official
+ownership, collapsed-map hiding, desktop/mobile no-overflow behavior, and no
+storage, fetch, progress, ranking, recommendation, or learner-state language.
 
 The Page brief is part of the reader shell. Verify it appears before authored
 content when public metadata exists, uses escaped summary/status/tags, resolved

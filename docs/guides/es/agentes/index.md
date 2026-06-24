@@ -140,6 +140,12 @@ pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
 storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
 en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
+Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
+estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
+pagina solo cuando haya propiedad directa de objetos oficiales, ocultamiento en
+mapa colapsado, comportamiento desktop/movil sin overflow, y ausencia de
+storage, fetch, progreso, ranking, recomendacion o lenguaje de estado del
+estudiante.
 
 El Page brief es parte de la shell lectora. Verifica que aparezca antes del
 contenido autorado cuando exista metadata publica, que use resumen/status/tags

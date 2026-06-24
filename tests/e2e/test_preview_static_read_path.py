@@ -2970,7 +2970,14 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   );
                                   return {
                                     visible: !!section && getComputedStyle(section).display !== 'none',
-                                    labels: links.map((link) => link.textContent.trim()),
+                                    labels: links.map((link) => link
+                                      .querySelector('.raya-course-map-workspace-label')
+                                      ?.textContent
+                                      ?.trim() || ''),
+                                    badges: links.map((link) => link
+                                      .querySelector('.raya-course-map-workspace-badge')
+                                      ?.textContent
+                                      ?.trim() || ''),
                                     hrefs: links.map((link) => link.getAttribute('href')),
                                   };
                                 }"""
@@ -2982,6 +2989,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "Practice",
                                 "Tasks",
                             ]
+                            assert workspace["badges"][0] == "Course"
+                            assert re.fullmatch(r"\d+ links?", workspace["badges"][1])
+                            assert workspace["badges"][2] == "Course"
+                            assert workspace["badges"][3] == "Course"
                             assert any(
                                 "../_raya/search/index.html?q=" in href
                                 for href in workspace["hrefs"]
@@ -2990,10 +3001,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "../_raya/graph/index.html?page=reader-ux" in href
                                 for href in workspace["hrefs"]
                             )
-                            assert any(
-                                "../_raya/practice/index.html" in href
-                                for href in workspace["hrefs"]
-                            )
+                            assert "../_raya/practice/index.html" in workspace["hrefs"]
                             assert any(
                                 "../_raya/tasks/index.html" in href
                                 for href in workspace["hrefs"]
@@ -3325,6 +3333,7 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
 
     course = tmp_path / "minimal"
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_official_task_objects(course)
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -3363,14 +3372,38 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                           filterVisible: !!document
                             .querySelector('#raya-course-map-filter')
                             ?.checkVisibility(),
+                          workspaceLabels: Array.from(
+                            document.querySelectorAll('[data-raya-course-map-workspace-link]')
+                          ).map((link) => link
+                            .querySelector('.raya-course-map-workspace-label')
+                            ?.textContent
+                            ?.trim() || ''),
+                          workspaceBadges: Array.from(
+                            document.querySelectorAll('[data-raya-course-map-workspace-link]')
+                          ).map((link) => link
+                            .querySelector('.raya-course-map-workspace-badge')
+                            ?.textContent
+                            ?.trim() || ''),
+                          practiceHref: document
+                            .querySelector('.raya-course-map-workspace-practice')
+                            ?.getAttribute('href'),
                         })"""
                     )
-                    assert initial == {
-                        "firstUnitExpanded": "true",
-                        "firstUnitChildrenHidden": False,
-                        "firstTopicVisible": True,
-                        "filterVisible": True,
-                    }
+                    assert initial["firstUnitExpanded"] == "true"
+                    assert initial["firstUnitChildrenHidden"] is False
+                    assert initial["firstTopicVisible"] is True
+                    assert initial["filterVisible"] is True
+                    assert initial["workspaceLabels"] == [
+                        "Search",
+                        "Graph",
+                        "Practice",
+                        "Tasks",
+                    ]
+                    assert initial["workspaceBadges"][2] == "8 official"
+                    assert initial["workspaceBadges"][3] == "5 tasks"
+                    assert initial["practiceHref"].endswith(
+                        "_raya/practice/index.html?page=first-topic"
+                    )
 
                     page.click(
                         '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'

@@ -863,7 +863,14 @@ def _render_page(
         _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
         {"page": page.id},
     )
+    direct_official_count = sum(official_counts.get(page.id, {}).values())
     practice_href = _relative_href(page.output_path, STATIC_PRACTICE_PATH.as_posix())
+    course_map_practice_href = practice_href
+    if direct_official_count:
+        course_map_practice_href = _href_with_query(
+            course_map_practice_href,
+            {"page": page.id},
+        )
     tasks_href = _relative_href(page.output_path, STATIC_TASKS_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
@@ -961,8 +968,11 @@ def _render_page(
                 content_model,
                 search_href=search_href,
                 graph_href=graph_href,
-                practice_href=practice_href,
+                practice_href=course_map_practice_href,
                 tasks_href=tasks_href,
+                official_counts=official_counts,
+                official_objects=official_objects,
+                page_graph_context=page_graph_context,
             ),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             _render_article_sequence_nav(page, content_model),
@@ -1257,6 +1267,9 @@ def _render_course_map(
     graph_href: str,
     practice_href: str,
     tasks_href: str,
+    official_counts: dict[str, dict[str, int]],
+    official_objects: list[dict[str, Any]],
+    page_graph_context: dict[str, list[dict[str, str]]],
 ) -> str:
     active_path = {crumb.id for crumb in _breadcrumb_pages(page, content_model)}
     active_path.add(page.id)
@@ -1354,11 +1367,30 @@ def _render_course_map(
         if root_id in content_model.pages_by_id
     ]
     position = html.escape(_page_position(page, content_model))
+    direct_official_count = sum(official_counts.get(page.id, {}).values())
+    direct_task_count = sum(
+        1 for item in official_objects if str(item.get("type", "")) in _OFFICIAL_TASK_TYPES
+    )
+    direct_link_count = len(page_graph_context.get("outgoing", [])) + len(
+        page_graph_context.get("incoming", [])
+    )
     workspace_links = [
-        ("search", "Search", search_href),
-        ("graph", "Graph", graph_href),
-        ("practice", "Practice", practice_href),
-        ("tasks", "Tasks", tasks_href),
+        ("search", "Search", search_href, "Course"),
+        ("graph", "Graph", graph_href, _count_label(direct_link_count, "link")),
+        (
+            "practice",
+            "Practice",
+            practice_href,
+            f"{direct_official_count} official"
+            if direct_official_count
+            else "Course",
+        ),
+        (
+            "tasks",
+            "Tasks",
+            tasks_href,
+            _count_label(direct_task_count, "task") if direct_task_count else "Course",
+        ),
     ]
     workspace_html = "\n".join(
         [
@@ -1371,9 +1403,17 @@ def _render_course_map(
                     f'<a class="raya-course-map-workspace-link '
                     f'raya-course-map-workspace-{html.escape(kind, quote=True)}" '
                     "data-raya-course-map-workspace-link "
-                    f'href="{html.escape(href)}">{html.escape(label)}</a>'
+                    f'href="{html.escape(href)}" '
+                    f'aria-label="{html.escape(label, quote=True)} workspace, {html.escape(badge, quote=True)}">'
+                    '<span class="raya-course-map-workspace-label">'
+                    f"{html.escape(label)}"
+                    "</span>"
+                    '<span class="raya-course-map-workspace-badge">'
+                    f"{html.escape(badge)}"
+                    "</span>"
+                    "</a>"
                 )
-                for kind, label, href in workspace_links
+                for kind, label, href, badge in workspace_links
             ),
             "</div>",
             "</section>",
@@ -1960,6 +2000,11 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
         '<nav class="raya-breadcrumbs" aria-label="Breadcrumbs">'
         '<ol class="raya-breadcrumbs-list">' + "".join(items) + "</ol></nav>"
     )
+
+
+def _count_label(count: int, singular: str) -> str:
+    suffix = singular if count == 1 else f"{singular}s"
+    return f"{count} {suffix}"
 
 
 def _render_page_brief(

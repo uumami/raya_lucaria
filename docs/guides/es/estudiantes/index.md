@@ -66,7 +66,12 @@ esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
 orden del curso; no son recomendaciones ni marcadores de progreso.
 El mapa expandido del curso tambien puede mostrar enlaces estaticos a Course
 Search, Course Graph, Official Practice y Official Tasks. Son atajos a
-workspaces generados, no progreso, ranking ni guia personalizada.
+workspaces generados, no progreso, ranking ni guia personalizada. Algunas cards
+de atajo incluyen badges estructurales pequenos como alcance de curso, conteos
+de enlaces explicitos, conteos de objetos oficiales aceptados o conteos de
+tareas aceptadas para la pagina actual. Esos badges describen estructura
+estatica autorada del curso; no son senales de finalizacion, importancia, nota
+ni recomendacion.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada, Zoom in, Zoom out, Fit,

@@ -60,7 +60,11 @@ size or OpenDyslexic when those settings are more comfortable. End-of-page cards
 are course-order links; they are not recommendations or progress markers.
 The expanded course map may also show static links to Course Search, Course
 Graph, Official Practice, and Official Tasks. They are shortcuts to generated
-workspaces, not progress, ranking, or personalized guidance.
+workspaces, not progress, ranking, or personalized guidance. Some shortcut
+cards include small structural badges such as course scope, explicit link
+counts, accepted official-object counts, or accepted task counts for the current
+page. Those badges describe authored static course structure; they are not
+completion, importance, grade, or recommendation signals.
 
 Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, Zoom in, Zoom out, Fit, Reset view, and expanded
