@@ -81,6 +81,12 @@ paths, support paths, hidden answer duplicates, external requests, runtime
 attempts, grading, progress, mastery, recommendation, adaptive, or learner-state
 language. Shared Text size and `OpenDyslexic` comfort preferences may use the
 local accessibility resource only.
+When this workspace changes, also verify active-object inspection parity:
+visible objects expose `data-raya-practice-active`, hover and focus on existing
+item links update the context panel, keyboard movement from the search input
+selects one visible object, Enter opens that object's `.raya-practice-open`
+link, and Clear/Escape reset transient active state. Do not make object cards
+extra tab stops just to support inspection.
 
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure, generated structural map numbers,
@@ -127,8 +133,9 @@ not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.
 
 When changing Course Search, verify approximate matching, keyboard result
-movement, Enter-to-open behavior, clear controls, shared discovery chrome,
-control/results/context workspace regions, compact mobile discovery chrome, no
+movement, hover/focus active-result inspection, Enter-to-open behavior, clear
+controls, shared discovery chrome, control/results/context workspace regions,
+compact mobile discovery chrome, no
 external requests, and no persistent search state. Search payloads stay
 metadata-only, and generated query context and context-panel summaries must
 remain transient. Search result graph-focus links must come from stable page IDs

@@ -80,12 +80,13 @@ importance rankings, progress, mastery, recommendations, or grading signals.
 
 Use Course Search when you remember a title, tag, status, summary phrase, or
 stable ID. It searches generated metadata only, supports approximate matches and
-keyboard movement through visible results, and does not search hidden source
+keyboard, hover, and focus inspection of visible results, and does not search hidden source
 paths or store your query. Opening it from a course page may preload that page
 title as a temporary query. A result can also offer `View in graph`, which opens
 the Course Graph focused on that same page so you can inspect its course
 position and explicit links. The Search context panel summarizes public
-metadata for a visible result; it is not a ranking or recommendation.
+metadata for the result you are inspecting; it is not a ranking or
+recommendation.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 
@@ -116,7 +117,9 @@ Some courses may also include an Official Practice workspace under
 `_raya/practice/`. Use it to find accepted course cards, prompts, quizzes,
 tasks, and other official objects across the course, then return to the owning
 page for context. Practice items should link to page anchors such as
-`#raya-official-<id>` and may offer `View in graph` links. The workspace is a
+`#raya-official-<id>` and may offer `View in graph` links. You can inspect
+visible Practice items with keyboard movement, hover, or focus on item links;
+the context panel follows that temporary selection. The workspace is a
 static discovery surface with filters, results, and public context summaries,
 not a recommendation engine, progress tracker, submission system, grading
 system, scoring system, attempt log, mastery estimate, stored practice state,

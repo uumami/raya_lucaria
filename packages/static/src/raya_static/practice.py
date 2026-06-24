@@ -69,6 +69,7 @@ _PRACTICE_JAVASCRIPT = r"""
   );
 
   let activeType = "all";
+  let activeIndex = -1;
 
   function matchesType(item) {
     return activeType === "all" || item.dataset.rayaPracticeType === activeType;
@@ -105,9 +106,38 @@ _PRACTICE_JAVASCRIPT = r"""
     return objects.filter((object) => !object.hidden);
   }
 
+  function indexForObject(object) {
+    return visibleObjects().indexOf(object);
+  }
+
+  function bestContextObject(visible) {
+    if (activeIndex >= 0 && visible[activeIndex]) {
+      return visible[activeIndex];
+    }
+    return visible[0];
+  }
+
+  function setActiveObject(nextIndex) {
+    const visible = visibleObjects();
+    if (visible.length === 0) {
+      activeIndex = -1;
+    } else {
+      activeIndex = Math.max(-1, Math.min(nextIndex, visible.length - 1));
+    }
+    objects.forEach((object) => {
+      object.dataset.rayaPracticeActive = "false";
+      object.setAttribute("data-raya-practice-active", "false");
+    });
+    if (activeIndex >= 0 && visible[activeIndex]) {
+      visible[activeIndex].dataset.rayaPracticeActive = "true";
+      visible[activeIndex].setAttribute("data-raya-practice-active", "true");
+    }
+    updateContext();
+  }
+
   function updateContext() {
     const visible = visibleObjects();
-    const item = itemForObject(visible[0]);
+    const item = itemForObject(bestContextObject(visible));
     if (summaryCount) {
       summaryCount.textContent = `${visible.length} visible practice object(s).`;
     }
@@ -145,22 +175,52 @@ _PRACTICE_JAVASCRIPT = r"""
     if (status) {
       status.textContent = `${visible} visible practice object(s).`;
     }
-    updateContext();
+    setActiveObject(Math.min(activeIndex, visible - 1));
   }
 
   filters.forEach((button) => {
     button.addEventListener("click", () => {
       activeType = button.getAttribute("data-raya-practice-filter") || "all";
+      activeIndex = -1;
       render();
     });
   });
 
-  input.addEventListener("input", render);
+  objects.forEach((object) => {
+    object.addEventListener("focusin", () => {
+      const index = indexForObject(object);
+      if (index >= 0) setActiveObject(index);
+    });
+    object.addEventListener("pointerenter", () => {
+      const index = indexForObject(object);
+      if (index >= 0) setActiveObject(index);
+    });
+  });
+
+  input.addEventListener("input", () => {
+    activeIndex = -1;
+    render();
+  });
   input.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
+    const visible = visibleObjects();
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveObject(visible.length === 0 ? -1 : (activeIndex + 1) % visible.length);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const next = activeIndex <= 0 ? visible.length - 1 : activeIndex - 1;
+      setActiveObject(visible.length === 0 ? -1 : next);
+    } else if (event.key === "Enter" && activeIndex >= 0 && visible[activeIndex]) {
+      const link = visible[activeIndex].querySelector(".raya-practice-open");
+      if (link && link.href) {
+        event.preventDefault();
+        window.location.href = link.href;
+      }
+    } else if (event.key === "Escape") {
       event.preventDefault();
       input.value = "";
       activeType = "all";
+      activeIndex = -1;
       render();
     }
   });
@@ -169,6 +229,7 @@ _PRACTICE_JAVASCRIPT = r"""
     clear.addEventListener("click", () => {
       input.value = "";
       activeType = "all";
+      activeIndex = -1;
       render();
       input.focus();
     });

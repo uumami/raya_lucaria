@@ -1018,6 +1018,20 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "Explicit links"
                             in page.locator("[data-raya-search-context-meta]").inner_text()
                         )
+                        result_card.hover()
+                        assert (
+                            result_card.get_attribute("data-raya-search-active")
+                            == "true"
+                        )
+                        result_card.locator("a").first.focus()
+                        assert (
+                            result_card.get_attribute("data-raya-search-active")
+                            == "true"
+                        )
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("[data-raya-search-context-title]").inner_text()
+                        )
                         assert "Explicit links" in result_card.inner_text()
                         assert "Official objects: Prompt: 1" in result_card.inner_text()
                         assert (
@@ -1232,6 +1246,54 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-quiz"]'
                         ).is_visible()
+                        quiz_card = page.locator(
+                            '[data-raya-practice-object="first-topic-quiz"]'
+                        )
+                        quiz_card.hover()
+                        assert (
+                            quiz_card.get_attribute("data-raya-practice-active")
+                            == "true"
+                        )
+                        assert (
+                            "Quiz"
+                            in page.locator("[data-raya-practice-context-meta]").inner_text()
+                        )
+                        quiz_card.locator(".raya-practice-open").focus()
+                        assert (
+                            quiz_card.get_attribute("data-raya-practice-active")
+                            == "true"
+                        )
+                        page.locator("#raya-practice-search").focus()
+                        page.press("#raya-practice-search", "ArrowDown")
+                        active_practice = page.locator(
+                            '[data-raya-practice-active="true"]'
+                        )
+                        assert active_practice.count() == 1
+                        assert (
+                            "No visible"
+                            not in page.locator(
+                                "[data-raya-practice-context-title]"
+                            ).inner_text()
+                        )
+                        active_open_href = active_practice.locator(
+                            ".raya-practice-open"
+                        ).first.evaluate("node => node.href")
+                        with page.expect_navigation():
+                            page.press("#raya-practice-search", "Enter")
+                        assert page.url == active_open_href
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.mouse.move(1, 1)
+                        page.locator("#raya-practice-search").focus()
+                        page.press("#raya-practice-search", "ArrowDown")
+                        assert (
+                            page.locator(
+                                '[data-raya-practice-active="true"]'
+                            ).count()
+                            == 1
+                        )
 
                         page.fill("#raya-practice-search", "retrieval")
                         page.wait_for_function(
@@ -1244,6 +1306,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             "1 visible practice object"
                             in page.locator("[data-raya-practice-summary-count]").inner_text()
                         )
+                        assert page.locator(
+                            '[data-raya-practice-active="true"]'
+                        ).count() == 0
                         assert (
                             "Explain how retrieval practice differs from rereading."
                             in page.locator("[data-raya-practice-context-title]").inner_text()
@@ -1282,6 +1347,27 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-card"]'
                         ).is_hidden()
+                        page.locator("#raya-practice-search").focus()
+                        page.press("#raya-practice-search", "ArrowDown")
+                        assert (
+                            page.locator(
+                                '[data-raya-practice-active="true"]'
+                            ).count()
+                            == 1
+                        )
+                        page.press("#raya-practice-search", "Escape")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        assert (
+                            page.locator(
+                                '[data-raya-practice-active="true"]'
+                            ).count()
+                            == 0
+                        )
 
                         page.click("#raya-practice-clear")
                         open_href = page.locator(

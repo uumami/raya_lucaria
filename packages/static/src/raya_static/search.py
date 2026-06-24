@@ -114,6 +114,10 @@ _SEARCH_JAVASCRIPT = r"""
     return results.filter((item) => !item.hidden);
   }
 
+  function indexForResult(item) {
+    return visibleResults().indexOf(item);
+  }
+
   function setActiveResult(nextIndex) {
     const visible = visibleResults();
     if (visible.length === 0) {
@@ -223,6 +227,15 @@ _SEARCH_JAVASCRIPT = r"""
       status.textContent = `${visible} visible result(s).`;
     }
   }
+
+  results.forEach((item) => {
+    item.addEventListener("focusin", () => {
+      setActiveResult(indexForResult(item));
+    });
+    item.addEventListener("pointerenter", () => {
+      setActiveResult(indexForResult(item));
+    });
+  });
 
   input.addEventListener("input", () => {
     activeIndex = -1;

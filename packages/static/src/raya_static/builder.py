@@ -3799,7 +3799,8 @@ def _render_practice_surface(
                         (
                             '<article class="raya-practice-object" '
                             f'data-raya-practice-object="{html.escape(item["id"], quote=True)}" '
-                            f'data-raya-practice-type="{html.escape(item["type"], quote=True)}">'
+                            f'data-raya-practice-type="{html.escape(item["type"], quote=True)}" '
+                            'data-raya-practice-active="false">'
                         ),
                         '<header class="raya-practice-object-header">',
                         (

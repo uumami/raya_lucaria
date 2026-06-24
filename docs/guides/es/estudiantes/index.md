@@ -91,13 +91,13 @@ importancia, progreso, dominio, recomendaciones ni senales de evaluacion.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
 stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y
-movimiento con teclado por resultados visibles, y no busca rutas ocultas de
+inspeccion con teclado, hover y foco de resultados visibles, y no busca rutas ocultas de
 fuente ni guarda tu consulta. Abrirlo desde una pagina del curso puede precargar
 el titulo de esa pagina como consulta temporal. Un resultado tambien puede
 ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
 inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
-contexto de Search resume metadata publica de un resultado visible; no es un
-ranking ni una recomendacion.
+contexto de Search resume metadata publica del resultado que inspeccionas; no
+es un ranking ni una recomendacion.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
@@ -130,9 +130,11 @@ Algunos cursos tambien pueden incluir un workspace Official Practice bajo
 `_raya/practice/`. Usalo para encontrar cards, prompts, quizzes, tasks y otros
 objetos oficiales aceptados en todo el curso, y despues vuelve a la pagina que
 los posee para ver el contexto. Los items de Practice deben enlazar a anchors
-de pagina como `#raya-official-<id>` y pueden ofrecer links `View in graph`. El
-workspace es una superficie estatica de descubrimiento con filtros, resultados
-y resumenes publicos de contexto, no un motor de recomendaciones, registro de
+de pagina como `#raya-official-<id>` y pueden ofrecer links `View in graph`.
+Puedes inspeccionar items visibles de Practice con movimiento de teclado, hover
+o foco en los links del item; el panel de contexto sigue esa seleccion
+temporal. El workspace es una superficie estatica de descubrimiento con
+filtros, resultados y resumenes publicos de contexto, no un motor de recomendaciones, registro de
 progreso, sistema de entregas, sistema de evaluacion, scoring, registro de
 attempts, estimacion de dominio, estado de practica guardado, workflow de
 requests externos, visor de rutas privadas de fuente ni cola personal de

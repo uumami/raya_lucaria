@@ -86,6 +86,13 @@ de estado de practica, scoring, submissions, attempts, grading, progreso,
 dominio, recomendacion, adaptacion ni lenguaje de estado del estudiante. Las
 preferencias compartidas Text size y `OpenDyslexic` pueden usar solo el recurso
 local de accesibilidad.
+Cuando cambie este workspace, verifica tambien la paridad de inspeccion de
+objeto activo: los objetos visibles exponen `data-raya-practice-active`, hover
+y foco en links existentes del item actualizan el panel de contexto, el
+movimiento de teclado desde el input de busqueda selecciona un objeto visible,
+Enter abre el link `.raya-practice-open` de ese objeto, y Clear/Escape reinician
+el estado activo transitorio. No hagas que las cards de objeto sean tab stops
+extra solo para soportar inspeccion.
 
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido, los numeros estructurales
@@ -144,9 +151,9 @@ del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.
 
 Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
-teclado por resultados, Enter para abrir, controles de limpiar, chrome
-compartido de descubrimiento, regiones de workspace de controles, resultados y
-contexto, chrome movil compacto, sin solicitudes externas y sin estado
+teclado por resultados, inspeccion de resultado activo por hover/foco, Enter
+para abrir, controles de limpiar, chrome compartido de descubrimiento, regiones
+de workspace de controles, resultados y contexto, chrome movil compacto, sin solicitudes externas y sin estado
 persistente de busqueda. Los payloads de busqueda siguen siendo solo metadata,
 y el contexto de consulta generado y los resumenes del panel de contexto deben
 permanecer transitorios. Los

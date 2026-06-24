@@ -883,6 +883,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-data" in search_script
     assert "levenshtein" in search_script
     assert "setActiveResult" in search_script
+    assert 'addEventListener("focusin"' in search_script
+    assert 'addEventListener("pointerenter"' in search_script
+    assert "setActiveResult(indexForResult(item))" in search_script
     assert "raya-search-clear" in search_script
     assert "URLSearchParams" in search_script
     assert 'params.get("q")' in search_script
@@ -953,6 +956,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     )
     assert 'data-raya-practice-filter="quiz"' in practice_html
     assert 'data-raya-practice-object="first-topic-card"' in practice_html
+    assert 'data-raya-practice-active="false"' in practice_html
     assert 'data-raya-practice-object="first-topic-prompt"' in practice_html
     assert 'data-raya-practice-object="first-topic-quiz"' in practice_html
     assert "What loop does Raya Lucaria support?" in practice_html
@@ -1030,6 +1034,13 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
             assert forbidden_runtime_token not in loaded_script
     for forbidden_practice_state_token in ("localStorage", "sessionStorage"):
         assert forbidden_practice_state_token not in practice_script
+    rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
+    assert "function setActiveObject" in practice_script
+    assert 'data-raya-practice-active' in practice_script
+    assert 'event.key === "ArrowDown"' in practice_script
+    assert 'event.key === "ArrowUp"' in practice_script
+    assert 'querySelector(".raya-practice-open")' in practice_script
+    assert '.raya-practice-object[data-raya-practice-active="true"]' in rich_css
 
 
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(

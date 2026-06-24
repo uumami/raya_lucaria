@@ -983,6 +983,14 @@ img {
   border-radius: 0.5rem;
   box-shadow: inset 0.25rem 0 0 var(--raya-color-accent);
   padding: 1rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+.raya-practice-object[data-raya-practice-active="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow:
+    inset 0.25rem 0 0 var(--raya-color-accent),
+    0 0 0 3px color-mix(in srgb, var(--raya-color-accent) 24%, transparent);
+  transform: translateY(-1px);
 }
 .raya-practice-object-header,
 .raya-practice-actions {
@@ -1009,6 +1017,9 @@ img {
 .raya-practice-object h3 {
   font-size: clamp(1.05rem, 1rem + 0.2vw, 1.25rem);
   margin: 0.65rem 0 0.4rem;
+}
+.raya-practice-object[data-raya-practice-active="true"] h3 {
+  color: var(--raya-color-success);
 }
 .raya-practice-actions {
   margin: 0.75rem 0 0;
