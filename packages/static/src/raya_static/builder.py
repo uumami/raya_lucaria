@@ -882,6 +882,13 @@ def _render_page(
         graph_href,
     )
     official_practice_html = _render_official_practice_section(official_objects)
+    page_brief_html = _render_page_brief(
+        page,
+        content_model,
+        _renderable_official_object_count(official_objects),
+        page_graph_context,
+        graph_href,
+    )
     learning_rail = _render_learning_rail(
         page,
         toc_html,
@@ -921,6 +928,7 @@ def _render_page(
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             _render_article_sequence_nav(page, content_model),
             breadcrumbs,
+            page_brief_html,
             article_html,
             article_connections_html,
             official_practice_html,
@@ -1848,9 +1856,135 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
             )
     return (
         '<nav class="raya-breadcrumbs" aria-label="Breadcrumbs">'
-        '<ol class="raya-breadcrumbs-list">'
-        + "".join(items)
-        + "</ol></nav>"
+        '<ol class="raya-breadcrumbs-list">' + "".join(items) + "</ol></nav>"
+    )
+
+
+def _render_page_brief(
+    page: ContentPage,
+    content_model: ContentModel,
+    official_practice_count: int,
+    page_graph_context: dict[str, list[dict[str, str]]],
+    graph_href: str,
+) -> str:
+    facts: list[str] = []
+    status = page.status.strip() if page.status else ""
+    if status:
+        facts.append(_page_brief_fact("Status", html.escape(status), "status"))
+    position = _page_position(page, content_model)
+    if position:
+        facts.append(_page_brief_fact("Position", html.escape(position), "position"))
+    if page.estimated_time:
+        facts.append(
+            _page_brief_fact("Estimated time", html.escape(page.estimated_time), "time")
+        )
+    if page.tags:
+        tag_items = " ".join(
+            f'<span class="raya-page-brief-tag">{html.escape(tag)}</span>'
+            for tag in page.tags
+        )
+        facts.append(_page_brief_fact("Tags", tag_items, "tags"))
+    prerequisite_links = _page_brief_prerequisite_links(page, content_model)
+    if prerequisite_links:
+        facts.append(
+            _page_brief_fact("Prerequisites", prerequisite_links, "prerequisites")
+        )
+    connection_text = _page_brief_connection_text(page_graph_context)
+    if connection_text:
+        facts.append(
+            _page_brief_fact(
+                "Connections",
+                f'<a href="{html.escape(graph_href)}">{connection_text}</a>',
+                "connections",
+            )
+        )
+    if official_practice_count:
+        label = (
+            "official practice object"
+            if official_practice_count == 1
+            else "official practice objects"
+        )
+        facts.append(
+            _page_brief_fact(
+                "Practice",
+                (
+                    '<a href="#raya-official-practice">'
+                    f"{official_practice_count} {label}</a>"
+                ),
+                "practice",
+            )
+        )
+    summary = page.summary.strip() if page.summary else ""
+    if not summary and not facts:
+        return ""
+    summary_html = (
+        f'<p class="raya-page-brief-summary">{html.escape(summary)}</p>'
+        if summary
+        else ""
+    )
+    facts_html = (
+        '<ul class="raya-page-brief-facts">' + "\n".join(facts) + "</ul>"
+        if facts
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section class="raya-page-brief" aria-labelledby="raya-page-brief-title">',
+            '<div class="raya-page-brief-heading">',
+            '<p class="raya-page-brief-kicker">Page brief</p>',
+            '<h2 id="raya-page-brief-title">At a glance</h2>',
+            "</div>",
+            summary_html,
+            facts_html,
+            "</section>",
+        ]
+    )
+
+
+def _page_brief_fact(label: str, value: str, class_suffix: str) -> str:
+    return (
+        f'<li class="raya-page-brief-fact raya-page-brief-{html.escape(class_suffix, quote=True)}">'
+        f'<span class="raya-page-brief-label">{html.escape(label)}</span>'
+        f'<span class="raya-page-brief-value">{value}</span>'
+        "</li>"
+    )
+
+
+def _page_brief_prerequisite_links(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    links: list[str] = []
+    for prerequisite in page.prerequisites:
+        target = content_model.pages_by_id.get(prerequisite)
+        if target is None:
+            continue
+        href = _relative_href(page.output_path, target.output_path)
+        title = target.nav_title or target.title
+        links.append(f'<a href="{html.escape(href)}">{html.escape(title)}</a>')
+    return ", ".join(links)
+
+
+def _page_brief_connection_text(
+    page_graph_context: dict[str, list[dict[str, str]]],
+) -> str:
+    outgoing_count = len(page_graph_context.get("outgoing", []))
+    incoming_count = len(page_graph_context.get("incoming", []))
+    if not outgoing_count and not incoming_count:
+        return ""
+    return (
+        f"{outgoing_count} "
+        f"{_relationship_count_label(outgoing_count, 'from this page', 'from this page')}"
+        f", {incoming_count} "
+        f"{_relationship_count_label(incoming_count, 'links here', 'link here')}"
+    )
+
+
+def _renderable_official_object_count(objects: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for item in objects
+        if isinstance(item, dict) and _render_official_object(item)
     )
 
 
@@ -1944,7 +2078,7 @@ def _render_article_sequence_cards(
             '<span class="raya-sequence-card-title">'
             f"{html.escape(previous_page.nav_title or previous_page.title)}</span>"
             '<span class="raya-sequence-card-meta">'
-            f'Page {previous["index"]} of {previous["total"]}</span>'
+            f"Page {previous['index']} of {previous['total']}</span>"
             "</a>"
         )
     next_target = targets.get("next")
@@ -1959,14 +2093,12 @@ def _render_article_sequence_cards(
             '<span class="raya-sequence-card-title">'
             f"{html.escape(next_page.nav_title or next_page.title)}</span>"
             '<span class="raya-sequence-card-meta">'
-            f'Page {next_target["index"]} of {next_target["total"]}</span>'
+            f"Page {next_target['index']} of {next_target['total']}</span>"
             "</a>"
         )
     return (
         '<nav class="raya-article-sequence-cards" '
-        'aria-label="End-of-page navigation">'
-        + "\n".join(cards)
-        + "</nav>"
+        'aria-label="End-of-page navigation">' + "\n".join(cards) + "</nav>"
     )
 
 
@@ -1983,7 +2115,9 @@ def _render_official_practice_section(objects: list[dict[str, Any]]) -> str:
     ordered = sorted(
         objects,
         key=lambda item: (
-            item.get("source_order") if isinstance(item.get("source_order"), int) else 0,
+            item.get("source_order")
+            if isinstance(item.get("source_order"), int)
+            else 0,
             str(item.get("id") or ""),
         ),
     )
@@ -1995,7 +2129,10 @@ def _render_official_practice_section(objects: list[dict[str, Any]]) -> str:
         return ""
     return "\n".join(
         [
-            '<section class="raya-official-practice" aria-label="Official practice">',
+            (
+                '<section class="raya-official-practice" '
+                'id="raya-official-practice" aria-label="Official practice">'
+            ),
             "<h2>Official practice</h2>",
             (
                 "<p>Official course prompts and checks for this page. Reveal support "
@@ -2045,7 +2182,9 @@ def _render_official_content(item: dict[str, Any]) -> str:
         if front:
             parts.append(f'<p class="raya-official-prompt">{front}</p>')
         if back:
-            parts.append(_official_reveal("Reveal answer", back, "raya-official-answer"))
+            parts.append(
+                _official_reveal("Reveal answer", back, "raya-official-answer")
+            )
         return "\n".join(parts)
     if object_type == "prompt":
         prompt = _official_text(content.get("prompt"))
@@ -2067,7 +2206,9 @@ def _render_official_quiz(content: dict[str, Any]) -> str:
         options = question.get("options")
         if not prompt and not isinstance(options, list):
             continue
-        parts = [f'<section class="raya-official-question" aria-label="Question {index}">']
+        parts = [
+            f'<section class="raya-official-question" aria-label="Question {index}">'
+        ]
         if prompt:
             parts.append(f'<p class="raya-official-prompt">{prompt}</p>')
         if isinstance(options, list):
@@ -2084,7 +2225,9 @@ def _render_official_quiz(content: dict[str, Any]) -> str:
                     correct_labels.append(label)
             if option_items:
                 parts.append(
-                    '<ol class="raya-official-options">' + "".join(option_items) + "</ol>"
+                    '<ol class="raya-official-options">'
+                    + "".join(option_items)
+                    + "</ol>"
                 )
             if correct_labels:
                 parts.append(
@@ -2113,7 +2256,7 @@ def _render_generic_official_content(content: dict[str, Any]) -> str:
     for field, label in visible_fields:
         value = _official_text(content.get(field))
         if value:
-            parts.append(f'<p><strong>{html.escape(label)}:</strong> {value}</p>')
+            parts.append(f"<p><strong>{html.escape(label)}:</strong> {value}</p>")
     for field, summary in support_fields:
         value = _official_text(content.get(field))
         if value:
@@ -3674,7 +3817,7 @@ def _render_search_surface(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
             f'<a class="raya-search-result-page" href="{html.escape(page["url"])}">'
-            f'{html.escape(page["title"])}</a>'
+            f"{html.escape(page['title'])}</a>"
             f"<p>{html.escape(page['summary'])}</p>"
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
             f'<p class="raya-search-result-counts">{html.escape(counts_text)}</p>'
@@ -3726,7 +3869,7 @@ def _render_search_surface(
             "</header>",
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls">',
-            '<h2>Find pages</h2>',
+            "<h2>Find pages</h2>",
             '<section class="raya-search-controls" aria-label="Course search controls">',
             '<label for="raya-search-input">Search</label>',
             '<input id="raya-search-input" type="search" autocomplete="off">',
@@ -3735,7 +3878,7 @@ def _render_search_surface(
             "</section>",
             (
                 '<p class="raya-discovery-summary" '
-                f'data-raya-search-summary-count>{len(browser_search["pages"])} visible result(s).</p>'
+                f"data-raya-search-summary-count>{len(browser_search['pages'])} visible result(s).</p>"
             ),
             "</aside>",
             '<section class="raya-search-results-panel" aria-label="Search results">',
@@ -3752,7 +3895,7 @@ def _render_search_surface(
             "<p data-raya-search-context-title>Select or filter a page.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
-                'data-raya-search-context-meta>Public page metadata only.</p>'
+                "data-raya-search-context-meta>Public page metadata only.</p>"
             ),
             "</aside>",
             "</section>",
@@ -3972,8 +4115,8 @@ def _render_practice_surface(
             '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
             "<h1>Official Practice</h1>",
             (
-            "<p>Find accepted course practice objects by page and type. "
-            "Open the owning page when you are ready to work with the full context.</p>"
+                "<p>Find accepted course practice objects by page and type. "
+                "Open the owning page when you are ready to work with the full context.</p>"
             ),
             "</header>",
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
@@ -3990,7 +4133,7 @@ def _render_practice_surface(
             "</section>",
             (
                 '<p class="raya-discovery-summary" '
-                f'data-raya-practice-summary-count>{len(browser_practice["objects"])} visible practice object(s).</p>'
+                f"data-raya-practice-summary-count>{len(browser_practice['objects'])} visible practice object(s).</p>"
             ),
             "</aside>",
             '<section class="raya-practice-results-panel" aria-label="Official practice results">',
@@ -4010,7 +4153,7 @@ def _render_practice_surface(
             "<p data-raya-practice-context-title>Select or filter an official object.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
-                'data-raya-practice-context-meta>Accepted public object metadata only.</p>'
+                "data-raya-practice-context-meta>Accepted public object metadata only.</p>"
             ),
             "</aside>",
             "</section>",
@@ -4086,7 +4229,8 @@ def _browser_practice_payload(
             "type": object_type,
         }
         for object_type, count in sorted(
-            type_counts.items(), key=lambda pair: (_official_type_label(pair[0]), pair[0])
+            type_counts.items(),
+            key=lambda pair: (_official_type_label(pair[0]), pair[0]),
         )
     ]
     return {
@@ -4130,7 +4274,9 @@ def _official_plain_text(value: Any) -> str:
         )
     if isinstance(value, dict):
         return "; ".join(
-            text for text in (_official_plain_text(item) for item in value.values()) if text
+            text
+            for text in (_official_plain_text(item) for item in value.values())
+            if text
         )
     return " ".join(str(value).split())
 

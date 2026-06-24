@@ -2260,6 +2260,79 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   color: var(--raya-color-muted);
   font-weight: 800;
 }
+.raya-page-brief {
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 42%, var(--raya-color-border));
+  border-radius: 0.5rem;
+  box-shadow: 0 0.75rem 1.75rem rgba(31, 35, 40, 0.08);
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1.35rem;
+  padding: 1rem;
+}
+.raya-page-brief-heading {
+  display: grid;
+  gap: 0.15rem;
+}
+.raya-page-brief-kicker {
+  color: var(--raya-color-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  line-height: 1;
+  margin: 0;
+  text-transform: uppercase;
+}
+.raya-page-brief h2 {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  margin: 0;
+}
+.raya-page-brief-summary {
+  color: var(--raya-color-text);
+  font-size: 0.98rem;
+  margin: 0;
+}
+.raya-page-brief-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.raya-page-brief-fact {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-page));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+}
+.raya-page-brief-label {
+  color: var(--raya-color-muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.raya-page-brief-value {
+  color: var(--raya-color-text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.raya-page-brief-value a {
+  font-weight: 800;
+}
+.raya-page-brief-tag {
+  display: inline-block;
+}
 .raya-main-article > :first-child,
 .raya-inspection-main > :first-child {
   margin-top: 0;
@@ -2271,6 +2344,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
 .raya-main-article > .raya-article-sequence-cards,
 .raya-main-article > .raya-article-connections,
 .raya-main-article > .raya-breadcrumbs,
+.raya-main-article > .raya-page-brief,
 .raya-main-article > .raya-numbered-object,
 .raya-main-article > table,
 .raya-main-article > pre {

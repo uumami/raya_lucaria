@@ -18,6 +18,12 @@ personal, finalizacion, dominio ni recomendaciones sobre que estudiar despues.
 
 Las paginas estaticas pueden incluir math pre-renderizada, codigo resaltado, botones de copiado en bloques de codigo fenced, tablas, callouts, footnotes, heading anchors y contenidos de pagina. La math debe aparecer ya compuesta en la pagina generada y no debe requerir CDN, cuenta, backend ni conversion MathJax en el browser. El codigo mostrado no se ejecuta en la pagina estatica salvo que un curso futuro agregue un workflow de ejecucion aceptado.
 
+Algunas paginas muestran un Page brief cerca del inicio. Resume metadata publica
+del curso como resumen, status, posicion de pagina, tiempo estimado, tags,
+prerrequisitos, conexiones explicitas de pagina y practica oficial disponible.
+Usalo para orientarte rapido. No es registro de progreso, recomendacion, nota,
+estimacion de dominio ni siguiente paso personalizado.
+
 Algunos cursos usan skins para presentacion visual o para enfatizar una unidad,
 lab, apendice, seccion de practica o seccion de repaso. Una skin no cambia la
 autoridad de fuente, etiquetas, enlaces, estado oficial/generado, tareas ni el

@@ -173,6 +173,13 @@ practica que estudiantes puedan usar sin progreso falso. Usa checkpoints y
 metas como material docente visible hasta que un contrato futuro los acepte como
 metadata.
 
+Las paginas renderizadas pueden mostrar un Page brief cerca del inicio del
+articulo. Se construye desde metadata aceptada como resumen, status, posicion
+estructural de pagina, tiempo estimado, tags, prerrequisitos resueltos, conteos
+de enlaces explicitos del grafo y conteos de practica oficial. Mantiene esos
+campos precisos; el brief orienta a estudiantes, pero no es evaluacion,
+progreso, dominio, personalizacion ni motor de recomendaciones.
+
 El renderizador estatico de practica oficial muestra objetos de nivel
 pagina desde archivos `_official/` colocados junto a su pagina en una seccion
 `Official practice`. Por ahora, escribe cards, prompts, quizzes y campos

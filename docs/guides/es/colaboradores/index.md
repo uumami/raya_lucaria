@@ -95,6 +95,13 @@ curso que los links compactos de secuencia. Mantenlas estaticas, accesibles con
 teclado, responsivas, y sin lenguaje de progreso, dominio, recomendacion o
 siguiente paso personal.
 
+Revisa el Page brief como orientacion estatica inicial sobre metadata ya
+aceptada. Puede mostrar resumen, status, posicion estructural de pagina, tiempo
+estimado, tags, prerrequisitos resueltos, conteos de enlaces explicitos del
+grafo y conteos de practica oficial. Debe usar solo enlaces y anchors locales,
+ser responsivo y evitar rutas de fuente, rutas privadas, fetches, storage del
+browser, progreso, dominio, recomendaciones, evaluacion o personalizacion.
+
 Revisa el Course graph como una superficie estatica de artifact. La busqueda del
 grafo, los detalles de pagina seleccionada, filtros de grupo, controles SVG de
 viewport y workspace expandido del grafo deben usar solo datos embebidos del

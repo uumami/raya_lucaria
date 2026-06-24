@@ -102,6 +102,13 @@ non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not
 learner progress.
 
+The Page brief is part of the reader shell. Verify it appears before authored
+content when public metadata exists, uses escaped summary/status/tags, resolved
+prerequisite links, page-focused graph links, and official-practice anchors, and
+does not expose source paths, private paths, runtime `fetch`, browser storage,
+progress, mastery, recommendations, grading, personalization, or learner-state
+language.
+
 When changing generated section indexes, verify section landing card markup,
 normal local link navigation, desktop/mobile no-overflow behavior, and absence
 of recommendation/progress/mastery wording inside the generated index surface.

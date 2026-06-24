@@ -172,6 +172,13 @@ prompts, and practice links that students can use without fake progress. Use
 checkpoints and goals as visible teaching material until a later source contract
 accepts them as metadata.
 
+Rendered pages may show a Page brief near the start of the article. It is built
+from accepted metadata such as summary, status, structural page position,
+estimated time, tags, resolved prerequisites, explicit graph-link counts, and
+official-practice counts. Keep those fields accurate; the brief is orientation
+for students, not grading, progress, mastery, personalization, or a
+recommendation engine.
+
 The static official practice renderer shows page-level objects from
 colocated `_official/` files on their owning page in an `Official practice`
 section. Author official cards, prompts, quizzes, and generic official object

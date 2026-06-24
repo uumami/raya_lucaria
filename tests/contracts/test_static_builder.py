@@ -127,6 +127,103 @@ def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
     assert "course/" not in breadcrumb_html
 
 
+def test_build_renders_reader_page_brief_from_public_metadata(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    topic = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic.write_text(
+        "---\n"
+        "id: first-topic\n"
+        "title: First Topic\n"
+        "summary: Fixture topic connected to official study objects.\n"
+        "status: ready\n"
+        "estimated_time: 12 minutes\n"
+        "tags:\n"
+        "  - retrieval\n"
+        "  - orientation\n"
+        "prerequisites:\n"
+        "  - first-unit\n"
+        "---\n"
+        "# First Topic\n\n"
+        "Students read, retrieve, reflect, revisit, adapt, and contribute. "
+        "Return to the [unit overview](../0_index.md).\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    brief = _tag_html(html, "section", "raya-page-brief")
+    visible = _visible_text(brief).lower()
+    assert html.index('<nav class="raya-breadcrumbs"') < html.index(
+        '<section class="raya-page-brief"'
+    )
+    assert html.index('<section class="raya-page-brief"') < html.index(
+        '<h1 id="first-topic">First Topic</h1>'
+    )
+    assert 'aria-labelledby="raya-page-brief-title"' in brief
+    assert '<p class="raya-page-brief-kicker">Page brief</p>' in brief
+    assert '<h2 id="raya-page-brief-title">At a glance</h2>' in brief
+    assert (
+        '<p class="raya-page-brief-summary">Fixture topic connected to official study objects.</p>'
+        in brief
+    )
+    assert '<li class="raya-page-brief-fact raya-page-brief-status">' in brief
+    assert "ready" in brief
+    assert '<li class="raya-page-brief-fact raya-page-brief-position">' in brief
+    assert "Page 3 of 3" in brief
+    assert "12 minutes" in brief
+    assert "retrieval" in brief
+    assert "orientation" in brief
+    assert 'href="../index.html"' in brief
+    assert "First Unit" in brief
+    assert 'href="../../_raya/graph/index.html?page=first-topic"' in brief
+    assert "from this page" in brief
+    assert 'href="#raya-official-practice"' in brief
+    assert "3 official practice objects" in brief
+    assert "recommend" not in visible
+    assert "progress" not in visible
+    assert "mastery" not in visible
+    assert "course/" not in brief
+    assert "_official" not in brief
+    assert "source_path" not in brief
+    assert "http://" not in brief
+    assert "https://" not in brief
+    assert "fetch(" not in brief
+    assert "localStorage" not in brief
+    assert "sessionStorage" not in brief
+    assert "<script" not in brief
+
+
+def test_page_brief_omits_practice_link_when_no_official_section_renders(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    official_root = course / "course" / "1_unit" / "1_topic" / "_official"
+    shutil.rmtree(official_root)
+    prompt_dir = official_root / "prompts"
+    prompt_dir.mkdir(parents=True)
+    (prompt_dir / "1_empty_prompt.yaml").write_text(
+        "id: empty-prompt\ntype: prompt\nauthority: official\ncontent: {}\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    brief = _tag_html(html, "section", "raya-page-brief")
+    assert 'href="#raya-official-practice"' not in brief
+    assert "official practice object" not in brief
+    assert '<section class="raya-official-practice"' not in html
+
+
 def test_official_practice_escapes_nested_mapping_keys(
     tmp_path: Path,
 ) -> None:
@@ -146,7 +243,7 @@ def test_official_practice_escapes_nested_mapping_keys(
         "authority: official\n"
         "content:\n"
         "  prompt:\n"
-        "    \"<img src=x onerror=alert(1)>\": \"<script>alert(2)</script>\"\n",
+        '    "<img src=x onerror=alert(1)>": "<script>alert(2)</script>"\n',
         encoding="utf-8",
     )
 
@@ -1026,9 +1123,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "data-raya-practice-context" in practice_html
     assert "data-raya-practice-context-title" in practice_html
     assert "data-raya-practice-context-meta" in practice_html
-    assert (
-        'aria-label="Official practice context" aria-live="polite"' in practice_html
-    )
+    assert 'aria-label="Official practice context" aria-live="polite"' in practice_html
     assert 'data-raya-practice-filter="quiz"' in practice_html
     assert 'data-raya-practice-object="first-topic-card"' in practice_html
     assert 'data-raya-practice-active="false"' in practice_html
@@ -1037,10 +1132,15 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "What loop does Raya Lucaria support?" in practice_html
     assert "Explain how retrieval practice differs from rereading." in practice_html
     assert "Which action is part of the Raya Lucaria learning loop?" in practice_html
-    assert "Read, retrieve, reflect, adapt, revisit, and contribute." not in practice_html
+    assert (
+        "Read, retrieve, reflect, adapt, revisit, and contribute." not in practice_html
+    )
     assert "Correct option" not in practice_html
     assert "Vendor lock-in" not in practice_html
-    assert 'href="../../unit/topic/index.html#raya-official-first-topic-card"' in practice_html
+    assert (
+        'href="../../unit/topic/index.html#raya-official-first-topic-card"'
+        in practice_html
+    )
     assert 'href="../graph/index.html?page=first-topic"' in practice_html
 
     payload_match = re.search(
@@ -1054,14 +1154,18 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert payload["version"] == 1
     by_id = {item["id"]: item for item in payload["objects"]}
     assert set(by_id) == {"first-topic-card", "first-topic-prompt", "first-topic-quiz"}
-    assert by_id["first-topic-card"]["preview"] == "What loop does Raya Lucaria support?"
+    assert (
+        by_id["first-topic-card"]["preview"] == "What loop does Raya Lucaria support?"
+    )
     assert by_id["first-topic-quiz"]["preview"] == (
         "Which action is part of the Raya Lucaria learning loop?"
     )
     assert by_id["first-topic-card"]["page_url"].endswith(
         "/unit/topic/index.html#raya-official-first-topic-card"
     )
-    assert by_id["first-topic-card"]["graph_url"] == "../graph/index.html?page=first-topic"
+    assert (
+        by_id["first-topic-card"]["graph_url"] == "../graph/index.html?page=first-topic"
+    )
     allowed_object_keys = {
         "anchor",
         "authority",
@@ -1111,7 +1215,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
         assert forbidden_practice_state_token not in practice_script
     rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
     assert "function setActiveObject" in practice_script
-    assert 'data-raya-practice-active' in practice_script
+    assert "data-raya-practice-active" in practice_script
     assert 'event.key === "ArrowDown"' in practice_script
     assert 'event.key === "ArrowUp"' in practice_script
     assert 'querySelector(".raya-practice-open")' in practice_script
@@ -2969,12 +3073,17 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Links here" in connections_panel
     assert 'href="../math-authoring/index.html"' in connections_panel
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
-    assert 'class="raya-connection-preview raya-connection-preview-rail"' in connections_panel
+    assert (
+        'class="raya-connection-preview raya-connection-preview-rail"'
+        in connections_panel
+    )
     assert "<summary>Reader UX Fixture</summary>" in connections_panel
     assert "Reader UX fixture for course-shell navigation" in connections_panel
-    assert '<span class="raya-connection-preview-status">ready</span>' in connections_panel
-    assert '<span><strong>1</strong> from this page</span>' in connections_panel
-    assert '<span><strong>2</strong> links here</span>' in connections_panel
+    assert (
+        '<span class="raya-connection-preview-status">ready</span>' in connections_panel
+    )
+    assert "<span><strong>1</strong> from this page</span>" in connections_panel
+    assert "<span><strong>2</strong> links here</span>" in connections_panel
     assert (
         'class="raya-connection-preview-open" href="../reader-ux/index.html"'
         in connections_panel
@@ -3014,8 +3123,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<span class="raya-connection-preview-status">ready</span>'
         in article_connections
     )
-    assert '<span><strong>1</strong> from this page</span>' in article_connections
-    assert '<span><strong>2</strong> links here</span>' in article_connections
+    assert "<span><strong>1</strong> from this page</span>" in article_connections
+    assert "<span><strong>2</strong> links here</span>" in article_connections
     assert (
         'class="raya-connection-preview-open" href="../math-authoring/index.html"'
         in article_connections
@@ -3044,18 +3153,28 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<section class="raya-article-connections"'
     )
     last_sequence_cards = _article_sequence_cards_html(last_html)
+    assert last_html.index(
+        '<section class="raya-article-connections"'
+    ) < last_html.index('<nav class="raya-article-sequence-cards"')
     assert (
-        last_html.index('<section class="raya-article-connections"')
-        < last_html.index('<nav class="raya-article-sequence-cards"')
+        'class="raya-sequence-card raya-sequence-card-next"' not in last_sequence_cards
     )
-    assert 'class="raya-sequence-card raya-sequence-card-next"' not in last_sequence_cards
     assert (
         'class="raya-sequence-card raya-sequence-card-prev" '
         'rel="prev" data-raya-prev-page href="../reader-ux/index.html"'
     ) in last_sequence_cards
-    assert '<span class="raya-sequence-card-kicker">Previous page</span>' in last_sequence_cards
-    assert '<span class="raya-sequence-card-title">Reader UX Fixture</span>' in last_sequence_cards
-    assert '<span class="raya-sequence-card-meta">Page 5 of 6</span>' in last_sequence_cards
+    assert (
+        '<span class="raya-sequence-card-kicker">Previous page</span>'
+        in last_sequence_cards
+    )
+    assert (
+        '<span class="raya-sequence-card-title">Reader UX Fixture</span>'
+        in last_sequence_cards
+    )
+    assert (
+        '<span class="raya-sequence-card-meta">Page 5 of 6</span>'
+        in last_sequence_cards
+    )
     assert "recommend" not in last_sequence_cards.lower()
     assert "progress" not in last_sequence_cards.lower()
     assert "mastery" not in last_sequence_cards.lower()
@@ -3078,8 +3197,8 @@ def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None
             "title: Math Authoring Fixture\n"
             "summary: Fixture page for current build-time MathJax authoring patterns.\n"
             "status: ready\n",
-            "title: \"<script>Title</script>\"\n"
-            "summary: \"<img src=x onerror=alert(1)>\"\n"
+            'title: "<script>Title</script>"\n'
+            'summary: "<img src=x onerror=alert(1)>"\n'
             "status: ready\n",
         ),
         encoding="utf-8",
@@ -3088,15 +3207,18 @@ def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None
     report = build_course(course)
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
-    html = (
-        course / "artifact" / "site" / "authoring-matrix" / "index.html"
-    ).read_text(encoding="utf-8")
+    html = (course / "artifact" / "site" / "authoring-matrix" / "index.html").read_text(
+        encoding="utf-8"
+    )
     article_connections = _article_connections_html(html)
     assert "&lt;script&gt;Title&lt;/script&gt;" in article_connections
     assert "&lt;img src=x onerror=alert(1)&gt;" in article_connections
     assert "<script>Title</script>" not in article_connections
     assert "<img src=x onerror=alert(1)>" not in article_connections
-    assert '<span class="raya-connection-preview-status">ready</span>' in article_connections
+    assert (
+        '<span class="raya-connection-preview-status">ready</span>'
+        in article_connections
+    )
     assert 'href="../math-authoring/index.html"' in article_connections
     assert 'href="../_raya/graph/index.html?page=math-authoring"' in article_connections
     assert "fetch(" not in article_connections
@@ -3179,17 +3301,27 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'rel="next" data-raya-next-page href="topic/index.html"' in middle_html
     root_sequence_cards = _article_sequence_cards_html(html)
     assert (
-        '<nav class="raya-article-sequence-cards" '
-        'aria-label="End-of-page navigation">'
+        '<nav class="raya-article-sequence-cards" aria-label="End-of-page navigation">'
     ) in root_sequence_cards
-    assert 'class="raya-sequence-card raya-sequence-card-prev"' not in root_sequence_cards
+    assert (
+        'class="raya-sequence-card raya-sequence-card-prev"' not in root_sequence_cards
+    )
     assert (
         'class="raya-sequence-card raya-sequence-card-next" '
         'rel="next" data-raya-next-page href="unit/index.html"'
     ) in root_sequence_cards
-    assert '<span class="raya-sequence-card-kicker">Next page</span>' in root_sequence_cards
-    assert '<span class="raya-sequence-card-title">First Unit</span>' in root_sequence_cards
-    assert '<span class="raya-sequence-card-meta">Page 2 of 3</span>' in root_sequence_cards
+    assert (
+        '<span class="raya-sequence-card-kicker">Next page</span>'
+        in root_sequence_cards
+    )
+    assert (
+        '<span class="raya-sequence-card-title">First Unit</span>'
+        in root_sequence_cards
+    )
+    assert (
+        '<span class="raya-sequence-card-meta">Page 2 of 3</span>'
+        in root_sequence_cards
+    )
     middle_sequence_cards = _article_sequence_cards_html(middle_html)
     assert (
         'class="raya-sequence-card raya-sequence-card-prev" '
@@ -3199,8 +3331,14 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         'class="raya-sequence-card raya-sequence-card-next" '
         'rel="next" data-raya-next-page href="topic/index.html"'
     ) in middle_sequence_cards
-    assert '<span class="raya-sequence-card-title">Minimal Course</span>' in middle_sequence_cards
-    assert '<span class="raya-sequence-card-title">First Topic</span>' in middle_sequence_cards
+    assert (
+        '<span class="raya-sequence-card-title">Minimal Course</span>'
+        in middle_sequence_cards
+    )
+    assert (
+        '<span class="raya-sequence-card-title">First Topic</span>'
+        in middle_sequence_cards
+    )
     assert "recommend" not in middle_sequence_cards.lower()
     assert "progress" not in middle_sequence_cards.lower()
     assert "mastery" not in middle_sequence_cards.lower()
@@ -3388,8 +3526,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);"
-        in css
+        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
     )
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "border-left: 0;" in css
@@ -3400,7 +3537,9 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     )
     assert "@media (max-width: 1500px)" in css
     assert "@media (min-width: 1280px)" in css
-    assert "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
+    assert (
+        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
+    )
     assert "outline: 3px solid var(--raya-color-accent);" in css
     assert "@media (max-width: 1279px)" in css
     assert "max-width: 68rem;" in css
@@ -4261,7 +4400,9 @@ def _article_sequence_cards_html(html_text: str) -> str:
     return html_text[start:end]
 
 
-def _local_index_study_counts(indices: dict[str, object], page_id: str) -> dict[str, int]:
+def _local_index_study_counts(
+    indices: dict[str, object], page_id: str
+) -> dict[str, int]:
     for section in indices["local"]:
         assert isinstance(section, dict)
         if section.get("id") == page_id:

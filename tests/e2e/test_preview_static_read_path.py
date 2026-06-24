@@ -140,11 +140,15 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
                         _assert_no_horizontal_overflow(page)
                         practice = page.locator(".raya-official-practice")
                         assert practice.is_visible()
-                        assert page.locator("#raya-official-first-topic-card").is_visible()
+                        assert page.locator(
+                            "#raya-official-first-topic-card"
+                        ).is_visible()
                         assert page.locator(
                             "#raya-official-first-topic-prompt"
                         ).is_visible()
-                        assert page.locator("#raya-official-first-topic-quiz").is_visible()
+                        assert page.locator(
+                            "#raya-official-first-topic-quiz"
+                        ).is_visible()
                         assert (
                             page.locator(
                                 "#raya-official-first-topic-card details"
@@ -162,7 +166,9 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
                         )
                         assert (
                             "Read, retrieve, reflect, adapt, revisit, and contribute."
-                            in page.locator("#raya-official-first-topic-card").inner_text()
+                            in page.locator(
+                                "#raya-official-first-topic-card"
+                            ).inner_text()
                         )
                         page.locator(
                             "#raya-official-first-topic-quiz details summary"
@@ -173,9 +179,12 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
                             ).get_attribute("open")
                             == ""
                         )
-                        assert "Correct option" in page.locator(
-                            "#raya-official-first-topic-quiz"
-                        ).inner_text()
+                        assert (
+                            "Correct option"
+                            in page.locator(
+                                "#raya-official-first-topic-quiz"
+                            ).inner_text()
+                        )
                         assert requested_urls == []
                     finally:
                         page.close()
@@ -226,9 +235,9 @@ def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) ->
                         breadcrumbs = page.locator(".raya-breadcrumbs")
                         assert breadcrumbs.is_visible()
                         assert (
-                            breadcrumbs.locator(".raya-breadcrumb-current").get_attribute(
-                                "aria-current"
-                            )
+                            breadcrumbs.locator(
+                                ".raya-breadcrumb-current"
+                            ).get_attribute("aria-current")
                             == "page"
                         )
                         assert "First Topic" in breadcrumbs.inner_text()
@@ -243,9 +252,9 @@ def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) ->
                             wait_until="networkidle",
                         )
                         breadcrumbs = page.locator(".raya-breadcrumbs")
-                        home_href = breadcrumbs.locator(".raya-breadcrumb-home").evaluate(
-                            "node => node.href"
-                        )
+                        home_href = breadcrumbs.locator(
+                            ".raya-breadcrumb-home"
+                        ).evaluate("node => node.href")
                         with page.expect_navigation():
                             breadcrumbs.locator(".raya-breadcrumb-home").click()
                         assert page.url == home_href
@@ -505,10 +514,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(".raya-graph-workspace").is_visible()
                         assert page.locator(".raya-graph-map-panel").is_visible()
                         assert page.locator(".raya-graph-list-panel").is_visible()
-                        assert page.locator(
-                            ".raya-graph-inspector-panel"
-                        ).is_visible()
-                        assert page.locator("#graph-layout").input_value() == "connections"
+                        assert page.locator(".raya-graph-inspector-panel").is_visible()
+                        assert (
+                            page.locator("#graph-layout").input_value() == "connections"
+                        )
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
                                 "data-raya-graph-layout"
@@ -519,9 +528,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         static_x, _ = _graph_node_translate(page, "static-path")
                         math_x, _ = _graph_node_translate(page, "math-authoring")
                         reader_x, _ = _graph_node_translate(page, "reader-ux")
-                        matrix_x, _ = _graph_node_translate(
-                            page, "authoring-matrix"
-                        )
+                        matrix_x, _ = _graph_node_translate(page, "authoring-matrix")
                         assert root_x < static_x
                         assert root_x < reader_x
                         assert root_x < matrix_x
@@ -608,9 +615,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "[data-raya-graph-help] summary"
                             )
                             assert inspector_summary.get_attribute("tabindex") is None
-                            page.click(
-                                '[data-raya-graph-toggle-panel="inspector"]'
-                            )
+                            page.click('[data-raya-graph-toggle-panel="inspector"]')
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
                                     "data-raya-graph-inspector-state"
@@ -630,9 +635,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 == 0
                             )
                             assert inspector_summary.get_attribute("tabindex") == "-1"
-                            page.click(
-                                '[data-raya-graph-toggle-panel="inspector"]'
-                            )
+                            page.click('[data-raya-graph-toggle-panel="inspector"]')
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
                                     "data-raya-graph-inspector-state"
@@ -955,21 +958,24 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             {
                                 "button": 0,
                                 "clientX": canvas_box["x"] + canvas_box["width"] * 0.08,
-                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                                "clientY": canvas_box["y"]
+                                + canvas_box["height"] * 0.08,
                             },
                         )
                         page.locator("#raya-graph-canvas").dispatch_event(
                             "mousemove",
                             {
                                 "clientX": canvas_box["x"] + canvas_box["width"] * 0.02,
-                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                                "clientY": canvas_box["y"]
+                                + canvas_box["height"] * 0.08,
                             },
                         )
                         page.locator("#raya-graph-canvas").dispatch_event(
                             "mouseup",
                             {
                                 "clientX": canvas_box["x"] + canvas_box["width"] * 0.02,
-                                "clientY": canvas_box["y"] + canvas_box["height"] * 0.08,
+                                "clientY": canvas_box["y"]
+                                + canvas_box["height"] * 0.08,
                             },
                         )
                         after_drag_pan = _viewbox_values(
@@ -1030,7 +1036,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="render-root"] g'
-                        ).evaluate("node => node.classList.contains('is-search-context')")
+                        ).evaluate(
+                            "node => node.classList.contains('is-search-context')"
+                        )
                         page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="render-root"]'
                         ).dispatch_event("focus")
@@ -1042,13 +1050,19 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert not page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="render-root"] g'
-                        ).evaluate("node => node.classList.contains('is-search-context')")
+                        ).evaluate(
+                            "node => node.classList.contains('is-search-context')"
+                        )
                         assert page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="static-path"] g'
-                        ).evaluate("node => node.classList.contains('is-search-dimmed')")
+                        ).evaluate(
+                            "node => node.classList.contains('is-search-dimmed')"
+                        )
                         assert page.locator(
                             '#raya-graph-canvas .raya-graph-edge[data-raya-graph-from="render-root"][data-raya-graph-to="authoring-matrix"]'
-                        ).first.evaluate("edge => edge.classList.contains('is-search-context')")
+                        ).first.evaluate(
+                            "edge => edge.classList.contains('is-search-context')"
+                        )
                         assert (
                             page.locator(
                                 "#raya-graph-canvas .raya-graph-edge.is-search-dimmed"
@@ -1086,10 +1100,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert not page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="static-path"] g'
-                        ).evaluate("node => node.classList.contains('is-search-dimmed')")
+                        ).evaluate(
+                            "node => node.classList.contains('is-search-dimmed')"
+                        )
                         assert not page.locator(
-                            '#raya-graph-canvas .raya-graph-edge.is-inspected'
-                        ).first.evaluate("edge => edge.classList.contains('is-search-dimmed')")
+                            "#raya-graph-canvas .raya-graph-edge.is-inspected"
+                        ).first.evaluate(
+                            "edge => edge.classList.contains('is-search-dimmed')"
+                        )
                         page.click("#graph-reset")
                         assert (
                             page.locator(
@@ -1150,9 +1168,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         after_height = page.locator(
                             "#raya-graph-canvas"
                         ).bounding_box()["height"]
-                        after_width = page.locator(
-                            "#raya-graph-canvas"
-                        ).bounding_box()["width"]
+                        after_width = page.locator("#raya-graph-canvas").bounding_box()[
+                            "width"
+                        ]
                         if viewport["width"] >= 1280:
                             assert after_width >= before_width
                         page.click("#graph-expand")
@@ -1206,7 +1224,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         cluster_root = _graph_node_translate(page, "render-root")
                         cluster_static = _graph_node_translate(page, "static-path")
-                        cluster_math_root = _graph_node_translate(page, "math-authoring")
+                        cluster_math_root = _graph_node_translate(
+                            page, "math-authoring"
+                        )
                         cluster_math_a = _graph_node_translate(page, "cluster-math-1")
                         cluster_math_b = _graph_node_translate(page, "cluster-math-2")
                         assert cluster_static[0] > cluster_root[0]
@@ -1606,7 +1626,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             assert control_box is not None
                             assert results_box is not None
                             assert context_box is not None
-                            assert control_box["x"] < results_box["x"] < context_box["x"]
+                            assert (
+                                control_box["x"] < results_box["x"] < context_box["x"]
+                            )
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
                                 ".raya-discovery-command-bar"
@@ -1632,7 +1654,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         assert (
                             "visible result"
-                            in page.locator("[data-raya-search-summary-count]").inner_text()
+                            in page.locator(
+                                "[data-raya-search-summary-count]"
+                            ).inner_text()
                         )
                         after = page.locator(
                             "#raya-search-results [data-raya-search-result]:visible"
@@ -1648,11 +1672,15 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert "Stable ID authoring-matrix" in result_card.inner_text()
                         assert (
                             "Authoring Matrix Fixture"
-                            in page.locator("[data-raya-search-context-title]").inner_text()
+                            in page.locator(
+                                "[data-raya-search-context-title]"
+                            ).inner_text()
                         )
                         assert (
                             "Explicit links"
-                            in page.locator("[data-raya-search-context-meta]").inner_text()
+                            in page.locator(
+                                "[data-raya-search-context-meta]"
+                            ).inner_text()
                         )
                         result_card.hover()
                         assert (
@@ -1666,7 +1694,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         assert (
                             "Authoring Matrix Fixture"
-                            in page.locator("[data-raya-search-context-title]").inner_text()
+                            in page.locator(
+                                "[data-raya-search-context-title]"
+                            ).inner_text()
                         )
                         assert "Explicit links" in result_card.inner_text()
                         assert "Official objects: Prompt: 1" in result_card.inner_text()
@@ -1728,7 +1758,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         assert (
                             "No visible result"
-                            in page.locator("[data-raya-search-context-title]").inner_text()
+                            in page.locator(
+                                "[data-raya-search-context-title]"
+                            ).inner_text()
                         )
                         page.goto(
                             f"{base_url}/_raya/search/index.html?q=Authoring%20Matrix%20Fixture",
@@ -1860,19 +1892,25 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             assert control_box is not None
                             assert results_box is not None
                             assert context_box is not None
-                            assert control_box["x"] < results_box["x"] < context_box["x"]
+                            assert (
+                                control_box["x"] < results_box["x"] < context_box["x"]
+                            )
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
                         page.click(".raya-command-font")
-                        assert page.locator("html").get_attribute(
-                            "data-raya-open-dyslexic"
-                        ) == "true"
+                        assert (
+                            page.locator("html").get_attribute(
+                                "data-raya-open-dyslexic"
+                            )
+                            == "true"
+                        )
                         page.click(".raya-command-size")
-                        assert page.locator("html").get_attribute(
-                            "data-raya-text-size"
-                        ) == "large"
+                        assert (
+                            page.locator("html").get_attribute("data-raya-text-size")
+                            == "large"
+                        )
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-card"]'
                         ).is_visible()
@@ -1892,7 +1930,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         )
                         assert (
                             "Quiz"
-                            in page.locator("[data-raya-practice-context-meta]").inner_text()
+                            in page.locator(
+                                "[data-raya-practice-context-meta]"
+                            ).inner_text()
                         )
                         quiz_card.locator(".raya-practice-open").focus()
                         assert (
@@ -1925,9 +1965,7 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         page.locator("#raya-practice-search").focus()
                         page.press("#raya-practice-search", "ArrowDown")
                         assert (
-                            page.locator(
-                                '[data-raya-practice-active="true"]'
-                            ).count()
+                            page.locator('[data-raya-practice-active="true"]').count()
                             == 1
                         )
 
@@ -1940,14 +1978,19 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         )
                         assert (
                             "1 visible practice object"
-                            in page.locator("[data-raya-practice-summary-count]").inner_text()
+                            in page.locator(
+                                "[data-raya-practice-summary-count]"
+                            ).inner_text()
                         )
-                        assert page.locator(
-                            '[data-raya-practice-active="true"]'
-                        ).count() == 0
+                        assert (
+                            page.locator('[data-raya-practice-active="true"]').count()
+                            == 0
+                        )
                         assert (
                             "Explain how retrieval practice differs from rereading."
-                            in page.locator("[data-raya-practice-context-title]").inner_text()
+                            in page.locator(
+                                "[data-raya-practice-context-title]"
+                            ).inner_text()
                         )
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-prompt"]'
@@ -1966,7 +2009,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert page.locator("#raya-practice-empty").is_visible()
                         assert (
                             "No visible practice object"
-                            in page.locator("[data-raya-practice-context-title]").inner_text()
+                            in page.locator(
+                                "[data-raya-practice-context-title]"
+                            ).inner_text()
                         )
 
                         page.click("#raya-practice-clear")
@@ -1986,9 +2031,7 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         page.locator("#raya-practice-search").focus()
                         page.press("#raya-practice-search", "ArrowDown")
                         assert (
-                            page.locator(
-                                '[data-raya-practice-active="true"]'
-                            ).count()
+                            page.locator('[data-raya-practice-active="true"]').count()
                             == 1
                         )
                         page.press("#raya-practice-search", "Escape")
@@ -1999,9 +2042,7 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               ?.includes('3 visible practice object')"""
                         )
                         assert (
-                            page.locator(
-                                '[data-raya-practice-active="true"]'
-                            ).count()
+                            page.locator('[data-raya-practice-active="true"]').count()
                             == 0
                         )
 
@@ -2019,7 +2060,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert page.url.endswith(
                             "/unit/topic/index.html#raya-official-first-topic-card"
                         )
-                        assert page.locator("#raya-official-first-topic-card").is_visible()
+                        assert page.locator(
+                            "#raya-official-first-topic-card"
+                        ).is_visible()
                         uncovered = page.evaluate(
                             """() => {
                               const target = document.querySelector(
@@ -2126,7 +2169,8 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert "@media (min-width: 1280px)" in rich_css
     assert (
-        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)" in rich_css
+        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)"
+        in rich_css
     )
     assert "transition: grid-template-columns 180ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
@@ -2715,8 +2759,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert collapsed["railBodyInert"] is True
                             assert collapsed["collapsedMapLinks"]
                             assert all(
-                                link["width"] >= 34
-                                and link["height"] >= 34
+                                link["width"] >= 34 and link["height"] >= 34
                                 for link in collapsed["collapsedMapLinks"]
                             )
                             _assert_no_horizontal_overflow(page)
@@ -2893,7 +2936,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert orientation["scrollTop"] > 0
                     assert orientation["currentTop"] >= orientation["mapTop"] - 1
                     if orientation["currentHeight"] <= orientation["mapHeight"]:
-                        assert orientation["currentBottom"] <= orientation["mapBottom"] + 1
+                        assert (
+                            orientation["currentBottom"] <= orientation["mapBottom"] + 1
+                        )
                     else:
                         assert orientation["currentBottom"] >= orientation["mapTop"]
                     assert orientation["localStorageKeys"] == []
@@ -2937,7 +2982,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert reexpanded["scrollTop"] > 0
                     assert reexpanded["currentTop"] >= reexpanded["mapTop"] - 1
                     if reexpanded["currentHeight"] <= reexpanded["mapHeight"]:
-                        assert reexpanded["currentBottom"] <= reexpanded["mapBottom"] + 1
+                        assert (
+                            reexpanded["currentBottom"] <= reexpanded["mapBottom"] + 1
+                        )
                     else:
                         assert reexpanded["currentBottom"] >= reexpanded["mapTop"]
                     first_toggle = page.locator("[data-raya-map-node-toggle]").first
@@ -4181,7 +4228,9 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                         )
                         assert "1 from this page" in preview_state["normalizedText"]
                         assert "2 links here" in preview_state["normalizedText"]
-                        assert preview_state["openHref"] == "../math-authoring/index.html"
+                        assert (
+                            preview_state["openHref"] == "../math-authoring/index.html"
+                        )
                         assert (
                             preview_state["graphHref"]
                             == "../_raya/graph/index.html?page=math-authoring"
@@ -4590,6 +4639,82 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     )
                 finally:
                     page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_preview_reader_page_brief_is_visible_static_and_responsive(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/unit/topic/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert requested_urls
+                        assert all(
+                            url.startswith(f"{handle.base_url}/")
+                            for url in requested_urls
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        brief = page.locator(".raya-page-brief")
+                        assert brief.is_visible()
+                        assert (
+                            brief.locator("#raya-page-brief-title").inner_text()
+                            == "At a glance"
+                        )
+                        text = brief.inner_text()
+                        assert (
+                            "Fixture topic connected to official study objects." in text
+                        )
+                        assert "ready" in text
+                        assert "Page 3 of 3" in text
+                        assert "3 official practice objects" in text
+                        assert "recommend" not in text.lower()
+                        assert "progress" not in text.lower()
+                        assert "mastery" not in text.lower()
+                        practice_href = brief.locator(
+                            'a[href="#raya-official-practice"]'
+                        ).get_attribute("href")
+                        assert practice_href == "#raya-official-practice"
+                        box = brief.bounding_box()
+                        assert box is not None
+                        assert box["width"] <= viewport["width"]
+                        if viewport["width"] <= 480:
+                            assert box["y"] < viewport["height"]
+                    finally:
+                        page.close()
             finally:
                 browser.close()
     finally:

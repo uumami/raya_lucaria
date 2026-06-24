@@ -112,6 +112,14 @@ storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
 en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
 
+El Page brief es parte de la shell lectora. Verifica que aparezca antes del
+contenido autorado cuando exista metadata publica, que use resumen/status/tags
+escapados, links de prerrequisitos resueltos, links de grafo enfocados en la
+pagina y anchors de practica oficial, y que no exponga rutas de fuente, rutas
+privadas, `fetch` en runtime, storage del browser, progreso, dominio,
+recomendaciones, evaluacion, personalizacion ni lenguaje de estado del
+estudiante.
+
 Al cambiar indices generados de seccion, verifica markup de cards de entrada,
 navegacion normal con enlaces locales, comportamiento desktop/mobile sin
 overflow y ausencia de lenguaje de recomendaciones/progreso/dominio dentro de la

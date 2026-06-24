@@ -91,6 +91,13 @@ Article-end Previous/Next cards are generated from the same course order as the
 compact sequence links. Keep them static, keyboard reachable, responsive, and
 free of progress, mastery, recommendation, or personal next-step wording.
 
+Review the Page brief as first-screen static orientation over already accepted
+metadata. It may show summary, status, structural page position, estimated time,
+tags, resolved prerequisites, explicit graph-link counts, and
+official-practice counts. It must use local links and anchors only, stay
+responsive, and avoid source paths, private paths, fetches, browser storage,
+progress, mastery, recommendations, grading, or personalization.
+
 Review the Course graph as a static artifact surface. Graph search, selected-page
 details, group filters, SVG viewport controls, and expanded graph workspace mode
 must use embedded artifact data and local renderer resources only. Zoom in, Zoom
