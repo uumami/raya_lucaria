@@ -169,6 +169,10 @@ pointer drag panning, shared discovery chrome, compact mobile discovery
 chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
+For desktop page-focused graph handoffs such as `?page=<page-id>`, verify that
+the selected SVG node and at least one graph edge are actually visible inside
+the first-paint graph canvas. Do not accept DOM-only checks that pass while the
+canvas is stretched so tall that the graph appears below the visible area.
 Graph layout positions are readability cues over explicit generated graph data.
 `Topology` is a static readability view over explicit generated graph
 relationships and the current visible edge set;

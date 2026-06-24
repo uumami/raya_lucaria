@@ -4089,6 +4089,9 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     ):
         assert selector in css
     assert "min-width: 2.75rem" in css
+    assert ".raya-graph-workspace {\n  align-items: start;" in css
+    assert "height: clamp(28rem, 56vh, 40rem);" in css
+    assert "height: clamp(34rem, 72vh, 48rem);" in css
     assert (
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
         in css

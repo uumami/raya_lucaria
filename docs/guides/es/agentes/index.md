@@ -224,6 +224,11 @@ atenuacion de spotlight y texto de inspeccion del grafo como pistas de legibilid
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente
 del grafo, librerias externas de grafo, requests fetch ni payloads de grafo en
 runtime.
+Para handoffs desktop de Graph enfocados por pagina como `?page=<page-id>`,
+verifica que el nodo SVG seleccionado y al menos una arista sean realmente
+visibles dentro del canvas del grafo en el primer render. No aceptes solo
+checks del DOM que pasan aunque el canvas este tan alto que el grafo aparece
+fuera del area visible inicial.
 Al cambiar Graph, verifica movimiento con teclado en graph search sobre
 resultados de pagina visibles, inspeccion de active result, Enter para abrir,
 pan del viewport del grafo y detalles de pagina seleccionada como ayudas

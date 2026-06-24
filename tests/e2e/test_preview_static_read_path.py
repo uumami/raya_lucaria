@@ -57,6 +57,23 @@ def _point_distance(a: tuple[float, float], b: tuple[float, float]) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
 
+def _boxes_intersect(outer: dict, inner: dict) -> bool:
+    return not (
+        inner["x"] + inner["width"] < outer["x"]
+        or inner["x"] > outer["x"] + outer["width"]
+        or inner["y"] + inner["height"] < outer["y"]
+        or inner["y"] > outer["y"] + outer["height"]
+    )
+
+
+def _intersection_box(left: dict, right: dict) -> dict:
+    x = max(left["x"], right["x"])
+    y = max(left["y"], right["y"])
+    width = max(0, min(left["x"] + left["width"], right["x"] + right["width"]) - x)
+    height = max(0, min(left["y"] + left["height"], right["y"] + right["height"]) - y)
+    return {"x": x, "y": y, "width": width, "height": height}
+
+
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     tmp_path: Path,
 ) -> None:
@@ -1943,6 +1960,62 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert requested_urls == []
                     finally:
                         page.close()
+            finally:
+                browser.close()
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                try:
+                    page.goto(
+                        f"{base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    canvas_box = page.locator("#raya-graph-canvas").bounding_box()
+                    selected_box = page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                    ).bounding_box()
+                    edge_boxes = page.locator(
+                        "#raya-graph-canvas .raya-graph-edge"
+                    ).evaluate_all(
+                        """edges => edges.map((edge) => {
+                          const box = edge.getBoundingClientRect();
+                          return {
+                            x: box.x,
+                            y: box.y,
+                            width: box.width,
+                            height: box.height,
+                          };
+                        })"""
+                    )
+                    assert canvas_box is not None
+                    assert selected_box is not None
+                    visible_canvas_box = _intersection_box(
+                        canvas_box,
+                        {
+                            "x": 0,
+                            "y": 0,
+                            "width": 1440,
+                            "height": 900,
+                        },
+                    )
+                    assert visible_canvas_box["width"] > 0
+                    assert visible_canvas_box["height"] > 0
+                    assert _boxes_intersect(visible_canvas_box, selected_box)
+                    assert any(
+                        _boxes_intersect(visible_canvas_box, edge_box)
+                        for edge_box in edge_boxes
+                    )
+                    assert canvas_box["height"] <= 700
+                finally:
+                    page.close()
             finally:
                 browser.close()
     finally:
