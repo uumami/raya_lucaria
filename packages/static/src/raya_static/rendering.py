@@ -874,6 +874,35 @@ img {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+.raya-graph-toolbar {
+  align-items: stretch;
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  padding: 0.65rem;
+}
+.raya-graph-toolbar-group {
+  align-items: center;
+  border-right: 1px solid var(--raya-color-border);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-right: 0.75rem;
+}
+.raya-graph-toolbar-group:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.raya-graph-toolbar-primary {
+  flex: 1 1 22rem;
+}
+.raya-graph-toolbar-primary input {
+  min-width: min(16rem, 100%);
+}
+.raya-graph-toolbar-viewport,
+.raya-graph-toolbar-state {
+  flex: 0 1 auto;
+}
 .raya-search-control-panel .raya-search-controls,
 .raya-practice-control-panel .raya-practice-controls {
   align-items: stretch;
@@ -1501,6 +1530,29 @@ img {
 }
 .raya-graph-detail-actions a[hidden] {
   display: none;
+}
+.raya-graph-detail-sequence {
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.65rem 0;
+  padding: 0.55rem;
+}
+.raya-graph-detail-sequence a {
+  border-left: 0.2rem solid var(--raya-color-border);
+  color: var(--raya-color-link);
+  font-weight: 750;
+  line-height: 1.35;
+  padding-left: 0.5rem;
+}
+.raya-graph-detail-sequence a[hidden] {
+  display: none;
+}
+[data-raya-graph-detail-current] {
+  border-left-color: var(--raya-color-accent) !important;
+  color: var(--raya-color-text) !important;
 }
 .raya-graph-detail-neighborhood {
   border-left: 0.22rem solid var(--raya-color-accent);

@@ -504,6 +504,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         language=str(config["language"]),
         graph_index=graph_index,
         official_counts=official_counts,
+        official_by_page=official_by_page,
         skin_context=skin_context,
         report=report,
     )
@@ -3526,6 +3527,7 @@ def _write_graph_surface(
     language: str,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -3539,6 +3541,7 @@ def _write_graph_surface(
             language=language,
             graph_index=graph_index,
             official_counts=official_counts,
+            official_by_page=official_by_page,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -3553,6 +3556,7 @@ def _render_graph_surface(
     language: str,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -3581,6 +3585,7 @@ def _render_graph_surface(
         content_model,
         graph_index,
         official_counts,
+        official_by_page,
     )
     graph_payload = _json_script_text(browser_graph)
     group_buttons = []
@@ -3653,7 +3658,11 @@ def _render_graph_surface(
                 "generated from this course.</p>"
             ),
             "</header>",
-            '<section class="raya-graph-controls" aria-label="Graph controls">',
+            '<section class="raya-graph-controls raya-graph-toolbar" aria-label="Graph controls">',
+            (
+                '<div class="raya-graph-toolbar-group raya-graph-toolbar-primary" '
+                'role="group" aria-label="Search and layout controls">'
+            ),
             '<label for="graph-search">Search</label>',
             '<input id="graph-search" type="search" autocomplete="off">',
             '<label for="graph-layout">Layout</label>',
@@ -3666,18 +3675,32 @@ def _render_graph_surface(
                 '<option value="list">List</option>'
                 "</select>"
             ),
+            "</div>",
+            (
+                '<div class="raya-graph-toolbar-group raya-graph-toolbar-viewport" '
+                'role="group" aria-label="Graph viewport controls">'
+            ),
             '<button id="graph-fit" type="button">Fit</button>',
             '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">Zoom in</button>',
             '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">Zoom out</button>',
             '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset view</button>',
-            '<span class="raya-graph-pan-controls" aria-label="Pan graph">',
+            "</div>",
+            (
+                '<span class="raya-graph-pan-controls raya-graph-toolbar-group '
+                'raya-graph-toolbar-pan" role="group" aria-label="Pan graph">'
+            ),
             '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">Left</button>',
             '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">Right</button>',
             '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">Up</button>',
             '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">Down</button>',
             "</span>",
+            (
+                '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
+                'role="group" aria-label="Graph state controls">'
+            ),
             '<button id="graph-reset" type="button">Reset graph</button>',
             '<button id="graph-expand" type="button" aria-pressed="false">Expand graph</button>',
+            "</div>",
             "</section>",
             (
                 '<p class="raya-graph-instructions">'
@@ -3763,8 +3786,16 @@ def _render_graph_surface(
             '<a data-raya-graph-detail-link href="../../index.html">Open page</a>',
             '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
             '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
+            '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>',
+            '<a data-raya-graph-detail-schedule-link hidden>Open schedule</a>',
             '<button type="button" data-raya-graph-focus-neighborhood hidden>Focus neighborhood</button>',
             "</p>",
+            '<nav class="raya-graph-detail-sequence" data-raya-graph-detail-sequence '
+            'aria-label="Selected page course order">',
+            '<a data-raya-graph-detail-previous href="../../index.html" hidden>Previous</a>',
+            '<a data-raya-graph-detail-current href="../../index.html">Selected page</a>',
+            '<a data-raya-graph-detail-next href="../../index.html" hidden>Next</a>',
+            "</nav>",
             '<div class="raya-graph-detail-links">',
             "<section>",
             "<h3>Links from this page</h3>",
@@ -3890,24 +3921,54 @@ def _browser_graph_payload(
     content_model: ContentModel,
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
+    official_by_page: dict[str, list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
+    official_by_page = official_by_page or {}
     nodes: list[dict[str, Any]] = []
     for node in graph_index["nodes"]:
         page = content_model.pages_by_id.get(str(node["id"]))
         if page is None:
             continue
+        page_objects = official_by_page.get(page.id, [])
+        public_task_objects = [
+            item for item in page_objects if _official_public_task_summary(item) is not None
+        ]
+        dated_task_objects = [
+            item for item in public_task_objects if _official_task_event_date(item)
+        ]
+        discovery_payload = _public_discovery_page_payload(
+            page,
+            content_model=content_model,
+            graph_index=graph_index,
+            official_counts=official_counts,
+            from_path=STATIC_GRAPH_PATH.as_posix(),
+            search_from_path=STATIC_GRAPH_PATH.as_posix(),
+            graph_from_path=STATIC_GRAPH_PATH.as_posix(),
+            practice_from_path=STATIC_GRAPH_PATH.as_posix(),
+        )
         nodes.append(
             {
                 **node,
-                **_public_discovery_page_payload(
-                    page,
-                    content_model=content_model,
-                    graph_index=graph_index,
-                    official_counts=official_counts,
-                    from_path=STATIC_GRAPH_PATH.as_posix(),
-                    search_from_path=STATIC_GRAPH_PATH.as_posix(),
-                    graph_from_path=STATIC_GRAPH_PATH.as_posix(),
-                    practice_from_path=STATIC_GRAPH_PATH.as_posix(),
+                **discovery_payload,
+                "tasks_url": (
+                    _href_with_query(
+                        _relative_href(
+                            STATIC_GRAPH_PATH.as_posix(), STATIC_TASKS_PATH.as_posix()
+                        ),
+                        {"page": page.id},
+                    )
+                    if public_task_objects
+                    else ""
+                ),
+                "schedule_url": (
+                    _href_with_query(
+                        _relative_href(
+                            STATIC_GRAPH_PATH.as_posix(), STATIC_SCHEDULE_PATH.as_posix()
+                        ),
+                        {"page": page.id},
+                    )
+                    if dated_task_objects
+                    else ""
                 ),
             }
         )

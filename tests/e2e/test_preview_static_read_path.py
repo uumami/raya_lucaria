@@ -394,6 +394,27 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    assignment_dir = (
+        course / "course" / "5_authoring_matrix" / "_official" / "assignments"
+    )
+    assignment_dir.mkdir(parents=True)
+    (assignment_dir / "1_matrix_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: authoring-matrix",
+                "content:",
+                "  title: Matrix graph check",
+                "  summary: Trace the graph context for matrix notation.",
+                "  due: '2026-11-03'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     for index in range(6, 18):
         crowded_page = course / "course" / f"{index}_crowded_{index}" / "0_index.md"
         crowded_page.parent.mkdir(parents=True)
@@ -496,6 +517,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
+                        toolbar_box = page.locator(
+                            ".raya-graph-toolbar"
+                        ).bounding_box()
+                        assert toolbar_box is not None
+                        assert toolbar_box["x"] >= 0
+                        assert (
+                            toolbar_box["x"] + toolbar_box["width"]
+                            <= viewport["width"] + 1
+                        )
                         assert page.locator(".raya-discovery-command-bar").is_visible()
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
@@ -707,6 +737,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-panel]"
                         ).is_visible()
+                        page.wait_for_function(
+                            f"""() => document
+                              .querySelector('#raya-graph-canvas [data-raya-graph-node="{first_active}"] g')
+                              ?.classList
+                              ?.contains('is-inspected')"""
+                        )
                         assert page.locator(
                             f'#raya-graph-canvas [data-raya-graph-node="{first_active}"] g'
                         ).evaluate("node => node.classList.contains('is-inspected')")
@@ -994,6 +1030,25 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-link]"
                         ).get_attribute("href")
+                        sequence_labels = page.locator(
+                            "[data-raya-graph-detail-sequence] a"
+                        ).evaluate_all(
+                            "nodes => nodes.map((node) => node.textContent.trim())"
+                        )
+                        assert sequence_labels == [
+                            "Previous: Reader UX Fixture",
+                            "Selected: Authoring Matrix Fixture",
+                            "Next: Crowded Page 6",
+                        ]
+                        assert page.locator(
+                            "[data-raya-graph-detail-next]"
+                        ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-tasks-link]"
+                        ).get_attribute("href") == "../tasks/index.html?page=authoring-matrix"
+                        assert page.locator(
+                            "[data-raya-graph-detail-schedule-link]"
+                        ).get_attribute("href") == "../schedule/index.html?page=authoring-matrix"
                         assert page.locator(
                             "[data-raya-graph-detail-empty]"
                         ).is_hidden()

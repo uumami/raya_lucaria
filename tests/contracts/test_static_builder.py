@@ -664,6 +664,47 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    assignment_dir = (
+        course / "course" / "5_authoring_matrix" / "_official" / "assignments"
+    )
+    assignment_dir.mkdir(parents=True)
+    (assignment_dir / "1_matrix_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: matrix-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: authoring-matrix",
+                "content:",
+                "  title: Matrix graph check",
+                "  summary: Trace the graph context for matrix notation.",
+                "  due: '2026-11-03'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    reader_task_dir = (
+        course / "course" / "4_reader_ux" / "_official" / "assignments"
+    )
+    reader_task_dir.mkdir(parents=True)
+    (reader_task_dir / "1_reader_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: reader-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: reader-ux",
+                "content:",
+                "  title: Reader task without date",
+                "  summary: Check task handoff without schedule handoff.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -718,6 +759,23 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-reset-view" in graph_html
     assert "graph-reset" in graph_html
     assert "graph-expand" in graph_html
+    assert "raya-graph-toolbar" in graph_html
+    assert (
+        '<div class="raya-graph-toolbar-group raya-graph-toolbar-primary" '
+        'role="group" aria-label="Search and layout controls">'
+    ) in graph_html
+    assert (
+        '<div class="raya-graph-toolbar-group raya-graph-toolbar-viewport" '
+        'role="group" aria-label="Graph viewport controls">'
+    ) in graph_html
+    assert (
+        '<span class="raya-graph-pan-controls raya-graph-toolbar-group '
+        'raya-graph-toolbar-pan" role="group" aria-label="Pan graph">'
+    ) in graph_html
+    assert (
+        '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
+        'role="group" aria-label="Graph state controls">'
+    ) in graph_html
     assert "Zoom in" in graph_html
     assert "Zoom out" in graph_html
     assert "Reset view" in graph_html
@@ -761,6 +819,28 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-link" in graph_html
     assert "data-raya-graph-detail-search-link" in graph_html
     assert "data-raya-graph-detail-practice-link" in graph_html
+    assert "data-raya-graph-detail-tasks-link" in graph_html
+    assert "data-raya-graph-detail-schedule-link" in graph_html
+    assert (
+        '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>'
+        in graph_html
+    )
+    assert (
+        '<a data-raya-graph-detail-schedule-link hidden>Open schedule</a>'
+        in graph_html
+    )
+    assert (
+        '<a data-raya-graph-detail-tasks-link href="../tasks/index.html"'
+        not in graph_html
+    )
+    assert (
+        '<a data-raya-graph-detail-schedule-link href="../schedule/index.html"'
+        not in graph_html
+    )
+    assert "data-raya-graph-detail-sequence" in graph_html
+    assert "data-raya-graph-detail-previous" in graph_html
+    assert "data-raya-graph-detail-current" in graph_html
+    assert "data-raya-graph-detail-next" in graph_html
     assert "raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-outgoing" in graph_html
@@ -784,6 +864,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     graph_nodes_by_id = {node["id"]: node for node in graph_payload["nodes"]}
     assert graph_nodes_by_id["render-root"]["title"] == "Raya & Lucaria <Graph> Fixture"
     root_node = graph_nodes_by_id["render-root"]
+    static_path_node = graph_nodes_by_id["static-path"]
+    reader_node = graph_nodes_by_id["reader-ux"]
     authoring_node = graph_nodes_by_id["authoring-matrix"]
     allowed_graph_node_keys = {
         "graph_url",
@@ -796,12 +878,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         "order",
         "practice_url",
         "previous_url",
+        "schedule_url",
         "search_url",
         "stable_id",
         "status",
         "study_counts",
         "summary",
         "tags",
+        "tasks_url",
         "title",
         "url",
     }
@@ -811,11 +895,25 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert set(node["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not node["url"].startswith("../../data/")
         assert node["search_url"].startswith("../search/index.html?q=")
-    assert root_node["study_counts"] == {"prompt": 1}
+    assert root_node["study_counts"] == {"assignment": 2, "prompt": 1}
     assert root_node["practice_url"] == ""
-    assert authoring_node["study_counts"] == {"prompt": 1}
+    assert root_node["tasks_url"] == ""
+    assert root_node["schedule_url"] == ""
+    assert static_path_node["study_counts"] == {}
+    assert static_path_node["practice_url"] == ""
+    assert static_path_node["tasks_url"] == ""
+    assert static_path_node["schedule_url"] == ""
+    assert reader_node["study_counts"] == {"assignment": 1}
+    assert reader_node["practice_url"] == "../practice/index.html?page=reader-ux"
+    assert reader_node["tasks_url"] == "../tasks/index.html?page=reader-ux"
+    assert reader_node["schedule_url"] == ""
+    assert authoring_node["study_counts"] == {"assignment": 1, "prompt": 1}
     assert authoring_node["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
+    )
+    assert authoring_node["tasks_url"] == "../tasks/index.html?page=authoring-matrix"
+    assert authoring_node["schedule_url"] == (
+        "../schedule/index.html?page=authoring-matrix"
     )
     assert authoring_node["previous_url"].endswith("../reader-ux/index.html")
     serialized_graph_payload = json.dumps(graph_payload)

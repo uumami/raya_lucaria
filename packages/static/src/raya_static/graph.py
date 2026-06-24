@@ -45,6 +45,11 @@ _GRAPH_JAVASCRIPT = r"""
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
+  const detailTasksLink = document.querySelector("[data-raya-graph-detail-tasks-link]");
+  const detailScheduleLink = document.querySelector("[data-raya-graph-detail-schedule-link]");
+  const detailPreviousLink = document.querySelector("[data-raya-graph-detail-previous]");
+  const detailCurrentLink = document.querySelector("[data-raya-graph-detail-current]");
+  const detailNextLink = document.querySelector("[data-raya-graph-detail-next]");
   const focusNeighborhood = document.querySelector("[data-raya-graph-focus-neighborhood]");
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
@@ -722,7 +727,10 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
-  function inspectGraphNode(nodeId) {
+  function inspectGraphNode(nodeId, options = {}) {
+    if (query && document.activeElement === search && !options.force) {
+      return;
+    }
     inspectedId = nodesById.has(nodeId) ? nodeId : "";
     if (hoverStatus) hoverStatus.textContent = inspectedId ? inspectionTextFor(inspectedId) : "";
     updateInspectionDom();
@@ -868,6 +876,33 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
+  function titleForUrl(url) {
+    if (!url) return "";
+    const target = nodes.find((candidate) => candidate.url === url);
+    return target ? (target.title || target.nav_title || target.id) : "";
+  }
+
+  function previousPageTitle(node) {
+    return titleForUrl(node.previous_url) || "previous page";
+  }
+
+  function nextPageTitle(node) {
+    return titleForUrl(node.next_url) || "next page";
+  }
+
+  function setOptionalDetailLink(link, href, text) {
+    if (!link) return;
+    if (href) {
+      link.href = href;
+      link.textContent = text;
+      link.hidden = false;
+    } else {
+      link.hidden = true;
+      link.removeAttribute("href");
+      link.textContent = text;
+    }
+  }
+
   function studyCountsText(counts) {
     if (!counts || typeof counts !== "object") return "";
     return Object.keys(counts).sort().map((key) => {
@@ -901,6 +936,14 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
       if (detailNeighborhood) detailNeighborhood.textContent = "";
+      setOptionalDetailLink(detailTasksLink, "", "Open tasks");
+      setOptionalDetailLink(detailScheduleLink, "", "Open schedule");
+      setOptionalDetailLink(detailPreviousLink, "", "Previous");
+      if (detailCurrentLink) {
+        detailCurrentLink.href = "#";
+        detailCurrentLink.textContent = "Selected page";
+      }
+      setOptionalDetailLink(detailNextLink, "", "Next");
       return;
     }
     const group = groupsById.get(node.group || "");
@@ -944,6 +987,22 @@ _GRAPH_JAVASCRIPT = r"""
       }
       detailPracticeLink.textContent = "Open practice";
     }
+    setOptionalDetailLink(detailTasksLink, node.tasks_url || "", "Open tasks");
+    setOptionalDetailLink(detailScheduleLink, node.schedule_url || "", "Open schedule");
+    setOptionalDetailLink(
+      detailPreviousLink,
+      node.previous_url || "",
+      node.previous_url ? "Previous: " + previousPageTitle(node) : "Previous"
+    );
+    if (detailCurrentLink) {
+      detailCurrentLink.href = node.url;
+      detailCurrentLink.textContent = "Selected: " + (node.title || node.nav_title || node.id);
+    }
+    setOptionalDetailLink(
+      detailNextLink,
+      node.next_url || "",
+      node.next_url ? "Next: " + nextPageTitle(node) : "Next"
+    );
     const outgoing = edges
       .filter((edge) => edge.from === node.id)
       .map((edge) => {
@@ -1179,7 +1238,7 @@ _GRAPH_JAVASCRIPT = r"""
       });
       link.addEventListener("mouseenter", () => inspectGraphNode(node.id));
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
-      link.addEventListener("focus", () => inspectGraphNode(node.id));
+      link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true }));
       link.addEventListener("blur", () => clearGraphInspection(node.id));
       canvas.appendChild(link);
     });
@@ -1341,7 +1400,7 @@ _GRAPH_JAVASCRIPT = r"""
   list.addEventListener("focusin", (event) => {
     const item = event.target.closest("[data-raya-graph-node]");
     if (!item || item.hidden) return;
-    inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");
+    inspectGraphNode(item.getAttribute("data-raya-graph-node") || "", { force: true });
   });
   list.addEventListener("focusout", (event) => {
     const item = event.target.closest("[data-raya-graph-node]");
@@ -1361,7 +1420,7 @@ _GRAPH_JAVASCRIPT = r"""
     link.addEventListener("focus", () => {
       const item = link.closest("[data-raya-graph-node]");
       if (!item || item.hidden) return;
-      inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");
+      inspectGraphNode(item.getAttribute("data-raya-graph-node") || "", { force: true });
     });
     link.addEventListener("blur", () => {
       const item = link.closest("[data-raya-graph-node]");
