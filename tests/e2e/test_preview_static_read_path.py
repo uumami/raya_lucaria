@@ -1131,7 +1131,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "nodes => nodes.map((node) => node.textContent.trim())"
                         )
                         assert sequence_labels == [
-                            "Previous: Reader UX Fixture",
+                            "Previous: Projection Residuals",
                             "Selected: Authoring Matrix Fixture",
                             "Next: Crowded Page 6",
                         ]
@@ -3243,7 +3243,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             ]
                             assert workspace["badges"][0] == "Course"
                             assert re.fullmatch(r"\d+ links?", workspace["badges"][1])
-                            assert workspace["badges"][2] == "Course"
+                            assert workspace["badges"][2] == "2 official"
                             assert workspace["badges"][3] == "Course"
                             assert workspace["badges"][4] == "Course"
                             assert any(
@@ -3254,7 +3254,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "../_raya/graph/index.html?page=reader-ux" in href
                                 for href in workspace["hrefs"]
                             )
-                            assert "../_raya/practice/index.html" in workspace["hrefs"]
+                            assert (
+                                "../_raya/practice/index.html?page=reader-ux"
+                                in workspace["hrefs"]
+                            )
                             assert any(
                                 "../_raya/tasks/index.html" in href
                                 for href in workspace["hrefs"]
@@ -3321,7 +3324,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             )
                             assert 64 <= collapsed["mapWidth"] <= 84
                             assert 44 <= collapsed["railWidth"] <= 64
-                            assert collapsed["mapButtonAfter"] == '"Map"'
+                            assert collapsed["mapButtonAfter"] == '"Nav"'
                             assert collapsed["railButtonAfter"] == '"Info"'
                             assert collapsed["railBodyHidden"] == "true"
                             assert collapsed["railBodyInert"] is True
@@ -4172,7 +4175,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert 56 <= collapsed["mapWidth"] <= 84
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
-                    assert collapsed["buttonVisualLabel"] == '"Map"'
+                    assert collapsed["buttonVisualLabel"] == '"Nav"'
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
                     assert collapsed["firstLinkPointerEvents"] == "auto"
@@ -4683,7 +4686,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                     assert "Links here" in expanded["text"]
                     panel.locator(
                         ".raya-connection-preview-rail summary",
-                        has_text="Reader UX Fixture",
+                        has_text="Projection Residuals",
                     ).click()
                     graph_link = panel.locator(
                         '.raya-connection-preview-graph[href="../_raya/graph/index.html?page=reader-ux"]'
@@ -4696,7 +4699,7 @@ def test_render_fixture_graph_context_panel_collapses_without_focus_leaks(
                         "[data-raya-graph-detail-panel]:not([hidden])"
                     )
                     assert (
-                        "Reader UX Fixture"
+                        "Projection Residuals"
                         in page.locator("[data-raya-graph-detail-title]").inner_text()
                     )
                 finally:
@@ -4790,7 +4793,7 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                             == "../_raya/graph/index.html?page=authoring-matrix"
                         )
                         assert "Math Authoring Fixture" in state["text"]
-                        assert "Reader UX Fixture" in state["text"]
+                        assert "Projection Residuals" in state["text"]
                         assert "recommend" not in state["text"].lower()
                         assert "progress" not in state["text"].lower()
                         assert "mastery" not in state["text"].lower()
@@ -5079,6 +5082,13 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             const [r, g, b] = rgb(value).map((channel) => channel / 255);
                             return 0.2126 * r + 0.7152 * g + 0.0722 * b;
                           };
+                          const shadowAlpha = (value) => {
+                            if (!value || value === 'none') return 0;
+                            const rgba = value.match(/rgba?\\(([^)]+)\\)/);
+                            if (!rgba) return 1;
+                            const parts = rgba[1].split(',').map((part) => part.trim());
+                            return parts.length >= 4 ? Number(parts[3]) : 1;
+                          };
                           const topBar = document.querySelector('.raya-top-command-bar');
                           const article = document.querySelector('article.raya-main-article');
                           const firstParagraph = document.querySelector('article.raya-main-article > p');
@@ -5108,8 +5118,42 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             articleBackground: articleStyle.backgroundColor,
                             courseMapBackground: courseMapStyle.backgroundColor,
                             railBackground: railStyle.backgroundColor,
+                            courseMapShadow: courseMapStyle.boxShadow,
+                            railShadow: railStyle.boxShadow,
+                            courseMapShadowAlpha: shadowAlpha(courseMapStyle.boxShadow),
+                            railShadowAlpha: shadowAlpha(railStyle.boxShadow),
                             topBarLuminance: luminance(topBarStyle.backgroundColor),
                             pageLuminance: luminance(bodyStyle.backgroundColor),
+                          };
+                        }"""
+                    )
+                    page.click(".raya-course-map-toggle")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """() => document.querySelector('nav.raya-course-map')
+                          ?.getBoundingClientRect().width <= 82
+                          && document.querySelector('aside.raya-learning-rail')
+                          ?.getBoundingClientRect().width <= 64"""
+                    )
+                    collapsed = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
+                          const mapToggle = document.querySelector('#raya-course-map .raya-course-map-toggle');
+                          const railExpand = document.querySelector('[data-raya-learning-rail-expand]');
+                          return {
+                            mapWidth: map.getBoundingClientRect().width,
+                            railWidth: rail.getBoundingClientRect().width,
+                            mapLabel: getComputedStyle(mapToggle, '::after').content,
+                            railLabel: getComputedStyle(railExpand, '::after').content,
+                            mapAriaLabel: mapToggle.getAttribute('aria-label'),
+                            railAriaLabel: railExpand.getAttribute('aria-label'),
+                            mapToggleWidth: mapToggle.getBoundingClientRect().width,
+                            railExpandWidth: railExpand.getBoundingClientRect().width,
                           };
                         }"""
                     )
@@ -5121,11 +5165,17 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         handle.close()
 
     assert chrome["shellWidth"] > 1700
-    assert chrome["articleWidth"] >= 820
+    assert chrome["articleWidth"] >= 980
+    assert chrome["articleWidth"] > chrome["mapWidth"] * 3
+    assert chrome["articleWidth"] > chrome["railWidth"] * 3
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
-    assert 220 <= chrome["mapWidth"] <= 300
-    assert 240 <= chrome["railWidth"] <= 330
+    assert 180 <= chrome["mapWidth"] <= 280
+    assert 200 <= chrome["railWidth"] <= 320
+    assert (
+        chrome["courseMapShadow"] == "none" or chrome["courseMapShadowAlpha"] <= 0.04
+    )
+    assert chrome["railShadow"] == "none" or chrome["railShadowAlpha"] <= 0.04
     assert chrome["topBarLuminance"] < chrome["pageLuminance"] - 0.35
     assert chrome["topBarBackground"] != chrome["bodyBackground"]
     assert chrome["topBarText"] != chrome["topBarBackground"]
@@ -5133,6 +5183,79 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
+    assert collapsed["mapWidth"] <= 82
+    assert collapsed["railWidth"] <= 64
+    assert collapsed["mapLabel"] == '"Nav"'
+    assert collapsed["railLabel"] == '"Info"'
+    assert collapsed["mapAriaLabel"] == "Expand course map"
+    assert collapsed["railAriaLabel"] == "Show learning context"
+    assert collapsed["mapToggleWidth"] >= 40
+    assert collapsed["railExpandWidth"] >= 40
+
+
+def test_render_fixture_reader_ux_is_learning_showcase(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    assert requested_urls
+                    assert all(
+                        url.startswith(f"{handle.base_url}/")
+                        for url in requested_urls
+                    )
+                    assert page.locator("h1").inner_text() == "Projection Residuals"
+                    article_text = page.locator("article.raya-main-article").inner_text()
+                    assert (
+                        "What remains after projecting a vector onto a line?"
+                        in article_text
+                    )
+                    assert "Try this first" in article_text
+                    assert "Misconception" in article_text
+                    assert (
+                        "Reader UX fixture"
+                        not in page.locator(".raya-page-brief").inner_text()
+                    )
+                    assert page.locator(
+                        'img[alt="Projection residual diagram"]'
+                    ).is_visible()
+                    assert page.locator("#raya-official-practice").is_visible()
+                    assert page.locator(".raya-official-object").count() >= 2
+                    assert page.locator(
+                        'a[href="../_raya/practice/index.html?page=reader-ux"]'
+                    ).count() >= 1
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
@@ -5813,7 +5936,7 @@ def test_render_fixture_reader_ux_page_uses_scannable_static_numbering(
         "orthogonal-activity",
     }
     for expected_text in (
-        "Reader UX Fixture",
+        "Projection Residuals",
         "Remark 4.4",
         "Example 4.1",
         "Problem 4.1",

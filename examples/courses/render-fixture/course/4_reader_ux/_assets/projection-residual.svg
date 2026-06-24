@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-labelledby="title desc">
+  <title id="title">Projection residual diagram</title>
+  <desc id="desc">A vector v split into a projection along u and an orthogonal residual.</desc>
+  <rect width="720" height="360" fill="#fff8ed"/>
+  <line x1="90" y1="275" x2="620" y2="115" stroke="#30221f" stroke-width="5" stroke-linecap="round"/>
+  <text x="600" y="103" fill="#30221f" font-family="Arial, sans-serif" font-size="24" font-weight="700">span(u)</text>
+  <line x1="130" y1="255" x2="470" y2="152" stroke="#c41f25" stroke-width="8" stroke-linecap="round"/>
+  <polygon points="470,152 443,146 456,176" fill="#c41f25"/>
+  <text x="287" y="181" fill="#c41f25" font-family="Arial, sans-serif" font-size="24" font-weight="700">proj_u(v)</text>
+  <line x1="130" y1="255" x2="470" y2="58" stroke="#2f5f9f" stroke-width="8" stroke-linecap="round"/>
+  <polygon points="470,58 442,58 457,86" fill="#2f5f9f"/>
+  <text x="320" y="68" fill="#2f5f9f" font-family="Arial, sans-serif" font-size="26" font-weight="700">v</text>
+  <line x1="470" y1="152" x2="470" y2="58" stroke="#1d7f42" stroke-width="8" stroke-linecap="round"/>
+  <polygon points="470,58 456,84 484,84" fill="#1d7f42"/>
+  <text x="486" y="112" fill="#1d7f42" font-family="Arial, sans-serif" font-size="22" font-weight="700">residual</text>
+  <path d="M450 146 L450 124 L470 118" fill="none" stroke="#30221f" stroke-width="3"/>
+  <circle cx="130" cy="255" r="7" fill="#30221f"/>
+  <circle cx="470" cy="152" r="7" fill="#30221f"/>
+  <circle cx="470" cy="58" r="7" fill="#30221f"/>
+</svg>

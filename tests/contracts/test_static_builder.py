@@ -904,7 +904,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert set(node["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not node["url"].startswith("../../data/")
         assert node["search_url"].startswith("../search/index.html?q=")
-    assert root_node["study_counts"] == {"assignment": 2, "prompt": 1}
+    assert root_node["study_counts"] == {
+        "assignment": 2,
+        "card": 1,
+        "prompt": 1,
+        "quiz": 1,
+    }
     assert root_node["practice_url"] == ""
     assert root_node["tasks_url"] == ""
     assert root_node["schedule_url"] == ""
@@ -912,7 +917,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert static_path_node["practice_url"] == ""
     assert static_path_node["tasks_url"] == ""
     assert static_path_node["schedule_url"] == ""
-    assert reader_node["study_counts"] == {"assignment": 1}
+    assert reader_node["study_counts"] == {"assignment": 1, "card": 1, "quiz": 1}
     assert reader_node["practice_url"] == "../practice/index.html?page=reader-ux"
     assert reader_node["tasks_url"] == "../tasks/index.html?page=reader-ux"
     assert reader_node["schedule_url"] == ""
@@ -1223,7 +1228,11 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert page["id"] in page["graph_url"]
         assert not page["graph_url"].startswith("../../data/")
     pages_by_id = {page["id"]: page for page in search_payload["pages"]}
-    assert pages_by_id["render-root"]["study_counts"] == {"prompt": 1}
+    assert pages_by_id["render-root"]["study_counts"] == {
+        "card": 1,
+        "prompt": 1,
+        "quiz": 1,
+    }
     assert pages_by_id["render-root"]["practice_url"] == ""
     assert pages_by_id["authoring-matrix"]["study_counts"] == {"prompt": 1}
     assert pages_by_id["authoring-matrix"]["practice_url"] == (
@@ -3236,7 +3245,7 @@ def test_render_fixture_builds_rich_static_pages(
     assert "mjx-container" in numbered_objects_html
 
     for expected_text in (
-        "Reader UX Fixture",
+        "Projection Residuals",
         "Remark 4.4",
         "Example 4.1",
         "Problem 4.1",
@@ -3412,13 +3421,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         in html
     )
     assert '<span class="raya-reading-context-course">Render Fixture</span>' in html
-    assert '<span class="raya-reading-context-page">Reader UX Fixture</span>' in html
+    assert '<span class="raya-reading-context-page">Projection Residuals</span>' in html
     assert '<span class="raya-reading-context-position">Page 5 of 6</span>' in html
     assert html.count('<span class="raya-reading-context-separator">/</span>') >= 3
     assert (
         '<span class="raya-reading-context-course">Render Fixture</span>'
         '<span class="raya-reading-context-separator">/</span>'
-        '<span class="raya-reading-context-page">Reader UX Fixture</span>' in html
+        '<span class="raya-reading-context-page">Projection Residuals</span>' in html
     )
     assert (
         '<nav class="raya-reading-context-sequence" '
@@ -3430,7 +3439,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-reading-context-link raya-reading-context-next"' in html
     assert 'href="../authoring-matrix/index.html"' in html
     assert 'aria-label="Next page: Authoring Matrix Fixture"' in html
-    assert 'href="../_raya/search/index.html?q=Reader%20UX%20Fixture"' in html
+    assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
@@ -3455,7 +3464,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         in html
     )
     assert "data-raya-course-map-workspace-link" in html
-    assert 'href="../_raya/search/index.html?q=Reader%20UX%20Fixture"' in html
+    assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert 'href="../_raya/practice/index.html"' in html
     assert 'href="../_raya/tasks/index.html"' in html
@@ -3528,8 +3537,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'class="raya-connection-preview raya-connection-preview-rail"'
         in connections_panel
     )
-    assert "<summary>Reader UX Fixture</summary>" in connections_panel
-    assert "Reader UX fixture for course-shell navigation" in connections_panel
+    assert "<summary>Projection Residuals</summary>" in connections_panel
+    assert "A compact lesson on projection residuals" in connections_panel
     assert (
         '<span class="raya-connection-preview-status">ready</span>' in connections_panel
     )
@@ -3619,7 +3628,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         in last_sequence_cards
     )
     assert (
-        '<span class="raya-sequence-card-title">Reader UX Fixture</span>'
+        '<span class="raya-sequence-card-title">Projection Residuals</span>'
         in last_sequence_cards
     )
     assert (
@@ -3884,7 +3893,7 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     )
     reader = next(page for page in pages["pages"] if page["quantum_id"] == "reader-ux")
     assert reader["estimated_time"] == "15 minutes"
-    assert reader["tags"] == ["reading", "navigation", "accessibility"]
+    assert reader["tags"] == ["reading", "navigation", "projection"]
     assert reader["prerequisites"] == ["render-root"]
 
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
@@ -3899,7 +3908,7 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     assert 'aria-hidden="true" inert' in tags_panel
     assert "<li>reading</li>" in tags_panel
     assert "<li>navigation</li>" in tags_panel
-    assert "<li>accessibility</li>" in tags_panel
+    assert "<li>projection</li>" in tags_panel
 
 
 def test_render_fixture_authoring_page_shows_explicit_graph_context(

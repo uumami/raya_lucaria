@@ -1,0 +1,16 @@
+id: projection-residual-quiz
+type: quiz
+authority: official
+content:
+  questions:
+    - id: residual-check
+      prompt: Which calculation verifies that the residual is orthogonal to u?
+      options:
+        - label: Compute the inner product of the residual with u and get zero.
+          correct: true
+        - label: Check that the residual is longer than the projection.
+          correct: false
+        - label: Check that the drawing looks like a right angle.
+          correct: false
+retrieval:
+  kind: concept-check

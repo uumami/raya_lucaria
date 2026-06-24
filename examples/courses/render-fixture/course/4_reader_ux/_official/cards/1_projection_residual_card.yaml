@@ -1,0 +1,8 @@
+id: projection-residual-card
+type: card
+authority: official
+content:
+  front: What proves that a projection residual is orthogonal to the direction vector?
+  back: Its inner product with the direction vector is zero.
+retrieval:
+  kind: recall

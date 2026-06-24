@@ -1,20 +1,35 @@
 ---
 id: reader-ux
-title: Reader UX Fixture
-summary: Reader UX fixture for course-shell navigation, learning rail context, static environments, and accessibility checks.
+title: Projection Residuals
+summary: A compact lesson on projection residuals that demonstrates course-shell navigation, learning context, practice, and accessible reading controls.
 status: ready
 estimated_time: 15 minutes
 tags:
   - reading
   - navigation
-  - accessibility
+  - projection
 prerequisites:
   - render-root
 ---
 
-# Reader UX Fixture
+# Projection Residuals
 
-This page is reader-facing fixture material for renderer, browser, and render-debug tests. It is not canonical pedagogy.
+What remains after projecting a vector onto a line? This short lesson uses that
+question to exercise the reader shell, learning rail, numbered objects,
+MathJax, local assets, and support disclosures in one realistic page.
+
+This remains reader-facing fixture material for renderer, browser, and
+render-debug checks. It is not canonical pedagogy; fixture authority remains in
+`docs/foundation/`.
+
+> [!TIP]
+> **Try this first.** Imagine shining a light from $v$ onto the line through
+> $u$. The shadow is the projection. Predict what direction the leftover vector
+> should point before reading the formula.
+
+> [!WARNING]
+> **Misconception.** A residual that looks perpendicular in a drawing is not
+> enough. Orthogonality is checked by an inner product equal to zero.
 
 We work in $\newcommand{\vect}[1]{\mathbf{#1}}\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}\newcommand{\orthproj}{\operatorname{proj}}\mathbb{R}^3$ with the standard inner product. The running question is how a vector splits into a component along a line and a residual component perpendicular to it.
 
@@ -100,13 +115,15 @@ $u$ is $0$.
 
 ## Worked Example
 
-The worked example above is intentionally compact fixture material for active
-heading and page table-of-contents checks.
+Split the vector using the computation above: find the projection, subtract it
+from the original vector, and check the dot product of the residual with the
+direction vector.
 
 ## 1 Numeric Heading
 
-Numeric heading slugs are valid rendered anchors and must not break shell
-initialization or active heading tracking.
+Use this numeric heading as a quick navigation target. The course shell should
+keep the current heading visible in the page contents while the math below stays
+readable.
 
 ::: equation {#orthogonal-equation}
 $$
@@ -118,7 +135,7 @@ $$
 :::
 
 ::: figure {#orthogonal-figure title="Projection triangle"}
-![Static path diagram](../_assets/diagrams/static-path.svg)
+![Projection residual diagram](_assets/projection-residual.svg)
 :::
 
 ::: table {#orthogonal-table title="Projection checklist"}
@@ -138,7 +155,8 @@ residual is orthogonal to $u$.
 ## Orientation Checkpoint
 
 > [!TIP]
-> Before reading, identify the current page in the course map and the immediate next page link.
+> Before moving on, use the course map and learning rail to identify this page,
+> its prerequisite, and the next page in the static sequence.
 
 ## Static Practice Prompt
 
@@ -152,8 +170,8 @@ Start with the learning rail, then compare it with the left-side course map.
 :::
 
 ::: answer {#answer-reader-map-practice of="reader-map-practice"}
-This page is Reader UX Fixture, its prerequisite is Raya Lucaria Render Fixture,
-and the next map page is Authoring Matrix Fixture.
+This page is Projection Residuals, its prerequisite is Raya Lucaria Render
+Fixture, and the next map page is Authoring Matrix Fixture.
 :::
 
 ::: activity {#orthogonal-activity title="Check the residual"}
