@@ -4103,6 +4103,15 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     assert (
         "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
     )
+    assert 'grid-template-areas: "course-map main-article learning-rail";' in css
+    assert (
+        '@media (max-width: 1279px) {\n  .raya-learning-shell {\n    grid-template-areas: "course-map main-article learning-rail";'
+        not in css
+    )
+    assert (
+        'grid-template-areas:\n      "main-article"\n      "course-map"\n      "learning-rail";'
+        in css
+    )
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "border-left: 0;" in css
     assert "backdrop-filter: blur(18px);" in css

@@ -138,6 +138,14 @@ non-persistent UI state; current-page map orientation must also remain
 non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not
 learner progress.
+For responsive shell changes, check desktop, tablet, and mobile viewports
+together. Desktop may collapse the right learning rail into a compact context
+tab, but tablet and mobile must keep the rail body visible and reachable by
+assistive technology when collapse controls are hidden. Pressing Escape inside
+the rail on mobile must not leave `aria-hidden`, `inert`, or hidden focusable
+content behind. Shell collapse/orientation state must not write localStorage or
+sessionStorage; only explicit comfort preferences such as text size or
+`OpenDyslexic` may persist.
 When changing Course workspace shortcut cards, verify labels, structural badges,
 deployment-neutral hrefs, page-focused Practice hrefs only for direct official
 ownership, Schedule hrefs and dated-task badges only from direct dated official

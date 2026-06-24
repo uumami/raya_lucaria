@@ -3414,10 +3414,6 @@ mjx-container[display="true"] {
   white-space: pre-wrap;
 }
 @media (max-width: 1279px) {
-  .raya-learning-shell {
-    grid-template-areas: "course-map main-article learning-rail";
-    grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);
-  }
   .raya-graph-workspace,
   [data-raya-graph-list-state="collapsed"] .raya-graph-workspace,
   [data-raya-graph-inspector-state="collapsed"] .raya-graph-workspace,

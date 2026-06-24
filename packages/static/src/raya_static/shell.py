@@ -70,6 +70,10 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function isDesktopShell() {
+    return desktopMapQuery.matches;
+  }
+
   function setFocusableDescendantsEnabled(container, enabled) {
     container
       .querySelectorAll("a[href], button, input, select, textarea, summary, [tabindex]")
@@ -488,6 +492,10 @@ _SHELL_JAVASCRIPT = r"""
 
   if (learningRailCollapse) {
     learningRailCollapse.addEventListener("click", () => {
+      if (!isDesktopShell()) {
+        setLearningRailExpanded(true);
+        return;
+      }
       setLearningRailExpanded(false);
       if (learningRailExpand) {
         learningRailExpand.focus();
@@ -522,7 +530,11 @@ _SHELL_JAVASCRIPT = r"""
         }
       }
     }
-    if (event.key === "Escape" && root.dataset.rayaLearningRail === "expanded") {
+    if (
+      event.key === "Escape" &&
+      isDesktopShell() &&
+      root.dataset.rayaLearningRail === "expanded"
+    ) {
       const activeElement = document.activeElement;
       const shouldMoveFocus =
         activeElement instanceof Element &&

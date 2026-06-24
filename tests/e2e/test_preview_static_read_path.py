@@ -5718,6 +5718,27 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           };
                         }"""
                     )
+                    storage_state = page.evaluate(
+                        """() => ({
+                          localKeys: Object.keys(window.localStorage),
+                          sessionKeys: Object.keys(window.sessionStorage),
+                        })"""
+                    )
+                    compact_links = page.evaluate(
+                        """() => Array
+                          .from(document.querySelectorAll('#raya-course-map a[href]'))
+                          .filter((link) => link.getClientRects().length > 0)
+                          .map((link) => {
+                            const box = link.getBoundingClientRect();
+                            link.focus();
+                            return {
+                              href: link.getAttribute('href'),
+                              width: box.width,
+                              height: box.height,
+                              focused: document.activeElement === link,
+                            };
+                          })"""
+                    )
                 finally:
                     page.close()
             finally:
@@ -5752,6 +5773,125 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert collapsed["railAriaLabel"] == "Show learning context"
     assert collapsed["mapToggleWidth"] >= 40
     assert collapsed["railExpandWidth"] >= 40
+    assert storage_state["localKeys"] == []
+    assert storage_state["sessionKeys"] == []
+    assert compact_links
+    assert all(
+        not link["href"].startswith(("http://", "https://"))
+        for link in compact_links
+    )
+    assert all(link["width"] > 0 for link in compact_links)
+    assert all(link["height"] >= 24 for link in compact_links)
+    assert all(link["focused"] for link in compact_links)
+
+
+def test_render_fixture_responsive_shell_state_remains_accessible(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    page.focus("#raya-learning-rail a")
+                    page.keyboard.press("Escape")
+                    mobile_state = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          return {
+                            rootState: root.dataset.rayaLearningRail,
+                            railState: rail?.dataset.rayaLearningRail,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            bodyDisplay: body ? getComputedStyle(body).display : '',
+                            collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
+                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                          };
+                        }"""
+                    )
+                    assert mobile_state["rootState"] == "expanded"
+                    assert mobile_state["railState"] == "expanded"
+                    assert mobile_state["bodyHidden"] == "false"
+                    assert mobile_state["bodyInert"] is False
+                    assert mobile_state["bodyDisplay"] != "none"
+                    assert mobile_state["collapseVisible"] is False
+                    assert mobile_state["expandVisible"] is False
+
+                    page.set_viewport_size({"width": 1180, "height": 900})
+                    page.wait_for_timeout(100)
+                    _assert_no_horizontal_overflow(page)
+                    tablet = page.evaluate(
+                        """() => {
+                          const article = document.querySelector('article.raya-main-article');
+                          const map = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            articleY: article.getBoundingClientRect().y,
+                            mapY: map.getBoundingClientRect().y,
+                            railY: rail.getBoundingClientRect().y,
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                          };
+                        }"""
+                    )
+                    assert tablet["articleY"] < tablet["mapY"] < tablet["railY"]
+                    assert tablet["bodyHidden"] == "false"
+                    assert tablet["bodyInert"] is False
+
+                    page.set_viewport_size({"width": 1440, "height": 950})
+                    page.wait_for_timeout(100)
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
+                    )
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'expanded'"
+                    )
+                    restored = page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                          };
+                        }"""
+                    )
+                    assert restored["bodyHidden"] == "false"
+                    assert restored["bodyInert"] is False
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 def test_render_fixture_reader_ux_is_learning_showcase(

@@ -151,6 +151,15 @@ pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
 storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
 en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
+Para cambios responsivos de la shell, revisa juntos los viewports desktop,
+tablet y movil. En desktop el riel derecho de aprendizaje puede colapsar a una
+pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe
+seguir visible y alcanzable por tecnologias asistivas cuando los controles de
+colapso estan ocultos. Presionar Escape dentro del riel en movil no debe dejar
+`aria-hidden`, `inert` ni contenido enfocable oculto. El estado de colapso u
+orientacion de la shell no debe escribir `localStorage` ni `sessionStorage`;
+solo preferencias explicitas de comodidad como tamano de texto u
+`OpenDyslexic` pueden persistir.
 Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
 estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
 pagina solo cuando haya propiedad directa de objetos oficiales, hrefs de
