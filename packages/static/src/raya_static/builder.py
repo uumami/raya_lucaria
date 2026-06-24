@@ -3777,6 +3777,13 @@ def _render_graph_surface(
                 "data-raya-graph-detail-study-counts></p>"
             ),
             (
+                '<section class="raya-graph-detail-study-objects" '
+                "data-raya-graph-detail-study-objects hidden>"
+                "<h3>Study objects</h3>"
+                "<ul data-raya-graph-detail-study-object-list></ul>"
+                "</section>"
+            ),
+            (
                 '<p class="raya-graph-detail-neighborhood" '
                 "data-raya-graph-detail-neighborhood></p>"
             ),
@@ -3972,6 +3979,7 @@ def _browser_graph_payload(
             {
                 **node,
                 **discovery_payload,
+                "study_objects": _browser_graph_study_objects(page, page_objects),
                 "tasks_url": (
                     _href_with_query(
                         _relative_href(
@@ -5146,6 +5154,89 @@ def _official_public_task_summary(item: dict[str, Any]) -> dict[str, Any] | None
         "title": title,
         "type": object_type,
     }
+
+
+def _browser_graph_study_objects(
+    page: ContentPage,
+    page_objects: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    objects: list[dict[str, str]] = []
+    sorted_objects = sorted(
+        page_objects,
+        key=lambda item: (
+            item.get("source_order")
+            if isinstance(item.get("source_order"), int)
+            else 0,
+            str(item.get("id") or ""),
+        ),
+    )
+    for item in sorted_objects:
+        if not isinstance(item, dict):
+            continue
+        object_id = str(item.get("id") or "").strip()
+        object_type = str(item.get("type") or "practice").strip() or "practice"
+        if not object_id:
+            continue
+        task_summary = _official_public_task_summary(item)
+        if task_summary is not None:
+            title = task_summary["title"]
+            preview = task_summary["preview"]
+            content_map = task_summary["content"]
+        else:
+            title = _official_type_label(object_type)
+            preview = _official_graph_preview_text(item)
+            content_map = {}
+        if task_summary is None and not preview:
+            continue
+        if not title and preview:
+            title = preview
+        if not preview:
+            preview = title
+        anchor = f"raya-official-{_safe_map_fragment_id(object_id)}"
+        payload = {
+            "id": object_id,
+            "preview": preview,
+            "title": title,
+            "type": object_type,
+            "type_label": _official_type_label(object_type),
+            "url": (
+                _relative_href(STATIC_GRAPH_PATH.as_posix(), page.output_path)
+                + f"#{anchor}"
+            ),
+        }
+        if task_summary is not None:
+            available = _official_public_text(content_map, ("available",))
+            due = _official_public_text(content_map, ("due",))
+            if available:
+                payload["available"] = available
+            if due:
+                payload["due"] = due
+        objects.append(payload)
+    return objects
+
+
+def _official_graph_preview_text(item: dict[str, Any]) -> str:
+    content = item.get("content")
+    if not isinstance(content, dict):
+        return ""
+    object_type = str(item.get("type") or "")
+    if object_type == "card":
+        return _official_public_text(content, ("front",))
+    if object_type == "prompt":
+        return _official_public_text(content, ("prompt",))
+    if object_type == "quiz":
+        questions = content.get("questions")
+        if isinstance(questions, list):
+            for question in questions:
+                if isinstance(question, dict):
+                    prompt = _official_public_text(question, ("prompt",))
+                    if prompt:
+                        return prompt
+        return ""
+    return _official_public_text(
+        content,
+        ("title", "summary", "prompt", "instructions", "body", "question"),
+    )
 
 
 def _browser_schedule_payload(

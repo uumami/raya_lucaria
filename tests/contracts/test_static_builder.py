@@ -664,6 +664,21 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    (official_dir / "2_nested_secret_prompt.yaml").write_text(
+        "\n".join(
+            [
+                "id: nested-secret-prompt",
+                "type: prompt",
+                "authority: official",
+                "content:",
+                "  prompt:",
+                "    question: Public nested prompt should not be flattened here.",
+                "    answer: GRAPH_SECRET_ANSWER",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     assignment_dir = (
         course / "course" / "5_authoring_matrix" / "_official" / "assignments"
     )
@@ -825,6 +840,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-title" in graph_html
     assert "data-raya-graph-detail-summary" in graph_html
     assert "data-raya-graph-detail-study-counts" in graph_html
+    assert "data-raya-graph-detail-study-objects" in graph_html
     assert "data-raya-graph-detail-link" in graph_html
     assert "data-raya-graph-detail-search-link" in graph_html
     assert "data-raya-graph-detail-practice-link" in graph_html
@@ -892,6 +908,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         "stable_id",
         "status",
         "study_counts",
+        "study_objects",
         "summary",
         "tags",
         "tasks_url",
@@ -907,7 +924,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert root_node["study_counts"] == {
         "assignment": 2,
         "card": 1,
-        "prompt": 1,
+        "prompt": 2,
         "quiz": 1,
     }
     assert root_node["practice_url"] == ""
@@ -921,13 +938,33 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert reader_node["practice_url"] == "../practice/index.html?page=reader-ux"
     assert reader_node["tasks_url"] == "../tasks/index.html?page=reader-ux"
     assert reader_node["schedule_url"] == ""
-    assert authoring_node["study_counts"] == {"assignment": 1, "prompt": 1}
+    assert authoring_node["study_counts"] == {"assignment": 1, "prompt": 2}
     assert authoring_node["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
     )
     assert authoring_node["tasks_url"] == "../tasks/index.html?page=authoring-matrix"
     assert authoring_node["schedule_url"] == (
         "../schedule/index.html?page=authoring-matrix"
+    )
+    study_objects = authoring_node["study_objects"]
+    assert [item["id"] for item in study_objects] == [
+        "matrix-assignment",
+        "matrix-prompt",
+    ]
+    assert study_objects[0]["type"] == "assignment"
+    assert study_objects[0]["type_label"] == "Assignment"
+    assert study_objects[0]["title"] == "Matrix graph check"
+    assert study_objects[0]["preview"] == "Trace the graph context for matrix notation."
+    assert study_objects[0]["due"] == "2026-11-03"
+    assert study_objects[0]["url"].endswith(
+        "../../authoring-matrix/index.html#raya-official-matrix-assignment"
+    )
+    assert study_objects[1]["type"] == "prompt"
+    assert study_objects[1]["type_label"] == "Prompt"
+    assert study_objects[1]["title"] == "Prompt"
+    assert "identity matrix preserves vector norms" in study_objects[1]["preview"]
+    assert study_objects[1]["url"].endswith(
+        "../../authoring-matrix/index.html#raya-official-matrix-prompt"
     )
     assert authoring_node["previous_url"].endswith("../reader-ux/index.html")
     serialized_graph_payload = json.dumps(graph_payload)
@@ -942,6 +979,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         "correct",
         "solution",
         "answer",
+        "GRAPH_SECRET_ANSWER",
         '"back"',
     ):
         assert private_token not in serialized_graph_payload

@@ -1159,6 +1159,36 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-schedule-link]"
                         ).get_attribute("href") == "../schedule/index.html?page=authoring-matrix"
+                        study_objects = page.locator(
+                            "[data-raya-graph-detail-study-objects]"
+                        )
+                        assert study_objects.is_visible()
+                        assert study_objects.locator(
+                            "a", has_text="Matrix graph check"
+                        ).is_visible()
+                        assert study_objects.locator(
+                            "text=Assignment · Due 2026-11-03"
+                        ).is_visible()
+                        assert study_objects.locator(
+                            "text=Trace the graph context for matrix notation."
+                        ).is_visible()
+                        assert study_objects.locator(
+                            "a", has_text="Matrix graph check"
+                        ).evaluate("node => node.href").endswith(
+                            "/authoring-matrix/index.html"
+                            "#raya-official-matrix-assignment"
+                        )
+                        page.fill("#graph-search", "matrix graph check")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('match')"""
+                        )
+                        assert page.locator(
+                            "#raya-graph-list "
+                            "[data-raya-graph-node='authoring-matrix']"
+                        ).is_visible()
                         assert page.locator(
                             "[data-raya-graph-detail-empty]"
                         ).is_hidden()

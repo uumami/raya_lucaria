@@ -41,6 +41,10 @@ _GRAPH_JAVASCRIPT = r"""
   const detailSummary = document.querySelector("[data-raya-graph-detail-summary]");
   const detailMeta = document.querySelector("[data-raya-graph-detail-meta]");
   const detailStudyCounts = document.querySelector("[data-raya-graph-detail-study-counts]");
+  const detailStudyObjects = document.querySelector("[data-raya-graph-detail-study-objects]");
+  const detailStudyObjectList = document.querySelector(
+    "[data-raya-graph-detail-study-object-list]"
+  );
   const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
@@ -141,6 +145,15 @@ _GRAPH_JAVASCRIPT = r"""
       node.summary,
       group ? group.title : "",
       node.study_counts ? Object.keys(node.study_counts).join(" ") : "",
+      Array.isArray(node.study_objects)
+        ? node.study_objects.map((item) => [
+          item.type_label,
+          item.title,
+          item.preview,
+          item.due,
+          item.available,
+        ].join(" ")).join(" ")
+        : "",
       Array.isArray(node.tags) ? node.tags.join(" ") : "",
     ].join(" ");
   }
@@ -944,6 +957,46 @@ _GRAPH_JAVASCRIPT = r"""
     }).join(", ");
   }
 
+  function renderDetailStudyObjects(node) {
+    if (!detailStudyObjects || !detailStudyObjectList) return;
+    detailStudyObjectList.replaceChildren();
+    const objects = Array.isArray(node && node.study_objects) ? node.study_objects : [];
+    if (!objects.length) {
+      detailStudyObjects.hidden = true;
+      return;
+    }
+    objects.forEach((item) => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = item.url || node.url || "#";
+      link.textContent = (
+        item.title ||
+        item.preview ||
+        item.id ||
+        item.type_label ||
+        "Study object"
+      );
+      const meta = document.createElement("span");
+      meta.className = "raya-graph-detail-study-object-meta";
+      const dateText = item.due
+        ? `Due ${item.due}`
+        : (item.available ? `Available ${item.available}` : "");
+      meta.textContent = [item.type_label || item.type || "Study object", dateText]
+        .filter(Boolean)
+        .join(" · ");
+      li.appendChild(link);
+      li.appendChild(meta);
+      if (item.preview && item.preview !== link.textContent) {
+        const preview = document.createElement("span");
+        preview.className = "raya-graph-detail-study-object-preview";
+        preview.textContent = item.preview;
+        li.appendChild(preview);
+      }
+      detailStudyObjectList.appendChild(li);
+    });
+    detailStudyObjects.hidden = false;
+  }
+
   function setGraphNeighborhoodFocus(enabled) {
     neighborhoodFocus = Boolean(enabled && selectedId);
     root.setAttribute(
@@ -967,6 +1020,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailPanel) detailPanel.hidden = true;
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
+      renderDetailStudyObjects(null);
       if (detailNeighborhood) detailNeighborhood.textContent = "";
       setOptionalDetailLink(detailTasksLink, "", "Open tasks");
       setOptionalDetailLink(detailScheduleLink, "", "Open schedule");
@@ -997,6 +1051,7 @@ _GRAPH_JAVASCRIPT = r"""
       const countsText = studyCountsText(node.study_counts);
       detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
     }
+    renderDetailStudyObjects(node);
     if (detailNeighborhood) {
       const counts = relationshipCountsFor(node.id);
       detailNeighborhood.textContent = `Explicit links: ${counts.outgoingCount} outgoing, ${counts.incomingCount} incoming, ${counts.connectedCount} connected.`;
