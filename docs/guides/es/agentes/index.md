@@ -99,9 +99,13 @@ la estructura de mapa jerarquico del curso expandido, los numeros estructurales
 generados del mapa,
 la orientacion de pagina actual dentro del mapa, el comportamiento del filtro
 del mapa, el contexto superior de lectura, los links compactos
-anterior/siguiente, las cards Previous/Next al final del articulo, la metadata
-del riel compacto operable, la salida de render-debug, el comportamiento movil
-sin overflow y sin solicitudes externas. El estado del mapa del curso, el texto
+anterior/siguiente, las breadcrumbs lectoras, las cards Previous/Next al final
+del articulo, la metadata del riel compacto operable, la salida de render-debug,
+el comportamiento movil sin overflow y sin solicitudes externas. Las
+breadcrumbs deben mostrar home del curso, paginas ancestro y pagina actual con
+markup de navegacion accesible, links estaticos neutrales al despliegue, marca
+de pagina actual, sin rutas de fuente y sin rutas privadas de soporte. El estado
+del mapa del curso, el texto
 del filtro y el contexto de lectura son UI no persistente; la orientacion de
 pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
 storage de navegacion legacy. Trata la posicion de pagina en la barra superior y

@@ -1809,12 +1809,49 @@ def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
     breadcrumbs = _breadcrumb_pages(page, content_model)
     if not breadcrumbs:
         return ""
-    items = []
+    home_page = content_model.pages[0]
+    crumbs: list[tuple[str, str | None, str]] = [
+        (
+            home_page.nav_title,
+            _relative_href(page.output_path, home_page.output_path),
+            "raya-breadcrumb-home",
+        )
+    ]
     for crumb in breadcrumbs:
-        href = _relative_href(page.output_path, crumb.output_path)
-        label = html.escape(crumb.nav_title)
-        items.append(f'<a href="{html.escape(href)}">{label}</a>')
-    return '<nav aria-label="Breadcrumbs">' + " / ".join(items) + "</nav>"
+        if crumb.id == home_page.id:
+            continue
+        crumbs.append(
+            (
+                crumb.nav_title,
+                _relative_href(page.output_path, crumb.output_path),
+                "raya-breadcrumb-link",
+            )
+        )
+    crumbs.append((page.nav_title, None, "raya-breadcrumb-current"))
+
+    items = []
+    for index, (label, href, class_name) in enumerate(crumbs):
+        if index > 0:
+            items.append(
+                '<li class="raya-breadcrumb-separator" aria-hidden="true">›</li>'
+            )
+        escaped_label = html.escape(label)
+        if href is None:
+            items.append(
+                '<li><span class="raya-breadcrumb-current" aria-current="page">'
+                f"{escaped_label}</span></li>"
+            )
+        else:
+            items.append(
+                f'<li><a class="{class_name}" href="{html.escape(href)}">'
+                f"{escaped_label}</a></li>"
+            )
+    return (
+        '<nav class="raya-breadcrumbs" aria-label="Breadcrumbs">'
+        '<ol class="raya-breadcrumbs-list">'
+        + "".join(items)
+        + "</ol></nav>"
+    )
 
 
 def _sequence_targets(

@@ -2156,10 +2156,54 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
     color: var(--raya-color-success);
   }
 }
-nav[aria-label="Breadcrumbs"] {
+.raya-breadcrumbs {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+  max-width: 100%;
+}
+.raya-breadcrumbs-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.raya-breadcrumbs li {
+  min-width: 0;
+}
+.raya-breadcrumb-home,
+.raya-breadcrumb-link,
+.raya-breadcrumb-current {
+  border-radius: 0.25rem;
+  display: inline-block;
+  max-width: min(18rem, 70vw);
+  overflow: hidden;
+  padding: 0.1rem 0.2rem;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+.raya-breadcrumb-home,
+.raya-breadcrumb-link {
+  color: var(--raya-color-link);
+  font-weight: 700;
+  text-decoration-thickness: 0.08em;
+}
+.raya-breadcrumb-home:hover,
+.raya-breadcrumb-link:hover {
+  color: var(--raya-color-success);
+}
+.raya-breadcrumb-current {
+  color: var(--raya-color-text);
+  font-weight: 800;
+}
+.raya-breadcrumb-separator {
+  color: var(--raya-color-muted);
+  font-weight: 800;
 }
 .raya-main-article > :first-child,
 .raya-inspection-main > :first-child {
@@ -2171,7 +2215,7 @@ nav[aria-label="Breadcrumbs"] {
 .raya-main-article > .raya-article-sequence,
 .raya-main-article > .raya-article-sequence-cards,
 .raya-main-article > .raya-article-connections,
-.raya-main-article > nav[aria-label="Breadcrumbs"],
+.raya-main-article > .raya-breadcrumbs,
 .raya-main-article > .raya-numbered-object,
 .raya-main-article > table,
 .raya-main-article > pre {

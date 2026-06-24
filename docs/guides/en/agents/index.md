@@ -91,9 +91,12 @@ extra tab stops just to support inspection.
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure, generated structural map numbers,
 current-page map orientation, map filter behavior, sticky reading context,
-compact previous/next links, article-end Previous/Next sequence cards, compact
-rail metadata, render-debug output, mobile no-overflow behavior, and no external
-requests. The course map state, filter text, and reading context are
+reader breadcrumbs, compact previous/next links, article-end Previous/Next
+sequence cards, compact rail metadata, render-debug output, mobile no-overflow
+behavior, and no external requests. Breadcrumbs should show course home,
+ancestor pages, and the current page with accessible navigation markup,
+deployment-neutral static links, current-page marking, no source paths, and no
+private support paths. The course map state, filter text, and reading context are
 non-persistent UI state; current-page map orientation must also remain
 non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not

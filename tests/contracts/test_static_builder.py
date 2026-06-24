@@ -101,6 +101,32 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert "fetch(" not in topic_html
 
 
+def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'class="raya-breadcrumbs"' in html
+    assert 'aria-label="Breadcrumbs"' in html
+    assert 'class="raya-breadcrumbs-list"' in html
+    assert 'class="raya-breadcrumb-home"' in html
+    assert 'href="../../index.html"' in html
+    assert 'class="raya-breadcrumb-link"' in html
+    assert 'href="../index.html"' in html
+    assert 'class="raya-breadcrumb-current"' in html
+    assert 'aria-current="page"' in html
+    assert 'class="raya-breadcrumb-separator" aria-hidden="true"' in html
+    breadcrumb_html = _tag_html(html, "nav", "raya-breadcrumbs")
+    assert "Minimal Course" in breadcrumb_html
+    assert "First Unit" in breadcrumb_html
+    assert "First Topic" in breadcrumb_html
+    assert "course/" not in breadcrumb_html
+
+
 def test_official_practice_escapes_nested_mapping_keys(
     tmp_path: Path,
 ) -> None:

@@ -171,6 +171,78 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
         handle.close()
 
 
+def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requests: list[str] = []
+                    page.on("request", lambda request: requests.append(request.url))
+                    try:
+                        page.goto(
+                            f"{base_url}/unit/topic/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert requests
+                        assert all(url.startswith(f"{base_url}/") for url in requests)
+                        _assert_no_horizontal_overflow(page)
+                        breadcrumbs = page.locator(".raya-breadcrumbs")
+                        assert breadcrumbs.is_visible()
+                        assert (
+                            breadcrumbs.locator(".raya-breadcrumb-current").get_attribute(
+                                "aria-current"
+                            )
+                            == "page"
+                        )
+                        assert "First Topic" in breadcrumbs.inner_text()
+                        ancestor_href = breadcrumbs.locator(
+                            ".raya-breadcrumb-link"
+                        ).evaluate("node => node.href")
+                        with page.expect_navigation():
+                            breadcrumbs.locator(".raya-breadcrumb-link").click()
+                        assert page.url == ancestor_href
+                        page.goto(
+                            f"{base_url}/unit/topic/index.html",
+                            wait_until="networkidle",
+                        )
+                        breadcrumbs = page.locator(".raya-breadcrumbs")
+                        home_href = breadcrumbs.locator(".raya-breadcrumb-home").evaluate(
+                            "node => node.href"
+                        )
+                        with page.expect_navigation():
+                            breadcrumbs.locator(".raya-breadcrumb-home").click()
+                        assert page.url == home_href
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_serves_local_assets(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 
