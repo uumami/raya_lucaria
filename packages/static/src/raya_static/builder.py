@@ -3912,6 +3912,10 @@ def _render_graph_surface(
                 "state or personal guidance.</p>"
             ),
             (
+                "<p>Graph arrows show link direction from the source page to "
+                "the target page. Direction is generated graph structure.</p>"
+            ),
+            (
                 "<p>Map groups pages by course structure, radial places visible "
                 "pages around one circle, and list hides the SVG so links stay "
                 "simple to scan.</p>"

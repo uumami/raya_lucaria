@@ -1021,6 +1021,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "is-inspected-neighbor" in graph_script
     assert "edgeColorFor" in graph_script
     assert "--raya-graph-edge-color" in graph_script
+    assert "raya-graph-arrow-marker" in graph_script
+    assert "marker-end" in graph_script
+    assert "Graph arrows show link direction" in graph_html
     assert "data-raya-graph-kind" in graph_script
     assert "raya-graph-edge-kind-" in graph_script
     assert "is-dimmed" in graph_script

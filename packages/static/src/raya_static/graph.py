@@ -255,18 +255,26 @@ _GRAPH_JAVASCRIPT = r"""
 
   function edgeLinePoints(edge, from, to) {
     const offset = edgeOffsetFor(edge);
-    if (!offset) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const length = Math.sqrt(dx * dx + dy * dy);
     if (!length) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+    const unitX = dx / length;
+    const unitY = dy / length;
+    const fromTrim = degreeRadiusFor(edge.from, edge.from === selectedId) + 4;
+    const toTrim = degreeRadiusFor(edge.to, edge.to === selectedId) + 10;
+    if (length <= fromTrim + toTrim + 8) {
+      return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+    }
     const normalX = -dy / length;
     const normalY = dx / length;
+    const offsetX = normalX * offset;
+    const offsetY = normalY * offset;
     return {
-      x1: from.x + normalX * offset,
-      y1: from.y + normalY * offset,
-      x2: to.x + normalX * offset,
-      y2: to.y + normalY * offset,
+      x1: from.x + unitX * fromTrim + offsetX,
+      y1: from.y + unitY * fromTrim + offsetY,
+      x2: to.x - unitX * toTrim + offsetX,
+      y2: to.y - unitY * toTrim + offsetY,
     };
   }
 
@@ -743,22 +751,22 @@ _GRAPH_JAVASCRIPT = r"""
         Boolean(inspectedId) && !inspectedSpotlightIds.has(id)
       );
     });
-    canvas.querySelectorAll(".raya-graph-edge").forEach((edge) => {
-      const from = edge.getAttribute("data-raya-graph-from") || "";
-      const to = edge.getAttribute("data-raya-graph-to") || "";
-      edge.classList.toggle(
+    canvas.querySelectorAll(".raya-graph-edge, .raya-graph-arrow-marker").forEach((edgeMark) => {
+      const from = edgeMark.getAttribute("data-raya-graph-from") || "";
+      const to = edgeMark.getAttribute("data-raya-graph-to") || "";
+      edgeMark.classList.toggle(
         "is-inspected",
         Boolean(inspectedId) && (from === inspectedId || to === inspectedId)
       );
-      edge.classList.toggle(
+      edgeMark.classList.toggle(
         "is-dimmed",
         Boolean(inspectedId) && !(from === inspectedId || to === inspectedId)
       );
-      edge.classList.toggle(
+      edgeMark.classList.toggle(
         "is-search-context",
         Boolean(query) && (matchIds.has(from) || matchIds.has(to))
       );
-      edge.classList.toggle(
+      edgeMark.classList.toggle(
         "is-search-dimmed",
         Boolean(query) &&
           !(matchIds.has(from) || matchIds.has(to)) &&
@@ -888,6 +896,77 @@ _GRAPH_JAVASCRIPT = r"""
     if (!nodesById.has(nodeId)) return;
     graphViewBox = null;
     selectGraphNode(nodeId);
+  }
+
+  function safeGraphMarkerFragment(value) {
+    return String(value || "")
+      .replace(/[^A-Za-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "edge";
+  }
+
+  function graphArrowMarkerId(edge, edgeIndex) {
+    return [
+      "raya-graph-arrow",
+      String(edgeIndex),
+      safeGraphMarkerFragment(edge.from),
+      safeGraphMarkerFragment(edge.to),
+      safeGraphMarkerFragment(edgeKind(edge)),
+    ].join("-");
+  }
+
+  function graphArrowMarkerUrl(edge, edgeIndex) {
+    return `url(#${graphArrowMarkerId(edge, edgeIndex)})`;
+  }
+
+  function edgeStateClassNames(edge) {
+    return [
+      selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
+      inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
+        ? "is-inspected"
+        : "",
+      inspectedId && !(edge.from === inspectedId || edge.to === inspectedId)
+        ? "is-dimmed"
+        : "",
+      query && (matchIds.has(edge.from) || matchIds.has(edge.to))
+        ? "is-search-context"
+        : "",
+      query && !(matchIds.has(edge.from) || matchIds.has(edge.to))
+        && !(edge.from === inspectedId || edge.to === inspectedId)
+        ? "is-search-dimmed"
+        : "",
+    ].filter(Boolean);
+  }
+
+  function appendGraphArrowMarkers(activeEdges) {
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    activeEdges.forEach((edge, edgeIndex) => {
+      const markerId = graphArrowMarkerId(edge, edgeIndex);
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+      marker.setAttribute("id", markerId);
+      marker.setAttribute("data-raya-graph-from", edge.from);
+      marker.setAttribute("data-raya-graph-to", edge.to);
+      marker.setAttribute("data-raya-graph-kind", edgeKind(edge));
+      marker.setAttribute(
+        "class",
+        [
+          "raya-graph-arrow-marker",
+          edgeKindClass(edge),
+          ...edgeStateClassNames(edge),
+        ].filter(Boolean).join(" ")
+      );
+      marker.setAttribute("markerWidth", "8");
+      marker.setAttribute("markerHeight", "8");
+      marker.setAttribute("refX", "7");
+      marker.setAttribute("refY", "4");
+      marker.setAttribute("orient", "auto");
+      marker.setAttribute("markerUnits", "strokeWidth");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", "M 0 0 L 8 4 L 0 8 z");
+      path.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
+      marker.appendChild(path);
+      defs.appendChild(marker);
+    });
+    canvas.appendChild(defs);
   }
 
   function renderDetailList(listEl, items, emptyText) {
@@ -1231,8 +1310,9 @@ _GRAPH_JAVASCRIPT = r"""
     }
     setGraphViewportControlsEnabled(true);
     canvas.replaceChildren();
+    appendGraphArrowMarkers(activeEdges);
 
-    activeEdges.forEach((edge) => {
+    activeEdges.forEach((edge, edgeIndex) => {
       const from = geometry.positions.get(edge.from);
       const to = geometry.positions.get(edge.to);
       if (!from || !to) return;
@@ -1245,26 +1325,14 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("data-raya-graph-from", edge.from);
       line.setAttribute("data-raya-graph-to", edge.to);
       line.setAttribute("data-raya-graph-kind", edgeKind(edge));
+      line.setAttribute("marker-end", graphArrowMarkerUrl(edge, edgeIndex));
       line.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
       line.setAttribute(
         "class",
         [
           "raya-graph-edge",
           edgeKindClass(edge),
-          selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
-          inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
-            ? "is-inspected"
-            : "",
-          inspectedId && !(edge.from === inspectedId || edge.to === inspectedId)
-            ? "is-dimmed"
-            : "",
-          query && (matchIds.has(edge.from) || matchIds.has(edge.to))
-            ? "is-search-context"
-            : "",
-          query && !(matchIds.has(edge.from) || matchIds.has(edge.to))
-            && !(edge.from === inspectedId || edge.to === inspectedId)
-            ? "is-search-dimmed"
-            : "",
+          ...edgeStateClassNames(edge),
         ].filter(Boolean).join(" ")
       );
       canvas.appendChild(line);

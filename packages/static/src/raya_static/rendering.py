@@ -1785,6 +1785,30 @@ img {
   stroke-opacity: 0.58;
   stroke-width: 2;
 }
+.raya-graph-arrow-marker path {
+  fill: var(--raya-graph-edge-color, var(--raya-color-border));
+  opacity: 0.68;
+}
+.raya-graph-arrow-marker.raya-graph-edge-kind-parent path {
+  opacity: 0.44;
+}
+.raya-graph-arrow-marker.is-active path {
+  fill: var(--raya-color-accent);
+  opacity: 0.86;
+}
+.raya-graph-arrow-marker.is-search-context path {
+  opacity: 0.82;
+}
+.raya-graph-arrow-marker.is-search-dimmed path {
+  opacity: 0.12;
+}
+.raya-graph-arrow-marker.is-inspected path {
+  fill: var(--raya-graph-edge-color, var(--raya-color-success));
+  opacity: 0.94;
+}
+.raya-graph-arrow-marker.is-dimmed path {
+  opacity: 0.14;
+}
 .raya-graph-edge-kind-navigation {
   stroke-dasharray: none;
 }

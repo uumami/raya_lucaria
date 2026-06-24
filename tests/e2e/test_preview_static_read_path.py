@@ -895,6 +895,40 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert computed["color"].startswith(
                                 "var(--raya-graph-group-"
                             )
+                            marker_end = edge.first.get_attribute("marker-end")
+                            assert marker_end is not None
+                            assert marker_end.startswith("url(#raya-graph-arrow-")
+                            marker_id = marker_end.removeprefix(
+                                "url(#"
+                            ).removesuffix(")")
+                            marker = page.locator(f"#{marker_id}")
+                            assert marker.count() == 1
+                            assert marker.evaluate(
+                                "node => node.classList.contains('raya-graph-arrow-marker')"
+                            )
+                            marker_path_style = marker.locator("path").evaluate(
+                                "node => node.style.getPropertyValue('--raya-graph-edge-color')"
+                            )
+                            assert marker_path_style == computed["color"]
+                            points = edge.first.evaluate(
+                                """node => ({
+                                  x1: Number(node.getAttribute('x1')),
+                                  y1: Number(node.getAttribute('y1')),
+                                  x2: Number(node.getAttribute('x2')),
+                                  y2: Number(node.getAttribute('y2')),
+                                })"""
+                            )
+                            target = _graph_node_translate(page, to_id)
+                            target_distance = (
+                                (target[0] - points["x2"]) ** 2
+                                + (target[1] - points["y2"]) ** 2
+                            ) ** 0.5
+                            assert target_distance >= 18
+                            assert marker.evaluate(
+                                "(marker, kind) => marker.classList.contains("
+                                "`raya-graph-edge-kind-${kind}`)",
+                                kind,
+                            )
                             if kind == "navigation":
                                 assert computed["dash"] in ("none", "")
                             else:
@@ -958,6 +992,24 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "#raya-graph-canvas .raya-graph-edge.is-dimmed"
                             ).count()
                             > 0
+                        )
+                        dimmed_edge = page.locator(
+                            "#raya-graph-canvas .raya-graph-edge.is-dimmed"
+                        ).first
+                        dimmed_marker_id = dimmed_edge.get_attribute(
+                            "marker-end"
+                        ).removeprefix("url(#").removesuffix(")")
+                        assert page.locator(f"#{dimmed_marker_id}").evaluate(
+                            "node => node.classList.contains('is-dimmed')"
+                        )
+                        inspected_edge = page.locator(
+                            "#raya-graph-canvas .raya-graph-edge.is-inspected"
+                        ).first
+                        inspected_marker_id = inspected_edge.get_attribute(
+                            "marker-end"
+                        ).removeprefix("url(#").removesuffix(")")
+                        assert page.locator(f"#{inspected_marker_id}").evaluate(
+                            "node => node.classList.contains('is-inspected')"
                         )
                         assert (
                             page.locator(
