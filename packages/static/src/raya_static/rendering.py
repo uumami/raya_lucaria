@@ -1753,6 +1753,16 @@ img {
   min-height: 2.25rem;
   padding: 0.25rem 0.65rem;
 }
+.raya-graph-detail-actions .raya-graph-detail-open-primary {
+  background: var(--raya-color-accent);
+  border-color: var(--raya-color-accent);
+  color: var(--raya-color-accent-contrast);
+  font-weight: 800;
+}
+.raya-graph-detail-actions .raya-graph-detail-open-primary:focus-visible,
+.raya-graph-detail-actions .raya-graph-detail-open-primary:hover {
+  filter: brightness(0.96);
+}
 .raya-graph-detail-actions a[hidden] {
   display: none;
 }

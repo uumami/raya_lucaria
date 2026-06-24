@@ -170,7 +170,9 @@ spotlight dimming, transient search spotlighting over matching pages and
 directly connected context, bounded degree-based node sizing, hover/focus inspection
 status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
-normal page links, the default deterministic `Connections` layout, alternate
+normal page links, SVG graph node single-click selection without page
+navigation, SVG graph node double-click page opening, focused SVG graph node
+Enter-to-open behavior, the primary selected-page open link, the default deterministic `Connections` layout, alternate
 `Topology`, `Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
 SVG viewport controls including pan buttons, focused graph Arrow-key panning,
 pointer drag panning, shared discovery chrome, compact mobile discovery
@@ -224,7 +226,9 @@ not introduce progress, mastery, recommendation, ranking, persistent graph
 state, external graph libraries, fetch requests, or runtime graph payloads.
 When changing Graph, verify graph-search keyboard movement over visible page
 results, active-result inspection, Enter-to-open behavior, graph viewport
-panning, and selected-page details as transient local navigation aids only.
+panning, single-click graph-node selection without page navigation,
+double-click graph-node page opening, focused graph node Enter-to-open
+behavior, and selected-page details as transient local navigation aids only.
 
 When changing Course Search, verify approximate matching, keyboard result
 movement, hover/focus active-result inspection, Enter-to-open behavior, clear

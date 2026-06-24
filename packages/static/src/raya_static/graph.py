@@ -1517,7 +1517,7 @@ _GRAPH_JAVASCRIPT = r"""
     }
     if (detailLink) {
       detailLink.href = node.url;
-      detailLink.textContent = "Open page";
+      detailLink.textContent = "Open selected page";
     }
     if (detailSearchLink) {
       detailSearchLink.href = node.search_url || "../search/index.html";
@@ -1577,6 +1577,12 @@ _GRAPH_JAVASCRIPT = r"""
     selectedId = nodeId;
     renderDetail();
     render();
+  }
+
+  function openGraphNode(nodeId) {
+    const node = nodesById.get(nodeId);
+    if (!node || !node.url) return;
+    window.location.href = node.url;
   }
 
   function clearGraphSelection() {
@@ -1812,7 +1818,13 @@ _GRAPH_JAVASCRIPT = r"""
       link.addEventListener("dblclick", (event) => {
         event.preventDefault();
         window.clearTimeout(pendingSelectTimer);
-        window.location.href = node.url;
+        openGraphNode(node.id);
+      });
+      link.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        window.clearTimeout(pendingSelectTimer);
+        openGraphNode(node.id);
       });
       link.addEventListener("mouseenter", () => inspectGraphNode(node.id));
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));

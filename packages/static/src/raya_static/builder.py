@@ -3758,8 +3758,10 @@ def _render_graph_surface(
             "</section>",
             (
                 '<p class="raya-graph-instructions">'
-                "Hover or focus a page to inspect nearby structure. Click to select it; "
-                "double-click a graph node or open the detail link to navigate."
+                "Hover or focus a page to inspect nearby structure. "
+                "Click a graph page once to inspect it. "
+                "Double-click a graph page to open it. "
+                "When a graph page has keyboard focus, press Enter to open it."
                 "</p>"
             ),
             (
@@ -3865,7 +3867,11 @@ def _render_graph_surface(
                 "data-raya-graph-detail-neighborhood></p>"
             ),
             '<p class="raya-graph-detail-actions">',
-            '<a data-raya-graph-detail-link href="../../index.html">Open page</a>',
+            (
+                '<a class="raya-graph-detail-open-primary" '
+                'data-raya-graph-detail-link href="../../index.html">'
+                "Open selected page</a>"
+            ),
             '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
             '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
             '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>',
@@ -3962,6 +3968,11 @@ def _render_graph_surface(
             (
                 "<p>When graph search is focused, Arrow keys move through "
                 "visible page results and Enter opens the active result.</p>"
+            ),
+            (
+                "<p>Click a graph page once to inspect it. Double-click a graph "
+                "page to open it. When a graph page has keyboard focus, press "
+                "Enter to open it.</p>"
             ),
             (
                 "<p>Connections is the default layout. It arranges pages from "

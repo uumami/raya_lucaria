@@ -837,6 +837,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Pan changes only the viewport" in graph_html
     assert "Fit selection frames the selected page" in graph_html
     assert "Fit selection changes only the SVG viewport" in graph_html
+    assert (
+        "Click a graph page once to inspect it. Double-click a graph page to open it."
+        in graph_html
+    )
+    assert (
+        "When a graph page has keyboard focus, press Enter to open it."
+        in graph_html
+    )
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
@@ -861,6 +869,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-practice-link" in graph_html
     assert "data-raya-graph-detail-tasks-link" in graph_html
     assert "data-raya-graph-detail-schedule-link" in graph_html
+    assert "raya-graph-detail-open-primary" in graph_html
+    assert (
+        '<a class="raya-graph-detail-open-primary" '
+        'data-raya-graph-detail-link href="../../index.html">'
+        "Open selected page</a>"
+    ) in graph_html
     assert (
         '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>'
         in graph_html
@@ -1044,6 +1058,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "URLSearchParams" in graph_script
     assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script
+    assert "function openGraphNode" in graph_script
+    assert 'event.key !== "Enter"' in graph_script
+    assert "openGraphNode(node.id)" in graph_script
     assert "degreeRadiusFor" in graph_script
     assert "14 + Math.min(8" in graph_script
     assert "raya-graph-node-hit" in graph_script
@@ -1098,6 +1115,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-edge-kind-filters" in stylesheet
     assert ".raya-graph-edge-kind-filter" in stylesheet
     assert ".raya-graph-list li.is-active-result a" in stylesheet
+    assert ".raya-graph-detail-open-primary" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

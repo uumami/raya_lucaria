@@ -92,7 +92,15 @@ relationship-kind edge line patterns for generated `navigation`, `parent`,
 transient search spotlighting over matched pages and directly connected
 context, transient graph-search keyboard movement over visible page results
 with Enter-to-open active result behavior, transient hover/focus spotlight
-dimming, hover/focus inspection text, keyboard inspection parity, public selected-page discovery card metadata, course-order Previous/Selected/Next links inside the selected-page detail card, local Tasks and Schedule handoff links when the selected page owns accepted public task-family metadata, non-persistent selected-neighborhood focus mode,
+dimming, hover/focus inspection text, keyboard inspection parity,
+single-click selection/inspection for SVG graph page links, double-click
+page opening for SVG graph page links, keyboard Enter-to-open behavior on
+focused SVG graph page links,
+public selected-page discovery card metadata, course-order
+Previous/Selected/Next links inside the selected-page detail card, a primary
+selected-page open link, local Tasks and Schedule handoff links when the
+selected page owns accepted public task-family metadata,
+non-persistent selected-neighborhood focus mode,
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
 out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,

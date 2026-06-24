@@ -251,6 +251,9 @@ checks del DOM que pasan aunque el canvas este tan alto que el grafo aparece
 fuera del area visible inicial.
 Al cambiar Graph, verifica movimiento con teclado en graph search sobre
 resultados de pagina visibles, inspeccion de active result, Enter para abrir,
+seleccion por click simple en nodos SVG del grafo sin navegar de pagina,
+apertura de pagina por doble click en nodos SVG del grafo, Enter para abrir
+nodos SVG del grafo con foco, link primario para abrir la pagina seleccionada,
 pan del viewport del grafo y detalles de pagina seleccionada como ayudas
 locales y transitorias de navegacion solamente.
 

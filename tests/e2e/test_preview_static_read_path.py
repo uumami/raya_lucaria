@@ -1873,11 +1873,28 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             f"{base_url}/_raya/graph/index.html",
                             wait_until="networkidle",
                         )
-                        page.locator(
+                        graph_path_before_selection = page.evaluate(
+                            "() => window.location.pathname"
+                        )
+                        first_graph_node = page.locator(
                             "#raya-graph-canvas .raya-graph-node-link"
-                        ).first.dispatch_event("click")
+                        ).first
+                        first_graph_node.click()
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        assert (
+                            page.evaluate("() => window.location.pathname")
+                            == graph_path_before_selection
+                        )
+                        assert page.locator(
+                            ".raya-graph-detail-open-primary"
+                        ).is_visible()
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-detail-link]"
+                            ).inner_text()
+                            == "Open selected page"
                         )
                         detail_href = page.locator(
                             "[data-raya-graph-detail-link]"
@@ -1897,8 +1914,22 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         with page.expect_navigation():
                             page.locator(
                                 "#raya-graph-canvas .raya-graph-node-link"
-                            ).first.dispatch_event("dblclick")
+                            ).first.dblclick()
                         assert page.url == graph_href
+                        page.goto(
+                            f"{base_url}/_raya/graph/index.html",
+                            wait_until="networkidle",
+                        )
+                        keyboard_node = page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        )
+                        keyboard_href = keyboard_node.evaluate(
+                            "node => new URL(node.getAttribute('href'), document.baseURI).href"
+                        )
+                        with page.expect_navigation():
+                            keyboard_node.focus()
+                            page.keyboard.press("Enter")
+                        assert page.url == keyboard_href
                         page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
                             wait_until="networkidle",
