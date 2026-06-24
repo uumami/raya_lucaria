@@ -69,7 +69,18 @@ _PRACTICE_JAVASCRIPT = r"""
   );
 
   let activeType = "all";
+  let activePage = "";
   let activeIndex = -1;
+
+  try {
+    activePage = new URLSearchParams(window.location.search || "").get("page") || "";
+  } catch {
+    activePage = "";
+  }
+
+  function matchesPage(item) {
+    return !activePage || item.dataset.rayaPracticePage === activePage;
+  }
 
   function matchesType(item) {
     return activeType === "all" || item.dataset.rayaPracticeType === activeType;
@@ -163,7 +174,7 @@ _PRACTICE_JAVASCRIPT = r"""
     const query = normalize(input.value);
     let visible = 0;
     objects.forEach((item) => {
-      const matched = matchesType(item) && matchesSearch(item, query);
+      const matched = matchesPage(item) && matchesType(item) && matchesSearch(item, query);
       item.hidden = !matched;
       if (matched) visible += 1;
     });
@@ -197,6 +208,13 @@ _PRACTICE_JAVASCRIPT = r"""
     });
   });
 
+  function resetPracticeFocus() {
+    input.value = "";
+    activeType = "all";
+    activePage = "";
+    activeIndex = -1;
+  }
+
   input.addEventListener("input", () => {
     activeIndex = -1;
     render();
@@ -218,18 +236,14 @@ _PRACTICE_JAVASCRIPT = r"""
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
-      input.value = "";
-      activeType = "all";
-      activeIndex = -1;
+      resetPracticeFocus();
       render();
     }
   });
 
   if (clear) {
     clear.addEventListener("click", () => {
-      input.value = "";
-      activeType = "all";
-      activeIndex = -1;
+      resetPracticeFocus();
       render();
       input.focus();
     });

@@ -102,7 +102,9 @@ title as a temporary query. A result can also offer `View in graph`, which opens
 the Course Graph focused on that same page so you can inspect its course
 position and explicit links. The Search context panel summarizes public
 metadata for the result you are inspecting; it is not a ranking or
-recommendation.
+recommendation. When a result has accepted official practice, it may also open
+Official Practice focused on that page. That page focus is only URL context;
+clearing Practice or pressing Escape returns to all visible official objects.
 
 If math appears as raw TeX commands such as `\begin{bmatrix}` or an unknown macro on a published page, treat that as a rendering problem to report to the course team, not as a step you need to fix in your browser.
 
@@ -142,10 +144,12 @@ page for context. Practice items should link to page anchors such as
 visible Practice items with keyboard movement, hover, or focus on item links;
 the context panel follows that temporary selection. The workspace is a
 static discovery surface with filters, results, and public context summaries,
-not a recommendation engine, progress tracker, submission system, grading
-system, scoring system, attempt log, mastery estimate, stored practice state,
-external request workflow, private source-path viewer, or personal review
-queue.
+and Search or Graph may open it already filtered to one page through
+`?page=<page-id>`. Clear or Escape removes that temporary page focus; it is not
+saved as study state. It is not a recommendation engine, progress tracker,
+submission system, grading system, scoring system, attempt log, mastery
+estimate, stored practice state, external request workflow, private source-path
+viewer, or personal review queue.
 
 Some courses may also include an Official Tasks workspace under
 `_raya/tasks/`. Use it to scan accepted assignments, projects, exams, and tasks

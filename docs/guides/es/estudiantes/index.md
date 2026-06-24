@@ -112,7 +112,10 @@ el titulo de esa pagina como consulta temporal. Un resultado tambien puede
 ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
 inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
 contexto de Search resume metadata publica del resultado que inspeccionas; no
-es un ranking ni una recomendacion.
+es un ranking ni una recomendacion. Cuando un resultado tiene practica oficial
+aceptada, tambien puede abrir Official Practice enfocada en esa pagina. Ese
+foco de pagina es solo contexto de URL; limpiar Practice o presionar Escape
+vuelve a todos los objetos oficiales visibles.
 
 Si la math aparece como comandos TeX crudos como `\begin{bmatrix}` o una macro desconocida en una pagina publicada, tratalo como un problema de rendering para reportar al equipo del curso, no como un paso que debas arreglar en tu browser.
 
@@ -154,11 +157,13 @@ de pagina como `#raya-official-<id>` y pueden ofrecer links `View in graph`.
 Puedes inspeccionar items visibles de Practice con movimiento de teclado, hover
 o foco en los links del item; el panel de contexto sigue esa seleccion
 temporal. El workspace es una superficie estatica de descubrimiento con
-filtros, resultados y resumenes publicos de contexto, no un motor de recomendaciones, registro de
-progreso, sistema de entregas, sistema de evaluacion, scoring, registro de
-attempts, estimacion de dominio, estado de practica guardado, workflow de
-requests externos, visor de rutas privadas de fuente ni cola personal de
-repaso.
+filtros, resultados y resumenes publicos de contexto, y Search o Graph pueden
+abrirlo ya filtrado a una pagina con `?page=<page-id>`. Clear o Escape quitan
+ese foco temporal de pagina; no se guarda como estado de estudio. No es un
+motor de recomendaciones, registro de progreso, sistema de entregas, sistema de
+evaluacion, scoring, registro de attempts, estimacion de dominio, estado de
+practica guardado, workflow de requests externos, visor de rutas privadas de
+fuente ni cola personal de repaso.
 
 Algunos cursos tambien pueden incluir un workspace Official Tasks bajo
 `_raya/tasks/`. Usalo para escanear assignments, projects, exams y tasks

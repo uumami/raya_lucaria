@@ -783,6 +783,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     graph_payload = json.loads(graph_payload_match.group(1))
     graph_nodes_by_id = {node["id"]: node for node in graph_payload["nodes"]}
     assert graph_nodes_by_id["render-root"]["title"] == "Raya & Lucaria <Graph> Fixture"
+    root_node = graph_nodes_by_id["render-root"]
     authoring_node = graph_nodes_by_id["authoring-matrix"]
     allowed_graph_node_keys = {
         "graph_url",
@@ -810,8 +811,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert set(node["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not node["url"].startswith("../../data/")
         assert node["search_url"].startswith("../search/index.html?q=")
+    assert root_node["study_counts"] == {"prompt": 1}
+    assert root_node["practice_url"] == ""
     assert authoring_node["study_counts"] == {"prompt": 1}
-    assert authoring_node["practice_url"] == "../practice/index.html"
+    assert authoring_node["practice_url"] == (
+        "../practice/index.html?page=authoring-matrix"
+    )
     assert authoring_node["previous_url"].endswith("../reader-ux/index.html")
     serialized_graph_payload = json.dumps(graph_payload)
     for private_token in (
@@ -1066,7 +1071,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert 'href="../graph/index.html?page=authoring-matrix"' in search_html
     assert "View in graph" in search_html
     assert 'class="raya-search-result-practice"' in search_html
-    assert 'href="../practice/index.html"' in search_html
+    assert 'href="../practice/index.html?page=authoring-matrix"' in search_html
     assert "Open practice" in search_html
     search_payload_match = re.search(
         r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
@@ -1105,8 +1110,12 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert page["id"] in page["graph_url"]
         assert not page["graph_url"].startswith("../../data/")
     pages_by_id = {page["id"]: page for page in search_payload["pages"]}
+    assert pages_by_id["render-root"]["study_counts"] == {"prompt": 1}
+    assert pages_by_id["render-root"]["practice_url"] == ""
     assert pages_by_id["authoring-matrix"]["study_counts"] == {"prompt": 1}
-    assert pages_by_id["authoring-matrix"]["practice_url"] == "../practice/index.html"
+    assert pages_by_id["authoring-matrix"]["practice_url"] == (
+        "../practice/index.html?page=authoring-matrix"
+    )
     assert pages_by_id["authoring-matrix"]["previous_url"].endswith(
         "../../reader-ux/index.html"
     )

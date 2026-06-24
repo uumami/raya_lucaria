@@ -3340,6 +3340,7 @@ def _public_discovery_page_payload(
 ) -> dict[str, Any]:
     previous_page, next_page = _previous_next_pages(page, content_model)
     counts = _aggregate_study_counts(page.id, content_model, official_counts)
+    direct_counts = official_counts.get(page.id, {})
     return {
         "id": page.id,
         "stable_id": page.id,
@@ -3369,8 +3370,11 @@ def _public_discovery_page_payload(
             {"q": page.title},
         ),
         "practice_url": (
-            _relative_href(practice_from_path, STATIC_PRACTICE_PATH.as_posix())
-            if counts
+            _href_with_query(
+                _relative_href(practice_from_path, STATIC_PRACTICE_PATH.as_posix()),
+                {"page": page.id},
+            )
+            if direct_counts
             else ""
         ),
         "study_counts": counts,
@@ -4139,6 +4143,7 @@ def _render_practice_surface(
                             '<article class="raya-practice-object" '
                             f'data-raya-practice-object="{html.escape(item["id"], quote=True)}" '
                             f'data-raya-practice-type="{html.escape(item["type"], quote=True)}" '
+                            f'data-raya-practice-page="{html.escape(item["page_id"], quote=True)}" '
                             'data-raya-practice-active="false">'
                         ),
                         '<header class="raya-practice-object-header">',

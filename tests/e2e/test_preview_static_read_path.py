@@ -1703,7 +1703,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert (
                             result_card.locator(".raya-search-result-practice")
                             .evaluate("node => node.href")
-                            .endswith("/_raya/practice/index.html")
+                            .endswith(
+                                "/_raya/practice/index.html?page=authoring-matrix"
+                            )
                         )
                         assert page.locator("#raya-search-empty").is_hidden()
                         graph_focus_href = page.locator(
@@ -1811,7 +1813,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert (
                             page.locator("[data-raya-graph-detail-practice-link]")
                             .evaluate("node => node.href")
-                            .endswith("/_raya/practice/index.html")
+                            .endswith(
+                                "/_raya/practice/index.html?page=authoring-matrix"
+                            )
                         )
                         _assert_no_horizontal_overflow(page)
                     finally:
@@ -2044,6 +2048,82 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert (
                             page.locator('[data-raya-practice-active="true"]').count()
                             == 0
+                        )
+
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html?page=first-topic",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        assert (
+                            page.evaluate(
+                                """() => Array.from(
+                                  document.querySelectorAll(
+                                    '[data-raya-practice-object]:not([hidden])'
+                                  )
+                                ).map((item) => item.dataset.rayaPracticePage)"""
+                            )
+                            == ["first-topic", "first-topic", "first-topic"]
+                        )
+                        assert (
+                            "First Topic"
+                            in page.locator(
+                                "[data-raya-practice-context-meta]"
+                            ).inner_text()
+                        )
+                        assert (
+                            page.evaluate(
+                                "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                            )
+                            == [[], []]
+                        )
+
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html?page=missing-page",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('0 visible practice object')"""
+                        )
+                        assert page.locator("#raya-practice-empty").is_visible()
+                        assert (
+                            "No visible practice object"
+                            in page.locator(
+                                "[data-raya-practice-context-title]"
+                            ).inner_text()
+                        )
+                        assert (
+                            page.evaluate(
+                                "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                            )
+                            == [[], []]
+                        )
+                        page.click("#raya-practice-clear")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html?page=missing-page",
+                            wait_until="networkidle",
+                        )
+                        page.locator("#raya-practice-search").focus()
+                        page.press("#raya-practice-search", "Escape")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
                         )
 
                         page.click("#raya-practice-clear")

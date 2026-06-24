@@ -106,9 +106,11 @@ Cuando cambie este workspace, verifica tambien la paridad de inspeccion de
 objeto activo: los objetos visibles exponen `data-raya-practice-active`, hover
 y foco en links existentes del item actualizan el panel de contexto, el
 movimiento de teclado desde el input de busqueda selecciona un objeto visible,
-Enter abre el link `.raya-practice-open` de ese objeto, y Clear/Escape reinician
-el estado activo transitorio. No hagas que las cards de objeto sean tab stops
-extra solo para soportar inspeccion.
+Enter abre el link `.raya-practice-open` de ese objeto, los handoffs
+`?page=<page-id>` desde Search o Graph muestran inicialmente solo objetos
+propiedad de esa pagina, y Clear/Escape reinician el estado activo transitorio
+y el foco de pagina. No hagas que las cards de objeto sean tab stops extra solo
+para soportar inspeccion.
 
 Para el workspace Official Tasks, inspecciona objetos aceptados bajo
 `_official/assignments/`, `_official/projects/`, `_official/exams/` y
@@ -232,7 +234,10 @@ contenido de respuestas/soporte, `fetch` en runtime, storage de search/graph,
 requests externos, recomendacion, progreso, dominio, completion, ranking ni
 lenguaje falso de practica relacionada. Enter en Search debe seguir abriendo la
 pagina del resultado, mientras los detalles de pagina seleccionada en Graph
-pueden ofrecer enlaces separados hacia Search y Practice.
+pueden ofrecer enlaces separados hacia Search y Practice. Los enlaces de
+handoff a Practice deben incluir `?page=<page-id>` solo cuando la pagina posee
+objetos oficiales aceptados, y ese foco de pagina debe permanecer como estado
+solo de URL.
 
 Para depurar renderizado, usa `scripts/check-render-debug.sh` cuando necesites la compuerta enfocada de paridad del fixture que tambien corre en la verificacion host/Docker. El gate escribe `report.json` e `index.html` junto a las capturas. Cuando falle, inspecciona primero `index.html` y usa `report.json` para ubicar pagina, viewport, path de archivo y diagnosticos del sitio copiado. Usa `raya preview <course> --render-debug /tmp/raya-render-debug` cuando diagnostiques un curso especifico. Ambos caminos inspeccionan paginas estaticas generadas; ninguno ejecuta codigo del curso ni depende de conversion MathJax en el browser. Usa esa salida como evidencia para fallas de layout/math, fuga de TeX visible, requests externos y overflow, pero conserva la autoridad en los archivos fuente, `manifest.json` y los `data/*.json` declarados por el manifest. Trata archivos render-debug solo como evidencia local; no los incluyas en commits.
 

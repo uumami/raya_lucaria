@@ -100,8 +100,10 @@ When this workspace changes, also verify active-object inspection parity:
 visible objects expose `data-raya-practice-active`, hover and focus on existing
 item links update the context panel, keyboard movement from the search input
 selects one visible object, Enter opens that object's `.raya-practice-open`
-link, and Clear/Escape reset transient active state. Do not make object cards
-extra tab stops just to support inspection.
+link, `?page=<page-id>` handoffs from Search or Graph initially show only
+objects owned by that page, and Clear/Escape reset transient active and page
+focus state. Do not make object cards extra tab stops just to support
+inspection.
 
 For the Official Tasks workspace, inspect accepted `_official/assignments/`,
 `_official/projects/`, `_official/exams/`, and `_official/tasks/` objects,
@@ -207,7 +209,9 @@ answer/support content, runtime `fetch`, search/graph storage, external
 requests, recommendation, progress, mastery, completion, ranking, or fake
 related-practice language. Search Enter must still open the page result, while
 Graph selected-page details may offer separate Search and Practice handoff
-links.
+links. Practice handoff links should include `?page=<page-id>` only when the
+page owns accepted official objects, and that page focus must remain URL-only
+state.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 
