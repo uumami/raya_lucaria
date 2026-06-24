@@ -152,6 +152,15 @@ attempts, estimacion de dominio, estado de practica guardado, workflow de
 requests externos, visor de rutas privadas de fuente ni cola personal de
 repaso.
 
+Algunos cursos tambien pueden incluir un workspace Official Tasks bajo
+`_raya/tasks/`. Usalo para escanear assignments, projects, exams y tasks
+aceptados por texto, tipo, orden del curso o fecha de entrega, y despues abre
+la pagina que los posee para ver el contexto completo. Puede mostrar campos
+publicos de planeacion como titulo, pagina, fecha de entrega, puntos, status y
+tags cuando el equipo del curso los escribio. No es registro de progreso
+personal, sistema de entregas, gradebook, pagina adaptativa de recomendaciones,
+sincronizacion de calendario ni superficie de respuestas ocultas.
+
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 
 Los ejemplos de codigo fenced pueden incluir un boton `Copy`. Copiar pone el texto de codigo mostrado en tu clipboard; no ejecuta el codigo, no guarda progreso ni contacta un backend.

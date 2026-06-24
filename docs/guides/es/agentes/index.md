@@ -103,6 +103,17 @@ Enter abre el link `.raya-practice-open` de ese objeto, y Clear/Escape reinician
 el estado activo transitorio. No hagas que las cards de objeto sean tab stops
 extra solo para soportar inspeccion.
 
+Para el workspace Official Tasks, inspecciona objetos aceptados bajo
+`_official/assignments/`, `_official/projects/`, `_official/exams/` y
+`_official/tasks/`, despues compara `data/tasks.json`, `manifest.json`,
+`_raya/tasks/index.html` y el script local `tasks.js`. La metadata publica de
+planeacion debe venir de campos `content` del objeto como `due`, `available`,
+`points`, `weight`, `status` y `tags`. Verifica anchors de pagina, links de
+foco en grafo, filtros, ordenamiento, Enter por teclado para abrir, paneles
+responsivos, sin rutas privadas, sin `fetch` en runtime, sin requests externos,
+sin browser storage y sin lenguaje de grading, entregas, progreso, dominio,
+recomendacion o estado del estudiante.
+
 Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
 la estructura de mapa jerarquico del curso expandido, los numeros estructurales
 generados del mapa,

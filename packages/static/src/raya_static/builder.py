@@ -30,6 +30,7 @@ from raya_schema import (
     validate_references_index,
     validate_reviewed_outputs_index,
     validate_runtime_index,
+    validate_tasks_index,
 )
 from raya_schema.content import ContentModel, ContentPage, resolve_course_content
 from raya_schema.course import resolve_course_source_root
@@ -79,6 +80,7 @@ from raya_static.accessibility import (
     ACCESSIBILITY_RESOURCE_PATH,
     OPEN_DYSLEXIC_CSS_NAME,
     OPEN_DYSLEXIC_JS_NAME,
+    OPEN_DYSLEXIC_VOLATILE_JS_NAME,
     open_dyslexic_resources,
 )
 from raya_static.graph import GRAPH_RESOURCE_PATH, GRAPH_SCRIPT_NAME, graph_resources
@@ -124,6 +126,7 @@ from raya_static.search import (
     search_resources,
 )
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
+from raya_static.tasks import TASKS_RESOURCE_PATH, TASKS_SCRIPT_NAME, tasks_resources
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
@@ -137,6 +140,7 @@ STATIC_INSPECTION_PATH = Path(STATIC_RESOURCE_DIR) / "inspect" / "index.html"
 STATIC_GRAPH_PATH = Path(STATIC_RESOURCE_DIR) / "graph" / "index.html"
 STATIC_SEARCH_PATH = Path(STATIC_RESOURCE_DIR) / "search" / "index.html"
 STATIC_PRACTICE_PATH = Path(STATIC_RESOURCE_DIR) / "practice" / "index.html"
+STATIC_TASKS_PATH = Path(STATIC_RESOURCE_DIR) / "tasks" / "index.html"
 MATH_STYLESHEET_PATH = Path(STATIC_RESOURCE_DIR) / "render" / "math" / "mathjax.css"
 GRAPH_GROUP_COLORS = (
     "var(--raya-graph-group-1)",
@@ -394,6 +398,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_graph_resources(site_dir, report)
     _write_search_resources(site_dir, report)
     _write_practice_resources(site_dir, report)
+    _write_tasks_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -436,6 +441,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     navigation_index = _navigation_index(course_id, content_model)
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
+    tasks_index = _browser_tasks_payload(content_model, official_by_page)
     references_index = _references_index(course_id, references, reviewed_by_reference)
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
     numbered_objects_index = build_numbered_objects_index(
@@ -458,6 +464,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "navigation.json", navigation_index, report)
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
+    _write_json(data_dir / "tasks.json", tasks_index, report)
     _write_json(data_dir / "references.json", references_index, report)
     _write_json(data_dir / "reviewed-outputs.json", reviewed_outputs_data, report)
     _write_json(data_dir / "numbered-objects.json", numbered_objects_index, report)
@@ -504,6 +511,15 @@ def build_course(course_path: str | Path) -> ValidationReport:
         skin_context=skin_context,
         report=report,
     )
+    _write_tasks_surface(
+        site_dir=site_dir,
+        content_model=content_model,
+        official_by_page=official_by_page,
+        course_title=str(config["title"]),
+        language=str(config["language"]),
+        skin_context=skin_context,
+        report=report,
+    )
 
     manifest = {
         "artifact_version": ARTIFACT_VERSION,
@@ -520,6 +536,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "navigation": "data/navigation.json",
             "indices": "data/indices.json",
             "official": "data/official.json",
+            "tasks": "data/tasks.json",
             "references": "data/references.json",
             "reviewed_outputs": "data/reviewed-outputs.json",
             "numbered_objects": "data/numbered-objects.json",
@@ -838,6 +855,7 @@ def _render_page(
         {"page": page.id},
     )
     practice_href = _relative_href(page.output_path, STATIC_PRACTICE_PATH.as_posix())
+    tasks_href = _relative_href(page.output_path, STATIC_TASKS_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -922,6 +940,7 @@ def _render_page(
                 search_href,
                 graph_href,
                 practice_href,
+                tasks_href,
             ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(page, content_model),
@@ -952,6 +971,7 @@ def _render_top_command_bar(
     search_href: str,
     graph_href: str,
     practice_href: str,
+    tasks_href: str,
 ) -> str:
     return "\n".join(
         [
@@ -978,6 +998,13 @@ def _render_top_command_bar(
                 f'href="{html.escape(practice_href)}" '
                 'aria-label="Open official practice">'
                 '<span class="raya-command-label">Practice</span>'
+                "</a>"
+            ),
+            (
+                f'<a class="raya-command raya-command-tasks" '
+                f'href="{html.escape(tasks_href)}" '
+                'aria-label="Open official tasks">'
+                '<span class="raya-command-label">Tasks</span>'
                 "</a>"
             ),
             _render_course_map_toggle(
@@ -4240,6 +4267,368 @@ def _browser_practice_payload(
     }
 
 
+_OFFICIAL_TASK_TYPES = frozenset({"assignment", "exam", "project", "task"})
+
+
+def _write_tasks_surface(
+    *,
+    site_dir: Path,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+    report: ValidationReport,
+) -> None:
+    tasks_path = site_dir / STATIC_TASKS_PATH
+    tasks_path.parent.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(tasks_path.parent)
+    tasks_path.write_text(
+        _render_tasks_surface(
+            content_model=content_model,
+            official_by_page=official_by_page,
+            course_title=course_title,
+            language=language,
+            skin_context=skin_context,
+        ),
+        encoding="utf-8",
+    )
+    report.wrote_output(tasks_path)
+
+
+def _render_tasks_surface(
+    *,
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+    course_title: str,
+    language: str,
+    skin_context: SkinContext,
+) -> str:
+    stylesheet_href = _relative_href(STATIC_TASKS_PATH.as_posix(), RENDER_STYLESHEET_PATH)
+    skin_stylesheet_href = _relative_href(
+        STATIC_TASKS_PATH.as_posix(),
+        SKIN_STYLESHEET_PATH,
+    )
+    accessibility_css_href = _relative_href(
+        STATIC_TASKS_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
+    )
+    accessibility_js_href = _relative_href(
+        STATIC_TASKS_PATH.as_posix(),
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
+    )
+    tasks_js_href = _relative_href(
+        STATIC_TASKS_PATH.as_posix(),
+        Path(TASKS_RESOURCE_PATH) / TASKS_SCRIPT_NAME,
+    )
+    root_skin = skin_id_for_source_path(
+        content_model.pages[0].source_path, skin_context
+    )
+    browser_tasks = _browser_tasks_payload(content_model, official_by_page)
+    tasks_payload = _json_script_text(browser_tasks)
+    type_buttons = [
+        (
+            '<button class="raya-task-chip" type="button" '
+            'data-raya-task-filter="all" aria-pressed="true">'
+            f"All ({len(browser_tasks['objects'])})"
+            "</button>"
+        )
+    ]
+    for type_info in browser_tasks["types"]:
+        type_buttons.append(
+            (
+                '<button class="raya-task-chip" type="button" '
+                f'data-raya-task-filter="{html.escape(type_info["type"], quote=True)}" '
+                'aria-pressed="false">'
+                f"{html.escape(type_info['label'])} ({type_info['count']})"
+                "</button>"
+            )
+        )
+
+    cards = []
+    for order, item in enumerate(browser_tasks["objects"]):
+        meta_bits = [
+            f"From {item['page_title']}",
+            f"ID {item['id']}",
+            f"Due {item['due']}" if item["due"] else "",
+            f"Available {item['available']}" if item["available"] else "",
+            item["points"],
+            f"Weight {item['weight']}" if item["weight"] else "",
+            f"Status {item['status']}" if item["status"] else "",
+        ]
+        tags_html = "".join(
+            f'<span class="raya-task-tag">{html.escape(tag)}</span>'
+            for tag in item["tags"]
+        )
+        cards.append(
+            "\n".join(
+                [
+                    (
+                        '<article class="raya-task-object" '
+                        f'data-raya-task-object="{html.escape(item["id"], quote=True)}" '
+                        f'data-raya-task-type="{html.escape(item["type"], quote=True)}" '
+                        f'data-raya-task-order="{order}" '
+                        'data-raya-task-active="false">'
+                    ),
+                    '<header class="raya-task-object-header">',
+                    (
+                        '<span class="raya-task-kind">'
+                        f"{html.escape(item['type_label'])}</span>"
+                    ),
+                    (
+                        '<span class="raya-task-authority">'
+                        f"{html.escape(item['authority'])}</span>"
+                    ),
+                    "</header>",
+                    f"<h3>{html.escape(item['title'] or item['preview'])}</h3>",
+                    (
+                        '<p class="raya-task-preview">'
+                        f"{html.escape(item['preview'])}</p>"
+                        if item["preview"] and item["preview"] != item["title"]
+                        else ""
+                    ),
+                    (
+                        '<p class="raya-task-meta">'
+                        f"{html.escape(' | '.join(bit for bit in meta_bits if bit))}"
+                        "</p>"
+                    ),
+                    (
+                        f'<p class="raya-task-tags">{tags_html}</p>'
+                        if tags_html
+                        else ""
+                    ),
+                    '<p class="raya-task-actions">',
+                    (
+                        '<a class="raya-task-open" '
+                        f'href="{html.escape(item["page_url"])}">Open page</a>'
+                    ),
+                    (
+                        '<a class="raya-task-graph" '
+                        f'href="{html.escape(item["graph_url"])}" '
+                        f'aria-label="View {html.escape(item["page_title"], quote=True)} in course graph">'
+                        "View in graph</a>"
+                    ),
+                    "</p>",
+                    "</article>",
+                ]
+            )
+        )
+
+    return "\n".join(
+        [
+            "<!doctype html>",
+            f'<html lang="{html.escape(language)}">',
+            "<head>",
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            f"<title>Official Tasks - {html.escape(course_title)}</title>",
+            f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
+            f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
+            "</head>",
+            (
+                f'<body data-raya-surface="tasks" '
+                f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
+            ),
+            '<a class="raya-skip-link" href="#raya-tasks-main">Skip to tasks</a>',
+            _render_discovery_command_bar(
+                course_title=course_title,
+                workspace_label="Official tasks workspace",
+                home_href="../../index.html",
+                search_href="../search/index.html",
+                graph_href="../graph/index.html",
+                practice_href="../practice/index.html",
+            ),
+            (
+                '<main id="raya-tasks-main" class="raya-tasks-page" '
+                'data-raya-tasks-page tabindex="-1">'
+            ),
+            '<header class="raya-tasks-header">',
+            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
+            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            "<h1>Official Tasks</h1>",
+            (
+                "<p>Scan accepted assignments, projects, exams, and tasks. "
+                "Open the owning page when you need the full course context.</p>"
+            ),
+            "</header>",
+            '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
+            '<aside class="raya-tasks-control-panel" aria-label="Official task controls">',
+            "<h2>Find tasks</h2>",
+            '<section class="raya-tasks-controls" aria-label="Official task controls">',
+            '<label for="raya-tasks-search">Search</label>',
+            '<input id="raya-tasks-search" type="search" autocomplete="off">',
+            '<label for="raya-tasks-sort">Sort</label>',
+            '<select id="raya-tasks-sort">',
+            '<option value="course">Course order</option>',
+            '<option value="due">Due date</option>',
+            '<option value="type">Type</option>',
+            "</select>",
+            '<button id="raya-tasks-clear" type="button">Clear</button>',
+            '<div class="raya-task-filters" aria-label="Task type filters">',
+            "\n".join(type_buttons),
+            "</div>",
+            '<p id="raya-tasks-status" class="raya-tasks-status" aria-live="polite"></p>',
+            "</section>",
+            (
+                '<p class="raya-discovery-summary" '
+                f"data-raya-tasks-summary-count>{len(browser_tasks['objects'])} visible task(s).</p>"
+            ),
+            "</aside>",
+            '<section class="raya-tasks-results-panel" aria-label="Official task results">',
+            (
+                '<p id="raya-tasks-empty" class="raya-tasks-empty" hidden>'
+                "No matching official tasks.</p>"
+            ),
+            (
+                '<section class="raya-tasks-results" data-raya-tasks-results '
+                'aria-label="Official task results">'
+            ),
+            "\n".join(cards),
+            "</section>",
+            "</section>",
+            (
+                '<aside class="raya-tasks-context-panel" data-raya-tasks-context '
+                'aria-label="Official task context" aria-live="polite">'
+            ),
+            "<h2>Context</h2>",
+            "<p data-raya-tasks-context-title>Select or filter an official task.</p>",
+            (
+                '<p class="raya-discovery-context-meta" '
+                "data-raya-tasks-context-meta>Accepted public task metadata only.</p>"
+            ),
+            "</aside>",
+            "</section>",
+            '<script type="application/json" id="raya-tasks-data">',
+            tasks_payload,
+            "</script>",
+            "</main>",
+            f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(tasks_js_href)}" defer></script>',
+            "</body>",
+            "</html>",
+            "",
+        ]
+    )
+
+
+def _browser_tasks_payload(
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+) -> dict[str, Any]:
+    objects: list[dict[str, Any]] = []
+    type_counts: dict[str, int] = defaultdict(int)
+    for page in content_model.pages:
+        page_objects = sorted(
+            official_by_page.get(page.id, []),
+            key=lambda item: (
+                item.get("source_order")
+                if isinstance(item.get("source_order"), int)
+                else 0,
+                str(item.get("id") or ""),
+            ),
+        )
+        for item in page_objects:
+            if not isinstance(item, dict):
+                continue
+            object_type = str(item.get("type") or "").strip()
+            if object_type not in _OFFICIAL_TASK_TYPES:
+                continue
+            object_id = str(item.get("id") or "").strip()
+            authority = str(item.get("authority") or "official").strip() or "official"
+            if not object_id:
+                continue
+            content = item.get("content")
+            content_map = content if isinstance(content, dict) else {}
+            title = _official_public_text(content_map, ("title",))
+            preview = _official_public_text(
+                content_map,
+                ("summary", "prompt", "instructions", "body", "question"),
+            )
+            if not title and preview:
+                title = preview
+            if not preview:
+                preview = title
+            if not title and not preview:
+                continue
+            anchor = f"raya-official-{_safe_map_fragment_id(object_id)}"
+            page_url = (
+                _relative_href(STATIC_TASKS_PATH.as_posix(), page.output_path)
+                + f"#{anchor}"
+            )
+            graph_url = _href_with_query(
+                _relative_href(STATIC_TASKS_PATH.as_posix(), STATIC_GRAPH_PATH.as_posix()),
+                {"page": page.id},
+            )
+            type_counts[object_type] += 1
+            objects.append(
+                {
+                    "anchor": anchor,
+                    "authority": authority,
+                    "available": _official_public_text(content_map, ("available",)),
+                    "due": _official_public_text(content_map, ("due",)),
+                    "graph_url": graph_url,
+                    "id": object_id,
+                    "page_id": page.id,
+                    "page_title": page.title,
+                    "page_url": page_url,
+                    "points": _official_public_text(content_map, ("points",)),
+                    "preview": preview,
+                    "status": _official_public_text(content_map, ("status",)),
+                    "tags": _official_public_tags(content_map),
+                    "title": title,
+                    "type": object_type,
+                    "type_label": _official_type_label(object_type),
+                    "weight": _official_public_text(content_map, ("weight",)),
+                }
+            )
+    types = [
+        {
+            "count": count,
+            "label": _official_type_label(object_type),
+            "type": object_type,
+        }
+        for object_type, count in sorted(
+            type_counts.items(),
+            key=lambda pair: (_official_type_label(pair[0]), pair[0]),
+        )
+    ]
+    return {
+        "objects": objects,
+        "types": types,
+        "version": 1,
+    }
+
+
+def _official_public_text(
+    content: dict[str, Any],
+    fields: tuple[str, ...],
+) -> str:
+    for field in fields:
+        text = _official_public_scalar_text(content.get(field))
+        if text:
+            return text
+    return ""
+
+
+def _official_public_tags(content: dict[str, Any]) -> list[str]:
+    value = content.get("tags")
+    if isinstance(value, (list, tuple)):
+        return [
+            text
+            for text in (_official_public_scalar_text(tag) for tag in value)
+            if text
+        ]
+    text = _official_public_scalar_text(value)
+    return [text] if text else []
+
+
+def _official_public_scalar_text(value: Any) -> str:
+    if value is None or isinstance(value, (dict, list, tuple, set)):
+        return ""
+    return " ".join(str(value).split())
+
+
 def _official_preview_text(item: dict[str, Any]) -> str:
     content = item.get("content")
     if not isinstance(content, dict):
@@ -4501,6 +4890,7 @@ def _write_rich_render_resources(
     accessibility_dir.mkdir(parents=True, exist_ok=True)
     css_path = accessibility_dir / OPEN_DYSLEXIC_CSS_NAME
     js_path = accessibility_dir / OPEN_DYSLEXIC_JS_NAME
+    volatile_js_path = accessibility_dir / OPEN_DYSLEXIC_VOLATILE_JS_NAME
     font_dir = accessibility_dir / "fonts"
     font_dir.mkdir(parents=True, exist_ok=True)
     font_path = font_dir / accessibility.font_name
@@ -4516,10 +4906,12 @@ def _write_rich_render_resources(
         return
     css_path.write_text(accessibility.css, encoding="utf-8")
     js_path.write_text(accessibility.javascript, encoding="utf-8")
+    volatile_js_path.write_text(accessibility.volatile_javascript, encoding="utf-8")
     with resources.as_file(accessibility.source_font) as source_font:
         shutil.copy2(source_font, font_path)
     report.wrote_output(css_path)
     report.wrote_output(js_path)
+    report.wrote_output(volatile_js_path)
     report.wrote_output(font_path)
 
 
@@ -4559,6 +4951,16 @@ def _write_practice_resources(site_dir: Path, report: ValidationReport) -> None:
     practice_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(practice_dir)
     script_path = practice_dir / PRACTICE_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_tasks_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = tasks_resources()
+    tasks_dir = site_dir / TASKS_RESOURCE_PATH
+    tasks_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(tasks_dir)
+    script_path = tasks_dir / TASKS_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 
@@ -4697,6 +5099,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_navigation_index(artifact_dir / "data" / "navigation.json"),
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
+        validate_tasks_index(artifact_dir / "data" / "tasks.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
         validate_reviewed_outputs_index(
             artifact_dir / "data" / "reviewed-outputs.json"

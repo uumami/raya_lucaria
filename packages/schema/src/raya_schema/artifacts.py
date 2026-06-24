@@ -67,6 +67,7 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "navigation": validate_navigation_index,
         "indices": validate_indices_index,
         "official": validate_official_index,
+        "tasks": validate_tasks_index,
         "references": validate_references_index,
         "reviewed_outputs": validate_reviewed_outputs_index,
         "numbered_objects": validate_numbered_objects_index,
@@ -179,6 +180,10 @@ def validate_indices_index(index_path: str | Path) -> ValidationReport:
 
 def validate_official_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "official-index.schema.json")
+
+
+def validate_tasks_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "tasks-index.schema.json")
 
 
 def validate_references_index(index_path: str | Path) -> ValidationReport:

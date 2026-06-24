@@ -89,6 +89,17 @@ incluir cobertura static-read-path, asserts enfocados de escaping/privacidad,
 checks no-storage/no-fetch e impacto de docs de rol para estudiantes,
 profesores, colaboradores y agentes.
 
+El workspace Official Tasks tambien es comportamiento actual del renderer
+estatico. Revisalo como superficie generada de planeacion sobre objetos
+oficiales `assignment`, `project`, `exam` y `task`, no como servicio de
+calendario ni sistema de estado del estudiante. La verificacion debe cubrir
+`data/tasks.json`, declaracion en `manifest.json`, `_raya/tasks/index.html`,
+el recurso local `tasks.js`, campos publicos de planeacion bajo `content`,
+anchors de pagina propietaria, links de foco en grafo, filtros, ordenamiento,
+inspeccion por teclado, layout desktop/movil, sin requests externos, sin
+`fetch` en runtime, sin browser storage y sin lenguaje de grading, entregas,
+progreso, dominio o recomendaciones.
+
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
 curso expandido por defecto en escritorio,

@@ -20,6 +20,7 @@ from raya_schema import (
     validate_references_index,
     validate_reviewed_outputs_index,
     validate_runtime_index,
+    validate_tasks_index,
 )
 from raya_static import build_course
 
@@ -164,6 +165,20 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         '{"course_id":"minimal-course","objects":[{"id":"card-1","type":"card","authority":"official","scope":{"quantum":"course-root"},"content":{"front":"Q","back":"A"}}]}',
         encoding="utf-8",
     )
+    tasks = tmp_path / "tasks.json"
+    tasks.write_text(
+        (
+            '{"version":1,"objects":[{"id":"task-1","type":"assignment",'
+            '"type_label":"Assignment","authority":"official","page_id":"course-root",'
+            '"page_title":"Home","anchor":"raya-official-task-1",'
+            '"page_url":"index.html#raya-official-task-1",'
+            '"graph_url":"_raya/graph/index.html?page=course-root",'
+            '"title":"Task","preview":"Task","due":"2026-09-15",'
+            '"available":"","points":"","weight":"","status":"","tags":[]}],'
+            '"types":[{"type":"assignment","label":"Assignment","count":1}]}'
+        ),
+        encoding="utf-8",
+    )
     navigation = tmp_path / "navigation.json"
     navigation.write_text(
         '{"course_id":"minimal-course","root":"course-root","items":[{"id":"course-root","path":"0_index.md","url":"index.html","title":"Home","label":"","children":[]}]}',
@@ -213,6 +228,7 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_navigation_index(navigation),
         validate_indices_index(indices),
         validate_official_index(official),
+        validate_tasks_index(tasks),
         validate_references_index(references),
         validate_reviewed_outputs_index(reviewed_outputs),
         validate_runtime_index(runtime),
@@ -221,6 +237,19 @@ def test_generated_artifact_indexes_validate(tmp_path: Path) -> None:
         validate_cache_index(cache),
     ):
         assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
+def test_tasks_index_validation_rejects_missing_required_fields(tmp_path: Path) -> None:
+    tasks = tmp_path / "tasks.json"
+    tasks.write_text('{"version":1,"objects":[{"id":"task-1"}],"types":[]}', encoding="utf-8")
+
+    report = validate_tasks_index(tasks)
+
+    assert not report.ok
+    assert any(
+        item.field == "objects.0" and "'type' is a required property" in item.message
+        for item in report.diagnostics
+    )
 
 
 def test_inspect_built_artifact_succeeds(tmp_path: Path) -> None:

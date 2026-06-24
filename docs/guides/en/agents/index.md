@@ -96,6 +96,16 @@ selects one visible object, Enter opens that object's `.raya-practice-open`
 link, and Clear/Escape reset transient active state. Do not make object cards
 extra tab stops just to support inspection.
 
+For the Official Tasks workspace, inspect accepted `_official/assignments/`,
+`_official/projects/`, `_official/exams/`, and `_official/tasks/` objects,
+then compare `data/tasks.json`, `manifest.json`, `_raya/tasks/index.html`, and
+the local `tasks.js` script. Public planning metadata should come from object
+`content` fields such as `due`, `available`, `points`, `weight`, `status`, and
+`tags`. Verify page anchors, graph focus links, filtering, sorting, keyboard
+Enter-to-open behavior, responsive panels, no private paths, no runtime fetch,
+no external requests, no browser storage, and no grading, submission, progress,
+mastery, recommendation, or learner-state language.
+
 When changing the shell, verify the expanded course map default, including the
 expanded hierarchical course map structure, generated structural map numbers,
 current-page map orientation, map filter behavior, sticky reading context,

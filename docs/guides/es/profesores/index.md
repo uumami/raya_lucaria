@@ -212,6 +212,34 @@ recomendado, con scoring, evaluado, entregado, intentado, progreso personal,
 dominio, estado guardado del estudiante, fetching en runtime, requests externos
 o vista de rutas privadas de fuente.
 
+Assignments, projects, exams y tasks tambien alimentan el workspace generado
+Official Tasks en `_raya/tasks/index.html` y el index declarado en manifest
+`data/tasks.json`. Pon cada objeto en el directorio de familia `_official/`
+correcto, por ejemplo `_official/assignments/` o `_official/exams/`, y escribe
+los campos publicos de planeacion bajo `content`:
+
+```yaml
+id: ps1
+type: assignment
+authority: official
+scope:
+  quantum: first-topic
+content:
+  title: Problem Set 1
+  instructions: Practica multiplicacion de matrices.
+  due: "2026-09-15"
+  points: 10 pts
+  weight: 15%
+  status: published
+  tags:
+    - retrieval
+```
+
+El workspace de tasks ayuda a estudiantes a escanear trabajo por tipo, texto y
+fecha de entrega, y despues volver al anchor de la pagina propietaria. No es
+sistema de entregas, gradebook, sincronizacion de calendario personal, registro
+de progreso, motor de recomendaciones ni superficie de respuestas ocultas.
+
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
 y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto

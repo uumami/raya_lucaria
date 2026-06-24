@@ -8,6 +8,7 @@ from importlib.abc import Traversable
 ACCESSIBILITY_RESOURCE_PATH = "_raya/render/accessibility"
 OPEN_DYSLEXIC_CSS_NAME = "open-dyslexic.css"
 OPEN_DYSLEXIC_JS_NAME = "open-dyslexic-toggle.js"
+OPEN_DYSLEXIC_VOLATILE_JS_NAME = "open-dyslexic-toggle-volatile.js"
 OPEN_DYSLEXIC_FONT_NAME = "OpenDyslexic-Regular.woff"
 OPEN_DYSLEXIC_RESOURCE_PACKAGE = "raya_static"
 OPEN_DYSLEXIC_RESOURCE_PATH = (
@@ -19,6 +20,7 @@ OPEN_DYSLEXIC_RESOURCE_PATH = (
 class AccessibilityResources:
     css: str
     javascript: str
+    volatile_javascript: str
     source_font: Traversable
     font_name: str
 
@@ -80,8 +82,11 @@ def open_dyslexic_resources() -> AccessibilityResources:
   const dyslexicActiveValue = "true";
   const textSizeStorageKey = "raya:text-size";
   const textSizes = ["normal", "large", "x-large"];
+  const persistPreferences =
+    document.documentElement.getAttribute("data-raya-comfort-persistence") !== "off";
 
   function storedDyslexicPreference() {
+    if (!persistPreferences) return false;
     try {
       return localStorage.getItem(dyslexicStorageKey) === dyslexicActiveValue;
     } catch {
@@ -90,6 +95,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
   }
 
   function storeDyslexicPreference(enabled) {
+    if (!persistPreferences) return;
     try {
       localStorage.setItem(
         dyslexicStorageKey,
@@ -101,6 +107,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
   }
 
   function storedTextSizePreference() {
+    if (!persistPreferences) return "normal";
     try {
       const value = localStorage.getItem(textSizeStorageKey) || "normal";
       return textSizes.includes(value) ? value : "normal";
@@ -110,6 +117,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
   }
 
   function storeTextSizePreference(size) {
+    if (!persistPreferences) return;
     try {
       localStorage.setItem(textSizeStorageKey, size);
     } catch {
@@ -163,9 +171,57 @@ def open_dyslexic_resources() -> AccessibilityResources:
   });
 })();
 '''
+    volatile_javascript = '''(() => {
+  const textSizes = ["normal", "large", "x-large"];
+
+  function applyDyslexic(enabled) {
+    document.documentElement.setAttribute(
+      "data-raya-open-dyslexic",
+      enabled ? "true" : "false"
+    );
+    document.querySelectorAll(".raya-font-toggle").forEach((button) => {
+      button.setAttribute("aria-pressed", enabled ? "true" : "false");
+    });
+  }
+
+  function applyTextSize(size) {
+    const normalized = textSizes.includes(size) ? size : "normal";
+    document.documentElement.setAttribute("data-raya-text-size", normalized);
+    document.querySelectorAll(".raya-text-size-toggle").forEach((button) => {
+      button.setAttribute(
+        "aria-pressed",
+        normalized === "normal" ? "false" : "true"
+      );
+      button.setAttribute("aria-label", `Text size: ${normalized}`);
+    });
+  }
+
+  applyDyslexic(false);
+  applyTextSize("normal");
+
+  document.addEventListener("click", (event) => {
+    const fontButton = event.target.closest(".raya-font-toggle");
+    if (fontButton) {
+      const enabled = fontButton.getAttribute("aria-pressed") !== "true";
+      applyDyslexic(enabled);
+      return;
+    }
+
+    const sizeButton = event.target.closest(".raya-text-size-toggle");
+    if (sizeButton) {
+      const current = document.documentElement.getAttribute("data-raya-text-size")
+        || "normal";
+      const index = textSizes.indexOf(current);
+      const next = textSizes[(index + 1) % textSizes.length];
+      applyTextSize(next);
+    }
+  });
+})();
+'''
     return AccessibilityResources(
         css=css,
         javascript=javascript,
+        volatile_javascript=volatile_javascript,
         source_font=resources.files(OPEN_DYSLEXIC_RESOURCE_PACKAGE).joinpath(
             OPEN_DYSLEXIC_RESOURCE_PATH
         ),

@@ -26,7 +26,7 @@ Task records may include:
 - owning page URL and object anchor
 - graph focus URL
 - title or preview
-- optional `due`, `available`, `points`, `weight`, `status`, and `tags` when authored directly on the accepted official object or under `content`
+- optional `due`, `available`, `points`, `weight`, `status`, and `tags` when authored under the accepted official object's `content`
 
 The renderer must not include source paths, `_official/` paths, private support paths, cache keys, source hashes, answers, solutions, quiz correctness, review state, learner progress, or date-based progress claims.
 

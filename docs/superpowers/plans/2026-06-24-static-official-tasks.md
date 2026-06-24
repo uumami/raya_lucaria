@@ -58,7 +58,7 @@ Expected: fail because `_raya/tasks/index.html` is missing.
 
 - [ ] Add `STATIC_TASKS_PATH = Path("_raya") / "tasks" / "index.html"`.
 - [ ] Add a safe task payload builder that includes only official objects with types `assignment`, `exam`, `project`, and `task`.
-- [ ] Extract public planning fields from the object root first, then from `content`: `title`, `summary`, `prompt`, `instructions`, `due`, `available`, `points`, `weight`, `status`, and `tags`.
+- [ ] Extract public planning fields from accepted official object `content`: `title`, `summary`, `prompt`, `instructions`, `due`, `available`, `points`, `weight`, `status`, and `tags`.
 - [ ] Write `artifact/data/tasks.json`.
 - [ ] Declare `"tasks": "data/tasks.json"` in `manifest.json`.
 - [ ] Add optional `tasks` to the artifact manifest schema.

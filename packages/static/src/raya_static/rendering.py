@@ -644,6 +644,9 @@ img {
 .raya-command-practice::before {
   content: "P";
 }
+.raya-command-tasks::before {
+  content: "T";
+}
 .raya-command-map::before {
   content: "M";
 }
@@ -1026,6 +1029,153 @@ img {
 }
 .raya-practice-open,
 .raya-practice-graph {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.65rem;
+}
+.raya-tasks-page {
+  margin: 0 auto;
+  max-width: 118rem;
+  padding: var(--raya-space-page);
+}
+.raya-tasks-header {
+  margin-bottom: var(--raya-space-block);
+  max-width: 72rem;
+}
+.raya-tasks-workspace {
+  align-items: start;
+  display: grid;
+  gap: var(--raya-space-block);
+  grid-template-columns: minmax(16rem, 22rem) minmax(28rem, 1fr) minmax(17rem, 23rem);
+  margin-top: var(--raya-space-block);
+}
+.raya-tasks-control-panel,
+.raya-tasks-results-panel,
+.raya-tasks-context-panel {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: 0.9rem;
+}
+.raya-tasks-control-panel,
+.raya-tasks-context-panel {
+  position: sticky;
+  top: calc(var(--raya-topbar-height, 4rem) + 1rem);
+}
+.raya-tasks-control-panel h2,
+.raya-tasks-context-panel h2 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+.raya-tasks-context-panel [data-raya-tasks-context-title] {
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+}
+.raya-tasks-controls {
+  align-items: stretch;
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: var(--raya-space-block);
+}
+.raya-tasks-controls input,
+.raya-tasks-controls select,
+.raya-tasks-controls button,
+.raya-task-chip {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  min-height: 2.5rem;
+  min-width: 0;
+  padding: 0.45rem 0.7rem;
+}
+.raya-task-filters {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.raya-task-chip[aria-pressed="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow: inset 0 -0.2rem 0 var(--raya-color-accent);
+}
+.raya-tasks-status,
+.raya-tasks-empty,
+.raya-task-meta,
+.raya-task-preview {
+  color: var(--raya-color-muted);
+  font-size: 0.875rem;
+}
+.raya-tasks-results {
+  display: grid;
+  gap: 0.75rem;
+}
+.raya-tasks-empty[hidden],
+.raya-task-object[hidden] {
+  display: none;
+}
+.raya-task-object {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  box-shadow: inset 0.25rem 0 0 var(--raya-color-success);
+  padding: 1rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+.raya-task-object[data-raya-task-active="true"] {
+  border-color: var(--raya-color-accent);
+  box-shadow:
+    inset 0.25rem 0 0 var(--raya-color-success),
+    0 0 0 3px color-mix(in srgb, var(--raya-color-accent) 24%, transparent);
+  transform: translateY(-1px);
+}
+.raya-task-object-header,
+.raya-task-actions,
+.raya-task-tags {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.raya-task-kind,
+.raya-task-authority,
+.raya-task-tag {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  padding: 0.15rem 0.5rem;
+}
+.raya-task-kind {
+  background: color-mix(in srgb, var(--raya-color-success) 14%, transparent);
+  color: var(--raya-color-text);
+  text-transform: uppercase;
+}
+.raya-task-tag {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 70%, transparent);
+}
+.raya-task-object h3 {
+  font-size: clamp(1.05rem, 1rem + 0.2vw, 1.25rem);
+  margin: 0.65rem 0 0.4rem;
+}
+.raya-task-object[data-raya-task-active="true"] h3 {
+  color: var(--raya-color-success);
+}
+.raya-task-actions {
+  margin: 0.75rem 0 0;
+}
+.raya-task-open,
+.raya-task-graph {
   align-items: center;
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
@@ -2778,13 +2928,16 @@ mjx-container[display="true"] {
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-search-workspace,
-  .raya-practice-workspace {
+  .raya-practice-workspace,
+  .raya-tasks-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-search-control-panel,
   .raya-search-context-panel,
   .raya-practice-control-panel,
-  .raya-practice-context-panel {
+  .raya-practice-context-panel,
+  .raya-tasks-control-panel,
+  .raya-tasks-context-panel {
     position: static;
   }
   [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
@@ -2846,7 +2999,8 @@ mjx-container[display="true"] {
   .raya-inspection-main,
   .raya-graph-page,
   .raya-search-page,
-  .raya-practice-page {
+  .raya-practice-page,
+  .raya-tasks-page {
     padding: 0.75rem;
   }
   .raya-top-command-bar-inner {
@@ -2880,6 +3034,12 @@ mjx-container[display="true"] {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
     min-width: 2.5rem;
     padding: 0.45rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map {
+    font-size: 0;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map::before {
+    font-size: 0.75rem;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
     clip: rect(0 0 0 0);
@@ -2973,6 +3133,9 @@ mjx-container[display="true"] {
   .raya-practice-controls,
   .raya-practice-control-panel,
   .raya-practice-context-panel,
+  .raya-tasks-controls,
+  .raya-tasks-control-panel,
+  .raya-tasks-context-panel,
   .raya-inspection-sidebar,
   .raya-code-copy {
     display: none !important;
@@ -2980,12 +3143,14 @@ mjx-container[display="true"] {
   .raya-learning-shell,
   .raya-graph-workspace,
   .raya-search-workspace,
-  .raya-practice-workspace {
+  .raya-practice-workspace,
+  .raya-tasks-workspace {
     display: block !important;
   }
   .raya-graph-page,
   .raya-search-page,
   .raya-practice-page,
+  .raya-tasks-page,
   .raya-graph-list-panel,
   .raya-main-article,
   .raya-inspection-main {
@@ -3005,13 +3170,15 @@ mjx-container[display="true"] {
   .raya-main-article a,
   .raya-search-results a,
   .raya-practice-results a,
+  .raya-tasks-results a,
   .raya-graph-list a {
     color: #000 !important;
     text-decoration: underline;
   }
   .raya-main-article a[href^="http"]::after,
   .raya-search-results a[href^="http"]::after,
-  .raya-practice-results a[href^="http"]::after {
+  .raya-practice-results a[href^="http"]::after,
+  .raya-tasks-results a[href^="http"]::after {
     content: " (" attr(href) ")";
     font-size: 0.85em;
     overflow-wrap: anywhere;

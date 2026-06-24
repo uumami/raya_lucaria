@@ -86,6 +86,16 @@ MathJax. Changes to this surface should include static-read-path coverage,
 focused escaping/privacy assertions, no-storage/no-fetch checks, and role-doc
 impact for students, professors, contributors, and agents.
 
+The Official Tasks workspace is also current static renderer behavior. Review
+it as a generated planning surface over official `assignment`, `project`,
+`exam`, and `task` objects, not as a calendar service or learner-state system.
+Verification should cover `data/tasks.json`, manifest declaration,
+`_raya/tasks/index.html`, the local `tasks.js` resource, public `content`
+planning fields, owning page anchors, graph focus links, filtering, sorting,
+keyboard inspection, desktop/mobile layout, no external requests, no runtime
+fetch, no browser storage, and no grading, submission, progress, mastery, or
+recommendation language.
+
 Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
 on desktop, can filter the rendered

@@ -2085,6 +2085,186 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
         handle.close()
 
 
+def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_official_task_objects(course)
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        tasks_html = _fetch_text(f"{base_url}/_raya/tasks/index.html")
+        tasks_js = _fetch_text(f"{base_url}/_raya/render/tasks.js")
+        script_hrefs = re.findall(r'<script src="([^"]+)"', tasks_html)
+
+        assert 'data-raya-surface="tasks"' in tasks_html
+        assert "raya-tasks-data" in tasks_html
+        assert "https://" not in tasks_html
+        assert "http://" not in tasks_html
+        assert "fetch(" not in tasks_js
+        assert "XMLHttpRequest" not in tasks_js
+        assert "localStorage" not in tasks_js
+        assert "sessionStorage" not in tasks_js
+        assert "private-task" not in tasks_html
+        assert "SHOULD_NOT_LEAK" not in tasks_html
+        for script_href in script_hrefs:
+            loaded_script = _fetch_text(urljoin(f"{base_url}/_raya/tasks/", script_href))
+            assert "fetch(" not in loaded_script
+            assert "XMLHttpRequest" not in loaded_script
+            assert "localStorage" not in loaded_script
+            assert "sessionStorage" not in loaded_script
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        browser_requests: list[str] = []
+                        page.on(
+                            "request",
+                            lambda request: browser_requests.append(request.url),
+                        )
+                        page.goto(
+                            f"{base_url}/_raya/tasks/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert browser_requests
+                        assert all(
+                            url.startswith(f"{base_url}/") for url in browser_requests
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(".raya-tasks-workspace").is_visible()
+                        assert page.locator(".raya-tasks-control-panel").is_visible()
+                        assert page.locator(".raya-tasks-results-panel").is_visible()
+                        assert page.locator(".raya-tasks-context-panel").is_visible()
+                        if viewport["width"] >= 1280:
+                            control_box = page.locator(
+                                ".raya-tasks-control-panel"
+                            ).bounding_box()
+                            results_box = page.locator(
+                                ".raya-tasks-results-panel"
+                            ).bounding_box()
+                            context_box = page.locator(
+                                ".raya-tasks-context-panel"
+                            ).bounding_box()
+                            assert control_box is not None
+                            assert results_box is not None
+                            assert context_box is not None
+                            assert (
+                                control_box["x"] < results_box["x"] < context_box["x"]
+                            )
+                        assert page.locator(".raya-command-search").is_visible()
+                        assert page.locator(".raya-command-graph").is_visible()
+                        assert page.locator(".raya-command-practice").is_visible()
+                        assert page.locator(".raya-command-size").is_visible()
+                        assert page.locator(".raya-command-font").is_visible()
+                        page.click(".raya-command-font")
+                        assert (
+                            page.locator("html").get_attribute(
+                                "data-raya-open-dyslexic"
+                            )
+                            == "true"
+                        )
+                        assert page.evaluate("() => localStorage.length") == 0
+                        assert page.evaluate("() => sessionStorage.length") == 0
+                        page.click(".raya-command-size")
+                        assert (
+                            page.locator("html").get_attribute("data-raya-text-size")
+                            == "large"
+                        )
+                        assert page.evaluate("() => localStorage.length") == 0
+                        assert page.evaluate("() => sessionStorage.length") == 0
+                        assert page.locator(
+                            '[data-raya-task-object="unit-assignment"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-task-object="unit-project"]'
+                        ).is_visible()
+                        page.click('[data-raya-task-filter="assignment"]')
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-tasks-status')
+                              ?.textContent
+                              ?.includes('1 visible task')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-task-object="unit-assignment"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-task-object="unit-project"]'
+                        ).is_hidden()
+                        page.click("#raya-tasks-clear")
+                        page.fill("#raya-tasks-search", "retrieval")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-tasks-status')
+                              ?.textContent
+                              ?.includes('2 visible tasks')"""
+                        )
+                        assert (
+                            "2 visible tasks"
+                            in page.locator(
+                                "[data-raya-tasks-summary-count]"
+                            ).inner_text()
+                        )
+                        page.select_option("#raya-tasks-sort", "due")
+                        first_visible = page.locator(
+                            '[data-raya-task-object]:not([hidden])'
+                        ).first
+                        assert (
+                            first_visible.get_attribute("data-raya-task-object")
+                            == "unit-assignment"
+                        )
+                        first_visible.hover()
+                        assert (
+                            first_visible.get_attribute("data-raya-task-active")
+                            == "true"
+                        )
+                        assert (
+                            "2026-09-15"
+                            in page.locator(
+                                "[data-raya-tasks-context-meta]"
+                            ).inner_text()
+                        )
+                        page.locator("#raya-tasks-search").focus()
+                        page.press("#raya-tasks-search", "ArrowDown")
+                        active_task = page.locator('[data-raya-task-active="true"]')
+                        assert active_task.count() == 1
+                        active_open_href = active_task.locator(
+                            ".raya-task-open"
+                        ).first.evaluate("node => node.href")
+                        with page.expect_navigation():
+                            page.press("#raya-tasks-search", "Enter")
+                        assert page.url == active_open_href
+                        assert "/unit/topic/index.html#raya-official-unit-" in page.url
+                        task_anchor = page.url.rsplit("#", 1)[1]
+                        assert page.locator(f"#{task_anchor}").is_visible()
+                        _assert_no_horizontal_overflow(page)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None:
     from raya_cli.preview import create_preview
 
@@ -2480,6 +2660,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 practiceHref: document
                                   .querySelector('.raya-command-practice')
                                   ?.getAttribute('href'),
+                                tasksHref: document
+                                  .querySelector('.raya-command-tasks')
+                                  ?.getAttribute('href'),
                                 mapExpanded: document
                                   .querySelector('.raya-command-map')
                                   ?.getAttribute('aria-expanded'),
@@ -2507,7 +2690,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 6
+                        assert state["count"] == 7
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
                         if viewport["width"] >= 1024:
@@ -2523,6 +2706,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             == "_raya/graph/index.html?page=render-root"
                         )
                         assert state["practiceHref"] == "_raya/practice/index.html"
+                        assert state["tasksHref"] == "_raya/tasks/index.html"
                         assert state["mapExpanded"] == "true"
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
@@ -5845,6 +6029,115 @@ def _local_math_font_names_from_css(css: str) -> list[str]:
             assert "/" not in name
             names.add(name)
     return sorted(names)
+
+
+def _add_official_task_objects(course: Path) -> None:
+    official_dir = course / "course" / "1_unit" / "1_topic" / "_official"
+    assignment_dir = official_dir / "assignments"
+    project_dir = official_dir / "projects"
+    exam_dir = official_dir / "exams"
+    task_dir = official_dir / "tasks"
+    for directory in (assignment_dir, project_dir, exam_dir, task_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+    (assignment_dir / "1_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Problem Set 1",
+                "  instructions: Practice matrix multiplication and write one retrieval reflection.",
+                "  due: '2026-09-15'",
+                "  points: 10 pts",
+                "  weight: 15%",
+                "  status: published",
+                "  tags:",
+                "    - linear algebra",
+                "    - retrieval",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "1_project.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-project",
+                "type: project",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Build a retrieval plan",
+                "  summary: Draft a short retrieval plan for reviewing the first unit.",
+                "  due: '2026-10-01'",
+                "  tags:",
+                "    - planning",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (exam_dir / "1_exam.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-exam",
+                "type: exam",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Unit checkpoint",
+                "  instructions: Use the official page context before starting.",
+                "  available: '2026-10-15'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (task_dir / "1_task.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-task",
+                "type: task",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Prepare one question",
+                "  prompt: Bring one precise question about projections.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (task_dir / "2_private_task.yaml").write_text(
+        "\n".join(
+            [
+                "id: private-task",
+                "type: task",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title:",
+                "    answer: Private support sentinel",
+                "  instructions:",
+                "    prompt: Public nested prompt should not be flattened.",
+                "    solution: SHOULD_NOT_LEAK_TASK_SOLUTION",
+                "  body:",
+                "    answer: SHOULD_NOT_LEAK_TASK_ANSWER",
+                "  tags:",
+                "    - public",
+                "    - hidden: SHOULD_NOT_LEAK_TASK_TAG",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def _browser_executable() -> Path:

@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/tasks-index.schema.json",
+  "title": "Raya Official Tasks Index",
+  "type": "object",
+  "required": [
+    "version",
+    "objects",
+    "types"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "anchor",
+          "authority",
+          "available",
+          "due",
+          "graph_url",
+          "id",
+          "page_id",
+          "page_title",
+          "page_url",
+          "points",
+          "preview",
+          "status",
+          "tags",
+          "title",
+          "type",
+          "type_label",
+          "weight"
+        ],
+        "properties": {
+          "anchor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authority": {
+            "const": "official"
+          },
+          "available": {
+            "type": "string"
+          },
+          "due": {
+            "type": "string"
+          },
+          "graph_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "page_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "points": {
+            "type": "string"
+          },
+          "preview": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "assignment",
+              "exam",
+              "project",
+              "task"
+            ]
+          },
+          "type_label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "weight": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "count",
+          "label",
+          "type"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "assignment",
+              "exam",
+              "project",
+              "task"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

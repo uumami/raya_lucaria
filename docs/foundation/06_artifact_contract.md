@@ -123,6 +123,15 @@ paths, page output paths, rendered anchors, deployment-neutral hrefs, and
 reference text. Rendered pages use this data to show static labels and links,
 while agents and future services use the JSON index instead of scraping HTML.
 
+Official task data is manifest-declared as `data/tasks.json`. It is generated
+from accepted official objects whose type is `assignment`, `exam`, `project`,
+or `task`, and records public planning fields such as title, preview, type,
+owning page, rendered anchor, deployment-neutral hrefs, graph focus link, due
+date, availability, points, weight, status, and tags when those fields are
+authored under the object `content`. It is not source authority, learner state,
+submission state, grading state, personal progress, recommendation data, or a
+calendar integration feed.
+
 ## Study Seed Data
 
 Artifacts should expose official learning objects as seed data for future study systems. Static artifacts may include cards, quizzes, prompts, tasks, and quanta scopes, but they should not contain private review history or personal mastery state.

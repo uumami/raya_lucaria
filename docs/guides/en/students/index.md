@@ -138,6 +138,14 @@ system, scoring system, attempt log, mastery estimate, stored practice state,
 external request workflow, private source-path viewer, or personal review
 queue.
 
+Some courses may also include an Official Tasks workspace under
+`_raya/tasks/`. Use it to scan accepted assignments, projects, exams, and tasks
+by text, type, course order, or due date, then open the owning page for full
+context. It may show public planning fields such as title, page, due date,
+points, status, and tags when the course team authored them. It is not a
+personal progress tracker, submission system, gradebook, adaptive
+recommendation page, calendar sync, or hidden answer surface.
+
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 
 Fenced code examples may include a `Copy` button. Copying puts the displayed code text on your clipboard; it does not run the code, save progress, or contact a backend.

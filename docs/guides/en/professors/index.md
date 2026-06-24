@@ -209,6 +209,34 @@ adaptive, recommended, scored, graded, submitted, attempted, personal progress,
 mastery, stored learner state, runtime fetching, external requests, or a private
 source-path view.
 
+Assignments, projects, exams, and tasks also feed a generated Official Tasks
+workspace at `_raya/tasks/index.html` and the manifest-declared
+`data/tasks.json` index. Put each object in the matching `_official/`
+family directory, for example `_official/assignments/` or `_official/exams/`,
+and put public planning fields under `content`:
+
+```yaml
+id: ps1
+type: assignment
+authority: official
+scope:
+  quantum: first-topic
+content:
+  title: Problem Set 1
+  instructions: Practice matrix multiplication.
+  due: "2026-09-15"
+  points: 10 pts
+  weight: 15%
+  status: published
+  tags:
+    - retrieval
+```
+
+The tasks workspace helps students scan work by type, text, and due date, then
+return to the owning page anchor. It is not a submission system, gradebook,
+personal calendar sync, progress tracker, recommendation engine, or hidden
+answer surface.
+
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
 students filter visible page labels or collapse the map to an operable compact map rail

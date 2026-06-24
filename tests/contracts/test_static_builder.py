@@ -1242,6 +1242,126 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert '.raya-practice-object[data-raya-practice-active="true"]' in rich_css
 
 
+def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    _add_official_task_objects(course)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    site = artifact / "site"
+    tasks_index = artifact / "data" / "tasks.json"
+    tasks_page = site / "_raya" / "tasks" / "index.html"
+    tasks_js = site / "_raya" / "render" / "tasks.js"
+    tasks_html = tasks_page.read_text(encoding="utf-8")
+    tasks_script = tasks_js.read_text(encoding="utf-8")
+    manifest = json.loads((artifact / "manifest.json").read_text(encoding="utf-8"))
+    payload_match = re.search(
+        r'<script type="application/json" id="raya-tasks-data">\n(.*?)\n</script>',
+        tasks_html,
+        re.DOTALL,
+    )
+
+    assert tasks_index.exists()
+    assert tasks_page.exists()
+    assert tasks_js.exists()
+    assert any(
+        diagnostic.message == "Artifact data index validation passed"
+        and diagnostic.path == tasks_index
+        for diagnostic in report.diagnostics
+    )
+    assert manifest["data"]["tasks"] == "data/tasks.json"
+    assert 'data-raya-surface="tasks"' in tasks_html
+    assert "Official tasks workspace" in tasks_html
+    assert 'href="../search/index.html"' in tasks_html
+    assert 'href="../graph/index.html"' in tasks_html
+    assert 'href="../practice/index.html"' in tasks_html
+    assert 'src="../render/tasks.js"' in tasks_html
+    assert 'href="../render/rich.css"' in tasks_html
+    assert 'href="../render/skin.css"' in tasks_html
+    assert "shell.js" not in tasks_html
+    assert "https://" not in tasks_html
+    assert "http://" not in tasks_html
+    assert "fetch(" not in tasks_script
+    assert "XMLHttpRequest" not in tasks_script
+    assert "localStorage" not in tasks_script
+    assert "sessionStorage" not in tasks_script
+    assert 'data-raya-task-object="private-task"' not in tasks_html
+    assert 'data-raya-task-object="unit-assignment"' in tasks_html
+    assert 'data-raya-task-object="unit-project"' in tasks_html
+    assert 'data-raya-task-object="unit-exam"' in tasks_html
+    assert 'data-raya-task-object="unit-task"' in tasks_html
+    assert "Problem Set 1" in tasks_html
+    assert "Build a retrieval plan" in tasks_html
+    assert "2026-09-15" in tasks_html
+    assert "10 pts" in tasks_html
+    assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in tasks_html
+    assert 'href="../graph/index.html?page=first-topic"' in tasks_html
+
+    tasks_payload = json.loads(tasks_index.read_text(encoding="utf-8"))
+    assert payload_match is not None
+    browser_payload = json.loads(payload_match.group(1))
+    assert browser_payload == tasks_payload
+    assert set(tasks_payload) == {"objects", "types", "version"}
+    assert tasks_payload["version"] == 1
+    by_id = {item["id"]: item for item in tasks_payload["objects"]}
+    assert set(by_id) == {"unit-assignment", "unit-exam", "unit-project", "unit-task"}
+    assert by_id["unit-assignment"]["title"] == "Problem Set 1"
+    assert by_id["unit-assignment"]["due"] == "2026-09-15"
+    assert by_id["unit-assignment"]["points"] == "10 pts"
+    assert by_id["unit-assignment"]["weight"] == "15%"
+    assert by_id["unit-assignment"]["status"] == "published"
+    assert by_id["unit-assignment"]["tags"] == ["linear algebra", "retrieval"]
+    assert by_id["unit-assignment"]["page_url"].endswith(
+        "/unit/topic/index.html#raya-official-unit-assignment"
+    )
+    assert by_id["unit-assignment"]["graph_url"] == "../graph/index.html?page=first-topic"
+    allowed_object_keys = {
+        "anchor",
+        "authority",
+        "available",
+        "due",
+        "graph_url",
+        "id",
+        "page_id",
+        "page_title",
+        "page_url",
+        "points",
+        "preview",
+        "status",
+        "tags",
+        "title",
+        "type",
+        "type_label",
+        "weight",
+    }
+    for item in tasks_payload["objects"]:
+        assert set(item) == allowed_object_keys
+    serialized_payload = json.dumps(tasks_payload)
+    for private_token in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "cache_key",
+        "course/",
+        "answer",
+        "solution",
+        "correct",
+        "personal",
+        "progress",
+        "mastery",
+        "recommend",
+        "SHOULD_NOT_LEAK",
+        "Private support sentinel",
+        "Public nested prompt should not be flattened",
+    ):
+        assert private_token not in serialized_payload
+        assert private_token not in tasks_html
+
+
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
     tmp_path: Path,
 ) -> None:
@@ -4331,6 +4451,115 @@ def _copy_minimal(tmp_path: Path) -> Path:
     course = tmp_path / "course"
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
     return course
+
+
+def _add_official_task_objects(course: Path) -> None:
+    official_dir = course / "course" / "1_unit" / "1_topic" / "_official"
+    assignment_dir = official_dir / "assignments"
+    project_dir = official_dir / "projects"
+    exam_dir = official_dir / "exams"
+    task_dir = official_dir / "tasks"
+    for directory in (assignment_dir, project_dir, exam_dir, task_dir):
+        directory.mkdir(parents=True, exist_ok=True)
+    (assignment_dir / "1_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Problem Set 1",
+                "  instructions: Practice matrix multiplication and write one retrieval reflection.",
+                "  due: '2026-09-15'",
+                "  points: 10 pts",
+                "  weight: 15%",
+                "  status: published",
+                "  tags:",
+                "    - linear algebra",
+                "    - retrieval",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (project_dir / "1_project.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-project",
+                "type: project",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Build a retrieval plan",
+                "  summary: Draft a short retrieval plan for reviewing the first unit.",
+                "  due: '2026-10-01'",
+                "  tags:",
+                "    - planning",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (exam_dir / "1_exam.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-exam",
+                "type: exam",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Unit checkpoint",
+                "  instructions: Use the official page context before starting.",
+                "  available: '2026-10-15'",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (task_dir / "1_task.yaml").write_text(
+        "\n".join(
+            [
+                "id: unit-task",
+                "type: task",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title: Prepare one question",
+                "  prompt: Bring one precise question about projections.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (task_dir / "2_private_task.yaml").write_text(
+        "\n".join(
+            [
+                "id: private-task",
+                "type: task",
+                "authority: official",
+                "scope:",
+                "  quantum: first-topic",
+                "content:",
+                "  title:",
+                "    answer: Private support sentinel",
+                "  instructions:",
+                "    prompt: Public nested prompt should not be flattened.",
+                "    solution: SHOULD_NOT_LEAK_TASK_SOLUTION",
+                "  body:",
+                "    answer: SHOULD_NOT_LEAK_TASK_ANSWER",
+                "  tags:",
+                "    - public",
+                "    - hidden: SHOULD_NOT_LEAK_TASK_TAG",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
 
 def _copy_render_fixture(tmp_path: Path) -> Path:
