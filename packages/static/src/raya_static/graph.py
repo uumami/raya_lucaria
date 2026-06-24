@@ -225,6 +225,38 @@ _GRAPH_JAVASCRIPT = r"""
     return `var(--raya-graph-group-${groupColorIndex(source.group || "")})`;
   }
 
+  function edgeKind(edge) {
+    const kind = normalize(edge && edge.kind ? edge.kind : "link")
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return kind || "link";
+  }
+
+  function edgeKindClass(edge) {
+    return `raya-graph-edge-kind-${edgeKind(edge)}`;
+  }
+
+  function edgeOffsetFor(edge) {
+    return edgeKind(edge) === "parent" ? 6 : 0;
+  }
+
+  function edgeLinePoints(edge, from, to) {
+    const offset = edgeOffsetFor(edge);
+    if (!offset) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const length = Math.sqrt(dx * dx + dy * dy);
+    if (!length) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y };
+    const normalX = -dy / length;
+    const normalY = dx / length;
+    return {
+      x1: from.x + normalX * offset,
+      y1: from.y + normalY * offset,
+      x2: to.x + normalX * offset,
+      y2: to.y + normalY * offset,
+    };
+  }
+
   function compareNodesByOrder(a, b) {
     const aOrder = Number(a.order || 0);
     const bOrder = Number(b.order || 0);
@@ -1149,18 +1181,21 @@ _GRAPH_JAVASCRIPT = r"""
       const from = geometry.positions.get(edge.from);
       const to = geometry.positions.get(edge.to);
       if (!from || !to) return;
+      const linePoints = edgeLinePoints(edge, from, to);
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      line.setAttribute("x1", String(from.x));
-      line.setAttribute("y1", String(from.y));
-      line.setAttribute("x2", String(to.x));
-      line.setAttribute("y2", String(to.y));
+      line.setAttribute("x1", String(linePoints.x1));
+      line.setAttribute("y1", String(linePoints.y1));
+      line.setAttribute("x2", String(linePoints.x2));
+      line.setAttribute("y2", String(linePoints.y2));
       line.setAttribute("data-raya-graph-from", edge.from);
       line.setAttribute("data-raya-graph-to", edge.to);
+      line.setAttribute("data-raya-graph-kind", edgeKind(edge));
       line.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
       line.setAttribute(
         "class",
         [
           "raya-graph-edge",
+          edgeKindClass(edge),
           selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
           inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
             ? "is-inspected"

@@ -793,9 +793,18 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="selected"' in graph_html
     assert 'data-raya-graph-legend="neighbor"' in graph_html
     assert 'data-raya-graph-legend="edge-color"' in graph_html
+    assert 'data-raya-graph-legend="edge-navigation"' in graph_html
+    assert 'data-raya-graph-legend="edge-content"' in graph_html
+    assert 'data-raya-graph-legend="edge-prerequisite"' in graph_html
+    assert 'data-raya-graph-legend="edge-parent"' in graph_html
     assert "Connected page" in graph_html
     assert "Edge color follows the source page group" in graph_html
     assert "source-group edge colors" in graph_html
+    assert "Relationship line patterns" in graph_html
+    assert "Navigation link" in graph_html
+    assert "Content reference" in graph_html
+    assert "Prerequisite metadata" in graph_html
+    assert "Parent link" in graph_html
     assert "Search spotlight" in graph_html
     assert "search spotlight is a structural readability cue" in graph_html
     assert "Pan changes only the viewport" in graph_html
@@ -969,6 +978,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "is-inspected-neighbor" in graph_script
     assert "edgeColorFor" in graph_script
     assert "--raya-graph-edge-color" in graph_script
+    assert "data-raya-graph-kind" in graph_script
+    assert "raya-graph-edge-kind-" in graph_script
     assert "is-dimmed" in graph_script
     assert "searchSpotlightIds" in graph_script
     assert "searchContextNodeIds" in graph_script
@@ -982,6 +993,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "moveActiveResult" in graph_script
     assert "is-active-result" in graph_script
     assert ".raya-graph-pan-controls" in stylesheet
+    assert ".raya-graph-edge-kind-navigation" in stylesheet
+    assert ".raya-graph-edge-kind-content" in stylesheet
+    assert ".raya-graph-edge-kind-prerequisite" in stylesheet
+    assert ".raya-graph-edge-kind-parent" in stylesheet
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (

@@ -3840,9 +3840,27 @@ def _render_graph_surface(
                 "</span>"
             ),
             (
-                '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
-                '<span class="raya-graph-legend-line"></span>'
-                "Explicit source link"
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="edge-navigation">'
+                '<span class="raya-graph-legend-line raya-graph-legend-edge-navigation"></span>'
+                "Navigation link"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="edge-content">'
+                '<span class="raya-graph-legend-line raya-graph-legend-edge-content"></span>'
+                "Content reference"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="edge-prerequisite">'
+                '<span class="raya-graph-legend-line raya-graph-legend-edge-prerequisite"></span>'
+                "Prerequisite metadata"
+                "</span>"
+            ),
+            (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="edge-parent">'
+                '<span class="raya-graph-legend-line raya-graph-legend-edge-parent"></span>'
+                "Parent link"
                 "</span>"
             ),
             "</section>",
@@ -3881,6 +3899,12 @@ def _render_graph_surface(
                 "<p>Edge color follows the source page group so explicit links "
                 "are easier to trace across the course; source-group edge "
                 "colors are structural readability cues only.</p>"
+            ),
+            (
+                "<p>Relationship line patterns distinguish navigation links, "
+                "content references, prerequisite metadata, and parent links. "
+                "They describe generated graph structure only, not learner "
+                "state or personal guidance.</p>"
             ),
             (
                 "<p>Map groups pages by course structure, radial places visible "

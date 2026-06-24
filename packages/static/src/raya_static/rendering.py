@@ -1453,6 +1453,32 @@ img {
     var(--raya-graph-group-2)
   );
 }
+.raya-graph-legend-edge-navigation {
+  background: var(--raya-color-border);
+}
+.raya-graph-legend-edge-content {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--raya-color-border) 0 0.35rem,
+    transparent 0.35rem 0.6rem
+  );
+}
+.raya-graph-legend-edge-prerequisite {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--raya-color-border) 0 0.55rem,
+    transparent 0.55rem 0.85rem
+  );
+  height: 0.22rem;
+}
+.raya-graph-legend-edge-parent {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--raya-color-border) 0 0.14rem,
+    transparent 0.14rem 0.38rem
+  );
+  opacity: 0.72;
+}
 .raya-graph-help {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);
@@ -1608,6 +1634,20 @@ img {
   stroke: var(--raya-graph-edge-color, var(--raya-color-border));
   stroke-opacity: 0.58;
   stroke-width: 2;
+}
+.raya-graph-edge-kind-navigation {
+  stroke-dasharray: none;
+}
+.raya-graph-edge-kind-content {
+  stroke-dasharray: 7 5;
+}
+.raya-graph-edge-kind-prerequisite {
+  stroke-dasharray: 13 6;
+  stroke-width: 2.4;
+}
+.raya-graph-edge-kind-parent {
+  stroke-dasharray: 2 5;
+  stroke-opacity: 0.44;
 }
 .raya-graph-edge.is-active {
   stroke: var(--raya-color-accent);

@@ -83,6 +83,8 @@ selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, connected-page visual states, transient
 page focus from generated URL context, structural group color, bounded node
 size derived from static link degree, source-group edge colors,
+relationship-kind edge line patterns for generated `navigation`, `parent`,
+`content`, and `prerequisite` edges,
 transient search spotlighting over matched pages and directly connected
 context, transient graph-search keyboard movement over visible page results
 with Enter-to-open active result behavior, transient hover/focus spotlight

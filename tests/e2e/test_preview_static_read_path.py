@@ -682,6 +682,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-legend='selected']"
                         ).is_visible()
+                        for legend_key in (
+                            "edge-navigation",
+                            "edge-content",
+                            "edge-prerequisite",
+                            "edge-parent",
+                        ):
+                            assert page.locator(
+                                f"[data-raya-graph-legend='{legend_key}']"
+                            ).is_visible()
                         assert page.locator("[data-raya-graph-help]").is_visible()
                         assert (
                             page.locator("[data-raya-graph-help]").get_attribute("open")
@@ -839,6 +848,92 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "node => node.style.getPropertyValue('--raya-graph-edge-color')"
                         )
                         assert edge_color.startswith("var(--raya-graph-group-")
+                        for from_id, to_id, kind in (
+                            ("render-root", "static-path", "navigation"),
+                            ("render-root", "authoring-matrix", "content"),
+                            ("reader-ux", "render-root", "prerequisite"),
+                            ("static-path", "render-root", "parent"),
+                        ):
+                            edge = page.locator(
+                                "#raya-graph-canvas "
+                                f'.raya-graph-edge[data-raya-graph-from="{from_id}"]'
+                                f'[data-raya-graph-to="{to_id}"]'
+                                f'[data-raya-graph-kind="{kind}"]'
+                            )
+                            assert edge.count() >= 1
+                            assert edge.first.evaluate(
+                                "(node, kind) => node.classList.contains("
+                                "`raya-graph-edge-kind-${kind}`)",
+                                kind,
+                            )
+                            computed = edge.first.evaluate(
+                                """node => {
+                                  const style = window.getComputedStyle(node);
+                                  return {
+                                    color: node.style.getPropertyValue('--raya-graph-edge-color'),
+                                    dash: style.strokeDasharray,
+                                    opacity: style.strokeOpacity,
+                                    width: style.strokeWidth,
+                                  };
+                                }"""
+                            )
+                            assert computed["color"].startswith(
+                                "var(--raya-graph-group-"
+                            )
+                            if kind == "navigation":
+                                assert computed["dash"] in ("none", "")
+                            else:
+                                assert computed["dash"] not in ("none", "")
+                            if kind == "prerequisite":
+                                assert float(computed["width"].replace("px", "")) > 2
+                            if kind == "parent":
+                                assert float(computed["opacity"]) < 0.58
+                        navigation_edge = page.locator(
+                            "#raya-graph-canvas "
+                            '.raya-graph-edge[data-raya-graph-from="render-root"]'
+                            '[data-raya-graph-to="static-path"]'
+                            '[data-raya-graph-kind="navigation"]'
+                        ).first
+                        parent_edge = page.locator(
+                            "#raya-graph-canvas "
+                            '.raya-graph-edge[data-raya-graph-from="static-path"]'
+                            '[data-raya-graph-to="render-root"]'
+                            '[data-raya-graph-kind="parent"]'
+                        ).first
+                        reciprocal_points = page.evaluate(
+                            """([navigation, parent]) => {
+                              const attrs = (node) => ({
+                                x1: Number(node.getAttribute('x1')),
+                                y1: Number(node.getAttribute('y1')),
+                                x2: Number(node.getAttribute('x2')),
+                                y2: Number(node.getAttribute('y2')),
+                              });
+                              return { navigation: attrs(navigation), parent: attrs(parent) };
+                            }""",
+                            [navigation_edge.element_handle(), parent_edge.element_handle()],
+                        )
+                        assert not (
+                            abs(
+                                reciprocal_points["navigation"]["x1"]
+                                - reciprocal_points["parent"]["x2"]
+                            )
+                            < 0.01
+                            and abs(
+                                reciprocal_points["navigation"]["y1"]
+                                - reciprocal_points["parent"]["y2"]
+                            )
+                            < 0.01
+                            and abs(
+                                reciprocal_points["navigation"]["x2"]
+                                - reciprocal_points["parent"]["x1"]
+                            )
+                            < 0.01
+                            and abs(
+                                reciprocal_points["navigation"]["y2"]
+                                - reciprocal_points["parent"]["y1"]
+                            )
+                            < 0.01
+                        )
                         page.wait_for_function(
                             """() => document
                               .querySelector('#raya-graph-canvas .raya-graph-edge.is-inspected') !== null"""
