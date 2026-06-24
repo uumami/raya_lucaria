@@ -1495,6 +1495,21 @@ img {
   border-color: color-mix(in srgb, var(--raya-color-border) 76%, var(--raya-color-page));
   box-shadow: 0 0.5rem 1.25rem rgba(31, 35, 40, 0.035);
 }
+.raya-graph-edge-kind-filters {
+  align-items: center;
+}
+.raya-graph-edge-kind-filters > span {
+  color: var(--raya-color-muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+.raya-graph-edge-kind-filter[aria-pressed="false"],
+[data-raya-graph-edge-kind-filter][aria-pressed="false"] {
+  background: var(--raya-color-surface);
+  border-color: var(--raya-color-border);
+  color: var(--raya-color-muted);
+  opacity: 0.72;
+}
 .raya-graph-list {
   list-style: none;
   padding-left: 0;

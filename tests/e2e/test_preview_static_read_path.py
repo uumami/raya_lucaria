@@ -706,6 +706,17 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert page.locator(
                                 f"[data-raya-graph-legend='{legend_key}']"
                             ).is_visible()
+                        for kind in (
+                            "navigation",
+                            "content",
+                            "prerequisite",
+                            "parent",
+                        ):
+                            button = page.locator(
+                                f'[data-raya-graph-edge-kind-filter="{kind}"]'
+                            )
+                            assert button.is_visible()
+                            assert button.get_attribute("aria-pressed") == "true"
                         assert page.locator("[data-raya-graph-help]").is_visible()
                         assert (
                             page.locator("[data-raya-graph-help]").get_attribute("open")
@@ -1010,6 +1021,106 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ).removeprefix("url(#").removesuffix(")")
                         assert page.locator(f"#{inspected_marker_id}").evaluate(
                             "node => node.classList.contains('is-inspected')"
+                        )
+                        content_filter = page.locator(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                        )
+                        content_edges = page.locator(
+                            "#raya-graph-canvas "
+                            '.raya-graph-edge[data-raya-graph-kind="content"]'
+                        )
+                        content_count = content_edges.count()
+                        assert content_count >= 1
+                        node_count_before_filter = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).count()
+                        pre_filter_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        page.click("#graph-zoom-in")
+                        filter_zoomed_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert filter_zoomed_viewbox != pre_filter_viewbox
+                        content_filter.click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-edge-kind-filter="content"]')
+                              ?.getAttribute('aria-pressed') === 'false'"""
+                        )
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == filter_zoomed_viewbox
+                        )
+                        assert content_edges.count() == 0
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas [data-raya-graph-node]"
+                            ).count()
+                            == node_count_before_filter
+                        )
+                        assert (
+                            "1 edge kind hidden"
+                            in page.locator("#graph-status").inner_text()
+                        )
+                        assert page.locator(
+                            "#raya-graph-canvas .raya-graph-arrow-marker"
+                        ).count() == page.locator(
+                            "#raya-graph-canvas .raya-graph-edge"
+                        ).count()
+                        page.click("#graph-reset")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-edge-kind-filter="content"]')
+                              ?.getAttribute('aria-pressed') === 'true'"""
+                        )
+                        assert page.locator(
+                            "#raya-graph-canvas "
+                            '.raya-graph-edge[data-raya-graph-kind="content"]'
+                        ).count() == content_count
+                        for toggle_kind in (
+                            "navigation",
+                            "prerequisite",
+                            "parent",
+                        ):
+                            kind_filter = page.locator(
+                                f'[data-raya-graph-edge-kind-filter="{toggle_kind}"]'
+                            )
+                            kind_edges = page.locator(
+                                "#raya-graph-canvas "
+                                f'.raya-graph-edge[data-raya-graph-kind="{toggle_kind}"]'
+                            )
+                            kind_count = kind_edges.count()
+                            assert kind_count >= 1
+                            kind_filter.click()
+                            page.wait_for_function(
+                                """(kind) => document
+                                  .querySelector(
+                                    `[data-raya-graph-edge-kind-filter="${kind}"]`
+                                  )
+                                  ?.getAttribute('aria-pressed') === 'false'""",
+                                arg=toggle_kind,
+                            )
+                            assert kind_edges.count() == 0
+                            kind_filter.click()
+                            page.wait_for_function(
+                                """(kind) => document
+                                  .querySelector(
+                                    `[data-raya-graph-edge-kind-filter="${kind}"]`
+                                  )
+                                  ?.getAttribute('aria-pressed') === 'true'""",
+                                arg=toggle_kind,
+                            )
+                            assert page.locator(
+                                "#raya-graph-canvas "
+                                f'.raya-graph-edge[data-raya-graph-kind="{toggle_kind}"]'
+                            ).count() == kind_count
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).hover()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas .raya-graph-node.is-dimmed') !== null"""
                         )
                         assert (
                             page.locator(

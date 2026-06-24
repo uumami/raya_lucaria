@@ -812,6 +812,15 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="edge-content"' in graph_html
     assert 'data-raya-graph-legend="edge-prerequisite"' in graph_html
     assert 'data-raya-graph-legend="edge-parent"' in graph_html
+    assert 'aria-label="Edge filters"' in graph_html
+    for kind, label in (
+        ("navigation", "Navigation"),
+        ("content", "Content"),
+        ("prerequisite", "Prerequisite"),
+        ("parent", "Parent"),
+    ):
+        assert f'data-raya-graph-edge-kind-filter="{kind}"' in graph_html
+        assert f'aria-pressed="true">{label}</button>' in graph_html
     assert "Connected page" in graph_html
     assert "Edge color follows the source page group" in graph_html
     assert "source-group edge colors" in graph_html
@@ -1026,6 +1035,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Graph arrows show link direction" in graph_html
     assert "data-raya-graph-kind" in graph_script
     assert "raya-graph-edge-kind-" in graph_script
+    assert "hiddenEdgeKinds" in graph_script
+    assert "visibleGraphEdges" in graph_script
+    assert "data-raya-graph-edge-kind-filter" in graph_script
+    assert "edge kind" in graph_script.lower()
     assert "is-dimmed" in graph_script
     assert "searchSpotlightIds" in graph_script
     assert "searchContextNodeIds" in graph_script
@@ -1043,6 +1056,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-edge-kind-content" in stylesheet
     assert ".raya-graph-edge-kind-prerequisite" in stylesheet
     assert ".raya-graph-edge-kind-parent" in stylesheet
+    assert ".raya-graph-edge-kind-filters" in stylesheet
+    assert ".raya-graph-edge-kind-filter" in stylesheet
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (

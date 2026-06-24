@@ -3675,6 +3675,32 @@ def _render_graph_surface(
             ),
             "</div>",
             (
+                '<div class="raya-graph-toolbar-group raya-graph-edge-kind-filters" '
+                'role="group" aria-label="Edge filters">'
+            ),
+            "<span>Edges</span>",
+            (
+                '<button type="button" class="raya-graph-edge-kind-filter" '
+                'data-raya-graph-edge-kind-filter="navigation" '
+                'aria-pressed="true">Navigation</button>'
+            ),
+            (
+                '<button type="button" class="raya-graph-edge-kind-filter" '
+                'data-raya-graph-edge-kind-filter="content" '
+                'aria-pressed="true">Content</button>'
+            ),
+            (
+                '<button type="button" class="raya-graph-edge-kind-filter" '
+                'data-raya-graph-edge-kind-filter="prerequisite" '
+                'aria-pressed="true">Prerequisite</button>'
+            ),
+            (
+                '<button type="button" class="raya-graph-edge-kind-filter" '
+                'data-raya-graph-edge-kind-filter="parent" '
+                'aria-pressed="true">Parent</button>'
+            ),
+            "</div>",
+            (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-viewport" '
                 'role="group" aria-label="Graph viewport controls">'
             ),
@@ -3914,6 +3940,11 @@ def _render_graph_surface(
             (
                 "<p>Graph arrows show link direction from the source page to "
                 "the target page. Direction is generated graph structure.</p>"
+            ),
+            (
+                "<p>Edge filters hide or show relationship kinds in the SVG "
+                "graph. They do not remove pages from the list or selected-page "
+                "inspector.</p>"
             ),
             (
                 "<p>Map groups pages by course structure, radial places visible "

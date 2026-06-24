@@ -35,6 +35,9 @@ _GRAPH_JAVASCRIPT = r"""
   const status = document.getElementById("graph-status");
   const hoverStatus = document.querySelector("[data-raya-graph-hover-status]");
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
+  const edgeKindFilters = Array.from(
+    document.querySelectorAll("[data-raya-graph-edge-kind-filter]")
+  );
   const detailEmpty = document.querySelector("[data-raya-graph-detail-empty]");
   const detailPanel = document.querySelector("[data-raya-graph-detail-panel]");
   const detailTitle = document.querySelector("[data-raya-graph-detail-title]");
@@ -78,6 +81,7 @@ _GRAPH_JAVASCRIPT = r"""
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
   const groupsById = new Map(groups.map((group) => [group.id, group]));
   const hiddenGroups = new Set();
+  const hiddenEdgeKinds = new Set();
   let query = "";
   let selectedId = "";
   let inspectedId = "";
@@ -220,6 +224,27 @@ _GRAPH_JAVASCRIPT = r"""
 
   function visibleEdges(visibleIds) {
     return edges.filter((edge) => visibleIds.has(edge.from) && visibleIds.has(edge.to));
+  }
+
+  function visibleGraphEdges(visibleIds) {
+    return edges.filter((edge) => (
+      visibleIds.has(edge.from) &&
+      visibleIds.has(edge.to) &&
+      !hiddenEdgeKinds.has(edgeKind(edge))
+    ));
+  }
+
+  function updateEdgeKindFilters() {
+    edgeKindFilters.forEach((button) => {
+      const kind = button.getAttribute("data-raya-graph-edge-kind-filter") || "";
+      button.setAttribute("aria-pressed", hiddenEdgeKinds.has(kind) ? "false" : "true");
+    });
+  }
+
+  function hiddenEdgeKindStatusText() {
+    const count = hiddenEdgeKinds.size;
+    if (!count) return "";
+    return `${count} edge kind${count === 1 ? "" : "s"} hidden.`;
   }
 
   function groupTitle(groupId) {
@@ -1267,19 +1292,21 @@ _GRAPH_JAVASCRIPT = r"""
     }
     const activeNodes = visibleGraphNodes(listNodes);
     const activeIds = new Set(activeNodes.map((node) => node.id));
-    const activeEdges = visibleEdges(activeIds);
-    const listEdges = visibleEdges(listIds);
+    const activeEdges = visibleGraphEdges(activeIds);
     if (activeResultId && !listIds.has(activeResultId)) {
       activeResultId = "";
     }
     renderList(listIds);
     if (status) {
       const statusPrefix = neighborhoodFocus ? "Neighborhood focus: " : "";
+      const edgeKindText = hiddenEdgeKindStatusText();
       if (query) {
         const contextCount = Math.max(0, listNodes.length - matchIds.size);
-        status.textContent = `${statusPrefix}${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s) in graph, ${activeEdges.length} visible edge(s) in graph.`;
+        const baseStatusText = `${statusPrefix}${matchIds.size} match(es), ${contextCount} connected page(s) shown; ${activeNodes.length} visible node(s) in graph, ${activeEdges.length} visible edge(s) in graph.`;
+        status.textContent = [baseStatusText, edgeKindText].filter(Boolean).join(" ");
       } else {
-        status.textContent = `${statusPrefix}${activeNodes.length} visible node(s), ${listEdges.length} visible edge(s).`;
+        const baseStatusText = `${statusPrefix}${activeNodes.length} visible node(s), ${activeEdges.length} visible edge(s).`;
+        status.textContent = [baseStatusText, edgeKindText].filter(Boolean).join(" ");
       }
     }
     if (mode === "list") {
@@ -1494,6 +1521,8 @@ _GRAPH_JAVASCRIPT = r"""
       if (search) search.value = "";
       if (layout) layout.value = "connections";
       hiddenGroups.clear();
+      hiddenEdgeKinds.clear();
+      updateEdgeKindFilters();
       selectedId = "";
       inspectedId = "";
       activeResultId = "";
@@ -1538,6 +1567,19 @@ _GRAPH_JAVASCRIPT = r"""
       render();
     });
   }
+  edgeKindFilters.forEach((button) => {
+    button.addEventListener("click", () => {
+      const kind = button.getAttribute("data-raya-graph-edge-kind-filter") || "";
+      if (!kind) return;
+      if (hiddenEdgeKinds.has(kind)) {
+        hiddenEdgeKinds.delete(kind);
+      } else {
+        hiddenEdgeKinds.add(kind);
+      }
+      updateEdgeKindFilters();
+      render();
+    });
+  });
   groupFilters.forEach((button) => {
     button.addEventListener("click", () => {
       const group = button.getAttribute("data-raya-graph-group-filter") || "";
@@ -1598,6 +1640,7 @@ _GRAPH_JAVASCRIPT = r"""
   setGraphPanelState("list", true);
   setGraphPanelState("inspector", true);
   setGraphExpanded(false);
+  updateEdgeKindFilters();
   renderDetail();
   render();
 })();
