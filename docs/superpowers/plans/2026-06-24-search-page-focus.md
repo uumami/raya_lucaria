@@ -403,7 +403,7 @@ passed; pytest reported 479 passed in 524.67s
 passed; container pytest reported 479 passed in 700.34s
 ```
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 Run:
 
@@ -413,7 +413,10 @@ git commit -m "Add exact search page focus"
 git push origin new_rayalucaria
 ```
 
-- [ ] **Step 5: Start local preview**
+Actual: committed implementation as `bdd41b2 Add exact search page focus` and
+pushed `new_rayalucaria` to GitHub.
+
+- [x] **Step 5: Start local preview**
 
 Run:
 
@@ -426,6 +429,10 @@ Report the preview URL and the Search URL with exact page focus:
 ```text
 /_raya/search/index.html?page=authoring-matrix
 ```
+
+Actual: preview started at `http://127.0.0.1:39069/index.html`; exact Search
+focus URL is
+`http://127.0.0.1:39069/_raya/search/index.html?page=authoring-matrix`.
 
 ## Self-Review
 
