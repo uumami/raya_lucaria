@@ -12,6 +12,12 @@ Examples are fixtures unless a course team explicitly accepts them as course mat
 
 Course source uses `source: course` and visible order inside `course/`: `0_index.md`, `1_foundations/`, `2_practice/`, and `A_reference/`. Put manual introductions in `0_index.md`; Glintstone renders generated child indexes and study counts from page summaries and official objects without overwriting source. Put official learning objects under `_official/` beside the topic they support, and local topic assets under `_assets/`. Use stable frontmatter `id` values and `raya:<id>` links for references that should survive renumbering or moving pages.
 
+For shorter authoring, use course-local wikilinks such as `[[First Topic]]` or
+`[[First Topic|the first topic]]`. They resolve during validation/build to
+normal static links and graph edges when the target uniquely matches a page ID,
+alias, title, navigation title, filename stem, or source path. Missing or
+ambiguous targets fail validation; use stable IDs for durable links.
+
 Generated child indexes render as section landing cards. Keep summaries,
 estimated time, and official objects honest so the cards help students scan
 course structure without implying personal progress, mastery, completion, or

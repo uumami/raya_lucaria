@@ -16,6 +16,13 @@ Usa los check scripts canonicos de `README.md` y `AGENTS.md`: `./scripts/check.s
 
 Para contenido de curso, trata los archivos fuente como canonicos y los artifacts generados como reconstruibles. Preserva `source: course`, el arbol ordenado `course/`, `id` en frontmatter, enlaces `raya:<id>`, privacidad de `_official/` y `_assets/` colocados, marcadores de indice generado y superficies de datos declaradas en manifest. No edites `artifact/` generado como fuente de verdad.
 
+Para problemas de wikilinks, inspecciona tokens fuente `[[target]]` o
+`[[target|label]]`, page IDs, aliases, titulos, nav titles, rutas de fuente,
+diagnosticos de validacion, HTML renderizado, `data/links.json` y
+`data/graph.json`. El resolver es local al curso y ocurre durante build; texto
+wikilink crudo en HTML renderizado, edges de contenido faltantes,
+resolucion en el browser o requests externos de grafo/busqueda son regresiones.
+
 Para rich static rendering, preserva el limite de Glintstone: reescribe enlaces mediante reglas Raya, genera anchors locales y tablas de contenido desde headings de fuente, pre-renderiza math MathJax aceptada durante build, mantiene archivos de soporte bajo `site/_raya/`, escapa raw HTML y no ejecutes bloques de codigo. Testea HTML generado, static read paths, math visible en browser, assets locales de math, ausencia de requests externos del renderer y overflow en desktop/mobile.
 
 Para bloques de codigo copiables, inspecciona el markup `.raya-code-block` renderizado, el handler local en `shell.js` y el texto copiado desde `pre code`. El control de copiado puede usar Clipboard API o fallback local, pero no debe ejecutar codigo, persistir estado lector, hacer fetch de datos ni cargar scripts externos.

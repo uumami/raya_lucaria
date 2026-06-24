@@ -595,6 +595,47 @@ def test_build_writes_graph_index_from_current_navigation_and_links(
     assert 'href="../../unit/topic/index.html"' in inspection_html
 
 
+def test_build_resolves_wikilinks_to_html_and_graph_edges(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    root_page = course / "course" / "0_index.md"
+    root_page.write_text(
+        root_page.read_text(encoding="utf-8")
+        + "\nRead [[First Topic|the topic page]].\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact = course / "artifact"
+    index_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+    assert "[[" not in index_html
+    assert 'href="unit/topic/index.html"' in index_html
+    assert ">the topic page</a>" in index_html
+
+    links = json.loads((artifact / "data" / "links.json").read_text(encoding="utf-8"))
+    link_edges = {
+        (link["from"], link["to"], link["kind"])
+        for link in links["links"]
+    }
+    assert ("course-root", "first-topic", "content") in link_edges
+
+    graph = json.loads((artifact / "data" / "graph.json").read_text(encoding="utf-8"))
+    graph_edges = {
+        (edge["from"], edge["to"], edge["kind"])
+        for edge in graph["edges"]
+    }
+    assert ("course-root", "first-topic", "content") in graph_edges
+    assert graph["backlinks"]["first-topic"] == [
+        {
+            "from": "course-root",
+            "title": "Minimal Course",
+            "url": "index.html",
+            "kind": "content",
+        }
+    ]
+
+
 def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))

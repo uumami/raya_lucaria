@@ -100,6 +100,115 @@ def test_explicit_numbered_object_reference_accepts_matching_directive(
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
 
 
+def test_unique_wikilink_validates_against_course_pages(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n"
+        "# Root\n\nRead [[First Topic|the first topic]].\n",
+        encoding="utf-8",
+    )
+    (source / "1_unit").mkdir()
+    (source / "1_unit" / "0_index.md").write_text(
+        "---\nid: unit\ntitle: Unit\nsummary: Unit page.\n---\n# Unit\n",
+        encoding="utf-8",
+    )
+    (source / "1_unit" / "1_topic").mkdir()
+    (source / "1_unit" / "1_topic" / "0_index.md").write_text(
+        "---\nid: first-topic\ntitle: First Topic\nsummary: Topic page.\n---\n# Topic\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
+def test_wikilinks_resolve_source_paths_and_ignore_fenced_examples(
+    tmp_path: Path,
+) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    (source / "0_index.md").write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n"
+        "# Root\n\n"
+        "Read [[1_unit/1_topic/0_index.md|the source-path topic]].\n\n"
+        "Inline examples such as `[[Missing Inline Example]]` are not links.\n\n"
+        "```markdown\n"
+        "[[Missing Fenced Example]]\n"
+        "```\n",
+        encoding="utf-8",
+    )
+    (source / "1_unit").mkdir()
+    (source / "1_unit" / "0_index.md").write_text(
+        "---\nid: unit\ntitle: Unit\nsummary: Unit page.\n---\n# Unit\n",
+        encoding="utf-8",
+    )
+    (source / "1_unit" / "1_topic").mkdir()
+    (source / "1_unit" / "1_topic" / "0_index.md").write_text(
+        "---\nid: first-topic\ntitle: First Topic\nsummary: Topic page.\n---\n# Topic\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+
+def test_missing_wikilink_fails_validation(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    root = source / "0_index.md"
+    root.write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n"
+        "# Root\n\nRead [[Missing Topic]].\n",
+        encoding="utf-8",
+    )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Broken wikilink reference"
+        and diagnostic.path == root
+        and diagnostic.field == "wikilink:Missing Topic"
+        for diagnostic in report.diagnostics
+    )
+
+
+def test_ambiguous_wikilink_fails_validation(tmp_path: Path) -> None:
+    _write_valid_config(tmp_path)
+    source = tmp_path / "course"
+    source.mkdir()
+    root = source / "0_index.md"
+    root.write_text(
+        "---\nid: root\ntitle: Root\nsummary: Root page.\n---\n"
+        "# Root\n\nRead [[Shared]].\n",
+        encoding="utf-8",
+    )
+    for index, page_id in ((1, "shared-a"), (2, "shared-b")):
+        path = source / f"{index}_shared.md"
+        path.write_text(
+            f"---\nid: {page_id}\ntitle: Shared\nsummary: Shared page.\n---\n"
+            f"# Shared {index}\n",
+            encoding="utf-8",
+        )
+
+    report = validate_course(tmp_path)
+
+    assert not report.ok
+    assert any(
+        diagnostic.message == "Ambiguous wikilink reference"
+        and diagnostic.path == root
+        and diagnostic.field == "wikilink:Shared"
+        and "stable page id" in (diagnostic.next_action or "")
+        for diagnostic in report.diagnostics
+    )
+
+
 def test_crlf_fenced_code_does_not_hide_real_numbered_ref_after_fence(
     tmp_path: Path,
 ) -> None:

@@ -839,7 +839,7 @@ This document names intentional gaps so they do not become tribal knowledge or a
 
 ## Deferred Graph And Search
 
-- Backlinks, wikilinks, graph scopes, graph UI, and cross-course graph.
+- Backlinks, graph scopes, graph UI, and cross-course graph.
 - Search indexes and browser search UI.
 
 ## Deferred Dynamic Domains

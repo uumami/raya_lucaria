@@ -122,6 +122,11 @@ Las paginas de curso pueden incluir objetos numerados y referencias estaticas. U
 
 El contenido numerado aparece como etiquetas y enlaces estaticos, por ejemplo `Theorem 3.1`, `Figure 3.1` o `Activity 3.3`. Los encabezados de prueba como `Proof of Activity 3.3` se generan durante build; el browser no calcula referencias.
 
+Algunos equipos de curso escriben enlaces internos con sintaxis `[[...]]`. En
+el curso publicado, deben aparecer como enlaces normales de pagina antes de que
+veas la pagina. Si aparece texto crudo `[[target]]` en una pagina publicada,
+reporta el titulo o URL de la pagina al equipo del curso.
+
 Los encabezados de prueba renderizados nombran el objeto que se esta probando, y la matematica dentro de la prueba debe aparecer ya compuesta durante el build. La pagina no deberia necesitar un request de browser-side MathJax para mostrar la prueba. Si ves sintaxis de fuente cruda o TeX crudo en vez de una prueba renderizada, reportalo al equipo del curso con la URL o titulo de la pagina.
 
 Las pruebas, soluciones, pistas y respuestas deben aparecer como contenido

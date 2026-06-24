@@ -15,6 +15,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.util import ClassNotFound
 from raya_schema import ValidationReport
+from raya_schema.wikilinks import render_wikilinks_as_markdown
 
 from raya_static.math_renderer import MathItem, MathRenderer
 from raya_static.numbered_objects import (
@@ -74,11 +75,13 @@ class RichMarkdownRenderer:
         source_path: Path,
         report: ValidationReport,
         math_renderer: MathRenderer,
+        resolve_wikilink: Callable[[str], str | None] | None = None,
     ) -> None:
         self._resolve_href = resolve_href
         self._source_path = source_path
         self._report = report
         self._math_renderer = math_renderer
+        self._resolve_wikilink = resolve_wikilink
         self._md = MarkdownIt("commonmark", {"html": False})
         self._md.enable("table")
         self._md.use(footnote_plugin)
@@ -99,6 +102,7 @@ class RichMarkdownRenderer:
         numbered_objects: NumberedObjectRenderContext | None = None,
         proofs: StaticEnvironmentRenderContext | None = None,
     ) -> str:
+        body = self._render_wikilinks(body)
         if numbered_objects is not None:
             body = expand_shorthand_references(
                 body,
@@ -117,7 +121,10 @@ class RichMarkdownRenderer:
         callout_fragments: dict[str, _CalloutFragment] = {}
         for placeholder, callout in callouts.items():
             callout_env = _new_env(self._resolve_href, collect_headings=False)
-            callout_tokens = self._md.parse(callout.body, callout_env)
+            callout_tokens = self._md.parse(
+                self._render_wikilinks(callout.body),
+                callout_env,
+            )
             callout_fragments[placeholder] = (callout, callout_tokens, callout_env)
         numbered_object_fragments: dict[str, _NumberedObjectFragment] = {}
         if numbered_objects is not None:
@@ -131,6 +138,7 @@ class RichMarkdownRenderer:
                 )
                 if not self._report.ok:
                     return ""
+                object_body = self._render_wikilinks(object_body)
                 object_tokens = self._md.parse(object_body, object_env)
                 numbered_object_fragments[item.source.placeholder] = (
                     item,
@@ -153,6 +161,7 @@ class RichMarkdownRenderer:
                 )
                 if not self._report.ok:
                     return ""
+                proof_body = self._render_wikilinks(proof_body)
                 proof_tokens = self._md.parse(proof_body, proof_env)
                 proof_fragments[item.source.placeholder] = (
                     item,
@@ -243,6 +252,14 @@ class RichMarkdownRenderer:
         if toc:
             return toc + "\n" + html_fragment
         return html_fragment
+
+    def _render_wikilinks(self, body: str) -> str:
+        if self._resolve_wikilink is None:
+            return body
+        return render_wikilinks_as_markdown(
+            body,
+            resolve_target=self._resolve_wikilink,
+        )
 
     def _replace_callout_placeholders(
         self,
@@ -405,12 +422,14 @@ def render_markdown_body(
     math_renderer: MathRenderer,
     numbered_objects: NumberedObjectRenderContext | None = None,
     proofs: StaticEnvironmentRenderContext | None = None,
+    resolve_wikilink: Callable[[str], str | None] | None = None,
 ) -> str:
     return RichMarkdownRenderer(
         resolve_href,
         source_path=source_path,
         report=report,
         math_renderer=math_renderer,
+        resolve_wikilink=resolve_wikilink,
     ).render(
         body,
         generated_index,

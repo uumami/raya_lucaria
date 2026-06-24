@@ -112,6 +112,11 @@ Course pages may include numbered objects and static references. A result might 
 
 Numbered content appears as static labels and links, such as `Theorem 3.1`, `Figure 3.1`, or `Activity 3.3`. Proof headings such as `Proof of Activity 3.3` are generated during build; the browser does not calculate references.
 
+Some course teams author internal links with `[[...]]` syntax. In the published
+course, those should appear as normal page links before you see the page. If
+raw `[[target]]` text appears in a published page, report the page title or URL
+to the course team.
+
 Rendered proof headings name the object being proved, and math inside the proof should already be typeset during build. The page should not need a browser-side MathJax request to display the proof. If you see raw source syntax or raw TeX instead of a rendered proof, report it to the course team with the page URL or title.
 
 Proofs, solutions, hints, and answers should appear as static course content.

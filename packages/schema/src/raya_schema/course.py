@@ -26,6 +26,11 @@ from raya_schema.references import (
 from raya_schema.reviewed import collect_source_references, discover_reviewed_outputs
 from raya_schema.runtime import load_runtime_model
 from raya_schema.schema_loader import validator_for
+from raya_schema.wikilinks import (
+    WikilinkResolver,
+    build_wikilink_resolver,
+    extract_wikilinks,
+)
 from raya_schema.yaml_io import load_yaml_file
 
 
@@ -94,6 +99,7 @@ def validate_course(course_path: str | Path) -> ValidationReport:
             source_path=page.source_path,
         )
     }
+    wikilink_resolver = build_wikilink_resolver(content_model)
     for page in content_model.pages:
         _validate_markdown_source_links(
             md_path=page.source_path,
@@ -103,6 +109,12 @@ def validate_course(course_path: str | Path) -> ValidationReport:
             pages_by_source=content_model.pages_by_source,
             stable_targets=set(content_model.pages_by_id) | set(content_model.pages_by_alias),
             numbered_object_ids=numbered_object_ids,
+            report=report,
+        )
+        _validate_wikilinks(
+            md_path=page.source_path,
+            body=page.body,
+            resolver=wikilink_resolver,
             report=report,
         )
 
@@ -397,6 +409,42 @@ def _validate_markdown_source_links(
             )
         else:
             report.read_file(asset_ref.target_path)
+
+
+def _validate_wikilinks(
+    *,
+    md_path: Path,
+    body: str,
+    resolver: WikilinkResolver,
+    report: ValidationReport,
+) -> None:
+    for wikilink in extract_wikilinks(body):
+        resolution = resolver.resolve(wikilink.target)
+        field = f"wikilink:{wikilink.target}"
+        if resolution.page is not None:
+            report.read_file(resolution.page.source_path)
+            continue
+        if resolution.ambiguous:
+            choices = ", ".join(page.id for page in resolution.ambiguous[:5])
+            report.add_error(
+                "Ambiguous wikilink reference",
+                path=md_path,
+                field=field,
+                next_action=(
+                    "Use a stable page id or more specific source path. "
+                    f"Matching page IDs: {choices}"
+                ),
+            )
+            continue
+        report.add_error(
+            "Broken wikilink reference",
+            path=md_path,
+            field=field,
+            next_action=(
+                "Use a target matching a stable page id, alias, title, nav title, "
+                "or unique source path."
+            ),
+        )
 
 
 def _validate_code_or_notebook_reference(

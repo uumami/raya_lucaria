@@ -16,6 +16,13 @@ Use the canonical check scripts from `README.md` and `AGENTS.md`: `./scripts/che
 
 For course content, treat source files as canonical and generated artifacts as rebuildable. Preserve `source: course`, the ordered `course/` tree, frontmatter `id`, `raya:<id>` links, colocated `_official/` and `_assets/` privacy, generated index markers, and manifest-declared data surfaces. Do not edit generated `artifact/` output as source truth.
 
+For wikilink issues, inspect source `[[target]]` or `[[target|label]]` tokens,
+course page IDs, aliases, titles, nav titles, source paths, validation
+diagnostics, rendered HTML, `data/links.json`, and `data/graph.json`. The
+resolver is build-time and course-local; raw wikilink text in rendered HTML,
+missing graph content edges, browser-side resolution, or external graph/search
+requests are regressions.
+
 For rich static rendering, preserve the Glintstone boundary: rewrite links through Raya rules, generate page-local anchors and tables of contents from source headings, pre-render accepted MathJax math at build time, keep support files under `site/_raya/`, escape raw HTML, and do not execute code blocks. Test generated HTML, static read paths, browser-visible math, local math assets, no external renderer requests, and desktop/mobile overflow.
 
 For copyable code blocks, inspect the rendered `.raya-code-block` markup, the local `shell.js` handler, and the copied `pre code` text. The copy control may use the Clipboard API or local fallback behavior, but it must not execute code, persist reader state, fetch data, or load external scripts.

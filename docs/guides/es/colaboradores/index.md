@@ -14,6 +14,13 @@ Usa los comandos Docker Compose y `uv` de `README.md` y `AGENTS.md` cuando cambi
 
 Cuando cambies validacion o rendering de cursos, preserva el modelo convention-first: `source: course` apunta al arbol ordenado `course/`, los nombres ordenados definen el orden de autoria, `id` en frontmatter define identidad estable, `_official/` y `_assets/` colocados permanecen privados, y `navigation.json` junto con `indices.json` son datos generados del artifact. Los tests deben cubrir diagnosticos de fuente, export de objetos oficiales, copia de assets, schemas de artifact y rendering static-read-path.
 
+Los wikilinks locales del curso son sintaxis de autoria en build, no
+comportamiento del browser. La validacion resuelve `[[target]]` y
+`[[target|label]]` contra las paginas del curso actual, falla targets faltantes
+o ambiguos, y el rendering emite enlaces estaticos locales normales mas edges
+explicitos de contenido en el grafo. No agregues resolucion de wikilinks en el
+browser, servicios externos de grafo/busqueda ni fugas de rutas de fuente.
+
 El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y MathJax detras de `packages/static`; los contratos de fuente deben describir comportamiento de autoria, no detalles internos de librerias. La math aceptada usa math inline con delimitadores de dolar, bloques display con delimitadores de doble dolar en lineas propias, macros locales por pagina, recursos locales bajo `site/_raya/render/math/`, diagnosticos estrictos y ninguna dependencia de renderer solo en browser. Cambios de renderer necesitan fixtures representativos, diagnosticos invalidos cuando aplique, tests de contrato, tests e2e/static-read-path, checks Chromium de math visible/sin requests externos, checks de overflow desktop/mobile y actualizaciones de documentacion de rol.
 
 Los bloques de codigo fenced renderizan controles locales de copiado. Preserva el texto exacto copiado desde `pre code`, botones accesibles por teclado, fallback HTML estatico y la regla de no storage, no fetch y no scripts externos al cambiar este comportamiento.

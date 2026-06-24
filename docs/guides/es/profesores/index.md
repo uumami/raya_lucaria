@@ -12,6 +12,13 @@ Los ejemplos son fixtures salvo que un equipo de curso los acepte explicitamente
 
 La fuente del curso usa `source: course` y orden visible dentro de `course/`: `0_index.md`, `1_foundations/`, `2_practice/` y `A_reference/`. Escribe las introducciones manuales en `0_index.md`; Glintstone renderiza indices de hijos y conteos de estudio desde resumenes y objetos oficiales sin sobrescribir la fuente. Pon objetos oficiales de aprendizaje bajo `_official/` junto al tema que apoyan, y assets locales del tema bajo `_assets/`. Usa `id` estable en frontmatter y enlaces `raya:<id>` para referencias que deben sobrevivir renumeracion o movimientos.
 
+Para autoria mas breve, usa wikilinks locales del curso como `[[First Topic]]`
+o `[[First Topic|the first topic]]`. Se resuelven durante validacion/build a
+enlaces estaticos normales y edges del grafo cuando el target coincide de forma
+unica con un page ID, alias, titulo, titulo de navegacion, stem de archivo o
+ruta de fuente. Targets faltantes o ambiguos fallan validacion; usa IDs
+estables para enlaces duraderos.
+
 Las paginas de curso pueden usar el baseline rich static aceptado: tablas, math MathJax en build, codigo mostrado con botones locales de copiado, callouts, footnotes, heading anchors y tablas de contenido generadas por pagina. Escribe math inline con delimitadores de dolar y math display con delimitadores de doble dolar en lineas propias. Usa `\newcommand` o `\renewcommand` locales a la pagina para macros soportadas. Documentos LaTeX completos, delimitadores malformados, delimitadores anidados no soportados y macros desconocidas fallan antes de publicar. Los bloques de codigo solo se muestran en esta fase, raw HTML se escapa y los archivos de soporte renderizados se generan bajo `artifact/site/_raya/`.
 
 Los indices generados de paginas hijas se renderizan como cards de entrada de

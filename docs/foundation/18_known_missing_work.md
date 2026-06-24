@@ -16,8 +16,8 @@ This document names intentional gaps so they do not become tribal knowledge or a
 
 ## Deferred Graph And Search
 
-- Wikilinks, graph scopes, cross-course graph, graph editing, inferred related
-  pages, and dynamic graph/state services.
+- Graph scopes, cross-course graph, graph editing, inferred related pages, and
+  dynamic graph/state services.
 - Full-text search indexes, prose-derived search, external search services, and
   dynamic search state.
 

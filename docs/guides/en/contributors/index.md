@@ -15,6 +15,12 @@ Use the Docker Compose and `uv` commands from `README.md` and `AGENTS.md` when c
 
 When changing course validation or rendering, preserve the convention-first source model: `source: course` points at the ordered `course/` tree, ordered filenames define authoring order, frontmatter `id` defines stable identity, colocated `_official/` and `_assets/` stay private, and `navigation.json` plus `indices.json` are generated artifact data. Tests should cover source diagnostics, official object export, asset copying, artifact schemas, and static-read-path rendering.
 
+Course-local wikilinks are build-time authoring syntax, not browser behavior.
+Validation resolves `[[target]]` and `[[target|label]]` against the current
+course pages, fails missing or ambiguous targets, and rendering emits ordinary
+static local links plus explicit content graph edges. Do not add browser-side
+wikilink resolution, external graph/search services, or source-path leakage.
+
 Rich static rendering is Glintstone-owned. Keep parser, highlighter, and MathJax libraries behind the `packages/static` boundary; source contracts should describe supported authoring behavior, not library internals. Accepted math uses inline dollar math, display dollar-delimiter blocks, page-local macros, local `site/_raya/render/math/` support resources, strict diagnostics, and no browser-only renderer dependency. Renderer changes need representative fixtures, invalid diagnostics when applicable, contract tests, e2e/static-read-path tests, Chromium visible-math/no-external-request checks, desktop/mobile overflow checks, and role documentation updates.
 
 Fenced code blocks render with local copy controls. Preserve exact copied `pre code` text, keyboard-reachable buttons, static HTML fallback, and the no-storage/no-fetch/no-external-script rule when changing this behavior.

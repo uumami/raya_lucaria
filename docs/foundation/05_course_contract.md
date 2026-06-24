@@ -122,6 +122,15 @@ Prefixes are authoring order only. They are stripped from rendered URLs, labels,
 Review [derivatives](raya:derivatives-rates).
 ```
 
+Course-local wikilinks are accepted authoring sugar for ordinary page links:
+`[[target]]` or `[[target|label]]`. Glintstone resolves them during validation
+and build against the current course's stable page IDs, aliases, titles,
+navigation titles, unique ordered filename stems, and unique source-relative
+paths without `.md`. Missing or ambiguous wikilinks fail validation. Rendered
+HTML contains normal deployment-neutral local links, and generated graph data
+treats resolved wikilinks as explicit content edges. Use stable IDs when a link
+must remain durable across renames, moves, or title changes.
+
 Rendered directories use `0_index.md` as the manual landing page and metadata source. Generated local indexes and master indexes are rendered from child metadata and official learning-object scopes, but generated sections are not written back into source files.
 
 Private support directories do not render. `_official/`, `_assets/`, `_reviewed/`, `_drafts/`, `drafts/`, `_partials/`, and other leading-underscore support paths are source support, not navigation entries. A quantum that owns `_official/`, `_assets/`, or `_reviewed/` must be a directory page with `0_index.md`; a standalone file page remains valid only when it owns no child support material.

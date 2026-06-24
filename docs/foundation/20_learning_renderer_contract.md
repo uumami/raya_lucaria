@@ -58,7 +58,10 @@ The Tasks workspace and `data/tasks.json` must not expose private source paths, 
 
 The right learning rail owns compact page context. It is expanded by default on desktop and may collapse through an explicit click control into an operable compact context tab. Collapsed rail content must be hidden from keyboard and screen-reader navigation. It may show page contents, normalized `summary` and `status`, optional estimated time and tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, static Connections summaries for explicit incoming and outgoing content links from generated graph data, native previews for linked pages using public generated metadata, graph-focus links for those explicit relationships, and previous/next links from generated navigation.
 
-Explicit graph link context means relationships already present in source links, stable IDs, or prerequisite metadata. It does not mean inferred recommendations, related practice, personal next steps, or mastery guidance.
+Explicit graph link context means relationships already present in source links,
+resolved course-local wikilinks, stable IDs, or prerequisite metadata. It does
+not mean inferred recommendations, related practice, personal next steps, or
+mastery guidance.
 
 The static graph page is a reader-facing view of generated artifact graph data.
 It may provide local fuzzy search, deterministic layouts, group filters,

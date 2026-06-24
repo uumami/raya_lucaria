@@ -75,6 +75,11 @@ from raya_schema.runtime import (
     reference_execution_metadata,
     runtime_index,
 )
+from raya_schema.wikilinks import (
+    WikilinkResolver,
+    build_wikilink_resolver,
+    extract_wikilinks,
+)
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.accessibility import (
     ACCESSIBILITY_RESOURCE_PATH,
@@ -279,6 +284,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         **content_model.pages_by_id,
         **content_model.pages_by_alias,
     }
+    wikilink_resolver = build_wikilink_resolver(content_model)
     official_counts = _official_counts(
         official_objects,
         content_model=content_model,
@@ -311,6 +317,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         pages_by_reference,
         pages_by_source,
         root,
+        wikilink_resolver,
     )
     graph_index = _graph_index(course_id, content_model, links_index)
     graph_context_by_page = _graph_context_by_page(content_model, graph_index)
@@ -371,6 +378,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             math_renderer=math_renderer,
             skin_context=skin_context,
             page_graph_context=graph_context_by_page.get(page.id, {}),
+            wikilink_resolver=wikilink_resolver,
         )
         if not report.ok:
             return report
@@ -824,6 +832,7 @@ def _render_page(
     math_renderer: MathRenderer,
     skin_context: SkinContext,
     page_graph_context: dict[str, list[dict[str, str]]],
+    wikilink_resolver: WikilinkResolver,
 ) -> str:
     breadcrumbs = _render_breadcrumbs(page, content_model)
     generated_index = _render_generated_index(
@@ -892,6 +901,10 @@ def _render_page(
         math_renderer=math_renderer,
         numbered_objects=numbered_objects,
         proofs=proofs,
+        resolve_wikilink=lambda target: _resolve_wikilink_page_id(
+            target,
+            wikilink_resolver,
+        ),
     )
     article_html, toc_html = _extract_page_toc(article_html)
     article_connections_html = _render_article_connections(
@@ -1843,6 +1856,16 @@ def _resolve_markdown_href(
     return href
 
 
+def _resolve_wikilink_page_id(
+    target: str,
+    resolver: WikilinkResolver,
+) -> str | None:
+    resolution = resolver.resolve(target)
+    if resolution.page is None:
+        return None
+    return resolution.page.id
+
+
 def _validate_rich_markdown_inputs(
     pages: list[ContentPage],
     report: ValidationReport,
@@ -2505,6 +2528,7 @@ def _links_index(
     pages_by_reference: dict[str, ContentPage],
     pages_by_source: dict[Path, ContentPage],
     course_root: Path,
+    wikilink_resolver: WikilinkResolver,
 ) -> dict[str, Any]:
     links: list[dict[str, str]] = []
     seen: set[tuple[str, str, str]] = set()
@@ -2539,6 +2563,10 @@ def _links_index(
                 pages_by_source,
                 course_root,
             )
+            if target_page is not None:
+                add_link(page.id, target_page.id, "content")
+        for wikilink in extract_wikilinks(page.body):
+            target_page = wikilink_resolver.resolve(wikilink.target).page
             if target_page is not None:
                 add_link(page.id, target_page.id, "content")
     return {"course_id": course_id, "links": links}
