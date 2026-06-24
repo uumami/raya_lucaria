@@ -3443,6 +3443,12 @@ def _render_graph_surface(
                 "</span>"
             ),
             (
+                '<span class="raya-graph-legend-item" data-raya-graph-legend="edge-color">'
+                '<span class="raya-graph-legend-line raya-graph-legend-edge-color"></span>'
+                "Source group edge"
+                "</span>"
+            ),
+            (
                 '<span class="raya-graph-legend-item" data-raya-graph-legend="link">'
                 '<span class="raya-graph-legend-line"></span>'
                 "Explicit source link"
@@ -3463,6 +3469,16 @@ def _render_graph_surface(
             (
                 "<p>Cluster groups visible pages by generated course group so "
                 "nearby pages can be scanned together.</p>"
+            ),
+            (
+                "<p>Hover and keyboard focus spotlight the inspected page and "
+                "its directly connected pages. Other graph marks dim "
+                "temporarily; this is only a readability cue.</p>"
+            ),
+            (
+                "<p>Edge color follows the source page group so explicit links "
+                "are easier to trace across the course; source-group edge "
+                "colors are structural readability cues only.</p>"
             ),
             (
                 "<p>Map groups pages by course structure, radial places visible "

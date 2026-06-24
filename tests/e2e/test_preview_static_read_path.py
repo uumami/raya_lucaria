@@ -696,6 +696,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "matrix"
                             in page.locator("#raya-graph-list").inner_text().lower()
                         )
+                        page.fill("#graph-search", "")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
                         page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
                         ).hover()
@@ -719,6 +726,28 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).evaluate(
                                 "node => node.classList.contains('is-inspected-neighbor')"
                             )
+                        edge_color = page.locator(
+                            "#raya-graph-canvas .raya-graph-edge"
+                        ).first.evaluate(
+                            "node => node.style.getPropertyValue('--raya-graph-edge-color')"
+                        )
+                        assert edge_color.startswith("var(--raya-graph-group-")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas .raya-graph-edge.is-inspected') !== null"""
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-edge.is-dimmed"
+                            ).count()
+                            > 0
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-node.is-dimmed"
+                            ).count()
+                            > 0
+                        )
                         page.locator(
                             '#raya-graph-list [data-raya-graph-node="authoring-matrix"] a'
                         ).focus()
@@ -727,6 +756,21 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               .querySelector('[data-raya-graph-hover-status]')
                               ?.textContent
                               ?.includes('Inspecting Authoring Matrix Fixture')"""
+                        )
+                        page.locator(
+                            '#raya-graph-list [data-raya-graph-node="static-path"] a'
+                        ).focus()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-hover-status]')
+                              ?.textContent
+                              ?.includes('Static Path')"""
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-node.is-dimmed"
+                            ).count()
+                            > 0
                         )
                         page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
@@ -1034,6 +1078,24 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert (
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
                             == initial_viewbox
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-edge.is-dimmed"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-graph-canvas .raya-graph-node.is-dimmed"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-hover-status]")
+                            .inner_text()
+                            .strip()
+                            == ""
                         )
                         assert all(
                             value == "true"

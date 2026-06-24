@@ -587,7 +587,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="match"' in graph_html
     assert 'data-raya-graph-legend="selected"' in graph_html
     assert 'data-raya-graph-legend="neighbor"' in graph_html
+    assert 'data-raya-graph-legend="edge-color"' in graph_html
     assert "Connected page" in graph_html
+    assert "Edge color follows the source page group" in graph_html
+    assert "source-group edge colors" in graph_html
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
@@ -711,6 +714,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "focusGraphDetailNode" in graph_script
     assert "is-inspected" in graph_script
     assert "is-inspected-neighbor" in graph_script
+    assert "edgeColorFor" in graph_script
+    assert "--raya-graph-edge-color" in graph_script
+    assert "is-dimmed" in graph_script
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

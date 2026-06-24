@@ -181,6 +181,12 @@ _GRAPH_JAVASCRIPT = r"""
     return index >= 0 ? (index % 8) + 1 : 1;
   }
 
+  function edgeColorFor(edge) {
+    const source = nodesById.get(edge.from);
+    if (!source) return "var(--raya-color-border)";
+    return `var(--raya-graph-group-${groupColorIndex(source.group || "")})`;
+  }
+
   function compareNodesByOrder(a, b) {
     const aOrder = Number(a.order || 0);
     const bOrder = Number(b.order || 0);
@@ -565,11 +571,18 @@ _GRAPH_JAVASCRIPT = r"""
 
   function updateInspectionDom() {
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
+    const inspectedSpotlightIds = inspectedId
+      ? new Set([inspectedId, ...inspectedConnectedIds])
+      : new Set();
     canvas.querySelectorAll("[data-raya-graph-node] g").forEach((nodeGroup) => {
       const link = nodeGroup.closest("[data-raya-graph-node]");
       const id = link ? link.getAttribute("data-raya-graph-node") || "" : "";
       nodeGroup.classList.toggle("is-inspected", id === inspectedId);
       nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+      nodeGroup.classList.toggle(
+        "is-dimmed",
+        Boolean(inspectedId) && !inspectedSpotlightIds.has(id)
+      );
     });
     canvas.querySelectorAll(".raya-graph-edge").forEach((edge) => {
       const from = edge.getAttribute("data-raya-graph-from") || "";
@@ -577,6 +590,10 @@ _GRAPH_JAVASCRIPT = r"""
       edge.classList.toggle(
         "is-inspected",
         Boolean(inspectedId) && (from === inspectedId || to === inspectedId)
+      );
+      edge.classList.toggle(
+        "is-dimmed",
+        Boolean(inspectedId) && !(from === inspectedId || to === inspectedId)
       );
     });
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
@@ -843,6 +860,9 @@ _GRAPH_JAVASCRIPT = r"""
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const selectedCluster = selectedId ? new Set([selectedId, ...connectedIds]) : new Set();
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
+    const inspectedSpotlightIds = inspectedId
+      ? new Set([inspectedId, ...inspectedConnectedIds])
+      : new Set();
     const geometry = positionsFor(activeNodes, mode);
 
     fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
@@ -865,6 +885,7 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("y2", String(to.y));
       line.setAttribute("data-raya-graph-from", edge.from);
       line.setAttribute("data-raya-graph-to", edge.to);
+      line.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
       line.setAttribute(
         "class",
         [
@@ -872,6 +893,9 @@ _GRAPH_JAVASCRIPT = r"""
           selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
           inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
             ? "is-inspected"
+            : "",
+          inspectedId && !(edge.from === inspectedId || edge.to === inspectedId)
+            ? "is-dimmed"
             : "",
         ].filter(Boolean).join(" ")
       );
@@ -900,6 +924,7 @@ _GRAPH_JAVASCRIPT = r"""
           isConnected ? "is-neighbor" : "",
           isInspected ? "is-inspected" : "",
           isInspectedNeighbor ? "is-inspected-neighbor" : "",
+          inspectedId && !inspectedSpotlightIds.has(node.id) ? "is-dimmed" : "",
           matchIds.has(node.id) ? "is-match" : "",
         ].filter(Boolean).join(" ")
       );
