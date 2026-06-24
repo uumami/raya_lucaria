@@ -642,7 +642,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-discovery-command-bar" in graph_html
     assert "Graph workspace" in graph_html
     assert 'href="../search/index.html"' in graph_html
+    assert 'href="../tasks/index.html"' in graph_html
     assert '<span class="raya-command-label">Search</span>' in graph_html
+    assert '<span class="raya-command-label">Tasks</span>' in graph_html
     assert (
         '<button class="raya-command raya-command-size raya-text-size-toggle"'
         in graph_html
@@ -654,6 +656,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "localStorage" not in graph_html
     assert '<script type="application/json" id="raya-graph-data">' in graph_html
     assert 'src="../render/graph.js"' in graph_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in graph_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in graph_html
     assert 'href="../render/rich.css"' in graph_html
     assert 'href="../render/skin.css"' in graph_html
     assert 'href="../../data/graph.json"' not in graph_html
@@ -966,7 +970,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-discovery-command-bar" in search_html
     assert "Search workspace" in search_html
     assert 'href="../graph/index.html"' in search_html
+    assert 'href="../tasks/index.html"' in search_html
     assert '<span class="raya-command-label">Graph</span>' in search_html
+    assert '<span class="raya-command-label">Tasks</span>' in search_html
     assert (
         '<button class="raya-command raya-command-size raya-text-size-toggle"'
         in search_html
@@ -982,6 +988,8 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     ) in search_html
     assert '<script type="application/json" id="raya-search-data">' in search_html
     assert 'src="../render/search.js"' in search_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in search_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in search_html
     assert 'href="../render/rich.css"' in search_html
     assert 'href="../render/skin.css"' in search_html
     assert 'href="../../data/pages.json"' not in search_html
@@ -1121,13 +1129,16 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "Official practice workspace" in practice_html
     assert 'href="../search/index.html"' in practice_html
     assert 'href="../graph/index.html"' in practice_html
+    assert 'href="../tasks/index.html"' in practice_html
     assert '<span class="raya-command-label">Search</span>' in practice_html
     assert '<span class="raya-command-label">Graph</span>' in practice_html
+    assert '<span class="raya-command-label">Tasks</span>' in practice_html
     assert "shell.js" not in practice_html
     assert "localStorage" not in practice_html
     assert '<script type="application/json" id="raya-practice-data">' in practice_html
     assert 'src="../render/practice.js"' in practice_html
-    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' in practice_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in practice_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in practice_html
     assert 'href="../render/rich.css"' in practice_html
     assert 'href="../render/skin.css"' in practice_html
     assert 'href="../../data/official.json"' not in practice_html
@@ -1273,11 +1284,17 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     )
     assert manifest["data"]["tasks"] == "data/tasks.json"
     assert 'data-raya-surface="tasks"' in tasks_html
+    assert "raya-discovery-command-bar" in tasks_html
     assert "Official tasks workspace" in tasks_html
     assert 'href="../search/index.html"' in tasks_html
     assert 'href="../graph/index.html"' in tasks_html
     assert 'href="../practice/index.html"' in tasks_html
+    assert '<span class="raya-command-label">Search</span>' in tasks_html
+    assert '<span class="raya-command-label">Graph</span>' in tasks_html
+    assert '<span class="raya-command-label">Practice</span>' in tasks_html
     assert 'src="../render/tasks.js"' in tasks_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in tasks_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in tasks_html
     assert 'href="../render/rich.css"' in tasks_html
     assert 'href="../render/skin.css"' in tasks_html
     assert "shell.js" not in tasks_html

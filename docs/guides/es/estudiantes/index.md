@@ -88,13 +88,13 @@ nativas con el resumen, estado y conteos de enlaces explicitos de la pagina
 enlazada cuando el curso tiene esos metadatos. Usalos como mapa de lectura
 despues de terminar la pagina; no son un registro de avance, ranking ni motor
 de recomendaciones.
-Las paginas Search, Graph y Practice usan la misma barra estatica de
+Las paginas Search, Graph, Practice y Tasks usan la misma barra estatica de
 descubrimiento para volver al curso, cambiar entre esos workspaces y mantener
-disponibles Text size u OpenDyslexic. Search y Practice tambien pueden mostrar
-controles, resultados y un panel de contexto en pantallas anchas. Esos
-controles son de comodidad de lectura y escaneo; los workspaces no guardan tu
-consulta, nodo seleccionado, layout del grafo ni filtros de practica como
-estado de estudio.
+disponibles Text size u OpenDyslexic para la pagina actual. Search, Practice y
+Tasks tambien pueden mostrar controles, resultados y un panel de contexto en
+pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los
+workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros
+de practica ni filtros de tareas como estado de estudio.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.

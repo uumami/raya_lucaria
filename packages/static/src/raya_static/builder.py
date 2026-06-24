@@ -1048,6 +1048,7 @@ def _render_discovery_command_bar(
     search_href: str | None,
     graph_href: str | None,
     practice_href: str | None,
+    tasks_href: str | None,
 ) -> str:
     commands = [
         (
@@ -1084,6 +1085,16 @@ def _render_discovery_command_bar(
                 f'href="{html.escape(practice_href)}" '
                 'aria-label="Open official practice">'
                 '<span class="raya-command-label">Practice</span>'
+                "</a>"
+            )
+        )
+    if tasks_href is not None:
+        commands.append(
+            (
+                f'<a class="raya-command raya-command-tasks" '
+                f'href="{html.escape(tasks_href)}" '
+                'aria-label="Open official tasks">'
+                '<span class="raya-command-label">Tasks</span>'
                 "</a>"
             )
         )
@@ -3427,7 +3438,7 @@ def _render_graph_surface(
     )
     accessibility_js_href = _relative_href(
         STATIC_GRAPH_PATH.as_posix(),
-        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
     graph_js_href = _relative_href(
         STATIC_GRAPH_PATH.as_posix(),
@@ -3499,6 +3510,7 @@ def _render_graph_surface(
                 search_href="../search/index.html",
                 graph_href=None,
                 practice_href="../practice/index.html",
+                tasks_href="../tasks/index.html",
             ),
             '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
             '<header class="raya-graph-header">',
@@ -3836,7 +3848,7 @@ def _render_search_surface(
     )
     accessibility_js_href = _relative_href(
         STATIC_SEARCH_PATH.as_posix(),
-        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
     search_js_href = _relative_href(
         STATIC_SEARCH_PATH.as_posix(),
@@ -3924,6 +3936,7 @@ def _render_search_surface(
                 search_href=None,
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
+                tasks_href="../tasks/index.html",
             ),
             (
                 '<main id="raya-search-main" class="raya-search-page" '
@@ -4050,7 +4063,7 @@ def _render_practice_surface(
     )
     accessibility_js_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
-        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
     practice_js_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
@@ -4173,6 +4186,7 @@ def _render_practice_surface(
                 search_href="../search/index.html",
                 graph_href="../graph/index.html",
                 practice_href=None,
+                tasks_href="../tasks/index.html",
             ),
             (
                 '<main id="raya-practice-main" class="raya-practice-page" '
@@ -4479,6 +4493,7 @@ def _render_tasks_surface(
                 search_href="../search/index.html",
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
+                tasks_href=None,
             ),
             (
                 '<main id="raya-tasks-main" class="raya-tasks-page" '

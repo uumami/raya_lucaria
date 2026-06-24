@@ -79,12 +79,13 @@ can open native previews with the linked page summary, status, and explicit link
 counts when the course has that metadata. Use them as a reading map after
 finishing the page; they are not a progress tracker, ranking, or recommendation
 engine.
-Search, Graph, and Practice pages use the same static discovery bar so you can
-return to the course, switch between those workspaces, and keep Text size or
-OpenDyslexic available. Search and Practice may also show controls, results,
-and a context panel on wider screens. Those controls are for reading and
-scanning comfort; the workspaces do not store your query, selected node, graph
-layout, or practice filters as study state.
+Search, Graph, Practice, and Tasks pages use the same static discovery bar so
+you can return to the course, switch between those workspaces, and keep Text
+size or OpenDyslexic available for the current page. Search, Practice, and
+Tasks may also show controls, results, and a context panel on wider screens.
+Those controls are for reading and scanning comfort; the workspaces do not
+store your query, selected node, graph layout, practice filters, or task
+filters as study state.
 When a page is selected in the graph, connected pages may be highlighted and
 summarized as outgoing links, incoming links, and connected pages. Those numbers
 describe the current static graph, not how far you have progressed.

@@ -209,9 +209,10 @@ permanecer transitorios. Los
 enlaces graph-focus de resultados de busqueda deben venir de stable IDs y URLs
 locales generadas del grafo, preservar Enter para abrir la pagina, y evitar
 lenguaje de recomendacion o progreso. Las paginas de descubrimiento Search,
-Graph y Practice pueden cargar recursos locales de accesibilidad para Text size
-y `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
-assets externos de workspace ni estado persistente de graph/search/practice.
+Graph, Practice y Tasks pueden cargar recursos locales de accesibilidad para
+Text size y `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa
+del curso, assets externos de workspace ni estado persistente de
+graph/search/practice/tasks.
 
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
 embebidos y las cards visibles usen solo metadata publica generada: titulo de

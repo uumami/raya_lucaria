@@ -185,10 +185,10 @@ external requests, and no persistent search state. Search payloads stay
 metadata-only, and generated query context and context-panel summaries must
 remain transient. Search result graph-focus links must come from stable page IDs
 and generated local graph URLs, preserve Enter-to-open-page behavior, and avoid
-recommendation or progress language. Search, Graph, and Practice discovery
+recommendation or progress language. Search, Graph, Practice, and Tasks discovery
 pages may load local accessibility resources for Text size and `OpenDyslexic`,
 but must not load `shell.js`, a course-map toggle, external workspace assets, or
-persisted graph/search/practice state.
+persisted graph/search/practice/tasks state.
 
 When changing Search or Graph discovery cards, verify that embedded payloads and
 visible cards use only public generated metadata: page title, nav title, stable
