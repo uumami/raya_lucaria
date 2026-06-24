@@ -3649,9 +3649,7 @@ def _render_graph_surface(
                 schedule_href="../schedule/index.html",
             ),
             '<main id="raya-graph-main" class="raya-graph-page" data-raya-graph-page>',
-            '<header class="raya-graph-header">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            '<header class="raya-graph-header raya-discovery-header">',
             "<h1>Course Graph</h1>",
             (
                 "<p>Explore pages, unit groups, prerequisites, and content references "
@@ -4159,9 +4157,7 @@ def _render_search_surface(
                 '<main id="raya-search-main" class="raya-search-page" '
                 'data-raya-search-page tabindex="-1">'
             ),
-            '<header class="raya-search-header">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            '<header class="raya-search-header raya-discovery-header">',
             "<h1>Course Search</h1>",
             "<p>Search page titles, summaries, stable IDs, tags, and status metadata.</p>",
             "</header>",
@@ -4411,9 +4407,7 @@ def _render_practice_surface(
                 '<main id="raya-practice-main" class="raya-practice-page" '
                 'data-raya-practice-page tabindex="-1">'
             ),
-            '<header class="raya-practice-header">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            '<header class="raya-practice-header raya-discovery-header">',
             "<h1>Official Practice</h1>",
             (
                 "<p>Find accepted course practice objects by page and type. "
@@ -4719,9 +4713,7 @@ def _render_tasks_surface(
                 '<main id="raya-tasks-main" class="raya-tasks-page" '
                 'data-raya-tasks-page tabindex="-1">'
             ),
-            '<header class="raya-tasks-header">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            '<header class="raya-tasks-header raya-discovery-header">',
             "<h1>Official Tasks</h1>",
             (
                 "<p>Scan accepted assignments, projects, exams, and tasks. "
@@ -4985,9 +4977,7 @@ def _render_schedule_surface(
                 '<main id="raya-schedule-main" class="raya-schedule-page" '
                 'data-raya-schedule-page tabindex="-1">'
             ),
-            '<header class="raya-schedule-header">',
-            f'<p class="raya-course-title">{html.escape(course_title)}</p>',
-            '<a class="raya-graph-back-link" href="../../index.html">Back to course</a>',
+            '<header class="raya-schedule-header raya-discovery-header">',
             "<h1>Official Schedule</h1>",
             (
                 "<p>Scan dated official assignments, projects, exams, and tasks. "

@@ -527,6 +527,21 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             <= viewport["width"] + 1
                         )
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(
+                            ".raya-discovery-command-bar .raya-command-home"
+                        ).is_visible()
+                        assert (
+                            page.locator(
+                                ".raya-graph-header .raya-course-title"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                ".raya-graph-header .raya-graph-back-link"
+                            ).count()
+                            == 0
+                        )
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
                                 ".raya-discovery-command-bar"
@@ -1284,9 +1299,6 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
-                        before_height = page.locator(
-                            "#raya-graph-canvas"
-                        ).bounding_box()["height"]
                         before_width = page.locator(
                             "#raya-graph-canvas"
                         ).bounding_box()["width"]
@@ -1315,14 +1327,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).first.get_attribute("tabindex")
                             == "-1"
                         )
-                        after_height = page.locator(
-                            "#raya-graph-canvas"
-                        ).bounding_box()["height"]
                         after_width = page.locator("#raya-graph-canvas").bounding_box()[
                             "width"
                         ]
                         if viewport["width"] >= 1280:
                             assert after_width >= before_width
+                            assert page.locator("#raya-graph-canvas").is_visible()
                         page.click("#graph-expand")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -1759,6 +1769,21 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(
+                            ".raya-discovery-command-bar .raya-command-home"
+                        ).is_visible()
+                        assert (
+                            page.locator(
+                                ".raya-search-header .raya-course-title"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                ".raya-search-header .raya-graph-back-link"
+                            ).count()
+                            == 0
+                        )
                         assert page.locator(".raya-search-workspace").is_visible()
                         assert page.locator(".raya-search-control-panel").is_visible()
                         assert page.locator(".raya-search-results-panel").is_visible()
@@ -2029,6 +2054,21 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(
+                            ".raya-discovery-command-bar .raya-command-home"
+                        ).is_visible()
+                        assert (
+                            page.locator(
+                                ".raya-practice-header .raya-course-title"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                ".raya-practice-header .raya-graph-back-link"
+                            ).count()
+                            == 0
+                        )
                         assert page.locator(".raya-practice-workspace").is_visible()
                         assert page.locator(".raya-practice-control-panel").is_visible()
                         assert page.locator(".raya-practice-results-panel").is_visible()
@@ -2394,6 +2434,21 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         )
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-discovery-command-bar").is_visible()
+                        assert page.locator(
+                            ".raya-discovery-command-bar .raya-command-home"
+                        ).is_visible()
+                        assert (
+                            page.locator(
+                                ".raya-tasks-header .raya-course-title"
+                            ).count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                ".raya-tasks-header .raya-graph-back-link"
+                            ).count()
+                            == 0
+                        )
                         assert page.locator(".raya-tasks-workspace").is_visible()
                         assert page.locator(".raya-tasks-control-panel").is_visible()
                         assert page.locator(".raya-tasks-results-panel").is_visible()
@@ -2523,6 +2578,15 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             assert schedule.locator(
                                 ".raya-discovery-command-bar"
                             ).is_visible()
+                            assert schedule.locator(
+                                ".raya-discovery-command-bar .raya-command-home"
+                            ).is_visible()
+                            assert schedule.locator(
+                                ".raya-schedule-header .raya-course-title"
+                            ).count() == 0
+                            assert schedule.locator(
+                                ".raya-schedule-header .raya-graph-back-link"
+                            ).count() == 0
                             assert schedule.locator(
                                 ".raya-schedule-workspace"
                             ).is_visible()
@@ -5701,6 +5765,19 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
                             assert page.locator(
                                 "main.raya-inspection-main"
                             ).bounding_box()
+
+                            for workspace_path in (
+                                "_raya/search/index.html",
+                                "_raya/graph/index.html",
+                                "_raya/practice/index.html",
+                                "_raya/tasks/index.html",
+                                "_raya/schedule/index.html",
+                            ):
+                                page.goto(
+                                    f"{base_url}/{workspace_path}",
+                                    wait_until="networkidle",
+                                )
+                                _assert_no_horizontal_overflow(page)
 
                             page.goto(
                                 f"{examples_url}/gallery/index.html",
