@@ -2882,6 +2882,42 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "inline-flex",
                                 "flex",
                             }
+                            workspace = page.evaluate(
+                                """() => {
+                                  const section = document.querySelector('[data-raya-course-map-workspaces]');
+                                  const links = Array.from(
+                                    document.querySelectorAll('[data-raya-course-map-workspace-link]')
+                                  );
+                                  return {
+                                    visible: !!section && getComputedStyle(section).display !== 'none',
+                                    labels: links.map((link) => link.textContent.trim()),
+                                    hrefs: links.map((link) => link.getAttribute('href')),
+                                  };
+                                }"""
+                            )
+                            assert workspace["visible"] is True
+                            assert workspace["labels"] == [
+                                "Search",
+                                "Graph",
+                                "Practice",
+                                "Tasks",
+                            ]
+                            assert any(
+                                "../_raya/search/index.html?q=" in href
+                                for href in workspace["hrefs"]
+                            )
+                            assert any(
+                                "../_raya/graph/index.html?page=reader-ux" in href
+                                for href in workspace["hrefs"]
+                            )
+                            assert any(
+                                "../_raya/practice/index.html" in href
+                                for href in workspace["hrefs"]
+                            )
+                            assert any(
+                                "../_raya/tasks/index.html" in href
+                                for href in workspace["hrefs"]
+                            )
                             page.click(".raya-course-map-toggle")
                             page.wait_for_function(
                                 """() => document
@@ -2933,6 +2969,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                         text: link.textContent.trim(),
                                       };
                                     }),
+                                  workspaceDisplay: getComputedStyle(
+                                    document.querySelector('[data-raya-course-map-workspaces]')
+                                  ).display,
                                 })"""
                             )
                             assert 64 <= collapsed["mapWidth"] <= 84
@@ -2941,6 +2980,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert collapsed["railButtonAfter"] == '"Info"'
                             assert collapsed["railBodyHidden"] == "true"
                             assert collapsed["railBodyInert"] is True
+                            assert collapsed["workspaceDisplay"] == "none"
                             assert collapsed["collapsedMapLinks"]
                             assert all(
                                 link["width"] >= 34 and link["height"] >= 34

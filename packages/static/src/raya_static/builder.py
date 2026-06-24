@@ -943,7 +943,14 @@ def _render_page(
                 tasks_href,
             ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
-            _render_course_map(page, content_model),
+            _render_course_map(
+                page,
+                content_model,
+                search_href=search_href,
+                graph_href=graph_href,
+                practice_href=practice_href,
+                tasks_href=tasks_href,
+            ),
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             _render_article_sequence_nav(page, content_model),
             breadcrumbs,
@@ -1218,7 +1225,15 @@ def _safe_map_fragment_id(value: str) -> str:
     return fragment or "course-map-node"
 
 
-def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
+def _render_course_map(
+    page: ContentPage,
+    content_model: ContentModel,
+    *,
+    search_href: str,
+    graph_href: str,
+    practice_href: str,
+    tasks_href: str,
+) -> str:
     active_path = {crumb.id for crumb in _breadcrumb_pages(page, content_model)}
     active_path.add(page.id)
     sequence_index = {
@@ -1315,6 +1330,31 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
         if root_id in content_model.pages_by_id
     ]
     position = html.escape(_page_position(page, content_model))
+    workspace_links = [
+        ("search", "Search", search_href),
+        ("graph", "Graph", graph_href),
+        ("practice", "Practice", practice_href),
+        ("tasks", "Tasks", tasks_href),
+    ]
+    workspace_html = "\n".join(
+        [
+            '<section class="raya-course-map-workspaces" '
+            'aria-label="Course workspaces" data-raya-course-map-workspaces>',
+            '<p class="raya-course-map-workspaces-label">Course workspaces</p>',
+            '<div class="raya-course-map-workspace-links">',
+            "\n".join(
+                (
+                    f'<a class="raya-course-map-workspace-link '
+                    f'raya-course-map-workspace-{html.escape(kind, quote=True)}" '
+                    "data-raya-course-map-workspace-link "
+                    f'href="{html.escape(href)}">{html.escape(label)}</a>'
+                )
+                for kind, label, href in workspace_links
+            ),
+            "</div>",
+            "</section>",
+        ]
+    )
     return "\n".join(
         [
             '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
@@ -1323,6 +1363,7 @@ def _render_course_map(page: ContentPage, content_model: ContentModel) -> str:
             f'<p class="raya-page-position">{position}</p>' if position else "",
             _render_course_map_toggle("Collapse map"),
             "</div>",
+            workspace_html,
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '

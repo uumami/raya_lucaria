@@ -64,6 +64,9 @@ articulo, en el contexto superior de lectura o en las cards al final de pagina
 para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando
 esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
 orden del curso; no son recomendaciones ni marcadores de progreso.
+El mapa expandido del curso tambien puede mostrar enlaces estaticos a Course
+Search, Course Graph, Official Practice y Official Tasks. Son atajos a
+workspaces generados, no progreso, ranking ni guia personalizada.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada, Zoom in, Zoom out, Fit,

@@ -3150,6 +3150,30 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
+    assert 'class="raya-course-map-workspaces"' in html
+    assert 'aria-label="Course workspaces"' in html
+    assert "data-raya-course-map-workspaces" in html
+    assert (
+        'class="raya-course-map-workspace-link raya-course-map-workspace-search"'
+        in html
+    )
+    assert (
+        'class="raya-course-map-workspace-link raya-course-map-workspace-graph"'
+        in html
+    )
+    assert (
+        'class="raya-course-map-workspace-link raya-course-map-workspace-practice"'
+        in html
+    )
+    assert (
+        'class="raya-course-map-workspace-link raya-course-map-workspace-tasks"'
+        in html
+    )
+    assert "data-raya-course-map-workspace-link" in html
+    assert 'href="../_raya/search/index.html?q=Reader%20UX%20Fixture"' in html
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
+    assert 'href="../_raya/practice/index.html"' in html
+    assert 'href="../_raya/tasks/index.html"' in html
     assert (
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html
@@ -3159,6 +3183,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
         'aria-label="Learning context" data-raya-learning-rail="expanded">'
     ) in html
+    assert html.count('aria-label="Learning context"') == 1
+    assert 'data-raya-learning-rail="expanded">aria-label=' not in html
     assert '<div class="raya-learning-rail-header">' in html
     assert (
         '<div id="raya-learning-rail-body" class="raya-learning-rail-body" '
@@ -3403,6 +3429,14 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         in html
     )
     assert 'aria-expanded="true">Collapse map</button>' in html
+    assert 'class="raya-course-map-workspaces"' in html
+    assert 'aria-label="Course workspaces"' in html
+    assert "data-raya-course-map-workspaces" in html
+    assert "data-raya-course-map-workspace-link" in html
+    assert "_raya/search/index.html?q=" in html
+    assert "_raya/graph/index.html?page=" in html
+    assert "_raya/practice/index.html" in html
+    assert "_raya/tasks/index.html" in html
     assert (
         'class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false"'
         in html

@@ -58,6 +58,9 @@ current static hierarchy. Use Previous and Next in the article, top reading
 context, or end-of-page cards to move through the ordered material, and use Text
 size or OpenDyslexic when those settings are more comfortable. End-of-page cards
 are course-order links; they are not recommendations or progress markers.
+The expanded course map may also show static links to Course Search, Course
+Graph, Official Practice, and Official Tasks. They are shortcuts to generated
+workspaces, not progress, ranking, or personalized guidance.
 
 Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, Zoom in, Zoom out, Fit, Reset view, and expanded
