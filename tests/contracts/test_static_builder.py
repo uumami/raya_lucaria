@@ -565,6 +565,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-search" in graph_html
     assert "graph-layout" in graph_html
     assert '<option value="connections" selected>Connections</option>' in graph_html
+    assert '<option value="cluster">Cluster</option>' in graph_html
     assert '<option value="map">Map</option>' in graph_html
     assert '<option value="radial">Radial</option>' in graph_html
     assert '<option value="list">List</option>' in graph_html
@@ -590,6 +591,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-help" in graph_html
     assert "<summary>Graph controls</summary>" in graph_html
     assert "Connections is the default layout" in graph_html
+    assert "Cluster groups visible pages by generated course group" in graph_html
     assert "not learner state or personal guidance" in graph_html
     assert "raya-graph-detail" in graph_html
     assert "raya-graph-workspace" in graph_html
@@ -688,6 +690,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "connectionDepthsFor" in graph_script
     assert "layoutEdgesFor" in graph_script
     assert 'mode === "connections"' in graph_script
+    assert "sortedGroupIdsFor" in graph_script
+    assert 'mode === "cluster"' in graph_script
+    assert "clusterRingRadius" in graph_script
     assert "incomingByNode" in graph_script
     assert "outgoingByNode" in graph_script
     assert "setGraphPanelState" in graph_script

@@ -124,10 +124,10 @@ nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
 inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, layout determinista `Connections` por defecto,
-layouts alternos `Map`, `Radial` y `List`, estado de area de trabajo expandida
-del grafo, controles SVG de viewport, chrome compartido de descubrimiento,
-chrome movil compacto, comportamiento movil sin overflow y sin solicitudes
-externas despues de cargar la pagina. El
+layouts alternos `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
+expandida del grafo, controles SVG de viewport, chrome compartido de
+descubrimiento, chrome movil compacto, comportamiento movil sin overflow y sin
+solicitudes externas despues de cargar la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos
 del artifact, no de HTML scrapeado ni almacenamiento del navegador. El contexto de URL
 generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido

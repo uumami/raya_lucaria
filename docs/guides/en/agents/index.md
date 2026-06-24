@@ -112,9 +112,9 @@ filters, group color semantics, bounded degree-based node sizing, hover/focus
 inspection status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
 normal page links, the default deterministic `Connections` layout, alternate
-`Map`, `Radial`, and `List` layouts, expanded graph workspace state, SVG
-viewport controls, shared discovery chrome, compact mobile discovery chrome,
-mobile no-overflow behavior, and no external requests after page load. Graph UI
+`Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
+SVG viewport controls, shared discovery chrome, compact mobile discovery
+chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must
 come from embedded artifact graph data, not scraped HTML or browser storage.
 Graph layout positions are readability cues over explicit generated graph data;

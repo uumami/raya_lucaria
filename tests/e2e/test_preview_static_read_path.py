@@ -53,6 +53,10 @@ def _graph_node_translate(page, node_id: str) -> tuple[float, float]:
     return float(match.group(1)), float(match.group(2))
 
 
+def _point_distance(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
 def test_preview_serves_static_pages_files_reviewed_outputs_and_inspection(
     tmp_path: Path,
 ) -> None:
@@ -397,6 +401,36 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                     f"# Crowded Page {index}",
                     "",
                     "Crowded layout fixture content.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+    for index, title in (
+        (1, "Cluster Math A"),
+        (2, "Cluster Math B"),
+    ):
+        cluster_page = (
+            course
+            / "course"
+            / "2_math_authoring"
+            / f"{index}_cluster_math_{index}"
+            / "0_index.md"
+        )
+        cluster_page.parent.mkdir(parents=True)
+        cluster_page.write_text(
+            "\n".join(
+                [
+                    "---",
+                    f"id: cluster-math-{index}",
+                    f"title: {title}",
+                    f"summary: Cluster layout fixture page {index}.",
+                    "status: ready",
+                    "---",
+                    "",
+                    f"# {title}",
+                    "",
+                    "Cluster layout fixture content.",
                     "",
                 ]
             ),
@@ -899,6 +933,60 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator("#graph-zoom-in").is_disabled()
                         assert page.locator("#graph-zoom-out").is_disabled()
                         assert page.locator("#graph-reset-view").is_disabled()
+                        page.fill("#graph-search", "")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        page.select_option("#graph-layout", "cluster")
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-layout"
+                            )
+                            == "cluster"
+                        )
+                        cluster_root = _graph_node_translate(page, "render-root")
+                        cluster_static = _graph_node_translate(page, "static-path")
+                        cluster_math_root = _graph_node_translate(page, "math-authoring")
+                        cluster_math_a = _graph_node_translate(page, "cluster-math-1")
+                        cluster_math_b = _graph_node_translate(page, "cluster-math-2")
+                        assert cluster_static[0] > cluster_root[0]
+                        assert cluster_static[1] > cluster_root[1]
+                        assert cluster_math_root[1] < cluster_math_a[1]
+                        assert cluster_math_root[1] < cluster_math_b[1]
+                        assert cluster_math_a[0] > cluster_math_b[0]
+                        assert _point_distance(
+                            cluster_math_a, cluster_math_b
+                        ) < _point_distance(cluster_math_a, cluster_static)
+                        cluster_canvas_height = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )[3]
+                        cluster_canvas_width = _viewbox_values(
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                        )[2]
+                        cluster_node_positions = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node] g"
+                        ).evaluate_all(
+                            """nodes => nodes.map((node) => {
+                              const match = node
+                                .getAttribute('transform')
+                                .match(/translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/);
+                              return {
+                                x: Number(match[1]),
+                                y: Number(match[2]),
+                              };
+                            })"""
+                        )
+                        assert all(
+                            30 <= position["x"] <= cluster_canvas_width - 30
+                            for position in cluster_node_positions
+                        )
+                        assert all(
+                            30 <= position["y"] <= cluster_canvas_height - 30
+                            for position in cluster_node_positions
+                        )
                         page.select_option("#graph-layout", "map")
                         page.select_option("#graph-layout", "connections")
                         assert (

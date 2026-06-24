@@ -215,6 +215,17 @@ _GRAPH_JAVASCRIPT = r"""
     return layoutEdges;
   }
 
+  function sortedGroupIdsFor(activeNodes) {
+    const activeGroupIds = Array.from(new Set(activeNodes.map((node) => node.group || "")));
+    return activeGroupIds.sort((a, b) => {
+      const aGroup = groups.find((group) => group.id === a);
+      const bGroup = groups.find((group) => group.id === b);
+      const aOrder = Number(aGroup ? aGroup.order || 0 : 0);
+      const bOrder = Number(bGroup ? bGroup.order || 0 : 0);
+      return aOrder - bOrder || groupTitle(a).localeCompare(groupTitle(b)) || a.localeCompare(b);
+    });
+  }
+
   function connectionDepthsFor(activeNodes) {
     const incomingByNode = new Map(activeNodes.map((node) => [node.id, []]));
     const outgoingByNode = new Map(activeNodes.map((node) => [node.id, []]));
@@ -303,6 +314,49 @@ _GRAPH_JAVASCRIPT = r"""
             y: columnNodes.length <= 1
               ? height / 2
               : topPadding + nodeIndex * rowGap,
+          });
+        });
+      });
+      return { width, height, positions };
+    }
+    if (mode === "cluster") {
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const sidePadding = 92;
+      const topPadding = 88;
+      const availableWidth = Math.max(1, width - sidePadding * 2);
+      const availableHeight = Math.max(1, height - topPadding * 2);
+      const centerRingRadius = Math.min(availableWidth, availableHeight) * 0.38;
+      const groupIds = sortedGroupIdsFor(activeNodes);
+      const nodesByGroup = new Map(groupIds.map((groupId) => [groupId, []]));
+      activeNodes.forEach((node) => {
+        const groupId = node.group || "";
+        if (!nodesByGroup.has(groupId)) nodesByGroup.set(groupId, []);
+        nodesByGroup.get(groupId).push(node);
+      });
+      groupIds.forEach((groupId, groupIndex) => {
+        const angle = groupIds.length <= 1
+          ? -Math.PI / 2
+          : (Math.PI * 2 * groupIndex) / groupIds.length - Math.PI / 2;
+        const groupCenter = {
+          x: groupIds.length <= 1 ? centerX : centerX + Math.cos(angle) * centerRingRadius,
+          y: groupIds.length <= 1 ? centerY : centerY + Math.sin(angle) * centerRingRadius,
+        };
+        const groupNodes = (nodesByGroup.get(groupId) || []).slice().sort(compareNodesByOrder);
+        const maxRadiusX = Math.max(0, Math.min(groupCenter.x - 44, width - groupCenter.x - 44));
+        const maxRadiusY = Math.max(0, Math.min(groupCenter.y - 44, height - groupCenter.y - 44));
+        const clusterRingRadius = groupNodes.length <= 1
+          ? 0
+          : Math.min(42, Math.max(22, Math.min(maxRadiusX, maxRadiusY)));
+        groupNodes.forEach((node, nodeIndex) => {
+          if (clusterRingRadius === 0) {
+            positions.set(node.id, groupCenter);
+            return;
+          }
+          const nodeAngle = (Math.PI * 2 * nodeIndex) / groupNodes.length - Math.PI / 2;
+          positions.set(node.id, {
+            x: groupCenter.x + Math.cos(nodeAngle) * clusterRingRadius,
+            y: groupCenter.y + Math.sin(nodeAngle) * clusterRingRadius,
           });
         });
       });

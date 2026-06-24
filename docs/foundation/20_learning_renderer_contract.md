@@ -70,9 +70,10 @@ completion signals. Fit and Reset view change only the visual graph viewport;
 they must not clear search, filters, selected-page details, or authored graph
 data. The default `Connections` layout may arrange visible pages by normalized
 explicit graph relationships and course order so students can read link flow,
-while `Map`, `Radial`, and `List` remain alternate local views. Layout position
-is only a readability cue over generated graph data, not recommendation rank,
-progress, importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. It must not fetch graph data at runtime, load external graph
+while `Cluster` may group visible pages by generated course group, and `Map`,
+`Radial`, and `List` remain alternate local views. Layout position is only a
+readability cue over generated graph data, not recommendation rank, progress,
+importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. It must not fetch graph data at runtime, load external graph
 libraries, persist graph state, infer
 recommendations, or present graph position as personal progress.
 
