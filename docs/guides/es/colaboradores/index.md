@@ -23,6 +23,12 @@ Los controles de comodidad lectora viven en recursos locales de accesibilidad.
 pero no deben cambiar skins del curso, datos fuente, datos del grafo, identidad
 de objetos numerados, progreso, respuestas, dominio ni recomendaciones.
 
+Los handouts Print/PDF son comportamiento del renderer sobre paginas generadas
+en `artifact/site/`. Mantenlos acotados a media print: oculta chrome y
+controles, conserva contenido del articulo, MathJax, codigo, tablas, practica
+oficial, objetos numerados y disclosures de soporte, y evita fetch, storage,
+assets externos, lenguaje de estado del estudiante o fugas de rutas de fuente.
+
 Los cambios de skin deben preservar validacion de tokens semanticos y output
 estatico generado. Los perfiles locales del curso bajo `skins/` definen tokens
 semanticos. `render.skin` del curso y los selectores `_raya/skin.yaml` de

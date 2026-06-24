@@ -4721,6 +4721,134 @@ def test_preview_reader_page_brief_is_visible_static_and_responsive(
         handle.close()
 
 
+def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    page.emulate_media(media="print")
+                    assert page.locator(".raya-main-article").is_visible()
+                    assert page.locator(".raya-page-brief").is_visible()
+                    assert (
+                        page.locator(".raya-top-command-bar").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-course-map").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-learning-rail").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert page.locator("mjx-container").first.is_visible()
+                    assert page.locator("table").first.is_visible()
+                    assert page.locator(".raya-static-environment").first.is_visible()
+                    break_inside = page.locator(
+                        ".raya-static-environment"
+                    ).first.evaluate("node => getComputedStyle(node).breakInside")
+                    assert break_inside in {"avoid", "avoid-page"}
+                    assert (
+                        page.locator(".raya-static-environment:not([open])").count()
+                        == 0
+                    )
+                    assert page.locator(
+                        ".raya-static-environment[open] "
+                        ".raya-static-environment-body"
+                    ).first.is_visible()
+                    page.emulate_media(media="screen")
+                    page.wait_for_function(
+                        "() => document.querySelectorAll('.raya-static-environment:not([open])').length > 0"
+                    )
+                    assert (
+                        page.locator(
+                            ".raya-static-environment[data-raya-print-opened]"
+                        ).count()
+                        == 0
+                    )
+                    assert requested_urls == []
+
+                    page.goto(
+                        f"{handle.base_url}/static-path/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    page.emulate_media(media="print")
+                    assert page.locator("pre code").first.is_visible()
+                    assert (
+                        page.locator(".raya-code-copy").first.evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-course-map").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert requested_urls == []
+
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    page.emulate_media(media="print")
+                    assert page.locator(".raya-graph-list-panel").is_visible()
+                    assert page.locator("#raya-graph-list").is_visible()
+                    assert (
+                        page.locator(".raya-graph-canvas").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-graph-inspector-panel").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert requested_urls == []
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:

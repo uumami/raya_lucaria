@@ -850,6 +850,26 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in graph_script
 
 
+def test_build_writes_static_handout_print_css(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    rich_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
+    assert "@media print" in rich_css
+    assert ".raya-top-command-bar" in rich_css
+    assert ".raya-course-map" in rich_css
+    assert ".raya-learning-rail" in rich_css
+    assert ".raya-main-article" in rich_css
+    assert ".raya-graph-canvas" in rich_css
+    assert "page-break-inside: avoid" in rich_css
+    assert 'content: " (" attr(href) ")"' in rich_css
+    assert "display: none !important" in rich_css
+
+
 def test_browser_graph_payload_skips_stale_graph_nodes() -> None:
     page = SimpleNamespace(
         id="known-page",

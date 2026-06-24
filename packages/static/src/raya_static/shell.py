@@ -31,6 +31,7 @@ _SHELL_JAVASCRIPT = r"""
   const mapFilter = document.querySelector("[data-raya-course-map-filter]");
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
+  const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const headings = tocLinks
     .map((link) => {
@@ -397,12 +398,55 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function printableDisclosureElements() {
+    return Array.from(
+      document.querySelectorAll(
+        ".raya-static-environment, .raya-official-reveal, .raya-connection-preview"
+      )
+    ).filter((element) => element instanceof HTMLDetailsElement);
+  }
+
+  function openPrintDisclosures() {
+    printableDisclosureElements().forEach((details) => {
+      if (details.open) {
+        return;
+      }
+      details.dataset.rayaPrintOpened = "true";
+      details.open = true;
+    });
+  }
+
+  function restorePrintDisclosures() {
+    printableDisclosureElements().forEach((details) => {
+      if (details.dataset.rayaPrintOpened !== "true") {
+        return;
+      }
+      details.open = false;
+      delete details.dataset.rayaPrintOpened;
+    });
+  }
+
+  function syncPrintDisclosureState() {
+    if (printQuery.matches) {
+      openPrintDisclosures();
+    } else {
+      restorePrintDisclosures();
+    }
+  }
+
   desktopMapQuery.addEventListener("change", () => {
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
       setLearningRailExpanded(true);
     }
   });
+  if (printQuery.addEventListener) {
+    printQuery.addEventListener("change", syncPrintDisclosureState);
+  } else if (printQuery.addListener) {
+    printQuery.addListener(syncPrintDisclosureState);
+  }
+  window.addEventListener("beforeprint", openPrintDisclosures);
+  window.addEventListener("afterprint", restorePrintDisclosures);
 
   toggleButtons.forEach((button) => {
     button.addEventListener("click", () => {

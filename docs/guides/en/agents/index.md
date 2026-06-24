@@ -43,6 +43,14 @@ article text size, and reload persistence. Treat it as a local comfort
 preference only; it must not change `data-raya-skin`, source content, graph
 data, progress, answers, mastery, or recommendations.
 
+For print/PDF handout changes, emulate print media in a browser test. Verify
+that command bars, course maps, learning rails, workspace controls, inspectors,
+filters, and graph canvases hide only in print, while article content, Page
+briefs, MathJax, code, tables, official practice, numbered objects, and support
+disclosures remain readable. Temporary disclosure opening for print must restore
+after screen media returns and must not use storage, fetch, external assets, or
+browser-side MathJax conversion.
+
 For math authoring checks, use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` as the focused source fixture. Verify source pages rather than generated `artifact/` files, and use render-debug evidence to confirm there is no raw visible TeX, no browser-side MathJax conversion, and no external renderer request. Numbered object support is current behavior: inspect fenced directives, stable IDs, rendered anchors, `@id` shorthand references, `raya:ref/id` explicit references, and the manifest-declared `data/numbered-objects.json` index instead of looking for LaTeX `\label` or `\ref` support.
 
 When a rendering issue crosses math, numbered objects, skins, references, static environments, and local assets, inspect `examples/courses/render-fixture/course/5_authoring_matrix/0_index.md` first, then move to the specialized fixture page for the failing surface.

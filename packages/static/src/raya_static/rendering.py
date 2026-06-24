@@ -2937,6 +2937,168 @@ mjx-container[display="true"] {
     border-right: 0;
   }
 }
+@media print {
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+    scroll-padding-top: 0;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0;
+  }
+  .raya-skip-link,
+  .raya-top-command-bar,
+  .raya-course-map,
+  .raya-learning-rail,
+  .raya-graph-controls,
+  .raya-graph-groups,
+  .raya-graph-status,
+  .raya-graph-hover-status,
+  .raya-graph-instructions,
+  .raya-graph-inspector-panel,
+  .raya-graph-canvas,
+  .raya-graph-panel-header button,
+  .raya-search-controls,
+  .raya-search-control-panel,
+  .raya-search-context-panel,
+  .raya-practice-controls,
+  .raya-practice-control-panel,
+  .raya-practice-context-panel,
+  .raya-inspection-sidebar,
+  .raya-code-copy {
+    display: none !important;
+  }
+  .raya-learning-shell,
+  .raya-graph-workspace,
+  .raya-search-workspace,
+  .raya-practice-workspace {
+    display: block !important;
+  }
+  .raya-graph-page,
+  .raya-search-page,
+  .raya-practice-page,
+  .raya-graph-list-panel,
+  .raya-main-article,
+  .raya-inspection-main {
+    background: #fff !important;
+    border: 0 !important;
+    color: #000 !important;
+    display: block !important;
+    margin: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    width: auto !important;
+  }
+  .raya-main-article {
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+  .raya-main-article a,
+  .raya-search-results a,
+  .raya-practice-results a,
+  .raya-graph-list a {
+    color: #000 !important;
+    text-decoration: underline;
+  }
+  .raya-main-article a[href^="http"]::after,
+  .raya-search-results a[href^="http"]::after,
+  .raya-practice-results a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+  }
+  .raya-breadcrumbs,
+  .raya-article-sequence,
+  .raya-article-sequence-cards,
+  .raya-page-brief,
+  .raya-article-connections,
+  .raya-official-practice,
+  .raya-numbered-object,
+  .raya-proof,
+  .raya-static-environment,
+  .raya-callout,
+  figure,
+  table,
+  pre,
+  blockquote,
+  mjx-container {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .raya-page-brief,
+  .raya-article-connections,
+  .raya-official-practice,
+  .raya-numbered-object,
+  .raya-proof,
+  .raya-static-environment,
+  .raya-callout {
+    background: #fff !important;
+    border-color: #888 !important;
+  }
+  .raya-page-toc {
+    border: 1px solid #999;
+  }
+  .raya-graph-panel-body[aria-hidden="true"] {
+    display: block !important;
+  }
+  [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2 {
+    writing-mode: horizontal-tb;
+  }
+  .raya-static-environment:not([open]) > .raya-static-environment-body {
+    display: block !important;
+  }
+  .raya-static-environment:not([open]) > summary.raya-static-environment-heading {
+    border-bottom: 1px solid #999;
+  }
+  .raya-static-environment-heading,
+  .raya-numbered-object-heading,
+  .raya-proof-heading {
+    background: #f7f7f7 !important;
+    border-color: #999 !important;
+    color: #000 !important;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th,
+  td {
+    border-color: #999 !important;
+  }
+  pre,
+  code,
+  .highlight {
+    background: #fff !important;
+    color: #000 !important;
+    white-space: pre-wrap;
+  }
+  pre,
+  .math.block,
+  .raya-numbered-object-body,
+  .raya-proof-body,
+  .raya-static-environment-body {
+    overflow: visible !important;
+  }
+  img,
+  svg {
+    max-width: 100% !important;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+}
 """.strip()
     return base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"
 

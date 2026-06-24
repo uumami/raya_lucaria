@@ -165,6 +165,12 @@ Reader comfort controls such as `Text size` and `OpenDyslexic` are local display
 preferences. They do not replace course skins and should not be used to encode
 course meaning, level, grading, progress, or official status.
 
+Generated pages can also be printed or saved to PDF as static handouts. Print
+mode hides navigation chrome and keeps authored content, MathJax, code, tables,
+official practice, numbered objects, and support disclosures readable. Treat
+those handouts as generated artifact views, not source truth, grading records,
+progress, mastery, or personalized recommendations.
+
 The learning-science course shell works best when source pages give the static
 renderer honest structure. Write concise page summaries, stable prerequisites,
 clear checkpoints as authored content, worked examples, retrieval practice

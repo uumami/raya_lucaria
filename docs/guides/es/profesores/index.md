@@ -165,6 +165,13 @@ preferencias locales de visualizacion. No reemplazan las skins del curso y no
 deben usarse para codificar significado del curso, nivel, evaluacion, progreso
 ni estado oficial.
 
+Las paginas generadas tambien pueden imprimirse o guardarse como PDF como
+handouts estaticos. El modo print oculta la chrome de navegacion y mantiene
+legibles el contenido autorado, MathJax, codigo, tablas, practica oficial,
+objetos numerados y disclosures de soporte. Trata esos handouts como vistas
+generadas del artifact, no como verdad de fuente, registros de evaluacion,
+progreso, dominio ni recomendaciones personalizadas.
+
 La estructura del curso basada en ciencia del aprendizaje funciona mejor cuando
 las paginas fuente dan estructura honesta al renderizador estatico. Escribe
 resumenes breves, prerrequisitos estables, checkpoints como contenido visible,

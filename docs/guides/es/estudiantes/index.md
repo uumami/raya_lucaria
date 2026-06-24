@@ -38,6 +38,12 @@ lectura. Cada preferencia de lectura no cambia contenido, evaluacion, enlaces,
 identidad de skin ni
 etiquetas de autoridad.
 
+Puedes imprimir una pagina generada o guardarla como PDF cuando quieras un
+handout para leer o anotar sin conexion. El modo print quita la chrome del
+curso y mantiene legibles el contenido, la math, el codigo, las tablas, la
+practica oficial y las notas de soporte. No envia trabajo, no guarda progreso,
+no estima dominio ni contacta servicios externos.
+
 La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
 el mapa del curso expandido se renderiza como un mapa jerarquico del curso
 expandido y puede mostrar numeros estructurales de secuencia del orden del

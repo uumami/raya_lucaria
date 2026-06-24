@@ -24,6 +24,12 @@ Reader comfort controls live in local accessibility resources. `Text size` and
 course skins, source data, graph data, numbered object identity, progress,
 answers, mastery, or recommendations.
 
+Print/PDF handouts are renderer behavior over generated `artifact/site/` pages.
+Keep them print-media scoped: hide chrome and controls, preserve article
+content, MathJax, code, tables, official practice, numbered objects, and support
+disclosures, and avoid fetch, storage, external assets, learner-state language,
+or source-path leakage.
+
 Skin profile changes must preserve token validation and generated static output.
 Course-local profiles under `skins/` define semantic tokens. Course
 `render.skin` and section `_raya/skin.yaml` selectors choose one of those

@@ -36,6 +36,12 @@ chrome. They are local reading preferences stored by your browser for that
 static site; they change text scale or page font for easier reading but do not
 change course content, grading, links, skin identity, or authority labels.
 
+You can print a generated page or save it as a PDF when you want a handout for
+offline reading or annotation. Print mode removes the course chrome and keeps
+the page content, math, code, tables, official practice, and support notes
+readable. It does not submit work, save progress, estimate mastery, or contact
+an external service.
+
 The current course shell is a static reading aid. On desktop, the expanded course map
 is rendered as an expanded hierarchical course map and may show structural
 sequence numbers from the course order. It gives orientation by default, the top bar keeps the current course/page title and
