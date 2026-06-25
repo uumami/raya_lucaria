@@ -3986,8 +3986,11 @@ def _render_graph_surface(
                 "none</dd></div>"
                 "<div><dt>Neighborhood</dt><dd data-raya-graph-state-neighborhood>"
                 "off</dd></div>"
-                "<div><dt>Share URL</dt><dd><code data-raya-graph-state-url>"
-                "</code></dd></div>"
+                "<div><dt>Share URL</dt><dd class=\"raya-graph-share-url\">"
+                "<code data-raya-graph-state-url></code>"
+                "<button type=\"button\" data-raya-graph-copy-url>Copy URL</button>"
+                "<span data-raya-graph-copy-status aria-live=\"polite\"></span>"
+                "</dd></div>"
                 "</dl>"
                 "</section>"
             ),

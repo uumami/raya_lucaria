@@ -96,6 +96,8 @@ _GRAPH_JAVASCRIPT = r"""
   const stateNeighborhood = document.querySelector("[data-raya-graph-state-neighborhood]");
   const statePageFocus = document.querySelector("[data-raya-graph-state-page-focus]");
   const stateUrl = document.querySelector("[data-raya-graph-state-url]");
+  const copyUrl = document.querySelector("[data-raya-graph-copy-url]");
+  const copyStatus = document.querySelector("[data-raya-graph-copy-status]");
 
   if (!root || !dataEl || !canvas || !list) {
     return;
@@ -415,6 +417,39 @@ _GRAPH_JAVASCRIPT = r"""
   function syncGraphStateReadout() {
     updateGraphUrlState();
     updateGraphStateReadout(lastActiveNodes, lastActiveEdges);
+  }
+
+  function copyTextFallback(value) {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    textarea.style.top = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      return document.execCommand("copy");
+    } catch {
+      return false;
+    } finally {
+      textarea.remove();
+    }
+  }
+
+  function copyGraphUrl() {
+    const value = window.location.href;
+    if (copyStatus) copyStatus.textContent = "";
+    const copied = navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(value).then(() => true, () => copyTextFallback(value))
+      : Promise.resolve(copyTextFallback(value));
+    copied.then((ok) => {
+      if (copyStatus) {
+        copyStatus.textContent = ok
+          ? "Copied graph URL."
+          : "Copy unavailable. Select the URL above.";
+      }
+    });
   }
 
   function hiddenEdgeKindStatusText() {
@@ -2443,6 +2478,9 @@ _GRAPH_JAVASCRIPT = r"""
   });
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
+  }
+  if (copyUrl) {
+    copyUrl.addEventListener("click", copyGraphUrl);
   }
   if (inspectionPreviewSelect) {
     inspectionPreviewSelect.addEventListener("click", () => {

@@ -2901,6 +2901,19 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
             )
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    """
+                    window.__rayaCopiedGraphUrls = [];
+                    Object.defineProperty(navigator, 'clipboard', {
+                      configurable: true,
+                      value: {
+                        writeText: async (value) => {
+                          window.__rayaCopiedGraphUrls.push(String(value));
+                        },
+                      },
+                    });
+                    """
+                )
                 requested_urls: list[str] = []
                 page.on("request", lambda request: requested_urls.append(request.url))
                 try:
@@ -2982,6 +2995,59 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert handle.base_url in page.locator(
                         "[data-raya-graph-state-url]"
                     ).inner_text()
+                    copy_button = page.locator("[data-raya-graph-copy-url]")
+                    assert copy_button.is_visible()
+                    assert copy_button.inner_text() == "Copy URL"
+                    copy_button.focus()
+                    assert page.evaluate(
+                        "() => document.activeElement === document.querySelector('[data-raya-graph-copy-url]')"
+                    )
+                    copy_button.click()
+                    page.wait_for_function(
+                        """() => window.__rayaCopiedGraphUrls.length === 1 &&
+                          window.__rayaCopiedGraphUrls[0] === window.location.href"""
+                    )
+                    assert (
+                        page.locator("[data-raya-graph-copy-status]").inner_text()
+                        == "Copied graph URL."
+                    )
+                    long_query = "projection-" + "state-" * 40
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html"
+                        f"?page=reader-ux&q={long_query}",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    page.evaluate(
+                        """() => {
+                          window.__rayaFallbackCopyAttempts = [];
+                          Object.defineProperty(navigator, 'clipboard', {
+                            configurable: true,
+                            value: undefined,
+                          });
+                          document.execCommand = (command) => {
+                            window.__rayaFallbackCopyAttempts.push({
+                              command,
+                              value: document.activeElement?.value || "",
+                            });
+                            return true;
+                          };
+                        }"""
+                    )
+                    page.click("[data-raya-graph-copy-url]")
+                    page.wait_for_function(
+                        """() => window.__rayaFallbackCopyAttempts.length === 1"""
+                    )
+                    assert page.evaluate(
+                        "() => window.__rayaFallbackCopyAttempts[0]"
+                    ) == {
+                        "command": "copy",
+                        "value": page.url,
+                    }
+                    assert (
+                        page.locator("[data-raya-graph-copy-status]").inner_text()
+                        == "Copied graph URL."
+                    )
 
                     storage_state = page.evaluate(
                         """() => ({

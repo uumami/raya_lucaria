@@ -1718,6 +1718,20 @@ img {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+.raya-graph-share-url {
+  align-items: start;
+  display: grid;
+  gap: 0.45rem;
+}
+.raya-graph-share-url button {
+  justify-self: start;
+  min-height: 2rem;
+}
+.raya-graph-share-url span {
+  color: var(--raya-color-muted);
+  font-size: 0.82rem;
+  min-height: 1.1rem;
+}
 .raya-graph-detail-focus-node {
   margin-left: 0.4rem;
 }
