@@ -69,6 +69,7 @@ _GRAPH_JAVASCRIPT = r"""
   const stateHiddenGroups = document.querySelector("[data-raya-graph-state-hidden-groups]");
   const stateHiddenEdges = document.querySelector("[data-raya-graph-state-hidden-edges]");
   const stateNeighborhood = document.querySelector("[data-raya-graph-state-neighborhood]");
+  const statePageFocus = document.querySelector("[data-raya-graph-state-page-focus]");
   const stateUrl = document.querySelector("[data-raya-graph-state-url]");
 
   if (!root || !dataEl || !canvas || !list) {
@@ -98,6 +99,8 @@ _GRAPH_JAVASCRIPT = r"""
   let selectedId = "";
   let inspectedId = "";
   let activeResultId = "";
+  let pageFocusId = "";
+  let pendingInitialPageFit = false;
   let neighborhoodFocus = false;
   let matchIds = new Set();
   let pendingSelectTimer = 0;
@@ -368,6 +371,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function updateGraphStateReadout(activeNodes, activeEdges) {
     if (stateSelected) stateSelected.textContent = selectedId || "none";
+    if (statePageFocus) statePageFocus.textContent = pageFocusId || "none";
     if (stateQuery) stateQuery.textContent = (search ? search.value.trim() : "") || "none";
     if (stateLayout) stateLayout.textContent = layout ? layout.value : defaultLayout;
     if (stateVisible) {
@@ -945,6 +949,18 @@ _GRAPH_JAVASCRIPT = r"""
     canvas.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
+  function fitInitialPageFocus() {
+    if (!pendingInitialPageFit) return;
+    pendingInitialPageFit = false;
+    if (!selectedId || root.getAttribute("data-raya-graph-layout") === "list") return;
+    const box = selectedNeighborhoodBounds();
+    if (box) {
+      setGraphViewBox(box);
+      canvas.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+    setFitSelectionEnabled();
+  }
+
   function setGraphViewportControlsEnabled(enabled) {
     [zoomIn, zoomOut, resetView, ...panButtons].forEach((button) => {
       if (button) button.disabled = !enabled;
@@ -1220,6 +1236,8 @@ _GRAPH_JAVASCRIPT = r"""
       }
     });
     if (activeResultId) {
+      pageFocusId = "";
+      pendingInitialPageFit = false;
       selectedId = activeResultId;
       inspectedId = activeResultId;
       renderDetail();
@@ -1574,6 +1592,8 @@ _GRAPH_JAVASCRIPT = r"""
 
   function selectGraphNode(nodeId) {
     neighborhoodFocus = false;
+    pageFocusId = "";
+    pendingInitialPageFit = false;
     selectedId = nodeId;
     renderDetail();
     render();
@@ -1591,6 +1611,8 @@ _GRAPH_JAVASCRIPT = r"""
     selectedId = "";
     inspectedId = "";
     activeResultId = "";
+    pageFocusId = "";
+    pendingInitialPageFit = false;
     if (hoverStatus) hoverStatus.textContent = "";
     setGraphNeighborhoodFocus(false);
     renderDetail();
@@ -1611,6 +1633,8 @@ _GRAPH_JAVASCRIPT = r"""
     const params = currentUrlParams();
     const pageId = params.get("page") || "";
     selectedId = nodesById.has(pageId) ? pageId : "";
+    pageFocusId = selectedId;
+    pendingInitialPageFit = Boolean(selectedId);
     const queryText = params.get("q") || "";
     if (search && queryText) {
       search.value = queryText;
@@ -1685,6 +1709,8 @@ _GRAPH_JAVASCRIPT = r"""
     let listIds = new Set(listNodes.map((node) => node.id));
     if (selectedId && !listIds.has(selectedId)) {
       selectedId = "";
+      pageFocusId = "";
+      pendingInitialPageFit = false;
       renderDetail();
       listNodes = visibleListNodes();
       listIds = new Set(listNodes.map((node) => node.id));
@@ -1716,6 +1742,7 @@ _GRAPH_JAVASCRIPT = r"""
       canvas.replaceChildren();
       fullViewBox = null;
       graphViewBox = null;
+      pendingInitialPageFit = false;
       latestRenderedPositions = new Map();
       latestRenderedEdges = [];
       setGraphViewportControlsEnabled(false);
@@ -1742,6 +1769,7 @@ _GRAPH_JAVASCRIPT = r"""
     } else {
       canvas.setAttribute("viewBox", viewBoxString(graphViewBox));
     }
+    fitInitialPageFocus();
     setGraphViewportControlsEnabled(true);
     canvas.replaceChildren();
     appendGraphArrowMarkers(activeEdges);
@@ -1857,6 +1885,8 @@ _GRAPH_JAVASCRIPT = r"""
         inspectedId = "";
       }
       activeResultId = "";
+      pageFocusId = "";
+      pendingInitialPageFit = false;
       graphViewBox = null;
       if (clearedActiveSelection) {
         renderDetail();
@@ -1943,6 +1973,8 @@ _GRAPH_JAVASCRIPT = r"""
       selectedId = "";
       inspectedId = "";
       activeResultId = "";
+      pageFocusId = "";
+      pendingInitialPageFit = false;
       setGraphNeighborhoodFocus(false);
       graphViewBox = null;
       if (hoverStatus) hoverStatus.textContent = "";

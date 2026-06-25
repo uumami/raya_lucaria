@@ -938,6 +938,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-state-hidden-groups" in graph_html
     assert "data-raya-graph-state-hidden-edges" in graph_html
     assert "data-raya-graph-state-neighborhood" in graph_html
+    assert "data-raya-graph-state-page-focus" in graph_html
     assert "data-raya-graph-state-url" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html

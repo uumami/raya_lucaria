@@ -3955,6 +3955,7 @@ def _render_graph_surface(
                 "<h3>Graph state</h3>"
                 "<dl>"
                 "<div><dt>Selected</dt><dd data-raya-graph-state-selected>none</dd></div>"
+                "<div><dt>Page focus</dt><dd data-raya-graph-state-page-focus>none</dd></div>"
                 "<div><dt>Search</dt><dd data-raya-graph-state-query>none</dd></div>"
                 "<div><dt>Layout</dt><dd data-raya-graph-state-layout>connections</dd></div>"
                 "<div><dt>Visible</dt><dd data-raya-graph-state-visible>"

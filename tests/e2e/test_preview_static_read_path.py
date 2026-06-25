@@ -2116,6 +2116,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             page.keyboard.press("Enter")
                         assert page.url == keyboard_href
                         page.goto(
+                            f"{base_url}/_raya/graph/index.html",
+                            wait_until="networkidle",
+                        )
+                        plain_graph_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
                             wait_until="networkidle",
                         )
@@ -2129,6 +2136,38 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "[data-raya-graph-detail-title]"
                             ).inner_text()
                         )
+                        page_scoped_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert _viewbox_width(page_scoped_viewbox) < _viewbox_width(
+                            plain_graph_viewbox
+                        )
+                        assert page.locator("#graph-fit-selection").is_enabled()
+                        context = _visible_graph_context(
+                            page, "authoring-matrix", viewport
+                        )
+                        assert context["selectedVisible"]
+                        assert context["activeEdgeVisible"]
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-state-page-focus]"
+                            ).inner_text()
+                            == "authoring-matrix"
+                        )
+                        page.click("#graph-reset-view")
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == plain_graph_viewbox
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-state-page-focus]"
+                            ).inner_text()
+                            == "authoring-matrix"
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
                         assert (
                             "Explicit links: 4 outgoing, 2 incoming, 4 connected."
                         ) in page.locator(
@@ -2267,6 +2306,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "[data-raya-graph-state-selected]"
                             ).inner_text()
                         )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-state-page-focus]"
+                            ).inner_text()
+                            == "none"
+                        )
                         page.click("#graph-reset")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -2274,6 +2319,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "false"
                         )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-state-page-focus]"
+                            ).inner_text()
+                            == "none"
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-empty]"
+                        ).is_visible()
                         assert requested_urls == []
                     finally:
                         page.close()
