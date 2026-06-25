@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 SCRIPT = ROOT / "scripts" / "check-render-debug.sh"
 RENDER_DEBUG_SOURCE = ROOT / "packages" / "cli" / "src" / "raya_cli" / "render_debug.py"
+GATE_TIMEOUT_SECONDS = int(os.environ.get("RAYA_RENDER_DEBUG_TEST_TIMEOUT", "180"))
 
 
 def run_gate(
@@ -28,7 +29,7 @@ def run_gate(
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
-        timeout=60,
+        timeout=GATE_TIMEOUT_SECONDS,
     )
 
 

@@ -187,11 +187,14 @@ lock de fondo solo mientras esta abierto, limpieza del scroll lock al cerrar o
 al volver a desktop, sin escrituras de storage, sin requests externos y
 disponibilidad del articulo y riel derecho despues de cerrar.
 Cuando cambien los rieles lectores colapsados, verifica que las pestanas
-desktop Map y Context usen labels visuales no horizontales, sigan siendo
+desktop Map y Context usen labels visuales horizontales estables, sigan siendo
 operables por teclado mediante sus controles existentes, aumenten el ancho del
 articulo, permanezcan ocultas en tablet/movil cuando sus controles desktop
 esten ocultos, y no agreguen storage, fetch, progreso, recomendacion ni estado
-del estudiante.
+del estudiante. Cuando cambien controles de comodidad del shell, verifica que
+reduced-motion desactive transiciones no esenciales y que las regiones
+colapsadas de escritorio salgan de la navegacion por teclado y asistiva como se
+especifica.
 Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
 estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
 pagina solo cuando haya propiedad directa de objetos oficiales, hrefs de

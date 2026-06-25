@@ -4976,7 +4976,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)"
         in rich_css
     )
-    assert "transition: grid-template-columns 180ms ease" in rich_css
+    assert "transition: grid-template-columns 220ms ease" in rich_css
     assert ".raya-course-map-toggle:focus-visible" in rich_css
     assert ".raya-rail-toggle:focus-visible" in rich_css
     assert "outline: 3px solid var(--raya-color-accent)" in rich_css
@@ -5702,6 +5702,42 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "inline-flex",
                                 "flex",
                             }
+                            shell_state = page.evaluate(
+                                """() => {
+                                  const root = document.documentElement;
+                                  const shell = document.querySelector('.raya-learning-shell');
+                                  const map = document.querySelector('#raya-course-map');
+                                  const article = document.querySelector('#raya-article');
+                                  const readableBlocks = Array.from(article.children)
+                                    .filter((child) => getComputedStyle(child).maxWidth !== '100%');
+                                  const rail = document.querySelector('#raya-learning-rail');
+                                  const commandBar = document.querySelector('.raya-top-command-bar');
+                                  return {
+                                    ready: root.dataset.rayaShellReady,
+                                    shellTransition: getComputedStyle(shell).transition,
+                                    mapTransition: getComputedStyle(map).transition,
+                                    railTransition: getComputedStyle(rail).transition,
+                                    articleMaxWidth: getComputedStyle(article).maxWidth,
+                                    readableBlockMaxWidths: readableBlocks.map(
+                                      (child) => getComputedStyle(child).maxWidth
+                                    ),
+                                    commandGap: getComputedStyle(commandBar).gap,
+                                  };
+                                }"""
+                            )
+                            assert shell_state["ready"] == "true"
+                            assert (
+                                "grid-template-columns"
+                                in shell_state["shellTransition"]
+                            )
+                            assert "transform" in shell_state["mapTransition"]
+                            assert "transform" in shell_state["railTransition"]
+                            assert shell_state["articleMaxWidth"] == "none"
+                            assert any(
+                                width != "none"
+                                for width in shell_state["readableBlockMaxWidths"]
+                            )
+                            assert shell_state["commandGap"] != "normal"
                             workspace = page.evaluate(
                                 """() => {
                                   const section = document.querySelector('[data-raya-course-map-workspaces]');
@@ -5792,6 +5828,27 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   railBodyInert: document
                                     .querySelector('#raya-learning-rail-body')
                                     .inert,
+                                  mapButtonText: document
+                                    .querySelector('#raya-course-map .raya-course-map-toggle')
+                                    ?.textContent
+                                    ?.trim(),
+                                  railExpandText: document
+                                    .querySelector('.raya-learning-rail-expand')
+                                    ?.textContent
+                                    ?.trim(),
+                                  mapButtonWritingMode: getComputedStyle(
+                                    document.querySelector('#raya-course-map .raya-course-map-toggle')
+                                  ).writingMode,
+                                  railButtonWritingMode: getComputedStyle(
+                                    document.querySelector('.raya-learning-rail-expand')
+                                  ).writingMode,
+                                  articleLeft: document
+                                    .querySelector('#raya-article')
+                                    .getBoundingClientRect().left,
+                                  articleRight: document
+                                    .querySelector('#raya-article')
+                                    .getBoundingClientRect().right,
+                                  viewportWidth: window.innerWidth,
                                   collapsedMapLinks: Array
                                     .from(document.querySelectorAll('#raya-course-map a[href]'))
                                     .filter((link) => {
@@ -5817,6 +5874,17 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert collapsed["railButtonAfter"] == '"Context"'
                             assert collapsed["railBodyHidden"] == "true"
                             assert collapsed["railBodyInert"] is True
+                            assert collapsed["mapButtonText"] in {"Expand map", "Map"}
+                            assert collapsed["railExpandText"] == "Context"
+                            assert collapsed["mapButtonWritingMode"] == "horizontal-tb"
+                            assert (
+                                collapsed["railButtonWritingMode"] == "horizontal-tb"
+                            )
+                            assert collapsed["articleLeft"] >= 0
+                            assert (
+                                collapsed["articleRight"]
+                                <= collapsed["viewportWidth"]
+                            )
                             assert collapsed["workspaceDisplay"] == "none"
                             assert collapsed["collapsedMapLinks"]
                             assert all(
@@ -5922,6 +5990,72 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         assert focused_id == "raya-article"
                     finally:
                         page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.emulate_media(reduced_motion="reduce")
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    state = page.evaluate(
+                        """() => ({
+                          shellTransition: getComputedStyle(
+                            document.querySelector('.raya-learning-shell')
+                          ).transitionDuration,
+                          mapTransition: getComputedStyle(
+                            document.querySelector('#raya-course-map')
+                          ).transitionDuration,
+                          railPanelTransition: getComputedStyle(
+                            document.querySelector('.raya-rail-panel-body')
+                          ).transitionDuration,
+                        })"""
+                    )
+                    assert state["shellTransition"] in {
+                        "0s",
+                        "0s, 0s",
+                        "0s, 0s, 0s",
+                    }
+                    assert state["mapTransition"] in {
+                        "0s",
+                        "0s, 0s",
+                        "0s, 0s, 0s",
+                        "0s, 0s, 0s, 0s",
+                        "0s, 0s, 0s, 0s, 0s",
+                    }
+                    assert state["railPanelTransition"] in {
+                        "0s",
+                        "0s, 0s",
+                        "0s, 0s, 0s",
+                    }
+                finally:
+                    page.close()
             finally:
                 browser.close()
     finally:
@@ -6753,10 +6887,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             document.querySelector('#raya-course-map .raya-course-map-toggle'),
                             '::after'
                           ).writingMode,
-                          buttonMarkerWidth: getComputedStyle(
-                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
-                            '::before'
-                          ).width,
                           wrappedLinkTexts: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.innerText)
                             .filter((text) => text.includes('\\n')),
@@ -6779,8 +6909,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
                     assert collapsed["buttonVisualLabel"] == '"Map"'
-                    assert collapsed["buttonVisualWritingMode"] == "vertical-rl"
-                    assert float(collapsed["buttonMarkerWidth"].replace("px", "")) > 0
+                    assert collapsed["buttonVisualWritingMode"] == "horizontal-tb"
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
                     assert collapsed["firstLinkPointerEvents"] == "auto"
@@ -8398,7 +8527,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
         handle.close()
 
 
-def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
+def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -8467,7 +8596,6 @@ def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
                             mapVisualLabel: mapLabel.content,
                             mapVisualWritingMode: mapLabel.writingMode,
                             mapVisualTextOrientation: mapLabel.textOrientation,
-                            mapMarkerWidth: getComputedStyle(mapButton, '::before').width,
                             firstMapLinkTabIndex: firstMapLink?.getAttribute('tabindex'),
                             firstMapLinkPointerEvents: firstMapLink
                               ? getComputedStyle(firstMapLink).pointerEvents
@@ -8480,9 +8608,7 @@ def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
                     assert map_collapsed["mapButtonExpanded"] == "false"
                     assert map_collapsed["mapButtonAriaLabel"] == "Expand course map"
                     assert map_collapsed["mapVisualLabel"] == '"Map"'
-                    assert map_collapsed["mapVisualWritingMode"] == "vertical-rl"
-                    assert map_collapsed["mapVisualTextOrientation"] == "upright"
-                    assert float(map_collapsed["mapMarkerWidth"].replace("px", "")) > 0
+                    assert map_collapsed["mapVisualWritingMode"] == "horizontal-tb"
                     assert map_collapsed["firstMapLinkTabIndex"] is None
                     assert map_collapsed["firstMapLinkPointerEvents"] == "auto"
 
@@ -8516,7 +8642,6 @@ def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
                             railVisualLabel: expandLabel.content,
                             railVisualWritingMode: expandLabel.writingMode,
                             railVisualTextOrientation: expandLabel.textOrientation,
-                            railMarkerWidth: getComputedStyle(expand, '::before').width,
                             railBodyHidden: body?.getAttribute('aria-hidden'),
                             railBodyInert: body?.inert,
                           };
@@ -8530,9 +8655,7 @@ def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
                     assert both_collapsed["railExpandExpanded"] == "false"
                     assert both_collapsed["railExpandAriaLabel"] == "Show learning context"
                     assert both_collapsed["railVisualLabel"] == '"Context"'
-                    assert both_collapsed["railVisualWritingMode"] == "vertical-rl"
-                    assert both_collapsed["railVisualTextOrientation"] == "upright"
-                    assert float(both_collapsed["railMarkerWidth"].replace("px", "")) > 0
+                    assert both_collapsed["railVisualWritingMode"] == "horizontal-tb"
                     assert both_collapsed["railBodyHidden"] == "true"
                     assert both_collapsed["railBodyInert"] is True
                     _assert_no_horizontal_overflow(page)

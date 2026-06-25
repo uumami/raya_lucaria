@@ -171,10 +171,12 @@ Escape close, focus restore to the opener, focus containment while open,
 scroll-lock cleanup after close or desktop resize, no storage writes, no
 external requests, and article/right-rail availability after close.
 When collapsed reader rails change, verify the desktop Map and Context tabs use
-non-horizontal visual labels, remain keyboard-operable through their existing
+stable horizontal visual labels, remain keyboard-operable through their existing
 controls, increase article width, stay hidden on tablet/mobile when their
 desktop controls are hidden, and do not add storage, fetch, progress,
-recommendation, or learner-state behavior.
+recommendation, or learner-state behavior. When shell comfort controls change,
+verify that reduced-motion disables nonessential transitions and that collapsed
+desktop regions are removed from keyboard and assistive navigation as specified.
 When changing Course workspace shortcut cards, verify labels, structural badges,
 deployment-neutral hrefs, page-focused Practice hrefs only for direct official
 ownership, Schedule hrefs and dated-task badges only from direct dated official

@@ -53,8 +53,10 @@ pagina, el articulo principal sigue siendo la leccion, y el riel de aprendizaje
 ofrece contenidos de pagina y contexto cercano. Puedes colapsar el mapa a un
 riel compacto operable cuando quieras mas espacio de lectura; esa eleccion es
 no persistente y no guarda ni muestra progreso personal. En desktop, los rieles
-colapsados de mapa y contexto aparecen como pestanas verticales para que puedas
-restaurarlos sin perder el articulo.
+colapsados de mapa y contexto aparecen como pestanas compactas para que puedas
+restaurarlos sin perder el articulo. Los controles Map, Focus reading y Context
+son herramientas de comodidad de lectura. Pueden ampliar el articulo o restaurar
+el contexto alrededor sin guardar un estado personal de avance.
 Cuando una pagina tiene tabla de contenidos, el riel de aprendizaje tambien
 puede mostrar la seccion actual del articulo mientras haces scroll. Esa etiqueta
 solo orienta por encabezados de la pagina; no es porcentaje leido, marca de
