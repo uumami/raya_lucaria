@@ -147,7 +147,10 @@ Los colores del grafo agrupan paginas por la estructura actual del curso, el
 tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
 grafo puede mantener visibles solo labels de alto contexto hasta que selecciones,
 busques, hagas hover o enfoques paginas cercanas con teclado. El hover o foco de teclado puede inspeccionar temporalmente una pagina y sus
-paginas conectadas. Son pistas estaticas de legibilidad, no rankings de
+paginas conectadas. Los equipos de curso pueden elegir una paleta de grafo
+mediante la skin del curso, asi que los colores pueden verse distintos entre
+cursos o secciones manteniendo el mismo significado estructural. Son pistas
+estaticas de legibilidad, no rankings de
 importancia, progreso, dominio, recomendaciones ni senales de evaluacion.
 
 Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen,

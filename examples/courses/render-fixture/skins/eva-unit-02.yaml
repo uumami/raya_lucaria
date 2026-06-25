@@ -12,6 +12,15 @@ tokens:
     success: "#236c3a"
     warning: "#8f5d00"
     danger: "#c4001a"
+  graph:
+    group_1: "#d92323"
+    group_2: "#c88020"
+    group_3: "#236c3a"
+    group_4: "#2878a0"
+    group_5: "#9040a0"
+    group_6: "#8f5d00"
+    group_7: "#c4001a"
+    group_8: "#57606a"
   font:
     body: "system-ui"
     heading: "system-ui"

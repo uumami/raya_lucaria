@@ -37,6 +37,12 @@ la fuente es un problema de selector, un problema de tokens de perfil, output
 CSS generado o activacion de pagina renderizada. No infieras estado de skin solo
 desde screenshots; compara el selector fuente, perfil cargado, diagnosticos,
 `skin.css`, `data-raya-skin` y reporte render-debug.
+Para problemas de paleta del grafo, inspecciona los `tokens.graph.group_1`
+hasta `group_8` opcionales en la skin seleccionada, las variables generadas
+`--raya-graph-group-*` en `skin.css`, las variables inline de chips de grupo,
+las custom properties de nodos y aristas SVG, y los paths de marcadores de
+flecha. Trata los colores del grafo solo como pistas visuales de legibilidad,
+nunca como progreso, ranking, recomendacion ni autoridad del grafo.
 
 Para el toggle lector `OpenDyslexic`, verifica los assets estaticos generados
 bajo `_raya/render/accessibility/`, el archivo local de fuente, el script local

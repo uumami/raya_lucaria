@@ -37,6 +37,11 @@ profile-token problem, generated CSS output, or a rendered-page activation
 problem. Do not infer skin state from screenshots alone; compare the source
 selector, loaded profile, diagnostics, `skin.css`, `data-raya-skin`, and
 render-debug report.
+For graph palette issues, inspect optional `tokens.graph.group_1` through
+`group_8` in the selected skin, generated `--raya-graph-group-*` variables in
+`skin.css`, graph group chip inline variables, SVG node and edge custom
+properties, and arrow marker paths. Treat graph colors as visual readability
+cues only, never as progress, ranking, recommendation, or graph authority.
 
 For the `OpenDyslexic` reader toggle, verify the generated static assets under
 `_raya/render/accessibility/`, the local font file, the local toggle script,

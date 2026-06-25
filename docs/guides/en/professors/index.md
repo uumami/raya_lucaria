@@ -141,6 +141,15 @@ tokens:
     success: "#1a7f37"
     warning: "#9a6700"
     danger: "#cf222e"
+  graph:
+    group_1: "#0969da"
+    group_2: "#1a7f37"
+    group_3: "#8250df"
+    group_4: "#9a6700"
+    group_5: "#006d77"
+    group_6: "#cf222e"
+    group_7: "#57606a"
+    group_8: "#6f42c1"
   font:
     body: "system-ui"
     heading: "system-ui"
@@ -159,9 +168,12 @@ render:
 The selector file does not define colors or fonts; it only names a profile that
 already exists under `skins/`.
 
-Skin files define semantic color, font, and density tokens. Keep contrast high,
-avoid external fonts, and do not use skins to change course content, links, or
-numbered object identity. The source fields are `render.skin`, `skins/`, and
+Skin files define semantic color, optional graph palette, font, and density
+tokens. The optional `tokens.graph.group_1` through `group_8` values color graph
+groups, legend swatches, nodes, edges, and arrow markers after rebuild. Keep
+contrast high, avoid external fonts, and do not use skins to change course
+content, links, graph data, progress, ranking, recommendations, or numbered
+object identity. The source fields are `render.skin`, `skins/`, and
 `_raya/skin.yaml`; there are no external fonts in the accepted static contract.
 The render fixture uses `eva-unit-02` as its readable default skin example;
 copy its pattern when you want a stronger visual identity without reducing

@@ -45,11 +45,16 @@ under the renderer support path. The rule is no arbitrary CSS, no external
 fonts, no CDN requests, and no browser-side skin resolution. Cover skin changes
 with render-debug evidence when generated CSS, page attributes, local resources,
 or visual layout can regress. When changing this contract, keep docs aligned
-with `REQUIRED_COLOR_TOKENS`, `REQUIRED_FONT_TOKENS`, `ALLOWED_DENSITIES`, and
-`ALLOWED_FONT_STACKS` in `packages/static/src/raya_static/skins.py`. Tests should
-cover unknown selectors, duplicate IDs, filename/id mismatches, unsupported
-token fields, malformed colors, low contrast, invalid density, unsafe fonts,
-generated `skin.css`, and nearest-section inheritance.
+with `REQUIRED_COLOR_TOKENS`, `REQUIRED_GRAPH_TOKENS`,
+`REQUIRED_FONT_TOKENS`, `ALLOWED_DENSITIES`, and `ALLOWED_FONT_STACKS` in
+`packages/static/src/raya_static/skins.py`. Optional graph tokens must remain
+validated categorical color cues for generated `--raya-graph-group-*`
+variables; do not let them become arbitrary CSS, browser-side theme logic, graph
+data authority, progress, ranking, or recommendations. Tests should cover
+unknown selectors, duplicate IDs, filename/id mismatches, unsupported token
+fields, malformed colors, malformed graph colors, low contrast, invalid
+density, unsafe fonts, generated `skin.css`, graph palette CSS variables, and
+nearest-section inheritance.
 
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when changing math rendering or authoring guidance. It is the fixture target for current valid examples: `\begin{bmatrix}`, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, optimization notation, and numbered object Markdown. Keep invalid math examples in tests so professor and student docs remain copyable.
 

@@ -46,11 +46,16 @@ CSS arbitrario, no fuentes externas, no requests CDN y no resolver de skin en el
 Cubre cambios de skin con evidencia render-debug cuando puedan fallar CSS generado,
 atributos de pagina, recursos locales o layout visual. Cuando cambies este
 contrato, manten docs alineadas con `REQUIRED_COLOR_TOKENS`,
-`REQUIRED_FONT_TOKENS`, `ALLOWED_DENSITIES` y `ALLOWED_FONT_STACKS` en
-`packages/static/src/raya_static/skins.py`. Los tests deben cubrir selectores
-desconocidos, IDs duplicados, desajustes entre nombre de archivo e `id`, campos
-de token no soportados, colores malformados, contraste bajo, densidad invalida,
-fuentes no seguras, `skin.css` generado e herencia de la seccion mas cercana.
+`REQUIRED_GRAPH_TOKENS`, `REQUIRED_FONT_TOKENS`, `ALLOWED_DENSITIES` y
+`ALLOWED_FONT_STACKS` en `packages/static/src/raya_static/skins.py`. Los tokens
+opcionales de grafo deben seguir siendo colores categoricos validados para las
+variables generadas `--raya-graph-group-*`; no los conviertas en CSS arbitrario,
+logica de tema en el browser, autoridad de datos del grafo, progreso, ranking
+ni recomendaciones. Los tests deben cubrir selectores desconocidos, IDs
+duplicados, desajustes entre nombre de archivo e `id`, campos de token no
+soportados, colores malformados, colores de grafo malformados, contraste bajo,
+densidad invalida, fuentes no seguras, `skin.css` generado, variables CSS de
+paleta de grafo e herencia de la seccion mas cercana.
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando cambies rendering de math o guia de autoria. Es el fixture target para ejemplos validos actuales: `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas, notacion de optimizacion y Markdown de objetos numerados. Mantiene ejemplos invalidos de math en tests para que docs de profesores y estudiantes sigan siendo copiables.
 

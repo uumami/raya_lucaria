@@ -748,16 +748,6 @@ img {
   max-width: 118rem;
   padding: var(--raya-space-page);
 }
-.raya-graph-page {
-  --raya-graph-group-1: var(--raya-color-accent);
-  --raya-graph-group-2: var(--raya-color-success);
-  --raya-graph-group-3: color-mix(in srgb, var(--raya-color-accent) 68%, var(--raya-color-success));
-  --raya-graph-group-4: color-mix(in srgb, var(--raya-color-success) 70%, var(--raya-color-text));
-  --raya-graph-group-5: color-mix(in srgb, var(--raya-color-accent) 58%, var(--raya-color-text));
-  --raya-graph-group-6: color-mix(in srgb, var(--raya-color-success) 52%, var(--raya-color-accent-soft));
-  --raya-graph-group-7: color-mix(in srgb, var(--raya-color-accent) 44%, var(--raya-color-surface));
-  --raya-graph-group-8: color-mix(in srgb, var(--raya-color-success) 44%, var(--raya-color-surface));
-}
 .raya-graph-header,
 .raya-search-header,
 .raya-practice-header,

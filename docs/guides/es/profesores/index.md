@@ -142,6 +142,15 @@ tokens:
     success: "#1a7f37"
     warning: "#9a6700"
     danger: "#cf222e"
+  graph:
+    group_1: "#0969da"
+    group_2: "#1a7f37"
+    group_3: "#8250df"
+    group_4: "#9a6700"
+    group_5: "#006d77"
+    group_6: "#cf222e"
+    group_7: "#57606a"
+    group_8: "#6f42c1"
   font:
     body: "system-ui"
     heading: "system-ui"
@@ -159,10 +168,13 @@ render:
 
 El selector no define colores ni fuentes; solo nombra un perfil que ya existe bajo `skins/`.
 
-Los archivos de skin definen tokens semanticos de color, font y densidad.
-Mantiene alto el contraste, evita fuentes externas, y no uses skins para
-cambiar contenido del curso, enlaces ni identidad de objetos numerados. Los
-campos de fuente son `render.skin`, `skins/` y `_raya/skin.yaml`.
+Los archivos de skin definen tokens semanticos de color, paleta opcional de
+grafo, font y densidad. Los valores opcionales `tokens.graph.group_1` hasta
+`group_8` colorean grupos del grafo, leyendas, nodos, aristas y flechas despues
+de reconstruir. Mantiene alto el contraste, evita fuentes externas, y no uses
+skins para cambiar contenido del curso, enlaces, datos del grafo, progreso,
+ranking, recomendaciones ni identidad de objetos numerados. Los campos de
+fuente son `render.skin`, `skins/` y `_raya/skin.yaml`.
 El render fixture usa `eva-unit-02` como ejemplo de skin predeterminada legible;
 copia ese patron cuando quieras una identidad visual mas fuerte sin bajar
 contraste ni cambiar el significado del curso.

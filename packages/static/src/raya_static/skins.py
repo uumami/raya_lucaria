@@ -24,8 +24,18 @@ REQUIRED_COLOR_TOKENS = (
     "danger",
 )
 REQUIRED_FONT_TOKENS = ("body", "heading", "mono")
+REQUIRED_GRAPH_TOKENS = (
+    "group_1",
+    "group_2",
+    "group_3",
+    "group_4",
+    "group_5",
+    "group_6",
+    "group_7",
+    "group_8",
+)
 ALLOWED_PROFILE_FIELDS = frozenset({"id", "name", "tokens"})
-ALLOWED_TOKEN_GROUPS = frozenset({"color", "font", "density"})
+ALLOWED_TOKEN_GROUPS = frozenset({"color", "font", "graph", "density"})
 ALLOWED_DENSITIES = frozenset({"comfortable", "compact", "spacious"})
 ALLOWED_FONT_STACKS = frozenset(
     {
@@ -56,6 +66,19 @@ DENSITY_SPACING = {
         "inline": "1rem",
     },
 }
+DEFAULT_GRAPH_COLORS = (
+    "var(--raya-color-accent)",
+    "var(--raya-color-success)",
+    "color-mix(in srgb, var(--raya-color-accent) 68%, var(--raya-color-success))",
+    "color-mix(in srgb, var(--raya-color-success) 70%, var(--raya-color-text))",
+    "color-mix(in srgb, var(--raya-color-accent) 58%, var(--raya-color-text))",
+    (
+        "color-mix(in srgb, var(--raya-color-success) 52%, "
+        "var(--raya-color-accent-soft))"
+    ),
+    "color-mix(in srgb, var(--raya-color-accent) 44%, var(--raya-color-surface))",
+    "color-mix(in srgb, var(--raya-color-success) 44%, var(--raya-color-surface))",
+)
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 SKIN_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -67,6 +90,7 @@ class SkinProfile:
     colors: dict[str, str]
     fonts: dict[str, str]
     density: str
+    graph_colors: dict[str, str] | None = None
     source_path: Path | None = None
 
 
@@ -105,6 +129,7 @@ BUILT_IN_SKINS = {
             "heading": "system-ui",
             "mono": "ui-monospace",
         },
+        graph_colors=None,
         density="comfortable",
     )
 }
@@ -304,7 +329,23 @@ def _parse_skin_profile(
         field="tokens.font",
         report=report,
     )
+    graph_colors = None
+    if "graph" in tokens:
+        graph_colors = _required_string_map(
+            tokens.get("graph"),
+            required=REQUIRED_GRAPH_TOKENS,
+            path=path,
+            field="tokens.graph",
+            report=report,
+        )
     _validate_colors(colors, path=path, report=report)
+    if graph_colors is not None:
+        _validate_colors(
+            graph_colors,
+            path=path,
+            report=report,
+            field_prefix="tokens.graph",
+        )
     _validate_contrast(colors, path=path, report=report)
     _validate_fonts(fonts, path=path, report=report)
 
@@ -330,6 +371,7 @@ def _parse_skin_profile(
         name=name,
         colors=colors,
         fonts=fonts,
+        graph_colors=graph_colors,
         density=density,
         source_path=path,
     )
@@ -412,13 +454,14 @@ def _validate_colors(
     *,
     path: Path,
     report: ValidationReport,
+    field_prefix: str = "tokens.color",
 ) -> None:
     for key, value in colors.items():
         if not HEX_COLOR_RE.match(value):
             report.add_error(
                 f"Skin color token '{key}' must be a 6-digit hex color",
                 path=path,
-                field=f"tokens.color.{key}",
+                field=f"{field_prefix}.{key}",
                 next_action='Use a value like "#0969da"',
             )
 
@@ -637,6 +680,14 @@ def render_skin_css(context: SkinContext) -> str:
             lines.append(f"  --raya-color-{key.replace('_', '-')}: {profile.colors[key]};")
         for key in REQUIRED_FONT_TOKENS:
             lines.append(f"  --raya-font-{key}: {profile.fonts[key]};")
+        if profile.graph_colors is not None:
+            for index, key in enumerate(REQUIRED_GRAPH_TOKENS, start=1):
+                lines.append(
+                    f"  --raya-graph-group-{index}: {profile.graph_colors[key]};"
+                )
+        else:
+            for index, value in enumerate(DEFAULT_GRAPH_COLORS, start=1):
+                lines.append(f"  --raya-graph-group-{index}: {value};")
         lines.append(f"  --raya-density: {profile.density};")
         for key, value in DENSITY_SPACING[profile.density].items():
             lines.append(f"  --raya-space-{key}: {value};")

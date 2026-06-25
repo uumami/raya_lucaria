@@ -139,7 +139,9 @@ Graph colors group pages by current course structure, node size can show how
 many explicit links touch a page, and the graph may keep only high-context
 labels visible until you select, search, hover, or keyboard-focus nearby pages.
 Hover or keyboard focus can temporarily inspect a page and its connected pages.
-These are static readability cues, not
+Course teams may choose a graph palette through the course skin, so colors may
+look different across courses or sections while keeping the same structural
+meaning. These are static readability cues, not
 importance rankings, progress, mastery, recommendations, or grading signals.
 
 Use Course Search when you remember a title, tag, status, summary phrase,

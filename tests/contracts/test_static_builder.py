@@ -463,6 +463,144 @@ def test_build_fails_for_invalid_skin_color(tmp_path: Path) -> None:
     )
 
 
+def test_build_emits_graph_palette_tokens_from_skin_profile(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: graph-lab\n",
+        encoding="utf-8",
+    )
+    skin_path = course / "skins" / "graph-lab.yaml"
+    _write_test_skin(skin_path, "graph-lab")
+    skin_path.write_text(
+        skin_path.read_text(encoding="utf-8").replace(
+            "  font:\n",
+            "  graph:\n"
+            '    group_1: "#d92323"\n'
+            '    group_2: "#236c3a"\n'
+            '    group_3: "#8250df"\n'
+            '    group_4: "#8f5d00"\n'
+            '    group_5: "#006d77"\n'
+            '    group_6: "#c4001a"\n'
+            '    group_7: "#5b2a86"\n'
+            '    group_8: "#57606a"\n'
+            "  font:\n",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    skin_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "skin.css"
+    ).read_text(encoding="utf-8")
+    assert '[data-raya-skin="graph-lab"]' in skin_css
+    assert "--raya-graph-group-1: #d92323;" in skin_css
+    assert "--raya-graph-group-8: #57606a;" in skin_css
+
+
+def test_build_emits_fallback_graph_palette_for_skin_without_graph_tokens(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: warm-academic\n",
+        encoding="utf-8",
+    )
+    _write_test_skin(course / "skins" / "warm-academic.yaml", "warm-academic")
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    skin_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "skin.css"
+    ).read_text(encoding="utf-8")
+    assert '[data-raya-skin="warm-academic"]' in skin_css
+    assert "--raya-graph-group-1: var(--raya-color-accent);" in skin_css
+    assert "--raya-graph-group-8: color-mix(" in skin_css
+    rich_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
+    assert ".raya-graph-page {\n  --raya-graph-group-1:" not in rich_css
+
+
+def test_build_fails_for_invalid_graph_palette_color(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: bad-graph\n",
+        encoding="utf-8",
+    )
+    skin_path = course / "skins" / "bad-graph.yaml"
+    _write_test_skin(skin_path, "bad-graph")
+    skin_path.write_text(
+        skin_path.read_text(encoding="utf-8").replace(
+            "  font:\n",
+            "  graph:\n"
+            '    group_1: "red"\n'
+            '    group_2: "#236c3a"\n'
+            '    group_3: "#8250df"\n'
+            '    group_4: "#8f5d00"\n'
+            '    group_5: "#006d77"\n'
+            '    group_6: "#c4001a"\n'
+            '    group_7: "#5b2a86"\n'
+            '    group_8: "#57606a"\n'
+            "  font:\n",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    messages = [diagnostic.format() for diagnostic in report.diagnostics]
+    assert any(
+        "Skin color token 'group_1' must be a 6-digit hex color" in message
+        for message in messages
+    )
+    assert any("tokens.graph.group_1" in message for message in messages)
+
+
+def test_build_fails_for_unknown_graph_palette_key(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8") + "\nrender:\n  skin: bad-graph\n",
+        encoding="utf-8",
+    )
+    skin_path = course / "skins" / "bad-graph.yaml"
+    _write_test_skin(skin_path, "bad-graph")
+    skin_path.write_text(
+        skin_path.read_text(encoding="utf-8").replace(
+            "  font:\n",
+            "  graph:\n"
+            '    group_1: "#d92323"\n'
+            '    group_2: "#236c3a"\n'
+            '    group_3: "#8250df"\n'
+            '    group_4: "#8f5d00"\n'
+            '    group_5: "#006d77"\n'
+            '    group_6: "#c4001a"\n'
+            '    group_7: "#5b2a86"\n'
+            '    group_8: "#57606a"\n'
+            '    chapter_bonus: "#111111"\n'
+            "  font:\n",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    messages = [diagnostic.format() for diagnostic in report.diagnostics]
+    assert any(
+        "Skin token group contains unsupported key 'chapter_bonus'" in message
+        for message in messages
+    )
+    assert any("tokens.graph.chapter_bonus" in message for message in messages)
+
+
 def test_build_fails_for_section_skin_selector_without_section_index(
     tmp_path: Path,
 ) -> None:
