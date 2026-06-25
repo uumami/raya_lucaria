@@ -1603,6 +1603,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.includes('authoring-matrix')"""
+                        )
                         before_width = page.locator(
                             "#raya-graph-canvas"
                         ).bounding_box()["width"]
@@ -1631,12 +1640,113 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).first.get_attribute("tabindex")
                             == "-1"
                         )
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-inspector-state"
+                            )
+                            == "collapsed"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-panel-body='inspector']"
+                            ).get_attribute("aria-hidden")
+                            == "true"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-detail-clear]"
+                            ).get_attribute("tabindex")
+                            == "-1"
+                        )
+                        assert page.input_value("#graph-search") == "matrx"
+                        assert (
+                            "authoring-matrix"
+                            in page.locator(
+                                "[data-raya-graph-state-selected]"
+                            ).inner_text()
+                        )
                         after_width = page.locator("#raya-graph-canvas").bounding_box()[
                             "width"
                         ]
                         if viewport["width"] >= 1280:
-                            assert after_width >= before_width
+                            assert after_width > before_width
                             assert page.locator("#raya-graph-canvas").is_visible()
+                            page.click('[data-raya-graph-toggle-panel="list"]')
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-expanded"
+                                )
+                                == "false"
+                            )
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-list-state"
+                                )
+                                == "expanded"
+                            )
+                            assert (
+                                page.locator(
+                                    "[data-raya-graph-panel-body='list']"
+                                ).get_attribute("aria-hidden")
+                                == "false"
+                            )
+                            assert (
+                                page.locator(
+                                    "#raya-graph-list [data-raya-graph-node] a"
+                                ).first.get_attribute("tabindex")
+                                is None
+                            )
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-inspector-state"
+                                )
+                                == "collapsed"
+                            )
+                            page.click("#graph-expand")
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-expanded"
+                                )
+                                == "true"
+                            )
+                            page.click('[data-raya-graph-toggle-panel="inspector"]')
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-expanded"
+                                )
+                                == "false"
+                            )
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-inspector-state"
+                                )
+                                == "expanded"
+                            )
+                            assert (
+                                page.locator(
+                                    "[data-raya-graph-panel-body='inspector']"
+                                ).get_attribute("aria-hidden")
+                                == "false"
+                            )
+                            assert (
+                                page.locator(
+                                    "[data-raya-graph-detail-clear]"
+                                ).get_attribute("tabindex")
+                                is None
+                            )
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-list-state"
+                                )
+                                == "collapsed"
+                            )
+                            page.click("#graph-expand")
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-expanded"
+                                )
+                                == "true"
+                            )
                         page.click("#graph-expand")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(
@@ -1649,6 +1759,24 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "data-raya-graph-list-state"
                             )
                             == "expanded"
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-inspector-state"
+                            )
+                            == "expanded"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-panel-body='inspector']"
+                            ).get_attribute("aria-hidden")
+                            == "false"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-detail-clear]"
+                            ).get_attribute("tabindex")
+                            is None
                         )
                         page.click("[data-raya-graph-detail-clear]")
                         assert page.locator(

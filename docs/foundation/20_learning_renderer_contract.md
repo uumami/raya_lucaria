@@ -104,7 +104,8 @@ non-persistent selected-neighborhood focus mode,
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
 out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,
-Fit selection, and Reset view, a non-persistent expanded workspace mode, and URL-addressable
+Fit selection, Reset view, and a non-persistent graph focus mode that collapses
+side panels into operable rails, and URL-addressable
 static graph state for selected page, search query, layout, visible groups,
 visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
 The graph may show a compact state readout and share URL for debugging and

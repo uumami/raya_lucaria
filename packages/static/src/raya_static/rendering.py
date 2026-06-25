@@ -863,7 +863,7 @@ img {
   writing-mode: vertical-rl;
 }
 [data-raya-graph-expanded="true"] .raya-graph-workspace {
-  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(40rem, 1fr) minmax(18rem, 24rem);
+  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(40rem, 1fr) minmax(4.5rem, 5.5rem);
 }
 .raya-graph-controls,
 .raya-search-controls,

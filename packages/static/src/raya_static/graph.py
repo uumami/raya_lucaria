@@ -1665,7 +1665,15 @@ _GRAPH_JAVASCRIPT = r"""
     root.setAttribute("data-raya-graph-expanded", nextExpanded ? "true" : "false");
     if (graphExpand) {
       graphExpand.setAttribute("aria-pressed", nextExpanded ? "true" : "false");
-      graphExpand.textContent = nextExpanded ? "Compact graph" : "Expand graph";
+      graphExpand.setAttribute(
+        "aria-label",
+        nextExpanded ? "Leave graph focus mode" : "Expand graph focus mode"
+      );
+      graphExpand.textContent = nextExpanded ? "Compact" : "Focus";
+    }
+    if (nextExpanded) {
+      setGraphPanelState("list", false);
+      setGraphPanelState("inspector", false);
     }
   }
 
@@ -1953,6 +1961,7 @@ _GRAPH_JAVASCRIPT = r"""
       const nextExpanded = root.dataset.rayaGraphExpanded !== "true";
       setGraphExpanded(nextExpanded);
       setGraphPanelState("list", !nextExpanded);
+      setGraphPanelState("inspector", !nextExpanded);
       render();
     });
   }
@@ -1963,7 +1972,11 @@ _GRAPH_JAVASCRIPT = r"""
       const attr = panelName === "inspector"
         ? "data-raya-graph-inspector-state"
         : "data-raya-graph-list-state";
-      setGraphPanelState(panelName, root.getAttribute(attr) === "collapsed");
+      const nextExpanded = root.getAttribute(attr) === "collapsed";
+      if (nextExpanded && root.dataset.rayaGraphExpanded === "true") {
+        setGraphExpanded(false);
+      }
+      setGraphPanelState(panelName, nextExpanded);
       syncGraphStateReadout();
     });
   });

@@ -794,12 +794,39 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
         'role="group" aria-label="Graph state controls">'
     ) in graph_html
-    assert "Zoom in" in graph_html
-    assert "Zoom out" in graph_html
-    assert "Reset view" in graph_html
+    assert (
+        '<button id="graph-zoom-in" type="button" '
+        'aria-label="Zoom in graph">+</button>'
+    ) in graph_html
+    assert (
+        '<button id="graph-zoom-out" type="button" '
+        'aria-label="Zoom out graph">-</button>'
+    ) in graph_html
+    assert (
+        '<button id="graph-reset-view" type="button" '
+        'aria-label="Reset graph view">Reset</button>'
+    ) in graph_html
     assert "Reset graph" in graph_html
-    assert "Pan graph left" in graph_html
-    assert "Pan graph right" in graph_html
+    assert (
+        '<button type="button" data-raya-graph-pan="left" '
+        'aria-label="Pan graph left">L</button>'
+    ) in graph_html
+    assert (
+        '<button type="button" data-raya-graph-pan="right" '
+        'aria-label="Pan graph right">R</button>'
+    ) in graph_html
+    assert (
+        '<button type="button" data-raya-graph-pan="up" '
+        'aria-label="Pan graph up">U</button>'
+    ) in graph_html
+    assert (
+        '<button type="button" data-raya-graph-pan="down" '
+        'aria-label="Pan graph down">D</button>'
+    ) in graph_html
+    assert (
+        '<button id="graph-expand" type="button" aria-pressed="false" '
+        'aria-label="Expand graph focus mode">Focus</button>'
+    ) in graph_html
     assert 'data-raya-graph-pan="left"' in graph_html
     assert 'tabindex="0"' in graph_html
     assert "raya-graph-instructions" in graph_html
@@ -1053,6 +1080,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "incomingByNode" in graph_script
     assert "outgoingByNode" in graph_script
     assert "setGraphPanelState" in graph_script
+    assert 'setGraphPanelState("list", !nextExpanded)' in graph_script
+    assert 'setGraphPanelState("inspector", !nextExpanded)' in graph_script
     assert "data-raya-graph-list-state" in graph_script
     assert "data-raya-graph-inspector-state" in graph_script
     assert "URLSearchParams" in graph_script

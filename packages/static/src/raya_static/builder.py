@@ -3747,25 +3747,26 @@ def _render_graph_surface(
             '<button id="graph-fit" type="button">Fit</button>',
             '<button id="graph-fit-selection" type="button" disabled>'
             "Fit selection</button>",
-            '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">Zoom in</button>',
-            '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">Zoom out</button>',
-            '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset view</button>',
+            '<button id="graph-zoom-in" type="button" aria-label="Zoom in graph">+</button>',
+            '<button id="graph-zoom-out" type="button" aria-label="Zoom out graph">-</button>',
+            '<button id="graph-reset-view" type="button" aria-label="Reset graph view">Reset</button>',
             "</div>",
             (
                 '<span class="raya-graph-pan-controls raya-graph-toolbar-group '
                 'raya-graph-toolbar-pan" role="group" aria-label="Pan graph">'
             ),
-            '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">Left</button>',
-            '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">Right</button>',
-            '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">Up</button>',
-            '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">Down</button>',
+            '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">L</button>',
+            '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">R</button>',
+            '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">U</button>',
+            '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">D</button>',
             "</span>",
             (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
                 'role="group" aria-label="Graph state controls">'
             ),
             '<button id="graph-reset" type="button">Reset graph</button>',
-            '<button id="graph-expand" type="button" aria-pressed="false">Expand graph</button>',
+            '<button id="graph-expand" type="button" '
+            'aria-pressed="false" aria-label="Expand graph focus mode">Focus</button>',
             "</div>",
             "</section>",
             (
