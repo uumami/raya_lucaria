@@ -652,28 +652,28 @@ img {
   padding: 0 0.2rem;
 }
 .raya-command-search::before {
-  content: "S";
+  content: "⌕";
 }
 .raya-command-home::before {
-  content: "C";
+  content: "⌂";
 }
 .raya-command-graph::before {
-  content: "G";
+  content: "⌘";
 }
 .raya-command-practice::before {
-  content: "P";
+  content: "✓";
 }
 .raya-command-tasks::before {
-  content: "T";
+  content: "☑";
 }
 .raya-command-schedule::before {
-  content: "D";
+  content: "◷";
 }
 .raya-command-map::before {
-  content: "M";
+  content: "◇";
 }
 .raya-command-size::before {
-  content: "T";
+  content: "A+";
 }
 .raya-command-font::before {
   content: "Aa";

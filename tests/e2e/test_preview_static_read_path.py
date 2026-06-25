@@ -598,6 +598,26 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             ".raya-discovery-command-bar .raya-command-home"
                         ).is_visible()
+                        graph_badges = page.evaluate(
+                            """() => Object.fromEntries(
+                              Array.from(
+                                document.querySelectorAll(
+                                  '.raya-discovery-command-bar .raya-command'
+                                )
+                              ).map((node) => [
+                                Array.from(node.classList)
+                                  .find((name) => name.startsWith('raya-command-')),
+                                getComputedStyle(node, '::before').content
+                              ])
+                            )"""
+                        )
+                        assert graph_badges["raya-command-home"] == '"⌂"'
+                        assert graph_badges["raya-command-search"] == '"⌕"'
+                        assert graph_badges["raya-command-practice"] == '"✓"'
+                        assert graph_badges["raya-command-tasks"] == '"☑"'
+                        assert graph_badges["raya-command-schedule"] == '"◷"'
+                        assert graph_badges["raya-command-size"] == '"A+"'
+                        assert graph_badges["raya-command-font"] == '"Aa"'
                         assert (
                             page.locator(
                                 ".raya-graph-header .raya-course-title"
@@ -6289,6 +6309,19 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           };
                         }"""
                     )
+                    badges = page.evaluate(
+                        """() => Object.fromEntries(
+                          Array.from(
+                            document.querySelectorAll(
+                              '.raya-top-command-bar .raya-command'
+                            )
+                          ).map((node) => [
+                            Array.from(node.classList)
+                              .find((name) => name.startsWith('raya-command-')),
+                            getComputedStyle(node, '::before').content
+                          ])
+                        )"""
+                    )
                     page.click(".raya-course-map-toggle")
                     page.click("[data-raya-learning-rail-collapse]")
                     page.wait_for_function(
@@ -6366,6 +6399,14 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
+    assert badges["raya-command-map"] == '"◇"'
+    assert badges["raya-command-search"] == '"⌕"'
+    assert badges["raya-command-graph"] == '"⌘"'
+    assert badges["raya-command-practice"] == '"✓"'
+    assert badges["raya-command-tasks"] == '"☑"'
+    assert badges["raya-command-schedule"] == '"◷"'
+    assert badges["raya-command-size"] == '"A+"'
+    assert badges["raya-command-font"] == '"Aa"'
     assert collapsed["mapWidth"] <= 82
     assert collapsed["railWidth"] <= 64
     assert collapsed["mapLabel"] == '"Nav"'
