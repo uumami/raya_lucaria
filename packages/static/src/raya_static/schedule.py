@@ -25,6 +25,7 @@ _SCHEDULE_JAVASCRIPT = r"""
   const status = document.getElementById("raya-schedule-status");
   const empty = document.getElementById("raya-schedule-empty");
   const summaryCount = document.querySelector("[data-raya-schedule-summary-count]");
+  const pageFocusNotice = document.querySelector("[data-raya-schedule-page-focus]");
   const contextTitle = document.querySelector("[data-raya-schedule-context-title]");
   const contextMeta = document.querySelector("[data-raya-schedule-context-meta]");
   const typeFilters = Array.from(document.querySelectorAll("[data-raya-schedule-type-filter]"));
@@ -92,6 +93,12 @@ _SCHEDULE_JAVASCRIPT = r"""
     return itemsById.get(id) || null;
   }
 
+  function pageTitleForActivePage() {
+    if (!activePage) return "";
+    const item = scheduleItems.find((candidate) => candidate.page_id === activePage);
+    return item ? (item.page_title || activePage) : "";
+  }
+
   function visibleItems() {
     return items.filter((item) => !item.hidden);
   }
@@ -128,6 +135,19 @@ _SCHEDULE_JAVASCRIPT = r"""
 
   function scheduleCountText(count) {
     return `${count} visible schedule ${count === 1 ? "item" : "items"}.`;
+  }
+
+  function updatePageFocusNotice(visibleCount) {
+    if (!pageFocusNotice) return;
+    const title = pageTitleForActivePage();
+    if (!activePage || !title) {
+      pageFocusNotice.hidden = true;
+      pageFocusNotice.textContent = "";
+      return;
+    }
+    pageFocusNotice.hidden = false;
+    pageFocusNotice.textContent =
+      `Focused on page ${title}. ${scheduleCountText(visibleCount)} Use Clear to show all.`;
   }
 
   function bestContextObject(visible) {
@@ -215,6 +235,7 @@ _SCHEDULE_JAVASCRIPT = r"""
     if (status) {
       status.textContent = scheduleCountText(visible);
     }
+    updatePageFocusNotice(visible);
     setActiveObject(Math.min(activeIndex, visible - 1));
   }
 

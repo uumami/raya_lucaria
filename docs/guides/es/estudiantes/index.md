@@ -175,7 +175,10 @@ o foco en los links del item; el panel de contexto sigue esa seleccion
 temporal. El workspace es una superficie estatica de descubrimiento con
 filtros, resultados y resumenes publicos de contexto, y Search o Graph pueden
 abrirlo ya filtrado a una pagina con `?page=<page-id>`. Clear o Escape quitan
-ese foco temporal de pagina; no se guarda como estado de estudio. No es un
+ese foco temporal de pagina; no se guarda como estado de estudio. Cuando un
+workspace se abre enfocado en una pagina, puede mostrar un aviso pequeno con el
+titulo publico de esa pagina y el conteo visible. Ese aviso desaparece con
+Clear o Escape; no es progreso guardado ni recomendacion. No es un
 motor de recomendaciones, registro de progreso, sistema de entregas, sistema de
 evaluacion, scoring, registro de attempts, estimacion de dominio, estado de
 practica guardado, workflow de requests externos, visor de rutas privadas de
@@ -186,7 +189,9 @@ Algunos cursos tambien pueden incluir un workspace Official Tasks bajo
 aceptados por texto, tipo, orden del curso o fecha de entrega, y despues abre
 la pagina que los posee para ver el contexto completo. Puede mostrar campos
 publicos de planeacion como titulo, pagina, fecha de entrega, puntos, status y
-tags cuando el equipo del curso los escribio. No es registro de progreso
+tags cuando el equipo del curso los escribio. Search o Graph pueden abrir Tasks
+enfocado en una pagina, con un aviso visible y reset por Clear o Escape a todos
+los tasks visibles. No es registro de progreso
 personal, sistema de entregas, gradebook, pagina adaptativa de recomendaciones,
 sincronizacion de calendario ni superficie de respuestas ocultas.
 
@@ -194,7 +199,9 @@ Algunos cursos tambien pueden incluir un workspace Official Schedule bajo
 `_raya/schedule/`. Usalo para escanear assignments, projects, exams y tasks
 aceptados que tienen fechas `due` o `available`, y despues abre la pagina que
 los posee para ver el contexto completo. Es una vista estatica fechada sobre
-metadata del curso; no es calendario personal, sistema de recordatorios,
+metadata del curso. Search o Graph pueden abrir Schedule enfocado en una
+pagina, con un aviso visible y reset por Clear o Escape a todos los items
+fechados visibles; no es calendario personal, sistema de recordatorios,
 registro de progreso, pagina de recomendaciones, sistema de entregas ni
 gradebook.
 

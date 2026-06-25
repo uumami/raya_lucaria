@@ -4498,6 +4498,10 @@ def _render_search_surface(
                 '<p class="raya-discovery-summary" '
                 f"data-raya-search-summary-count>{len(browser_search['pages'])} visible result(s).</p>"
             ),
+            (
+                '<p class="raya-discovery-page-focus" '
+                'data-raya-search-page-focus hidden aria-live="polite"></p>'
+            ),
             "</aside>",
             '<section class="raya-search-results-panel" aria-label="Search results">',
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
@@ -4757,6 +4761,10 @@ def _render_practice_surface(
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-practice-summary-count>{len(browser_practice['objects'])} visible practice object(s).</p>"
+            ),
+            (
+                '<p class="raya-discovery-page-focus" '
+                'data-raya-practice-page-focus hidden aria-live="polite"></p>'
             ),
             "</aside>",
             '<section class="raya-practice-results-panel" aria-label="Official practice results">',
@@ -5071,6 +5079,10 @@ def _render_tasks_surface(
                 '<p class="raya-discovery-summary" '
                 f"data-raya-tasks-summary-count>{len(browser_tasks['objects'])} visible task(s).</p>"
             ),
+            (
+                '<p class="raya-discovery-page-focus" '
+                'data-raya-tasks-page-focus hidden aria-live="polite"></p>'
+            ),
             "</aside>",
             '<section class="raya-tasks-results-panel" aria-label="Official task results">',
             (
@@ -5332,6 +5344,10 @@ def _render_schedule_surface(
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-schedule-summary-count>{len(schedule_payload['items'])} visible schedule item(s).</p>"
+            ),
+            (
+                '<p class="raya-discovery-page-focus" '
+                'data-raya-schedule-page-focus hidden aria-live="polite"></p>'
             ),
             "</aside>",
             '<section class="raya-schedule-results-panel" aria-label="Official schedule results">',

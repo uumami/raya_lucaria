@@ -154,9 +154,11 @@ MathJax output, cache keys, or learner state. Generated query context may preloa
 the search box without becoming stored search state. Search result graph-focus
 links must be generated from stable page IDs and local graph URLs only; keep
 their wording structural, such as `View in graph`. Search and Practice discovery
-workspaces may use control, results, and context regions on desktop, but those
-regions must stay public-metadata-only, responsive, and free of stored discovery
-state.
+workspaces may use control, results, and context regions on desktop. Search,
+Practice, Tasks, and Schedule may show a compact page-focus notice for a valid
+`?page=<page-id>` handoff, but the notice must hide for missing or invalid page
+focus and after Clear/Escape restores the full workspace. Those regions must
+stay public-metadata-only, responsive, and free of stored discovery state.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

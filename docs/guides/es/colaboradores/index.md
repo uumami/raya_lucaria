@@ -165,8 +165,11 @@ sin convertirse en estado guardado. Los enlaces graph-focus de resultados de
 busqueda deben generarse solo desde stable IDs y URLs locales del grafo; conserva
 lenguaje estructural como `View in graph`. Los workspaces de descubrimiento
 Search y Practice pueden usar regiones de controles, resultados y contexto en
-desktop, pero esas regiones deben quedarse solo en metadata publica, ser
-responsivas y no guardar estado de descubrimiento.
+desktop. Search, Practice, Tasks y Schedule pueden mostrar un aviso compacto de
+foco de pagina para un handoff valido `?page=<page-id>`, pero el aviso debe
+ocultarse cuando el foco falta o no es valido y despues de que Clear/Escape
+restaura el workspace completo. Esas regiones deben quedarse solo en metadata
+publica, ser responsivas y no guardar estado de descubrimiento.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

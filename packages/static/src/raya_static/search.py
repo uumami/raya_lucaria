@@ -24,6 +24,7 @@ _SEARCH_JAVASCRIPT = r"""
   const clear = document.getElementById("raya-search-clear");
   const status = document.getElementById("raya-search-status");
   const summaryCount = document.querySelector("[data-raya-search-summary-count]");
+  const pageFocusNotice = document.querySelector("[data-raya-search-page-focus]");
   const contextTitle = document.querySelector("[data-raya-search-context-title]");
   const contextMeta = document.querySelector("[data-raya-search-context-meta]");
   const results = Array.from(document.querySelectorAll("[data-raya-search-result]"));
@@ -148,6 +149,25 @@ _SEARCH_JAVASCRIPT = r"""
     return pagesById.get(id) || null;
   }
 
+  function pageTitleForActivePage() {
+    if (!activePage) return "";
+    const page = pagesById.get(activePage);
+    return page ? (page.title || page.nav_title || activePage) : "";
+  }
+
+  function updatePageFocusNotice(visibleCount) {
+    if (!pageFocusNotice) return;
+    const title = pageTitleForActivePage();
+    if (!activePage || !title) {
+      pageFocusNotice.hidden = true;
+      pageFocusNotice.textContent = "";
+      return;
+    }
+    pageFocusNotice.hidden = false;
+    pageFocusNotice.textContent =
+      `Focused on page ${title}. ${visibleCount} visible result(s). Use Clear to show all.`;
+  }
+
   function bestContextItem(visible) {
     if (activeIndex >= 0) {
       return visible[activeIndex];
@@ -242,6 +262,7 @@ _SEARCH_JAVASCRIPT = r"""
     if (status) {
       status.textContent = `${visible} visible result(s).`;
     }
+    updatePageFocusNotice(visible);
   }
 
   results.forEach((item) => {

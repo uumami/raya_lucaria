@@ -26,6 +26,7 @@ _TASKS_JAVASCRIPT = r"""
   const status = document.getElementById("raya-tasks-status");
   const empty = document.getElementById("raya-tasks-empty");
   const summaryCount = document.querySelector("[data-raya-tasks-summary-count]");
+  const pageFocusNotice = document.querySelector("[data-raya-tasks-page-focus]");
   const contextTitle = document.querySelector("[data-raya-tasks-context-title]");
   const contextMeta = document.querySelector("[data-raya-tasks-context-meta]");
   const filters = Array.from(document.querySelectorAll("[data-raya-task-filter]"));
@@ -106,6 +107,12 @@ _TASKS_JAVASCRIPT = r"""
     return itemsById.get(id) || null;
   }
 
+  function pageTitleForActivePage() {
+    if (!activePage) return "";
+    const item = items.find((candidate) => candidate.page_id === activePage);
+    return item ? (item.page_title || activePage) : "";
+  }
+
   function visibleObjects() {
     return objects.filter((object) => !object.hidden);
   }
@@ -163,6 +170,19 @@ _TASKS_JAVASCRIPT = r"""
     return `${count} visible ${count === 1 ? "task" : "tasks"}.`;
   }
 
+  function updatePageFocusNotice(visibleCount) {
+    if (!pageFocusNotice) return;
+    const title = pageTitleForActivePage();
+    if (!activePage || !title) {
+      pageFocusNotice.hidden = true;
+      pageFocusNotice.textContent = "";
+      return;
+    }
+    pageFocusNotice.hidden = false;
+    pageFocusNotice.textContent =
+      `Focused on page ${title}. ${taskCountText(visibleCount)} Use Clear to show all.`;
+  }
+
   function updateContext() {
     const visible = visibleObjects();
     const item = itemForObject(bestContextObject(visible));
@@ -217,6 +237,7 @@ _TASKS_JAVASCRIPT = r"""
     if (status) {
       status.textContent = taskCountText(visible);
     }
+    updatePageFocusNotice(visible);
     setActiveObject(Math.min(activeIndex, visible - 1));
   }
 

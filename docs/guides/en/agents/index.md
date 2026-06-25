@@ -292,6 +292,14 @@ fixture. `hint`, `solution`, and `answer` should be native closed `details`
 disclosures by default; they must not require storage, fetch, scoring, external
 assets, or browser-side MathJax.
 
+For discovery workspace page-focus failures, open Search, Practice, Tasks, and
+Schedule with a valid `?page=<page-id>` handoff and verify the control region
+shows a compact page-focus notice with the public page title and visible count.
+Then verify Clear and Escape hide the notice and restore all visible results or
+objects. Missing or invalid page focus must keep the notice hidden. Do not add
+storage, fetch, external resources, learner-state wording, or recommendation
+language to make the notice work.
+
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
 For every vector $\vect{v}$, the identity map returns $\vect{v}$.

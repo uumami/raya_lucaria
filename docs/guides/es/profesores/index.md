@@ -213,7 +213,9 @@ superficie estatica de descubrimiento `_raya/practice/index.html` desde
 utiles para escanear, y espera que los links de Practice devuelvan a estudiantes
 a anchors de la pagina propietaria como `#raya-official-<id>`. El workspace
 generado puede organizar controles, resultados y resumenes publicos de contexto
-para escanear, pero no debe exponer respuestas ocultas. No escribas respuestas
+para escanear. Search o Graph pueden abrirlo enfocado en una pagina propietaria
+con un aviso visible de foco de pagina y reset por Clear/Escape, pero no debe
+exponer respuestas ocultas. No escribas respuestas
 ocultas duplicadas para el workspace ni lo presentes como adaptativo,
 recomendado, con scoring, evaluado, entregado, intentado, progreso personal,
 dominio, estado guardado del estudiante, fetching en runtime, requests externos
@@ -243,14 +245,18 @@ content:
 ```
 
 El workspace de tasks ayuda a estudiantes a escanear trabajo por tipo, texto y
-fecha de entrega, y despues volver al anchor de la pagina propietaria. No es
+fecha de entrega, y despues volver al anchor de la pagina propietaria. Search o
+Graph pueden abrirlo enfocado en una pagina con un aviso visible y reset por
+Clear/Escape a todos los tasks visibles. No es
 sistema de entregas, gradebook, sincronizacion de calendario personal, registro
 de progreso, motor de recomendaciones ni superficie de respuestas ocultas.
 
 El workspace Official Schedule en `_raya/schedule/index.html` se genera desde
 los mismos objetos aceptados de familia task cuando incluyen `content.due` o
 `content.available`. Ayuda a estudiantes a escanear trabajo oficial fechado y
-volver al anchor de la pagina propietaria. No es una fuente de calendario
+volver al anchor de la pagina propietaria. Search o Graph pueden abrirlo
+enfocado en una pagina con un aviso visible y reset por Clear/Escape a todos los
+items fechados visibles. No es una fuente de calendario
 separada, sincronizacion de calendario personal, sistema de recordatorios,
 sistema de entregas, gradebook, registro de progreso ni motor de
 recomendaciones.
@@ -291,9 +297,11 @@ generados de pagina pueden precargar una consulta temporal, pero el renderer no
 la guarda. Los resultados tambien pueden incluir links `View in graph`
 generados desde stable IDs para que estudiantes inspeccionen donde queda una
 pagina encontrada dentro del grafo del curso. El workspace de Search puede
-mostrar regiones de controles, resultados y contexto desde metadata publica;
-esos resumenes son ayudas estructurales para escanear, no rankings ni
-recomendaciones.
+mostrar regiones de controles, resultados y contexto desde metadata publica. Un
+handoff valido de pagina puede mostrar un aviso visible con la pagina publica
+enfocada y el conteo visible hasta que Clear o Escape restaure todos los
+resultados. Esos resumenes son ayudas estructurales para escanear, no rankings
+ni recomendaciones.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 

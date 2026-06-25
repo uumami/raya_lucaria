@@ -790,6 +790,19 @@ img {
   font-size: 0.9rem;
   margin: 0.65rem 0 0;
 }
+.raya-discovery-page-focus {
+  background: color-mix(in srgb, var(--raya-color-accent) 10%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 35%, var(--raya-color-border));
+  border-radius: 0.55rem;
+  color: var(--raya-color-text);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0.65rem 0 0;
+  padding: 0.6rem 0.7rem;
+}
+.raya-discovery-page-focus[hidden] {
+  display: none;
+}
 .raya-search-context-panel [data-raya-search-context-title],
 .raya-practice-context-panel [data-raya-practice-context-title] {
   font-weight: 800;

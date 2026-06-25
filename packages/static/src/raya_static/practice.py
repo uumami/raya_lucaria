@@ -25,6 +25,7 @@ _PRACTICE_JAVASCRIPT = r"""
   const status = document.getElementById("raya-practice-status");
   const empty = document.getElementById("raya-practice-empty");
   const summaryCount = document.querySelector("[data-raya-practice-summary-count]");
+  const pageFocusNotice = document.querySelector("[data-raya-practice-page-focus]");
   const contextTitle = document.querySelector("[data-raya-practice-context-title]");
   const contextMeta = document.querySelector("[data-raya-practice-context-meta]");
   const filters = Array.from(document.querySelectorAll("[data-raya-practice-filter]"));
@@ -113,6 +114,25 @@ _PRACTICE_JAVASCRIPT = r"""
     return itemsById.get(id) || null;
   }
 
+  function pageTitleForActivePage() {
+    if (!activePage) return "";
+    const item = items.find((candidate) => candidate.page_id === activePage);
+    return item ? (item.page_title || activePage) : "";
+  }
+
+  function updatePageFocusNotice(visibleCount) {
+    if (!pageFocusNotice) return;
+    const title = pageTitleForActivePage();
+    if (!activePage || !title) {
+      pageFocusNotice.hidden = true;
+      pageFocusNotice.textContent = "";
+      return;
+    }
+    pageFocusNotice.hidden = false;
+    pageFocusNotice.textContent =
+      `Focused on page ${title}. ${visibleCount} visible practice object(s). Use Clear to show all.`;
+  }
+
   function visibleObjects() {
     return objects.filter((object) => !object.hidden);
   }
@@ -186,6 +206,7 @@ _PRACTICE_JAVASCRIPT = r"""
     if (status) {
       status.textContent = `${visible} visible practice object(s).`;
     }
+    updatePageFocusNotice(visible);
     setActiveObject(Math.min(activeIndex, visible - 1));
   }
 

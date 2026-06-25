@@ -209,8 +209,9 @@ directory; Glintstone can render both the page section and a static
 object labels, summaries, tags, status, and stable IDs useful for scanning, and
 expect Practice links to return students to owning page anchors such as
 `#raya-official-<id>`. The generated workspace may organize controls, results,
-and public context summaries for scanning, but it should not expose hidden
-answers. Do not author duplicate hidden answers for the workspace or frame it as
+and public context summaries for scanning. Search or Graph may open it focused
+on one owning page with a visible page-focus notice and Clear/Escape reset, but
+it should not expose hidden answers. Do not author duplicate hidden answers for the workspace or frame it as
 adaptive, recommended, scored, graded, submitted, attempted, personal progress,
 mastery, stored learner state, runtime fetching, external requests, or a private
 source-path view.
@@ -239,14 +240,17 @@ content:
 ```
 
 The tasks workspace helps students scan work by type, text, and due date, then
-return to the owning page anchor. It is not a submission system, gradebook,
+return to the owning page anchor. Search or Graph may open it focused on one
+page with a visible notice and Clear/Escape reset to all visible tasks. It is
+not a submission system, gradebook,
 personal calendar sync, progress tracker, recommendation engine, or hidden
 answer surface.
 
 The Official Schedule workspace at `_raya/schedule/index.html` is generated
 from the same accepted task-family objects when they include `content.due` or
 `content.available`. It helps students scan dated official work and return to
-the owning page anchor. It is not a separate calendar source, personal
+the owning page anchor. Search or Graph may open it focused on one page with a
+visible notice and Clear/Escape reset to all visible dated items. It is not a separate calendar source, personal
 calendar sync, reminder system, submission system, gradebook, progress tracker,
 or recommendation engine.
 
@@ -285,8 +289,10 @@ output, or personal learner state. Generated page links may preload a temporary
 query, but the renderer does not store it. Search results may also include
 `View in graph` links generated from stable page IDs so students can inspect
 where a found page sits in the course graph. The Search workspace may show
-control, results, and context regions from public metadata; those summaries are
-structural scanning aids, not rankings or recommendations.
+control, results, and context regions from public metadata. A valid page handoff
+may show a visible page-focus notice with the focused public page and visible
+count until Clear or Escape restores all results. Those summaries are structural
+scanning aids, not rankings or recommendations.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

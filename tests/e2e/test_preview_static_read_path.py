@@ -3626,6 +3626,31 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 "[data-raya-search-context-title]"
                             ).inner_text()
                         )
+                        search_focus_notice = page.locator(
+                            "[data-raya-search-page-focus]"
+                        )
+                        assert search_focus_notice.is_visible()
+                        assert "Focused on page" in search_focus_notice.inner_text()
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in search_focus_notice.inner_text()
+                        )
+                        assert "1 visible result" in search_focus_notice.inner_text()
+                        page.locator("#raya-search-input").focus()
+                        page.press("#raya-search-input", "Escape")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-search-status')
+                              ?.textContent
+                              ?.includes('visible result')"""
+                        )
+                        assert (
+                            page.locator(
+                                "#raya-search-results [data-raya-search-result]:visible"
+                            ).count()
+                            > 1
+                        )
+                        assert search_focus_notice.is_hidden()
                         page.goto(
                             (
                                 f"{base_url}/_raya/search/index.html"
@@ -3657,6 +3682,7 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).count()
                             > 1
                         )
+                        assert search_focus_notice.is_hidden()
                         assert page.locator(
                             '[data-raya-search-result="matrix-reference"]'
                         ).is_visible()
@@ -3665,6 +3691,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             wait_until="networkidle",
                         )
                         assert page.locator("#raya-search-empty").is_visible()
+                        assert page.locator(
+                            "[data-raya-search-page-focus]"
+                        ).is_hidden()
                         page.press("#raya-search-input", "Escape")
                         assert page.locator("#raya-search-empty").is_hidden()
                         page.click(
@@ -3993,12 +4022,53 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                                 "[data-raya-practice-context-meta]"
                             ).inner_text()
                         )
+                        practice_focus_notice = page.locator(
+                            "[data-raya-practice-page-focus]"
+                        )
+                        assert practice_focus_notice.is_visible()
+                        assert "Focused on page" in practice_focus_notice.inner_text()
+                        assert "First Topic" in practice_focus_notice.inner_text()
+                        assert (
+                            "3 visible practice object"
+                            in practice_focus_notice.inner_text()
+                        )
                         assert (
                             page.evaluate(
                                 "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
                             )
                             == [[], []]
                         )
+                        page.click("#raya-practice-clear")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        assert practice_focus_notice.is_hidden()
+                        page.goto(
+                            f"{base_url}/_raya/practice/index.html?page=first-topic",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        practice_focus_notice = page.locator(
+                            "[data-raya-practice-page-focus]"
+                        )
+                        assert practice_focus_notice.is_visible()
+                        page.locator("#raya-practice-search").focus()
+                        page.press("#raya-practice-search", "Escape")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('3 visible practice object')"""
+                        )
+                        assert practice_focus_notice.is_hidden()
 
                         page.goto(
                             f"{base_url}/_raya/practice/index.html?page=missing-page",
@@ -4011,6 +4081,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               ?.includes('0 visible practice object')"""
                         )
                         assert page.locator("#raya-practice-empty").is_visible()
+                        assert page.locator(
+                            "[data-raya-practice-page-focus]"
+                        ).is_hidden()
                         assert (
                             "No visible practice object"
                             in page.locator(
@@ -4292,8 +4365,44 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                     "[data-raya-tasks-summary-count]"
                                 ).inner_text()
                             )
+                            tasks_focus_notice = scoped_tasks.locator(
+                                "[data-raya-tasks-page-focus]"
+                            )
+                            assert tasks_focus_notice.is_visible()
+                            assert (
+                                "Focused on page"
+                                in tasks_focus_notice.inner_text()
+                            )
+                            assert "First Topic" in tasks_focus_notice.inner_text()
+                            assert "4 visible tasks" in tasks_focus_notice.inner_text()
                             assert scoped_tasks.evaluate("() => localStorage.length") == 0
                             assert scoped_tasks.evaluate("() => sessionStorage.length") == 0
+                            scoped_tasks.locator("#raya-tasks-search").focus()
+                            scoped_tasks.press("#raya-tasks-search", "Escape")
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('5 visible tasks')"""
+                            )
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="extension-assignment"]'
+                            ).is_visible()
+                            assert tasks_focus_notice.is_hidden()
+                            scoped_tasks.goto(
+                                f"{base_url}/_raya/tasks/index.html?page=first-topic",
+                                wait_until="networkidle",
+                            )
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('4 visible tasks')"""
+                            )
+                            tasks_focus_notice = scoped_tasks.locator(
+                                "[data-raya-tasks-page-focus]"
+                            )
+                            assert tasks_focus_notice.is_visible()
                             scoped_tasks.click("#raya-tasks-clear")
                             scoped_tasks.wait_for_function(
                                 """() => document
@@ -4304,6 +4413,20 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="extension-assignment"]'
                             ).is_visible()
+                            assert tasks_focus_notice.is_hidden()
+                            scoped_tasks.goto(
+                                f"{base_url}/_raya/tasks/index.html?page=missing-page",
+                                wait_until="networkidle",
+                            )
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('0 visible tasks')"""
+                            )
+                            assert scoped_tasks.locator(
+                                "[data-raya-tasks-page-focus]"
+                            ).is_hidden()
                         finally:
                             scoped_tasks.close()
                         page.click('[data-raya-task-filter="assignment"]')
@@ -4447,6 +4570,47 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                         "[data-raya-schedule-summary-count]"
                                     ).inner_text()
                                 )
+                                schedule_focus_notice = scoped_schedule.locator(
+                                    "[data-raya-schedule-page-focus]"
+                                )
+                                assert schedule_focus_notice.is_visible()
+                                assert (
+                                    "Focused on page"
+                                    in schedule_focus_notice.inner_text()
+                                )
+                                assert (
+                                    "First Topic"
+                                    in schedule_focus_notice.inner_text()
+                                )
+                                assert (
+                                    "3 visible schedule item"
+                                    in schedule_focus_notice.inner_text()
+                                )
+                                scoped_schedule.click("#raya-schedule-clear")
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('4 visible schedule items')"""
+                                )
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="extension-assignment"]'
+                                ).is_visible()
+                                assert schedule_focus_notice.is_hidden()
+                                scoped_schedule.goto(
+                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
+                                    wait_until="networkidle",
+                                )
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('3 visible schedule items')"""
+                                )
+                                schedule_focus_notice = scoped_schedule.locator(
+                                    "[data-raya-schedule-page-focus]"
+                                )
+                                assert schedule_focus_notice.is_visible()
                                 scoped_schedule.locator("#raya-schedule-search").focus()
                                 scoped_schedule.press("#raya-schedule-search", "Escape")
                                 scoped_schedule.wait_for_function(
@@ -4458,6 +4622,20 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 assert scoped_schedule.locator(
                                     '[data-raya-schedule-item="extension-assignment"]'
                                 ).is_visible()
+                                assert schedule_focus_notice.is_hidden()
+                                scoped_schedule.goto(
+                                    f"{base_url}/_raya/schedule/index.html?page=missing-page",
+                                    wait_until="networkidle",
+                                )
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('0 visible schedule items')"""
+                                )
+                                assert scoped_schedule.locator(
+                                    "[data-raya-schedule-page-focus]"
+                                ).is_hidden()
                                 assert (
                                     scoped_schedule.evaluate(
                                         "() => localStorage.length"
