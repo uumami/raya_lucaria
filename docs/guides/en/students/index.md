@@ -58,6 +58,12 @@ record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
+The top bar may also include a small course search field. Typing there opens
+the generated Course Search workspace with your query; the reader page does not
+build a second search index, fetch results, or save the text as study state.
+Use it as a quick jump when a phrase, theorem, page title, or stable ID comes
+to mind while reading.
+
 Use the Course map button to collapse or expand navigation when you need a
 different focus. On desktop, `Focus reading` can collapse the map and right
 learning rail together so the article gets more space; it is temporary display
@@ -138,7 +144,8 @@ metadata and public rendered article prose, supports approximate matches and
 keyboard, hover, and focus inspection of visible results, and does not search
 hidden source paths, private support paths, MathJax internals, answers, or your
 personal state. Opening it from a course page may preload that page title as a
-temporary query. A result can also offer `View in graph`, which opens the Course
+temporary query, and the top-bar search field may open it with the text you
+typed. A result can also offer `View in graph`, which opens the Course
 Graph focused on that same page so you can inspect its course position and
 explicit links. The Search context panel summarizes public context for the
 result you are inspecting; it is not a ranking or recommendation. When a result

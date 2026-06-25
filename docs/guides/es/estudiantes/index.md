@@ -63,6 +63,12 @@ Cuando un mapa largo se abre, la pagina puede mover el enlace de la pagina
 actual a la parte visible del mapa. Esa orientacion es contexto temporal de
 lectura, no estado guardado.
 
+La barra superior tambien puede incluir un campo pequeno de busqueda del curso.
+Escribir ahi abre el workspace generado Course Search con tu consulta; la pagina
+de lectura no crea un segundo indice, no hace fetch de resultados ni guarda el
+texto como estado de estudio. Usalo como salto rapido cuando recuerdes una
+frase, teorema, titulo de pagina o stable ID mientras lees.
+
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
 el riel derecho para dar mas espacio al articulo; es estado visual temporal y no
@@ -145,7 +151,8 @@ publica renderizada del articulo, soporta coincidencias aproximadas e
 inspeccion con teclado, hover y foco de resultados visibles, y no busca rutas
 ocultas de fuente, rutas privadas de soporte, internos de MathJax, respuestas
 ni tu estado personal. Abrirlo desde una pagina del curso puede precargar el
-titulo de esa pagina como consulta temporal. Un resultado tambien puede ofrecer
+titulo de esa pagina como consulta temporal, y el campo de busqueda de la barra
+superior puede abrirlo con el texto que escribiste. Un resultado tambien puede ofrecer
 `View in graph`, que abre Course Graph enfocado en esa misma pagina para
 inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
 contexto de Search resume contexto publico del resultado que inspeccionas; no

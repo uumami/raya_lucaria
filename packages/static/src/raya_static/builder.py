@@ -13,7 +13,7 @@ from html.parser import HTMLParser
 from importlib import resources
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit, urlunsplit
 
 from raya_schema import (
     ValidationReport,
@@ -1050,6 +1050,7 @@ def _render_top_command_bar(
             '<div class="raya-top-command-bar-inner">',
             _render_reading_context(course_title, page, content_model),
             '<div class="raya-course-tools">',
+            _render_command_search_form(search_href),
             _render_command_link(
                 class_name="raya-command raya-command-search",
                 href=search_href,
@@ -1128,6 +1129,34 @@ def _render_top_command_bar(
             "</div>",
             "</header>",
         ]
+    )
+
+
+def _render_command_search_form(search_href: str) -> str:
+    parsed_href = urlsplit(search_href)
+    form_action = urlunsplit(
+        (
+            parsed_href.scheme,
+            parsed_href.netloc,
+            parsed_href.path,
+            "",
+            "",
+        )
+    )
+    return (
+        '<form class="raya-command-search-form" '
+        f'action="{html.escape(form_action, quote=True)}" method="get" role="search">'
+        '<label class="raya-visually-hidden" for="raya-command-search-input">'
+        "Search course text"
+        "</label>"
+        '<input id="raya-command-search-input" class="raya-command-search-input" '
+        'type="search" name="q" placeholder="Search course" autocomplete="off" '
+        'aria-label="Search course text">'
+        '<button class="raya-command-search-submit" type="submit" '
+        'aria-label="Open search results">'
+        '<span aria-hidden="true">Go</span>'
+        "</button>"
+        "</form>"
     )
 
 

@@ -312,6 +312,7 @@ def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) ->
             try:
                 for viewport in (
                     {"width": 1280, "height": 900},
+                    {"width": 820, "height": 900},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
@@ -3456,6 +3457,23 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             lambda request: browser_requests.append(request.url),
                         )
                         page.goto(
+                            f"{base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        page.locator("#raya-command-search-input").fill(
+                            "projection residual"
+                        )
+                        page.locator(".raya-command-search-form").evaluate(
+                            "form => form.requestSubmit()"
+                        )
+                        page.wait_for_url(
+                            "**/_raya/search/index.html?q=projection+residual"
+                        )
+                        assert page.locator(
+                            "[data-raya-search-result='reader-ux']"
+                        ).is_visible()
+                        page.goto(
                             f"{base_url}/_raya/search/index.html",
                             wait_until="networkidle",
                         )
@@ -5272,6 +5290,8 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                 states = []
                 for viewport in (
                     {"width": 1440, "height": 900},
+                    {"width": 640, "height": 900},
+                    {"width": 521, "height": 900},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
@@ -5300,6 +5320,18 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 commandRows: new Set(commandTops).size,
                                 topBarWidth: topBar.scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
+                                formBox: (() => {
+                                  const box = document
+                                    .querySelector('.raya-command-search-form')
+                                    ?.getBoundingClientRect();
+                                  return box
+                                    ? {
+                                        left: box.left,
+                                        right: box.right,
+                                        width: box.width,
+                                      }
+                                    : null;
+                                })(),
                                 searchHref: document
                                   .querySelector('.raya-command-search')
                                   ?.getAttribute('href'),
@@ -5362,10 +5394,14 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         )
                         assert state["count"] == 10
                         assert state["visibleCount"] == (
-                            10 if viewport["width"] >= 1280 else 8
+                            9 if viewport["width"] >= 1280 else 7
                         )
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
+                        assert state["formBox"] is not None
+                        assert state["formBox"]["left"] >= 0
+                        assert state["formBox"]["right"] <= state["viewportWidth"]
+                        assert state["formBox"]["width"] >= 160
                         if viewport["width"] >= 1024:
                             assert state["topBarHeight"] <= 96
                             assert state["commandRows"] == 1
@@ -5469,7 +5505,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
     finally:
         handle.close()
 
-    assert len(states) == 2
+    assert len(states) == 4
 
 
 def test_render_fixture_learning_shell_layout_and_accessibility(
@@ -5537,6 +5573,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const rail = document.querySelector('#raya-learning-rail');
                                   const commandBar = document.querySelector('.raya-top-command-bar');
                                   const commands = Array.from(document.querySelectorAll('.raya-command'));
+                                  const visibleCommands = commands.filter(
+                                    (button) => button.getClientRects().length > 0
+                                  );
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
@@ -5544,8 +5583,8 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     articleWidth: article.getBoundingClientRect().width,
                                     railWidth: rail.getBoundingClientRect().width,
                                     commandBarHeight: commandBar.getBoundingClientRect().height,
-                                    commandHeights: commands.map((button) => button.getBoundingClientRect().height),
-                                    commandWidths: commands.map((button) => button.getBoundingClientRect().width),
+                                    commandHeights: visibleCommands.map((button) => button.getBoundingClientRect().height),
+                                    commandWidths: visibleCommands.map((button) => button.getBoundingClientRect().width),
                                     mapIndex: currentMapLink?.getAttribute('data-raya-map-index'),
                                     mapNumber: currentMapLink
                                       ? getComputedStyle(currentMapLink, '::before').content
@@ -5559,7 +5598,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert 188 <= metrics["mapWidth"] <= 250
                             assert metrics["articleWidth"] >= 760
                             assert 220 <= metrics["railWidth"] <= 285
-                            assert metrics["commandBarHeight"] <= 72
+                            assert metrics["commandBarHeight"] <= 96
                             assert all(
                                 36 <= height <= 48
                                 for height in metrics["commandHeights"]

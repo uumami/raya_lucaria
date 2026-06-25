@@ -3737,6 +3737,15 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "XMLHttpRequest" not in script_text
     assert 'html[data-raya-course-map-scroll-lock="true"]' in css_text
     assert ".raya-course-map-drawer-chrome" in css_text
+    assert ".raya-visually-hidden" in css_text
+    assert ".raya-command-search-form" in css_text
+    assert ".raya-command-search-input" in css_text
+    assert ".raya-command-search-submit" in css_text
+    assert (
+        ".raya-main-article {\n  background: var(--raya-color-surface);"
+        in css_text
+    )
+    assert "box-shadow: 0 1rem 2.5rem rgba(31, 35, 40, 0.08);" not in css_text
     assert (
         ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;"
         in css_text
@@ -3765,6 +3774,16 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
     assert 'aria-label="Hide learning context"' in html
+    assert '<form class="raya-command-search-form"' in html
+    assert 'action="../_raya/search/index.html"' in html
+    assert 'method="get"' in html
+    assert 'name="q"' in html
+    assert 'placeholder="Search course"' in html
+    assert 'aria-label="Search course text"' in html
+    assert (
+        '<button class="raya-command-search-submit" type="submit" '
+        'aria-label="Open search results">'
+    ) in html
     assert (
         '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
     )
