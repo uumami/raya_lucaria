@@ -306,7 +306,8 @@ recommendation, mastery, grading, or personal due state.
 When changing Search or Graph discovery cards, verify that embedded payloads and
 visible cards use only public generated data: page title, nav title, stable ID,
 hierarchy label, status, summary, tags, public rendered article prose for
-Search, previous/next course-order links, explicit graph link counts, accepted
+Search, generated public section/object anchors and snippets for Search
+subresults, previous/next course-order links, explicit graph link counts, accepted
 official object counts, and relative links to owning pages or generated
 workspaces. Confirm there are no source paths, `_official/`, `_assets/`,
 `_reviewed/`, artifact internals, cache keys, MathJax internals, raw TeX,
@@ -318,6 +319,11 @@ links. Search handoff links should include `?page=<page-id>` for exact public
 page focus. Practice handoff links should include `?page=<page-id>` only when
 the page owns accepted official objects, and that page focus must remain
 URL-only state.
+
+When Course Search changes, verify section subresults as well as page results.
+Generated section records may point to public rendered heading or numbered-object
+anchors, but must not include raw TeX, MathJax CHTML, private paths, support-only
+answer text, artifact internals, or learner-state language.
 
 For renderer debugging, use `scripts/check-render-debug.sh` when you need the focused fixture parity gate that also runs in host/Docker verification. The gate writes `report.json` and `index.html` beside the screenshots. When it fails, inspect `index.html` first, then use `report.json` for exact page, viewport, file path, and copied-site diagnostics. Use `raya preview <course> --render-debug /tmp/raya-render-debug` when diagnosing a specific course. Both paths inspect generated static pages; neither path executes course code or relies on browser-side MathJax conversion. Use debug output as evidence for layout/math failures, raw TeX leakage, external requests, and overflow, but keep authority in source files, `manifest.json`, and manifest-declared `data/*.json`. Treat render-debug files as local evidence only; do not commit them.
 

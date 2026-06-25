@@ -309,7 +309,10 @@ tags, status, etiquetas de jerarquia, stable IDs y prosa publica renderizada
 del articulo, pero no indexa rutas ocultas de fuente, rutas privadas de soporte,
 internos de MathJax, TeX crudo, contenido solo de respuestas/soporte ni estado
 personal del estudiante. Los links generados de pagina pueden precargar una
-consulta temporal, pero el renderer no la guarda. Los resultados tambien pueden
+consulta temporal, pero el renderer no la guarda. Los resultados pueden mostrar
+coincidencias de seccion para anchors publicos generados, incluidos objetos
+numerados renderizados, para que estudiantes salten a la parte relevante de una
+pagina sin crear nueva verdad de fuente. Los resultados tambien pueden
 incluir links `View in graph` generados desde stable IDs para que estudiantes
 inspeccionen donde queda una pagina encontrada dentro del grafo del curso. El
 workspace de Search puede mostrar regiones de controles, resultados y contexto

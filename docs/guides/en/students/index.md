@@ -152,7 +152,9 @@ stable ID, or phrase from the public article text. It searches generated public
 metadata and public rendered article prose, supports approximate matches and
 keyboard, hover, and focus inspection of visible results, and does not search
 hidden source paths, private support paths, MathJax internals, answers, or your
-personal state. Opening it from a course page may preload that page title as a
+personal state. Results may show section matches that jump to generated public
+page anchors, including numbered objects such as theorems, figures, tables,
+homework, or assignments when the course rendered them. Opening it from a course page may preload that page title as a
 temporary query, and the top-bar search field may open it with the text you
 typed. A result can also offer `View in graph`, which opens the Course
 Graph focused on that same page so you can inspect its course position and

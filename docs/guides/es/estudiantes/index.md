@@ -161,7 +161,10 @@ stable ID o frase del articulo publico. Busca metadata publica generada y prosa
 publica renderizada del articulo, soporta coincidencias aproximadas e
 inspeccion con teclado, hover y foco de resultados visibles, y no busca rutas
 ocultas de fuente, rutas privadas de soporte, internos de MathJax, respuestas
-ni tu estado personal. Abrirlo desde una pagina del curso puede precargar el
+ni tu estado personal. Los resultados pueden mostrar coincidencias de seccion
+que saltan a anchors publicos generados de la pagina, incluidos objetos
+numerados como theorem, figure, table, homework o assignment cuando el curso los
+renderizo. Abrirlo desde una pagina del curso puede precargar el
 titulo de esa pagina como consulta temporal, y el campo de busqueda de la barra
 superior puede abrirlo con el texto que escribiste. Un resultado tambien puede ofrecer
 `View in graph`, que abre Course Graph enfocado en esa misma pagina para

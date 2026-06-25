@@ -150,6 +150,7 @@ Accepted baseline:
 - Footnotes render on the same page. A missing footnote definition is a build diagnostic naming the source page and label.
 - Heading anchors are page-local conveniences derived from heading text. Duplicate anchors receive suffixes. Durable identity remains frontmatter `id` plus `raya:<id>` links.
 - Pages with enough section headings get a generated page table of contents. The table of contents and generated indexes are output, not source edits.
+- Course Search may expose generated public section and object anchors as subresults under page results. These records come from rendered public article HTML and manifest-declared search data; they must not scrape private source paths, MathJax internals, support-only answers, or learner state.
 - Numbered objects render at build time from fenced `:::` directives and
   `render.numbered_objects` configuration. Theorem, corollary, equation,
   figure, table, problem, homework, and assignment families may share or use

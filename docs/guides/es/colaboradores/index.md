@@ -170,6 +170,9 @@ del articulo. No indexes rutas de fuente, rutas de artifact, rutas privadas de
 soporte, internos de MathJax, TeX crudo, cache keys, contenido solo de
 respuestas/soporte ni estado del estudiante. El contexto de consulta generado
 puede precargar la caja de busqueda sin convertirse en estado guardado. Los
+records de busqueda pueden incluir anchors y snippets publicos generados de
+secciones u objetos como subresultados, pero deben seguir siendo ayudas publicas
+sanitizadas para escanear, no recomendaciones ni autoridad alterna. Los
 enlaces graph-focus de resultados de busqueda deben generarse solo desde stable
 IDs y URLs locales del grafo; conserva lenguaje estructural como `View in
 graph`. Los workspaces de descubrimiento Search y Practice pueden usar regiones

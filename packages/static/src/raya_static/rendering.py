@@ -1083,9 +1083,50 @@ img {
   gap: 0.5rem;
   margin: 0.65rem 0 0;
 }
+.raya-search-result-sections {
+  background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 80%, var(--raya-color-accent));
+  border-radius: 0.375rem;
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.75rem;
+}
+.raya-search-result-sections[hidden] {
+  display: none;
+}
+.raya-search-result-sections h3 {
+  font-size: 0.85rem;
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+}
+.raya-search-result-section-list {
+  display: grid;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.raya-search-result-section {
+  border-left: 0.2rem solid var(--raya-color-accent);
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 0.55rem;
+}
+.raya-search-result-section[hidden] {
+  display: none;
+}
+.raya-search-result-section a {
+  font-weight: 800;
+}
+.raya-search-result-section span {
+  color: var(--raya-color-muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
 .raya-search-result-open,
 .raya-search-result-graph,
-.raya-search-result-practice {
+.raya-search-result-practice,
+.raya-search-result-tasks,
+.raya-search-result-schedule {
   align-items: center;
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
@@ -1573,6 +1614,8 @@ img {
 .raya-search-result-open,
 .raya-search-result-graph,
 .raya-search-result-practice,
+.raya-search-result-tasks,
+.raya-search-result-schedule,
 .raya-practice-open,
 .raya-practice-graph,
 .raya-task-open,

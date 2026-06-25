@@ -160,6 +160,9 @@ public page metadata and public rendered article prose. Do not index source
 paths, artifact paths, private support paths, MathJax internals, raw TeX,
 cache keys, answer/support-only content, or learner state. Generated query
 context may preload the search box without becoming stored search state. Search
+records may include generated public section/object anchors and snippets as
+subresults, but those records must remain sanitized public scan aids rather
+than recommendations or alternate authority. Search
 result graph-focus links must be generated from stable page IDs and local graph
 URLs only; keep their wording structural, such as `View in graph`. Search and
 Practice discovery workspaces may use control, results, and context regions on

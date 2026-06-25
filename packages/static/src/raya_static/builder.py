@@ -353,7 +353,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     if not report.ok:
         return report
     rendered_pages: list[tuple[ContentPage, str]] = []
-    search_records_by_page: dict[str, dict[str, str]] = {}
+    search_records_by_page: dict[str, dict[str, Any]] = {}
 
     for page in pages:
         numbered_context = NumberedObjectRenderContext(
@@ -942,10 +942,12 @@ def _render_page(
     )
     article_html, toc_html = _extract_page_toc(article_html)
     public_article_text = _public_article_search_text(article_html)
+    public_sections = _public_article_search_sections(article_html, page_id=page.id)
     search_record = {
         "id": page.id,
         "search_text": public_article_text,
         "search_snippet": _public_search_snippet(public_article_text),
+        "sections": public_sections,
     }
     article_connections_html = _render_article_connections(
         page,
@@ -1791,6 +1793,162 @@ def _public_article_search_text(article_html: str) -> str:
     parser = _PublicArticleTextParser()
     parser.feed(article_html)
     return _sanitize_public_search_text(_compact_public_text(" ".join(parser.parts)))
+
+
+class _PublicArticleSectionParser(HTMLParser):
+    _HEADING_LEVELS = {
+        "h2": 2,
+        "h3": 3,
+        "h4": 4,
+        "h5": 5,
+        "h6": 6,
+    }
+
+    def __init__(self, *, page_id: str) -> None:
+        super().__init__(convert_charrefs=True)
+        self._page_id = page_id
+        self._skip_depth = 0
+        self._heading_capture: dict[str, Any] | None = None
+        self._title_capture: list[str] | None = None
+        self._title_capture_kind = ""
+        self._current: dict[str, Any] | None = None
+        self.sections: list[dict[str, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        classes = _PublicArticleTextParser._classes(attrs)
+        anchor = self._attr(attrs, "id")
+        if (
+            tag == "section"
+            and anchor
+            and self._skip_depth == 0
+            and bool(classes & {"raya-numbered-object", "raya-proof"})
+        ):
+            self._finalize_current()
+            self._current = {
+                "anchor": anchor,
+                "level": 2,
+                "title": "",
+                "parts": [],
+            }
+            return
+        if tag in self._HEADING_LEVELS and self._skip_depth == 0:
+            level = self._HEADING_LEVELS[tag]
+            if self._current is not None and level <= int(self._current["level"]):
+                self._finalize_current()
+            if anchor:
+                self._heading_capture = {
+                    "anchor": anchor,
+                    "level": level,
+                    "tag": tag,
+                    "parts": [],
+                }
+            return
+        skip = (
+            self._skip_depth > 0
+            or tag in {"code", "pre", "script", "style", "svg"}
+            or bool(classes & _PublicArticleTextParser._SKIP_CLASSES)
+        )
+        if skip:
+            self._skip_depth += 1
+            return
+        title_classes = classes & {
+            "raya-numbered-object-title",
+            "raya-proof-title",
+        }
+        reference_classes = classes & {
+            "raya-numbered-object-reference",
+            "raya-proof-reference",
+        }
+        if self._current is not None and tag == "span" and (title_classes or reference_classes):
+            self._title_capture = []
+            self._title_capture_kind = "title" if title_classes else "reference"
+        if self._current is not None and tag in _PublicArticleTextParser._BLOCK_TAGS:
+            self._current["parts"].append(" ")
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._skip_depth > 0:
+            self._skip_depth -= 1
+            return
+        if self._heading_capture is not None and tag == self._heading_capture["tag"]:
+            title = _sanitize_public_search_text(
+                _compact_public_text(" ".join(self._heading_capture["parts"]))
+            )
+            if title:
+                self._current = {
+                    "anchor": str(self._heading_capture["anchor"]),
+                    "level": int(self._heading_capture["level"]),
+                    "title": title,
+                    "parts": [title, " "],
+                }
+            self._heading_capture = None
+            return
+        if self._title_capture is not None and tag == "span":
+            title = _sanitize_public_search_text(
+                _compact_public_text(" ".join(self._title_capture))
+            )
+            if title and self._current is not None:
+                existing_title = str(self._current.get("title", ""))
+                if self._title_capture_kind == "title":
+                    self._current["title"] = title
+                elif not existing_title:
+                    self._current["title"] = title
+            self._title_capture = None
+            self._title_capture_kind = ""
+        if self._current is not None and tag in _PublicArticleTextParser._BLOCK_TAGS:
+            self._current["parts"].append(" ")
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth > 0:
+            return
+        if self._title_capture is not None:
+            self._title_capture.append(data)
+        if self._heading_capture is not None:
+            self._heading_capture["parts"].append(data)
+            return
+        if self._current is not None:
+            self._current["parts"].append(data)
+
+    def close(self) -> None:
+        super().close()
+        self._finalize_current()
+
+    def _finalize_current(self) -> None:
+        if self._current is None:
+            return
+        anchor = str(self._current["anchor"])
+        search_text = _sanitize_public_search_text(
+            _compact_public_text(" ".join(str(part) for part in self._current["parts"]))
+        )
+        title = _sanitize_public_search_text(str(self._current["title"]))
+        if not title:
+            title = _public_search_snippet(search_text, limit=80)
+        if search_text:
+            self.sections.append(
+                {
+                    "id": f"{self._page_id}:{anchor}",
+                    "anchor": anchor,
+                    "title": title,
+                    "search_text": search_text,
+                    "search_snippet": _public_search_snippet(search_text, limit=160),
+                }
+            )
+        self._current = None
+
+    @staticmethod
+    def _attr(attrs: list[tuple[str, str | None]], name: str) -> str:
+        for attr_name, value in attrs:
+            if attr_name == name and value:
+                return value
+        return ""
+
+
+def _public_article_search_sections(
+    article_html: str, *, page_id: str
+) -> list[dict[str, str]]:
+    parser = _PublicArticleSectionParser(page_id=page_id)
+    parser.feed(article_html)
+    parser.close()
+    return parser.sections
 
 
 def _compact_public_text(value: str) -> str:
@@ -4644,7 +4802,7 @@ def _write_search_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
-    search_records: dict[str, dict[str, str]],
+    search_records: dict[str, dict[str, Any]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -4675,7 +4833,7 @@ def _render_search_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
-    search_records: dict[str, dict[str, str]],
+    search_records: dict[str, dict[str, Any]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -4750,6 +4908,27 @@ def _render_search_surface(
             if page["schedule_url"]
             else ""
         )
+        section_items = []
+        for section in page["sections"]:
+            section_items.append(
+                '<li class="raya-search-result-section" '
+                f'data-raya-search-section="{html.escape(section["id"], quote=True)}">'
+                f'<a href="{html.escape(section["url"])}">'
+                f'{html.escape(section["title"])}</a>'
+                f'<span>{html.escape(section["search_snippet"])}</span>'
+                "</li>"
+            )
+        sections_html = (
+            '<section class="raya-search-result-sections" '
+            'aria-label="Section matches">'
+            "<h3>Section matches</h3>"
+            '<ol class="raya-search-result-section-list">'
+            f'{"".join(section_items)}'
+            "</ol>"
+            "</section>"
+            if section_items
+            else ""
+        )
         result_items.append(
             f'<li data-raya-search-result="{html.escape(page["id"], quote=True)}" '
             'data-raya-search-active="false">'
@@ -4759,6 +4938,7 @@ def _render_search_surface(
             f'<p class="raya-search-result-meta">{html.escape(meta)}</p>'
             f'<p class="raya-search-result-counts">{html.escape(counts_text)}</p>'
             f"{study_counts_html}"
+            f"{sections_html}"
             '<p class="raya-search-result-actions">'
             f'<a class="raya-search-result-open" href="{html.escape(page["url"])}">'
             "Open page</a>"
@@ -4860,7 +5040,7 @@ def _browser_search_payload(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
-    search_records: dict[str, dict[str, str]],
+    search_records: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     pages = []
     for page in content_model.pages:
@@ -4884,6 +5064,30 @@ def _browser_search_payload(
             for tag in payload.get("tags", [])
         ]
         public_record = search_records.get(page.id, {})
+        public_sections = []
+        page_url = str(payload.get("url", ""))
+        for section in public_record.get("sections", []):
+            anchor = _sanitize_public_search_text(str(section.get("anchor", "")))
+            title = _sanitize_public_search_text(str(section.get("title", "")))
+            search_text = _sanitize_public_search_text(
+                str(section.get("search_text", ""))
+            )
+            search_snippet = _sanitize_public_search_text(
+                str(section.get("search_snippet", ""))
+            )
+            section_id = _sanitize_public_search_text(str(section.get("id", "")))
+            if not (anchor and title and search_text and section_id):
+                continue
+            public_sections.append(
+                {
+                    "id": section_id,
+                    "anchor": anchor,
+                    "title": title,
+                    "url": f"{page_url}#{quote(anchor)}",
+                    "search_text": search_text,
+                    "search_snippet": search_snippet or _public_search_snippet(search_text),
+                }
+            )
         payload["search_text"] = _compact_public_text(
             " ".join(
                 [
@@ -4896,10 +5100,12 @@ def _browser_search_payload(
                     str(payload.get("hierarchy_label", "")),
                     " ".join(str(tag) for tag in payload.get("tags", [])),
                     str(public_record.get("search_text", "")),
+                    " ".join(section["search_text"] for section in public_sections),
                 ]
             )
         )
         payload["search_snippet"] = str(public_record.get("search_snippet", ""))
+        payload["sections"] = public_sections
         pages.append(payload)
     return {
         "version": 1,
@@ -4909,7 +5115,7 @@ def _browser_search_payload(
 
 def _search_index(
     content_model: ContentModel,
-    search_records: dict[str, dict[str, str]],
+    search_records: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     return {
         "version": 1,
@@ -4922,6 +5128,16 @@ def _search_index(
                 "search_snippet": str(
                     search_records.get(page.id, {}).get("search_snippet", "")
                 ),
+                "sections": [
+                    {
+                        "id": str(section.get("id", "")),
+                        "anchor": str(section.get("anchor", "")),
+                        "title": str(section.get("title", "")),
+                        "search_text": str(section.get("search_text", "")),
+                        "search_snippet": str(section.get("search_snippet", "")),
+                    }
+                    for section in search_records.get(page.id, {}).get("sections", [])
+                ],
             }
             for page in content_model.pages
         ],

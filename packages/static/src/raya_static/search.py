@@ -54,24 +54,42 @@ _SEARCH_JAVASCRIPT = r"""
   const pagesById = new Map(pages.map((page) => [page.id, page]));
   let activeIndex = -1;
   let activePage = "";
+  function pageBaseFields(page) {
+    return [
+      page.id,
+      page.stable_id,
+      page.title,
+      page.nav_title,
+      page.summary,
+      page.status,
+      page.hierarchy_label,
+      page.link_counts
+        ? `${page.link_counts.outgoing} ${page.link_counts.incoming} ${page.link_counts.connected}`
+        : "",
+      page.study_counts
+        ? Object.keys(page.study_counts).join(" ")
+        : "",
+      ...(Array.isArray(page.tags) ? page.tags : []),
+    ].join(" ");
+  }
+
+  const pageBaseText = new Map(
+    pages.map((page) => [page.id, normalize(pageBaseFields(page))])
+  );
   const pageText = new Map(
     pages.map((page) => [
       page.id,
       normalize(page.search_text || [
-        page.id,
-        page.stable_id,
-        page.title,
-        page.nav_title,
-        page.summary,
-        page.status,
-        page.hierarchy_label,
-        page.link_counts
-          ? `${page.link_counts.outgoing} ${page.link_counts.incoming} ${page.link_counts.connected}`
-          : "",
-        page.study_counts
-          ? Object.keys(page.study_counts).join(" ")
-          : "",
-        ...(Array.isArray(page.tags) ? page.tags : []),
+        pageBaseFields(page),
+        ...(Array.isArray(page.sections)
+          ? page.sections.map((section) => [
+              section.id,
+              section.anchor,
+              section.title,
+              section.search_text,
+              section.search_snippet,
+            ].join(" "))
+          : []),
       ].join(" ")),
     ])
   );
@@ -149,6 +167,64 @@ _SEARCH_JAVASCRIPT = r"""
     return pagesById.get(id) || null;
   }
 
+  function sectionText(section) {
+    return [
+      section.id,
+      section.anchor,
+      section.title,
+      section.search_text,
+      section.search_snippet,
+    ].join(" ");
+  }
+
+  function matchingSections(page, queryText) {
+    if (!page || !Array.isArray(page.sections)) return [];
+    const query = normalize(queryText);
+    if (!query) return page.sections;
+    return page.sections.filter((section) => fuzzyMatch(query, sectionText(section)));
+  }
+
+  function updateSectionMatches(item, page, queryText) {
+    const sectionItems = Array.from(item.querySelectorAll("[data-raya-search-section]"));
+    if (sectionItems.length === 0) return 0;
+    const matched = new Set(
+      matchingSections(page, queryText).map((section) => section.id)
+    );
+    sectionItems.forEach((sectionItem) => {
+      const id = sectionItem.getAttribute("data-raya-search-section") || "";
+      sectionItem.hidden = matched.size > 0 && !matched.has(id);
+    });
+    const sectionPanel = item.querySelector(".raya-search-result-sections");
+    if (sectionPanel) {
+      sectionPanel.hidden = matched.size === 0;
+    }
+    return matched.size;
+  }
+
+  function activeOpenLink(item) {
+    const page = pageForResult(item);
+    const query = normalize(input.value);
+    if (page && query && !fuzzyMatch(query, pageBaseText.get(page.id) || "")) {
+      const sectionItems = Array.from(
+        item.querySelectorAll("[data-raya-search-section]:not([hidden])")
+      );
+      const exactSection = sectionItems.find((sectionItem) => {
+        const id = sectionItem.getAttribute("data-raya-search-section") || "";
+        const section = Array.isArray(page.sections)
+          ? page.sections.find((candidate) => candidate.id === id)
+          : null;
+        return section && normalize(sectionText(section)).includes(query);
+      });
+      if (exactSection) {
+        const sectionLink = exactSection.querySelector("a");
+        if (sectionLink && sectionLink.href) {
+          return sectionLink;
+        }
+      }
+    }
+    return item.querySelector("a");
+  }
+
   function pageTitleForActivePage() {
     if (!activePage) return "";
     const page = pagesById.get(activePage);
@@ -211,11 +287,14 @@ _SEARCH_JAVASCRIPT = r"""
     }
     if (contextMeta) {
       const snippet = page.search_snippet ? `Match text: ${page.search_snippet}` : "";
+      const query = normalize(input.value);
+      const sectionCount = query ? matchingSections(page, query).length : 0;
       contextMeta.textContent = [
         page.hierarchy_label || "",
         page.status ? `Status ${page.status}` : "",
         `Explicit links: ${counts.outgoing || 0} outgoing, ${counts.incoming || 0} incoming`,
         `Official objects: ${studyTotal}`,
+        sectionCount ? `Section matches: ${sectionCount}` : "",
         snippet,
       ].filter(Boolean).join(" | ");
     }
@@ -247,7 +326,10 @@ _SEARCH_JAVASCRIPT = r"""
     results.forEach((item) => {
       const id = item.getAttribute("data-raya-search-result") || "";
       const text = pageText.get(id);
-      const matched = matchesPage(item) && (text ? fuzzyMatch(query, text) : false);
+      const page = pagesById.get(id) || null;
+      const sectionMatches = page ? updateSectionMatches(item, page, query) : 0;
+      const matched = matchesPage(item) &&
+        ((text ? fuzzyMatch(query, text) : false) || sectionMatches > 0);
       item.hidden = !matched;
       if (matched) visible += 1;
     });
@@ -272,6 +354,12 @@ _SEARCH_JAVASCRIPT = r"""
       setActiveResult(indexForResult(item));
     });
     item.addEventListener("pointerenter", () => {
+      const focusedResult = document.activeElement
+        ? document.activeElement.closest("[data-raya-search-result]")
+        : null;
+      if (focusedResult && focusedResult !== item) {
+        return;
+      }
       setActiveResult(indexForResult(item));
     });
   });
@@ -290,7 +378,7 @@ _SEARCH_JAVASCRIPT = r"""
       const next = activeIndex <= 0 ? visible.length - 1 : activeIndex - 1;
       setActiveResult(visible.length === 0 ? -1 : next);
     } else if (event.key === "Enter" && activeIndex >= 0 && visible[activeIndex]) {
-      const link = visible[activeIndex].querySelector("a");
+      const link = activeOpenLink(visible[activeIndex]);
       if (link && link.href) {
         event.preventDefault();
         window.location.href = link.href;

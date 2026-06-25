@@ -301,7 +301,10 @@ navigation labels, summaries, tags, status, hierarchy labels, stable IDs, and
 public rendered article prose approximately, but it does not index hidden source
 paths, private support paths, MathJax internals, raw TeX, answer/support-only
 content, or personal learner state. Generated page links may preload a
-temporary query, but the renderer does not store it. Search results may also
+temporary query, but the renderer does not store it. Search results may show
+section matches for generated public anchors, including rendered numbered
+objects, so students can jump to the relevant part of a page without creating
+new source truth. Search results may also
 include `View in graph` links generated from stable page IDs so students can
 inspect where a found page sits in the course graph. The Search workspace may
 show control, results, and context regions from public metadata and public

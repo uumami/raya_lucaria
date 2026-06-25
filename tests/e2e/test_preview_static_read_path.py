@@ -3784,11 +3784,37 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             '[data-raya-search-result="authoring-matrix"]:not([hidden])'
                         )
                         assert prose_card.is_visible()
+                        section_link = prose_card.locator(
+                            '.raya-search-result-section '
+                            'a[href="../../authoring-matrix/index.html#raya-object-authoring-theorem"]'
+                        )
+                        assert section_link.is_visible()
+                        assert section_link.inner_text() == "Matrix norm fixture"
                         assert (
                             "Match text:"
                             in page.locator(
                                 "[data-raya-search-context-meta]"
                             ).inner_text()
+                        )
+                        assert (
+                            "Section matches:"
+                            in page.locator(
+                                "[data-raya-search-context-meta]"
+                            ).inner_text()
+                        )
+                        page.locator("#raya-search-input").focus()
+                        page.press("#raya-search-input", "ArrowDown")
+                        section_active = page.locator(
+                            '#raya-search-results [data-raya-search-active="true"]'
+                        )
+                        assert (
+                            section_active.get_attribute("data-raya-search-result")
+                            == "authoring-matrix"
+                        )
+                        with page.expect_navigation():
+                            page.press("#raya-search-input", "Enter")
+                        assert page.url.endswith(
+                            "/authoring-matrix/index.html#raya-object-authoring-theorem"
                         )
                         page.goto(
                             f"{base_url}/_raya/search/index.html?page=authoring-matrix",

@@ -19,7 +19,8 @@
         "required": [
           "id",
           "search_text",
-          "search_snippet"
+          "search_snippet",
+          "sections"
         ],
         "properties": {
           "id": {
@@ -31,6 +32,42 @@
           },
           "search_snippet": {
             "type": "string"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "anchor",
+                "id",
+                "search_snippet",
+                "search_text",
+                "title"
+              ],
+              "properties": {
+                "anchor": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "search_snippet": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "search_text": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false

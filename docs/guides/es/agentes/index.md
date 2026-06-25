@@ -329,6 +329,11 @@ recomendacion o progreso. Las paginas de descubrimiento Search, Graph, Practice
 y Tasks pueden cargar recursos locales de accesibilidad para Text size y
 `OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
 assets externos de workspace ni estado persistente de graph/search/practice/tasks.
+Cuando cambie Course Search, verifica subresultados de seccion ademas de
+resultados de pagina. Los records generados pueden apuntar a anchors publicos de
+headings u objetos numerados renderizados, pero no deben incluir TeX crudo,
+MathJax CHTML, rutas privadas, texto de respuestas/soporte, internos de artifact
+ni lenguaje de estado del estudiante.
 
 Al cambiar Tasks o Schedule, verifica handoffs solo por URL
 `?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
@@ -343,9 +348,10 @@ recomendacion, dominio, calificacion ni estado personal de fechas.
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
 embebidos y las cards visibles usen solo datos publicos generados: titulo de
 pagina, nav title, stable ID, hierarchy label, status, summary, tags, prosa
-publica renderizada del articulo para Search, enlaces anterior/siguiente del
-orden del curso, conteos explicitos de enlaces del grafo, conteos de objetos
-oficiales aceptados y enlaces relativos a paginas propietarias o workspaces
+publica renderizada del articulo para Search, anchors y snippets publicos
+generados de secciones u objetos para subresultados de Search, enlaces
+anterior/siguiente del orden del curso, conteos explicitos de enlaces del grafo,
+conteos de objetos oficiales aceptados y enlaces relativos a paginas propietarias o workspaces
 generados. Confirma que no haya rutas de fuente, `_official/`, `_assets/`,
 `_reviewed/`, internos de artifact, cache keys, internos de MathJax, TeX crudo,
 contenido de respuestas/soporte, `fetch` en runtime, storage de search/graph,

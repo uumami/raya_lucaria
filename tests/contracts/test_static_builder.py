@@ -1489,6 +1489,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     index_html = (site / "index.html").read_text(encoding="utf-8")
     search_html = search_page.read_text(encoding="utf-8")
     search_script = search_js.read_text(encoding="utf-8")
+    rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
 
     assert search_page.exists()
     assert search_js.exists()
@@ -1563,6 +1564,10 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert 'class="raya-search-result-schedule"' in search_html
     assert 'href="../schedule/index.html?page=authoring-matrix"' in search_html
     assert "Open schedule" in search_html
+    assert "raya-search-result-sections" in search_html
+    assert "Section matches" in search_html
+    assert 'data-raya-search-section="authoring-matrix:raya-object-authoring-theorem"' in search_html
+    assert 'href="../../authoring-matrix/index.html#raya-object-authoring-theorem"' in search_html
     search_payload_match = re.search(
         r'<script type="application/json" id="raya-search-data">\n(.*?)\n</script>',
         search_html,
@@ -1598,6 +1603,19 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         search_records["authoring-matrix"]["search_text"].lower()
     )
     assert len(search_records["authoring-matrix"]["search_snippet"]) <= 280
+    assert "sections" in search_records["authoring-matrix"]
+    assert isinstance(search_records["authoring-matrix"]["sections"], list)
+    indexed_sections = {
+        section["title"]: section
+        for section in search_records["authoring-matrix"]["sections"]
+    }
+    assert "Matrix norm fixture" in indexed_sections
+    assert indexed_sections["Matrix norm fixture"]["anchor"] == (
+        "raya-object-authoring-theorem"
+    )
+    assert "matrix norm fixture" in (
+        indexed_sections["Matrix norm fixture"]["search_text"].lower()
+    )
     serialized_search_index = json.dumps(search_index)
     broad_forbidden_search_tokens = (
         "mjx-container",
@@ -1637,6 +1655,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         "schedule_url",
         "stable_id",
         "status",
+        "sections",
         "study_counts",
         "summary",
         "tags",
@@ -1647,11 +1666,26 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     for page in search_payload["pages"]:
         assert set(page) == allowed_page_keys
         assert page["stable_id"] == page["id"]
+        assert isinstance(page["sections"], list)
         assert set(page["link_counts"]) == {"connected", "incoming", "outgoing"}
         assert not page["url"].startswith("../../data/")
         assert page["graph_url"].startswith("../graph/index.html?page=")
         assert page["id"] in page["graph_url"]
         assert not page["graph_url"].startswith("../../data/")
+        for section in page["sections"]:
+            assert set(section) == {
+                "anchor",
+                "id",
+                "search_snippet",
+                "search_text",
+                "title",
+                "url",
+            }
+            assert section["id"].startswith(f"{page['id']}:")
+            assert section["url"].startswith(page["url"] + "#")
+            assert section["anchor"]
+            assert section["title"]
+            assert section["search_snippet"]
     pages_by_id = {page["id"]: page for page in search_payload["pages"]}
     assert pages_by_id["render-root"]["study_counts"] == {
         "assignment": 1,
@@ -1683,6 +1717,15 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         pages_by_id["authoring-matrix"]["search_text"].lower()
     )
     assert pages_by_id["authoring-matrix"]["search_snippet"]
+    matrix_sections = pages_by_id["authoring-matrix"]["sections"]
+    section_by_title = {section["title"]: section for section in matrix_sections}
+    assert "Matrix norm fixture" in section_by_title
+    assert section_by_title["Matrix norm fixture"]["url"].endswith(
+        "../../authoring-matrix/index.html#raya-object-authoring-theorem"
+    )
+    assert "matrix norm fixture" in (
+        section_by_title["Matrix norm fixture"]["search_text"].lower()
+    )
     assert pages_by_id["authoring-matrix"]["previous_url"].endswith(
         "../../reader-ux/index.html"
     )
@@ -1712,7 +1755,11 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert 'addEventListener("focusin"' in search_script
     assert 'addEventListener("pointerenter"' in search_script
     assert "setActiveResult(indexForResult(item))" in search_script
+    assert "matchingSections" in search_script
+    assert "data-raya-search-section" in search_script
     assert "raya-search-clear" in search_script
+    assert ".raya-search-result-tasks," in rich_css
+    assert ".raya-search-result-schedule" in rich_css
     assert "URLSearchParams" in search_script
     assert 'params.get("q")' in search_script
     assert 'params.get("page")' in search_script
