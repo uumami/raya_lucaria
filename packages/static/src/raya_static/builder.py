@@ -4202,6 +4202,17 @@ def _render_graph_surface(
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
             (
+                '<section class="raya-graph-preview-bubble" '
+                "data-raya-graph-preview-bubble hidden aria-hidden=\"true\">"
+                '<p class="raya-graph-preview-kicker" '
+                "data-raya-graph-preview-meta></p>"
+                "<h2 data-raya-graph-preview-title>Graph page</h2>"
+                "<p data-raya-graph-preview-summary></p>"
+                '<p class="raya-graph-preview-counts" '
+                "data-raya-graph-preview-counts></p>"
+                "</section>"
+            ),
+            (
                 '<section class="raya-graph-inspection-preview" '
                 "data-raya-graph-inspection-preview hidden "
                 'aria-label="Graph page preview" aria-live="polite">'

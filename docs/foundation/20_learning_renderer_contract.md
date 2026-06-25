@@ -98,6 +98,8 @@ transient search spotlighting over matched pages and directly connected
 context, transient graph-search keyboard movement over visible page results
 with Enter-to-open active result behavior, transient hover/focus spotlight
 dimming, hover/focus inspection text, keyboard inspection parity,
+an optional bounded graph preview bubble for SVG graph node hover/focus using
+only already loaded public page metadata,
 single-click selection/inspection for SVG graph page links, double-click
 page opening for SVG graph page links, keyboard Enter-to-open behavior on
 focused SVG graph page links,
@@ -147,6 +149,9 @@ readability cue over generated graph data, not recommendation rank, progress,
 importance, mastery, or authority. Selected-neighborhood focus may narrow visible graph and list nodes to the selected page plus directly connected pages from explicit generated edges, but it remains transient UI state and must always allow return to the full graph. Selected-page relationship chips may focus the already rendered relationship walkthrough by explicit relationship kind and direction, but that focus remains local UI state and must not persist to browser storage, mutate URL/share state, fetch data, change authored graph data, or imply recommendation, ranking, mastery, progress, or authority. URL graph state is shareable page state, not browser storage or learner state. It must not fetch graph data at runtime, load external graph
 libraries, persist graph state in browser storage, infer
 recommendations, or present graph position as personal progress.
+The graph preview bubble is transient spatial context only; it must not fetch
+data, persist state, expose private source surfaces, or imply progress,
+mastery, ranking, recommendation, personalization, or authority.
 
 Generated Search, Graph, Practice, Tasks, and Schedule pages may share discovery workspace chrome that shows the current course title, identifies the workspace, links back to the course, links between discovery workspaces, and exposes local volatile text-size and `OpenDyslexic` controls. Search, Practice, Tasks, and Schedule may also use static workspace regions for controls, results, and public context summaries so desktop readers can scan without leaving the page. Search result context, Practice object context, Tasks object context, and Schedule item context may follow transient active cards selected by keyboard movement, pointer hover, or focus on existing links. When Search, Practice, Tasks, or Schedule opens from a valid `?page=<page-id>` handoff, the control region may show a compact visible notice naming the focused public page, the current visible count, and the Clear reset path. That notice is structural URL context only and must hide when no valid page focus exists or after Clear/Escape restores the full static workspace. This chrome, active context, and page-focus notice are static page structure. They must not load the course shell script, show a course map control without a course map, store search, graph, practice, task, or schedule state, fetch external resources, or turn structural workspace labels into progress, ranking, or recommendation language.
 

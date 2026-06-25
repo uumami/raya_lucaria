@@ -114,6 +114,11 @@ busqueda y filtros, y si el foco de vecindario esta activo. Usa sus acciones
 Open page, Focus neighborhood, Show full graph y Clear selection como controles
 locales del grafo; la banda no es progreso guardado, ranking, dominio ni
 recomendacion.
+En pantallas anchas, pasar el puntero sobre un nodo del grafo o enfocarlo puede
+mostrar una vista previa pequena cerca del nodo con titulo de pagina, contexto
+estatico, resumen y conteos de enlaces explicitos. Usala como ayuda rapida de
+lectura; el panel inspector y los enlaces normales de pagina siguen siendo la
+forma estable de inspeccionar o abrir la pagina.
 Algunas paginas tambien pueden terminar con un bloque Page connections dentro
 del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace

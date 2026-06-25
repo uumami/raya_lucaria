@@ -54,6 +54,11 @@ _GRAPH_JAVASCRIPT = r"""
   const inspectionPreviewOpen = document.querySelector(
     "[data-raya-graph-inspection-preview-open]"
   );
+  const graphPreviewBubble = document.querySelector("[data-raya-graph-preview-bubble]");
+  const graphPreviewMeta = document.querySelector("[data-raya-graph-preview-meta]");
+  const graphPreviewTitle = document.querySelector("[data-raya-graph-preview-title]");
+  const graphPreviewSummary = document.querySelector("[data-raya-graph-preview-summary]");
+  const graphPreviewCounts = document.querySelector("[data-raya-graph-preview-counts]");
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
   const edgeKindFilters = Array.from(
     document.querySelectorAll("[data-raya-graph-edge-kind-filter]")
@@ -1688,6 +1693,65 @@ _GRAPH_JAVASCRIPT = r"""
     inspectionPreview.hidden = false;
   }
 
+  function hideGraphPreviewBubble() {
+    if (!graphPreviewBubble) return;
+    graphPreviewBubble.hidden = true;
+    graphPreviewBubble.setAttribute("aria-hidden", "true");
+  }
+
+  function graphPointToPanelOffset(point) {
+    if (!point || !canvas || !graphViewBox) return null;
+    const canvasBox = canvas.getBoundingClientRect();
+    const panelBox = canvas.parentElement
+      ? canvas.parentElement.getBoundingClientRect()
+      : canvasBox;
+    if (!canvasBox.width || !canvasBox.height || !graphViewBox.width || !graphViewBox.height) {
+      return null;
+    }
+    const scale = Math.min(
+      canvasBox.width / graphViewBox.width,
+      canvasBox.height / graphViewBox.height
+    );
+    const renderedWidth = graphViewBox.width * scale;
+    const renderedHeight = graphViewBox.height * scale;
+    const alignX = (canvasBox.width - renderedWidth) / 2;
+    const alignY = (canvasBox.height - renderedHeight) / 2;
+    return {
+      x: canvasBox.left - panelBox.left + alignX + (point.x - graphViewBox.x) * scale,
+      y: canvasBox.top - panelBox.top + alignY + (point.y - graphViewBox.y) * scale,
+      panelWidth: panelBox.width,
+      panelHeight: panelBox.height,
+    };
+  }
+
+  function showGraphPreviewBubble(nodeId) {
+    if (!graphPreviewBubble) return;
+    const node = nodesById.get(nodeId);
+    const point = latestRenderedPositions.get(nodeId);
+    const offset = graphPointToPanelOffset(point);
+    if (!node || !offset) {
+      hideGraphPreviewBubble();
+      return;
+    }
+    if (graphPreviewTitle) graphPreviewTitle.textContent = node.title || node.nav_title || node.id;
+    if (graphPreviewMeta) graphPreviewMeta.textContent = inspectionPreviewTextFor(node);
+    if (graphPreviewSummary) graphPreviewSummary.textContent = node.summary || "No summary available.";
+    if (graphPreviewCounts) graphPreviewCounts.textContent = inspectionPreviewCountTextFor(node.id);
+
+    graphPreviewBubble.hidden = false;
+    graphPreviewBubble.setAttribute("aria-hidden", "false");
+    const bubbleBox = graphPreviewBubble.getBoundingClientRect();
+    const margin = 16;
+    const targetX = offset.x + 22;
+    const targetY = offset.y - Math.min(64, bubbleBox.height / 2);
+    const maxX = Math.max(margin, offset.panelWidth - bubbleBox.width - margin);
+    const maxY = Math.max(margin, offset.panelHeight - bubbleBox.height - margin);
+    const x = Math.min(Math.max(margin, targetX), maxX);
+    const y = Math.min(Math.max(margin, targetY), maxY);
+    graphPreviewBubble.style.setProperty("--raya-graph-preview-x", `${x - margin}px`);
+    graphPreviewBubble.style.setProperty("--raya-graph-preview-y", `${y - margin}px`);
+  }
+
   function updateInspectionDom() {
     renderInspectionPreview(inspectedId);
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
@@ -1755,6 +1819,11 @@ _GRAPH_JAVASCRIPT = r"""
     inspectedId = nodesById.has(nodeId) ? nodeId : "";
     if (hoverStatus) hoverStatus.textContent = inspectedId ? inspectionTextFor(inspectedId) : "";
     renderInspectionPreview(inspectedId);
+    if (inspectedId && options.bubble) {
+      showGraphPreviewBubble(inspectedId);
+    } else if (!options.bubble) {
+      hideGraphPreviewBubble();
+    }
     updateInspectionDom();
   }
 
@@ -1848,12 +1917,14 @@ _GRAPH_JAVASCRIPT = r"""
         inspectedId = activeResultId;
         if (hoverStatus) hoverStatus.textContent = inspectionTextFor(inspectedId);
         renderInspectionPreview(inspectedId);
+        hideGraphPreviewBubble();
         updateInspectionDom();
         return;
       }
       inspectedId = "";
       if (hoverStatus) hoverStatus.textContent = "";
       renderInspectionPreview("");
+      hideGraphPreviewBubble();
       updateInspectionDom();
     };
     if (nodeId) {
@@ -2330,6 +2401,7 @@ _GRAPH_JAVASCRIPT = r"""
     pendingInitialPageFit = false;
     if (hoverStatus) hoverStatus.textContent = "";
     renderInspectionPreview("");
+    hideGraphPreviewBubble();
     setGraphNeighborhoodFocus(false);
     renderDetail();
     render();
@@ -2474,6 +2546,7 @@ _GRAPH_JAVASCRIPT = r"""
     if (inspectedId && !activeIds.has(inspectedId)) {
       inspectedId = "";
       if (hoverStatus) hoverStatus.textContent = "";
+      hideGraphPreviewBubble();
     }
     renderList(listIds);
     if (status) {
@@ -2497,6 +2570,7 @@ _GRAPH_JAVASCRIPT = r"""
       pendingInitialPageFit = false;
       latestRenderedPositions = new Map();
       latestRenderedEdges = [];
+      hideGraphPreviewBubble();
       setGraphViewportControlsEnabled(false);
       setFitSelectionEnabled();
       if (activeResultId) setActiveResult(activeResultId, { scroll: false });
@@ -2633,9 +2707,9 @@ _GRAPH_JAVASCRIPT = r"""
         window.clearTimeout(pendingSelectTimer);
         openGraphNode(node.id);
       });
-      link.addEventListener("mouseenter", () => inspectGraphNode(node.id));
+      link.addEventListener("mouseenter", () => inspectGraphNode(node.id, { bubble: true }));
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
-      link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true }));
+      link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true, bubble: true }));
       link.addEventListener("blur", () => clearGraphInspection(node.id));
       link.addEventListener("pointerdown", (event) => startGraphNodeDrag(event, node.id));
       link.addEventListener("mousedown", (event) => startGraphNodeDrag(event, node.id));
@@ -2729,6 +2803,10 @@ _GRAPH_JAVASCRIPT = r"""
       panGraphView(0, 0.12);
     }
   });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    hideGraphPreviewBubble();
+  });
   canvas.addEventListener("wheel", wheelZoomGraphView, { passive: false });
   canvas.addEventListener("pointerdown", startGraphPan);
   canvas.addEventListener("pointermove", (event) => {
@@ -2769,6 +2847,7 @@ _GRAPH_JAVASCRIPT = r"""
       setGraphNeighborhoodFocus(false);
       graphViewBox = null;
       if (hoverStatus) hoverStatus.textContent = "";
+      hideGraphPreviewBubble();
       setGraphExpanded(false);
       setGraphPanelState("list", true);
       setGraphPanelState("inspector", true);

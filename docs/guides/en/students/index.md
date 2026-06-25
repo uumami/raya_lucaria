@@ -103,6 +103,10 @@ current layout, selected page, page focus, search and filter context, and
 whether neighborhood focus is on. Use its Open page, Focus neighborhood, Show
 full graph, and Clear selection actions as local graph controls; the band is
 not saved progress, ranking, mastery, or a recommendation.
+On wider screens, hovering or focusing a graph node may show a small preview
+near the node with the page title, static context, summary, and explicit link
+counts. Treat it as a quick reading aid; the inspector panel and normal page
+links remain the stable way to inspect or open the page.
 Graph state and share URL details may be under a `Graph state` disclosure so
 the main graph stays focused on search, the canvas, and selected-page context.
 Some pages may also end with a Page connections block inside the article. It

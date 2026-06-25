@@ -918,6 +918,7 @@ img {
 .raya-graph-map-panel {
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 .raya-graph-panel-header {
   align-items: center;
@@ -2118,6 +2119,41 @@ img {
 .raya-graph-canvas[hidden] {
   display: none;
 }
+.raya-graph-preview-bubble {
+  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-accent);
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 2rem color-mix(in srgb, var(--raya-color-text) 18%, transparent);
+  color: var(--raya-color-text);
+  inline-size: min(19rem, calc(100% - 2rem));
+  left: 1rem;
+  padding: 0.85rem 0.95rem;
+  pointer-events: none;
+  position: absolute;
+  top: 1rem;
+  transform: translate(var(--raya-graph-preview-x, 0), var(--raya-graph-preview-y, 0));
+  z-index: 4;
+}
+.raya-graph-preview-bubble[hidden] {
+  display: none;
+}
+.raya-graph-preview-bubble h2,
+.raya-graph-preview-bubble p {
+  margin: 0;
+}
+.raya-graph-preview-bubble h2 {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+.raya-graph-preview-kicker,
+.raya-graph-preview-counts {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+}
+.raya-graph-preview-bubble h2 + p,
+.raya-graph-preview-bubble p + p {
+  margin-top: 0.35rem;
+}
 .raya-graph-edge {
   stroke: var(--raya-graph-edge-color, var(--raya-color-border));
   stroke-opacity: 0.58;
@@ -2291,6 +2327,11 @@ img {
 }
 .raya-graph-list li[hidden] {
   display: none;
+}
+@media (max-width: 720px) {
+  .raya-graph-preview-bubble {
+    display: none;
+  }
 }
 .raya-learning-shell {
   display: grid;

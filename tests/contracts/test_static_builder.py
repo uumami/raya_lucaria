@@ -856,6 +856,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-inspection-preview-counts" in graph_html
     assert "data-raya-graph-inspection-preview-select" in graph_html
     assert "data-raya-graph-inspection-preview-open" in graph_html
+    assert 'class="raya-graph-preview-bubble"' in graph_html
+    assert "data-raya-graph-preview-bubble hidden" in graph_html
+    assert "data-raya-graph-preview-title" in graph_html
+    assert "data-raya-graph-preview-summary" in graph_html
+    assert "data-raya-graph-preview-counts" in graph_html
     assert 'class="raya-graph-legend"' in graph_html
     assert 'data-raya-graph-legend="node"' in graph_html
     assert 'data-raya-graph-legend="match"' in graph_html
@@ -1118,6 +1123,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "function openGraphNode" in graph_script
     assert "renderInspectionPreview" in graph_script
     assert "inspectionPreviewTextFor" in graph_script
+    assert "data-raya-graph-preview-bubble" in graph_script
+    assert "showGraphPreviewBubble" in graph_script
+    assert "hideGraphPreviewBubble" in graph_script
     assert "inspectedId && !activeIds.has(inspectedId)" in graph_script
     assert 'event.key !== "Enter"' in graph_script
     assert "openGraphNode(node.id)" in graph_script
@@ -1182,6 +1190,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-edge-kind-filter" in stylesheet
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert ".raya-graph-inspection-preview" in stylesheet
+    assert ".raya-graph-preview-bubble" in stylesheet
+    assert "@media (max-width: 720px)" in stylesheet
     assert ".raya-graph-detail-open-primary" in stylesheet
     assert ".raya-graph-detail-relationship-chip" in stylesheet
     assert ".raya-graph-orientation" in stylesheet

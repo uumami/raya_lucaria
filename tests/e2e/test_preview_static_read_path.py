@@ -3354,6 +3354,96 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
         handle.close()
 
 
+def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import expect, sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 960})
+                try:
+                    page.goto(
+                        f"{base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator("#raya-graph-canvas").evaluate(
+                        """(svg) => {
+                          svg.style.width = '1000px';
+                          svg.style.height = '200px';
+                          svg.style.maxWidth = 'none';
+                        }"""
+                    )
+                    bubble = page.locator("[data-raya-graph-preview-bubble]")
+                    expect(bubble).to_be_hidden()
+
+                    node = page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="render-root"]'
+                    )
+                    node.hover()
+                    expect(bubble).to_be_visible()
+                    expect(
+                        page.locator("[data-raya-graph-preview-title]")
+                    ).to_contain_text("Raya Lucaria Render Fixture")
+                    expect(
+                        page.locator("[data-raya-graph-preview-counts]")
+                    ).to_contain_text("connected")
+                    expect(
+                        page.locator("[data-raya-graph-inspection-preview]")
+                    ).to_be_visible()
+                    node_bounds = node.bounding_box()
+                    bounds = bubble.bounding_box()
+                    assert node_bounds is not None
+                    assert bounds is not None
+                    assert bounds["x"] >= 0
+                    assert bounds["x"] + bounds["width"] <= 1440
+                    node_center = {
+                        "x": node_bounds["x"] + node_bounds["width"] / 2,
+                        "y": node_bounds["y"] + node_bounds["height"] / 2,
+                    }
+                    bubble_center = {
+                        "x": bounds["x"] + bounds["width"] / 2,
+                        "y": bounds["y"] + bounds["height"] / 2,
+                    }
+                    assert bubble_center["x"] >= node_center["x"]
+                    assert abs(bubble_center["x"] - node_center["x"]) <= 260
+                    assert abs(bubble_center["y"] - node_center["y"]) <= 140
+
+                    page.keyboard.press("Escape")
+                    expect(bubble).to_be_hidden()
+                    expect(
+                        page.locator("[data-raya-graph-inspection-preview]")
+                    ).to_be_visible()
+
+                    node.evaluate("node => node.focus()")
+                    expect(bubble).to_be_visible()
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
