@@ -284,6 +284,8 @@ graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to
 inspect dense visual graph areas without changing course data or saved state.
 Selected-page details may include a Relationship walkthrough that explains
 explicit link kinds and directions with local page and graph-focus controls.
+Connection previews may label relationship kind and direction, such as
+`Content` and `From this page`, using explicit generated graph context only.
 Relationship chips may temporarily narrow that walkthrough for reading, but
 they do not create recommendations, progress, saved filters, or new course data.
 The graph may hide low-context labels until selection, search, hover, or

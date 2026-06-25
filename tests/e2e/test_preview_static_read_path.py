@@ -7420,6 +7420,7 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                                 normalizedText: details?.innerText.replace(/\\s+/g, ' ').trim(),
                                 openHref: details?.querySelector('.raya-connection-preview-open')?.getAttribute('href'),
                                 graphHref: details?.querySelector('.raya-connection-preview-graph')?.getAttribute('href'),
+                                summaryDisplay: getComputedStyle(details?.querySelector('summary')).display,
                                 localStorageKeys: Object.keys(localStorage),
                                 sessionStorageKeys: Object.keys(sessionStorage),
                               };
@@ -7432,6 +7433,13 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                         )
                         assert "1 from this page" in preview_state["normalizedText"]
                         assert "2 links here" in preview_state["normalizedText"]
+                        assert "Content" in preview_state["normalizedText"]
+                        assert "From this page" in preview_state["normalizedText"]
+                        assert (
+                            "This page links to the target page through an explicit content link."
+                            in preview_state["normalizedText"]
+                        )
+                        assert "list-item" in preview_state["summaryDisplay"]
                         assert (
                             preview_state["openHref"] == "../math-authoring/index.html"
                         )

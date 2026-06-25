@@ -155,8 +155,10 @@ y enlaces locales. Los relationship chips pueden actuar como filtros con
 botones nativos para ese walkthrough, con `aria-pressed`, sin mutar la URL, sin
 storage del navegador y con limpieza cuando cambia la seleccion del grafo. El reveal contextual de labels puede ocultar visualmente
 labels SVG de bajo contexto, pero los anchors de pagina y texto `aria-label`
-deben seguir disponibles. El contexto de URL generado puede enfocar una pagina, pero
-debe seguir siendo transitorio.
+deben seguir disponibles. El contexto de URL generado puede enfocar una pagina,
+pero debe seguir siendo transitorio. Los previews de conexion solo pueden
+etiquetar tipo y direccion de relacion, como `Content` y `From this page`,
+desde contexto explicito generado del grafo.
 El readout de estado/debug del grafo y el control de copiar URL pueden estar
 dentro de un disclosure nativo cerrado por defecto; mantenlo sincronizado,
 local y sin storage del grafo.

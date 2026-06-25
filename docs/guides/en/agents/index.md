@@ -260,9 +260,11 @@ avoid source paths, private support paths, external URLs, fetch requests,
 storage calls, progress, mastery, recommendations, and ranking language.
 Page-connection previews in the rail and article must use generated public page
 metadata only: title, summary, status, local page URL, graph-focus URL, and
-explicit incoming/outgoing counts. Verify native disclosure behavior, escaped
-text, no private paths, no browser storage, no fetch, no external requests, and
-no recommendation/progress/mastery wording.
+explicit relationship kind, direction, and incoming/outgoing counts. Connection
+previews may label relationship kind and direction, such as `Content` and
+`From this page`, using explicit generated graph context only. Verify native
+disclosure behavior, escaped text, no private paths, no browser storage, no
+fetch, no external requests, and no recommendation/progress/mastery wording.
 Treat graph color, source-group edge color, size, search spotlighting,
 spotlight dimming, and inspection text as structural readability cues; do
 not introduce progress, mastery, recommendation, ranking, persistent graph

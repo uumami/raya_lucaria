@@ -4072,10 +4072,22 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'class="raya-connection-preview raya-connection-preview-rail"'
         in connections_panel
     )
-    assert "<summary>Projection Residuals</summary>" in connections_panel
+    assert (
+        '<span class="raya-connection-preview-title">Projection Residuals</span>'
+        in connections_panel
+    )
     assert "A compact lesson on projection residuals" in connections_panel
     assert (
         '<span class="raya-connection-preview-status">ready</span>' in connections_panel
+    )
+    assert '<span class="raya-connection-preview-kind">Content</span>' in connections_panel
+    assert (
+        '<span class="raya-connection-preview-direction">Links here</span>'
+        in connections_panel
+    )
+    assert (
+        "This target page links here through an explicit content link."
+        in connections_panel
     )
     assert "<span><strong>1</strong> from this page</span>" in connections_panel
     assert "<span><strong>2</strong> links here</span>" in connections_panel
@@ -4109,13 +4121,28 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'class="raya-connection-preview raya-connection-preview-article"'
         in article_connections
     )
-    assert "<summary>Math Authoring Fixture</summary>" in article_connections
+    assert (
+        '<span class="raya-connection-preview-title">Math Authoring Fixture</span>'
+        in article_connections
+    )
     assert (
         "Fixture page for current build-time MathJax authoring patterns."
         in article_connections
     )
     assert (
         '<span class="raya-connection-preview-status">ready</span>'
+        in article_connections
+    )
+    assert (
+        '<span class="raya-connection-preview-kind">Content</span>'
+        in article_connections
+    )
+    assert (
+        '<span class="raya-connection-preview-direction">From this page</span>'
+        in article_connections
+    )
+    assert (
+        "This page links to the target page through an explicit content link."
         in article_connections
     )
     assert "<span><strong>1</strong> from this page</span>" in article_connections

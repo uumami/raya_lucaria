@@ -2802,6 +2802,37 @@ html[data-raya-course-map-scroll-lock="true"] body {
   overflow-wrap: anywhere;
   padding: 0.45rem 0.55rem;
 }
+.raya-connection-preview summary::marker {
+  color: var(--raya-color-accent);
+}
+.raya-connection-preview-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.raya-connection-preview-kind,
+.raya-connection-preview-direction {
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 42%, var(--raya-color-border));
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
+  padding: 0.24rem 0.42rem;
+}
+.raya-connection-preview-kind {
+  background: var(--raya-color-accent);
+  color: var(--raya-color-accent-text);
+}
+.raya-connection-preview-direction {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 76%, var(--raya-color-surface));
+  color: var(--raya-color-text);
+}
+.raya-connection-preview-title {
+  display: block;
+  margin-top: 0.35rem;
+}
 .raya-connection-preview summary:focus-visible {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 2px;
@@ -2822,6 +2853,11 @@ html[data-raya-course-map-scroll-lock="true"] body {
   color: var(--raya-color-muted);
   font-size: 0.9rem;
   line-height: 1.45;
+}
+.raya-connection-preview-direction-note {
+  color: var(--raya-color-muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 .raya-connection-preview-status {
   background: var(--raya-color-accent-soft);

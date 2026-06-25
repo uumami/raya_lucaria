@@ -1968,14 +1968,18 @@ def _render_linked_pages_rail(
         sections.append(
             _rail_connection_heading("From this page", len(outgoing))
             + '<ul class="raya-rail-link-list">'
-            + "\n".join(_linked_page_item(page, item) for item in outgoing)
+            + "\n".join(
+                _linked_page_item(page, item, "From this page") for item in outgoing
+            )
             + "</ul>"
         )
     if incoming:
         sections.append(
             _rail_connection_heading("Links here", len(incoming))
             + '<ul class="raya-rail-link-list">'
-            + "\n".join(_linked_page_item(page, item) for item in incoming)
+            + "\n".join(
+                _linked_page_item(page, item, "Links here") for item in incoming
+            )
             + "</ul>"
         )
     if not sections:
@@ -2044,7 +2048,9 @@ def _article_connection_section(
     items: list[dict[str, str]],
     page: ContentPage,
 ) -> str:
-    rendered_items = "\n".join(_article_connection_item(page, item) for item in items)
+    rendered_items = "\n".join(
+        _article_connection_item(page, item, title) for item in items
+    )
     return "\n".join(
         [
             '<section class="raya-article-connections-section">',
@@ -2057,13 +2063,38 @@ def _article_connection_section(
     )
 
 
-def _article_connection_item(page: ContentPage, item: dict[str, str]) -> str:
-    preview = _connection_preview_item(page, item, "article")
+def _article_connection_item(
+    page: ContentPage,
+    item: dict[str, str],
+    direction: str,
+) -> str:
+    preview = _connection_preview_item(page, item, "article", direction)
     return f'<li class="raya-article-connection-item">{preview}</li>'
 
 
 def _relationship_count_label(count: int, plural: str, singular: str) -> str:
     return singular if count == 1 else plural
+
+
+def _connection_kind_label(kind: str) -> str:
+    labels = {
+        "content": "Content",
+        "navigation": "Navigation",
+        "parent": "Parent",
+        "prerequisite": "Prerequisite",
+    }
+    normalized = kind.strip().lower()
+    return labels.get(
+        normalized,
+        normalized.replace("-", " ").replace("_", " ").title() or "Content",
+    )
+
+
+def _connection_direction_sentence(direction: str, kind: str) -> str:
+    kind_label = _connection_kind_label(kind).lower()
+    if direction == "Links here":
+        return f"This target page links here through an explicit {kind_label} link."
+    return f"This page links to the target page through an explicit {kind_label} link."
 
 
 def _rail_connection_heading(title: str, count: int) -> str:
@@ -2075,14 +2106,15 @@ def _rail_connection_heading(title: str, count: int) -> str:
     )
 
 
-def _linked_page_item(page: ContentPage, item: dict[str, str]) -> str:
-    return "<li>" + _connection_preview_item(page, item, "rail") + "</li>"
+def _linked_page_item(page: ContentPage, item: dict[str, str], direction: str) -> str:
+    return "<li>" + _connection_preview_item(page, item, "rail", direction) + "</li>"
 
 
 def _connection_preview_item(
     page: ContentPage,
     item: dict[str, str],
     variant: str,
+    direction: str,
 ) -> str:
     title = item["title"]
     href = _relative_href(page.output_path, item["url"])
@@ -2090,14 +2122,23 @@ def _connection_preview_item(
         _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
         {"page": item["id"]},
     )
-    metadata = _connection_preview_metadata(item)
+    kind_label = _connection_kind_label(item.get("kind", "content"))
+    metadata = _connection_preview_metadata(item, direction)
     return "\n".join(
         [
             (
                 '<details class="raya-connection-preview '
                 f'raya-connection-preview-{html.escape(variant, quote=True)}">'
             ),
-            f"<summary>{html.escape(title)}</summary>",
+            (
+                "<summary>"
+                '<span class="raya-connection-preview-meta">'
+                f'<span class="raya-connection-preview-kind">{html.escape(kind_label)}</span>'
+                f'<span class="raya-connection-preview-direction">{html.escape(direction)}</span>'
+                "</span>"
+                f'<span class="raya-connection-preview-title">{html.escape(title)}</span>'
+                "</summary>"
+            ),
             '<div class="raya-connection-preview-body">',
             metadata,
             '<p class="raya-connection-preview-actions">',
@@ -2117,8 +2158,13 @@ def _connection_preview_item(
     )
 
 
-def _connection_preview_metadata(item: dict[str, str]) -> str:
+def _connection_preview_metadata(item: dict[str, str], direction: str) -> str:
     parts: list[str] = []
+    kind = item.get("kind", "content")
+    parts.append(
+        '<p class="raya-connection-preview-direction-note">'
+        f"{html.escape(_connection_direction_sentence(direction, kind))}</p>"
+    )
     summary = item.get("summary", "")
     status = item.get("status", "")
     if summary:

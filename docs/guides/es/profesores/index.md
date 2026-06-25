@@ -289,7 +289,9 @@ explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
 seleccionada y workspace expandido del grafo. Los detalles de pagina seleccionada
 pueden incluir un Relationship walkthrough que explica tipos y direcciones de
 enlaces explicitos con controles locales de pagina y foco en grafo. Los
-relationship chips pueden reducir temporalmente ese walkthrough para lectura,
+previews de conexion pueden etiquetar tipo y direccion de relacion, como
+`Content` y `From this page`, usando solo contexto explicito generado del grafo.
+Los relationship chips pueden reducir temporalmente ese walkthrough para lectura,
 pero no crean recomendaciones, progreso, filtros guardados ni datos nuevos del
 curso. El grafo
 puede ocultar labels de bajo contexto hasta que una seleccion, busqueda,

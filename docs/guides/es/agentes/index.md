@@ -274,10 +274,13 @@ soporte, URLs externas, requests fetch, llamadas a storage, progreso, dominio,
 recomendaciones y lenguaje de ranking.
 Las vistas previas de Page connections en el riel y el articulo deben usar solo
 metadatos publicos generados de pagina: titulo, resumen, estado, URL local de
-la pagina, URL de foco en grafo y conteos explicitos entrantes/salientes.
-Verifica comportamiento de controles nativos de despliegue, texto escapado, sin
-rutas privadas, sin almacenamiento del navegador, sin fetch, sin solicitudes
-externas y sin lenguaje de recomendacion, avance o maestria.
+la pagina, URL de foco en grafo, tipo y direccion explicitos de relacion, y
+conteos explicitos entrantes/salientes. Los previews de conexion pueden
+etiquetar tipo y direccion de relacion, como `Content` y `From this page`,
+usando solo contexto explicito generado del grafo. Verifica comportamiento de
+controles nativos de despliegue, texto escapado, sin rutas privadas, sin
+almacenamiento del navegador, sin fetch, sin solicitudes externas y sin
+lenguaje de recomendacion, avance o maestria.
 Trata color, color de arista por grupo fuente, tamano, spotlight de busqueda,
 atenuacion de spotlight y texto de inspeccion del grafo como pistas de legibilidad estructural;
 no introduzcas progreso, dominio, recomendaciones, rankings, estado persistente

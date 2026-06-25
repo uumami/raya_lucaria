@@ -124,9 +124,10 @@ del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace
 Open in course graph. Los elementos de conexion pueden abrir vistas previas
 nativas con el resumen, estado y conteos de enlaces explicitos de la pagina
-enlazada cuando el curso tiene esos metadatos. Usalos como mapa de lectura
-despues de terminar la pagina; no son un registro de avance, ranking ni motor
-de recomendaciones.
+enlazada cuando el curso tiene esos metadatos. Tambien pueden etiquetar tipo y
+direccion de relacion, como `Content` y `From this page`, usando solo contexto
+explicito generado del grafo. Usalos como mapa de lectura despues de terminar
+la pagina; no son un registro de avance, ranking ni motor de recomendaciones.
 Las paginas Search, Graph, Practice, Tasks y Schedule usan la misma barra estatica de
 descubrimiento para volver al curso, cambiar entre esos workspaces y mantener
 disponibles Text size u OpenDyslexic para la pagina actual. Search, Practice y

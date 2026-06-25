@@ -148,6 +148,8 @@ button filters for that walkthrough, with `aria-pressed`, no URL mutation, no
 browser storage, and clear behavior when graph selection changes. Contextual label reveal may hide
 low-context SVG labels visually, but page anchors and `aria-label` text must
 remain available. Generated URL context may focus a page, but it must remain transient.
+Connection previews may label relationship kind and direction, such as
+`Content` and `From this page`, using explicit generated graph context only.
 Graph state/debug readout and copy URL controls may be hidden behind a native
 disclosure by default; keep the underlying state synchronized, local, and free
 of graph storage.

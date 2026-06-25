@@ -113,9 +113,10 @@ Some pages may also end with a Page connections block inside the article. It
 uses the same static relationship data to show pages linked from the lesson,
 pages that link back to it, and an Open in course graph link. Connection items
 can open native previews with the linked page summary, status, and explicit link
-counts when the course has that metadata. Use them as a reading map after
-finishing the page; they are not a progress tracker, ranking, or recommendation
-engine.
+counts when the course has that metadata. They may also label relationship kind
+and direction, such as `Content` and `From this page`, using explicit generated
+graph context only. Use them as a reading map after finishing the page; they are
+not a progress tracker, ranking, or recommendation engine.
 Search, Graph, Practice, Tasks, and Schedule pages use the same static discovery bar so
 you can return to the course, switch between those workspaces, and keep Text
 size or OpenDyslexic available for the current page. Search, Practice, and
