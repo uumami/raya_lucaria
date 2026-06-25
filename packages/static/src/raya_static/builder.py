@@ -1538,6 +1538,13 @@ def _render_course_map(
         [
             '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
             '<div class="raya-course-map-header">',
+            '<div class="raya-course-map-drawer-chrome">',
+            '<span class="raya-course-map-drawer-grip" aria-hidden="true"></span>',
+            '<p class="raya-course-map-drawer-title">Course map</p>',
+            f'<p class="raya-course-map-drawer-position">{position}</p>'
+            if position
+            else "",
+            "</div>",
             '<p class="raya-region-title">Course map</p>',
             f'<p class="raya-page-position">{position}</p>' if position else "",
             (

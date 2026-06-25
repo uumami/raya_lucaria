@@ -68,7 +68,12 @@ necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
 el riel derecho para dar mas espacio al articulo; es estado visual temporal y no
 guarda progreso. En desktop, `Context` puede ocultar o restaurar solo el riel
 derecho mientras deja disponible el mapa del curso; tambien es estado temporal
-de layout, no progreso ni personalizacion. Usa el filtro del mapa para limitar etiquetas de paginas
+de layout, no progreso ni personalizacion. En tablet y movil, el boton Course
+map abre un drawer temporal con titulo propio, posicion de pagina, filtro,
+atajos de workspace y boton de cierre. Mientras el drawer esta abierto, la
+pagina de fondo pausa el scroll para que el mapa sea mas facil de usar; cierralo
+con el boton de cierre, el backdrop o Escape para volver el foco a la lectura.
+Usa el filtro del mapa para limitar etiquetas de paginas
 visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
 articulo, en el contexto superior de lectura o en las cards al final de pagina
 para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando

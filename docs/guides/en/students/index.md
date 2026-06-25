@@ -63,7 +63,12 @@ different focus. On desktop, `Focus reading` can collapse the map and right
 learning rail together so the article gets more space; it is temporary display
 state and does not store progress. On desktop, `Context` can hide or restore
 only the right learning rail while leaving the course map available; that is
-also temporary layout state, not progress or personalization. Use the map filter to narrow visible page labels inside the
+also temporary layout state, not progress or personalization. On tablet and
+mobile, the Course map button opens a temporary drawer with its own title,
+page position, filter, workspace shortcuts, and close button. While the drawer
+is open, the page behind it pauses scrolling so the map is easier to use; close
+it with the close button, the backdrop, or Escape to return focus to reading.
+Use the map filter to narrow visible page labels inside the
 current static hierarchy. Use Previous and Next in the article, top reading
 context, or end-of-page cards to move through the ordered material, and use Text
 size or OpenDyslexic when those settings are more comfortable. End-of-page cards

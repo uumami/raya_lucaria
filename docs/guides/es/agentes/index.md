@@ -173,6 +173,13 @@ colapso estan ocultos. Presionar Escape dentro del riel en movil no debe dejar
 orientacion de la shell no debe escribir `localStorage` ni `sessionStorage`;
 solo preferencias explicitas de comodidad como tamano de texto u
 `OpenDyslexic` pueden persistir.
+Cuando cambie el drawer Course map en tablet/movil, verifica chrome visible del
+drawer, posicion estructural de pagina cuando exista, boton de cierre, cierre
+por backdrop, cierre por Escape, restauracion de foco al opener, contencion de
+foco mientras esta abierto, estado cerrado con `aria-hidden`/`inert`, scroll
+lock de fondo solo mientras esta abierto, limpieza del scroll lock al cerrar o
+al volver a desktop, sin escrituras de storage, sin requests externos y
+disponibilidad del articulo y riel derecho despues de cerrar.
 Cuando cambien los rieles lectores colapsados, verifica que las pestanas
 desktop Map y Context usen labels visuales no horizontales, sigan siendo
 operables por teclado mediante sus controles existentes, aumenten el ancho del

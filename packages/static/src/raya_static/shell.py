@@ -178,6 +178,10 @@ _SHELL_JAVASCRIPT = r"""
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
     const commandExpanded = !isDesktopShell() ? drawerOpen : structuralExpanded;
+    root.setAttribute(
+      "data-raya-course-map-scroll-lock",
+      drawerOpen && !isDesktopShell() ? "true" : "false"
+    );
     toggleButtons
       .filter((button) => button.classList.contains("raya-command-map"))
       .forEach((button) => {
@@ -207,6 +211,10 @@ _SHELL_JAVASCRIPT = r"""
     map.setAttribute("aria-hidden", "false");
     if (root.dataset.rayaCourseMapDrawer !== "closed") {
       root.dataset.rayaCourseMapDrawer = "closed";
+    }
+    root.setAttribute("data-raya-course-map-scroll-lock", "false");
+    if (mapDrawerBackdrop) {
+      mapDrawerBackdrop.hidden = true;
     }
   }
 

@@ -8649,6 +8649,147 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
         handle.close()
 
 
+def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-command-map")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    state = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const body = document.body;
+                          const map = document.querySelector('#raya-course-map');
+                          const backdrop = document.querySelector('[data-raya-course-map-drawer-backdrop]');
+                          const opener = document.querySelector('.raya-command-map');
+                          const chrome = document.querySelector('.raya-course-map-drawer-chrome');
+                          const title = document.querySelector('.raya-course-map-drawer-title');
+                          const grip = document.querySelector('.raya-course-map-drawer-grip');
+                          const close = document.querySelector('[data-raya-course-map-close]');
+                          const mapBox = map.getBoundingClientRect();
+                          const backdropStyle = getComputedStyle(backdrop);
+                          return {
+                            drawer: root.dataset.rayaCourseMapDrawer,
+                            scrollLock: root.dataset.rayaCourseMapScrollLock,
+                            htmlOverflow: getComputedStyle(root).overflow,
+                            bodyOverflow: getComputedStyle(body).overflow,
+                            ariaHidden: map.getAttribute('aria-hidden'),
+                            inert: map.inert,
+                            chromeVisible: chrome && getComputedStyle(chrome).display !== 'none',
+                            chromeAriaHidden: chrome && chrome.getAttribute('aria-hidden'),
+                            title: title && title.textContent.trim(),
+                            gripVisible: grip && getComputedStyle(grip).display !== 'none',
+                            closeLabel: close && close.getAttribute('aria-label'),
+                            width: mapBox.width,
+                            left: mapBox.left,
+                            right: mapBox.right,
+                            backdropHidden: backdrop.hidden,
+                            backdropDisplay: backdropStyle.display,
+                            backdropBackground: backdropStyle.backgroundColor,
+                            backdropFilter: backdropStyle.backdropFilter || backdropStyle.webkitBackdropFilter,
+                            openerExpanded: opener.getAttribute('aria-expanded'),
+                          };
+                        }"""
+                    )
+                    assert state["drawer"] == "open"
+                    assert state["scrollLock"] == "true"
+                    assert state["htmlOverflow"] == "hidden"
+                    assert state["bodyOverflow"] == "hidden"
+                    assert state["ariaHidden"] == "false"
+                    assert state["inert"] is False
+                    assert state["chromeVisible"] is True
+                    assert state["chromeAriaHidden"] != "true"
+                    assert state["title"] == "Course map"
+                    assert state["gripVisible"] is True
+                    assert state["closeLabel"] == "Close course map"
+                    assert 320 <= state["width"] <= 390
+                    assert state["left"] == 0
+                    assert state["right"] <= 390
+                    assert state["backdropHidden"] is False
+                    assert state["backdropDisplay"] == "block"
+                    assert "rgba" in state["backdropBackground"]
+                    assert state["backdropFilter"] != "none"
+                    assert state["openerExpanded"] == "true"
+
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                    )
+                    closed = page.evaluate(
+                        """() => ({
+                          scrollLock: document.documentElement.dataset.rayaCourseMapScrollLock,
+                          htmlOverflow: getComputedStyle(document.documentElement).overflow,
+                          bodyOverflow: getComputedStyle(document.body).overflow,
+                          focusedClass: document.activeElement && document.activeElement.className,
+                        })"""
+                    )
+                    assert closed["scrollLock"] == "false"
+                    assert closed["htmlOverflow"] != "hidden"
+                    assert closed["bodyOverflow"] != "hidden"
+                    assert "raya-command-map" in closed["focusedClass"]
+
+                    page.click(".raya-command-map")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.set_viewport_size({"width": 1280, "height": 900})
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                    )
+                    resized = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const backdrop = document.querySelector('[data-raya-course-map-drawer-backdrop]');
+                          return {
+                            drawer: root.dataset.rayaCourseMapDrawer,
+                            scrollLock: root.dataset.rayaCourseMapScrollLock,
+                            backdropHidden: backdrop.hidden,
+                            backdropDisplay: getComputedStyle(backdrop).display,
+                          };
+                        }"""
+                    )
+                    assert resized == {
+                        "drawer": "closed",
+                        "scrollLock": "false",
+                        "backdropHidden": True,
+                        "backdropDisplay": "none",
+                    }
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_reader_page_brief_is_visible_static_and_responsive(
     tmp_path: Path,
 ) -> None:

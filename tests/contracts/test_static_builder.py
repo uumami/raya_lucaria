@@ -3730,10 +3730,13 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "data-raya-course-map-action" in script_text
     assert "data-raya-course-map-close" in script_text
     assert "data-raya-course-map-drawer-backdrop" in script_text
+    assert "data-raya-course-map-scroll-lock" in script_text
     assert 'link.getAttribute("data-raya-map-label")' in script_text
     assert 'node.getAttribute("data-raya-map-node") || ""' not in script_text
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
+    assert 'html[data-raya-course-map-scroll-lock="true"]' in css_text
+    assert ".raya-course-map-drawer-chrome" in css_text
     assert (
         ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;"
         in css_text
@@ -3800,6 +3803,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-course-map-workspaces"' in html
     assert 'aria-label="Course workspaces"' in html
     assert "data-raya-course-map-workspaces" in html
+    assert 'class="raya-course-map-drawer-chrome"' in html
+    assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
+    assert 'class="raya-course-map-drawer-grip"' in html
+    assert 'class="raya-course-map-drawer-title">Course map</p>' in html
     assert 'class="raya-course-map-actions"' in html
     assert 'data-raya-course-map-action="current"' in html
     assert 'data-raya-course-map-action="expand-all"' in html

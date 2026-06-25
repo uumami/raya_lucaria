@@ -159,6 +159,12 @@ the rail on mobile must not leave `aria-hidden`, `inert`, or hidden focusable
 content behind. Shell collapse/orientation state must not write localStorage or
 sessionStorage; only explicit comfort preferences such as text size or
 `OpenDyslexic` may persist.
+When the tablet/mobile Course map drawer changes, verify visible drawer chrome,
+the structural page position when present, the close button, backdrop close,
+Escape close, focus restore to the opener, focus containment while open,
+`aria-hidden`/`inert` closed state, background scroll lock only while open,
+scroll-lock cleanup after close or desktop resize, no storage writes, no
+external requests, and article/right-rail availability after close.
 When collapsed reader rails change, verify the desktop Map and Context tabs use
 non-horizontal visual labels, remain keyboard-operable through their existing
 controls, increase article width, stay hidden on tablet/mobile when their
