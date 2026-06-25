@@ -1469,6 +1469,86 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "[data-raya-graph-detail-panel]"
                         ).is_visible()
                         page.click("#graph-fit")
+                        page.locator("#raya-graph-canvas").evaluate(
+                            """(svg) => {
+                              svg.style.width = '360px';
+                              svg.style.height = '620px';
+                              svg.style.maxWidth = 'none';
+                            }"""
+                        )
+                        off_center_anchor = page.locator(
+                            "#raya-graph-canvas"
+                        ).evaluate(
+                            """(svg) => {
+                              const [x, y, width, height] = svg
+                                .getAttribute('viewBox')
+                                .split(/\\s+/)
+                                .map(Number);
+                              const svgPoint = svg.createSVGPoint();
+                              svgPoint.x = x + width * 0.54;
+                              svgPoint.y = y + height * 0.70;
+                              const matrix = svg.getScreenCTM();
+                              if (!matrix) return null;
+                              const mapped = svgPoint.matrixTransform(matrix);
+                              return { x: mapped.x, y: mapped.y };
+                            }"""
+                        )
+                        assert off_center_anchor is not None
+                        svg_point_at_anchor = """(svg, point) => {
+                          const svgPoint = svg.createSVGPoint();
+                          svgPoint.x = point.x;
+                          svgPoint.y = point.y;
+                          const matrix = svg.getScreenCTM();
+                          if (!matrix) return null;
+                          const mapped = svgPoint.matrixTransform(matrix.inverse());
+                          return { x: mapped.x, y: mapped.y };
+                        }"""
+                        anchor_before_zoom = page.locator(
+                            "#raya-graph-canvas"
+                        ).evaluate(svg_point_at_anchor, off_center_anchor)
+                        assert anchor_before_zoom is not None
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "wheel",
+                            {
+                                "deltaY": -140,
+                                "clientX": off_center_anchor["x"],
+                                "clientY": off_center_anchor["y"],
+                            },
+                        )
+                        anchor_after_zoom = page.locator(
+                            "#raya-graph-canvas"
+                        ).evaluate(svg_point_at_anchor, off_center_anchor)
+                        assert anchor_after_zoom is not None
+                        assert abs(
+                            anchor_after_zoom["x"] - anchor_before_zoom["x"]
+                        ) < 0.5
+                        assert abs(
+                            anchor_after_zoom["y"] - anchor_before_zoom["y"]
+                        ) < 0.5
+                        zero_delta_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "wheel",
+                            {
+                                "deltaX": 120,
+                                "deltaY": 0,
+                                "clientX": off_center_anchor["x"],
+                                "clientY": off_center_anchor["y"],
+                            },
+                        )
+                        assert (
+                            page.locator("#raya-graph-canvas").get_attribute("viewBox")
+                            == zero_delta_viewbox
+                        )
+                        page.locator("#raya-graph-canvas").evaluate(
+                            """(svg) => {
+                              svg.style.width = '';
+                              svg.style.height = '';
+                              svg.style.maxWidth = '';
+                            }"""
+                        )
+                        page.click("#graph-fit")
                         assert (
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
                             == initial_viewbox
@@ -1488,6 +1568,55 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert _viewbox_width(zoomed_out_viewbox) > _viewbox_width(
                             zoomed_viewbox
                         )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.includes('authoring-matrix')"""
+                        )
+                        page.fill("#graph-search", "matrix")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('match(es)')"""
+                        )
+                        selected_before_wheel = page.locator(
+                            "[data-raya-graph-state-selected]"
+                        ).inner_text()
+                        wheel_start_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        canvas_box = page.locator("#raya-graph-canvas").bounding_box()
+                        assert canvas_box is not None
+                        page.locator("#raya-graph-canvas").dispatch_event(
+                            "wheel",
+                            {
+                                "deltaY": -180,
+                                "clientX": canvas_box["x"] + canvas_box["width"] / 2,
+                                "clientY": canvas_box["y"] + canvas_box["height"] / 2,
+                            },
+                        )
+                        wheel_zoomed_viewbox = page.locator(
+                            "#raya-graph-canvas"
+                        ).get_attribute("viewBox")
+                        assert wheel_zoomed_viewbox != wheel_start_viewbox
+                        assert _viewbox_width(wheel_zoomed_viewbox) < _viewbox_width(
+                            wheel_start_viewbox
+                        )
+                        assert page.input_value("#graph-search") == "matrix"
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-state-selected]"
+                            ).inner_text()
+                            == selected_before_wheel
+                        )
+                        assert page.locator(
+                            "[data-raya-graph-detail-panel]"
+                        ).is_visible()
                         page.click("#graph-fit")
                         assert (
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
@@ -1521,6 +1650,80 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-panel]"
                         ).is_visible()
+                        page.fill("#graph-search", "zzzz-no-match")
+                        page.wait_for_selector("[data-raya-graph-empty]:visible")
+                        assert (
+                            "No graph pages match"
+                            in page.locator("[data-raya-graph-empty]").inner_text()
+                        )
+                        assert "zzzz-no-match" in page.locator(
+                            "[data-raya-graph-empty]"
+                        ).inner_text()
+                        assert page.locator(
+                            "[data-raya-graph-empty] [data-raya-graph-clear-search]"
+                        ).is_visible()
+                        page.locator(
+                            "[data-raya-graph-empty] [data-raya-graph-clear-search]"
+                        ).click()
+                        page.wait_for_function(
+                            """() => document.querySelector('#graph-search')?.value === ''"""
+                        )
+                        assert (
+                            page.locator("[data-raya-graph-empty]:visible").count()
+                            == 0
+                        )
+                        page.click('[data-raya-graph-toggle-panel="list"]')
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-list-state"
+                            )
+                            == "collapsed"
+                        )
+                        page.fill("#graph-search", "zzzz-no-match")
+                        page.wait_for_selector(
+                            "[data-raya-graph-empty]", state="attached"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-empty] [data-raya-graph-clear-search]"
+                            ).get_attribute("tabindex")
+                            == "-1"
+                        )
+                        page.click('[data-raya-graph-toggle-panel="list"]')
+                        assert (
+                            page.locator("[data-raya-graph-page]").get_attribute(
+                                "data-raya-graph-list-state"
+                            )
+                            == "expanded"
+                        )
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-empty] [data-raya-graph-clear-search]"
+                            ).get_attribute("tabindex")
+                            is None
+                        )
+                        page.locator(
+                            "[data-raya-graph-empty] [data-raya-graph-clear-search]"
+                        ).click()
+                        page.wait_for_function(
+                            """() => document.querySelector('#graph-search')?.value === ''"""
+                        )
+                        page.fill("#graph-search", "matrx")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-status')
+                              ?.textContent
+                              ?.includes('visible node')"""
+                        )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.includes('authoring-matrix')"""
+                        )
                         before_key_pan = _viewbox_values(
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
                         )

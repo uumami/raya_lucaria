@@ -1007,6 +1007,34 @@ _GRAPH_JAVASCRIPT = r"""
     fitSelection.disabled = !enabled;
   }
 
+  function constrainedZoomBox(factor, anchor = null) {
+    if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
+      return null;
+    }
+    const minWidth = fullViewBox.width * 0.32;
+    const maxWidth = fullViewBox.width * 1.75;
+    const minHeight = fullViewBox.height * 0.32;
+    const maxHeight = fullViewBox.height * 1.75;
+    const nextWidth = Math.max(minWidth, Math.min(maxWidth, graphViewBox.width * factor));
+    const nextHeight = Math.max(minHeight, Math.min(maxHeight, graphViewBox.height * factor));
+    const centerX = graphViewBox.x + graphViewBox.width / 2;
+    const centerY = graphViewBox.y + graphViewBox.height / 2;
+    if (!anchor) {
+      return {
+        x: centerX - nextWidth / 2,
+        y: centerY - nextHeight / 2,
+        width: nextWidth,
+        height: nextHeight,
+      };
+    }
+    return {
+      x: anchor.x - anchor.ratioX * nextWidth,
+      y: anchor.y - anchor.ratioY * nextHeight,
+      width: nextWidth,
+      height: nextHeight,
+    };
+  }
+
   function fitSelectedGraphContext() {
     const box = selectedNeighborhoodBounds();
     if (!box) return;
@@ -1093,23 +1121,58 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function zoomGraphView(factor) {
+    const nextBox = constrainedZoomBox(factor);
+    if (nextBox) setGraphViewBox(nextBox);
+  }
+
+  function graphPointFromClientPoint(clientX, clientY) {
+    if (!canvas || !graphViewBox) return null;
+    const matrix = canvas.getScreenCTM ? canvas.getScreenCTM() : null;
+    if (matrix && canvas.createSVGPoint) {
+      const point = canvas.createSVGPoint();
+      point.x = clientX;
+      point.y = clientY;
+      const mapped = point.matrixTransform(matrix.inverse());
+      return {
+        x: mapped.x,
+        y: mapped.y,
+      };
+    }
+    const rect = canvas.getBoundingClientRect();
+    const ratioX = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
+    const ratioY = Math.max(0, Math.min(1, (clientY - rect.top) / Math.max(1, rect.height)));
+    return {
+      x: graphViewBox.x + graphViewBox.width * ratioX,
+      y: graphViewBox.y + graphViewBox.height * ratioY,
+    };
+  }
+
+  function zoomGraphViewAtClientPoint(factor, clientX, clientY) {
+    if (!canvas || !graphViewBox) return;
+    const graphPoint = graphPointFromClientPoint(clientX, clientY);
+    if (!graphPoint) return;
+    const ratioX = Math.max(0, Math.min(1, (graphPoint.x - graphViewBox.x) / Math.max(1, graphViewBox.width)));
+    const ratioY = Math.max(0, Math.min(1, (graphPoint.y - graphViewBox.y) / Math.max(1, graphViewBox.height)));
+    const anchor = {
+      ratioX,
+      ratioY,
+      x: graphPoint.x,
+      y: graphPoint.y,
+    };
+    const nextBox = constrainedZoomBox(factor, anchor);
+    if (nextBox) setGraphViewBox(nextBox);
+  }
+
+  function wheelZoomGraphView(event) {
     if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
       return;
     }
-    const minWidth = fullViewBox.width * 0.32;
-    const maxWidth = fullViewBox.width * 1.75;
-    const minHeight = fullViewBox.height * 0.32;
-    const maxHeight = fullViewBox.height * 1.75;
-    const nextWidth = Math.max(minWidth, Math.min(maxWidth, graphViewBox.width * factor));
-    const nextHeight = Math.max(minHeight, Math.min(maxHeight, graphViewBox.height * factor));
-    const centerX = graphViewBox.x + graphViewBox.width / 2;
-    const centerY = graphViewBox.y + graphViewBox.height / 2;
-    setGraphViewBox({
-      x: centerX - nextWidth / 2,
-      y: centerY - nextHeight / 2,
-      width: nextWidth,
-      height: nextHeight,
-    });
+    if (event.deltaY === 0 || Math.abs(event.deltaY) < Math.abs(event.deltaX || 0)) {
+      return;
+    }
+    event.preventDefault();
+    const factor = event.deltaY < 0 ? 0.88 : 1.14;
+    zoomGraphViewAtClientPoint(factor, event.clientX, event.clientY);
   }
 
   function panGraphView(dxRatio, dyRatio) {
@@ -1802,6 +1865,7 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function renderList(activeIds) {
+    list.querySelector("[data-raya-graph-empty]")?.remove();
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
@@ -1822,6 +1886,35 @@ _GRAPH_JAVASCRIPT = r"""
         }
       }
     });
+    if (query && activeIds.size === 0) {
+      const empty = document.createElement("li");
+      empty.className = "raya-graph-empty";
+      empty.setAttribute("data-raya-graph-empty", "");
+      const text = document.createElement("p");
+      text.textContent = `No graph pages match "${search ? search.value.trim() : query}".`;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("data-raya-graph-clear-search", "");
+      button.textContent = "Clear search";
+      button.addEventListener("click", () => {
+        if (search) search.value = "";
+        activeResultId = "";
+        inspectedId = "";
+        pageFocusId = "";
+        pendingInitialPageFit = false;
+        graphViewBox = null;
+        if (hoverStatus) hoverStatus.textContent = "";
+        renderDetail();
+        render();
+        if (search) search.focus();
+      });
+      empty.append(text, button);
+      list.appendChild(empty);
+      setPanelFocusable(
+        graphPanelBody("list"),
+        root.getAttribute("data-raya-graph-list-state") !== "collapsed"
+      );
+    }
   }
 
   function setGraphExpanded(nextExpanded) {
@@ -2099,6 +2192,7 @@ _GRAPH_JAVASCRIPT = r"""
       panGraphView(0, 0.12);
     }
   });
+  canvas.addEventListener("wheel", wheelZoomGraphView, { passive: false });
   canvas.addEventListener("pointerdown", startGraphPan);
   canvas.addEventListener("pointermove", moveGraphPan);
   canvas.addEventListener("pointerup", endGraphPan);

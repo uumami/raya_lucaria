@@ -1865,6 +1865,29 @@ img {
   flex-wrap: wrap;
   gap: 0.35rem;
 }
+.raya-graph-empty {
+  background: color-mix(in srgb, var(--raya-color-warning-soft) 74%, var(--raya-color-surface));
+  border: 1px solid var(--raya-color-border);
+  border-left: 0.25rem solid var(--raya-color-warning);
+  border-radius: 0.375rem;
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  padding: 0.7rem;
+}
+.raya-graph-empty p {
+  margin: 0;
+}
+.raya-graph-empty button {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  justify-self: start;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+}
 .raya-graph-canvas {
   background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
