@@ -3932,10 +3932,9 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
-    assert (
-        'aria-expanded="true" aria-label="Collapse course map">Course map</button>'
-        in html
-    )
+    assert 'aria-expanded="true" aria-label="Collapse course map">' in html
+    assert 'data-raya-command-icon="map"' in html
+    assert '<span class="raya-command-label">Course map</span>' in html
     assert 'aria-expanded="true">Collapse map</button>' in html
     assert 'class="raya-course-map-workspaces"' in html
     assert 'aria-label="Course workspaces"' in html
@@ -4182,11 +4181,9 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     for selector in (
         ".raya-top-command-bar",
         ".raya-command",
-        ".raya-command::before",
-        ".raya-command-search::before",
-        ".raya-command-graph::before",
-        ".raya-command-map::before",
-        ".raya-command-font::before",
+        ".raya-command-icon",
+        ".raya-command-icon-text",
+        ".raya-command-map .raya-command-icon",
         ".raya-course-map a::before",
         ".raya-learning-shell",
         ".raya-course-map",

@@ -636,47 +636,32 @@ img {
   text-decoration: none;
 }
 .raya-command::before {
-  align-items: center;
+  content: none;
+  display: none;
+}
+.raya-command-icon {
   background: color-mix(in srgb, var(--raya-color-accent) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--raya-color-accent) 56%, transparent);
-  border-radius: 0.25rem;
-  color: var(--raya-color-text);
-  display: inline-flex;
+  border-radius: 0.3rem;
+  box-sizing: border-box;
+  color: currentColor;
+  fill: none;
   flex: 0 0 auto;
-  font-size: 0.75rem;
-  font-weight: 800;
   height: 1.5rem;
-  justify-content: center;
-  line-height: 1;
-  min-width: 1.5rem;
-  padding: 0 0.2rem;
+  padding: 0.18rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  width: 1.5rem;
 }
-.raya-command-search::before {
-  content: "⌕";
-}
-.raya-command-home::before {
-  content: "⌂";
-}
-.raya-command-graph::before {
-  content: "⌘";
-}
-.raya-command-practice::before {
-  content: "✓";
-}
-.raya-command-tasks::before {
-  content: "☑";
-}
-.raya-command-schedule::before {
-  content: "◷";
-}
-.raya-command-map::before {
-  content: "◇";
-}
-.raya-command-size::before {
-  content: "A+";
-}
-.raya-command-font::before {
-  content: "Aa";
+.raya-command-icon-text {
+  fill: currentColor;
+  font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  stroke: none;
 }
 .raya-command:hover {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
@@ -3680,7 +3665,7 @@ mjx-container[display="true"] {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map {
     font-size: 0;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map::before {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map .raya-command-icon {
     font-size: 0.75rem;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {

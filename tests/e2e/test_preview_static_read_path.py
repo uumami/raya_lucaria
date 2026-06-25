@@ -598,7 +598,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             ".raya-discovery-command-bar .raya-command-home"
                         ).is_visible()
-                        graph_badges = page.evaluate(
+                        graph_icons = page.evaluate(
                             """() => Object.fromEntries(
                               Array.from(
                                 document.querySelectorAll(
@@ -607,17 +607,54 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ).map((node) => [
                                 Array.from(node.classList)
                                   .find((name) => name.startsWith('raya-command-')),
-                                getComputedStyle(node, '::before').content
+                                (() => {
+                                  const icon = node.querySelector('.raya-command-icon');
+                                  const labelNode = node.querySelector('.raya-command-label');
+                                  const shape = icon?.querySelector('path, circle');
+                                  return {
+                                    iconCount: node.querySelectorAll('.raya-command-icon').length,
+                                    iconBeforeLabel: !!icon && !!labelNode
+                                      && !!(
+                                        icon.compareDocumentPosition(labelNode)
+                                        & Node.DOCUMENT_POSITION_FOLLOWING
+                                      ),
+                                    tagName: icon?.tagName,
+                                    icon: icon?.getAttribute('data-raya-command-icon'),
+                                    ariaHidden: icon?.getAttribute('aria-hidden'),
+                                    focusable: icon?.getAttribute('focusable'),
+                                    viewBox: icon?.getAttribute('viewBox'),
+                                    label: labelNode?.textContent?.trim(),
+                                    before: getComputedStyle(node, '::before').content,
+                                    shapeFill: shape ? getComputedStyle(shape).fill : null,
+                                    shapeStroke: shape ? getComputedStyle(shape).stroke : null,
+                                  };
+                                })()
                               ])
                             )"""
                         )
-                        assert graph_badges["raya-command-home"] == '"⌂"'
-                        assert graph_badges["raya-command-search"] == '"⌕"'
-                        assert graph_badges["raya-command-practice"] == '"✓"'
-                        assert graph_badges["raya-command-tasks"] == '"☑"'
-                        assert graph_badges["raya-command-schedule"] == '"◷"'
-                        assert graph_badges["raya-command-size"] == '"A+"'
-                        assert graph_badges["raya-command-font"] == '"Aa"'
+                        expected_graph_icons = {
+                            "raya-command-home": ("home", "Course"),
+                            "raya-command-search": ("search", "Search"),
+                            "raya-command-practice": ("practice", "Practice"),
+                            "raya-command-tasks": ("tasks", "Tasks"),
+                            "raya-command-schedule": ("schedule", "Schedule"),
+                            "raya-command-size": ("text-size", "Text size"),
+                            "raya-command-font": ("font", "OpenDyslexic"),
+                        }
+                        for command_class, (icon_name, label) in expected_graph_icons.items():
+                            icon = graph_icons[command_class]
+                            assert icon["tagName"] == "svg"
+                            assert icon["iconCount"] == 1
+                            assert icon["iconBeforeLabel"] is True
+                            assert icon["icon"] == icon_name
+                            assert icon["ariaHidden"] == "true"
+                            assert icon["focusable"] == "false"
+                            assert icon["viewBox"] == "0 0 24 24"
+                            assert icon["label"] == label
+                            assert icon["before"] == "none"
+                            if icon_name not in {"text-size", "font"}:
+                                assert icon["shapeFill"] == "none"
+                                assert icon["shapeStroke"] != "none"
                         assert (
                             page.locator(
                                 ".raya-graph-header .raya-course-title"
@@ -3718,10 +3755,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
     assert 'data-raya-course-map="expanded"' in index_html
-    assert (
-        'aria-expanded="true" aria-label="Collapse course map">Course map</button>'
-        in index_html
-    )
+    assert 'aria-expanded="true" aria-label="Collapse course map">' in index_html
+    assert 'data-raya-command-icon="map"' in index_html
+    assert '<span class="raya-command-label">Course map</span>' in index_html
     assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
     assert (
         'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"'
@@ -6309,7 +6345,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           };
                         }"""
                     )
-                    badges = page.evaluate(
+                    icons = page.evaluate(
                         """() => Object.fromEntries(
                           Array.from(
                             document.querySelectorAll(
@@ -6318,7 +6354,28 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           ).map((node) => [
                             Array.from(node.classList)
                               .find((name) => name.startsWith('raya-command-')),
-                            getComputedStyle(node, '::before').content
+                            (() => {
+                              const icon = node.querySelector('.raya-command-icon');
+                              const labelNode = node.querySelector('.raya-command-label');
+                              const shape = icon?.querySelector('path, circle');
+                              return {
+                                iconCount: node.querySelectorAll('.raya-command-icon').length,
+                                iconBeforeLabel: !!icon && !!labelNode
+                                  && !!(
+                                    icon.compareDocumentPosition(labelNode)
+                                    & Node.DOCUMENT_POSITION_FOLLOWING
+                                  ),
+                                tagName: icon?.tagName,
+                                icon: icon?.getAttribute('data-raya-command-icon'),
+                                ariaHidden: icon?.getAttribute('aria-hidden'),
+                                focusable: icon?.getAttribute('focusable'),
+                                viewBox: icon?.getAttribute('viewBox'),
+                                label: labelNode?.textContent?.trim(),
+                                before: getComputedStyle(node, '::before').content,
+                                shapeFill: shape ? getComputedStyle(shape).fill : null,
+                                shapeStroke: shape ? getComputedStyle(shape).stroke : null,
+                              };
+                            })()
                           ])
                         )"""
                     )
@@ -6399,14 +6456,30 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
-    assert badges["raya-command-map"] == '"◇"'
-    assert badges["raya-command-search"] == '"⌕"'
-    assert badges["raya-command-graph"] == '"⌘"'
-    assert badges["raya-command-practice"] == '"✓"'
-    assert badges["raya-command-tasks"] == '"☑"'
-    assert badges["raya-command-schedule"] == '"◷"'
-    assert badges["raya-command-size"] == '"A+"'
-    assert badges["raya-command-font"] == '"Aa"'
+    expected_icons = {
+        "raya-command-map": ("map", "Course map"),
+        "raya-command-search": ("search", "Search"),
+        "raya-command-graph": ("graph", "Graph"),
+        "raya-command-practice": ("practice", "Practice"),
+        "raya-command-tasks": ("tasks", "Tasks"),
+        "raya-command-schedule": ("schedule", "Schedule"),
+        "raya-command-size": ("text-size", "Text size"),
+        "raya-command-font": ("font", "OpenDyslexic"),
+    }
+    for command_class, (icon_name, label) in expected_icons.items():
+        icon = icons[command_class]
+        assert icon["tagName"] == "svg"
+        assert icon["iconCount"] == 1
+        assert icon["iconBeforeLabel"] is True
+        assert icon["icon"] == icon_name
+        assert icon["ariaHidden"] == "true"
+        assert icon["focusable"] == "false"
+        assert icon["viewBox"] == "0 0 24 24"
+        assert icon["label"] == label
+        assert icon["before"] == "none"
+        if icon_name not in {"text-size", "font"}:
+            assert icon["shapeFill"] == "none"
+            assert icon["shapeStroke"] != "none"
     assert collapsed["mapWidth"] <= 82
     assert collapsed["railWidth"] <= 64
     assert collapsed["mapLabel"] == '"Nav"'

@@ -1035,59 +1035,60 @@ def _render_top_command_bar(
             '<div class="raya-top-command-bar-inner">',
             _render_reading_context(course_title, page, content_model),
             '<div class="raya-course-tools">',
-            (
-                f'<a class="raya-command raya-command-search" '
-                f'href="{html.escape(search_href)}" '
-                'aria-label="Open course search">'
-                '<span class="raya-command-label">Search</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-search",
+                href=search_href,
+                aria_label="Open course search",
+                icon="search",
+                label="Search",
             ),
-            (
-                f'<a class="raya-command raya-command-graph" '
-                f'href="{html.escape(graph_href)}" '
-                'aria-label="Open course graph">'
-                '<span class="raya-command-label">Graph</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-graph",
+                href=graph_href,
+                aria_label="Open course graph",
+                icon="graph",
+                label="Graph",
             ),
-            (
-                f'<a class="raya-command raya-command-practice" '
-                f'href="{html.escape(practice_href)}" '
-                'aria-label="Open official practice">'
-                '<span class="raya-command-label">Practice</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-practice",
+                href=practice_href,
+                aria_label="Open official practice",
+                icon="practice",
+                label="Practice",
             ),
-            (
-                f'<a class="raya-command raya-command-tasks" '
-                f'href="{html.escape(tasks_href)}" '
-                'aria-label="Open official tasks">'
-                '<span class="raya-command-label">Tasks</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-tasks",
+                href=tasks_href,
+                aria_label="Open official tasks",
+                icon="tasks",
+                label="Tasks",
             ),
-            (
-                f'<a class="raya-command raya-command-schedule" '
-                f'href="{html.escape(schedule_href)}" '
-                'aria-label="Open official schedule">'
-                '<span class="raya-command-label">Schedule</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-schedule",
+                href=schedule_href,
+                aria_label="Open official schedule",
+                icon="schedule",
+                label="Schedule",
             ),
             _render_course_map_toggle(
                 "Course map",
                 class_name="raya-command raya-command-map raya-course-map-toggle",
                 aria_label="Collapse course map",
+                icon="map",
             ),
-            (
-                '<button class="raya-command raya-command-size raya-text-size-toggle" type="button" '
-                'aria-label="Text size: normal" '
-                'aria-pressed="false">'
-                '<span class="raya-command-label">Text size</span>'
-                "</button>"
+            _render_command_button(
+                class_name="raya-command raya-command-size raya-text-size-toggle",
+                aria_label="Text size: normal",
+                icon="text-size",
+                label="Text size",
+                aria_pressed="false",
             ),
-            (
-                '<button class="raya-command raya-command-font raya-font-toggle" type="button" '
-                'aria-label="Toggle OpenDyslexic font" '
-                'aria-pressed="false">'
-                '<span class="raya-command-label">OpenDyslexic</span>'
-                "</button>"
+            _render_command_button(
+                class_name="raya-command raya-command-font raya-font-toggle",
+                aria_label="Toggle OpenDyslexic font",
+                icon="font",
+                label="OpenDyslexic",
+                aria_pressed="false",
             ),
             "</div>",
             "</div>",
@@ -1108,77 +1109,79 @@ def _render_discovery_command_bar(
     schedule_href: str | None,
 ) -> str:
     commands = [
-        (
-            f'<a class="raya-command raya-command-home" href="{html.escape(home_href)}" '
-            'aria-label="Back to course">'
-            '<span class="raya-command-label">Course</span>'
-            "</a>"
+        _render_command_link(
+            class_name="raya-command raya-command-home",
+            href=home_href,
+            aria_label="Back to course",
+            icon="home",
+            label="Course",
         )
     ]
     if search_href is not None:
         commands.append(
-            (
-                f'<a class="raya-command raya-command-search" '
-                f'href="{html.escape(search_href)}" '
-                'aria-label="Open course search">'
-                '<span class="raya-command-label">Search</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-search",
+                href=search_href,
+                aria_label="Open course search",
+                icon="search",
+                label="Search",
             )
         )
     if graph_href is not None:
         commands.append(
-            (
-                f'<a class="raya-command raya-command-graph" '
-                f'href="{html.escape(graph_href)}" '
-                'aria-label="Open course graph">'
-                '<span class="raya-command-label">Graph</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-graph",
+                href=graph_href,
+                aria_label="Open course graph",
+                icon="graph",
+                label="Graph",
             )
         )
     if practice_href is not None:
         commands.append(
-            (
-                f'<a class="raya-command raya-command-practice" '
-                f'href="{html.escape(practice_href)}" '
-                'aria-label="Open official practice">'
-                '<span class="raya-command-label">Practice</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-practice",
+                href=practice_href,
+                aria_label="Open official practice",
+                icon="practice",
+                label="Practice",
             )
         )
     if tasks_href is not None:
         commands.append(
-            (
-                f'<a class="raya-command raya-command-tasks" '
-                f'href="{html.escape(tasks_href)}" '
-                'aria-label="Open official tasks">'
-                '<span class="raya-command-label">Tasks</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-tasks",
+                href=tasks_href,
+                aria_label="Open official tasks",
+                icon="tasks",
+                label="Tasks",
             )
         )
     if schedule_href is not None:
         commands.append(
-            (
-                f'<a class="raya-command raya-command-schedule" '
-                f'href="{html.escape(schedule_href)}" '
-                'aria-label="Open official schedule">'
-                '<span class="raya-command-label">Schedule</span>'
-                "</a>"
+            _render_command_link(
+                class_name="raya-command raya-command-schedule",
+                href=schedule_href,
+                aria_label="Open official schedule",
+                icon="schedule",
+                label="Schedule",
             )
         )
     commands.extend(
         [
-            (
-                '<button class="raya-command raya-command-size raya-text-size-toggle" '
-                'type="button" aria-label="Text size: normal" aria-pressed="false">'
-                '<span class="raya-command-label">Text size</span>'
-                "</button>"
+            _render_command_button(
+                class_name="raya-command raya-command-size raya-text-size-toggle",
+                aria_label="Text size: normal",
+                icon="text-size",
+                label="Text size",
+                aria_pressed="false",
             ),
-            (
-                '<button class="raya-command raya-command-font raya-font-toggle" '
-                'type="button" aria-label="Toggle OpenDyslexic font" '
-                'aria-pressed="false">'
-                '<span class="raya-command-label">OpenDyslexic</span>'
-                "</button>"
+            _render_command_button(
+                class_name="raya-command raya-command-font raya-font-toggle",
+                aria_label="Toggle OpenDyslexic font",
+                icon="font",
+                label="OpenDyslexic",
+                aria_pressed="false",
             ),
         ]
     )
@@ -1283,17 +1286,24 @@ def _render_course_map_toggle(
     *,
     class_name: str = "raya-course-map-toggle",
     aria_label: str | None = None,
+    icon: str | None = None,
 ) -> str:
     aria_expanded = "true" if expanded else "false"
     aria_label_attr = (
         f' aria-label="{html.escape(aria_label, quote=True)}"' if aria_label else ""
     )
+    label_markup = html.escape(label)
+    if icon is not None:
+        label_markup = (
+            f"{_command_icon(icon)}"
+            f'<span class="raya-command-label">{html.escape(label)}</span>'
+        )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
         "data-raya-course-map-toggle "
         'aria-controls="raya-course-map" '
         f'aria-expanded="{aria_expanded}"{aria_label_attr}>'
-        f"{html.escape(label)}"
+        f"{label_markup}"
         "</button>"
     )
 
@@ -1930,6 +1940,93 @@ def _render_sequence_rail(page: ContentPage, content_model: ContentModel) -> str
     if not sequence_nav:
         return ""
     return _render_rail_panel("raya-page-sequence", "Sequence", sequence_nav)
+
+
+_COMMAND_ICON_BODIES = {
+    "home": (
+        '<path d="M4.5 11.2 12 5l7.5 6.2"/>'
+        '<path d="M6.8 10.5v8h10.4v-8"/>'
+        '<path d="M10 18.5v-5h4v5"/>'
+    ),
+    "search": '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
+    "graph": (
+        '<circle cx="6.5" cy="7" r="2.3"/>'
+        '<circle cx="17.5" cy="8.5" r="2.3"/>'
+        '<circle cx="12" cy="17" r="2.3"/>'
+        '<path d="m8.6 7.4 6.7.7M7.7 9.1l3.1 5.9M16.4 10.7l-3.2 4.4"/>'
+    ),
+    "practice": '<path d="M5 12.8 9.4 17 19 7"/>',
+    "tasks": (
+        '<path d="M8 5h8l1.5 2v12h-11V7L8 5Z"/>'
+        '<path d="M9 11h6M9 15h4"/>'
+        '<path d="M9.2 7.2h5.6"/>'
+    ),
+    "schedule": (
+        '<path d="M6.5 5.5h11v13h-11z"/>'
+        '<path d="M6.5 9h11M9 4v3M15 4v3"/>'
+        '<path d="M9 12h2M13 12h2M9 15h2"/>'
+    ),
+    "map": (
+        '<path d="M4.8 6.5 9.8 5l4.4 1.5 5-1.5v12.5l-5 1.5-4.4-1.5-5 1.5z"/>'
+        '<path d="M9.8 5v12.5M14.2 6.5V19"/>'
+    ),
+    "text-size": (
+        '<text class="raya-command-icon-text" x="11.7" y="14.8" '
+        'text-anchor="middle">A+</text>'
+    ),
+    "font": (
+        '<text class="raya-command-icon-text" x="11.8" y="14.8" '
+        'text-anchor="middle">Aa</text>'
+    ),
+}
+
+
+def _command_icon(name: str) -> str:
+    body = _COMMAND_ICON_BODIES[name]
+    return (
+        '<svg class="raya-command-icon" '
+        f'data-raya-command-icon="{html.escape(name, quote=True)}" '
+        'aria-hidden="true" focusable="false" viewBox="0 0 24 24" '
+        'width="24" height="24">'
+        f"{body}"
+        "</svg>"
+    )
+
+
+def _render_command_link(
+    *,
+    class_name: str,
+    href: str,
+    aria_label: str,
+    icon: str,
+    label: str,
+) -> str:
+    return (
+        f'<a class="{html.escape(class_name, quote=True)}" '
+        f'href="{html.escape(href)}" '
+        f'aria-label="{html.escape(aria_label, quote=True)}">'
+        f"{_command_icon(icon)}"
+        f'<span class="raya-command-label">{html.escape(label)}</span>'
+        "</a>"
+    )
+
+
+def _render_command_button(
+    *,
+    class_name: str,
+    aria_label: str,
+    icon: str,
+    label: str,
+    aria_pressed: str | None = None,
+) -> str:
+    pressed_attr = "" if aria_pressed is None else f' aria-pressed="{aria_pressed}"'
+    return (
+        f'<button class="{html.escape(class_name, quote=True)}" type="button" '
+        f'aria-label="{html.escape(aria_label, quote=True)}"{pressed_attr}>'
+        f"{_command_icon(icon)}"
+        f'<span class="raya-command-label">{html.escape(label)}</span>'
+        "</button>"
+    )
 
 
 def _resolve_markdown_href(
