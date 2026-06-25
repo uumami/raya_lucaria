@@ -1900,6 +1900,10 @@ img {
 .raya-graph-canvas.is-panning {
   cursor: grabbing;
 }
+.raya-graph-canvas.is-dragging-node,
+.raya-graph-canvas.is-dragging-node .raya-graph-node-link {
+  cursor: grabbing;
+}
 .raya-graph-canvas:focus-visible {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
@@ -1973,7 +1977,11 @@ img {
   stroke-opacity: 0.14;
 }
 .raya-graph-node-link {
-  cursor: pointer;
+  cursor: grab;
+}
+.raya-graph-node.is-dragging circle {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 60%, var(--raya-color-surface));
+  stroke-width: 4;
 }
 .raya-graph-node-hit {
   fill: transparent;

@@ -4194,6 +4194,12 @@ def _render_graph_surface(
                 "and use Arrow keys to move the viewport. Pan changes only the "
                 "viewport.</p>"
             ),
+            (
+                "<p>Drag individual graph pages to untangle the visible SVG "
+                "while reading. Manual positions are temporary browser-side "
+                "readability cues; Reset graph or changing layout restores the "
+                "generated structure.</p>"
+            ),
             "</details>",
             "</div>",
             "</aside>",

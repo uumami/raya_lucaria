@@ -1255,6 +1255,157 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(f"#{inspected_marker_id}").evaluate(
                             "node => node.classList.contains('is-inspected')"
                         )
+                        page.click("#graph-reset")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#graph-layout')
+                              ?.value === 'connections'"""
+                        )
+                        if viewport["width"] >= 1280:
+                            drag_target = "authoring-matrix"
+                            drag_edge = page.locator(
+                                "#raya-graph-canvas "
+                                f'.raya-graph-edge[data-raya-graph-from="{drag_target}"], '
+                                "#raya-graph-canvas "
+                                f'.raya-graph-edge[data-raya-graph-to="{drag_target}"]'
+                            ).first
+                            drag_edge_before = drag_edge.evaluate(
+                                """node => ({
+                                  x1: Number(node.getAttribute('x1')),
+                                  y1: Number(node.getAttribute('y1')),
+                                  x2: Number(node.getAttribute('x2')),
+                                  y2: Number(node.getAttribute('y2')),
+                                })"""
+                            )
+                            drag_start = _graph_node_translate(page, drag_target)
+                            drag_hit_box = page.locator(
+                                f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"] '
+                                ".raya-graph-node-hit"
+                            ).bounding_box()
+                            assert drag_hit_box is not None
+                            graph_url_before_drag = page.url
+                            page.mouse.move(
+                                drag_hit_box["x"] + drag_hit_box["width"] / 2,
+                                drag_hit_box["y"] + drag_hit_box["height"] / 2,
+                            )
+                            page.mouse.down()
+                            page.mouse.move(
+                                drag_hit_box["x"] + drag_hit_box["width"] / 2 + 150,
+                                drag_hit_box["y"] + drag_hit_box["height"] / 2 + 90,
+                                steps=6,
+                            )
+                            page.mouse.up()
+                            drag_after = _graph_node_translate(page, drag_target)
+                            assert drag_after != drag_start
+                            assert drag_after[0] > drag_start[0] + 20
+                            assert drag_after[1] > drag_start[1] + 15
+                            assert page.url == graph_url_before_drag
+                            drag_edge_after = drag_edge.evaluate(
+                                """node => ({
+                                  x1: Number(node.getAttribute('x1')),
+                                  y1: Number(node.getAttribute('y1')),
+                                  x2: Number(node.getAttribute('x2')),
+                                  y2: Number(node.getAttribute('y2')),
+                                })"""
+                            )
+                            assert drag_edge_after != drag_edge_before
+                            page.click("#graph-fit")
+                            assert _graph_node_translate(page, drag_target) == drag_after
+                            assert (
+                                drag_edge.evaluate(
+                                    """node => ({
+                                      x1: Number(node.getAttribute('x1')),
+                                      y1: Number(node.getAttribute('y1')),
+                                      x2: Number(node.getAttribute('x2')),
+                                      y2: Number(node.getAttribute('y2')),
+                                    })"""
+                                )
+                                == drag_edge_after
+                            )
+                            page.fill("#graph-search", "matrix")
+                            page.wait_for_function(
+                                """nodeId => {
+                                  const canvas = document.querySelector('#raya-graph-canvas');
+                                  const group = document
+                                    .querySelector(
+                                      `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+                                    );
+                                  if (!canvas || !group) return false;
+                                  const viewBox = canvas
+                                    .getAttribute('viewBox')
+                                    .split(/\\s+/)
+                                    .map(Number);
+                                  const transform = group.getAttribute('transform') || '';
+                                  const match = transform.match(
+                                    /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                  );
+                                  if (!match) return false;
+                                  const x = Number(match[1]);
+                                  const y = Number(match[2]);
+                                  return x >= viewBox[0] + 35.99 &&
+                                    x <= viewBox[0] + viewBox[2] - 35.99 &&
+                                    y >= viewBox[1] + 35.99 &&
+                                    y <= viewBox[1] + viewBox[3] - 35.99;
+                                }""",
+                                arg=drag_target,
+                            )
+                            page.click("#graph-reset")
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#graph-search')
+                                  ?.value === ''"""
+                            )
+                            assert page.evaluate(
+                                "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                            ) == [[], []]
+                            touch_state = page.locator(
+                                f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"]'
+                            ).evaluate(
+                                """node => {
+                                  const canvas = document.querySelector('#raya-graph-canvas');
+                                  const before = canvas.classList.contains('is-dragging-node');
+                                  const event = new PointerEvent('pointerdown', {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    pointerId: 71,
+                                    pointerType: 'touch',
+                                    button: 0,
+                                    clientX: node.getBoundingClientRect().left + 4,
+                                    clientY: node.getBoundingClientRect().top + 4,
+                                  });
+                                  const dispatched = node.dispatchEvent(event);
+                                  return {
+                                    before,
+                                    after: canvas.classList.contains('is-dragging-node'),
+                                    defaultPrevented: event.defaultPrevented,
+                                    dispatched,
+                                  };
+                                }"""
+                            )
+                            assert touch_state == {
+                                "before": False,
+                                "after": False,
+                                "defaultPrevented": False,
+                                "dispatched": True,
+                            }
+                            page.click("#graph-reset")
+                            page.wait_for_function(
+                                """([nodeId, expected]) => {
+                                  const transform = document
+                                    .querySelector(
+                                      `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+                                    )
+                                    ?.getAttribute('transform') || '';
+                                  const match = transform.match(
+                                    /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                  );
+                                  return !!match &&
+                                    Math.abs(Number(match[1]) - expected[0]) < 0.01 &&
+                                    Math.abs(Number(match[2]) - expected[1]) < 0.01;
+                                }""",
+                                arg=[drag_target, list(drag_start)],
+                            )
+                            assert _graph_node_translate(page, drag_target) == drag_start
                         content_filter = page.locator(
                             '[data-raya-graph-edge-kind-filter="content"]'
                         )

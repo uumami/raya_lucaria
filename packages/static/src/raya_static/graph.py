@@ -132,10 +132,14 @@ _GRAPH_JAVASCRIPT = r"""
   let fullViewBox = null;
   let graphViewBox = null;
   let graphPanStart = null;
+  let graphNodeDrag = null;
+  let suppressedNodeClick = { id: "", until: 0 };
+  let graphNodeClickSequence = { id: "", time: 0 };
   let lastActiveNodes = [];
   let lastActiveEdges = [];
   let latestRenderedPositions = new Map();
   let latestRenderedEdges = [];
+  const manualNodePositions = new Map();
 
   function normalize(value) {
     return String(value || "")
@@ -1241,6 +1245,164 @@ _GRAPH_JAVASCRIPT = r"""
     }
   }
 
+  function constrainGraphPoint(point, box = fullViewBox) {
+    if (!box) return point;
+    const margin = 36;
+    return {
+      x: Math.max(
+        box.x + margin,
+        Math.min(box.x + box.width - margin, point.x)
+      ),
+      y: Math.max(
+        box.y + margin,
+        Math.min(box.y + box.height - margin, point.y)
+      ),
+    };
+  }
+
+  function updateVisibleEdgeGeometryForNode(nodeId) {
+    canvas.querySelectorAll(".raya-graph-edge").forEach((line) => {
+      const fromId = line.getAttribute("data-raya-graph-from") || "";
+      const toId = line.getAttribute("data-raya-graph-to") || "";
+      if (fromId !== nodeId && toId !== nodeId) return;
+      const edge = latestRenderedEdges.find((candidate) => (
+        candidate.from === fromId &&
+        candidate.to === toId &&
+        edgeKind(candidate) === (line.getAttribute("data-raya-graph-kind") || "")
+      ));
+      const from = latestRenderedPositions.get(fromId);
+      const to = latestRenderedPositions.get(toId);
+      if (!edge || !from || !to) return;
+      const linePoints = edgeLinePoints(edge, from, to);
+      line.setAttribute("x1", String(linePoints.x1));
+      line.setAttribute("y1", String(linePoints.y1));
+      line.setAttribute("x2", String(linePoints.x2));
+      line.setAttribute("y2", String(linePoints.y2));
+    });
+  }
+
+  function updateVisibleNodePosition(nodeId, point) {
+    const nextPoint = constrainGraphPoint(point);
+    latestRenderedPositions.set(nodeId, nextPoint);
+    manualNodePositions.set(nodeId, nextPoint);
+    canvas.querySelectorAll("[data-raya-graph-node]").forEach((link) => {
+      if ((link.getAttribute("data-raya-graph-node") || "") !== nodeId) return;
+      const group = link.querySelector("g");
+      if (group) {
+        group.setAttribute("transform", `translate(${nextPoint.x} ${nextPoint.y})`);
+        group.classList.add("is-dragging");
+      }
+    });
+    updateVisibleEdgeGeometryForNode(nodeId);
+    setFitSelectionEnabled();
+  }
+
+  function startGraphNodeDrag(event, nodeId) {
+    if (
+      graphNodeDrag ||
+      !nodeId ||
+      !latestRenderedPositions.has(nodeId) ||
+      root.getAttribute("data-raya-graph-layout") === "list" ||
+      (event.type.startsWith("pointer") && event.pointerType && event.pointerType !== "mouse") ||
+      event.button !== 0
+    ) {
+      return;
+    }
+    const graphPoint = graphPointFromClientPoint(event.clientX, event.clientY);
+    const nodePoint = latestRenderedPositions.get(nodeId);
+    if (!graphPoint || !nodePoint) return;
+    graphNodeDrag = {
+      pointerId: event.pointerId ?? "mouse",
+      nodeId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startGraphPoint: graphPoint,
+      startNodePoint: { ...nodePoint },
+      moved: false,
+      captured: false,
+    };
+    if (event.pointerId !== undefined && canvas.setPointerCapture) {
+      canvas.setPointerCapture(event.pointerId);
+      graphNodeDrag.captured = true;
+    }
+    canvas.classList.add("is-dragging-node");
+    if (hoverStatus) hoverStatus.textContent = `Repositioning ${nodesById.get(nodeId)?.title || nodeId}.`;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function moveGraphNodeDrag(event) {
+    const pointerId = event.type.startsWith("mouse") && graphNodeDrag
+      ? graphNodeDrag.pointerId
+      : event.pointerId ?? "mouse";
+    if (!graphNodeDrag || graphNodeDrag.pointerId !== pointerId) return false;
+    const graphPoint = graphPointFromClientPoint(event.clientX, event.clientY);
+    if (!graphPoint) return true;
+    const dx = graphPoint.x - graphNodeDrag.startGraphPoint.x;
+    const dy = graphPoint.y - graphNodeDrag.startGraphPoint.y;
+    if (
+      Math.abs(event.clientX - graphNodeDrag.startClientX) > 4 ||
+      Math.abs(event.clientY - graphNodeDrag.startClientY) > 4
+    ) {
+      graphNodeDrag.moved = true;
+    }
+    updateVisibleNodePosition(graphNodeDrag.nodeId, {
+      x: graphNodeDrag.startNodePoint.x + dx,
+      y: graphNodeDrag.startNodePoint.y + dy,
+    });
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+
+  function endGraphNodeDrag(event) {
+    const pointerId = event.type.startsWith("mouse") && graphNodeDrag
+      ? graphNodeDrag.pointerId
+      : event.pointerId ?? "mouse";
+    if (!graphNodeDrag || graphNodeDrag.pointerId !== pointerId) return false;
+    const nodeId = graphNodeDrag.nodeId;
+    if (graphNodeDrag.moved) {
+      suppressedNodeClick = { id: nodeId, until: Date.now() + 500 };
+    }
+    const moved = graphNodeDrag.moved;
+    const captured = graphNodeDrag.captured;
+    canvas.querySelectorAll("[data-raya-graph-node] g.is-dragging").forEach((group) => {
+      group.classList.remove("is-dragging");
+    });
+    graphNodeDrag = null;
+    canvas.classList.remove("is-dragging-node");
+    if (hoverStatus) hoverStatus.textContent = "";
+    if (captured && event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch {
+        // Pointer capture may already be released by the browser.
+      }
+    }
+    if (!moved) {
+      const now = Date.now();
+      const opensNode = graphNodeClickSequence.id === nodeId &&
+        now - graphNodeClickSequence.time <= 360;
+      graphNodeClickSequence = { id: nodeId, time: now };
+      window.clearTimeout(pendingSelectTimer);
+      if (opensNode) {
+        graphNodeClickSequence = { id: "", time: 0 };
+        openGraphNode(nodeId);
+      } else {
+        pendingSelectTimer = window.setTimeout(() => {
+          selectGraphNode(nodeId);
+        }, 180);
+      }
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+
+  function shouldSuppressGraphNodeClick(nodeId) {
+    return suppressedNodeClick.id === nodeId && Date.now() <= suppressedNodeClick.until;
+  }
+
   function inspectionTextFor(nodeId) {
     const node = nodesById.get(nodeId);
     if (!node) return "";
@@ -1997,10 +2159,17 @@ _GRAPH_JAVASCRIPT = r"""
     const searchSpotlight = searchSpotlightIds();
     const searchContext = searchContextNodeIds();
     const geometry = positionsFor(activeNodes, mode, activeEdges);
+    const nextFullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
     latestRenderedPositions = geometry.positions;
+    activeNodes.forEach((node) => {
+      const manualPoint = manualNodePositions.get(node.id);
+      if (manualPoint) {
+        latestRenderedPositions.set(node.id, constrainGraphPoint(manualPoint, nextFullViewBox));
+      }
+    });
     latestRenderedEdges = activeEdges;
 
-    fullViewBox = { x: 0, y: 0, width: geometry.width, height: geometry.height };
+    fullViewBox = nextFullViewBox;
     if (!graphViewBox) {
       setGraphViewBox({ ...fullViewBox });
     } else {
@@ -2012,8 +2181,8 @@ _GRAPH_JAVASCRIPT = r"""
     appendGraphArrowMarkers(activeEdges);
 
     activeEdges.forEach((edge, edgeIndex) => {
-      const from = geometry.positions.get(edge.from);
-      const to = geometry.positions.get(edge.to);
+      const from = latestRenderedPositions.get(edge.from);
+      const to = latestRenderedPositions.get(edge.to);
       if (!from || !to) return;
       const linePoints = edgeLinePoints(edge, from, to);
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -2083,6 +2252,10 @@ _GRAPH_JAVASCRIPT = r"""
       link.appendChild(group);
       link.addEventListener("click", (event) => {
         event.preventDefault();
+        if (shouldSuppressGraphNodeClick(node.id)) {
+          suppressedNodeClick = { id: "", until: 0 };
+          return;
+        }
         window.clearTimeout(pendingSelectTimer);
         pendingSelectTimer = window.setTimeout(() => {
           selectGraphNode(node.id);
@@ -2103,6 +2276,8 @@ _GRAPH_JAVASCRIPT = r"""
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
       link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true }));
       link.addEventListener("blur", () => clearGraphInspection(node.id));
+      link.addEventListener("pointerdown", (event) => startGraphNodeDrag(event, node.id));
+      link.addEventListener("mousedown", (event) => startGraphNodeDrag(event, node.id));
       canvas.appendChild(link);
     });
     if (activeResultId) setActiveResult(activeResultId, { scroll: false });
@@ -2153,6 +2328,7 @@ _GRAPH_JAVASCRIPT = r"""
   if (layout) {
     layout.addEventListener("change", () => {
       graphViewBox = null;
+      manualNodePositions.clear();
       render();
     });
   }
@@ -2194,19 +2370,34 @@ _GRAPH_JAVASCRIPT = r"""
   });
   canvas.addEventListener("wheel", wheelZoomGraphView, { passive: false });
   canvas.addEventListener("pointerdown", startGraphPan);
-  canvas.addEventListener("pointermove", moveGraphPan);
-  canvas.addEventListener("pointerup", endGraphPan);
-  canvas.addEventListener("pointercancel", endGraphPan);
+  canvas.addEventListener("pointermove", (event) => {
+    if (!moveGraphNodeDrag(event)) moveGraphPan(event);
+  });
+  canvas.addEventListener("pointerup", (event) => {
+    if (!endGraphNodeDrag(event)) endGraphPan(event);
+  });
+  canvas.addEventListener("pointercancel", (event) => {
+    if (!endGraphNodeDrag(event)) endGraphPan(event);
+  });
   canvas.addEventListener("mousedown", startGraphPan);
-  canvas.addEventListener("mousemove", moveGraphPan);
-  canvas.addEventListener("mouseup", endGraphPan);
-  canvas.addEventListener("mouseleave", endGraphPan);
+  canvas.addEventListener("mousemove", (event) => {
+    if (!moveGraphNodeDrag(event)) moveGraphPan(event);
+  });
+  canvas.addEventListener("mouseup", (event) => {
+    if (!endGraphNodeDrag(event)) endGraphPan(event);
+  });
+  canvas.addEventListener("mouseleave", (event) => {
+    if (!endGraphNodeDrag(event)) endGraphPan(event);
+  });
   if (reset) {
     reset.addEventListener("click", () => {
       if (search) search.value = "";
       if (layout) layout.value = "connections";
       hiddenGroups.clear();
       hiddenEdgeKinds.clear();
+      manualNodePositions.clear();
+      suppressedNodeClick = { id: "", until: 0 };
+      graphNodeClickSequence = { id: "", time: 0 };
       updateEdgeKindFilters();
       selectedId = "";
       inspectedId = "";
