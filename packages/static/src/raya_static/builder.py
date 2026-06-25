@@ -9,6 +9,7 @@ import shutil
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from importlib import resources
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,7 @@ from raya_schema import (
     validate_references_index,
     validate_reviewed_outputs_index,
     validate_runtime_index,
+    validate_search_index,
     validate_tasks_index,
 )
 from raya_schema.content import ContentModel, ContentPage, resolve_course_content
@@ -351,6 +353,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     if not report.ok:
         return report
     rendered_pages: list[tuple[ContentPage, str]] = []
+    search_records_by_page: dict[str, dict[str, str]] = {}
 
     for page in pages:
         numbered_context = NumberedObjectRenderContext(
@@ -361,7 +364,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             items=static_environment_collection.items_by_page_id.get(page.id, []),
             objects_by_id=numbered_object_collection.objects_by_id,
         )
-        rendered_page = _render_page(
+        rendered_page, search_record = _render_page(
             page=page,
             body=static_environment_collection.prepared_bodies_by_page_id.get(
                 page.id,
@@ -389,6 +392,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         if not report.ok:
             return report
         rendered_pages.append((page, rendered_page))
+        search_records_by_page[page.id] = search_record
 
     math_resources = _prepare_math_render_resources(math_renderer.css_chunks, report)
     if not report.ok:
@@ -457,6 +461,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
     tasks_index = _browser_tasks_payload(content_model, official_by_page)
+    search_index = _search_index(content_model, search_records_by_page)
     references_index = _references_index(course_id, references, reviewed_by_reference)
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
     numbered_objects_index = build_numbered_objects_index(
@@ -480,6 +485,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
     _write_json(data_dir / "tasks.json", tasks_index, report)
+    _write_json(data_dir / "search-index.json", search_index, report)
     _write_json(data_dir / "references.json", references_index, report)
     _write_json(data_dir / "reviewed-outputs.json", reviewed_outputs_data, report)
     _write_json(data_dir / "numbered-objects.json", numbered_objects_index, report)
@@ -516,6 +522,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         graph_index=graph_index,
         official_counts=official_counts,
         official_by_page=official_by_page,
+        search_records=search_records_by_page,
         skin_context=skin_context,
         report=report,
     )
@@ -563,6 +570,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "indices": "data/indices.json",
             "official": "data/official.json",
             "tasks": "data/tasks.json",
+            "search_index": "data/search-index.json",
             "references": "data/references.json",
             "reviewed_outputs": "data/reviewed-outputs.json",
             "numbered_objects": "data/numbered-objects.json",
@@ -851,7 +859,7 @@ def _render_page(
     skin_context: SkinContext,
     page_graph_context: dict[str, list[dict[str, str]]],
     wikilink_resolver: WikilinkResolver,
-) -> str:
+) -> tuple[str, dict[str, str]]:
     breadcrumbs = _render_breadcrumbs(page, content_model)
     generated_index = _render_generated_index(
         page,
@@ -933,6 +941,12 @@ def _render_page(
         ),
     )
     article_html, toc_html = _extract_page_toc(article_html)
+    public_article_text = _public_article_search_text(article_html)
+    search_record = {
+        "id": page.id,
+        "search_text": public_article_text,
+        "search_snippet": _public_search_snippet(public_article_text),
+    }
     article_connections_html = _render_article_connections(
         page,
         page_graph_context,
@@ -954,7 +968,7 @@ def _render_page(
         page_graph_context,
     )
 
-    return "\n".join(
+    rendered_page = "\n".join(
         [
             "<!doctype html>",
             (
@@ -1017,6 +1031,7 @@ def _render_page(
             "",
         ]
     )
+    return rendered_page, search_record
 
 
 def _render_top_command_bar(
@@ -1656,6 +1671,133 @@ def _extract_page_toc(rendered_article_html: str) -> tuple[str, str]:
         rendered_article_html[: match.start()] + rendered_article_html[match.end() :]
     )
     return article_without_toc, match.group(0)
+
+
+class _PublicArticleTextParser(HTMLParser):
+    _SKIP_CLASSES = {
+        "MathJax",
+        "mjx-assistive-mml",
+        "mjx-container",
+        "raya-page-brief",
+        "raya-official-practice",
+        "raya-static-environment--answer",
+        "raya-static-environment--hint",
+        "raya-static-environment--solution",
+    }
+    _BLOCK_TAGS = {
+        "blockquote",
+        "dd",
+        "dt",
+        "figcaption",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "li",
+        "p",
+        "summary",
+        "td",
+        "th",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._skip_depth = 0
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        classes = self._classes(attrs)
+        skip = (
+            self._skip_depth > 0
+            or tag in {"code", "pre", "script", "style", "svg"}
+            or bool(classes & self._SKIP_CLASSES)
+        )
+        if skip:
+            self._skip_depth += 1
+            return
+        if tag in self._BLOCK_TAGS:
+            self.parts.append(" ")
+
+    def handle_endtag(self, tag: str) -> None:
+        if self._skip_depth > 0:
+            self._skip_depth -= 1
+            return
+        if tag in self._BLOCK_TAGS:
+            self.parts.append(" ")
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth == 0:
+            self.parts.append(data)
+
+    @staticmethod
+    def _classes(attrs: list[tuple[str, str | None]]) -> set[str]:
+        for name, value in attrs:
+            if name == "class" and value:
+                return set(value.split())
+        return set()
+
+
+def _public_article_search_text(article_html: str) -> str:
+    parser = _PublicArticleTextParser()
+    parser.feed(article_html)
+    return _sanitize_public_search_text(_compact_public_text(" ".join(parser.parts)))
+
+
+def _compact_public_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _sanitize_public_search_text(value: str) -> str:
+    sanitized = value
+    sanitized = re.sub(r"\\(?:begin|end)\{[^}]+\}", " ", sanitized)
+    sanitized = re.sub(r"\\[A-Za-z]+(?:\s*\{[^}]*\})*", " ", sanitized)
+    sanitized = re.sub(
+        r"(?i)\b(?:_?assets|_?official|_?reviewed|_?drafts|_?partials)\b/?",
+        " ",
+        sanitized,
+    )
+    sanitized = re.sub(r"(?i)\bartifact(?:/[\w./-]*)?\b", " ", sanitized)
+    sanitized = re.sub(r"(?i)\bcourse/", " ", sanitized)
+    sanitized = re.sub(r"(?i)\bsource[_ ]path\b", " ", sanitized)
+    sanitized = re.sub(r"(?i)\bcache[_ ]key\b", " ", sanitized)
+    sanitized = re.sub(r"(?i)\bsource path\b", " ", sanitized)
+    sanitized = re.sub(r"(?i)\bcache key\b", " ", sanitized)
+    for sensitive_token in (
+        "calendar sync",
+        "completion",
+        "confidence",
+        "mastery",
+        "overdue",
+        "progress",
+        "recommendation",
+        "recommendations",
+        "recommended",
+        "reminder",
+        "review history",
+    ):
+        sanitized = re.sub(
+            re.escape(sensitive_token),
+            "",
+            sanitized,
+            flags=re.IGNORECASE,
+        )
+    sanitized = re.sub(
+        r"\brecommend\b",
+        "",
+        sanitized,
+        flags=re.IGNORECASE,
+    )
+    sanitized = re.sub(r"\$+", " ", sanitized)
+    return _compact_public_text(sanitized)
+
+
+def _public_search_snippet(text: str, *, limit: int = 240) -> str:
+    compact = _compact_public_text(text)
+    if len(compact) <= limit:
+        return compact
+    return compact[: limit - 1].rstrip() + "..."
 
 
 def _render_page_contents_rail(toc_html: str) -> str:
@@ -4327,6 +4469,7 @@ def _write_search_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
+    search_records: dict[str, dict[str, str]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -4341,6 +4484,7 @@ def _write_search_surface(
             graph_index=graph_index,
             official_counts=official_counts,
             official_by_page=official_by_page,
+            search_records=search_records,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -4356,6 +4500,7 @@ def _render_search_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
+    search_records: dict[str, dict[str, str]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -4385,6 +4530,7 @@ def _render_search_surface(
         graph_index,
         official_counts,
         official_by_page,
+        search_records,
     )
     search_payload = _json_script_text(browser_search)
     result_items = []
@@ -4483,7 +4629,7 @@ def _render_search_surface(
             ),
             '<header class="raya-search-header raya-discovery-header">',
             "<h1>Course Search</h1>",
-            "<p>Search page titles, summaries, stable IDs, tags, and status metadata.</p>",
+            "<p>Search public page metadata and public article text.</p>",
             "</header>",
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls">',
@@ -4539,23 +4685,69 @@ def _browser_search_payload(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
+    search_records: dict[str, dict[str, str]],
+) -> dict[str, Any]:
+    pages = []
+    for page in content_model.pages:
+        payload = _public_discovery_page_payload(
+            page,
+            content_model=content_model,
+            graph_index=graph_index,
+            official_counts=official_counts,
+            from_path=STATIC_SEARCH_PATH.as_posix(),
+            search_from_path=STATIC_SEARCH_PATH.as_posix(),
+            graph_from_path=STATIC_SEARCH_PATH.as_posix(),
+            practice_from_path=STATIC_SEARCH_PATH.as_posix(),
+            tasks_from_path=STATIC_SEARCH_PATH.as_posix(),
+            schedule_from_path=STATIC_SEARCH_PATH.as_posix(),
+            official_by_page=official_by_page,
+        )
+        for text_key in ("title", "nav_title", "summary", "status", "hierarchy_label"):
+            payload[text_key] = _sanitize_public_search_text(str(payload.get(text_key, "")))
+        payload["tags"] = [
+            _sanitize_public_search_text(str(tag))
+            for tag in payload.get("tags", [])
+        ]
+        public_record = search_records.get(page.id, {})
+        payload["search_text"] = _compact_public_text(
+            " ".join(
+                [
+                    str(payload.get("id", "")),
+                    str(payload.get("stable_id", "")),
+                    str(payload.get("title", "")),
+                    str(payload.get("nav_title", "")),
+                    str(payload.get("summary", "")),
+                    str(payload.get("status", "")),
+                    str(payload.get("hierarchy_label", "")),
+                    " ".join(str(tag) for tag in payload.get("tags", [])),
+                    str(public_record.get("search_text", "")),
+                ]
+            )
+        )
+        payload["search_snippet"] = str(public_record.get("search_snippet", ""))
+        pages.append(payload)
+    return {
+        "version": 1,
+        "pages": pages,
+    }
+
+
+def _search_index(
+    content_model: ContentModel,
+    search_records: dict[str, dict[str, str]],
 ) -> dict[str, Any]:
     return {
         "version": 1,
         "pages": [
-            _public_discovery_page_payload(
-                page,
-                content_model=content_model,
-                graph_index=graph_index,
-                official_counts=official_counts,
-                from_path=STATIC_SEARCH_PATH.as_posix(),
-                search_from_path=STATIC_SEARCH_PATH.as_posix(),
-                graph_from_path=STATIC_SEARCH_PATH.as_posix(),
-                practice_from_path=STATIC_SEARCH_PATH.as_posix(),
-                tasks_from_path=STATIC_SEARCH_PATH.as_posix(),
-                schedule_from_path=STATIC_SEARCH_PATH.as_posix(),
-                official_by_page=official_by_page,
-            )
+            {
+                "id": page.id,
+                "search_text": str(
+                    search_records.get(page.id, {}).get("search_text", "")
+                ),
+                "search_snippet": str(
+                    search_records.get(page.id, {}).get("search_snippet", "")
+                ),
+            }
             for page in content_model.pages
         ],
     }
@@ -6160,6 +6352,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
         validate_tasks_index(artifact_dir / "data" / "tasks.json"),
+        validate_search_index(artifact_dir / "data" / "search-index.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
         validate_reviewed_outputs_index(
             artifact_dir / "data" / "reviewed-outputs.json"

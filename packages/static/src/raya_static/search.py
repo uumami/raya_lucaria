@@ -57,7 +57,7 @@ _SEARCH_JAVASCRIPT = r"""
   const pageText = new Map(
     pages.map((page) => [
       page.id,
-      normalize([
+      normalize(page.search_text || [
         page.id,
         page.stable_id,
         page.title,
@@ -210,11 +210,13 @@ _SEARCH_JAVASCRIPT = r"""
       contextTitle.textContent = page.title || page.nav_title || page.id || "Visible page";
     }
     if (contextMeta) {
+      const snippet = page.search_snippet ? `Match text: ${page.search_snippet}` : "";
       contextMeta.textContent = [
         page.hierarchy_label || "",
         page.status ? `Status ${page.status}` : "",
         `Explicit links: ${counts.outgoing || 0} outgoing, ${counts.incoming || 0} incoming`,
         `Official objects: ${studyTotal}`,
+        snippet,
       ].filter(Boolean).join(" | ");
     }
   }

@@ -656,7 +656,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
                 "type: prompt",
                 "authority: official",
                 "content:",
-                "  prompt: Explain why the identity matrix preserves vector norms.",
+                "  prompt: SHOULD_NOT_LEAK_OFFICIAL_PROMPT Explain why the identity matrix preserves vector norms.",
                 "retrieval:",
                 "  kind: reflection",
                 "",
@@ -1295,6 +1295,21 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         ),
         encoding="utf-8",
     )
+    authoring_page = course / "course" / "5_authoring_matrix" / "0_index.md"
+    authoring_text = authoring_page.read_text(encoding="utf-8")
+    authoring_text = authoring_text.replace(
+        "summary: Combined fixture page for copyable authoring patterns across math, numbered content, skins, and static environments.",
+        "summary: Combined fixture page for copyable authoring patterns across math, numbered content, skins, and static environments. _OFFICIAL artifact/source_path cache_key progress recommend",
+    )
+    authoring_text += (
+        "\n\nPublic code block with private and raw math sentinels:\n\n"
+        "```text\n"
+        "SHOULD_NOT_INDEX_RAW_TEX \\newcommand{\\leak}{x} "
+        "\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix} "
+        "_reviewed artifact/site source path cache key\n"
+        "```\n"
+    )
+    authoring_page.write_text(authoring_text, encoding="utf-8")
 
     report = build_course(course)
 
@@ -1389,6 +1404,55 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert set(search_payload) == {"pages", "version"}
     assert search_payload["version"] == 1
     assert search_payload["pages"]
+    search_index_path = course / "artifact" / "data" / "search-index.json"
+    assert search_index_path.exists()
+    assert any(
+        diagnostic.message == "Artifact data index validation passed"
+        and diagnostic.path == search_index_path.resolve()
+        for diagnostic in report.diagnostics
+    )
+    manifest = json.loads(
+        (course / "artifact" / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["data"]["search_index"] == "data/search-index.json"
+    search_index = json.loads(search_index_path.read_text(encoding="utf-8"))
+    assert search_index["version"] == 1
+    assert {record["id"] for record in search_index["pages"]} >= {
+        "render-root",
+        "authoring-matrix",
+    }
+    search_records = {record["id"]: record for record in search_index["pages"]}
+    assert "fixture material for renderer and documentation tests" in (
+        search_records["authoring-matrix"]["search_text"].lower()
+    )
+    assert "matrix norm fixture" in (
+        search_records["authoring-matrix"]["search_text"].lower()
+    )
+    assert len(search_records["authoring-matrix"]["search_snippet"]) <= 280
+    serialized_search_index = json.dumps(search_index)
+    broad_forbidden_search_tokens = (
+        "mjx-container",
+        "\\\\begin",
+        "\\\\newcommand",
+        "SHOULD_NOT_INDEX_RAW_TEX",
+        "SHOULD_NOT_LEAK_OFFICIAL_PROMPT",
+        "_official",
+        "_OFFICIAL",
+        "_reviewed",
+        "_assets",
+        "artifact",
+        "source_path",
+        "source path",
+        "cache_key",
+        "cache key",
+        "progress",
+        "recommend",
+    )
+    for forbidden_token in broad_forbidden_search_tokens:
+        assert forbidden_token not in serialized_search_index
+    assert "static labels, anchors, links, mathjax html" not in (
+        serialized_search_index.lower()
+    )
     allowed_page_keys = {
         "graph_url",
         "hierarchy_label",
@@ -1398,6 +1462,8 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         "next_url",
         "practice_url",
         "previous_url",
+        "search_snippet",
+        "search_text",
         "search_url",
         "schedule_url",
         "stable_id",
@@ -1441,18 +1507,34 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert pages_by_id["authoring-matrix"]["schedule_url"] == (
         "../schedule/index.html?page=authoring-matrix"
     )
+    assert "fixture material for renderer and documentation tests" in (
+        pages_by_id["authoring-matrix"]["search_text"].lower()
+    )
+    assert "matrix norm fixture" in (
+        pages_by_id["authoring-matrix"]["search_text"].lower()
+    )
+    assert pages_by_id["authoring-matrix"]["search_snippet"]
     assert pages_by_id["authoring-matrix"]["previous_url"].endswith(
         "../../reader-ux/index.html"
     )
     serialized_search_payload = json.dumps(search_payload)
     for private_token in (
         "_official",
+        "_OFFICIAL",
         "_reviewed",
         "_assets",
         "artifact",
         "source_path",
+        "source path",
         "cache_key",
+        "cache key",
         "course/",
+        "\\\\begin",
+        "\\\\newcommand",
+        "SHOULD_NOT_INDEX_RAW_TEX",
+        "SHOULD_NOT_LEAK_OFFICIAL_PROMPT",
+        "progress",
+        "recommend",
     ):
         assert private_token not in serialized_search_payload
     assert "raya-search-data" in search_script

@@ -244,10 +244,13 @@ movement, hover/focus active-result inspection, Enter-to-open behavior, clear
 controls, shared discovery chrome, control/results/context workspace regions,
 compact mobile discovery chrome, no
 external requests, and no persistent search state. Search payloads stay
-metadata-only, and generated query context and context-panel summaries must
-remain transient. Exact Search page focus from `?page=<page-id>` may initially
-narrow visible results to one public page ID; Clear and Escape must restore all
-visible results without writing browser storage or changing source authority.
+public: generated page metadata plus public rendered article prose. They must
+exclude source paths, private support paths, artifact paths, MathJax internals,
+raw TeX, cache keys, answer/support-only content, and learner state. Generated
+query context and context-panel summaries must remain transient. Exact Search
+page focus from `?page=<page-id>` may initially narrow visible results to one
+public page ID; Clear and Escape must restore all visible results without
+writing browser storage or changing source authority.
 Search result graph-focus links must come from stable page IDs and generated
 local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
 or progress language. Search, Graph, Practice, and Tasks discovery pages may load
@@ -263,11 +266,12 @@ authority. Treat the page query as transient navigation context, not progress,
 recommendation, mastery, grading, or personal due state.
 
 When changing Search or Graph discovery cards, verify that embedded payloads and
-visible cards use only public generated metadata: page title, nav title, stable
-ID, hierarchy label, status, summary, tags, previous/next course-order links,
-explicit graph link counts, accepted official object counts, and relative links
-to owning pages or generated workspaces. Confirm there are no source paths,
-`_official/`, `_assets/`, `_reviewed/`, artifact internals, cache keys,
+visible cards use only public generated data: page title, nav title, stable ID,
+hierarchy label, status, summary, tags, public rendered article prose for
+Search, previous/next course-order links, explicit graph link counts, accepted
+official object counts, and relative links to owning pages or generated
+workspaces. Confirm there are no source paths, `_official/`, `_assets/`,
+`_reviewed/`, artifact internals, cache keys, MathJax internals, raw TeX,
 answer/support content, runtime `fetch`, search/graph storage, external
 requests, recommendation, progress, mastery, completion, ranking, or fake
 related-practice language. Search Enter must still open the page result, while

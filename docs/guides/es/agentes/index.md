@@ -271,9 +271,12 @@ Al cambiar Course Search, verifica coincidencia aproximada, movimiento con
 teclado por resultados, inspeccion de resultado activo por hover/foco, Enter
 para abrir, controles de limpiar, chrome compartido de descubrimiento, regiones
 de workspace de controles, resultados y contexto, chrome movil compacto, sin solicitudes externas y sin estado
-persistente de busqueda. Los payloads de busqueda siguen siendo solo metadata,
-y el contexto de consulta generado y los resumenes del panel de contexto deben
-permanecer transitorios. El foco exacto de pagina Search desde
+persistente de busqueda. Los payloads de busqueda pueden incluir metadata
+publica generada y prosa publica renderizada del articulo, pero deben excluir
+rutas de fuente, rutas privadas de soporte, rutas de artifact, internos de
+MathJax, TeX crudo, cache keys, contenido solo de respuestas/soporte y estado
+del estudiante. El contexto de consulta generado y los resumenes del panel de
+contexto deben permanecer transitorios. El foco exacto de pagina Search desde
 `?page=<page-id>` puede reducir inicialmente los resultados visibles a un ID
 publico de pagina; Clear y Escape deben restaurar todos los resultados visibles
 sin escribir storage del navegador ni cambiar autoridad de fuente. Los enlaces
@@ -295,12 +298,13 @@ pagina como contexto transitorio de navegacion, no como progreso,
 recomendacion, dominio, calificacion ni estado personal de fechas.
 
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads
-embebidos y las cards visibles usen solo metadata publica generada: titulo de
-pagina, nav title, stable ID, hierarchy label, status, summary, tags, enlaces
-anterior/siguiente del orden del curso, conteos explicitos de enlaces del grafo,
-conteos de objetos oficiales aceptados y enlaces relativos a paginas
-propietarias o workspaces generados. Confirma que no haya rutas de fuente,
-`_official/`, `_assets/`, `_reviewed/`, internos de artifact, cache keys,
+embebidos y las cards visibles usen solo datos publicos generados: titulo de
+pagina, nav title, stable ID, hierarchy label, status, summary, tags, prosa
+publica renderizada del articulo para Search, enlaces anterior/siguiente del
+orden del curso, conteos explicitos de enlaces del grafo, conteos de objetos
+oficiales aceptados y enlaces relativos a paginas propietarias o workspaces
+generados. Confirma que no haya rutas de fuente, `_official/`, `_assets/`,
+`_reviewed/`, internos de artifact, cache keys, internos de MathJax, TeX crudo,
 contenido de respuestas/soporte, `fetch` en runtime, storage de search/graph,
 requests externos, recomendacion, progreso, dominio, completion, ranking ni
 lenguaje falso de practica relacionada. Enter en Search debe seguir abriendo la

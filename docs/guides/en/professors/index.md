@@ -282,17 +282,19 @@ Treat it as course structure from current artifact data, not as analytics,
 recommendations, mastery, or personal progress. Generated page links may open
 the graph focused on the current page.
 
-Course Search is a static metadata search surface. It can match titles,
-navigation labels, summaries, tags, status, hierarchy labels, and stable IDs
-approximately, but it does not index hidden source paths, rendered prose, math
-output, or personal learner state. Generated page links may preload a temporary
-query, but the renderer does not store it. Search results may also include
-`View in graph` links generated from stable page IDs so students can inspect
-where a found page sits in the course graph. The Search workspace may show
-control, results, and context regions from public metadata. A valid page handoff
-may show a visible page-focus notice with the focused public page and visible
-count until Clear or Escape restores all results. Those summaries are structural
-scanning aids, not rankings or recommendations.
+Course Search is a static public discovery surface. It can match titles,
+navigation labels, summaries, tags, status, hierarchy labels, stable IDs, and
+public rendered article prose approximately, but it does not index hidden source
+paths, private support paths, MathJax internals, raw TeX, answer/support-only
+content, or personal learner state. Generated page links may preload a
+temporary query, but the renderer does not store it. Search results may also
+include `View in graph` links generated from stable page IDs so students can
+inspect where a found page sits in the course graph. The Search workspace may
+show control, results, and context regions from public metadata and public
+match snippets. A valid page handoff may show a visible page-focus notice with
+the focused public page and visible count until Clear or Escape restores all
+results. Those summaries are structural scanning aids, not rankings or
+recommendations.
 
 Course pages may also link to scripts and notebooks beside the learning quantum they support, for example `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py`, or `notebooks/overview.ipynb`. Glintstone validates linked `.py` and `.ipynb` files by extension and ownership boundary, copies only linked files for reading and download, and previews them statically; they are not executed during build. Use this for transparent supporting work, not for hidden page content or official learning objects.
 

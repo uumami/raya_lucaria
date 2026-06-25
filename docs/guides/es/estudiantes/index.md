@@ -120,14 +120,16 @@ busques, hagas hover o enfoques paginas cercanas con teclado. El hover o foco de
 paginas conectadas. Son pistas estaticas de legibilidad, no rankings de
 importancia, progreso, dominio, recomendaciones ni senales de evaluacion.
 
-Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen o
-stable ID. Busca solo metadata generada, soporta coincidencias aproximadas y
-inspeccion con teclado, hover y foco de resultados visibles, y no busca rutas ocultas de
-fuente ni guarda tu consulta. Abrirlo desde una pagina del curso puede precargar
-el titulo de esa pagina como consulta temporal. Un resultado tambien puede
-ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
+Usa Course Search cuando recuerdes un titulo, tag, status, frase de resumen,
+stable ID o frase del articulo publico. Busca metadata publica generada y prosa
+publica renderizada del articulo, soporta coincidencias aproximadas e
+inspeccion con teclado, hover y foco de resultados visibles, y no busca rutas
+ocultas de fuente, rutas privadas de soporte, internos de MathJax, respuestas
+ni tu estado personal. Abrirlo desde una pagina del curso puede precargar el
+titulo de esa pagina como consulta temporal. Un resultado tambien puede ofrecer
+`View in graph`, que abre Course Graph enfocado en esa misma pagina para
 inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
-contexto de Search resume metadata publica del resultado que inspeccionas; no
+contexto de Search resume contexto publico del resultado que inspeccionas; no
 es un ranking ni una recomendacion. Cuando un resultado tiene practica oficial
 aceptada, tambien puede abrir Official Practice enfocada en esa pagina. Ese
 foco de pagina es solo contexto de URL; limpiar Practice o presionar Escape

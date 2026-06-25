@@ -158,18 +158,20 @@ local y sin storage del grafo.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia
 aproximada, controles de limpiar y movimiento con teclado por resultados son
-validos solo sobre metadata embebida de paginas. No indexes prosa renderizada,
-rutas de fuente, rutas de artifact, output MathJax, cache keys ni estado del
-estudiante. El contexto de consulta generado puede precargar la caja de busqueda
-sin convertirse en estado guardado. Los enlaces graph-focus de resultados de
-busqueda deben generarse solo desde stable IDs y URLs locales del grafo; conserva
-lenguaje estructural como `View in graph`. Los workspaces de descubrimiento
-Search y Practice pueden usar regiones de controles, resultados y contexto en
-desktop. Search, Practice, Tasks y Schedule pueden mostrar un aviso compacto de
+validos sobre metadata publica embebida de paginas y prosa publica renderizada
+del articulo. No indexes rutas de fuente, rutas de artifact, rutas privadas de
+soporte, internos de MathJax, TeX crudo, cache keys, contenido solo de
+respuestas/soporte ni estado del estudiante. El contexto de consulta generado
+puede precargar la caja de busqueda sin convertirse en estado guardado. Los
+enlaces graph-focus de resultados de busqueda deben generarse solo desde stable
+IDs y URLs locales del grafo; conserva lenguaje estructural como `View in
+graph`. Los workspaces de descubrimiento Search y Practice pueden usar regiones
+de controles, resultados y contexto en desktop. Search, Practice, Tasks y
+Schedule pueden mostrar un aviso compacto de
 foco de pagina para un handoff valido `?page=<page-id>`, pero el aviso debe
 ocultarse cuando el foco falta o no es valido y despues de que Clear/Escape
-restaura el workspace completo. Esas regiones deben quedarse solo en metadata
-publica, ser responsivas y no guardar estado de descubrimiento.
+restaura el workspace completo. Esas regiones deben quedarse publicas, ser
+responsivas y no guardar estado de descubrimiento.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

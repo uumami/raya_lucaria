@@ -3599,6 +3599,23 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             in page.locator("#raya-search-results").inner_text()
                         )
                         page.goto(
+                            f"{base_url}/_raya/search/index.html?q=matrix%20norm%20fixture",
+                            wait_until="networkidle",
+                        )
+                        prose_card = page.locator(
+                            '[data-raya-search-result="authoring-matrix"]'
+                        )
+                        page.wait_for_selector(
+                            '[data-raya-search-result="authoring-matrix"]:not([hidden])'
+                        )
+                        assert prose_card.is_visible()
+                        assert (
+                            "Match text:"
+                            in page.locator(
+                                "[data-raya-search-context-meta]"
+                            ).inner_text()
+                        )
+                        page.goto(
                             f"{base_url}/_raya/search/index.html?page=authoring-matrix",
                             wait_until="networkidle",
                         )

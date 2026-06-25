@@ -114,15 +114,17 @@ Hover or keyboard focus can temporarily inspect a page and its connected pages.
 These are static readability cues, not
 importance rankings, progress, mastery, recommendations, or grading signals.
 
-Use Course Search when you remember a title, tag, status, summary phrase, or
-stable ID. It searches generated metadata only, supports approximate matches and
-keyboard, hover, and focus inspection of visible results, and does not search hidden source
-paths or store your query. Opening it from a course page may preload that page
-title as a temporary query. A result can also offer `View in graph`, which opens
-the Course Graph focused on that same page so you can inspect its course
-position and explicit links. The Search context panel summarizes public
-metadata for the result you are inspecting; it is not a ranking or
-recommendation. When a result has accepted official practice, it may also open
+Use Course Search when you remember a title, tag, status, summary phrase,
+stable ID, or phrase from the public article text. It searches generated public
+metadata and public rendered article prose, supports approximate matches and
+keyboard, hover, and focus inspection of visible results, and does not search
+hidden source paths, private support paths, MathJax internals, answers, or your
+personal state. Opening it from a course page may preload that page title as a
+temporary query. A result can also offer `View in graph`, which opens the Course
+Graph focused on that same page so you can inspect its course position and
+explicit links. The Search context panel summarizes public context for the
+result you are inspecting; it is not a ranking or recommendation. When a result
+has accepted official practice, it may also open
 Official Practice focused on that page. That page focus is only URL context;
 clearing Practice or pressing Escape returns to all visible official objects.
 

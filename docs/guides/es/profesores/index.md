@@ -289,19 +289,21 @@ del curso desde datos actuales de artifact, no como analiticas,
 recomendaciones, dominio o progreso personal. Los links generados de pagina
 pueden abrir el grafo enfocado en la pagina actual.
 
-Course Search es una superficie estatica de busqueda de metadata. Puede coincidir
-aproximadamente con titulos, etiquetas de navegacion, resumenes, tags, status,
-etiquetas de jerarquia y stable IDs, pero no indexa rutas ocultas de fuente,
-prosa renderizada, output de math ni estado personal del estudiante. Los links
-generados de pagina pueden precargar una consulta temporal, pero el renderer no
-la guarda. Los resultados tambien pueden incluir links `View in graph`
-generados desde stable IDs para que estudiantes inspeccionen donde queda una
-pagina encontrada dentro del grafo del curso. El workspace de Search puede
-mostrar regiones de controles, resultados y contexto desde metadata publica. Un
-handoff valido de pagina puede mostrar un aviso visible con la pagina publica
-enfocada y el conteo visible hasta que Clear o Escape restaure todos los
-resultados. Esos resumenes son ayudas estructurales para escanear, no rankings
-ni recomendaciones.
+Course Search es una superficie estatica de descubrimiento publico. Puede
+coincidir aproximadamente con titulos, etiquetas de navegacion, resumenes,
+tags, status, etiquetas de jerarquia, stable IDs y prosa publica renderizada
+del articulo, pero no indexa rutas ocultas de fuente, rutas privadas de soporte,
+internos de MathJax, TeX crudo, contenido solo de respuestas/soporte ni estado
+personal del estudiante. Los links generados de pagina pueden precargar una
+consulta temporal, pero el renderer no la guarda. Los resultados tambien pueden
+incluir links `View in graph` generados desde stable IDs para que estudiantes
+inspeccionen donde queda una pagina encontrada dentro del grafo del curso. El
+workspace de Search puede mostrar regiones de controles, resultados y contexto
+desde metadata publica y snippets publicos de coincidencia. Un handoff valido
+de pagina puede mostrar un aviso visible con la pagina publica enfocada y el
+conteo visible hasta que Clear o Escape restaure todos los resultados. Esos
+resumenes son ayudas estructurales para escanear, no rankings ni
+recomendaciones.
 
 Las paginas de curso tambien pueden linkear scripts y notebooks junto al quantum que apoyan, por ejemplo `scripts/clean.py`, `labs/explore.ipynb`, `code/helper.py` o `notebooks/overview.ipynb`. Glintstone valida archivos `.py` y `.ipynb` linkeados por extension y limite de propiedad, copia solo archivos linkeados para lectura y descarga, y los previsualiza estaticamente; no se ejecutan durante el build. Usa esto para trabajo de soporte transparente, no para contenido de pagina escondido ni objetos oficiales de aprendizaje.
 
