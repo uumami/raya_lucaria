@@ -4865,7 +4865,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert "@media (min-width: 1280px)" in rich_css
     assert (
-        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)"
+        "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem)"
         in rich_css
     )
     assert "transition: grid-template-columns 180ms ease" in rich_css
@@ -5630,7 +5630,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             page.wait_for_function(
                                 """() => document
                                   .querySelector('#raya-course-map')
-                                  ?.getBoundingClientRect().width < 80"""
+                                  ?.getBoundingClientRect().width <= 112"""
                             )
                             page.click("[data-raya-learning-rail-collapse]")
                             page.wait_for_function(
@@ -5641,7 +5641,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             page.wait_for_function(
                                 """() => document
                                   .querySelector('#raya-learning-rail')
-                                  ?.getBoundingClientRect().width < 70"""
+                                  ?.getBoundingClientRect().width <= 112"""
                             )
                             collapsed = page.evaluate(
                                 """() => ({
@@ -5682,10 +5682,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   ).display,
                                 })"""
                             )
-                            assert 64 <= collapsed["mapWidth"] <= 84
-                            assert 44 <= collapsed["railWidth"] <= 64
-                            assert collapsed["mapButtonAfter"] == '"Nav"'
-                            assert collapsed["railButtonAfter"] == '"Info"'
+                            assert 64 <= collapsed["mapWidth"] <= 112
+                            assert 64 <= collapsed["railWidth"] <= 112
+                            assert collapsed["mapButtonAfter"] == '"Map"'
+                            assert collapsed["railButtonAfter"] == '"Context"'
                             assert collapsed["railBodyHidden"] == "true"
                             assert collapsed["railBodyInert"] is True
                             assert collapsed["workspaceDisplay"] == "none"
@@ -6620,6 +6620,14 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             document.querySelector('#raya-course-map .raya-course-map-toggle'),
                             '::after'
                           ).content,
+                          buttonVisualWritingMode: getComputedStyle(
+                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
+                            '::after'
+                          ).writingMode,
+                          buttonMarkerWidth: getComputedStyle(
+                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
+                            '::before'
+                          ).width,
                           wrappedLinkTexts: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.innerText)
                             .filter((text) => text.includes('\\n')),
@@ -6638,10 +6646,12 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["texts"] == ["Course map", "Expand map"]
                     assert collapsed["listHidden"] == "false"
                     assert collapsed["listInert"] is False
-                    assert 56 <= collapsed["mapWidth"] <= 84
+                    assert 64 <= collapsed["mapWidth"] <= 112
                     assert collapsed["articleWidth"] > 760
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
-                    assert collapsed["buttonVisualLabel"] == '"Nav"'
+                    assert collapsed["buttonVisualLabel"] == '"Map"'
+                    assert collapsed["buttonVisualWritingMode"] == "vertical-rl"
+                    assert float(collapsed["buttonMarkerWidth"].replace("px", "")) > 0
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
                     assert collapsed["firstLinkPointerEvents"] == "auto"
@@ -7635,9 +7645,9 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                     )
                     page.wait_for_function(
                         """() => document.querySelector('nav.raya-course-map')
-                          ?.getBoundingClientRect().width <= 82
+                          ?.getBoundingClientRect().width <= 112
                           && document.querySelector('aside.raya-learning-rail')
-                          ?.getBoundingClientRect().width <= 64"""
+                          ?.getBoundingClientRect().width <= 112"""
                     )
                     collapsed = page.evaluate(
                         """() => {
@@ -7729,10 +7739,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         if icon_name not in {"text-size", "font"}:
             assert icon["shapeFill"] == "none"
             assert icon["shapeStroke"] != "none"
-    assert collapsed["mapWidth"] <= 82
-    assert collapsed["railWidth"] <= 64
-    assert collapsed["mapLabel"] == '"Nav"'
-    assert collapsed["railLabel"] == '"Info"'
+    assert collapsed["mapWidth"] <= 112
+    assert collapsed["railWidth"] <= 112
+    assert collapsed["mapLabel"] == '"Map"'
+    assert collapsed["railLabel"] == '"Context"'
     assert collapsed["mapAriaLabel"] == "Expand course map"
     assert collapsed["railAriaLabel"] == "Show learning context"
     assert collapsed["mapToggleWidth"] >= 40
@@ -8216,7 +8226,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     assert collapsed["collapseExpanded"] == "false"
                     assert collapsed["expandExpanded"] == "false"
                     assert collapsed["articleWidth"] > initial["articleWidth"] + 80
-                    assert collapsed["railWidth"] <= 80
+                    assert collapsed["railWidth"] <= 112
                     assert collapsed["railBodyHidden"] == "true"
                     assert collapsed["railBodyInert"] is True
                     _assert_no_horizontal_overflow(page)
@@ -8243,6 +8253,152 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                         "contextLabel": "Hide learning context",
                         "railBodyHidden": "false",
                     }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_collapsed_reader_rails_use_vertical_tabs(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => ({
+                          articleWidth: document.querySelector('#raya-article')
+                            ?.getBoundingClientRect().width,
+                          mapWidth: document.querySelector('#raya-course-map')
+                            ?.getBoundingClientRect().width,
+                          railWidth: document.querySelector('#raya-learning-rail')
+                            ?.getBoundingClientRect().width,
+                        })"""
+                    )
+                    assert initial["articleWidth"] > 620
+                    assert initial["mapWidth"] >= 210
+                    assert initial["railWidth"] >= 220
+
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document.querySelector('#raya-article')
+                          ?.getBoundingClientRect().width > minimumWidth""",
+                        arg=initial["articleWidth"] + 80,
+                    )
+                    map_collapsed = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const mapButton = document
+                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                          const mapLabel = getComputedStyle(mapButton, '::after');
+                          const firstMapLink = document.querySelector('#raya-course-map a');
+                          return {
+                            articleWidth: document.querySelector('#raya-article')
+                              ?.getBoundingClientRect().width,
+                            mapWidth: map?.getBoundingClientRect().width,
+                            mapButtonExpanded: mapButton?.getAttribute('aria-expanded'),
+                            mapButtonAriaLabel: mapButton?.getAttribute('aria-label'),
+                            mapVisualLabel: mapLabel.content,
+                            mapVisualWritingMode: mapLabel.writingMode,
+                            mapVisualTextOrientation: mapLabel.textOrientation,
+                            mapMarkerWidth: getComputedStyle(mapButton, '::before').width,
+                            firstMapLinkTabIndex: firstMapLink?.getAttribute('tabindex'),
+                            firstMapLinkPointerEvents: firstMapLink
+                              ? getComputedStyle(firstMapLink).pointerEvents
+                              : null,
+                          };
+                        }"""
+                    )
+                    assert map_collapsed["articleWidth"] > initial["articleWidth"] + 80
+                    assert 64 <= map_collapsed["mapWidth"] <= 112
+                    assert map_collapsed["mapButtonExpanded"] == "false"
+                    assert map_collapsed["mapButtonAriaLabel"] == "Expand course map"
+                    assert map_collapsed["mapVisualLabel"] == '"Map"'
+                    assert map_collapsed["mapVisualWritingMode"] == "vertical-rl"
+                    assert map_collapsed["mapVisualTextOrientation"] == "upright"
+                    assert float(map_collapsed["mapMarkerWidth"].replace("px", "")) > 0
+                    assert map_collapsed["firstMapLinkTabIndex"] is None
+                    assert map_collapsed["firstMapLinkPointerEvents"] == "auto"
+
+                    page.click("[data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document.querySelector('#raya-article')
+                          ?.getBoundingClientRect().width > minimumWidth""",
+                        arg=map_collapsed["articleWidth"] + 40,
+                    )
+                    both_collapsed = page.evaluate(
+                        """() => {
+                          const expand = document
+                            .querySelector('[data-raya-learning-rail-expand]');
+                          const expandLabel = getComputedStyle(expand, '::after');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            articleWidth: document.querySelector('#raya-article')
+                              ?.getBoundingClientRect().width,
+                            railWidth: document.querySelector('#raya-learning-rail')
+                              ?.getBoundingClientRect().width,
+                            contextButtonExpanded: document
+                              .querySelector('[data-raya-learning-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            railExpandExpanded: expand?.getAttribute('aria-expanded'),
+                            railExpandAriaLabel: expand?.getAttribute('aria-label'),
+                            railVisualLabel: expandLabel.content,
+                            railVisualWritingMode: expandLabel.writingMode,
+                            railVisualTextOrientation: expandLabel.textOrientation,
+                            railMarkerWidth: getComputedStyle(expand, '::before').width,
+                            railBodyHidden: body?.getAttribute('aria-hidden'),
+                            railBodyInert: body?.inert,
+                          };
+                        }"""
+                    )
+                    assert both_collapsed["mapState"] == "collapsed"
+                    assert both_collapsed["railState"] == "collapsed"
+                    assert both_collapsed["articleWidth"] > map_collapsed["articleWidth"] + 40
+                    assert 64 <= both_collapsed["railWidth"] <= 112
+                    assert both_collapsed["contextButtonExpanded"] == "false"
+                    assert both_collapsed["railExpandExpanded"] == "false"
+                    assert both_collapsed["railExpandAriaLabel"] == "Show learning context"
+                    assert both_collapsed["railVisualLabel"] == '"Context"'
+                    assert both_collapsed["railVisualWritingMode"] == "vertical-rl"
+                    assert both_collapsed["railVisualTextOrientation"] == "upright"
+                    assert float(both_collapsed["railMarkerWidth"].replace("px", "")) > 0
+                    assert both_collapsed["railBodyHidden"] == "true"
+                    assert both_collapsed["railBodyInert"] is True
+                    _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
             finally:

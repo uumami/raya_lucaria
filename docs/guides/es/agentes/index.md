@@ -173,6 +173,12 @@ colapso estan ocultos. Presionar Escape dentro del riel en movil no debe dejar
 orientacion de la shell no debe escribir `localStorage` ni `sessionStorage`;
 solo preferencias explicitas de comodidad como tamano de texto u
 `OpenDyslexic` pueden persistir.
+Cuando cambien los rieles lectores colapsados, verifica que las pestanas
+desktop Map y Context usen labels visuales no horizontales, sigan siendo
+operables por teclado mediante sus controles existentes, aumenten el ancho del
+articulo, permanezcan ocultas en tablet/movil cuando sus controles desktop
+esten ocultos, y no agreguen storage, fetch, progreso, recomendacion ni estado
+del estudiante.
 Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
 estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
 pagina solo cuando haya propiedad directa de objetos oficiales, hrefs de

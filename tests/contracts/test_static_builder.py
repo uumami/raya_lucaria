@@ -4364,7 +4364,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
+        "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
     )
     assert 'grid-template-areas: "course-map main-article learning-rail";' in css
     assert (
@@ -4385,7 +4385,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     assert "@media (max-width: 1500px)" in css
     assert "@media (min-width: 1280px)" in css
     assert (
-        "grid-template-columns: 4.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
+        "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
     )
     assert "outline: 3px solid var(--raya-color-accent);" in css
     assert "@media (max-width: 1279px)" in css

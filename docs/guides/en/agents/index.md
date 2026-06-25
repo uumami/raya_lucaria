@@ -159,6 +159,11 @@ the rail on mobile must not leave `aria-hidden`, `inert`, or hidden focusable
 content behind. Shell collapse/orientation state must not write localStorage or
 sessionStorage; only explicit comfort preferences such as text size or
 `OpenDyslexic` may persist.
+When collapsed reader rails change, verify the desktop Map and Context tabs use
+non-horizontal visual labels, remain keyboard-operable through their existing
+controls, increase article width, stay hidden on tablet/mobile when their
+desktop controls are hidden, and do not add storage, fetch, progress,
+recommendation, or learner-state behavior.
 When changing Course workspace shortcut cards, verify labels, structural badges,
 deployment-neutral hrefs, page-focused Practice hrefs only for direct official
 ownership, Schedule hrefs and dated-task badges only from direct dated official
