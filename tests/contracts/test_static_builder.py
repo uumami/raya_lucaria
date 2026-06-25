@@ -3571,11 +3571,19 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert 'execCommand("copy")' in script_text
     assert "Code block copied" in script_text
     assert "function orientCourseMapToCurrentPage" in script_text
+    assert "function openCourseMapDrawer" in script_text
+    assert "function closeCourseMapDrawer" in script_text
+    assert "function expandCurrentCourseMapPath" in script_text
+    assert "function expandAllCourseMapNodes" in script_text
+    assert "function collapseCourseMapToCurrentPath" in script_text
     assert "rayaCourseMapOriented" in script_text
     assert "scrollIntoView" not in script_text
     assert "glintstone-nav-expanded" not in script_text
     assert "data-raya-course-map-filter" in script_text
     assert "data-raya-map-node-toggle" in script_text
+    assert "data-raya-course-map-action" in script_text
+    assert "data-raya-course-map-close" in script_text
+    assert "data-raya-course-map-drawer-backdrop" in script_text
     assert 'link.getAttribute("data-raya-map-label")' in script_text
     assert 'node.getAttribute("data-raya-map-node") || ""' not in script_text
     assert "fetch(" not in script_text
@@ -3642,6 +3650,12 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-course-map-workspaces"' in html
     assert 'aria-label="Course workspaces"' in html
     assert "data-raya-course-map-workspaces" in html
+    assert 'class="raya-course-map-actions"' in html
+    assert 'data-raya-course-map-action="current"' in html
+    assert 'data-raya-course-map-action="expand-all"' in html
+    assert 'data-raya-course-map-action="less"' in html
+    assert 'data-raya-course-map-close' in html
+    assert 'data-raya-course-map-drawer-backdrop hidden' in html
     assert (
         'class="raya-course-map-workspace-link raya-course-map-workspace-search"'
         in html
@@ -3903,7 +3917,10 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         encoding="utf-8"
     )
 
-    assert '<html lang="en" data-raya-course-map="expanded">' in html
+    assert (
+        '<html lang="en" data-raya-course-map="expanded" '
+        'data-raya-course-map-drawer="closed">'
+    ) in html
     assert (
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html
@@ -3924,6 +3941,12 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'aria-label="Course workspaces"' in html
     assert "data-raya-course-map-workspaces" in html
     assert "data-raya-course-map-workspace-link" in html
+    assert 'class="raya-course-map-actions"' in html
+    assert 'data-raya-course-map-action="current"' in html
+    assert 'data-raya-course-map-action="expand-all"' in html
+    assert 'data-raya-course-map-action="less"' in html
+    assert 'data-raya-course-map-close' in html
+    assert 'data-raya-course-map-drawer-backdrop hidden' in html
     assert "_raya/search/index.html?q=" in html
     assert "_raya/graph/index.html?page=" in html
     assert "_raya/practice/index.html" in html

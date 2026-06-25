@@ -957,7 +957,11 @@ def _render_page(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}" data-raya-course-map="expanded">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
@@ -1492,9 +1496,19 @@ def _render_course_map(
             '<div class="raya-course-map-header">',
             '<p class="raya-region-title">Course map</p>',
             f'<p class="raya-page-position">{position}</p>' if position else "",
+            (
+                '<button class="raya-course-map-close" type="button" '
+                'data-raya-course-map-close aria-label="Close course map">'
+                "Close</button>"
+            ),
             _render_course_map_toggle("Collapse map"),
             "</div>",
             workspace_html,
+            '<div class="raya-course-map-actions" aria-label="Course map section controls">',
+            '<button type="button" data-raya-course-map-action="current">Current</button>',
+            '<button type="button" data-raya-course-map-action="expand-all">All</button>',
+            '<button type="button" data-raya-course-map-action="less">Less</button>',
+            "</div>",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -1508,6 +1522,10 @@ def _render_course_map(
             "</ol>",
             "</div>",
             "</nav>",
+            (
+                '<div class="raya-course-map-drawer-backdrop" '
+                'data-raya-course-map-drawer-backdrop hidden></div>'
+            ),
         ]
     )
 
