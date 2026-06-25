@@ -66,7 +66,8 @@ For the learning-science course shell, preserve source constraints and current
 artifact authority. The main article may end with a Page connections block
 generated from explicit incoming/outgoing content-link graph context. The
 right learning rail may render current page contents, normalized metadata, stable-ID
-prerequisites, previous/next links, static Connections summaries for explicit
+prerequisites, previous/next links, current-section context derived from active
+heading anchors, static Connections summaries for explicit
 incoming/outgoing graph context, and graph-focus links for those explicit
 relationships. Keep the boundary explicit: no inferred goals, no fake related
 practice, no personal progress, and no browser-side MathJax. Use render-debug
@@ -138,6 +139,11 @@ non-persistent UI state; current-page map orientation must also remain
 non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not
 learner progress.
+If the shell exposes current-section context, verify it is generated from the
+page contents and heading anchors, updates with the active heading in browser
+tests, remains a normal local anchor link, writes no browser storage, and does
+not use reading percentage, completion, mastery, recommendation, or progress
+language.
 If the shell exposes `Focus reading`, verify it is keyboard reachable, collapses
 the desktop course map and right learning rail together, toggles back to the
 expanded layout, does not change URL state, and writes no browser storage.

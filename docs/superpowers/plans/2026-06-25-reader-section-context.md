@@ -29,7 +29,7 @@
 
 - [ ] **Step 1: Write the failing contract assertions**
 
-In `test_build_static_render_fixture_outputs_rich_html`, add:
+In `test_render_fixture_builds_rich_static_pages`, add:
 
 ```python
     assert 'class="raya-current-section"' in html
@@ -51,7 +51,7 @@ In the shell script contract test that reads `shell.js`, add:
 Run:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_static_render_fixture_outputs_rich_html tests/contracts/test_static_builder.py::test_build_writes_minimal_static_site -q
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_render_fixture_builds_rich_static_pages tests/contracts/test_static_builder.py::test_static_build_writes_local_shell_resource -q
 ```
 
 Expected: FAIL because the current-section component and shell hook do not exist.
@@ -120,7 +120,7 @@ Add:
 Run:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_static_render_fixture_outputs_rich_html tests/contracts/test_static_builder.py::test_build_writes_minimal_static_site -q
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_render_fixture_builds_rich_static_pages tests/contracts/test_static_builder.py::test_static_build_writes_local_shell_resource -q
 ```
 
 Expected: PASS.
@@ -235,7 +235,7 @@ Ask an independent review agent to inspect the changes for static-boundary, acce
 Run:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_static_render_fixture_outputs_rich_html tests/contracts/test_static_builder.py::test_build_writes_minimal_static_site tests/e2e/test_preview_static_read_path.py::test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading -q
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_render_fixture_builds_rich_static_pages tests/contracts/test_static_builder.py::test_static_build_writes_local_shell_resource tests/e2e/test_preview_static_read_path.py::test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading -q
 ./scripts/check-render-debug.sh
 ```
 

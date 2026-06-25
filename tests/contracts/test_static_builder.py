@@ -48,6 +48,9 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert (artifact / "site" / "index.html").exists()
     assert (artifact / "site" / "unit" / "index.html").exists()
     assert (artifact / "site" / "unit" / "topic" / "index.html").exists()
+    root_html = (artifact / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'class="raya-current-section"' not in root_html
+    assert "data-raya-current-section-link" not in root_html
     assert (artifact / "manifest.json").exists()
     assert (artifact / "data" / "pages.json").exists()
     assert (artifact / "data" / "quanta.json").exists()
@@ -3235,6 +3238,16 @@ def test_render_fixture_builds_rich_static_pages(
     tmp_path: Path,
 ) -> None:
     course = _copy_render_fixture(tmp_path)
+    root_source = course / "course" / "0_index.md"
+    root_source.write_text(
+        root_source.read_text(encoding="utf-8").replace(
+            "# Raya Lucaria Render Fixture\n",
+            "# Raya Lucaria Render Fixture\n\n## Ampersand & Vector\n\n"
+            "This heading checks escaped current-section labels.\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -3398,6 +3411,14 @@ def test_render_fixture_builds_rich_static_pages(
     assert "<table>" in html
     assert "mjx-container" in html
     assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in html
+    assert 'class="raya-current-section"' in html
+    assert "data-raya-current-section" in html
+    assert "data-raya-current-section-link" in html
+    assert (
+        '<a class="raya-current-section-link" data-raya-current-section-link '
+        'aria-live="polite" href="#ampersand-vector">Ampersand &amp; Vector</a>'
+    ) in html
+    assert "Ampersand &amp;amp; Vector" not in html
     assert "Fixture authority remains in docs/foundation/" in _visible_text(html)
     assert "Linear Algebra Fixture" in _visible_text(html)
     assert "Probability and Statistics Fixture" in _visible_text(html)
@@ -3677,6 +3698,9 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "function expandCurrentCourseMapPath" in script_text
     assert "function expandAllCourseMapNodes" in script_text
     assert "function collapseCourseMapToCurrentPath" in script_text
+    assert "currentSectionLink" in script_text
+    assert "function syncCurrentSection" in script_text
+    assert "data-raya-current-section-link" in script_text
     assert "rayaCourseMapOriented" in script_text
     assert "scrollIntoView" not in script_text
     assert "glintstone-nav-expanded" not in script_text

@@ -70,7 +70,8 @@ restricciones de fuente y autoridad actual del artifact. El articulo principal
 puede terminar con un bloque Page connections generado desde contexto explicito
 del grafo de enlaces de contenido entrantes y salientes. El riel derecho puede
 renderizar contenidos de pagina actuales, metadata normalizada, prerrequisitos
-por ID estable, enlaces anterior/siguiente, resumenes estaticos de Connections
+por ID estable, enlaces anterior/siguiente, contexto de seccion actual derivado
+de anchors de heading activos, resumenes estaticos de Connections
 para contexto explicito de grafo entrante y saliente, y enlaces de foco en grafo
 para esas relaciones explicitas. Mantiene el limite: sin metas inferidas, sin
 practica relacionada falsa, sin progreso personal y sin MathJax en el browser.
@@ -151,6 +152,11 @@ pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
 storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
 en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
+Si la shell expone contexto de seccion actual, verifica que se genere desde los
+contenidos de pagina y anchors de heading, que se actualice con el heading activo
+en tests de browser, que siga siendo un enlace local normal, que no escriba
+storage del browser y que no use lenguaje de porcentaje leido, finalizacion,
+dominio, recomendacion o progreso.
 Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
 colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
 layout expandido, no cambie el estado de URL y no escriba storage del browser.

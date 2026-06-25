@@ -37,6 +37,7 @@ _SHELL_JAVASCRIPT = r"""
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
+  const currentSectionLink = document.querySelector("[data-raya-current-section-link]");
   const headings = tocLinks
     .map((link) => {
       const href = link.getAttribute("href");
@@ -812,6 +813,23 @@ _SHELL_JAVASCRIPT = r"""
     }, headings[0]);
     tocLinks.forEach((link) => link.removeAttribute("aria-current"));
     active.link.setAttribute("aria-current", "location");
+    syncCurrentSection(active.link);
+  }
+
+  function syncCurrentSection(activeLink) {
+    if (!currentSectionLink || !activeLink) {
+      return;
+    }
+    const href = activeLink.getAttribute("href") || "";
+    const label = activeLink.textContent || "Current section";
+    if (
+      currentSectionLink.getAttribute("href") === href &&
+      currentSectionLink.textContent === label
+    ) {
+      return;
+    }
+    currentSectionLink.setAttribute("href", href);
+    currentSectionLink.textContent = label;
   }
 
   if (headings.length > 0) {

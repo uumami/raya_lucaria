@@ -1577,6 +1577,7 @@ def _render_learning_rail(
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
         _render_linked_pages_rail(page, page_graph_context),
+        _render_current_section_rail(toc_html),
         _render_page_contents_rail(toc_html),
         _render_sequence_rail(page, content_model),
         support_panels,
@@ -1805,6 +1806,37 @@ def _render_page_contents_rail(toc_html: str) -> str:
         return ""
     return _render_rail_panel(
         "raya-page-contents", "Page contents", toc_html, expanded=True
+    )
+
+
+def _render_current_section_rail(toc_html: str) -> str:
+    if not toc_html:
+        return ""
+    match = re.search(r'<a href="([^"]+)">([^<]+)</a>', toc_html)
+    if match is None:
+        return ""
+    href = match.group(1)
+    label = html.unescape(match.group(2))
+    body = "\n".join(
+        [
+            '<div class="raya-current-section" data-raya-current-section>',
+            '<span class="raya-current-section-label">Current section</span>',
+            (
+                '<a class="raya-current-section-link" '
+                "data-raya-current-section-link "
+                'aria-live="polite" '
+                f'href="{html.escape(href, quote=True)}">'
+                f"{html.escape(label)}"
+                "</a>"
+            ),
+            "</div>",
+        ]
+    )
+    return _render_rail_panel(
+        "raya-page-current-section",
+        "Current section",
+        body,
+        expanded=True,
     )
 
 

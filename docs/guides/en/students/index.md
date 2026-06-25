@@ -49,6 +49,10 @@ structural page position visible, the main article remains the lesson, and the
 learning rail provides page contents and nearby course context. You can collapse
 the map to an operable compact map rail when you want more reading space; that
 choice is non-persistent and does not store or show personal progress.
+When a page has a table of contents, the learning rail may also show the
+current article section as you scroll. That label is just section orientation
+from the page headings, not a reading percentage, completion marker, or progress
+record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 

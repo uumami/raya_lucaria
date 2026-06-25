@@ -3349,6 +3349,30 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   font-size: 0.8125rem;
   font-weight: 700;
 }
+.raya-current-section {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+}
+.raya-current-section-label {
+  color: var(--raya-color-muted);
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 0.25rem;
+}
+.raya-current-section-link {
+  color: var(--raya-color-accent);
+  font-weight: 700;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+.raya-current-section-link:focus-visible {
+  outline: 2px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-page-toc {
   border: 1px solid #d8dee4;
   margin: 1rem 0 1.5rem;

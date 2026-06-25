@@ -8201,6 +8201,40 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         """() => document.querySelector('.raya-page-toc a[aria-current="location"]')?.getAttribute('href')"""
                     )
                     assert active == "#worked-example"
+                    current_section = page.evaluate(
+                        """() => ({
+                          href: document
+                            .querySelector('[data-raya-current-section-link]')
+                            ?.getAttribute('href'),
+                          text: document
+                            .querySelector('[data-raya-current-section-link]')
+                            ?.textContent
+                            ?.trim(),
+                        })"""
+                    )
+                    assert current_section["href"] == "#worked-example"
+                    assert current_section["text"] == "Worked Example"
+                    redundant_mutations = page.evaluate(
+                        """async () => {
+                          const current = document
+                            .querySelector('[data-raya-current-section-link]');
+                          if (!current) {
+                            return -1;
+                          }
+                          const originalSetAttribute = current.setAttribute.bind(current);
+                          let hrefUpdates = 0;
+                          current.setAttribute = (name, value) => {
+                            if (name === 'href') {
+                              hrefUpdates += 1;
+                            }
+                            return originalSetAttribute(name, value);
+                          };
+                          window.dispatchEvent(new Event('scroll'));
+                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                          return hrefUpdates;
+                        }"""
+                    )
+                    assert redundant_mutations == 0
 
                     page.evaluate(
                         """() => document
@@ -8210,6 +8244,11 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     page.wait_for_function(
                         """() => document
                           .querySelector('.raya-page-toc a[aria-current="location"]')
+                          ?.getAttribute('href') === '#1-numeric-heading'"""
+                    )
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-current-section-link]')
                           ?.getAttribute('href') === '#1-numeric-heading'"""
                     )
                 finally:
