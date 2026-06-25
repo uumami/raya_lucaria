@@ -2671,6 +2671,16 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert "Parent out 1" in chip_texts
                         assert len(chip_texts) == 4
                         assert sum(int(text.split().pop()) for text in chip_texts) == 6
+                        outgoing_text = page.locator(
+                            "[data-raya-graph-detail-outgoing]"
+                        ).inner_text()
+                        incoming_text = page.locator(
+                            "[data-raya-graph-detail-incoming]"
+                        ).inner_text()
+                        assert "Content" in outgoing_text
+                        assert "Parent" in outgoing_text
+                        assert "Content" in incoming_text
+                        assert "Navigation" in incoming_text
                         relationship_walkthrough = page.locator(
                             "[data-raya-graph-relationship-walkthrough]"
                         )
@@ -3138,6 +3148,57 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "Projection Residuals" in page.locator(
                         "[data-raya-graph-detail-title]"
                     ).inner_text()
+                    orientation = page.locator("[data-raya-graph-orientation]")
+                    assert orientation.is_visible()
+                    orientation_box = orientation.bounding_box()
+                    canvas_box = page.locator("#raya-graph-canvas").bounding_box()
+                    assert orientation_box is not None
+                    assert canvas_box is not None
+                    assert orientation_box["y"] < canvas_box["y"]
+                    assert orientation_box["y"] < 900
+                    assert orientation_box["height"] <= 140
+                    assert "visible page" in page.locator(
+                        "[data-raya-graph-orientation-counts]"
+                    ).inner_text()
+                    assert "visible relationship" in page.locator(
+                        "[data-raya-graph-orientation-counts]"
+                    ).inner_text()
+                    assert "Connections" in page.locator(
+                        "[data-raya-graph-orientation-layout]"
+                    ).inner_text()
+                    assert "Projection Residuals" in page.locator(
+                        "[data-raya-graph-orientation-selected]"
+                    ).inner_text()
+                    assert "Projection Residuals" in page.locator(
+                        "[data-raya-graph-orientation-page-focus]"
+                    ).inner_text()
+                    assert "projection" in page.locator(
+                        "[data-raya-graph-orientation-query]"
+                    ).inner_text()
+                    assert "All groups and relationships visible" in page.locator(
+                        "[data-raya-graph-orientation-filters]"
+                    ).inner_text()
+                    open_from_orientation = page.locator(
+                        "[data-raya-graph-orientation-open]"
+                    )
+                    assert open_from_orientation.is_visible()
+                    assert open_from_orientation.get_attribute("href").endswith(
+                        "/reader-ux/index.html"
+                    )
+                    orientation_focus = page.locator(
+                        "[data-raya-graph-orientation-neighborhood-toggle]"
+                    )
+                    assert orientation_focus.is_visible()
+                    orientation_focus.click()
+                    page.wait_for_function(
+                        "() => document.querySelector('[data-raya-graph-orientation-neighborhood]').textContent.includes('On')"
+                    )
+                    assert "neighborhood=1" in page.url
+                    orientation_focus.click()
+                    page.wait_for_function(
+                        "() => document.querySelector('[data-raya-graph-orientation-neighborhood]').textContent.includes('Off')"
+                    )
+                    assert "neighborhood=1" not in page.url
                     debug = page.locator("[data-raya-graph-debug]")
                     assert debug.is_visible()
                     assert debug.get_attribute("open") is None
@@ -3199,6 +3260,9 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "Parent" in page.locator(
                         "[data-raya-graph-state-hidden-edges]"
                     ).inner_text()
+                    assert "Parent" in page.locator(
+                        "[data-raya-graph-orientation-filters]"
+                    ).inner_text()
                     assert "edges=" in page.url
 
                     page.locator("[data-raya-graph-group-filter]").first.click()
@@ -3207,6 +3271,9 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     )
                     assert "hidden" in page.locator(
                         "[data-raya-graph-state-hidden-groups]"
+                    ).inner_text().lower()
+                    assert "hidden group" in page.locator(
+                        "[data-raya-graph-orientation-filters]"
                     ).inner_text().lower()
                     assert handle.base_url in page.locator(
                         "[data-raya-graph-state-url]"

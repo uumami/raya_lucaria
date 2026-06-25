@@ -93,6 +93,12 @@ describen relaciones estaticas autoradas, no recomendaciones ni progreso
 personal. Los detalles `Graph state` y share URL pueden estar dentro de un
 disclosure para que el flujo principal del grafo mantenga foco en busqueda,
 canvas y contexto de pagina seleccionada.
+El grafo tambien puede mostrar una banda de orientacion cerca del canvas.
+Nombra el layout actual, pagina seleccionada, foco de pagina, contexto de
+busqueda y filtros, y si el foco de vecindario esta activo. Usa sus acciones
+Open page, Focus neighborhood, Show full graph y Clear selection como controles
+locales del grafo; la banda no es progreso guardado, ranking, dominio ni
+recomendacion.
 Algunas paginas tambien pueden terminar con un bloque Page connections dentro
 del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace

@@ -729,6 +729,58 @@ img {
 .raya-practice-header {
   max-width: 72rem;
 }
+.raya-graph-orientation {
+  background: color-mix(
+    in srgb,
+    var(--raya-color-surface) 88%,
+    var(--raya-color-accent) 12%
+  );
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  display: grid;
+  font-size: 0.875rem;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.6rem;
+}
+.raya-graph-orientation-main {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.8rem;
+  justify-content: space-between;
+}
+.raya-graph-orientation-counts,
+.raya-graph-orientation-selection {
+  margin: 0;
+}
+.raya-graph-orientation-meta {
+  display: grid;
+  gap: 0.25rem 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(5.75rem, 1fr));
+  margin: 0;
+}
+.raya-graph-orientation-meta div {
+  min-width: 0;
+}
+.raya-graph-orientation-meta dt {
+  color: var(--raya-color-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.raya-graph-orientation-meta dd {
+  line-height: 1.2;
+  margin: 0.05rem 0 0;
+  overflow-wrap: anywhere;
+}
+.raya-graph-orientation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+}
 .raya-graph-workspace {
   align-items: start;
   display: grid;

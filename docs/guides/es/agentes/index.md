@@ -265,6 +265,14 @@ verifica que el nodo SVG seleccionado y al menos una arista sean realmente
 visibles dentro del canvas del grafo en el primer render. No aceptes solo
 checks del DOM que pasan aunque el canvas este tan alto que el grafo aparece
 fuera del area visible inicial.
+Tambien verifica la banda de orientacion del grafo cuando cambies Graph. Sus
+conteos visibles, layout, pagina seleccionada, foco de pagina, busqueda,
+filtros, foco de vecindario y acciones de pagina seleccionada deben derivarse
+de datos embebidos del grafo y estado transitorio del DOM. La banda no debe usar
+storage, hacer fetch de datos de grafo en runtime ni introducir lenguaje de
+progreso, dominio, ranking, recomendacion o personalizacion. Las listas de
+enlaces entrantes/salientes de pagina seleccionada, chips de relacion y cards
+del walkthrough deben coincidir sobre los tipos explicitos de aristas generadas.
 Al cambiar Graph, verifica movimiento con teclado en graph search sobre
 resultados de pagina visibles, inspeccion de active result, Enter para abrir,
 seleccion por click simple en nodos SVG del grafo sin navegar de pagina,

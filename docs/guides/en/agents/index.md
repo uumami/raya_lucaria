@@ -199,6 +199,14 @@ Verify the compact graph-state readout and browser URL stay synchronized after
 control changes, use only public structural state, can live inside a closed
 native disclosure by default, and do not write `localStorage` or
 `sessionStorage`.
+Also verify the student-facing graph orientation band when Graph changes. Its
+visible counts, layout, selected page, page focus, search, filters,
+neighborhood focus, and selected-page actions must be derived from embedded
+graph data and transient DOM state. The band must not use storage, fetch
+runtime graph data, or introduce progress, mastery, ranking, recommendation, or
+personalization language. Selected-page incoming/outgoing lists, relationship
+chips, and relationship walkthrough cards must agree on explicit generated edge
+kinds.
 For desktop page-focused graph handoffs such as `?page=<page-id>`, verify that
 the selected SVG node and at least one graph edge are actually visible inside
 the first-paint graph canvas. Do not accept DOM-only checks that pass while the

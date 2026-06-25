@@ -4112,6 +4112,40 @@ def _render_graph_surface(
             '<section class="raya-graph-map-panel" aria-label="Course graph map">',
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             (
+                '<section class="raya-graph-orientation" '
+                'data-raya-graph-orientation aria-label="Graph orientation">'
+                '<div class="raya-graph-orientation-main">'
+                '<p class="raya-graph-orientation-counts" '
+                'data-raya-graph-orientation-counts>'
+                '0 visible page(s), 0 visible relationship(s)</p>'
+                '<p class="raya-graph-orientation-selection">'
+                '<span>Selected</span> '
+                '<strong data-raya-graph-orientation-selected>None</strong>'
+                "</p>"
+                "</div>"
+                '<dl class="raya-graph-orientation-meta">'
+                '<div><dt>Layout</dt><dd data-raya-graph-orientation-layout>'
+                "Connections</dd></div>"
+                '<div><dt>Page focus</dt><dd data-raya-graph-orientation-page-focus>'
+                "None</dd></div>"
+                '<div><dt>Search</dt><dd data-raya-graph-orientation-query>'
+                "None</dd></div>"
+                '<div><dt>Filters</dt><dd data-raya-graph-orientation-filters>'
+                "All groups and relationships visible</dd></div>"
+                "<div><dt>Neighborhood</dt>"
+                '<dd data-raya-graph-orientation-neighborhood>Off</dd></div>'
+                "</dl>"
+                '<p class="raya-graph-orientation-actions">'
+                '<a data-raya-graph-orientation-open href="../../index.html" hidden>'
+                "Open page</a>"
+                '<button type="button" data-raya-graph-orientation-neighborhood-toggle '
+                "hidden>Focus neighborhood</button>"
+                '<button type="button" data-raya-graph-orientation-clear hidden>'
+                "Clear selection</button>"
+                "</p>"
+                "</section>"
+            ),
+            (
                 '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),

@@ -83,6 +83,11 @@ can see its explicit links first. The learning rail may also show a Connections
 panel with counts for links from the current page and links into it; those
 counts describe authored static relationships, not recommendations or personal
 progress.
+The graph may also show an orientation band near the canvas. It names the
+current layout, selected page, page focus, search and filter context, and
+whether neighborhood focus is on. Use its Open page, Focus neighborhood, Show
+full graph, and Clear selection actions as local graph controls; the band is
+not saved progress, ranking, mastery, or a recommendation.
 Graph state and share URL details may be under a `Graph state` disclosure so
 the main graph stays focused on search, the canvas, and selected-page context.
 Some pages may also end with a Page connections block inside the article. It

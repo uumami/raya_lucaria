@@ -107,6 +107,19 @@ _GRAPH_JAVASCRIPT = r"""
   const stateUrl = document.querySelector("[data-raya-graph-state-url]");
   const copyUrl = document.querySelector("[data-raya-graph-copy-url]");
   const copyStatus = document.querySelector("[data-raya-graph-copy-status]");
+  const orientation = document.querySelector("[data-raya-graph-orientation]");
+  const orientationCounts = document.querySelector("[data-raya-graph-orientation-counts]");
+  const orientationLayout = document.querySelector("[data-raya-graph-orientation-layout]");
+  const orientationSelected = document.querySelector("[data-raya-graph-orientation-selected]");
+  const orientationPageFocus = document.querySelector("[data-raya-graph-orientation-page-focus]");
+  const orientationQuery = document.querySelector("[data-raya-graph-orientation-query]");
+  const orientationFilters = document.querySelector("[data-raya-graph-orientation-filters]");
+  const orientationNeighborhood = document.querySelector("[data-raya-graph-orientation-neighborhood]");
+  const orientationOpen = document.querySelector("[data-raya-graph-orientation-open]");
+  const orientationNeighborhoodToggle = document.querySelector(
+    "[data-raya-graph-orientation-neighborhood-toggle]"
+  );
+  const orientationClear = document.querySelector("[data-raya-graph-orientation-clear]");
 
   if (!root || !dataEl || !canvas || !list) {
     return;
@@ -373,6 +386,16 @@ _GRAPH_JAVASCRIPT = r"""
     return kind || "Edge";
   }
 
+  function layoutLabel(value) {
+    if (value === "connections") return "Connections";
+    if (value === "topology") return "Topology";
+    if (value === "cluster") return "Cluster";
+    if (value === "map") return "Map";
+    if (value === "radial") return "Radial";
+    if (value === "list") return "List";
+    return value || "Connections";
+  }
+
   function hiddenGroupText() {
     if (hiddenGroups.size === 0) return "none";
     const labels = groups
@@ -427,6 +450,73 @@ _GRAPH_JAVASCRIPT = r"""
   function syncGraphStateReadout() {
     updateGraphUrlState();
     updateGraphStateReadout(lastActiveNodes, lastActiveEdges);
+  }
+
+  function updateGraphOrientation(activeNodes, activeEdges) {
+    if (!orientation) return;
+    const selected = selectedId ? nodesById.get(selectedId) : null;
+    const focused = pageFocusId ? nodesById.get(pageFocusId) : null;
+    if (orientationCounts) {
+      orientationCounts.textContent = `${activeNodes.length} visible page(s), ${activeEdges.length} visible relationship(s)`;
+    }
+    if (orientationLayout) {
+      orientationLayout.textContent = layoutLabel(layout ? layout.value : defaultLayout);
+    }
+    if (orientationSelected) {
+      orientationSelected.textContent = selected
+        ? selected.title || selected.nav_title || selected.id
+        : "None";
+    }
+    if (orientationPageFocus) {
+      orientationPageFocus.textContent = focused
+        ? focused.title || focused.nav_title || focused.id
+        : "None";
+    }
+    if (orientationQuery) {
+      orientationQuery.textContent = (search ? search.value.trim() : "") || "None";
+    }
+    if (orientationFilters) {
+      const pieces = [];
+      if (hiddenGroups.size > 0) {
+        const labels = groups
+          .filter((group) => hiddenGroups.has(group.id))
+          .map((group) => group.title || group.id);
+        pieces.push(
+          `${hiddenGroups.size} hidden group(s): ${labels.join(", ")}`
+        );
+      }
+      if (hiddenEdgeKinds.size > 0) {
+        const labels = Array.from(hiddenEdgeKinds).map(edgeKindLabel);
+        pieces.push(
+          `${hiddenEdgeKinds.size} hidden relationship kind(s): ${labels.join(", ")}`
+        );
+      }
+      orientationFilters.textContent = pieces.length
+        ? pieces.join("; ")
+        : "All groups and relationships visible";
+    }
+    if (orientationNeighborhood) {
+      orientationNeighborhood.textContent = neighborhoodFocus ? "On" : "Off";
+    }
+    if (orientationOpen) {
+      if (selected && selected.url) {
+        orientationOpen.href = selected.url;
+        orientationOpen.hidden = false;
+      } else {
+        orientationOpen.hidden = true;
+      }
+    }
+    if (orientationNeighborhoodToggle) {
+      orientationNeighborhoodToggle.hidden = !selected;
+      orientationNeighborhoodToggle.textContent = neighborhoodFocus
+        ? "Show full graph"
+        : "Focus neighborhood";
+      orientationNeighborhoodToggle.setAttribute(
+        "aria-pressed",
+        neighborhoodFocus ? "true" : "false"
+      );
+    }
+    if (orientationClear) orientationClear.hidden = !selected;
   }
 
   function copyTextFallback(value) {
@@ -1774,8 +1864,7 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function edgeLabel(edge) {
-    const kind = edge && edge.kind ? edge.kind : "link";
-    return kind.replace(/-/g, " ");
+    return edgeKindLabel(edgeKind(edge));
   }
 
   function focusGraphDetailNode(nodeId) {
@@ -2110,6 +2199,21 @@ _GRAPH_JAVASCRIPT = r"""
     }
   }
 
+  function explicitRelationshipsFor(nodeId, direction) {
+    return edges
+      .filter((edge) => (direction === "out" ? edge.from === nodeId : edge.to === nodeId))
+      .map((edge) => {
+        const otherId = direction === "out" ? edge.to : edge.from;
+        const target = nodesById.get(otherId) || {};
+        return {
+          id: otherId,
+          title: target.title || otherId,
+          url: target.url || "#",
+          kind: edgeLabel(edge),
+        };
+      });
+  }
+
   function renderDetail() {
     const node = selectedId ? nodesById.get(selectedId) : null;
     if (!node) {
@@ -2193,25 +2297,8 @@ _GRAPH_JAVASCRIPT = r"""
       node.next_url || "",
       node.next_url ? "Next: " + nextPageTitle(node) : "Next"
     );
-    const outgoing = edges
-      .filter((edge) => edge.from === node.id)
-      .map((edge) => {
-        const target = nodesById.get(edge.to) || {};
-        return {
-          id: edge.to,
-          title: target.title || edge.to,
-          url: target.url || "#",
-          kind: edgeLabel(edge),
-        };
-      });
-    const incoming = Array.isArray(backlinks[node.id])
-      ? backlinks[node.id].map((backlink) => ({
-          id: backlink.from,
-          title: backlink.title,
-          url: backlink.url,
-          kind: edgeLabel(backlink),
-        }))
-      : [];
+    const outgoing = explicitRelationshipsFor(node.id, "out");
+    const incoming = explicitRelationshipsFor(node.id, "in");
     renderDetailList(detailOutgoing, outgoing, "No outgoing links.");
     renderDetailList(detailIncoming, incoming, "No incoming links.");
   }
@@ -2380,6 +2467,7 @@ _GRAPH_JAVASCRIPT = r"""
     const activeEdges = visibleGraphEdges(activeIds);
     lastActiveNodes = activeNodes;
     lastActiveEdges = activeEdges;
+    updateGraphOrientation(activeNodes, activeEdges);
     if (activeResultId && !listIds.has(activeResultId)) {
       activeResultId = "";
     }
@@ -2717,6 +2805,17 @@ _GRAPH_JAVASCRIPT = r"""
   });
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
+  }
+  if (orientationClear) {
+    orientationClear.addEventListener("click", clearGraphSelection);
+  }
+  if (orientationNeighborhoodToggle) {
+    orientationNeighborhoodToggle.addEventListener("click", () => {
+      if (!selectedId) return;
+      setGraphNeighborhoodFocus(!neighborhoodFocus);
+      graphViewBox = null;
+      render();
+    });
   }
   if (copyUrl) {
     copyUrl.addEventListener("click", copyGraphUrl);

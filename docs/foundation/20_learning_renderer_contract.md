@@ -113,9 +113,15 @@ Fit selection, Reset view, and a non-persistent graph focus mode that collapses
 side panels into operable rails, and URL-addressable
 static graph state for selected page, search query, layout, visible groups,
 visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
-The graph may show a compact state readout and share URL for debugging and
+The graph may show a compact student-facing orientation band with visible page
+and relationship counts, layout, selected page, URL page focus, search, filters,
+selected-neighborhood focus state, and local actions for the selected page. It
+may also show a compact state readout and share URL for debugging and
 orientation over the already loaded static artifact data inside an intentional
-native disclosure. Desktop
+native disclosure. Selected-page incoming/outgoing detail lists must use the
+same explicit generated edge kinds as relationship chips and walkthroughs, so
+visible lists, counts, and walkthrough cards do not describe different graph
+subsets. Desktop
 page-focused graph handoffs such as `?page=<page-id>` must first-paint visible
 selected graph content in the graph canvas when graph data exists; graph canvas
 height should remain bounded relative to the viewport so side-panel height
@@ -123,7 +129,9 @@ cannot stretch the canvas and hide the graph below the first visible area. Label
 visibility, graph color, node size, edge style, spotlighting, and layout
 position are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
-completion signals. Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view
+completion signals. The orientation band is structural graph context only and
+must not become progress, mastery, ranking, recommendation, or personalization.
+Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view
 change only the visual graph viewport; they must not clear search, filters,
 selected-page details, or authored graph data. Fit selection may frame the
 selected page and visible directly connected graph context, and may scroll the

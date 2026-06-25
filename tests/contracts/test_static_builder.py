@@ -835,6 +835,19 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-instructions" in graph_html
     assert "Hover or focus a page" in graph_html
     assert "data-raya-graph-hover-status" in graph_html
+    assert "raya-graph-orientation" in graph_html
+    assert "data-raya-graph-orientation" in graph_html
+    assert "0 visible page(s), 0 visible relationship(s)" in graph_html
+    assert "data-raya-graph-orientation-counts" in graph_html
+    assert "data-raya-graph-orientation-layout" in graph_html
+    assert "data-raya-graph-orientation-selected" in graph_html
+    assert "data-raya-graph-orientation-page-focus" in graph_html
+    assert "data-raya-graph-orientation-query" in graph_html
+    assert "data-raya-graph-orientation-filters" in graph_html
+    assert "data-raya-graph-orientation-neighborhood" in graph_html
+    assert "data-raya-graph-orientation-open" in graph_html
+    assert "data-raya-graph-orientation-neighborhood-toggle" in graph_html
+    assert "data-raya-graph-orientation-clear" in graph_html
     assert "raya-graph-inspection-preview" in graph_html
     assert "data-raya-graph-inspection-preview" in graph_html
     assert "data-raya-graph-inspection-preview-title" in graph_html
@@ -1148,6 +1161,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "initializeGraphStateFromUrl" in graph_script
     assert "updateGraphUrlState" in graph_script
     assert "updateGraphStateReadout" in graph_script
+    assert "visible page(s)" in graph_script
+    assert "visible relationship(s)" in graph_script
+    assert "updateGraphOrientation" in graph_script
+    assert "explicitRelationshipsFor" in graph_script
     assert "renderRelationshipChips" in graph_script
     assert "relationshipChipCountsFor" in graph_script
     assert "history.replaceState" in graph_script
@@ -1167,6 +1184,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-inspection-preview" in stylesheet
     assert ".raya-graph-detail-open-primary" in stylesheet
     assert ".raya-graph-detail-relationship-chip" in stylesheet
+    assert ".raya-graph-orientation" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",
