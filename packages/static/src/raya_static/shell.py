@@ -27,6 +27,7 @@ _SHELL_JAVASCRIPT = r"""
   const learningRailCollapse = document.querySelector("[data-raya-learning-rail-collapse]");
   const learningRailExpand = document.querySelector("[data-raya-learning-rail-expand]");
   const railToggleButtons = Array.from(document.querySelectorAll("[data-raya-rail-toggle]"));
+  const readerFocusToggle = document.querySelector("[data-raya-reader-focus-toggle]");
   const mapNodeToggles = Array.from(document.querySelectorAll("[data-raya-map-node-toggle]"));
   const mapActionButtons = Array.from(document.querySelectorAll("[data-raya-course-map-action]"));
   const mapCloseButton = document.querySelector("[data-raya-course-map-close]");
@@ -445,6 +446,34 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function syncReaderFocusToggle(active) {
+    root.dataset.rayaReaderFocus = active ? "active" : "inactive";
+    if (!readerFocusToggle) {
+      return;
+    }
+    readerFocusToggle.setAttribute("aria-pressed", active ? "true" : "false");
+    readerFocusToggle.setAttribute(
+      "aria-label",
+      active ? "Exit reading focus" : "Focus reading"
+    );
+  }
+
+  function clearReaderFocus() {
+    if (root.dataset.rayaReaderFocus === "active") {
+      syncReaderFocusToggle(false);
+    }
+  }
+
+  function setReaderFocus(active) {
+    if (!isDesktopShell()) {
+      syncReaderFocusToggle(false);
+      return;
+    }
+    setExpanded(!active);
+    setLearningRailExpanded(!active);
+    syncReaderFocusToggle(active);
+  }
+
   function setRailPanelExpanded(button, nextExpanded) {
     const bodyId = button.getAttribute("aria-controls");
     if (!bodyId) {
@@ -607,7 +636,11 @@ _SHELL_JAVASCRIPT = r"""
   desktopMapQuery.addEventListener("change", () => {
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
+      if (root.dataset.rayaReaderFocus === "active") {
+        setExpanded(true);
+      }
       setLearningRailExpanded(true);
+      syncReaderFocusToggle(false);
     }
     syncCourseMapDrawerState();
   });
@@ -630,6 +663,7 @@ _SHELL_JAVASCRIPT = r"""
         return;
       }
       setExpanded(root.dataset.rayaCourseMap !== "expanded");
+      clearReaderFocus();
       if (root.dataset.rayaCourseMap === "expanded") {
         window.requestAnimationFrame(() =>
           orientCourseMapToCurrentPage({ repeat: true })
@@ -697,6 +731,7 @@ _SHELL_JAVASCRIPT = r"""
         return;
       }
       setLearningRailExpanded(false);
+      clearReaderFocus();
       if (learningRailExpand) {
         learningRailExpand.focus();
       }
@@ -706,9 +741,16 @@ _SHELL_JAVASCRIPT = r"""
   if (learningRailExpand) {
     learningRailExpand.addEventListener("click", () => {
       setLearningRailExpanded(true);
+      clearReaderFocus();
       if (learningRailCollapse) {
         learningRailCollapse.focus();
       }
+    });
+  }
+
+  if (readerFocusToggle) {
+    readerFocusToggle.addEventListener("click", () => {
+      setReaderFocus(root.dataset.rayaReaderFocus !== "active");
     });
   }
 
@@ -780,6 +822,7 @@ _SHELL_JAVASCRIPT = r"""
 
   setExpanded(true);
   setLearningRailExpanded(true);
+  syncReaderFocusToggle(false);
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
   syncCourseMapDrawerState();

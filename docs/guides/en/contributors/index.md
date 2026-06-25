@@ -116,7 +116,8 @@ Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
 on desktop, can filter the rendered
 map labels locally, can collapse by explicit click to an operable compact map rail,
-and keeps that shell state non-persistent. The course-map behavior is
+can expose a volatile desktop `Focus reading` command that collapses the map and
+right learning rail together, and keeps that shell state non-persistent. The course-map behavior is
 explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
 served from local renderer resources rather than external scripts or styles.
 Article-end Previous/Next cards are generated from the same course order as the
@@ -140,6 +141,9 @@ wording. Selected-page relationship walkthroughs must be built from explicit
 generated graph edges and local links only. Contextual label reveal may hide
 low-context SVG labels visually, but page anchors and `aria-label` text must
 remain available. Generated URL context may focus a page, but it must remain transient.
+Graph state/debug readout and copy URL controls may be hidden behind a native
+disclosure by default; keep the underlying state synchronized, local, and free
+of graph storage.
 
 Review Course Search as the matching companion to graph navigation. Approximate
 matching, clear controls, and keyboard result movement are allowed over embedded

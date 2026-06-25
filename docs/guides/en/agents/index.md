@@ -138,6 +138,9 @@ non-persistent UI state; current-page map orientation must also remain
 non-persistent and must not restore legacy navigation storage. Treat page
 position in the top bar and sequence cards as structural course orientation, not
 learner progress.
+If the shell exposes `Focus reading`, verify it is keyboard reachable, collapses
+the desktop course map and right learning rail together, toggles back to the
+expanded layout, does not change URL state, and writes no browser storage.
 For responsive shell changes, check desktop, tablet, and mobile viewports
 together. Desktop may collapse the right learning rail into a compact context
 tab, but tablet and mobile must keep the rail body visible and reachable by
@@ -185,8 +188,9 @@ come from embedded artifact graph data, not scraped HTML or browser storage.
 Graph URL state may encode selected page, search query, layout, visible groups,
 visible edge kinds, selected-neighborhood focus, expanded mode, and panel state.
 Verify the compact graph-state readout and browser URL stay synchronized after
-control changes, use only public structural state, and do not write
-`localStorage` or `sessionStorage`.
+control changes, use only public structural state, can live inside a closed
+native disclosure by default, and do not write `localStorage` or
+`sessionStorage`.
 For desktop page-focused graph handoffs such as `?page=<page-id>`, verify that
 the selected SVG node and at least one graph edge are actually visible inside
 the first-paint graph canvas. Do not accept DOM-only checks that pass while the

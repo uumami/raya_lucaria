@@ -253,7 +253,9 @@ or recommendation engine.
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let
 students filter visible page labels or collapse the map to an operable compact map rail
-for more reading space. Course-map state and filter text are
+for more reading space. On desktop, `Focus reading` may collapse both the map
+and right learning rail as temporary display state. Course-map state, reader
+focus, and filter text are
 non-persistent UI state. The shell may show structure such as `Page N of M`;
 treat that as course position, not personal progress or completion.
 Pages may also end with larger Previous/Next cards generated from the authored
@@ -268,6 +270,8 @@ Selected-page details may include a Relationship walkthrough that explains
 explicit link kinds and directions with local page and graph-focus controls.
 The graph may hide low-context labels until selection, search, hover, or
 keyboard focus makes them useful.
+Graph debug state and share URL controls may sit inside a closed native
+disclosure by default so students see the graph workflow first.
 Treat it as course structure from current artifact data, not as analytics,
 recommendations, mastery, or personal progress. Generated page links may open
 the graph focused on the current page.

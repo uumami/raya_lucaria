@@ -53,7 +53,9 @@ When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
 Use the Course map button to collapse or expand navigation when you need a
-different focus. Use the map filter to narrow visible page labels inside the
+different focus. On desktop, `Focus reading` can collapse the map and right
+learning rail together so the article gets more space; it is temporary display
+state and does not store progress. Use the map filter to narrow visible page labels inside the
 current static hierarchy. Use Previous and Next in the article, top reading
 context, or end-of-page cards to move through the ordered material, and use Text
 size or OpenDyslexic when those settings are more comfortable. End-of-page cards
@@ -77,6 +79,8 @@ can see its explicit links first. The learning rail may also show a Connections
 panel with counts for links from the current page and links into it; those
 counts describe authored static relationships, not recommendations or personal
 progress.
+Graph state and share URL details may be under a `Graph state` disclosure so
+the main graph stays focused on search, the canvas, and selected-page context.
 Some pages may also end with a Page connections block inside the article. It
 uses the same static relationship data to show pages linked from the lesson,
 pages that link back to it, and an Open in course graph link. Connection items

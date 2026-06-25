@@ -258,8 +258,9 @@ recomendaciones.
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
 y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto
-operable para dar mas espacio de lectura. El estado del mapa y el texto del
-filtro son UI no persistente. La shell puede mostrar estructura como `Page N of M`;
+operable para dar mas espacio de lectura. En desktop, `Focus reading` puede
+colapsar juntos el mapa y el riel derecho como estado visual temporal. El estado
+del mapa, el foco lector y el texto del filtro son UI no persistente. La shell puede mostrar estructura como `Page N of M`;
 eso es posicion dentro del curso y no es progreso personal ni finalizacion.
 Las paginas tambien pueden terminar con cards Previous/Next generadas desde el
 orden autorado del curso. No las escribas por separado; manten claro el orden y
@@ -270,8 +271,9 @@ explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
 seleccionada y workspace expandido del grafo. Los detalles de pagina seleccionada
 pueden incluir un Relationship walkthrough que explica tipos y direcciones de
 enlaces explicitos con controles locales de pagina y foco en grafo. El grafo
-	puede ocultar labels de bajo contexto hasta que una seleccion, busqueda,
-	hover o foco de teclado los vuelva utiles. Estudiantes tambien pueden usar
+puede ocultar labels de bajo contexto hasta que una seleccion, busqueda,
+hover o foco de teclado los vuelva utiles. Los detalles de debug `Graph state`
+pueden estar cerrados por defecto en un disclosure nativo. Estudiantes tambien pueden usar
 Zoom in, Zoom out, Fit y Reset view para inspeccionar zonas visuales densas del
 grafo sin cambiar datos del curso ni estado guardado. Tratalo como estructura
 del curso desde datos actuales de artifact, no como analiticas,

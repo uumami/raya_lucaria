@@ -1690,9 +1690,18 @@ img {
   margin: 0 0 1rem;
   padding: 0.75rem;
 }
-.raya-graph-state h3 {
+.raya-graph-state summary {
+  cursor: pointer;
   font-size: 0.95rem;
+  font-weight: 800;
   margin: 0 0 0.5rem;
+}
+.raya-graph-state:not([open]) summary {
+  margin-bottom: 0;
+}
+.raya-graph-state summary:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
 }
 .raya-graph-state dl {
   display: grid;
@@ -2915,6 +2924,11 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
     width: 1px;
   }
 }
+@media (max-width: 1279px) {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus {
+    display: none;
+  }
+}
 @media (min-width: 1280px) {
   [data-raya-course-map="expanded"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"] {
@@ -3825,9 +3839,9 @@ mjx-container[display="true"] {
     flex-wrap: wrap;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    overflow-x: auto;
+    overflow-x: visible;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
     min-width: 2.5rem;

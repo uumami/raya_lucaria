@@ -1077,6 +1077,14 @@ def _render_top_command_bar(
                 icon="map",
             ),
             _render_command_button(
+                class_name="raya-command raya-command-focus",
+                aria_label="Focus reading",
+                icon="focus",
+                label="Focus reading",
+                aria_pressed="false",
+                extra_attrs=" data-raya-reader-focus-toggle",
+            ),
+            _render_command_button(
                 class_name="raya-command raya-command-size raya-text-size-toggle",
                 aria_label="Text size: normal",
                 icon="text-size",
@@ -1970,6 +1978,11 @@ _COMMAND_ICON_BODIES = {
         '<path d="M4.8 6.5 9.8 5l4.4 1.5 5-1.5v12.5l-5 1.5-4.4-1.5-5 1.5z"/>'
         '<path d="M9.8 5v12.5M14.2 6.5V19"/>'
     ),
+    "focus": (
+        '<path d="M8 5H5v3M16 5h3v3M5 16v3h3M19 16v3h-3"/>'
+        '<path d="M9 12h6"/>'
+        '<path d="M12 9v6"/>'
+    ),
     "text-size": (
         '<text class="raya-command-icon-text" x="11.7" y="14.8" '
         'text-anchor="middle">A+</text>'
@@ -2018,11 +2031,12 @@ def _render_command_button(
     icon: str,
     label: str,
     aria_pressed: str | None = None,
+    extra_attrs: str = "",
 ) -> str:
     pressed_attr = "" if aria_pressed is None else f' aria-pressed="{aria_pressed}"'
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
-        f'aria-label="{html.escape(aria_label, quote=True)}"{pressed_attr}>'
+        f'aria-label="{html.escape(aria_label, quote=True)}"{pressed_attr}{extra_attrs}>'
         f"{_command_icon(icon)}"
         f'<span class="raya-command-label">{html.escape(label)}</span>'
         "</button>"
@@ -3970,9 +3984,9 @@ def _render_graph_surface(
                 'data-raya-graph-hover-status aria-live="polite"></p>'
             ),
             (
-                '<section class="raya-graph-state" '
-                'data-raya-graph-state-readout aria-label="Graph state">'
-                "<h3>Graph state</h3>"
+                '<details class="raya-graph-state raya-graph-debug" '
+                'data-raya-graph-state-readout data-raya-graph-debug>'
+                "<summary>Graph state</summary>"
                 "<dl>"
                 "<div><dt>Selected</dt><dd data-raya-graph-state-selected>none</dd></div>"
                 "<div><dt>Page focus</dt><dd data-raya-graph-state-page-focus>none</dd></div>"
@@ -3992,7 +4006,7 @@ def _render_graph_surface(
                 "<span data-raya-graph-copy-status aria-live=\"polite\"></span>"
                 "</dd></div>"
                 "</dl>"
-                "</section>"
+                "</details>"
             ),
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
             "<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>",

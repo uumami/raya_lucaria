@@ -58,7 +58,9 @@ actual a la parte visible del mapa. Esa orientacion es contexto temporal de
 lectura, no estado guardado.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
-necesites otro foco. Usa el filtro del mapa para limitar etiquetas de paginas
+necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
+el riel derecho para dar mas espacio al articulo; es estado visual temporal y no
+guarda progreso. Usa el filtro del mapa para limitar etiquetas de paginas
 visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
 articulo, en el contexto superior de lectura o en las cards al final de pagina
 para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando
@@ -84,7 +86,9 @@ enfocar esa pagina para ver primero sus enlaces explicitos. El riel de
 aprendizaje tambien puede mostrar un panel Connections con conteos de enlaces
 que salen de la pagina actual y enlaces que apuntan a ella; esos conteos
 describen relaciones estaticas autoradas, no recomendaciones ni progreso
-personal.
+personal. Los detalles `Graph state` y share URL pueden estar dentro de un
+disclosure para que el flujo principal del grafo mantenga foco en busqueda,
+canvas y contexto de pagina seleccionada.
 Algunas paginas tambien pueden terminar con un bloque Page connections dentro
 del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace

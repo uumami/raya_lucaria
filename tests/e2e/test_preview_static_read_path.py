@@ -2634,7 +2634,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert (
                             page.locator(
                                 "[data-raya-graph-state-page-focus]"
-                            ).inner_text()
+                            ).text_content()
                             == "authoring-matrix"
                         )
                         page.click("#graph-reset-view")
@@ -2645,7 +2645,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert (
                             page.locator(
                                 "[data-raya-graph-state-page-focus]"
-                            ).inner_text()
+                            ).text_content()
                             == "authoring-matrix"
                         )
                         assert page.locator(
@@ -2870,12 +2870,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "math-authoring"
                             in page.locator(
                                 "[data-raya-graph-state-selected]"
-                            ).inner_text()
+                            ).text_content()
                         )
                         assert (
                             page.locator(
                                 "[data-raya-graph-state-page-focus]"
-                            ).inner_text()
+                            ).text_content()
                             == "none"
                         )
                         focus_label_state = page.locator(
@@ -2903,7 +2903,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert (
                             page.locator(
                                 "[data-raya-graph-state-page-focus]"
-                            ).inner_text()
+                            ).text_content()
                             == "none"
                         )
                         assert page.locator(
@@ -3029,6 +3029,11 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "Projection Residuals" in page.locator(
                         "[data-raya-graph-detail-title]"
                     ).inner_text()
+                    debug = page.locator("[data-raya-graph-debug]")
+                    assert debug.is_visible()
+                    assert debug.get_attribute("open") is None
+                    debug.locator("summary").click()
+                    assert debug.get_attribute("open") == ""
                     assert "reader-ux" in page.locator(
                         "[data-raya-graph-state-selected]"
                     ).inner_text()
@@ -3070,6 +3075,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     page.wait_for_function(
                         "() => new URL(window.location.href).searchParams.get('page') === 'reader-ux'"
                     )
+                    page.locator("[data-raya-graph-debug] summary").click()
                     assert "reader-ux" in page.locator(
                         "[data-raya-graph-state-selected]"
                     ).inner_text()
@@ -3118,6 +3124,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                         f"?page=reader-ux&q={long_query}",
                         wait_until="networkidle",
                     )
+                    page.locator("[data-raya-graph-debug] summary").click()
                     _assert_no_horizontal_overflow(page)
                     page.evaluate(
                         """() => {
@@ -4556,6 +4563,135 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     assert "OpenDyslexic" in after["bodyFont"]
 
 
+def test_render_fixture_reader_focus_command_collapses_map_and_rail(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                try:
+                    page.goto(f"{handle.base_url}/reader-ux/index.html")
+                    initial_url = page.url
+                    focus = page.locator("[data-raya-reader-focus-toggle]")
+                    assert focus.is_visible()
+                    assert focus.get_attribute("aria-pressed") == "false"
+                    focus.focus()
+                    assert page.evaluate(
+                        "() => document.activeElement === document.querySelector('[data-raya-reader-focus-toggle]')"
+                    )
+
+                    focus.click()
+                    assert (
+                        page.locator("html").get_attribute("data-raya-reader-focus")
+                        == "active"
+                    )
+                    assert (
+                        page.locator("#raya-course-map").get_attribute(
+                            "data-raya-course-map"
+                        )
+                        == "collapsed"
+                    )
+                    assert (
+                        page.locator("#raya-learning-rail").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "collapsed"
+                    )
+                    assert focus.get_attribute("aria-pressed") == "true"
+                    assert page.url == initial_url
+                    assert page.evaluate(
+                        "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                    ) == [[], []]
+
+                    page.set_viewport_size({"width": 1100, "height": 900})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaReaderFocus === 'inactive'"""
+                    )
+                    assert focus.is_hidden()
+                    assert (
+                        page.locator("#raya-course-map").get_attribute(
+                            "data-raya-course-map"
+                        )
+                        == "expanded"
+                    )
+                    assert (
+                        page.locator("#raya-learning-rail").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "expanded"
+                    )
+
+                    page.set_viewport_size({"width": 1440, "height": 900})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    assert focus.is_visible()
+                    assert focus.get_attribute("aria-pressed") == "false"
+
+                    focus.click()
+                    page.click(".raya-command-map")
+                    assert (
+                        page.locator("html").get_attribute("data-raya-reader-focus")
+                        == "inactive"
+                    )
+                    assert focus.get_attribute("aria-pressed") == "false"
+
+                    focus.click()
+                    page.click("[data-raya-learning-rail-expand]")
+                    assert (
+                        page.locator("html").get_attribute("data-raya-reader-focus")
+                        == "inactive"
+                    )
+                    assert focus.get_attribute("aria-pressed") == "false"
+
+                    focus.click()
+                    focus.click()
+                    assert (
+                        page.locator("html").get_attribute("data-raya-reader-focus")
+                        == "inactive"
+                    )
+                    assert (
+                        page.locator("#raya-course-map").get_attribute(
+                            "data-raya-course-map"
+                        )
+                        == "expanded"
+                    )
+                    assert (
+                        page.locator("#raya-learning-rail").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "expanded"
+                    )
+                    assert focus.get_attribute("aria-pressed") == "false"
+                    assert page.url == initial_url
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_text_size_toggle_changes_reader_scale(
     tmp_path: Path,
 ) -> None:
@@ -4776,13 +4912,17 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               const commands = Array.from(
                                 document.querySelectorAll('.raya-command')
                               );
+                              const visibleCommands = commands.filter(
+                                (item) => item.getClientRects().length > 0
+                              );
                               const topBar = document.querySelector('.raya-top-command-bar');
-                              const commandTops = commands.map(
+                              const commandTops = visibleCommands.map(
                                 (item) => Math.round(item.getBoundingClientRect().top)
                               );
                               return {
                                 count: commands.length,
-                                minHeights: commands.map(
+                                visibleCount: visibleCommands.length,
+                                minHeights: visibleCommands.map(
                                   (item) => item.getBoundingClientRect().height
                                 ),
                                 topBarHeight: topBar.getBoundingClientRect().height,
@@ -4807,6 +4947,15 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 mapExpanded: document
                                   .querySelector('.raya-command-map')
                                   ?.getAttribute('aria-expanded'),
+                                focusLabel: document
+                                  .querySelector('.raya-command-focus')
+                                  ?.getAttribute('aria-label'),
+                                focusPressed: document
+                                  .querySelector('.raya-command-focus')
+                                  ?.getAttribute('aria-pressed'),
+                                focusVisible: !!document
+                                  .querySelector('.raya-command-focus')
+                                  ?.getClientRects().length,
                                 sizeLabel: document
                                   .querySelector('.raya-command-size')
                                   ?.getAttribute('aria-label'),
@@ -4831,7 +4980,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 8
+                        assert state["count"] == 9
+                        assert state["visibleCount"] == (
+                            9 if viewport["width"] >= 1280 else 8
+                        )
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
                         if viewport["width"] >= 1024:
@@ -4852,6 +5004,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["mapExpanded"] == (
                             "true" if viewport["width"] >= 1280 else "false"
                         )
+                        assert state["focusLabel"] == "Focus reading"
+                        assert state["focusPressed"] == "false"
+                        assert state["focusVisible"] == (viewport["width"] >= 1280)
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
@@ -5241,6 +5396,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         assert (
                             "raya-skip-link" in focused
                             or "raya-reading-context-link" in focused
+                            or "raya-command-focus" in focused
                             or "raya-text-size-toggle" in focused
                             or "raya-font-toggle" in focused
                         )
@@ -7165,6 +7321,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["fontButtonVisible"] is True
     expected_icons = {
         "raya-command-map": ("map", "Course map"),
+        "raya-command-focus": ("focus", "Focus reading"),
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),

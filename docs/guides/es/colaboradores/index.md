@@ -150,6 +150,9 @@ y enlaces locales. El reveal contextual de labels puede ocultar visualmente
 labels SVG de bajo contexto, pero los anchors de pagina y texto `aria-label`
 deben seguir disponibles. El contexto de URL generado puede enfocar una pagina, pero
 debe seguir siendo transitorio.
+El readout de estado/debug del grafo y el control de copiar URL pueden estar
+dentro de un disclosure nativo cerrado por defecto; mantenlo sincronizado,
+local y sin storage del grafo.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia
 aproximada, controles de limpiar y movimiento con teclado por resultados son

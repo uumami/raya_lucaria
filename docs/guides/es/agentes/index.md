@@ -151,6 +151,9 @@ pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
 storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
 en las cards de secuencia como orientacion estructural del curso, no como
 progreso del estudiante.
+Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
+colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
+layout expandido, no cambie el estado de URL y no escriba storage del browser.
 Para cambios responsivos de la shell, revisa juntos los viewports desktop,
 tablet y movil. En desktop el riel derecho de aprendizaje puede colapsar a una
 pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe
@@ -206,8 +209,9 @@ del grafo en la URL puede codificar pagina seleccionada, busqueda, layout,
 grupos visibles, tipos de edge visibles, foco de vecindario seleccionado, modo
 expandido y estado de paneles. Verifica que el readout compacto de estado del
 grafo y la URL del navegador se mantengan sincronizados despues de cambios de
-controles, que usen solo estado estructural publico, y que no escriban
-`localStorage` ni `sessionStorage`. El contexto de URL generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
+controles, que usen solo estado estructural publico, que puedan vivir dentro de
+un disclosure nativo cerrado por defecto, y que no escriban `localStorage` ni
+`sessionStorage`. El contexto de URL generado puede seleccionar una pagina solo cuando resuelve a un nodo embebido
 del grafo. Los conteos de vecindario deben derivarse de edges del grafo
 generado, y los resaltados de pagina conectada deben excluir el nodo
 seleccionado. El foco de vecindario seleccionado puede reducir el grafo y la lista
