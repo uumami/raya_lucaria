@@ -147,6 +147,10 @@ language.
 If the shell exposes `Focus reading`, verify it is keyboard reachable, collapses
 the desktop course map and right learning rail together, toggles back to the
 expanded layout, does not change URL state, and writes no browser storage.
+If the shell exposes a top-bar `Context` command, verify it toggles only the
+right learning rail on desktop, keeps the course map available, mirrors
+`aria-expanded` and labels with the rail controls, remains hidden on tablet and
+mobile, and writes no browser storage or progress/recommendation state.
 For responsive shell changes, check desktop, tablet, and mobile viewports
 together. Desktop may collapse the right learning rail into a compact context
 tab, but tablet and mobile must keep the rail body visible and reachable by

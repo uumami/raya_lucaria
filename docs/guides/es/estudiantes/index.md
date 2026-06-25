@@ -64,7 +64,9 @@ lectura, no estado guardado.
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
 el riel derecho para dar mas espacio al articulo; es estado visual temporal y no
-guarda progreso. Usa el filtro del mapa para limitar etiquetas de paginas
+guarda progreso. En desktop, `Context` puede ocultar o restaurar solo el riel
+derecho mientras deja disponible el mapa del curso; tambien es estado temporal
+de layout, no progreso ni personalizacion. Usa el filtro del mapa para limitar etiquetas de paginas
 visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
 articulo, en el contexto superior de lectura o en las cards al final de pagina
 para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando

@@ -3719,6 +3719,9 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "currentSectionLink" in script_text
     assert "function syncCurrentSection" in script_text
     assert "data-raya-current-section-link" in script_text
+    assert "learningRailToggleButtons" in script_text
+    assert "function syncLearningRailToggleButtons" in script_text
+    assert "data-raya-learning-rail-toggle" in script_text
     assert "rayaCourseMapOriented" in script_text
     assert "scrollIntoView" not in script_text
     assert "glintstone-nav-expanded" not in script_text
@@ -3755,6 +3758,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
     )
     assert 'aria-label="Collapse course map"' in html
+    assert '<button class="raya-command raya-command-context"' in html
+    assert "data-raya-learning-rail-toggle" in html
+    assert 'aria-controls="raya-learning-rail-body"' in html
+    assert 'aria-label="Hide learning context"' in html
     assert (
         '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
     )

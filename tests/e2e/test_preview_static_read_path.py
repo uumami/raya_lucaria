@@ -5327,6 +5327,15 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 focusVisible: !!document
                                   .querySelector('.raya-command-focus')
                                   ?.getClientRects().length,
+                                railContextLabel: document
+                                  .querySelector('.raya-command-context')
+                                  ?.getAttribute('aria-label'),
+                                railContextExpanded: document
+                                  .querySelector('.raya-command-context')
+                                  ?.getAttribute('aria-expanded'),
+                                railContextVisible: !!document
+                                  .querySelector('.raya-command-context')
+                                  ?.getClientRects().length,
                                 sizeLabel: document
                                   .querySelector('.raya-command-size')
                                   ?.getAttribute('aria-label'),
@@ -5351,9 +5360,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 9
+                        assert state["count"] == 10
                         assert state["visibleCount"] == (
-                            9 if viewport["width"] >= 1280 else 8
+                            10 if viewport["width"] >= 1280 else 8
                         )
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
@@ -5378,6 +5387,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["focusLabel"] == "Focus reading"
                         assert state["focusPressed"] == "false"
                         assert state["focusVisible"] == (viewport["width"] >= 1280)
+                        assert state["railContextLabel"] == "Hide learning context"
+                        assert state["railContextExpanded"] == "true"
+                        assert state["railContextVisible"] == (
+                            viewport["width"] >= 1280
+                        )
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
@@ -8093,6 +8107,150 @@ def test_render_fixture_reader_ux_is_learning_showcase(
         handle.close()
 
 
+def test_render_fixture_top_context_command_toggles_right_rail_only(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => ({
+                          mapState: document.documentElement.dataset.rayaCourseMap,
+                          railState: document.documentElement.dataset.rayaLearningRail,
+                          contextExpanded: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          collapseExpanded: document
+                            .querySelector('[data-raya-learning-rail-collapse]')
+                            ?.getAttribute('aria-expanded'),
+                          expandExpanded: document
+                            .querySelector('[data-raya-learning-rail-expand]')
+                            ?.getAttribute('aria-expanded'),
+                          commandVisible: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getClientRects().length > 0,
+                          articleWidth: document
+                            .querySelector('#raya-article')
+                            ?.getBoundingClientRect().width,
+                          railWidth: document
+                            .querySelector('#raya-learning-rail')
+                            ?.getBoundingClientRect().width,
+                        })"""
+                    )
+                    assert initial["commandVisible"] is True
+                    assert initial["mapState"] == "expanded"
+                    assert initial["railState"] == "expanded"
+                    assert initial["contextExpanded"] == "true"
+                    assert initial["collapseExpanded"] == "true"
+                    assert initial["expandExpanded"] == "true"
+                    assert initial["articleWidth"] > 620
+                    assert initial["railWidth"] >= 220
+
+                    page.click("[data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document
+                          .querySelector('#raya-article')
+                          ?.getBoundingClientRect().width > minimumWidth""",
+                        arg=initial["articleWidth"] + 80,
+                    )
+                    collapsed = page.evaluate(
+                        """() => ({
+                          mapState: document.documentElement.dataset.rayaCourseMap,
+                          railState: document.documentElement.dataset.rayaLearningRail,
+                          contextExpanded: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          contextLabel: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-label'),
+                          collapseExpanded: document
+                            .querySelector('[data-raya-learning-rail-collapse]')
+                            ?.getAttribute('aria-expanded'),
+                          expandExpanded: document
+                            .querySelector('[data-raya-learning-rail-expand]')
+                            ?.getAttribute('aria-expanded'),
+                          articleWidth: document
+                            .querySelector('#raya-article')
+                            ?.getBoundingClientRect().width,
+                          railWidth: document
+                            .querySelector('#raya-learning-rail')
+                            ?.getBoundingClientRect().width,
+                          railBodyHidden: document
+                            .querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          railBodyInert: document
+                            .querySelector('#raya-learning-rail-body')?.inert,
+                        })"""
+                    )
+                    assert collapsed["mapState"] == "expanded"
+                    assert collapsed["railState"] == "collapsed"
+                    assert collapsed["contextExpanded"] == "false"
+                    assert collapsed["contextLabel"] == "Show learning context"
+                    assert collapsed["collapseExpanded"] == "false"
+                    assert collapsed["expandExpanded"] == "false"
+                    assert collapsed["articleWidth"] > initial["articleWidth"] + 80
+                    assert collapsed["railWidth"] <= 80
+                    assert collapsed["railBodyHidden"] == "true"
+                    assert collapsed["railBodyInert"] is True
+                    _assert_no_horizontal_overflow(page)
+
+                    page.click("[data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'expanded'"
+                    )
+                    restored = page.evaluate(
+                        """() => ({
+                          contextExpanded: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          contextLabel: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-label'),
+                          railBodyHidden: document
+                            .querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                        })"""
+                    )
+                    assert restored == {
+                        "contextExpanded": "true",
+                        "contextLabel": "Hide learning context",
+                        "railBodyHidden": "false",
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
     tmp_path: Path,
 ) -> None:
@@ -8125,6 +8283,15 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     _assert_no_horizontal_overflow(page)
                     topbar = _bounding_box(page, ".raya-top-command-bar")
                     assert topbar["height"] <= 220
+                    assert not page.locator(
+                        "[data-raya-learning-rail-toggle]"
+                    ).is_visible()
+                    assert (
+                        page.locator("#raya-learning-rail-body").get_attribute(
+                            "aria-hidden"
+                        )
+                        == "false"
+                    )
                     article = _bounding_box(page, "article.raya-main-article")
                     rail = _bounding_box(page, "aside.raya-learning-rail")
                     assert article["y"] < rail["y"]

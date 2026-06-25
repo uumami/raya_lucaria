@@ -26,6 +26,9 @@ _SHELL_JAVASCRIPT = r"""
   const learningRailBody = document.querySelector("#raya-learning-rail-body");
   const learningRailCollapse = document.querySelector("[data-raya-learning-rail-collapse]");
   const learningRailExpand = document.querySelector("[data-raya-learning-rail-expand]");
+  const learningRailToggleButtons = Array.from(
+    document.querySelectorAll("[data-raya-learning-rail-toggle]")
+  );
   const railToggleButtons = Array.from(document.querySelectorAll("[data-raya-rail-toggle]"));
   const readerFocusToggle = document.querySelector("[data-raya-reader-focus-toggle]");
   const mapNodeToggles = Array.from(document.querySelectorAll("[data-raya-map-node-toggle]"));
@@ -424,6 +427,16 @@ _SHELL_JAVASCRIPT = r"""
   window.rayaOrientCourseMapToCurrentPageAutomatic = () =>
     orientCourseMapToCurrentPage({ repeat: true });
 
+  function syncLearningRailToggleButtons(nextExpanded) {
+    learningRailToggleButtons.forEach((button) => {
+      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+      button.setAttribute(
+        "aria-label",
+        nextExpanded ? "Hide learning context" : "Show learning context"
+      );
+    });
+  }
+
   function setLearningRailExpanded(nextExpanded) {
     if (!learningRail || !learningRailBody) {
       return;
@@ -431,6 +444,7 @@ _SHELL_JAVASCRIPT = r"""
     root.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
+    syncLearningRailToggleButtons(nextExpanded);
     learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
     setElementInert(learningRailBody, !nextExpanded);
     setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
@@ -754,6 +768,17 @@ _SHELL_JAVASCRIPT = r"""
       setReaderFocus(root.dataset.rayaReaderFocus !== "active");
     });
   }
+
+  learningRailToggleButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!isDesktopShell()) {
+        setLearningRailExpanded(true);
+        return;
+      }
+      setLearningRailExpanded(root.dataset.rayaLearningRail !== "expanded");
+      clearReaderFocus();
+    });
+  });
 
   document.addEventListener("keydown", (event) => {
     if (handleSequenceKeyboardNavigation(event)) {

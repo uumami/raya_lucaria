@@ -160,6 +160,10 @@ dominio, recomendacion o progreso.
 Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
 colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
 layout expandido, no cambie el estado de URL y no escriba storage del browser.
+Si la shell expone un comando superior `Context`, verifica que alterne solo el
+riel derecho en desktop, mantenga disponible el mapa del curso, sincronice
+`aria-expanded` y labels con los controles del riel, permanezca oculto en tablet
+y movil, y no escriba storage del browser ni estado de progreso o recomendacion.
 Para cambios responsivos de la shell, revisa juntos los viewports desktop,
 tablet y movil. En desktop el riel derecho de aprendizaje puede colapsar a una
 pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe

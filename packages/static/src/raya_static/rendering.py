@@ -3006,7 +3006,8 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   }
 }
 @media (max-width: 1279px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {
     display: none;
   }
 }
@@ -3017,7 +3018,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   }
   [data-raya-course-map="expanded"][data-raya-learning-rail="collapsed"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"][data-raya-learning-rail="collapsed"] {
-    grid-template-columns: minmax(12rem, 15rem) minmax(48rem, 1fr) 3.25rem;
+    grid-template-columns: minmax(13.75rem, 13.75rem) minmax(48rem, 1fr) 3.25rem;
   }
   [data-raya-course-map="collapsed"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="collapsed"] {

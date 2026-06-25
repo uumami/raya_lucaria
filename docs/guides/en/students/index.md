@@ -59,7 +59,9 @@ part of the map. That orientation is temporary reading context, not saved state.
 Use the Course map button to collapse or expand navigation when you need a
 different focus. On desktop, `Focus reading` can collapse the map and right
 learning rail together so the article gets more space; it is temporary display
-state and does not store progress. Use the map filter to narrow visible page labels inside the
+state and does not store progress. On desktop, `Context` can hide or restore
+only the right learning rail while leaving the course map available; that is
+also temporary layout state, not progress or personalization. Use the map filter to narrow visible page labels inside the
 current static hierarchy. Use Previous and Next in the article, top reading
 context, or end-of-page cards to move through the ordered material, and use Text
 size or OpenDyslexic when those settings are more comfortable. End-of-page cards

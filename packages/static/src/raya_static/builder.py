@@ -1100,6 +1100,17 @@ def _render_top_command_bar(
                 extra_attrs=" data-raya-reader-focus-toggle",
             ),
             _render_command_button(
+                class_name="raya-command raya-command-context",
+                aria_label="Hide learning context",
+                icon="context",
+                label="Context",
+                extra_attrs=(
+                    " data-raya-learning-rail-toggle "
+                    'aria-controls="raya-learning-rail-body" '
+                    'aria-expanded="true"'
+                ),
+            ),
+            _render_command_button(
                 class_name="raya-command raya-command-size raya-text-size-toggle",
                 aria_label="Text size: normal",
                 icon="text-size",
@@ -2156,6 +2167,11 @@ _COMMAND_ICON_BODIES = {
         '<path d="M8 5H5v3M16 5h3v3M5 16v3h3M19 16v3h-3"/>'
         '<path d="M9 12h6"/>'
         '<path d="M12 9v6"/>'
+    ),
+    "context": (
+        '<path d="M5 5.5h14v13H5z"/>'
+        '<path d="M14.5 5.5v13"/>'
+        '<path d="M7.5 9h4M7.5 12h4M7.5 15h4"/>'
     ),
     "text-size": (
         '<text class="raya-command-icon-text" x="11.7" y="14.8" '
