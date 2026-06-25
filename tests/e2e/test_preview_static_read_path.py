@@ -2656,6 +2656,40 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert "Parent out 1" in chip_texts
                         assert len(chip_texts) == 4
                         assert sum(int(text.split().pop()) for text in chip_texts) == 6
+                        relationship_walkthrough = page.locator(
+                            "[data-raya-graph-relationship-walkthrough]"
+                        )
+                        assert relationship_walkthrough.is_visible()
+                        walkthrough_cards = relationship_walkthrough.locator(
+                            "[data-raya-graph-relationship-walkthrough-card]"
+                        )
+                        assert walkthrough_cards.count() == 4
+                        walkthrough_text = relationship_walkthrough.inner_text()
+                        assert "Relationship walkthrough" in walkthrough_text
+                        assert "Content from this page" in walkthrough_text
+                        assert "Content to this page" in walkthrough_text
+                        assert "Navigation to this page" in walkthrough_text
+                        assert "Parent from this page" in walkthrough_text
+                        assert "Use these pages to read the selected page's explicit content links." in walkthrough_text
+                        assert "These pages explicitly link back to the selected page." in walkthrough_text
+                        assert "This page appears after these pages in the generated course order." in walkthrough_text
+                        assert "These pages are direct structural parents of the selected page." in walkthrough_text
+                        assert (
+                            relationship_walkthrough.locator(
+                                '[data-raya-graph-focus-node="math-authoring"]'
+                            ).count()
+                            >= 1
+                        )
+                        assert (
+                            any(
+                                href.endswith("/math-authoring/index.html")
+                                for href in relationship_walkthrough.locator(
+                                    "a"
+                                ).evaluate_all(
+                                    "links => links.map((link) => link.href)"
+                                )
+                            )
+                        )
                         assert page.locator(
                             '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
                         ).evaluate("node => node.classList.contains('is-active')")
@@ -2813,6 +2847,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ).is_visible()
                         assert page.locator(
                             "[data-raya-graph-detail-relationship-chips]"
+                        ).is_hidden()
+                        assert page.locator(
+                            "[data-raya-graph-relationship-walkthrough]"
                         ).is_hidden()
                         assert requested_urls == []
                     finally:

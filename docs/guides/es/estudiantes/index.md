@@ -103,6 +103,10 @@ de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
+Los detalles de pagina seleccionada tambien pueden mostrar un Relationship
+walkthrough que agrupa enlaces por tipo de relacion y direccion. Usalo para ver
+por que una pagina esta conectada y para enfocar otra pagina conectada sin salir
+del workspace del grafo.
 Los colores del grafo agrupan paginas por la estructura actual del curso, el
 tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
 hover o foco de teclado puede inspeccionar temporalmente una pagina y sus

@@ -4026,6 +4026,14 @@ def _render_graph_surface(
                 "data-raya-graph-detail-relationship-chip-list></div>"
                 "</section>"
             ),
+            (
+                '<section class="raya-graph-relationship-walkthrough" '
+                "data-raya-graph-relationship-walkthrough hidden>"
+                "<h3>Relationship walkthrough</h3>"
+                '<div class="raya-graph-relationship-walkthrough-list" '
+                "data-raya-graph-relationship-walkthrough-list></div>"
+                "</section>"
+            ),
             '<p class="raya-graph-detail-actions">',
             (
                 '<a class="raya-graph-detail-open-primary" '

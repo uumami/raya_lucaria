@@ -75,6 +75,12 @@ _GRAPH_JAVASCRIPT = r"""
   const detailRelationshipChipList = document.querySelector(
     "[data-raya-graph-detail-relationship-chip-list]"
   );
+  const relationshipWalkthrough = document.querySelector(
+    "[data-raya-graph-relationship-walkthrough]"
+  );
+  const relationshipWalkthroughList = document.querySelector(
+    "[data-raya-graph-relationship-walkthrough-list]"
+  );
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
@@ -519,6 +525,39 @@ _GRAPH_JAVASCRIPT = r"""
       if (directionDelta !== 0) return directionDelta;
       return left.kind.localeCompare(right.kind);
     });
+  }
+
+  function relationshipWalkthroughTitle(kind, direction) {
+    const label = edgeKindLabel(kind);
+    return `${label} ${direction === "out" ? "from" : "to"} this page`;
+  }
+
+  function relationshipWalkthroughMeaning(kind, direction) {
+    if (kind === "content" && direction === "out") {
+      return "Use these pages to read the selected page's explicit content links.";
+    }
+    if (kind === "content" && direction === "in") {
+      return "These pages explicitly link back to the selected page.";
+    }
+    if (kind === "navigation" && direction === "out") {
+      return "These pages appear after the selected page in the generated course order.";
+    }
+    if (kind === "navigation" && direction === "in") {
+      return "This page appears after these pages in the generated course order.";
+    }
+    if (kind === "parent" && direction === "out") {
+      return "These pages are direct structural parents of the selected page.";
+    }
+    if (kind === "parent" && direction === "in") {
+      return "These pages sit directly below the selected page in the course structure.";
+    }
+    if (kind === "prerequisite" && direction === "out") {
+      return "These pages are explicit prerequisites of the selected page.";
+    }
+    if (kind === "prerequisite" && direction === "in") {
+      return "These pages explicitly depend on the selected page as prior context.";
+    }
+    return "These are explicit generated graph relationships from course source links or order.";
   }
 
   function edgeKindClass(edge) {
@@ -1871,6 +1910,108 @@ _GRAPH_JAVASCRIPT = r"""
     detailRelationshipChips.hidden = false;
   }
 
+  function relationshipWalkthroughGroupsFor(nodeId) {
+    const groupsByKey = new Map();
+    const addItem = (kind, direction, item) => {
+      const normalizedKind = edgeKind({ kind });
+      const key = `${normalizedKind}:${direction}`;
+      if (!groupsByKey.has(key)) {
+        groupsByKey.set(key, {
+          kind: normalizedKind,
+          direction,
+          items: [],
+        });
+      }
+      groupsByKey.get(key).items.push(item);
+    };
+    edges.forEach((edge) => {
+      if (edge.from === nodeId) {
+        const target = nodesById.get(edge.to);
+        addItem(edge.kind, "out", {
+          id: edge.to,
+          title: target ? (target.title || target.nav_title || edge.to) : edge.to,
+          url: target ? target.url : "#",
+        });
+      }
+      if (edge.to === nodeId) {
+        const source = nodesById.get(edge.from);
+        addItem(edge.kind, "in", {
+          id: edge.from,
+          title: source ? (source.title || source.nav_title || edge.from) : edge.from,
+          url: source ? source.url : "#",
+        });
+      }
+    });
+    const kindOrder = ["navigation", "content", "prerequisite", "parent"];
+    const directionOrder = ["out", "in"];
+    return Array.from(groupsByKey.values()).sort((left, right) => {
+      const leftKind = kindOrder.indexOf(left.kind);
+      const rightKind = kindOrder.indexOf(right.kind);
+      const kindDelta = (leftKind < 0 ? kindOrder.length : leftKind) -
+        (rightKind < 0 ? kindOrder.length : rightKind);
+      if (kindDelta !== 0) return kindDelta;
+      const directionDelta = directionOrder.indexOf(left.direction) -
+        directionOrder.indexOf(right.direction);
+      if (directionDelta !== 0) return directionDelta;
+      return left.kind.localeCompare(right.kind);
+    }).map((group) => ({
+      ...group,
+      items: group.items.sort((left, right) => {
+        const leftNode = nodesById.get(left.id);
+        const rightNode = nodesById.get(right.id);
+        if (leftNode && rightNode) return compareNodesByOrder(leftNode, rightNode);
+        return String(left.title || left.id).localeCompare(String(right.title || right.id));
+      }),
+    }));
+  }
+
+  function renderRelationshipWalkthrough(nodeId) {
+    if (!relationshipWalkthrough || !relationshipWalkthroughList) return;
+    relationshipWalkthroughList.replaceChildren();
+    if (!nodeId) {
+      relationshipWalkthrough.hidden = true;
+      return;
+    }
+    const groupsForNode = relationshipWalkthroughGroupsFor(nodeId);
+    if (!groupsForNode.length) {
+      relationshipWalkthrough.hidden = true;
+      return;
+    }
+    groupsForNode.forEach((group) => {
+      const card = document.createElement("section");
+      card.className = "raya-graph-relationship-walkthrough-card";
+      card.setAttribute("data-raya-graph-relationship-walkthrough-card", "");
+      card.setAttribute("data-raya-graph-relationship-kind", group.kind);
+      card.setAttribute("data-raya-graph-relationship-direction", group.direction);
+
+      const title = document.createElement("h4");
+      title.textContent = relationshipWalkthroughTitle(group.kind, group.direction);
+      const meaning = document.createElement("p");
+      meaning.textContent = relationshipWalkthroughMeaning(group.kind, group.direction);
+      const listEl = document.createElement("ul");
+      group.items.forEach((item) => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = item.url || "#";
+        link.textContent = item.title || item.id || "Untitled page";
+        li.appendChild(link);
+        if (nodesById.has(item.id)) {
+          const focus = document.createElement("button");
+          focus.type = "button";
+          focus.className = "raya-graph-detail-focus-node";
+          focus.setAttribute("data-raya-graph-focus-node", item.id);
+          focus.textContent = "Focus";
+          focus.addEventListener("click", () => focusGraphDetailNode(item.id));
+          li.appendChild(focus);
+        }
+        listEl.appendChild(li);
+      });
+      card.append(title, meaning, listEl);
+      relationshipWalkthroughList.appendChild(card);
+    });
+    relationshipWalkthrough.hidden = false;
+  }
+
   function setGraphNeighborhoodFocus(enabled) {
     neighborhoodFocus = Boolean(enabled && selectedId);
     root.setAttribute(
@@ -1900,6 +2041,7 @@ _GRAPH_JAVASCRIPT = r"""
       setOptionalDetailLink(detailTasksLink, "", "Open tasks");
       setOptionalDetailLink(detailScheduleLink, "", "Open schedule");
       setOptionalDetailLink(detailPreviousLink, "", "Previous");
+      renderRelationshipWalkthrough("");
       if (detailCurrentLink) {
         detailCurrentLink.href = "#";
         detailCurrentLink.textContent = "Selected page";
@@ -1928,6 +2070,7 @@ _GRAPH_JAVASCRIPT = r"""
     }
     renderDetailStudyObjects(node);
     renderRelationshipChips(node.id);
+    renderRelationshipWalkthrough(node.id);
     if (detailNeighborhood) {
       const counts = relationshipCountsFor(node.id);
       detailNeighborhood.textContent = `Explicit links: ${counts.outgoingCount} outgoing, ${counts.incomingCount} incoming, ${counts.connectedCount} connected.`;

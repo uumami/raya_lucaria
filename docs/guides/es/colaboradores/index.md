@@ -144,8 +144,10 @@ artifact y recursos locales del renderer. Zoom in, Zoom out, Fit y Reset view
 pueden cambiar el viewport SVG visual, pero no deben persistir estado, pedir
 datos del grafo ni limpiar el contexto de pagina seleccionada. No agregues
 motores de grafo CDN, fetches runtime, estado persistente del grafo ni lenguaje
-de recomendaciones/progreso. El contexto de URL generado puede enfocar una
-pagina, pero debe seguir siendo transitorio.
+de recomendaciones/progreso. Los relationship walkthroughs de pagina
+seleccionada deben construirse solo desde edges explicitos generados del grafo
+y enlaces locales. El contexto de URL generado puede enfocar una pagina, pero
+debe seguir siendo transitorio.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia
 aproximada, controles de limpiar y movimiento con teclado por resultados son

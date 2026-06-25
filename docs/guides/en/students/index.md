@@ -94,6 +94,9 @@ filters as study state.
 When a page is selected in the graph, connected pages may be highlighted and
 summarized as outgoing links, incoming links, and connected pages. Those numbers
 describe the current static graph, not how far you have progressed.
+The selected-page details may also show a Relationship walkthrough that groups
+links by relationship kind and direction. Use it to see why a page is connected
+and to focus another connected page without leaving the graph workspace.
 Graph colors group pages by current course structure, node size can show how
 many explicit links touch a page, and hover or keyboard focus can temporarily
 inspect a page and its connected pages. These are static readability cues, not

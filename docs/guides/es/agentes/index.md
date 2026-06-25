@@ -190,7 +190,9 @@ hover/foco, spotlight transitorio de busqueda sobre paginas coincidentes y
 contexto directamente conectado, tamano de nodo acotado por grado, estado de inspeccion por hover/foco, paridad de
 inspeccion con teclado, modo de foco de vecindario seleccionado, controles de paginas
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
-enlaces normales de pagina, layout determinista `Connections` por defecto,
+enlaces normales de pagina, cards de relationship walkthrough de pagina seleccionada que
+explican tipo y direccion de edge explicitos sin lenguaje de recomendacion,
+layout determinista `Connections` por defecto,
 layouts alternos `Topology`, `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
 expandida del grafo, controles SVG de viewport incluyendo botones de pan,
 pan con `Arrow keys` cuando el grafo tiene foco, pan por arrastre del puntero, chrome compartido de

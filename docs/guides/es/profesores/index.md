@@ -267,7 +267,9 @@ los titulos de pagina, y tratalas como navegacion estatica, no recomendaciones.
 
 El Course graph generado puede ayudar a estudiantes a inspeccionar relaciones
 explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
-seleccionada y workspace expandido del grafo. Estudiantes tambien pueden usar
+seleccionada y workspace expandido del grafo. Los detalles de pagina seleccionada
+pueden incluir un Relationship walkthrough que explica tipos y direcciones de
+enlaces explicitos con controles locales de pagina y foco en grafo. Estudiantes tambien pueden usar
 Zoom in, Zoom out, Fit y Reset view para inspeccionar zonas visuales densas del
 grafo sin cambiar datos del curso ni estado guardado. Tratalo como estructura
 del curso desde datos actuales de artifact, no como analiticas,
