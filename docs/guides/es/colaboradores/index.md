@@ -146,7 +146,9 @@ datos del grafo ni limpiar el contexto de pagina seleccionada. No agregues
 motores de grafo CDN, fetches runtime, estado persistente del grafo ni lenguaje
 de recomendaciones/progreso. Los relationship walkthroughs de pagina
 seleccionada deben construirse solo desde edges explicitos generados del grafo
-y enlaces locales. El reveal contextual de labels puede ocultar visualmente
+y enlaces locales. Los relationship chips pueden actuar como filtros con
+botones nativos para ese walkthrough, con `aria-pressed`, sin mutar la URL, sin
+storage del navegador y con limpieza cuando cambia la seleccion del grafo. El reveal contextual de labels puede ocultar visualmente
 labels SVG de bajo contexto, pero los anchors de pagina y texto `aria-label`
 deben seguir disponibles. El contexto de URL generado puede enfocar una pagina, pero
 debe seguir siendo transitorio.

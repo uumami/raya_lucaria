@@ -110,7 +110,9 @@ conectadas. Esos numeros describen el grafo estatico actual, no tu avance.
 Los detalles de pagina seleccionada tambien pueden mostrar un Relationship
 walkthrough que agrupa enlaces por tipo de relacion y direccion. Usalo para ver
 por que una pagina esta conectada y para enfocar otra pagina conectada sin salir
-del workspace del grafo.
+del workspace del grafo. Los relationship chips pueden reducir temporalmente
+ese walkthrough a un tipo y direccion de enlace; presionar el mismo chip otra
+vez restaura el walkthrough completo.
 Los colores del grafo agrupan paginas por la estructura actual del curso, el
 tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
 grafo puede mantener visibles solo labels de alto contexto hasta que selecciones,

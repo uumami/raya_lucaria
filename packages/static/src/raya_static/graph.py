@@ -81,6 +81,9 @@ _GRAPH_JAVASCRIPT = r"""
   const relationshipWalkthroughList = document.querySelector(
     "[data-raya-graph-relationship-walkthrough-list]"
   );
+  const relationshipFocusStatus = document.querySelector(
+    "[data-raya-graph-relationship-focus-status]"
+  );
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
@@ -133,6 +136,7 @@ _GRAPH_JAVASCRIPT = r"""
   let inspectedId = "";
   let activeResultId = "";
   let pageFocusId = "";
+  let activeRelationshipFocus = "";
   let pendingInitialPageFit = false;
   let neighborhoodFocus = false;
   let matchIds = new Set();
@@ -489,6 +493,58 @@ _GRAPH_JAVASCRIPT = r"""
 
   function relationshipChipLabel(kind, direction) {
     return `${edgeKindLabel(kind)} ${direction}`;
+  }
+
+  function relationshipFocusKey(kind, direction) {
+    return `${edgeKind({ kind })}:${direction}`;
+  }
+
+  function syncRelationshipFocusDom() {
+    if (detailRelationshipChipList) {
+      detailRelationshipChipList
+        .querySelectorAll("[data-raya-graph-relationship-chip]")
+        .forEach((chip) => {
+          const key = relationshipFocusKey(
+            chip.getAttribute("data-raya-graph-relationship-kind") || "",
+            chip.getAttribute("data-raya-graph-relationship-direction") || ""
+          );
+          chip.setAttribute(
+            "aria-pressed",
+            key === activeRelationshipFocus ? "true" : "false"
+          );
+        });
+    }
+    if (relationshipWalkthroughList) {
+      relationshipWalkthroughList
+        .querySelectorAll("[data-raya-graph-relationship-walkthrough-card]")
+        .forEach((card) => {
+          const key = relationshipFocusKey(
+            card.getAttribute("data-raya-graph-relationship-kind") || "",
+            card.getAttribute("data-raya-graph-relationship-direction") || ""
+          );
+          card.hidden = Boolean(activeRelationshipFocus && key !== activeRelationshipFocus);
+        });
+    }
+    if (!relationshipFocusStatus) {
+      return;
+    }
+    if (!activeRelationshipFocus) {
+      relationshipFocusStatus.textContent = "";
+      return;
+    }
+    const [kind, direction] = activeRelationshipFocus.split(":");
+    relationshipFocusStatus.textContent = `Showing ${relationshipChipLabel(kind, direction)} relationships.`;
+  }
+
+  function clearRelationshipFocus() {
+    activeRelationshipFocus = "";
+    syncRelationshipFocusDom();
+  }
+
+  function setRelationshipFocus(kind, direction) {
+    const nextKey = relationshipFocusKey(kind, direction);
+    activeRelationshipFocus = activeRelationshipFocus === nextKey ? "" : nextKey;
+    syncRelationshipFocusDom();
   }
 
   function relationshipChipCountsFor(nodeId) {
@@ -1666,6 +1722,7 @@ _GRAPH_JAVASCRIPT = r"""
     if (activeResultId) {
       pageFocusId = "";
       pendingInitialPageFit = false;
+      clearRelationshipFocus();
       selectedId = activeResultId;
       inspectedId = activeResultId;
       renderDetail();
@@ -1918,13 +1975,20 @@ _GRAPH_JAVASCRIPT = r"""
       return;
     }
     chips.forEach((chip) => {
-      const item = document.createElement("span");
+      const item = document.createElement("button");
+      item.type = "button";
       item.className = "raya-graph-detail-relationship-chip";
+      item.setAttribute("data-raya-graph-relationship-chip", "");
       item.setAttribute("data-raya-graph-relationship-kind", chip.kind);
       item.setAttribute("data-raya-graph-relationship-direction", chip.direction);
+      item.setAttribute("aria-pressed", "false");
       item.textContent = `${relationshipChipLabel(chip.kind, chip.direction)} ${chip.count}`;
+      item.addEventListener("click", () =>
+        setRelationshipFocus(chip.kind, chip.direction)
+      );
       detailRelationshipChipList.appendChild(item);
     });
+    syncRelationshipFocusDom();
     detailRelationshipChips.hidden = false;
   }
 
@@ -2027,6 +2091,7 @@ _GRAPH_JAVASCRIPT = r"""
       card.append(title, meaning, listEl);
       relationshipWalkthroughList.appendChild(card);
     });
+    syncRelationshipFocusDom();
     relationshipWalkthrough.hidden = false;
   }
 
@@ -2049,6 +2114,7 @@ _GRAPH_JAVASCRIPT = r"""
     const node = selectedId ? nodesById.get(selectedId) : null;
     if (!node) {
       setGraphNeighborhoodFocus(false);
+      clearRelationshipFocus();
       if (detailEmpty) detailEmpty.hidden = false;
       if (detailPanel) detailPanel.hidden = true;
       if (detailSummary) detailSummary.textContent = "";
@@ -2151,6 +2217,7 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function selectGraphNode(nodeId) {
+    clearRelationshipFocus();
     neighborhoodFocus = false;
     pageFocusId = "";
     pendingInitialPageFit = false;
@@ -2168,6 +2235,7 @@ _GRAPH_JAVASCRIPT = r"""
   function clearGraphSelection() {
     window.clearTimeout(pendingSelectTimer);
     pendingSelectTimer = 0;
+    clearRelationshipFocus();
     selectedId = "";
     inspectedId = "";
     activeResultId = "";
@@ -2192,6 +2260,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function initializeGraphStateFromUrl() {
     const params = currentUrlParams();
+    clearRelationshipFocus();
     const pageId = params.get("page") || "";
     selectedId = nodesById.has(pageId) ? pageId : "";
     pageFocusId = selectedId;
@@ -2602,6 +2671,7 @@ _GRAPH_JAVASCRIPT = r"""
       manualNodePositions.clear();
       suppressedNodeClick = { id: "", until: 0 };
       graphNodeClickSequence = { id: "", time: 0 };
+      clearRelationshipFocus();
       updateEdgeKindFilters();
       selectedId = "";
       inspectedId = "";

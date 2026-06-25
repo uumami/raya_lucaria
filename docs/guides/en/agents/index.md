@@ -174,7 +174,9 @@ directly connected context, bounded degree-based node sizing, hover/focus inspec
 status, keyboard inspection parity, selected-neighborhood focus mode,
 connected-page detail controls that change graph selection without replacing
 normal page links, selected-page relationship walkthrough cards that explain
-explicit edge kind and direction without recommendation language, contextual
+explicit edge kind and direction without recommendation language, relationship
+chip buttons that transiently focus those walkthrough cards by kind and
+direction with `aria-pressed` and without URL or storage writes, contextual
 SVG label reveal for selected, inspected, neighboring, search, active-result,
 dragging, and high-degree pages, SVG graph node single-click selection without page
 navigation, SVG graph node double-click page opening, focused SVG graph node

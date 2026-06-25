@@ -1800,13 +1800,24 @@ img {
   border: 1px solid var(--raya-color-border);
   border-radius: 999px;
   color: var(--raya-color-text);
+  cursor: pointer;
   display: inline-flex;
+  font: inherit;
   font-size: 0.82rem;
   font-weight: 700;
   gap: 0.35rem;
   line-height: 1.2;
   min-height: 1.8rem;
   padding: 0.25rem 0.55rem;
+}
+.raya-graph-detail-relationship-chip[aria-pressed="true"] {
+  background: var(--raya-color-text);
+  border-color: var(--raya-color-text);
+  color: var(--raya-color-surface);
+}
+.raya-graph-detail-relationship-chip:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
 }
 .raya-graph-relationship-walkthrough {
   border: 1px solid var(--raya-color-border);
@@ -1817,6 +1828,11 @@ img {
 .raya-graph-relationship-walkthrough h3 {
   font-size: 0.95rem;
   margin: 0 0 0.55rem;
+}
+.raya-graph-relationship-focus-status {
+  color: var(--raya-color-muted);
+  font-size: 0.85rem;
+  margin: -0.15rem 0 0.55rem;
 }
 .raya-graph-relationship-walkthrough-list {
   display: grid;

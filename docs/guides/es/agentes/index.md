@@ -195,6 +195,8 @@ inspeccion con teclado, modo de foco de vecindario seleccionado, controles de pa
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, cards de relationship walkthrough de pagina seleccionada que
 explican tipo y direccion de edge explicitos sin lenguaje de recomendacion,
+botones relationship chip que enfocan transitoriamente esas cards por tipo y
+direccion con `aria-pressed` y sin escribir URL ni storage,
 reveal contextual de labels SVG para paginas seleccionadas, inspeccionadas,
 vecinas, de busqueda, resultado activo, arrastre y alto grado,
 layout determinista `Connections` por defecto,

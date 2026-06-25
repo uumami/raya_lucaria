@@ -270,7 +270,10 @@ El Course graph generado puede ayudar a estudiantes a inspeccionar relaciones
 explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
 seleccionada y workspace expandido del grafo. Los detalles de pagina seleccionada
 pueden incluir un Relationship walkthrough que explica tipos y direcciones de
-enlaces explicitos con controles locales de pagina y foco en grafo. El grafo
+enlaces explicitos con controles locales de pagina y foco en grafo. Los
+relationship chips pueden reducir temporalmente ese walkthrough para lectura,
+pero no crean recomendaciones, progreso, filtros guardados ni datos nuevos del
+curso. El grafo
 puede ocultar labels de bajo contexto hasta que una seleccion, busqueda,
 hover o foco de teclado los vuelva utiles. Los detalles de debug `Graph state`
 pueden estar cerrados por defecto en un disclosure nativo. Estudiantes tambien pueden usar

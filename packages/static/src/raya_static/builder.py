@@ -4044,6 +4044,8 @@ def _render_graph_surface(
                 '<section class="raya-graph-relationship-walkthrough" '
                 "data-raya-graph-relationship-walkthrough hidden>"
                 "<h3>Relationship walkthrough</h3>"
+                '<p class="raya-graph-relationship-focus-status" '
+                'data-raya-graph-relationship-focus-status aria-live="polite"></p>'
                 '<div class="raya-graph-relationship-walkthrough-list" '
                 "data-raya-graph-relationship-walkthrough-list></div>"
                 "</section>"

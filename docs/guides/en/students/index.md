@@ -101,6 +101,8 @@ describe the current static graph, not how far you have progressed.
 The selected-page details may also show a Relationship walkthrough that groups
 links by relationship kind and direction. Use it to see why a page is connected
 and to focus another connected page without leaving the graph workspace.
+Relationship chips can temporarily narrow that walkthrough to one link kind and
+direction; pressing the same chip again restores the full walkthrough.
 Graph colors group pages by current course structure, node size can show how
 many explicit links touch a page, and the graph may keep only high-context
 labels visible until you select, search, hover, or keyboard-focus nearby pages.

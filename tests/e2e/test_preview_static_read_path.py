@@ -2689,6 +2689,115 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert "These pages explicitly link back to the selected page." in walkthrough_text
                         assert "This page appears after these pages in the generated course order." in walkthrough_text
                         assert "These pages are direct structural parents of the selected page." in walkthrough_text
+                        content_out_chip = relationship_chips.locator(
+                            '[data-raya-graph-relationship-kind="content"]'
+                            '[data-raya-graph-relationship-direction="out"]'
+                        )
+                        assert (
+                            content_out_chip.evaluate("node => node.tagName")
+                            == "BUTTON"
+                        )
+                        assert content_out_chip.get_attribute("aria-pressed") == "false"
+                        relationship_focus_url = page.url
+                        content_out_chip.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "true"
+                        assert page.url == relationship_focus_url
+                        assert page.evaluate(
+                            "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                        ) == [[], []]
+                        visible_cards = walkthrough_cards.evaluate_all(
+                            """cards => cards
+                              .filter((card) => !card.hidden)
+                              .map((card) => [
+                                card.getAttribute('data-raya-graph-relationship-kind'),
+                                card.getAttribute('data-raya-graph-relationship-direction'),
+                                card.textContent,
+                              ])"""
+                        )
+                        assert len(visible_cards) == 1
+                        assert visible_cards[0][0:2] == ["content", "out"]
+                        assert "Content from this page" in visible_cards[0][2]
+                        assert (
+                            "Showing Content out relationships."
+                            in relationship_walkthrough.inner_text()
+                        )
+                        content_in_chip = relationship_chips.locator(
+                            '[data-raya-graph-relationship-kind="content"]'
+                            '[data-raya-graph-relationship-direction="in"]'
+                        )
+                        content_in_chip.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "false"
+                        assert content_in_chip.get_attribute("aria-pressed") == "true"
+                        visible_card_keys = walkthrough_cards.evaluate_all(
+                            """cards => cards
+                              .filter((card) => !card.hidden)
+                              .map((card) => [
+                                card.getAttribute('data-raya-graph-relationship-kind'),
+                                card.getAttribute('data-raya-graph-relationship-direction'),
+                              ])"""
+                        )
+                        assert visible_card_keys == [["content", "in"]]
+                        active_card_focus = relationship_walkthrough.locator(
+                            '[data-raya-graph-relationship-walkthrough-card]'
+                            '[data-raya-graph-relationship-kind="content"]'
+                            '[data-raya-graph-relationship-direction="in"] '
+                            "[data-raya-graph-focus-node]"
+                        ).first
+                        active_card_focus_target = active_card_focus.get_attribute(
+                            "data-raya-graph-focus-node"
+                        )
+                        assert active_card_focus_target
+                        active_card_focus.click()
+                        page.wait_for_function(
+                            """(target) => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent === target""",
+                            arg=active_card_focus_target,
+                        )
+                        assert (
+                            relationship_chips.locator(
+                                "[data-raya-graph-relationship-chip]"
+                            ).evaluate_all(
+                                "chips => chips.every((chip) => chip.getAttribute('aria-pressed') === 'false')"
+                            )
+                            is True
+                        )
+                        assert (
+                            walkthrough_cards.evaluate_all(
+                                "cards => cards.length === cards.filter((card) => !card.hidden).length"
+                            )
+                            is True
+                        )
+                        assert (
+                            "Showing "
+                            not in relationship_walkthrough.inner_text()
+                        )
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).click()
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent === 'authoring-matrix'"""
+                        )
+                        content_out_chip = relationship_chips.locator(
+                            '[data-raya-graph-relationship-kind="content"]'
+                            '[data-raya-graph-relationship-direction="out"]'
+                        )
+                        content_out_chip.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "true"
+                        content_out_chip.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "false"
+                        assert (
+                            walkthrough_cards.evaluate_all(
+                                "cards => cards.filter((card) => !card.hidden).length"
+                            )
+                            == 4
+                        )
+                        assert (
+                            "Showing "
+                            not in relationship_walkthrough.inner_text()
+                        )
                         assert (
                             relationship_walkthrough.locator(
                                 '[data-raya-graph-focus-node="math-authoring"]'
