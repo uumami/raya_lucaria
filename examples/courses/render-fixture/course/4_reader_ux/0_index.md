@@ -18,10 +18,6 @@ What remains after projecting a vector onto a line? This short lesson uses that
 question to exercise the reader shell, learning rail, numbered objects,
 MathJax, local assets, and support disclosures in one realistic page.
 
-This remains reader-facing fixture material for renderer, browser, and
-render-debug checks. It is not canonical pedagogy; fixture authority remains in
-`docs/foundation/`.
-
 > [!TIP]
 > **Try this first.** Imagine shining a light from $v$ onto the line through
 > $u$. The shadow is the projection. Predict what direction the leftover vector
@@ -239,3 +235,9 @@ Replacing $u$ by $cu$ changes both $\ip{v}{u}$ and $\ip{u}{u}$ by matching
 factors, so the scalar multiple still points along the same line. The residual
 check remains the inner-product calculation from @orthogonal-proposition.
 :::
+
+## Fixture Note
+
+This remains reader-facing fixture material for renderer, browser, and
+render-debug checks. It is not canonical pedagogy; fixture authority remains in
+`docs/foundation/`.

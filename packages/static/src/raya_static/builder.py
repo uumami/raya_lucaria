@@ -2302,6 +2302,7 @@ def _page_brief_connection_text(
     if not outgoing_count and not incoming_count:
         return ""
     return (
+        "View graph context: "
         f"{outgoing_count} "
         f"{_relationship_count_label(outgoing_count, 'from this page', 'from this page')}"
         f", {incoming_count} "

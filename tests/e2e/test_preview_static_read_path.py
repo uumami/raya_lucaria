@@ -6686,6 +6686,144 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert all(link["focused"] for link in compact_links)
 
 
+def test_render_fixture_desktop_course_map_labels_stay_scannable(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    map_labels = page.evaluate(
+                        """() => {
+                          const lineCount = (node) => {
+                            const box = node.getBoundingClientRect();
+                            const style = getComputedStyle(node);
+                            return box.height / parseFloat(style.lineHeight);
+                          };
+                          const current = document
+                            .querySelector('#raya-course-map a[aria-current="page"]');
+                          const workspaces = Array.from(
+                            document.querySelectorAll('.raya-course-map-workspace-link')
+                          );
+                          return {
+                            currentText: current?.textContent?.trim(),
+                            currentLines: lineCount(current),
+                            currentOverflowWrap: getComputedStyle(current).overflowWrap,
+                            workspaceLines: workspaces.map(lineCount),
+                            workspaceOverflowWrap: workspaces.map(
+                              (node) => getComputedStyle(node).overflowWrap
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "Projection Residuals" in map_labels["currentText"]
+    assert map_labels["currentLines"] <= 3.5
+    assert map_labels["currentOverflowWrap"] != "anywhere"
+    assert max(map_labels["workspaceLines"]) <= 2
+    assert all(
+        overflow_wrap != "anywhere"
+        for overflow_wrap in map_labels["workspaceOverflowWrap"]
+    )
+
+
+def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    reader_page = course / "course" / "4_reader_ux" / "0_index.md"
+    reader_page.write_text(
+        reader_page.read_text(encoding="utf-8").replace(
+            "title: Projection Residuals",
+            "title: ProjectionResidualsWithAnUnbrokenAuthorIdentifierThatMustWrapSafely",
+        ),
+        encoding="utf-8",
+    )
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    current_link = page.locator(
+                        '#raya-course-map a[aria-current="page"]'
+                    )
+                    current_state = current_link.evaluate(
+                        """(node) => {
+                          const nodeBox = node.getBoundingClientRect();
+                          const mapBox = document
+                            .querySelector('#raya-course-map')
+                            .getBoundingClientRect();
+                          const style = getComputedStyle(node);
+                          return {
+                            text: node.textContent.trim(),
+                            linkRight: nodeBox.right,
+                            mapRight: mapBox.right,
+                            overflowWrap: style.overflowWrap,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "ProjectionResidualsWithAnUnbrokenAuthorIdentifier" in current_state["text"]
+    assert current_state["linkRight"] <= current_state["mapRight"]
+    assert current_state["overflowWrap"] == "break-word"
+
+
 def test_render_fixture_responsive_shell_state_remains_accessible(
     tmp_path: Path,
 ) -> None:
@@ -6846,6 +6984,46 @@ def test_render_fixture_reader_ux_is_learning_showcase(
                     )
                     assert "Try this first" in article_text
                     assert "Misconception" in article_text
+                    first_viewport = page.evaluate(
+                        """() => {
+                          const viewportBottom = window.innerHeight;
+                          return Array.from(
+                            document.querySelectorAll('article.raya-main-article *')
+                          )
+                            .filter((node) => {
+                              const box = node.getBoundingClientRect();
+                              const style = getComputedStyle(node);
+                              return box.width > 0
+                                && box.height > 0
+                                && box.top < viewportBottom
+                                && box.bottom > 0
+                                && style.visibility !== 'hidden'
+                                && style.display !== 'none';
+                            })
+                            .map((node) => node.textContent || '')
+                            .join('\\n');
+                        }"""
+                    )
+                    assert "Projection Residuals" in first_viewport
+                    assert (
+                        "What remains after projecting a vector onto a line?"
+                        in first_viewport
+                    )
+                    assert "Try this first" in first_viewport
+                    assert (
+                        "This remains reader-facing fixture material"
+                        not in first_viewport
+                    )
+                    assert "render-debug" not in first_viewport.lower()
+                    assert "not canonical" not in first_viewport.lower()
+                    brief_graph_link = page.locator(
+                        ".raya-page-brief-connections a"
+                    )
+                    assert (
+                        brief_graph_link.get_attribute("href")
+                        == "../_raya/graph/index.html?page=reader-ux"
+                    )
+                    assert "graph" in brief_graph_link.inner_text().lower()
                     assert (
                         "Reader UX fixture"
                         not in page.locator(".raya-page-brief").inner_text()

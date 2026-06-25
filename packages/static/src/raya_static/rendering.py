@@ -2170,7 +2170,7 @@ html[data-raya-shell-ready="true"] .raya-course-map {
 .raya-course-map-workspace-links {
   display: grid;
   gap: 0.35rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
 }
 .raya-course-map-workspace-link {
   border: 1px solid var(--raya-color-border);
@@ -2770,6 +2770,7 @@ html[data-raya-shell-ready="true"] .raya-rail-panel-body {
   align-items: center;
   display: flex;
   gap: 0.45rem;
+  overflow-wrap: break-word;
   padding: 0.25rem 0 0.25rem 0.5rem;
   text-decoration: none;
 }
