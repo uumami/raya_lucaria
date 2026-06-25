@@ -981,6 +981,19 @@ _GRAPH_JAVASCRIPT = r"""
     }, 0);
   }
 
+  function shouldShowGraphLabel(id, selectedConnectedIds, inspectedConnectedIds, searchContext) {
+    return (
+      id === selectedId ||
+      id === inspectedId ||
+      id === activeResultId ||
+      selectedConnectedIds.has(id) ||
+      inspectedConnectedIds.has(id) ||
+      matchIds.has(id) ||
+      searchContext.has(id) ||
+      degreeFor(id) >= 5
+    );
+  }
+
   function degreeRadiusFor(nodeId, selected) {
     if (selected) return 19;
     return 14 + Math.min(8, Math.sqrt(degreeFor(nodeId)) * 2);
@@ -1537,11 +1550,16 @@ _GRAPH_JAVASCRIPT = r"""
       : new Set();
     const searchSpotlight = searchSpotlightIds();
     const searchContext = searchContextNodeIds();
+    const selectedConnectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     canvas.querySelectorAll("[data-raya-graph-node] g").forEach((nodeGroup) => {
       const link = nodeGroup.closest("[data-raya-graph-node]");
       const id = link ? link.getAttribute("data-raya-graph-node") || "" : "";
       nodeGroup.classList.toggle("is-inspected", id === inspectedId);
       nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+      nodeGroup.classList.toggle(
+        "is-label-visible",
+        shouldShowGraphLabel(id, selectedConnectedIds, inspectedConnectedIds, searchContext)
+      );
       nodeGroup.classList.toggle(
         "is-search-context",
         searchContext.has(id) && id !== inspectedId
@@ -2397,11 +2415,18 @@ _GRAPH_JAVASCRIPT = r"""
       const isConnected = connectedIds.has(node.id);
       const isInspected = node.id === inspectedId;
       const isInspectedNeighbor = inspectedConnectedIds.has(node.id);
+      const isLabelVisible = shouldShowGraphLabel(
+        node.id,
+        connectedIds,
+        inspectedConnectedIds,
+        searchContext
+      );
       group.setAttribute(
         "class",
         [
           "raya-graph-node",
           active ? "" : "is-muted",
+          isLabelVisible ? "is-label-visible" : "",
           node.id === selectedId ? "is-selected" : "",
           isConnected ? "is-neighbor" : "",
           isInspected ? "is-inspected" : "",
@@ -2424,6 +2449,7 @@ _GRAPH_JAVASCRIPT = r"""
       hitTarget.setAttribute("r", String(Math.max(30, radius + 8)));
       circle.setAttribute("r", String(radius));
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("class", "raya-graph-node-label");
       text.setAttribute("y", String(radius + 20));
       text.textContent = node.nav_title || node.title || node.id;
       group.append(hitTarget, circle, text);

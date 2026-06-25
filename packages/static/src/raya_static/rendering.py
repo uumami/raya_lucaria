@@ -2080,7 +2080,22 @@ img {
   fill: var(--raya-color-text);
   font-size: 0.78rem;
   font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
   text-anchor: middle;
+  transition: opacity 140ms ease;
+  visibility: hidden;
+}
+.raya-graph-node.is-label-visible text,
+.raya-graph-node.is-selected text,
+.raya-graph-node.is-neighbor text,
+.raya-graph-node.is-inspected text,
+.raya-graph-node.is-inspected-neighbor text,
+.raya-graph-node.is-match text,
+.raya-graph-node.is-search-context text,
+.raya-graph-node.is-dragging text {
+  opacity: 1;
+  visibility: visible;
 }
 .raya-graph-node.is-muted {
   opacity: 0.28;

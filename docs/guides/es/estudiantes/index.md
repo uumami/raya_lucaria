@@ -109,7 +109,8 @@ por que una pagina esta conectada y para enfocar otra pagina conectada sin salir
 del workspace del grafo.
 Los colores del grafo agrupan paginas por la estructura actual del curso, el
 tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
-hover o foco de teclado puede inspeccionar temporalmente una pagina y sus
+grafo puede mantener visibles solo labels de alto contexto hasta que selecciones,
+busques, hagas hover o enfoques paginas cercanas con teclado. El hover o foco de teclado puede inspeccionar temporalmente una pagina y sus
 paginas conectadas. Son pistas estaticas de legibilidad, no rankings de
 importancia, progreso, dominio, recomendaciones ni senales de evaluacion.
 

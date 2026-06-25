@@ -137,8 +137,9 @@ out, Fit, and Reset view may change the visual SVG viewport, but must not persis
 state, fetch graph data, or clear selected-page context. Do not add CDN graph
 engines, runtime fetches, persistent graph state, or recommendation/progress
 wording. Selected-page relationship walkthroughs must be built from explicit
-generated graph edges and local links only. Generated URL context may focus a
-page, but it must remain transient.
+generated graph edges and local links only. Contextual label reveal may hide
+low-context SVG labels visually, but page anchors and `aria-label` text must
+remain available. Generated URL context may focus a page, but it must remain transient.
 
 Review Course Search as the matching companion to graph navigation. Approximate
 matching, clear controls, and keyboard result movement are allowed over embedded

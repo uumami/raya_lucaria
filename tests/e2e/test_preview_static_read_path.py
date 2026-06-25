@@ -2590,6 +2590,21 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         plain_graph_viewbox = page.locator(
                             "#raya-graph-canvas"
                         ).get_attribute("viewBox")
+                        plain_label_state = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).evaluate_all(
+                            """nodes => Object.fromEntries(nodes.map((node) => {
+                              const label = node.querySelector('text');
+                              const style = label ? getComputedStyle(label) : null;
+                              return [node.getAttribute('data-raya-graph-node'), {
+                                text: label ? label.textContent.trim() : '',
+                                visible: Boolean(style) && style.visibility !== 'hidden',
+                              }];
+                            }))"""
+                        )
+                        assert plain_label_state["render-root"]["visible"]
+                        assert plain_label_state["authoring-matrix"]["visible"]
+                        assert not plain_label_state["static-path"]["visible"]
                         page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
                             wait_until="networkidle",
@@ -2711,6 +2726,26 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert page.locator(
                                 f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
                             ).evaluate("node => node.classList.contains('is-neighbor')")
+                        selected_label_state = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).evaluate_all(
+                            """nodes => Object.fromEntries(nodes.map((node) => {
+                              const label = node.querySelector('text');
+                              const style = label ? getComputedStyle(label) : null;
+                              return [node.getAttribute('data-raya-graph-node'), {
+                                visible: Boolean(style) && style.visibility !== 'hidden',
+                              }];
+                            }))"""
+                        )
+                        assert selected_label_state["authoring-matrix"]["visible"]
+                        for node_id in (
+                            "render-root",
+                            "math-authoring",
+                            "numbered-objects",
+                            "reader-ux",
+                        ):
+                            assert selected_label_state[node_id]["visible"]
+                        assert not selected_label_state["static-path"]["visible"]
                         focus_button = page.locator(
                             "[data-raya-graph-focus-neighborhood]"
                         )
@@ -2748,6 +2783,20 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "#raya-graph-list [data-raya-graph-node].is-active-result"
                         ).count()
+                        search_label_state = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).evaluate_all(
+                            """nodes => Object.fromEntries(nodes.map((node) => {
+                              const label = node.querySelector('text');
+                              const style = label ? getComputedStyle(label) : null;
+                              return [node.getAttribute('data-raya-graph-node'), {
+                                visible: Boolean(style) && style.visibility !== 'hidden',
+                              }];
+                            }))"""
+                        )
+                        assert search_label_state["static-path"]["visible"]
+                        assert search_label_state["render-root"]["visible"]
+                        assert search_label_state["authoring-matrix"]["visible"]
                         assert page.locator(
                             '#raya-graph-list [data-raya-graph-node="static-path"]'
                         ).is_visible()
@@ -2829,6 +2878,21 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             ).inner_text()
                             == "none"
                         )
+                        focus_label_state = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-node]"
+                        ).evaluate_all(
+                            """nodes => Object.fromEntries(nodes.map((node) => {
+                              const label = node.querySelector('text');
+                              const style = label ? getComputedStyle(label) : null;
+                              return [node.getAttribute('data-raya-graph-node'), {
+                                visible: Boolean(style) && style.visibility !== 'hidden',
+                              }];
+                            }))"""
+                        )
+                        assert focus_label_state["math-authoring"]["visible"]
+                        assert focus_label_state["numbered-objects"]["visible"]
+                        assert focus_label_state["render-root"]["visible"]
+                        assert not focus_label_state["static-path"]["visible"]
                         page.click("#graph-reset")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(

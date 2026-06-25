@@ -192,6 +192,8 @@ inspeccion con teclado, modo de foco de vecindario seleccionado, controles de pa
 conectadas en el detalle que cambian la seleccion del grafo sin reemplazar los
 enlaces normales de pagina, cards de relationship walkthrough de pagina seleccionada que
 explican tipo y direccion de edge explicitos sin lenguaje de recomendacion,
+reveal contextual de labels SVG para paginas seleccionadas, inspeccionadas,
+vecinas, de busqueda, resultado activo, arrastre y alto grado,
 layout determinista `Connections` por defecto,
 layouts alternos `Topology`, `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
 expandida del grafo, controles SVG de viewport incluyendo botones de pan,

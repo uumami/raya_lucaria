@@ -146,7 +146,9 @@ datos del grafo ni limpiar el contexto de pagina seleccionada. No agregues
 motores de grafo CDN, fetches runtime, estado persistente del grafo ni lenguaje
 de recomendaciones/progreso. Los relationship walkthroughs de pagina
 seleccionada deben construirse solo desde edges explicitos generados del grafo
-y enlaces locales. El contexto de URL generado puede enfocar una pagina, pero
+y enlaces locales. El reveal contextual de labels puede ocultar visualmente
+labels SVG de bajo contexto, pero los anchors de pagina y texto `aria-label`
+deben seguir disponibles. El contexto de URL generado puede enfocar una pagina, pero
 debe seguir siendo transitorio.
 
 Revisa Course Search como companero de navegacion del grafo. Coincidencia

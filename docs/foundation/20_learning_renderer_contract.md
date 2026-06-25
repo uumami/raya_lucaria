@@ -89,6 +89,9 @@ that group explicit edges by kind and direction with local page links and
 transient graph-focus controls, connected-page visual states, transient
 page focus from generated URL context, structural group color, bounded node
 size derived from static link degree, source-group edge colors,
+contextual SVG label reveal that keeps high-context labels visible and
+declutters low-context labels without removing page links or accessibility
+labels,
 relationship-kind edge line patterns for generated `navigation`, `parent`,
 `content`, and `prerequisite` edges,
 transient search spotlighting over matched pages and directly connected
@@ -115,8 +118,9 @@ orientation over the already loaded static artifact data. Desktop
 page-focused graph handoffs such as `?page=<page-id>` must first-paint visible
 selected graph content in the graph canvas when graph data exists; graph canvas
 height should remain bounded relative to the viewport so side-panel height
-cannot stretch the canvas and hide the graph below the first visible area. These visual
-semantics are readability cues for current graph structure only; they are not
+cannot stretch the canvas and hide the graph below the first visible area. Label
+visibility, graph color, node size, edge style, spotlighting, and layout
+position are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
 completion signals. Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view
 change only the visual graph viewport; they must not clear search, filters,

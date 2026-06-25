@@ -266,6 +266,8 @@ graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to
 inspect dense visual graph areas without changing course data or saved state.
 Selected-page details may include a Relationship walkthrough that explains
 explicit link kinds and directions with local page and graph-focus controls.
+The graph may hide low-context labels until selection, search, hover, or
+keyboard focus makes them useful.
 Treat it as course structure from current artifact data, not as analytics,
 recommendations, mastery, or personal progress. Generated page links may open
 the graph focused on the current page.
