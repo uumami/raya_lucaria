@@ -35,6 +35,25 @@ _GRAPH_JAVASCRIPT = r"""
   const panelToggles = Array.from(document.querySelectorAll("[data-raya-graph-toggle-panel]"));
   const status = document.getElementById("graph-status");
   const hoverStatus = document.querySelector("[data-raya-graph-hover-status]");
+  const inspectionPreview = document.querySelector("[data-raya-graph-inspection-preview]");
+  const inspectionPreviewTitle = document.querySelector(
+    "[data-raya-graph-inspection-preview-title]"
+  );
+  const inspectionPreviewMeta = document.querySelector(
+    "[data-raya-graph-inspection-preview-meta]"
+  );
+  const inspectionPreviewSummary = document.querySelector(
+    "[data-raya-graph-inspection-preview-summary]"
+  );
+  const inspectionPreviewCounts = document.querySelector(
+    "[data-raya-graph-inspection-preview-counts]"
+  );
+  const inspectionPreviewSelect = document.querySelector(
+    "[data-raya-graph-inspection-preview-select]"
+  );
+  const inspectionPreviewOpen = document.querySelector(
+    "[data-raya-graph-inspection-preview-open]"
+  );
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
   const edgeKindFilters = Array.from(
     document.querySelectorAll("[data-raya-graph-edge-kind-filter]")
@@ -1167,7 +1186,52 @@ _GRAPH_JAVASCRIPT = r"""
     return `Inspecting ${node.title || node.nav_title || node.id}: ${group ? group.title : "Course"}; ${counts.outgoingCount} outgoing link(s), ${counts.incomingCount} incoming link(s), ${counts.connectedCount} connected page(s).`;
   }
 
+  function inspectionPreviewTextFor(node) {
+    const group = groupsById.get(node.group || "");
+    return [
+      group ? group.title : "",
+      node.hierarchy_label || "",
+      node.status ? `Status: ${node.status}` : "",
+    ].filter(Boolean).join(" · ");
+  }
+
+  function inspectionPreviewCountTextFor(nodeId) {
+    const counts = relationshipCountsFor(nodeId);
+    return `${counts.outgoingCount} outgoing · ${counts.incomingCount} incoming · ${counts.connectedCount} connected`;
+  }
+
+  function renderInspectionPreview(nodeId) {
+    if (!inspectionPreview) return;
+    const node = nodesById.get(nodeId);
+    if (!node) {
+      inspectionPreview.hidden = true;
+      if (inspectionPreviewSelect) inspectionPreviewSelect.dataset.rayaGraphNode = "";
+      if (inspectionPreviewOpen) inspectionPreviewOpen.removeAttribute("href");
+      return;
+    }
+    if (inspectionPreviewTitle) {
+      inspectionPreviewTitle.textContent = node.title || node.nav_title || node.id;
+    }
+    if (inspectionPreviewMeta) {
+      inspectionPreviewMeta.textContent = inspectionPreviewTextFor(node);
+    }
+    if (inspectionPreviewSummary) {
+      inspectionPreviewSummary.textContent = node.summary || "No summary available.";
+    }
+    if (inspectionPreviewCounts) {
+      inspectionPreviewCounts.textContent = inspectionPreviewCountTextFor(node.id);
+    }
+    if (inspectionPreviewSelect) {
+      inspectionPreviewSelect.dataset.rayaGraphNode = node.id;
+    }
+    if (inspectionPreviewOpen) {
+      inspectionPreviewOpen.href = node.url || "#";
+    }
+    inspectionPreview.hidden = false;
+  }
+
   function updateInspectionDom() {
+    renderInspectionPreview(inspectedId);
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     const inspectedSpotlightIds = inspectedId
       ? new Set([inspectedId, ...inspectedConnectedIds])
@@ -1227,6 +1291,7 @@ _GRAPH_JAVASCRIPT = r"""
     }
     inspectedId = nodesById.has(nodeId) ? nodeId : "";
     if (hoverStatus) hoverStatus.textContent = inspectedId ? inspectionTextFor(inspectedId) : "";
+    renderInspectionPreview(inspectedId);
     updateInspectionDom();
   }
 
@@ -1287,6 +1352,7 @@ _GRAPH_JAVASCRIPT = r"""
       selectedId = activeResultId;
       inspectedId = activeResultId;
       renderDetail();
+      renderInspectionPreview(inspectedId);
       updateInspectionDom();
       syncGraphStateReadout();
     } else {
@@ -1317,11 +1383,13 @@ _GRAPH_JAVASCRIPT = r"""
       if (activeResultId && query && nodesById.has(activeResultId)) {
         inspectedId = activeResultId;
         if (hoverStatus) hoverStatus.textContent = inspectionTextFor(inspectedId);
+        renderInspectionPreview(inspectedId);
         updateInspectionDom();
         return;
       }
       inspectedId = "";
       if (hoverStatus) hoverStatus.textContent = "";
+      renderInspectionPreview("");
       updateInspectionDom();
     };
     if (nodeId) {
@@ -1685,6 +1753,7 @@ _GRAPH_JAVASCRIPT = r"""
     pageFocusId = "";
     pendingInitialPageFit = false;
     if (hoverStatus) hoverStatus.textContent = "";
+    renderInspectionPreview("");
     setGraphNeighborhoodFocus(false);
     renderDetail();
     render();
@@ -1793,6 +1862,10 @@ _GRAPH_JAVASCRIPT = r"""
     lastActiveEdges = activeEdges;
     if (activeResultId && !listIds.has(activeResultId)) {
       activeResultId = "";
+    }
+    if (inspectedId && !activeIds.has(inspectedId)) {
+      inspectedId = "";
+      if (hoverStatus) hoverStatus.textContent = "";
     }
     renderList(listIds);
     if (status) {
@@ -2085,6 +2158,12 @@ _GRAPH_JAVASCRIPT = r"""
   });
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
+  }
+  if (inspectionPreviewSelect) {
+    inspectionPreviewSelect.addEventListener("click", () => {
+      const nodeId = inspectionPreviewSelect.dataset.rayaGraphNode || "";
+      if (nodeId) selectGraphNode(nodeId);
+    });
   }
   if (focusNeighborhood) {
     focusNeighborhood.addEventListener("click", () => {

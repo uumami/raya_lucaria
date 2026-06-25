@@ -53,6 +53,31 @@ def _graph_node_translate(page, node_id: str) -> tuple[float, float]:
     return float(match.group(1)), float(match.group(2))
 
 
+def _click_graph_node_group(page, node_id: str, *, click_count: int = 1) -> None:
+    node = page.locator(
+        f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
+    )
+    node.scroll_into_view_if_needed()
+    box = node.bounding_box()
+    assert box is not None
+    x = box["x"] + box["width"] / 2
+    y = box["y"] + box["height"] / 2
+    assert (
+        page.evaluate(
+            """([x, y, nodeId]) => document
+              .elementFromPoint(x, y)
+              ?.closest("[data-raya-graph-node]")
+              ?.getAttribute("data-raya-graph-node") === nodeId""",
+            [x, y, node_id],
+        )
+        is True
+    )
+    if click_count == 2:
+        node.dblclick(force=True)
+    else:
+        node.click(force=True)
+
+
 def _point_distance(a: tuple[float, float], b: tuple[float, float]) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
@@ -685,6 +710,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(".raya-graph-map-panel").is_visible()
                         assert page.locator(".raya-graph-list-panel").is_visible()
                         assert page.locator(".raya-graph-inspector-panel").is_visible()
+                        preview = page.locator(
+                            "[data-raya-graph-inspection-preview]"
+                        )
+                        assert preview.is_hidden()
                         assert (
                             page.locator("#graph-layout").input_value() == "connections"
                         )
@@ -703,6 +732,79 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert root_x < reader_x
                         assert root_x < matrix_x
                         assert math_x < matrix_x
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).focus()
+                        page.wait_for_selector(
+                            "[data-raya-graph-inspection-preview]:not([hidden])"
+                        )
+                        assert "Authoring Matrix Fixture" in preview.locator(
+                            "[data-raya-graph-inspection-preview-title]"
+                        ).inner_text()
+                        assert (
+                            "Combined fixture page for copyable authoring patterns"
+                            in preview.locator(
+                                "[data-raya-graph-inspection-preview-summary]"
+                            ).inner_text()
+                        )
+                        assert "ready" in preview.locator(
+                            "[data-raya-graph-inspection-preview-meta]"
+                        ).inner_text().lower()
+                        preview_counts = preview.locator(
+                            "[data-raya-graph-inspection-preview-counts]"
+                        ).inner_text()
+                        assert "4 outgoing" in preview_counts
+                        assert "2 incoming" in preview_counts
+                        assert "4 connected" in preview_counts
+                        assert page.locator("[data-raya-graph-detail-empty]").is_visible()
+                        preview.locator(
+                            "[data-raya-graph-inspection-preview-select]"
+                        ).click()
+                        page.wait_for_selector(
+                            "[data-raya-graph-detail-panel]:not([hidden])"
+                        )
+                        assert "Authoring Matrix Fixture" in page.locator(
+                            "[data-raya-graph-detail-title]"
+                        ).inner_text()
+                        assert preview.locator(
+                            "[data-raya-graph-inspection-preview-open]"
+                        ).get_attribute("href") == page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).get_attribute("href")
+                        page.click("#graph-reset")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-inspection-preview]')
+                              ?.hasAttribute('hidden')"""
+                        )
+                        assert preview.is_hidden()
+                        page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).focus()
+                        page.wait_for_selector(
+                            "[data-raya-graph-inspection-preview]:not([hidden])"
+                        )
+                        page.locator(
+                            '[data-raya-graph-group-filter="authoring-matrix"]'
+                        ).dispatch_event("click")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-inspection-preview]')
+                              ?.hasAttribute('hidden')"""
+                        )
+                        assert preview.is_hidden()
+                        assert (
+                            page.locator("[data-raya-graph-hover-status]")
+                            .inner_text()
+                            .strip()
+                            == ""
+                        )
+                        page.click(
+                            '[data-raya-graph-group-filter="authoring-matrix"]'
+                        )
+                        page.wait_for_selector(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        )
                         canvas_height = _viewbox_values(
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
                         )[3]
@@ -970,9 +1072,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).hover()
+                        if viewport["width"] >= 520:
+                            page.locator(
+                                '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                                ".raya-graph-node-hit"
+                            ).hover()
+                        else:
+                            page.locator(
+                                '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                            ).focus()
                         page.wait_for_function(
                             """() => document
                               .querySelector('[data-raya-graph-hover-status]')
@@ -1240,9 +1348,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "#raya-graph-canvas "
                                 f'.raya-graph-edge[data-raya-graph-kind="{toggle_kind}"]'
                             ).count() == kind_count
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).hover()
+                        if viewport["width"] >= 520:
+                            page.locator(
+                                '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                                ".raya-graph-node-hit"
+                            ).hover()
+                        else:
+                            page.locator(
+                                '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                            ).focus()
                         page.wait_for_function(
                             """() => document
                               .querySelector('#raya-graph-canvas .raya-graph-node.is-dimmed') !== null"""
@@ -1254,7 +1368,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             > 0
                         )
                         page.locator(
-                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"] a'
+                            '#raya-graph-list [data-raya-graph-node="authoring-matrix"]:visible a'
                         ).focus()
                         page.wait_for_function(
                             """() => document
@@ -1263,7 +1377,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.includes('Inspecting Authoring Matrix Fixture')"""
                         )
                         page.locator(
-                            '#raya-graph-list [data-raya-graph-node="static-path"] a'
+                            '#raya-graph-list [data-raya-graph-node="static-path"]:visible a'
                         ).focus()
                         page.wait_for_function(
                             """() => document
@@ -2062,9 +2176,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "() => window.location.pathname"
                         )
                         first_graph_node = page.locator(
-                            "#raya-graph-canvas .raya-graph-node-link"
-                        ).first
-                        first_graph_node.click()
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        )
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
@@ -2092,14 +2206,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             wait_until="networkidle",
                         )
                         graph_href = page.locator(
-                            "#raya-graph-canvas [data-raya-graph-node]"
-                        ).first.evaluate(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).evaluate(
                             "node => new URL(node.getAttribute('href'), document.baseURI).href"
                         )
                         with page.expect_navigation():
-                            page.locator(
-                                "#raya-graph-canvas .raya-graph-node-link"
-                            ).first.dblclick()
+                            _click_graph_node_group(
+                                page, "authoring-matrix", click_count=2
+                            )
                         assert page.url == graph_href
                         page.goto(
                             f"{base_url}/_raya/graph/index.html",

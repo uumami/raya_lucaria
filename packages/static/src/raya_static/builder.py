@@ -3926,6 +3926,25 @@ def _render_graph_surface(
                 '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
+            (
+                '<section class="raya-graph-inspection-preview" '
+                "data-raya-graph-inspection-preview hidden "
+                'aria-label="Graph page preview" aria-live="polite">'
+                '<div class="raya-graph-inspection-preview-header">'
+                "<h2 data-raya-graph-inspection-preview-title>Page preview</h2>"
+                "<p data-raya-graph-inspection-preview-meta></p>"
+                "</div>"
+                "<p data-raya-graph-inspection-preview-summary></p>"
+                '<p class="raya-graph-inspection-preview-counts" '
+                "data-raya-graph-inspection-preview-counts></p>"
+                '<p class="raya-graph-inspection-preview-actions">'
+                '<button type="button" data-raya-graph-inspection-preview-select>'
+                "Inspect page</button>"
+                '<a data-raya-graph-inspection-preview-open href="../../index.html">'
+                "Open page</a>"
+                "</p>"
+                "</section>"
+            ),
             "</section>",
             (
                 '<aside id="raya-graph-inspector-panel" '

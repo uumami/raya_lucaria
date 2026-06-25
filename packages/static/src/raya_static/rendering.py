@@ -1524,6 +1524,41 @@ img {
   min-height: 1.6rem;
   padding-left: 0.65rem;
 }
+.raya-graph-inspection-preview {
+  background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  margin: 0.65rem 0;
+  padding: 0.8rem 0.9rem;
+  pointer-events: none;
+}
+.raya-graph-inspection-preview-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  justify-content: space-between;
+}
+.raya-graph-inspection-preview h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.raya-graph-inspection-preview p {
+  margin: 0.4rem 0 0;
+}
+.raya-graph-inspection-preview [data-raya-graph-inspection-preview-meta],
+.raya-graph-inspection-preview-counts {
+  color: var(--raya-color-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.raya-graph-inspection-preview-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  pointer-events: auto;
+}
 .raya-graph-legend {
   align-items: center;
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
