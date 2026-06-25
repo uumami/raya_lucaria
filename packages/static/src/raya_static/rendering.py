@@ -3547,13 +3547,29 @@ mjx-container[display="true"] {
     width: 1px;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map {
+    all: revert;
+    background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-page));
+    border: 1px solid color-mix(in srgb, var(--raya-color-border) 62%, var(--raya-color-page));
+    border-radius: 0.375rem;
+    bottom: 0;
+    box-sizing: border-box;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
-    inset: 0 auto 0 0;
+    color: var(--raya-color-text);
+    display: block;
+    font-family: var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    left: 0;
     margin: 0;
     max-height: 100vh;
     overflow: auto;
+    overscroll-behavior: contain;
+    padding: var(--raya-space-panel);
     position: fixed;
-    width: min(88vw, 24rem);
+    right: auto;
+    scrollbar-gutter: stable;
+    top: 0;
+    width: 343px;
     z-index: 80;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-backdrop {
@@ -3595,6 +3611,26 @@ mjx-container[display="true"] {
   }
   .raya-sequence-card-next {
     text-align: left;
+  }
+}
+@media (max-width: 380px) {
+  html[data-raya-course-map-drawer="open"] .raya-course-map {
+    width: 320px;
+  }
+}
+@media (max-width: 340px) {
+  html[data-raya-course-map-drawer="open"] .raya-course-map {
+    width: 296px;
+  }
+}
+@media (max-width: 312px) {
+  html[data-raya-course-map-drawer="open"] .raya-course-map {
+    width: 280px;
+  }
+}
+@media (max-width: 290px) {
+  html[data-raya-course-map-drawer="open"] .raya-course-map {
+    width: 260px;
   }
 }
 @media (max-width: 520px) {

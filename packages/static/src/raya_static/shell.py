@@ -109,6 +109,59 @@ _SHELL_JAVASCRIPT = r"""
     element.inert = inert;
   }
 
+  function focusableElementsWithin(container) {
+    return Array.from(
+      container.querySelectorAll(
+        "a[href], button, input, select, textarea, summary, [tabindex]"
+      )
+    ).filter((element) => {
+      if (element.disabled || element.getAttribute("tabindex") === "-1") {
+        return false;
+      }
+      const style = window.getComputedStyle(element);
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        element.getClientRects().length > 0
+      );
+    });
+  }
+
+  function trapCourseMapDrawerFocus(event) {
+    if (
+      event.key !== "Tab" ||
+      root.dataset.rayaCourseMapDrawer !== "open" ||
+      isDesktopShell()
+    ) {
+      return false;
+    }
+    const focusable = focusableElementsWithin(map);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      map.focus();
+      return true;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const activeElement = document.activeElement;
+    if (!map.contains(activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+      return true;
+    }
+    if (event.shiftKey && activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return true;
+    }
+    if (!event.shiftKey && activeElement === last) {
+      event.preventDefault();
+      first.focus();
+      return true;
+    }
+    return false;
+  }
+
   function clearCourseMapFilter() {
     if (mapFilter && mapFilter.value) {
       mapFilter.value = "";
@@ -118,15 +171,34 @@ _SHELL_JAVASCRIPT = r"""
 
   function syncCourseMapDrawerState() {
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
+    const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
+    const commandExpanded = !isDesktopShell() ? drawerOpen : structuralExpanded;
+    toggleButtons
+      .filter((button) => button.classList.contains("raya-command-map"))
+      .forEach((button) => {
+        button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
+        button.setAttribute(
+          "aria-label",
+          !isDesktopShell()
+            ? commandExpanded
+              ? "Close course map"
+              : "Open course map"
+            : commandExpanded
+              ? "Collapse course map"
+              : "Expand course map"
+        );
+      });
     if (mapDrawerBackdrop) {
       mapDrawerBackdrop.hidden = !drawerOpen;
     }
     if (!isDesktopShell()) {
       setElementInert(map, !drawerOpen);
+      setFocusableDescendantsEnabled(map, drawerOpen);
       map.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
       return;
     }
     setElementInert(map, false);
+    setFocusableDescendantsEnabled(map, true);
     map.setAttribute("aria-hidden", "false");
     if (root.dataset.rayaCourseMapDrawer !== "closed") {
       root.dataset.rayaCourseMapDrawer = "closed";
@@ -642,6 +714,9 @@ _SHELL_JAVASCRIPT = r"""
 
   document.addEventListener("keydown", (event) => {
     if (handleSequenceKeyboardNavigation(event)) {
+      return;
+    }
+    if (trapCourseMapDrawerFocus(event)) {
       return;
     }
     if (event.key === "Escape" && root.dataset.rayaCourseMapDrawer === "open") {

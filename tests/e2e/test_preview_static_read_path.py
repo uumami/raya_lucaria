@@ -4086,7 +4086,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["practiceHref"] == "_raya/practice/index.html"
                         assert state["tasksHref"] == "_raya/tasks/index.html"
                         assert state["scheduleHref"] == "_raya/schedule/index.html"
-                        assert state["mapExpanded"] == "true"
+                        assert state["mapExpanded"] == (
+                            "true" if viewport["width"] >= 1280 else "false"
+                        )
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
@@ -4113,7 +4115,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               };
                             }"""
                         )
-                        assert collapsed_state["expanded"] == "false"
+                        assert collapsed_state["expanded"] == (
+                            "false" if viewport["width"] >= 1280 else "true"
+                        )
                         assert collapsed_state["label"] == "Course map"
                         assert collapsed_state["height"] >= 36
                         assert collapsed_state["height"] < 72
@@ -4122,6 +4126,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             collapsed_state["topBarWidth"]
                             <= collapsed_state["viewportWidth"]
                         )
+                        if viewport["width"] < 1280:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                            )
                         page.click(".raya-command-size")
                         after_size = page.evaluate(
                             """() => ({
@@ -4405,11 +4414,34 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                         else:
                             if viewport["width"] >= 900:
                                 assert article["width"] >= 700
-                            assert article["y"] < course_map["y"] < learning_rail["y"]
-                            _assert_bounded_scroll_region(page, "nav.raya-course-map")
+                            assert article["y"] < learning_rail["y"]
+                            drawer_state = page.evaluate(
+                                """() => {
+                                  const root = document.documentElement;
+                                  const map = document.querySelector('#raya-course-map');
+                                  const command = document.querySelector('.raya-command-map');
+                                  return {
+                                    drawer: root.dataset.rayaCourseMapDrawer,
+                                    mapHidden: map.getAttribute('aria-hidden'),
+                                    mapInert: map.inert,
+                                    commandExpanded: command.getAttribute('aria-expanded'),
+                                  };
+                                }"""
+                            )
+                            assert drawer_state == {
+                                "drawer": "closed",
+                                "mapHidden": "true",
+                                "mapInert": True,
+                                "commandExpanded": "false",
+                            }
                             _assert_bounded_scroll_region(
                                 page, "aside.raya-learning-rail"
                             )
+                            page.click(".raya-command-map")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
+                            _assert_bounded_scroll_region(page, "nav.raya-course-map")
                             mobile_course_list = page.locator(
                                 "#raya-course-map .raya-course-map-list"
                             ).bounding_box()
@@ -4422,7 +4454,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert mobile_course_link is not None
                             assert mobile_course_link["width"] > 0
                             assert mobile_course_link["height"] > 0
-                            page.click(".raya-course-map-toggle")
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                            )
                             _assert_no_horizontal_overflow(page)
                             mobile_grid_columns = page.evaluate(
                                 """() => getComputedStyle(
@@ -4756,6 +4791,70 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         "firstTopicVisible": False,
                     }
 
+                    page.click('[data-raya-course-map-action="expand-all"]')
+                    expanded_all = page.evaluate(
+                        """() => ({
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstUnitChildrenHidden: document
+                            .querySelector('#raya-map-children-2-first-unit')
+                            ?.hasAttribute('hidden'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert expanded_all == {
+                        "firstUnitExpanded": "true",
+                        "firstUnitChildrenHidden": False,
+                        "firstTopicVisible": True,
+                    }
+
+                    page.click('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                    page.click('[data-raya-course-map-action="less"]')
+                    reduced_to_current = page.evaluate(
+                        """() => ({
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert reduced_to_current == {
+                        "firstUnitExpanded": "true",
+                        "firstTopicVisible": True,
+                        "currentVisible": True,
+                    }
+
+                    page.fill("#raya-course-map-filter", "zz-no-match")
+                    page.click('[data-raya-course-map-action="current"]')
+                    current_action = page.evaluate(
+                        """() => ({
+                          filterValue: document.querySelector('#raya-course-map-filter')?.value,
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          firstTopicVisible: !!document
+                            .querySelector('[data-raya-map-node="first-topic"]')
+                            ?.checkVisibility(),
+                          emptyVisible: !!document
+                            .querySelector('[data-raya-map-filter-empty]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert current_action == {
+                        "filterValue": "",
+                        "firstUnitExpanded": "true",
+                        "firstTopicVisible": True,
+                        "emptyVisible": False,
+                    }
+
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
@@ -4774,7 +4873,7 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         })"""
                     )
                     assert compact == {
-                        "firstTopicVisible": False,
+                        "firstTopicVisible": True,
                         "filterVisible": False,
                         "emptyVisible": False,
                     }
@@ -4822,7 +4921,7 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     )
                     assert compact_after_filter == {
                         "filterValue": "",
-                        "visibleLinks": 3,
+                        "visibleLinks": 2,
                         "filterVisible": False,
                         "emptyVisible": False,
                     }
@@ -6358,12 +6457,18 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                             articleY: article.getBoundingClientRect().y,
                             mapY: map.getBoundingClientRect().y,
                             railY: rail.getBoundingClientRect().y,
+                            drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
+                            mapHidden: map.getAttribute('aria-hidden'),
+                            mapInert: map.inert,
                             bodyHidden: body.getAttribute('aria-hidden'),
                             bodyInert: body.inert,
                           };
                         }"""
                     )
-                    assert tablet["articleY"] < tablet["mapY"] < tablet["railY"]
+                    assert tablet["articleY"] < tablet["railY"]
+                    assert tablet["drawerState"] == "closed"
+                    assert tablet["mapHidden"] == "true"
+                    assert tablet["mapInert"] is True
                     assert tablet["bodyHidden"] == "false"
                     assert tablet["bodyInert"] is False
 
@@ -6494,49 +6599,137 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     topbar = _bounding_box(page, ".raya-top-command-bar")
                     assert topbar["height"] <= 220
                     article = _bounding_box(page, "article.raya-main-article")
-                    course_map = _bounding_box(page, "nav.raya-course-map")
                     rail = _bounding_box(page, "aside.raya-learning-rail")
-                    assert article["y"] < course_map["y"] < rail["y"]
+                    assert article["y"] < rail["y"]
                     assert not page.locator(
                         "#raya-course-map .raya-course-map-toggle"
                     ).is_visible()
                     assert (
-                        page.locator(".raya-course-map-toggle").first.get_attribute(
+                        page.locator(".raya-command-map").first.get_attribute(
                             "aria-expanded"
                         )
-                        == "true"
+                        == "false"
                     )
-                    expanded = page.evaluate(
+                    closed_drawer = page.evaluate(
                         """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
+                          mapState: document.documentElement.dataset.rayaCourseMap,
+                          drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
+                          mapHidden: document.querySelector('#raya-course-map')
+                            ?.getAttribute('aria-hidden'),
+                          mapInert: document.querySelector('#raya-course-map')?.inert,
                           mapTabIndex: document.querySelector('#raya-course-map')
                             ?.getAttribute('tabindex'),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
-                    assert expanded["state"] == "expanded"
-                    assert expanded["mapTabIndex"] == "-1"
-                    assert expanded["linkTabIndexes"]
-                    assert set(expanded["linkTabIndexes"]) == {None}
+                    assert closed_drawer["mapState"] == "expanded"
+                    assert closed_drawer["drawerState"] == "closed"
+                    assert closed_drawer["mapHidden"] == "true"
+                    assert closed_drawer["mapInert"] is True
+                    assert closed_drawer["mapTabIndex"] == "-1"
+                    assert closed_drawer["linkTabIndexes"]
+                    assert set(closed_drawer["linkTabIndexes"]) == {"-1"}
 
-                    page.click(".raya-course-map-toggle")
+                    page.click(".raya-command-map")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                    )
                     assert (
-                        page.locator(".raya-course-map-toggle").first.get_attribute(
+                        page.locator(".raya-command-map").first.get_attribute(
                             "aria-expanded"
                         )
-                        == "false"
+                        == "true"
                     )
                     _assert_no_horizontal_overflow(page)
-                    collapsed = page.evaluate(
+                    opened_drawer = page.evaluate(
                         """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
+                          drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
+                          mapHidden: document.querySelector('#raya-course-map')
+                            ?.getAttribute('aria-hidden'),
+                          mapInert: document.querySelector('#raya-course-map')?.inert,
+                          mapBox: (() => {
+                            const box = document.querySelector('#raya-course-map')
+                              ?.getBoundingClientRect();
+                            return box ? { x: box.x, width: box.width, height: box.height } : null;
+                          })(),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
                     )
-                    assert collapsed["state"] == "collapsed"
-                    assert set(collapsed["linkTabIndexes"]) == {None}
+                    assert opened_drawer["drawerState"] == "open"
+                    assert opened_drawer["mapHidden"] == "false"
+                    assert opened_drawer["mapInert"] is False
+                    assert opened_drawer["mapBox"]["x"] == 0
+                    assert opened_drawer["mapBox"]["width"] >= 300
+                    assert opened_drawer["mapBox"]["height"] >= 600
+                    assert set(opened_drawer["linkTabIndexes"]) == {None}
+
+                    page.keyboard.press("Shift+Tab")
+                    reverse_trap = page.evaluate(
+                        """() => ({
+                          activeInsideMap: document
+                            .querySelector('#raya-course-map')
+                            ?.contains(document.activeElement),
+                          activeText: document.activeElement?.textContent?.trim() || '',
+                        })"""
+                    )
+                    assert reverse_trap["activeInsideMap"] is True
+                    assert reverse_trap["activeText"]
+
+                    for _ in range(12):
+                        page.keyboard.press("Tab")
+                        tab_state = page.evaluate(
+                            """() => ({
+                              drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
+                              activeInsideMap: document
+                                .querySelector('#raya-course-map')
+                                ?.contains(document.activeElement),
+                              activeInCommandBar: !!document.activeElement
+                                ?.closest('.raya-top-command-bar'),
+                              activeInArticle: !!document.activeElement
+                                ?.closest('article.raya-main-article'),
+                              activeInRail: !!document.activeElement
+                                ?.closest('#raya-learning-rail'),
+                            })"""
+                        )
+                        assert tab_state == {
+                            "drawerState": "open",
+                            "activeInsideMap": True,
+                            "activeInCommandBar": False,
+                            "activeInArticle": False,
+                            "activeInRail": False,
+                        }
+
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                    )
+                    escaped_drawer = page.evaluate(
+                        """() => ({
+                          drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
+                          mapHidden: document.querySelector('#raya-course-map')
+                            ?.getAttribute('aria-hidden'),
+                          mapInert: document.querySelector('#raya-course-map')?.inert,
+                          commandFocused: document.activeElement?.classList
+                            ?.contains('raya-command-map'),
+                          railBodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          railBodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .map((link) => link.getAttribute('tabindex')),
+                        })"""
+                    )
+                    assert escaped_drawer["linkTabIndexes"]
+                    assert set(escaped_drawer.pop("linkTabIndexes")) == {"-1"}
+                    assert escaped_drawer == {
+                        "drawerState": "closed",
+                        "mapHidden": "true",
+                        "mapInert": True,
+                        "commandFocused": True,
+                        "railBodyHidden": "false",
+                        "railBodyInert": False,
+                    }
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(
