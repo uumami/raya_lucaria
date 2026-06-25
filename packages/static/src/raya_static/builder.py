@@ -3995,6 +3995,14 @@ def _render_graph_surface(
                 '<p class="raya-graph-detail-neighborhood" '
                 "data-raya-graph-detail-neighborhood></p>"
             ),
+            (
+                '<section class="raya-graph-detail-relationship-chips" '
+                "data-raya-graph-detail-relationship-chips hidden>"
+                "<h3>Relationship types</h3>"
+                '<div class="raya-graph-detail-relationship-chip-list" '
+                "data-raya-graph-detail-relationship-chip-list></div>"
+                "</section>"
+            ),
             '<p class="raya-graph-detail-actions">',
             (
                 '<a class="raya-graph-detail-open-primary" '

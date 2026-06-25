@@ -50,6 +50,12 @@ _GRAPH_JAVASCRIPT = r"""
     "[data-raya-graph-detail-study-object-list]"
   );
   const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
+  const detailRelationshipChips = document.querySelector(
+    "[data-raya-graph-detail-relationship-chips]"
+  );
+  const detailRelationshipChipList = document.querySelector(
+    "[data-raya-graph-detail-relationship-chip-list]"
+  );
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
@@ -415,6 +421,46 @@ _GRAPH_JAVASCRIPT = r"""
       .replace(/[^a-z0-9-]+/g, "-")
       .replace(/^-+|-+$/g, "");
     return kind || "link";
+  }
+
+  function relationshipChipLabel(kind, direction) {
+    return `${edgeKindLabel(kind)} ${direction}`;
+  }
+
+  function relationshipChipCountsFor(nodeId) {
+    const counts = new Map();
+    edges.forEach((edge) => {
+      const kind = edgeKind(edge);
+      if (edge.from === nodeId) {
+        const key = `${kind}:out`;
+        counts.set(key, {
+          kind,
+          direction: "out",
+          count: (counts.get(key)?.count || 0) + 1,
+        });
+      }
+      if (edge.to === nodeId) {
+        const key = `${kind}:in`;
+        counts.set(key, {
+          kind,
+          direction: "in",
+          count: (counts.get(key)?.count || 0) + 1,
+        });
+      }
+    });
+    const kindOrder = ["navigation", "content", "prerequisite", "parent"];
+    const directionOrder = ["out", "in"];
+    return Array.from(counts.values()).sort((left, right) => {
+      const leftKind = kindOrder.indexOf(left.kind);
+      const rightKind = kindOrder.indexOf(right.kind);
+      const kindDelta = (leftKind < 0 ? kindOrder.length : leftKind) -
+        (rightKind < 0 ? kindOrder.length : rightKind);
+      if (kindDelta !== 0) return kindDelta;
+      const directionDelta = directionOrder.indexOf(left.direction) -
+        directionOrder.indexOf(right.direction);
+      if (directionDelta !== 0) return directionDelta;
+      return left.kind.localeCompare(right.kind);
+    });
   }
 
   function edgeKindClass(edge) {
@@ -1474,6 +1520,29 @@ _GRAPH_JAVASCRIPT = r"""
     detailStudyObjects.hidden = false;
   }
 
+  function renderRelationshipChips(nodeId) {
+    if (!detailRelationshipChips || !detailRelationshipChipList) return;
+    detailRelationshipChipList.replaceChildren();
+    if (!nodeId) {
+      detailRelationshipChips.hidden = true;
+      return;
+    }
+    const chips = relationshipChipCountsFor(nodeId);
+    if (!chips.length) {
+      detailRelationshipChips.hidden = true;
+      return;
+    }
+    chips.forEach((chip) => {
+      const item = document.createElement("span");
+      item.className = "raya-graph-detail-relationship-chip";
+      item.setAttribute("data-raya-graph-relationship-kind", chip.kind);
+      item.setAttribute("data-raya-graph-relationship-direction", chip.direction);
+      item.textContent = `${relationshipChipLabel(chip.kind, chip.direction)} ${chip.count}`;
+      detailRelationshipChipList.appendChild(item);
+    });
+    detailRelationshipChips.hidden = false;
+  }
+
   function setGraphNeighborhoodFocus(enabled) {
     neighborhoodFocus = Boolean(enabled && selectedId);
     root.setAttribute(
@@ -1498,6 +1567,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
       renderDetailStudyObjects(null);
+      renderRelationshipChips("");
       if (detailNeighborhood) detailNeighborhood.textContent = "";
       setOptionalDetailLink(detailTasksLink, "", "Open tasks");
       setOptionalDetailLink(detailScheduleLink, "", "Open schedule");
@@ -1529,6 +1599,7 @@ _GRAPH_JAVASCRIPT = r"""
       detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
     }
     renderDetailStudyObjects(node);
+    renderRelationshipChips(node.id);
     if (detailNeighborhood) {
       const counts = relationshipCountsFor(node.id);
       detailNeighborhood.textContent = `Explicit links: ${counts.outgoingCount} outgoing, ${counts.incomingCount} incoming, ${counts.connectedCount} connected.`;

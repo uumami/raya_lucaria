@@ -924,6 +924,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-next" in graph_html
     assert "raya-graph-detail-neighborhood" in graph_html
     assert "data-raya-graph-detail-neighborhood" in graph_html
+    assert "raya-graph-detail-relationship-chips" in graph_html
+    assert "data-raya-graph-detail-relationship-chips" in graph_html
+    assert "Relationship types" in graph_html
     assert "data-raya-graph-detail-outgoing" in graph_html
     assert "data-raya-graph-detail-incoming" in graph_html
     assert "data-raya-graph-detail-clear" in graph_html
@@ -1131,6 +1134,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "initializeGraphStateFromUrl" in graph_script
     assert "updateGraphUrlState" in graph_script
     assert "updateGraphStateReadout" in graph_script
+    assert "renderRelationshipChips" in graph_script
+    assert "relationshipChipCountsFor" in graph_script
     assert "history.replaceState" in graph_script
     assert 'params.get("q")' in graph_script
     assert 'params.get("layout")' in graph_script
@@ -1146,6 +1151,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-edge-kind-filter" in stylesheet
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert ".raya-graph-detail-open-primary" in stylesheet
+    assert ".raya-graph-detail-relationship-chip" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

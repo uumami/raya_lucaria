@@ -2173,6 +2173,21 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ) in page.locator(
                             "[data-raya-graph-detail-neighborhood]"
                         ).inner_text()
+                        relationship_chips = page.locator(
+                            "[data-raya-graph-detail-relationship-chips]"
+                        )
+                        assert relationship_chips.is_visible()
+                        chip_texts = relationship_chips.locator(
+                            ".raya-graph-detail-relationship-chip"
+                        ).evaluate_all(
+                            "nodes => nodes.map((node) => node.textContent.trim())"
+                        )
+                        assert "Content out 3" in chip_texts
+                        assert "Content in 1" in chip_texts
+                        assert "Navigation in 1" in chip_texts
+                        assert "Parent out 1" in chip_texts
+                        assert len(chip_texts) == 4
+                        assert sum(int(text.split().pop()) for text in chip_texts) == 6
                         assert page.locator(
                             '#raya-graph-list [data-raya-graph-node="authoring-matrix"]'
                         ).evaluate("node => node.classList.contains('is-active')")
@@ -2328,6 +2343,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(
                             "[data-raya-graph-detail-empty]"
                         ).is_visible()
+                        assert page.locator(
+                            "[data-raya-graph-detail-relationship-chips]"
+                        ).is_hidden()
                         assert requested_urls == []
                     finally:
                         page.close()

@@ -1721,6 +1721,35 @@ img {
   color: var(--raya-color-muted);
   font-size: 0.85rem;
 }
+.raya-graph-detail-relationship-chips {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem;
+}
+.raya-graph-detail-relationship-chips h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.45rem;
+}
+.raya-graph-detail-relationship-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.raya-graph-detail-relationship-chip {
+  align-items: center;
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 0.35rem;
+  line-height: 1.2;
+  min-height: 1.8rem;
+  padding: 0.25rem 0.55rem;
+}
 .raya-graph-detail-actions {
   display: flex;
   flex-wrap: wrap;
