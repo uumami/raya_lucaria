@@ -1918,13 +1918,6 @@ img {
   list-style: none;
   padding-left: 0;
 }
-.raya-graph-list li {
-  border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 62%, transparent);
-  padding: 0.55rem 0;
-}
-.raya-graph-list li:last-child {
-  border-bottom: 0;
-}
 .raya-graph-group-swatch {
   background: var(--raya-graph-group-color, var(--raya-color-accent));
   border: 1px solid color-mix(in srgb, var(--raya-color-text) 24%, transparent);
@@ -2638,13 +2631,50 @@ img {
   padding-left: 0;
 }
 .raya-graph-list li {
+  border: 1px solid var(--raya-color-border);
+  border-left: 4px solid var(--raya-color-accent);
+  border-radius: 0.5rem;
   break-inside: avoid;
-  margin-bottom: 0.35rem;
+  display: block;
+  margin: 0 0 0.65rem;
+  padding: 0.7rem 0.75rem;
+}
+.raya-graph-list-title-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.raya-graph-list-title-row a {
+  font-weight: 850;
+  min-width: 0;
+}
+.raya-graph-list-status {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  text-transform: uppercase;
+}
+.raya-graph-list-metrics {
+  color: var(--raya-color-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  margin-top: 0.35rem;
 }
 .raya-graph-list-summary {
   color: var(--raya-color-muted);
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin-top: 0.45rem;
 }
 .raya-graph-list li.is-active a {
   color: var(--raya-color-success);

@@ -1900,6 +1900,11 @@ _GRAPH_JAVASCRIPT = r"""
     return item.getAttribute("data-raya-graph-node") || "";
   }
 
+  function graphListHasFocus() {
+    const active = document.activeElement;
+    return Boolean(active && list && list.contains(active));
+  }
+
   function currentVisibleListIds() {
     return Array.from(list.querySelectorAll("[data-raya-graph-node]"))
       .filter((item) => !item.hidden)
@@ -2805,7 +2810,10 @@ _GRAPH_JAVASCRIPT = r"""
         window.clearTimeout(pendingSelectTimer);
         openGraphNode(node.id);
       });
-      link.addEventListener("mouseenter", () => inspectGraphNode(node.id, { bubble: true }));
+      link.addEventListener("mouseenter", () => {
+        if (graphListHasFocus()) return;
+        inspectGraphNode(node.id, { bubble: true });
+      });
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
       link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true, bubble: true }));
       link.addEventListener("blur", () => clearGraphInspection(node.id));

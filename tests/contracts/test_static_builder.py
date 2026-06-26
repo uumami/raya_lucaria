@@ -1173,6 +1173,17 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-state-url" in graph_html
     assert "data-raya-graph-node" in graph_html
     assert "raya-graph-list-metrics" in graph_html
+    assert "raya-graph-list-title-row" in graph_html
+    assert "raya-graph-list-status" in graph_html
+    assert "raya-graph-list-relationship-counts" in graph_html
+    assert "raya-graph-list-stable-id" in graph_html
+    assert '<span class="raya-graph-list-status">ready</span>' in graph_html
+    assert graph_html.index("raya-graph-list-title-row") < graph_html.index(
+        "raya-graph-list-metrics"
+    )
+    assert graph_html.index("raya-graph-list-metrics") < graph_html.index(
+        "raya-graph-list-summary"
+    )
     assert 'style="--raya-graph-group-color:' in graph_html
     assert "raya-graph-group-swatch" in graph_html
     assert "Backlinks:" in graph_html

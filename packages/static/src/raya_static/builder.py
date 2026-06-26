@@ -4281,11 +4281,15 @@ def _render_graph_surface(
         edge_count = edge_counts[node["id"]]
         node_items.append(
             f'<li data-raya-graph-node="{html.escape(node["id"], quote=True)}">'
+            '<div class="raya-graph-list-title-row">'
             f'<a href="{html.escape(node["url"])}">{html.escape(node["title"])}</a>'
+            f'<span class="raya-graph-list-status">{html.escape(node["status"])}</span>'
+            "</div>"
             '<span class="raya-graph-list-metrics">'
-            f"Stable ID {html.escape(node['stable_id'])}; "
-            f"Status: {html.escape(node['status'])}; "
-            f"Explicit links: {edge_count}; Backlinks: {backlink_count}"
+            f'<span class="raya-graph-list-stable-id">Stable ID '
+            f'{html.escape(node["stable_id"])}</span>'
+            f'<span class="raya-graph-list-relationship-counts">'
+            f"Explicit links: {edge_count}; Backlinks: {backlink_count}</span>"
             "</span>"
             f'<span class="raya-graph-list-summary">{html.escape(node["summary"])}</span>'
             "</li>"

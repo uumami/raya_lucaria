@@ -752,6 +752,53 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.locator(".raya-graph-workspace").is_visible()
                         assert page.locator(".raya-graph-map-panel").is_visible()
                         assert page.locator(".raya-graph-list-panel").is_visible()
+                        list_card_probe = page.evaluate(
+                            """() => {
+                              const item = document.querySelector(
+                                '#raya-graph-list [data-raya-graph-node="reader-ux"]'
+                              );
+                              const titleRow = item?.querySelector('.raya-graph-list-title-row');
+                              const metrics = item?.querySelector('.raya-graph-list-metrics');
+                              const summary = item?.querySelector('.raya-graph-list-summary');
+                              const status = item?.querySelector('.raya-graph-list-status');
+                              const box = (node) => {
+                                const rect = node?.getBoundingClientRect();
+                                return rect
+                                  ? {
+                                      top: rect.top,
+                                      left: rect.left,
+                                      width: rect.width,
+                                      height: rect.height,
+                                    }
+                                  : null;
+                              };
+                              return {
+                                titleRow: box(titleRow),
+                                metrics: box(metrics),
+                                summary: box(summary),
+                                status: box(status),
+                                titleDisplay: getComputedStyle(titleRow).display,
+                                metricsDisplay: getComputedStyle(metrics).display,
+                                summaryDisplay: getComputedStyle(summary).display,
+                                statusText: status?.textContent?.trim(),
+                                summaryText: summary?.textContent?.trim(),
+                              };
+                            }"""
+                        )
+                        assert list_card_probe["titleDisplay"] == "flex"
+                        assert list_card_probe["metricsDisplay"] in {"flex", "grid"}
+                        assert list_card_probe["summaryDisplay"] == "block"
+                        assert list_card_probe["statusText"] == "ready"
+                        assert "projection residuals" in list_card_probe["summaryText"]
+                        assert (
+                            list_card_probe["metrics"]["top"]
+                            > list_card_probe["titleRow"]["top"]
+                        )
+                        assert (
+                            list_card_probe["summary"]["top"]
+                            > list_card_probe["metrics"]["top"]
+                        )
+                        assert list_card_probe["status"]["width"] >= 42
                         assert page.locator(".raya-graph-inspector-panel").is_visible()
                         preview = page.locator(
                             "[data-raya-graph-inspection-preview]"
@@ -1707,6 +1754,35 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('Static Path')"""
                         )
+                        list_focus_over_hover = page.locator(
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                        ).evaluate(
+                            """node => {
+                              const target = node.querySelector('.raya-graph-node-hit') || node;
+                              target.dispatchEvent(new MouseEvent('mouseenter', {
+                                bubbles: true,
+                                cancelable: true,
+                              }));
+                              return {
+                                activeNode: document.activeElement
+                                  ?.closest('[data-raya-graph-node]')
+                                  ?.getAttribute('data-raya-graph-node'),
+                                hoverStatus: document
+                                  .querySelector('[data-raya-graph-hover-status]')
+                                  ?.textContent,
+                                inspectedListNodes: Array.from(
+                                  document.querySelectorAll(
+                                    '#raya-graph-list [data-raya-graph-node].is-inspected'
+                                  )
+                                ).map((item) => item.getAttribute('data-raya-graph-node')),
+                              };
+                            }"""
+                        )
+                        assert list_focus_over_hover["activeNode"] == "static-path"
+                        assert "Static Path" in list_focus_over_hover["hoverStatus"]
+                        assert list_focus_over_hover["inspectedListNodes"] == [
+                            "static-path"
+                        ]
                         assert (
                             page.locator(
                                 "#raya-graph-canvas .raya-graph-node.is-dimmed"
