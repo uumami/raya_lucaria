@@ -85,10 +85,10 @@ from raya_schema.wikilinks import (
 from raya_schema.yaml_io import load_yaml_file
 from raya_static.accessibility import (
     ACCESSIBILITY_RESOURCE_PATH,
+    COMFORT_PREPAINT_JS_NAME,
     OPEN_DYSLEXIC_CSS_NAME,
     OPEN_DYSLEXIC_JS_NAME,
     OPEN_DYSLEXIC_VOLATILE_JS_NAME,
-    comfort_prepaint_script,
     open_dyslexic_resources,
 )
 from raya_static.discovery import (
@@ -880,6 +880,10 @@ def _render_page(
         page.output_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
     )
+    comfort_prepaint_js_href = _relative_href(
+        page.output_path,
+        f"{ACCESSIBILITY_RESOURCE_PATH}/{COMFORT_PREPAINT_JS_NAME}",
+    )
     accessibility_js_href = _relative_href(
         page.output_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_JS_NAME}",
@@ -999,7 +1003,7 @@ def _render_page(
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
-            f"<script>{comfort_prepaint_script()}</script>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -7468,6 +7472,7 @@ def _write_rich_render_resources(
     accessibility_dir = site_dir / ACCESSIBILITY_RESOURCE_PATH
     accessibility_dir.mkdir(parents=True, exist_ok=True)
     css_path = accessibility_dir / OPEN_DYSLEXIC_CSS_NAME
+    prepaint_js_path = accessibility_dir / COMFORT_PREPAINT_JS_NAME
     js_path = accessibility_dir / OPEN_DYSLEXIC_JS_NAME
     volatile_js_path = accessibility_dir / OPEN_DYSLEXIC_VOLATILE_JS_NAME
     font_dir = accessibility_dir / "fonts"
@@ -7484,11 +7489,13 @@ def _write_rich_render_resources(
         )
         return
     css_path.write_text(accessibility.css, encoding="utf-8")
+    prepaint_js_path.write_text(accessibility.prepaint_javascript, encoding="utf-8")
     js_path.write_text(accessibility.javascript, encoding="utf-8")
     volatile_js_path.write_text(accessibility.volatile_javascript, encoding="utf-8")
     with resources.as_file(accessibility.source_font) as source_font:
         shutil.copy2(source_font, font_path)
     report.wrote_output(css_path)
+    report.wrote_output(prepaint_js_path)
     report.wrote_output(js_path)
     report.wrote_output(volatile_js_path)
     report.wrote_output(font_path)

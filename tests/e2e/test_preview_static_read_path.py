@@ -8243,6 +8243,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         accessibility_js = _fetch_text(
             f"{base_url}/_raya/render/accessibility/open-dyslexic-toggle.js"
         )
+        comfort_prepaint_js = _fetch_text(
+            f"{base_url}/_raya/render/accessibility/comfort-prepaint.js"
+        )
         index_skin_css = _fetch_stylesheet_containing(
             index_url,
             index_html,
@@ -8269,10 +8272,11 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert 'aria-pressed="false"' in index_html
     assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
+    assert 'src="_raya/render/accessibility/comfort-prepaint.js"' in index_html
     assert 'src="_raya/render/accessibility/open-dyslexic-toggle.js"' in index_html
-    assert 'localStorage.getItem("raya:open-dyslexic")' in index_html
-    assert 'localStorage.getItem("raya:text-size")' in index_html
-    assert index_html.index('localStorage.getItem("raya:open-dyslexic")') < (
+    assert 'localStorage.getItem("raya:open-dyslexic")' not in index_html
+    assert 'localStorage.getItem("raya:text-size")' not in index_html
+    assert index_html.index('src="_raya/render/accessibility/comfort-prepaint.js"') < (
         index_html.index('href="_raya/render/rich.css"')
     )
     for surface_name, surface_html in volatile_surface_html.items():
@@ -8284,6 +8288,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         )
     assert "@font-face" in accessibility_css
     assert "OpenDyslexic" in accessibility_css
+    assert 'localStorage.getItem("raya:open-dyslexic")' in comfort_prepaint_js
+    assert 'localStorage.getItem("raya:text-size")' in comfort_prepaint_js
+    assert "fetch(" not in comfort_prepaint_js
     assert "localStorage" in accessibility_js
     assert "data-raya-open-dyslexic" in accessibility_js
     assert 'data-raya-course-map="expanded"' in index_html

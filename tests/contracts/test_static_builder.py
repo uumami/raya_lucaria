@@ -4043,6 +4043,9 @@ def test_render_fixture_builds_rich_static_pages(
     accessibility_css = (
         site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic.css"
     )
+    accessibility_prepaint_js = (
+        site_dir / "_raya" / "render" / "accessibility" / "comfort-prepaint.js"
+    )
     accessibility_js = (
         site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic-toggle.js"
     )
@@ -4055,8 +4058,10 @@ def test_render_fixture_builds_rich_static_pages(
         / "OpenDyslexic-Regular.woff"
     )
     assert accessibility_css.is_file()
+    assert accessibility_prepaint_js.is_file()
     assert accessibility_js.is_file()
     assert accessibility_font.is_file()
+    assert accessibility_prepaint_js in report.outputs_written
     assert 'class="raya-generated-index raya-section-landing"' in html
     assert 'class="raya-section-card-list"' in html
     assert 'class="raya-section-card"' in html
@@ -5348,6 +5353,11 @@ def test_accessibility_resource_is_packaged_and_storage_safe() -> None:
     assert accessibility.source_font.is_file()
     assert font.read_bytes() == accessibility.source_font.read_bytes()
     assert '[data-raya-open-dyslexic="true"] body' in accessibility.css
+    assert 'localStorage.getItem("raya:open-dyslexic")' in (
+        accessibility.prepaint_javascript
+    )
+    assert 'localStorage.getItem("raya:text-size")' in accessibility.prepaint_javascript
+    assert "fetch(" not in accessibility.prepaint_javascript
     assert "try {" in accessibility.javascript
     assert "catch" in accessibility.javascript
     assert "localStorage" in accessibility.javascript

@@ -7,6 +7,7 @@ from importlib.abc import Traversable
 
 ACCESSIBILITY_RESOURCE_PATH = "_raya/render/accessibility"
 OPEN_DYSLEXIC_CSS_NAME = "open-dyslexic.css"
+COMFORT_PREPAINT_JS_NAME = "comfort-prepaint.js"
 OPEN_DYSLEXIC_JS_NAME = "open-dyslexic-toggle.js"
 OPEN_DYSLEXIC_VOLATILE_JS_NAME = "open-dyslexic-toggle-volatile.js"
 OPEN_DYSLEXIC_FONT_NAME = "OpenDyslexic-Regular.woff"
@@ -19,6 +20,7 @@ OPEN_DYSLEXIC_RESOURCE_PATH = (
 @dataclass(frozen=True)
 class AccessibilityResources:
     css: str
+    prepaint_javascript: str
     javascript: str
     volatile_javascript: str
     source_font: Traversable
@@ -240,6 +242,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
 '''
     return AccessibilityResources(
         css=css,
+        prepaint_javascript=comfort_prepaint_script(),
         javascript=javascript,
         volatile_javascript=volatile_javascript,
         source_font=resources.files(OPEN_DYSLEXIC_RESOURCE_PACKAGE).joinpath(
