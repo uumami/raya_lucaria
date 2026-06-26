@@ -1646,9 +1646,14 @@ def _render_course_map(
             _render_course_map_toggle("Collapse map"),
             "</div>",
             workspace_html,
-            '<div class="raya-course-map-actions" aria-label="Course map section controls">',
+            '<div class="raya-course-map-actions" role="group" aria-label="Course map section controls">',
             '<button type="button" data-raya-course-map-action="current">Current</button>',
             '<button type="button" data-raya-course-map-action="expand-all">All</button>',
+            (
+                '<button type="button" data-raya-course-map-action="scan" '
+                'aria-pressed="false" aria-label="Scan course map branches">'
+                "Scan</button>"
+            ),
             '<button type="button" data-raya-course-map-action="less">Less</button>',
             "</div>",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',

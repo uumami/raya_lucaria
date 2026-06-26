@@ -174,6 +174,24 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function scanModeButton() {
+    return mapActionButtons.find(
+      (button) => button.getAttribute("data-raya-course-map-action") === "scan"
+    );
+  }
+
+  function setCourseMapScanMode(active) {
+    if (active) {
+      map.dataset.rayaCourseMapScan = "active";
+    } else {
+      delete map.dataset.rayaCourseMapScan;
+    }
+    const button = scanModeButton();
+    if (button) {
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    }
+  }
+
   function syncCourseMapDrawerState() {
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
@@ -221,6 +239,7 @@ _SHELL_JAVASCRIPT = r"""
   function setExpanded(nextExpanded) {
     if (!nextExpanded) {
       clearCourseMapFilter();
+      setCourseMapScanMode(false);
     }
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
@@ -264,12 +283,35 @@ _SHELL_JAVASCRIPT = r"""
     if (!toggle || !children) {
       return;
     }
+    if (
+      nextExpanded &&
+      map.dataset.rayaCourseMapScan === "active" &&
+      !options.skipSiblingCollapse
+    ) {
+      collapseExpandedSiblingMapNodes(node);
+    }
     if (!options.temporary) {
       node.dataset.rayaMapExpanded = nextExpanded ? "true" : "false";
     }
     toggle.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     children.hidden = !nextExpanded;
     children.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
+  }
+
+  function collapseExpandedSiblingMapNodes(node) {
+    const parentList = node.parentElement;
+    if (!parentList) {
+      return;
+    }
+    Array.from(parentList.children).forEach((sibling) => {
+      if (
+        sibling !== node &&
+        sibling.matches("[data-raya-map-node]") &&
+        sibling.dataset.rayaMapExpanded === "true"
+      ) {
+        setMapNodeExpanded(sibling, false, { skipSiblingCollapse: true });
+      }
+    });
   }
 
   function applyStoredMapExpansion(node) {
@@ -380,13 +422,18 @@ _SHELL_JAVASCRIPT = r"""
     return nodes;
   }
 
-  function expandCurrentCourseMapPath() {
+  function expandCurrentCourseMapPath(options = {}) {
     clearCourseMapFilter();
+    if (!options.keepScanMode) {
+      setCourseMapScanMode(false);
+    }
     const currentNodes = currentCourseMapNodes();
     mapNodeToggles.forEach((button) => {
       const node = button.closest("[data-raya-map-node]");
       if (node) {
-        setMapNodeExpanded(node, currentNodes.has(node));
+        setMapNodeExpanded(node, currentNodes.has(node), {
+          skipSiblingCollapse: true,
+        });
       }
     });
     orientCourseMapToCurrentPage({ force: true });
@@ -394,6 +441,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function expandAllCourseMapNodes() {
     clearCourseMapFilter();
+    setCourseMapScanMode(false);
     mapNodeToggles.forEach((button) => {
       const node = button.closest("[data-raya-map-node]");
       if (node) {
@@ -404,6 +452,11 @@ _SHELL_JAVASCRIPT = r"""
 
   function collapseCourseMapToCurrentPath() {
     expandCurrentCourseMapPath();
+  }
+
+  function scanCurrentCourseMapBranch() {
+    setCourseMapScanMode(true);
+    expandCurrentCourseMapPath({ keepScanMode: true });
   }
 
   function openCourseMapDrawer(opener = null) {
@@ -424,6 +477,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function closeCourseMapDrawer(options = {}) {
     root.dataset.rayaCourseMapDrawer = "closed";
+    setCourseMapScanMode(false);
     syncCourseMapDrawerState();
     if (options.restoreFocus && courseMapDrawerOpener) {
       courseMapDrawerOpener.focus();
@@ -700,6 +754,8 @@ _SHELL_JAVASCRIPT = r"""
       const action = button.getAttribute("data-raya-course-map-action");
       if (action === "expand-all") {
         expandAllCourseMapNodes();
+      } else if (action === "scan") {
+        scanCurrentCourseMapBranch();
       } else if (action === "less") {
         collapseCourseMapToCurrentPath();
       } else {
@@ -736,7 +792,10 @@ _SHELL_JAVASCRIPT = r"""
   });
 
   if (mapFilter) {
-    mapFilter.addEventListener("input", applyCourseMapFilter);
+    mapFilter.addEventListener("input", () => {
+      setCourseMapScanMode(false);
+      applyCourseMapFilter();
+    });
     applyCourseMapFilter();
   }
 

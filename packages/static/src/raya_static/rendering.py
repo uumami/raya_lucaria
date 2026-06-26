@@ -2899,6 +2899,11 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 2px;
 }
+.raya-course-map-actions button[aria-pressed="true"] {
+  background: var(--raya-color-success-soft);
+  border-color: color-mix(in srgb, var(--raya-color-success) 62%, var(--raya-color-border));
+  color: var(--raya-color-success);
+}
 .raya-course-map-close,
 .raya-course-map-drawer-backdrop {
   display: none;

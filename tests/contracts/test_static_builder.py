@@ -4142,6 +4142,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "function expandCurrentCourseMapPath" in script_text
     assert "function expandAllCourseMapNodes" in script_text
     assert "function collapseCourseMapToCurrentPath" in script_text
+    assert "rayaCourseMapScan" in script_text
+    assert "collapseExpandedSiblingMapNodes" in script_text
     assert "currentSectionLink" in script_text
     assert "function syncCurrentSection" in script_text
     assert "data-raya-current-section-link" in script_text
@@ -4162,6 +4164,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
     assert 'html[data-raya-course-map-scroll-lock="true"]' in css_text
+    assert '.raya-course-map-actions button[aria-pressed="true"]' in css_text
     assert ".raya-course-map-drawer-chrome" in css_text
     assert ".raya-visually-hidden" in css_text
     assert ".raya-command-search-form" in css_text
@@ -4253,8 +4256,14 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-course-map-drawer-grip"' in html
     assert 'class="raya-course-map-drawer-title">Course map</p>' in html
     assert 'class="raya-course-map-actions"' in html
+    assert 'role="group" aria-label="Course map section controls"' in html
     assert 'data-raya-course-map-action="current"' in html
     assert 'data-raya-course-map-action="expand-all"' in html
+    assert 'data-raya-course-map-action="scan"' in html
+    assert (
+        'data-raya-course-map-action="scan" aria-pressed="false" '
+        'aria-label="Scan course map branches">Scan</button>'
+    ) in html
     assert 'data-raya-course-map-action="less"' in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
@@ -4572,6 +4581,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'class="raya-course-map-actions"' in html
     assert 'data-raya-course-map-action="current"' in html
     assert 'data-raya-course-map-action="expand-all"' in html
+    assert 'data-raya-course-map-action="scan"' in html
     assert 'data-raya-course-map-action="less"' in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html

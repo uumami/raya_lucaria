@@ -7077,6 +7077,56 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
     course = tmp_path / "minimal"
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
     _add_official_task_objects(course)
+    branch_a = course / "course" / "2_map_branch_a"
+    branch_b = course / "course" / "3_map_branch_b"
+    branch_a_child = branch_a / "1_branch_a_child"
+    branch_b_child = branch_b / "1_branch_b_child"
+    branch_a_child.mkdir(parents=True)
+    branch_b_child.mkdir(parents=True)
+    (branch_a / "0_index.md").write_text(
+        "---\n"
+        "id: map-branch-a\n"
+        "title: Map Branch A\n"
+        "summary: Extra sibling branch for course-map scan tests.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Map Branch A\n\n"
+        "Sibling branch A.\n",
+        encoding="utf-8",
+    )
+    (branch_a_child / "0_index.md").write_text(
+        "---\n"
+        "id: map-branch-a-child\n"
+        "title: Map Branch A Child\n"
+        "summary: Extra child for course-map scan tests.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Map Branch A Child\n\n"
+        "Child page A.\n",
+        encoding="utf-8",
+    )
+    (branch_b / "0_index.md").write_text(
+        "---\n"
+        "id: map-branch-b\n"
+        "title: Map Branch B\n"
+        "summary: Extra sibling branch for course-map scan tests.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Map Branch B\n\n"
+        "Sibling branch B.\n",
+        encoding="utf-8",
+    )
+    (branch_b_child / "0_index.md").write_text(
+        "---\n"
+        "id: map-branch-b-child\n"
+        "title: Map Branch B Child\n"
+        "summary: Extra child for course-map scan tests.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Map Branch B Child\n\n"
+        "Child page B.\n",
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -7229,6 +7279,191 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         "currentVisible": True,
                     }
 
+                    page.click('[data-raya-course-map-action="scan"]')
+                    scan_start = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan,
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          firstUnitExpanded: document
+                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchAExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          localStorageKeys: Object.keys(localStorage),
+                          sessionStorageKeys: Object.keys(sessionStorage),
+                        })"""
+                    )
+                    assert scan_start == {
+                        "scan": "active",
+                        "scanPressed": "true",
+                        "firstUnitExpanded": "true",
+                        "branchAExpanded": "false",
+                        "branchBExpanded": "false",
+                        "currentVisible": True,
+                        "localStorageKeys": [],
+                        "sessionStorageKeys": [],
+                    }
+
+                    page.click('[data-raya-map-node="map-branch-a"] [data-raya-map-node-toggle]')
+                    page.click('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                    scan_sibling_collapse = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan,
+                          branchAExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchAChildrenHidden: document
+                            .querySelector('[data-raya-map-node="map-branch-a"] > [data-raya-map-children]')
+                            ?.hasAttribute('hidden'),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchBChildrenHidden: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] > [data-raya-map-children]')
+                            ?.hasAttribute('hidden'),
+                          localStorageKeys: Object.keys(localStorage),
+                          sessionStorageKeys: Object.keys(sessionStorage),
+                        })"""
+                    )
+                    assert scan_sibling_collapse == {
+                        "scan": "active",
+                        "branchAExpanded": "false",
+                        "branchAChildrenHidden": True,
+                        "branchBExpanded": "true",
+                        "branchBChildrenHidden": False,
+                        "localStorageKeys": [],
+                        "sessionStorageKeys": [],
+                    }
+
+                    page.click('[data-raya-course-map-action="expand-all"]')
+                    scan_exited = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          branchAExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                        })"""
+                    )
+                    assert scan_exited == {
+                        "scan": "",
+                        "scanPressed": "false",
+                        "branchAExpanded": "true",
+                        "branchBExpanded": "true",
+                    }
+
+                    page.click('[data-raya-course-map-action="scan"]')
+                    page.click('[data-raya-course-map-action="current"]')
+                    scan_exited_by_current = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert scan_exited_by_current == {
+                        "scan": "",
+                        "scanPressed": "false",
+                        "currentVisible": True,
+                    }
+
+                    page.click('[data-raya-course-map-action="scan"]')
+                    page.click('[data-raya-course-map-action="less"]')
+                    scan_exited_by_less = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert scan_exited_by_less == {
+                        "scan": "",
+                        "scanPressed": "false",
+                        "currentVisible": True,
+                    }
+
+                    page.click('[data-raya-course-map-action="scan"]')
+                    page.fill("#raya-course-map-filter", "topic")
+                    scan_exited_by_filter = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          filterValue: document.querySelector('#raya-course-map-filter')?.value,
+                        })"""
+                    )
+                    assert scan_exited_by_filter == {
+                        "scan": "",
+                        "scanPressed": "false",
+                        "filterValue": "topic",
+                    }
+
+                    page.click('[data-raya-course-map-action="scan"]')
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    scan_exited_by_collapse = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                        })"""
+                    )
+                    assert scan_exited_by_collapse == {
+                        "scan": "",
+                        "scanPressed": "false",
+                    }
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'"""
+                    )
+
                     page.fill("#raya-course-map-filter", "zz-no-match")
                     page.click('[data-raya-course-map-action="current"]')
                     current_action = page.evaluate(
@@ -7305,7 +7540,7 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     )
                     page.wait_for_function(
                         """() => Array.from(document.querySelectorAll('#raya-course-map a'))
-                          .filter((link) => link.checkVisibility()).length === 2"""
+                          .filter((link) => link.checkVisibility()).length === 4"""
                     )
                     compact_after_filter = page.evaluate(
                         """() => ({
@@ -7322,7 +7557,7 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     )
                     assert compact_after_filter == {
                         "filterValue": "",
-                        "visibleLinks": 2,
+                        "visibleLinks": 4,
                         "filterVisible": False,
                         "emptyVisible": False,
                     }
@@ -8448,6 +8683,8 @@ def test_render_fixture_course_map_works_without_storage(
             )
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page_errors: list[str] = []
+                page.on("pageerror", lambda error: page_errors.append(str(error)))
                 page.add_init_script(
                     """
                     Object.defineProperty(window, 'localStorage', {
@@ -8475,6 +8712,28 @@ def test_render_fixture_course_map_works_without_storage(
                     assert initial["expanded"] == "true"
                     assert initial["linkTabIndexes"]
                     assert set(initial["linkTabIndexes"]) == {None}
+
+                    page.click('[data-raya-course-map-action="scan"]')
+                    scan = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan,
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert scan == {
+                        "scan": "active",
+                        "scanPressed": "true",
+                        "currentVisible": True,
+                    }
+                    assert page_errors == []
 
                     page.click(".raya-course-map-toggle")
                     collapsed = page.evaluate(
@@ -9806,6 +10065,27 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert opened_drawer["mapBox"]["height"] >= 600
                     assert set(opened_drawer["linkTabIndexes"]) == {None}
 
+                    page.click('[data-raya-course-map-action="scan"]')
+                    drawer_scan = page.evaluate(
+                        """() => ({
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan,
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
+                          currentVisible: !!document
+                            .querySelector('#raya-course-map a[aria-current="page"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert drawer_scan == {
+                        "scan": "active",
+                        "scanPressed": "true",
+                        "currentVisible": True,
+                    }
+
                     page.keyboard.press("Shift+Tab")
                     reverse_trap = page.evaluate(
                         """() => ({
@@ -9857,6 +10137,13 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                           railBodyHidden: document.querySelector('#raya-learning-rail-body')
                             ?.getAttribute('aria-hidden'),
                           railBodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                          scan: document
+                            .querySelector('#raya-course-map')
+                            ?.dataset
+                            ?.rayaCourseMapScan || '',
+                          scanPressed: document
+                            .querySelector('[data-raya-course-map-action="scan"]')
+                            ?.getAttribute('aria-pressed'),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
@@ -9870,6 +10157,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         "commandFocused": True,
                         "railBodyHidden": "false",
                         "railBodyInert": False,
+                        "scan": "",
+                        "scanPressed": "false",
                     }
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
