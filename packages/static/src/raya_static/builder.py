@@ -88,6 +88,7 @@ from raya_static.accessibility import (
     OPEN_DYSLEXIC_CSS_NAME,
     OPEN_DYSLEXIC_JS_NAME,
     OPEN_DYSLEXIC_VOLATILE_JS_NAME,
+    comfort_prepaint_script,
     open_dyslexic_resources,
 )
 from raya_static.discovery import (
@@ -998,6 +999,7 @@ def _render_page(
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
+            f"<script>{comfort_prepaint_script()}</script>",
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',

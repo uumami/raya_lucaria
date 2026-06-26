@@ -72,6 +72,7 @@ The legacy `main` branch evidence inspected for this audit:
 | Eva visual identity | `eva-02-light.css`, `eva-02-dark.css`, other theme CSS | Current render fixture uses course-local Eva Unit 01/02/03 and Ghost In The Shell skin profiles with validated tokens | Adapted | Improve skins only through source profiles and validation |
 | OpenDyslexic | `font-toggle.js` | Current static renderer copies local OpenDyslexic resources and exposes reader/workspace controls | Converged | Keep as local comfort preference |
 | Text size comfort | `font-toggle.js` size classes | Current reader/discovery controls expose text-size comfort behavior | Converged | Keep as local comfort preference |
+| Pre-paint comfort restore | `base.njk` early head script restored legacy visual preferences | Current reader pages restore only accepted OpenDyslexic and text-size comfort attributes before CSS; discovery workspaces remain volatile/no-storage | Adapted | Keep limited to explicit comfort preferences |
 | Computed reading effort hint | `eleventyComputed.js` `readingTime`; `base.njk` reading-time display | Current renderer supports authored `estimated_time`; current Superpowers slice adds build-time `Estimated read time` fallback from public article text when authored metadata is absent | Adapted | Keep authored `estimated_time` authoritative and treat fallback as approximate orientation only |
 | Copyable code | `copy-code.js` | Current renderer has copyable fenced code blocks | Converged | Maintain no-execution contract |
 | Keyboard page navigation | `keyboard-nav.js` | Current renderer supports previous/next keyboard navigation from generated sequence links | Converged | Keep static course-order semantics |
@@ -104,12 +105,11 @@ Do not port these behaviors into the current renderer:
 
 ## Remaining Candidate Subgoals
 
-1. **Pre-paint comfort and reader-control discoverability.** The legacy branch
-   avoided comfort-control flash with early head logic and kept font controls
+1. **Reader-control discoverability.** The legacy branch kept font controls
    visible in the reader chrome. Current OpenDyslexic and text-size behavior is
-   local and accepted, but a future loop should verify whether reader pages
-   restore allowed comfort preferences before first paint and whether controls
-   are visible enough in the reader shell.
+   local, accepted, and now restored before paint on reader pages; a future loop
+   should verify whether the comfort controls are visible enough in the reader
+   shell at desktop and mobile widths.
 
 2. **Usability review against built artifacts.** Use the gallery dashboard,
    local preview, and render-debug output to identify the next concrete visual
@@ -130,6 +130,7 @@ historical execution records so future agents do not redo completed work:
 - `docs/superpowers/plans/2026-06-26-graph-first-viewport-layout.md`
 - `docs/superpowers/plans/2026-06-26-learning-rail-first-viewport-polish.md`
 - `docs/superpowers/plans/2026-06-26-discovery-results-jump.md`
+- `docs/superpowers/plans/2026-06-26-prepaint-comfort-restore.md`
 
 This was documentation housekeeping only. It did not change renderer behavior
 or lower the verification requirements for future frontend/graph loops.
@@ -144,13 +145,13 @@ or lower the verification requirements for future frontend/graph loops.
 ## Suggested Next Loop
 
 The best next renderer loop is a **current built-artifact visual review** with
-special attention to pre-paint comfort restore, reader comfort-control
-discoverability, and whether backlinks/sequence navigation remain obvious in
-the reading flow. Discovery workspace overview, switcher, quick guides, grouped
-controls, reset parity, graph toolbar comfort, graph skin palette support,
-gallery dashboard links, graph first-viewport layout, graph list scan cards,
-guided graph controls, and graph reading keys are now implemented in current
-source and tests.
+special attention to reader comfort-control discoverability and whether
+backlinks/sequence navigation remain obvious in the reading flow. Discovery
+workspace overview, switcher, quick guides, grouped controls, reset parity,
+graph toolbar comfort, graph skin palette support, gallery dashboard links,
+graph first-viewport layout, graph list scan cards, guided graph controls,
+graph reading keys, and reader pre-paint comfort restore are now implemented in
+current source and tests.
 
 Choose the next renderer implementation from current preview or render-debug
 evidence, not from legacy `main` alone. That keeps the UX fusion goal anchored

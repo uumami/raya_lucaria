@@ -25,6 +25,26 @@ class AccessibilityResources:
     font_name: str
 
 
+def comfort_prepaint_script() -> str:
+    return '''(() => {
+  const textSizes = ["normal", "large", "x-large"];
+  try {
+    document.documentElement.setAttribute(
+      "data-raya-open-dyslexic",
+      localStorage.getItem("raya:open-dyslexic") === "true" ? "true" : "false"
+    );
+    const textSize = localStorage.getItem("raya:text-size") || "normal";
+    document.documentElement.setAttribute(
+      "data-raya-text-size",
+      textSizes.includes(textSize) ? textSize : "normal"
+    );
+  } catch {
+    document.documentElement.setAttribute("data-raya-open-dyslexic", "false");
+    document.documentElement.setAttribute("data-raya-text-size", "normal");
+  }
+})();'''
+
+
 def open_dyslexic_resources() -> AccessibilityResources:
     css = f'''@font-face {{
   font-family: "OpenDyslexic";

@@ -7296,6 +7296,13 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         index_html = _fetch_text(index_url)
         reader_html = _fetch_text(reader_url)
         authoring_html = _fetch_text(authoring_url)
+        volatile_surface_html = {
+            "graph": _fetch_text(f"{base_url}/_raya/graph/index.html"),
+            "search": _fetch_text(f"{base_url}/_raya/search/index.html"),
+            "practice": _fetch_text(f"{base_url}/_raya/practice/index.html"),
+            "tasks": _fetch_text(f"{base_url}/_raya/tasks/index.html"),
+            "schedule": _fetch_text(f"{base_url}/_raya/schedule/index.html"),
+        }
         rich_css = _fetch_text(f"{base_url}/_raya/render/rich.css")
         accessibility_css = _fetch_text(
             f"{base_url}/_raya/render/accessibility/open-dyslexic.css"
@@ -7330,6 +7337,18 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert 'aria-pressed="false"' in index_html
     assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
     assert 'src="_raya/render/accessibility/open-dyslexic-toggle.js"' in index_html
+    assert 'localStorage.getItem("raya:open-dyslexic")' in index_html
+    assert 'localStorage.getItem("raya:text-size")' in index_html
+    assert index_html.index('localStorage.getItem("raya:open-dyslexic")') < (
+        index_html.index('href="_raya/render/rich.css"')
+    )
+    for surface_name, surface_html in volatile_surface_html.items():
+        assert (
+            'localStorage.getItem("raya:open-dyslexic")' not in surface_html
+        ), surface_name
+        assert 'localStorage.getItem("raya:text-size")' not in surface_html, (
+            surface_name
+        )
     assert "@font-face" in accessibility_css
     assert "OpenDyslexic" in accessibility_css
     assert "localStorage" in accessibility_js
@@ -7427,6 +7446,80 @@ def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     assert after["rootSetting"] == "true"
     assert after["bodyToken"] == '"OpenDyslexic"'
     assert "OpenDyslexic" in after["bodyFont"]
+
+
+def test_render_fixture_restores_comfort_preferences_before_deferred_script(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 1280, "height": 900})
+                context.add_init_script(
+                    """
+                    localStorage.setItem('raya:open-dyslexic', 'true');
+                    localStorage.setItem('raya:text-size', 'x-large');
+                    """
+                )
+                page = context.new_page()
+                try:
+                    blocked_scripts: list[str] = []
+
+                    def block_deferred_accessibility(route) -> None:
+                        blocked_scripts.append(route.request.url)
+                        route.abort()
+
+                    page.route(
+                        "**/_raya/render/accessibility/open-dyslexic-toggle.js",
+                        block_deferred_accessibility,
+                    )
+                    page.goto(f"{base_url}/index.html", wait_until="domcontentloaded")
+                    restored = page.evaluate(
+                        """() => ({
+                          dyslexic: document.documentElement
+                            .getAttribute('data-raya-open-dyslexic'),
+                          size: document.documentElement
+                            .getAttribute('data-raya-text-size'),
+                          bodyToken: getComputedStyle(document.body)
+                            .getPropertyValue('--raya-font-body')
+                            .trim(),
+                          articleScale: getComputedStyle(
+                            document.querySelector('.raya-main-article')
+                          ).getPropertyValue('--raya-reader-text-scale').trim(),
+                        })"""
+                    )
+                finally:
+                    page.close()
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert blocked_scripts
+    assert restored["dyslexic"] == "true"
+    assert restored["size"] == "x-large"
+    assert restored["bodyToken"] == '"OpenDyslexic"'
+    assert restored["articleScale"] == "1.25"
 
 
 def test_render_fixture_reader_focus_command_collapses_map_and_rail(
