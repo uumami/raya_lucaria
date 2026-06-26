@@ -2755,9 +2755,41 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         content_out_chip.click()
                         assert content_out_chip.get_attribute("aria-pressed") == "true"
                         assert page.url == relationship_focus_url
+                        focus_summary = page.locator(
+                            "[data-raya-graph-relationship-focus-summary]"
+                        )
+                        focus_reset = page.locator(
+                            "[data-raya-graph-relationship-focus-reset]"
+                        )
+                        assert focus_reset.is_visible()
+                        assert (
+                            "Showing Content out relationships."
+                            in focus_summary.inner_text()
+                        )
                         assert page.evaluate(
                             "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
                         ) == [[], []]
+                        visible_outgoing_items = page.locator(
+                            "[data-raya-graph-detail-outgoing] li"
+                        ).evaluate_all(
+                            "items => items.filter((item) => !item.hidden).map((item) => item.textContent)"
+                        )
+                        assert visible_outgoing_items
+                        assert all("Content" in text for text in visible_outgoing_items)
+                        assert (
+                            page.locator(
+                                "[data-raya-graph-detail-incoming] li"
+                            ).evaluate_all("items => items.every((item) => item.hidden)")
+                            is True
+                        )
+                        focused_edges = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-edge].is-relationship-focus"
+                        )
+                        muted_edges = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-edge].is-relationship-muted"
+                        )
+                        assert focused_edges.count() >= 1
+                        assert muted_edges.count() >= 1
                         visible_cards = walkthrough_cards.evaluate_all(
                             """cards => cards
                               .filter((card) => !card.hidden)
@@ -2837,10 +2869,20 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             '[data-raya-graph-relationship-kind="content"]'
                             '[data-raya-graph-relationship-direction="out"]'
                         )
+                        graph_url_before_focus_reset = page.url
                         content_out_chip.click()
                         assert content_out_chip.get_attribute("aria-pressed") == "true"
-                        content_out_chip.click()
+                        assert focus_reset.is_visible()
+                        focus_reset.click()
                         assert content_out_chip.get_attribute("aria-pressed") == "false"
+                        assert focus_reset.is_hidden()
+                        assert (
+                            "All selected-page relationships are visible."
+                            in focus_summary.inner_text()
+                        )
+                        assert page.url == graph_url_before_focus_reset
+                        assert focused_edges.count() == 0
+                        assert muted_edges.count() == 0
                         assert (
                             walkthrough_cards.evaluate_all(
                                 "cards => cards.filter((card) => !card.hidden).length"
@@ -2848,8 +2890,59 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             == 4
                         )
                         assert (
+                            page.locator(
+                                "[data-raya-graph-detail-incoming] li"
+                            ).evaluate_all(
+                                "items => items.some((item) => !item.hidden)"
+                            )
+                            is True
+                        )
+                        assert (
                             "Showing "
                             not in relationship_walkthrough.inner_text()
+                        )
+                        assert page.evaluate(
+                            "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                        ) == [[], []]
+                        content_out_chip.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "true"
+                        page.locator(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                        ).click()
+                        assert (
+                            content_out_chip.get_attribute(
+                                "data-raya-graph-relationship-hidden-by-filter"
+                            )
+                            == "true"
+                        )
+                        assert content_out_chip.get_attribute("aria-pressed") == "true"
+                        assert focus_reset.is_visible()
+                        assert (
+                            "Content relationships are hidden by Relationship filters."
+                            in focus_summary.inner_text()
+                        )
+                        assert page.evaluate(
+                            "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                        ) == [[], []]
+                        focus_reset.click()
+                        assert content_out_chip.get_attribute("aria-pressed") == "false"
+                        assert focus_reset.is_hidden()
+                        assert (
+                            "Content relationships are hidden by Relationship filters."
+                            in focus_summary.inner_text()
+                        )
+                        page.locator(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                        ).click()
+                        assert (
+                            content_out_chip.get_attribute(
+                                "data-raya-graph-relationship-hidden-by-filter"
+                            )
+                            == "false"
+                        )
+                        assert (
+                            "All selected-page relationships are visible."
+                            in focus_summary.inner_text()
                         )
                         assert (
                             relationship_walkthrough.locator(
@@ -6161,6 +6254,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         f"{handle.base_url}/authoring-matrix/index.html",
                         wait_until="networkidle",
                     )
+                    page.evaluate(
+                        "() => document.fonts ? document.fonts.ready.then(() => true) : true"
+                    )
                     requested_urls.clear()
                     assert page.locator("[data-raya-map-active='ancestor']").count() > 0
                     desktop_map_region = page.evaluate(
@@ -6540,6 +6636,10 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """() => Array.from(document.querySelectorAll('#raya-course-map a'))
+                          .filter((link) => link.checkVisibility()).length === 2"""
                     )
                     compact_after_filter = page.evaluate(
                         """() => ({

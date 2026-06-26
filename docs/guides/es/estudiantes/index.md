@@ -151,8 +151,12 @@ Los detalles de pagina seleccionada tambien pueden mostrar un Relationship
 walkthrough que agrupa enlaces por tipo de relacion y direccion. Usalo para ver
 por que una pagina esta conectada y para enfocar otra pagina conectada sin salir
 del workspace del grafo. Los relationship chips pueden reducir temporalmente
-ese walkthrough a un tipo y direccion de enlace; presionar el mismo chip otra
-vez restaura el walkthrough completo.
+ese walkthrough a un tipo y direccion de enlace, incluyendo las listas de
+enlaces de la pagina seleccionada y las aristas visibles que coinciden.
+Presionar el mismo chip o `Show all relationships` restaura el walkthrough
+completo. Si `Relationship filters` oculta globalmente un tipo, el chip de la
+pagina seleccionada puede mostrar que ese tipo esta oculto por el filtro actual;
+es estado temporal de inspeccion, no estado de estudio guardado.
 Los colores del grafo agrupan paginas por la estructura actual del curso, el
 tamano del nodo puede mostrar cuantos enlaces explicitos tocan una pagina, y el
 grafo puede mantener visibles solo labels de alto contexto hasta que selecciones,

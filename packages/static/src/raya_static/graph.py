@@ -89,6 +89,12 @@ _GRAPH_JAVASCRIPT = r"""
   const relationshipFocusStatus = document.querySelector(
     "[data-raya-graph-relationship-focus-status]"
   );
+  const relationshipFocusSummary = document.querySelector(
+    "[data-raya-graph-relationship-focus-summary]"
+  );
+  const relationshipFocusReset = document.querySelector(
+    "[data-raya-graph-relationship-focus-reset]"
+  );
   const detailLink = document.querySelector("[data-raya-graph-detail-link]");
   const detailSearchLink = document.querySelector("[data-raya-graph-detail-search-link]");
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
@@ -595,20 +601,45 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function syncRelationshipFocusDom() {
+    const hasFocus = Boolean(activeRelationshipFocus);
+    const [kind = "", direction = ""] = hasFocus
+      ? activeRelationshipFocus.split(":")
+      : [];
+    let firstHiddenRelationshipKind = "";
     if (detailRelationshipChipList) {
       detailRelationshipChipList
         .querySelectorAll("[data-raya-graph-relationship-chip]")
         .forEach((chip) => {
+          const chipKind =
+            chip.getAttribute("data-raya-graph-relationship-kind") || "";
           const key = relationshipFocusKey(
-            chip.getAttribute("data-raya-graph-relationship-kind") || "",
+            chipKind,
             chip.getAttribute("data-raya-graph-relationship-direction") || ""
           );
+          const hiddenByFilter = hiddenEdgeKinds.has(chipKind);
+          if (hiddenByFilter && !firstHiddenRelationshipKind) {
+            firstHiddenRelationshipKind = chipKind;
+          }
+          chip.setAttribute(
+            "data-raya-graph-relationship-hidden-by-filter",
+            hiddenByFilter ? "true" : "false"
+          );
+          chip.classList.toggle("is-hidden-by-filter", hiddenByFilter);
           chip.setAttribute(
             "aria-pressed",
             key === activeRelationshipFocus ? "true" : "false"
           );
         });
     }
+    document
+      .querySelectorAll("[data-raya-graph-detail-relationship-kind]")
+      .forEach((item) => {
+        const itemKind =
+          item.getAttribute("data-raya-graph-detail-relationship-kind") || "";
+        const itemDirection =
+          item.getAttribute("data-raya-graph-detail-relationship-direction") || "";
+        item.hidden = hasFocus && (itemKind !== kind || itemDirection !== direction);
+      });
     if (relationshipWalkthroughList) {
       relationshipWalkthroughList
         .querySelectorAll("[data-raya-graph-relationship-walkthrough-card]")
@@ -620,15 +651,32 @@ _GRAPH_JAVASCRIPT = r"""
           card.hidden = Boolean(activeRelationshipFocus && key !== activeRelationshipFocus);
         });
     }
+    const focusedKindHidden = hasFocus && hiddenEdgeKinds.has(kind);
+    const summaryText = focusedKindHidden
+      ? `${edgeKindLabel(kind)} relationships are hidden by Relationship filters.`
+      : (
+        hasFocus
+          ? `Showing ${relationshipChipLabel(kind, direction)} relationships.`
+          : (
+            firstHiddenRelationshipKind
+              ? `${edgeKindLabel(firstHiddenRelationshipKind)} relationships are hidden by Relationship filters.`
+              : "All selected-page relationships are visible."
+          )
+      );
+    if (relationshipFocusSummary) {
+      relationshipFocusSummary.textContent = summaryText;
+    }
+    if (relationshipFocusReset) {
+      relationshipFocusReset.hidden = !hasFocus;
+    }
     if (!relationshipFocusStatus) {
       return;
     }
-    if (!activeRelationshipFocus) {
+    if (!hasFocus) {
       relationshipFocusStatus.textContent = "";
       return;
     }
-    const [kind, direction] = activeRelationshipFocus.split(":");
-    relationshipFocusStatus.textContent = `Showing ${relationshipChipLabel(kind, direction)} relationships.`;
+    relationshipFocusStatus.textContent = summaryText;
   }
 
   function clearRelationshipFocus() {
@@ -640,6 +688,7 @@ _GRAPH_JAVASCRIPT = r"""
     const nextKey = relationshipFocusKey(kind, direction);
     activeRelationshipFocus = activeRelationshipFocus === nextKey ? "" : nextKey;
     syncRelationshipFocusDom();
+    render();
   }
 
   function relationshipChipCountsFor(nodeId) {
@@ -1983,6 +2032,19 @@ _GRAPH_JAVASCRIPT = r"""
     ].filter(Boolean);
   }
 
+  function relationshipEdgeStateClassNames(edge) {
+    if (!activeRelationshipFocus || !selectedId) return [];
+    const edgeDirection =
+      edge.from === selectedId ? "out" : (edge.to === selectedId ? "in" : "");
+    if (!edgeDirection) return [];
+    const [focusKind, focusDirection] = activeRelationshipFocus.split(":");
+    const focusMatches = edgeKind(edge) === focusKind && edgeDirection === focusDirection;
+    return [
+      focusMatches ? "is-relationship-focus" : "",
+      focusMatches ? "" : "is-relationship-muted",
+    ].filter(Boolean);
+  }
+
   function appendGraphArrowMarkers(activeEdges) {
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     activeEdges.forEach((edge, edgeIndex) => {
@@ -1998,6 +2060,7 @@ _GRAPH_JAVASCRIPT = r"""
           "raya-graph-arrow-marker",
           edgeKindClass(edge),
           ...edgeStateClassNames(edge),
+          ...relationshipEdgeStateClassNames(edge),
         ].filter(Boolean).join(" ")
       );
       marker.setAttribute("markerWidth", "8");
@@ -2031,8 +2094,17 @@ _GRAPH_JAVASCRIPT = r"""
       link.textContent = item.title || item.id || "Untitled page";
       const meta = document.createElement("span");
       meta.className = "raya-graph-detail-edge-kind";
-      meta.textContent = ` ${item.kind || "link"}`;
+      meta.textContent = ` ${item.kindLabel || item.kind || "link"}`;
       li.append(link, meta);
+      if (item.kind) {
+        li.setAttribute("data-raya-graph-detail-relationship-kind", item.kind);
+      }
+      if (item.direction) {
+        li.setAttribute(
+          "data-raya-graph-detail-relationship-direction",
+          item.direction
+        );
+      }
       if (nodesById.has(item.id)) {
         const focus = document.createElement("button");
         focus.type = "button";
@@ -2280,7 +2352,8 @@ _GRAPH_JAVASCRIPT = r"""
           id: otherId,
           title: target.title || otherId,
           url: target.url || "#",
-          kind: edgeLabel(edge),
+          kind: edgeKind(edge),
+          kindLabel: edgeLabel(edge),
         };
       });
   }
@@ -2368,10 +2441,17 @@ _GRAPH_JAVASCRIPT = r"""
       node.next_url || "",
       node.next_url ? "Next: " + nextPageTitle(node) : "Next"
     );
-    const outgoing = explicitRelationshipsFor(node.id, "out");
-    const incoming = explicitRelationshipsFor(node.id, "in");
+    const outgoing = explicitRelationshipsFor(node.id, "out").map((item) => ({
+      ...item,
+      direction: "out",
+    }));
+    const incoming = explicitRelationshipsFor(node.id, "in").map((item) => ({
+      ...item,
+      direction: "in",
+    }));
     renderDetailList(detailOutgoing, outgoing, "No outgoing links.");
     renderDetailList(detailIncoming, incoming, "No incoming links.");
+    syncRelationshipFocusDom();
   }
 
   function selectGraphNode(nodeId) {
@@ -2617,6 +2697,7 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("y1", String(linePoints.y1));
       line.setAttribute("x2", String(linePoints.x2));
       line.setAttribute("y2", String(linePoints.y2));
+      line.setAttribute("data-raya-graph-edge", "");
       line.setAttribute("data-raya-graph-from", edge.from);
       line.setAttribute("data-raya-graph-to", edge.to);
       line.setAttribute("data-raya-graph-kind", edgeKind(edge));
@@ -2628,6 +2709,7 @@ _GRAPH_JAVASCRIPT = r"""
           "raya-graph-edge",
           edgeKindClass(edge),
           ...edgeStateClassNames(edge),
+          ...relationshipEdgeStateClassNames(edge),
         ].filter(Boolean).join(" ")
       );
       canvas.appendChild(line);
@@ -2912,6 +2994,12 @@ _GRAPH_JAVASCRIPT = r"""
       render();
     });
   }
+  if (relationshipFocusReset) {
+    relationshipFocusReset.addEventListener("click", () => {
+      clearRelationshipFocus();
+      render();
+    });
+  }
   edgeKindFilters.forEach((button) => {
     button.addEventListener("click", () => {
       const kind = button.getAttribute("data-raya-graph-edge-kind-filter") || "";
@@ -2922,6 +3010,7 @@ _GRAPH_JAVASCRIPT = r"""
         hiddenEdgeKinds.add(kind);
       }
       updateEdgeKindFilters();
+      syncRelationshipFocusDom();
       render();
     });
   });

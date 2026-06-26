@@ -1103,6 +1103,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-detail-relationship-chips" in graph_html
     assert "data-raya-graph-detail-relationship-chips" in graph_html
     assert "Relationship types" in graph_html
+    assert "data-raya-graph-relationship-focus-bar" in graph_html
+    assert "data-raya-graph-relationship-focus-summary" in graph_html
+    assert "data-raya-graph-relationship-focus-reset" in graph_html
+    assert (
+        '<button type="button" class="raya-graph-relationship-focus-reset" '
+        'data-raya-graph-relationship-focus-reset hidden>'
+        "Show all relationships</button>"
+    ) in graph_html
     assert "data-raya-graph-detail-outgoing" in graph_html
     assert "data-raya-graph-detail-incoming" in graph_html
     assert "data-raya-graph-detail-clear" in graph_html

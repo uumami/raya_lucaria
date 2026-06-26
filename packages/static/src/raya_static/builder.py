@@ -4515,6 +4515,14 @@ def _render_graph_surface(
                 '<section class="raya-graph-detail-relationship-chips" '
                 "data-raya-graph-detail-relationship-chips hidden>"
                 "<h3>Relationship types</h3>"
+                '<div class="raya-graph-relationship-focus-bar" '
+                "data-raya-graph-relationship-focus-bar>"
+                '<p data-raya-graph-relationship-focus-summary>'
+                "All selected-page relationships are visible.</p>"
+                '<button type="button" class="raya-graph-relationship-focus-reset" '
+                "data-raya-graph-relationship-focus-reset hidden>"
+                "Show all relationships</button>"
+                "</div>"
                 '<div class="raya-graph-detail-relationship-chip-list" '
                 "data-raya-graph-detail-relationship-chip-list></div>"
                 "</section>"

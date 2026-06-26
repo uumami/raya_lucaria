@@ -1963,6 +1963,36 @@ img {
   font-size: 0.95rem;
   margin: 0 0 0.45rem;
 }
+.raya-graph-relationship-focus-bar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin: 0 0 0.55rem;
+}
+.raya-graph-relationship-focus-bar p {
+  color: var(--raya-color-muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+.raya-graph-relationship-focus-reset {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 1.85rem;
+  padding: 0.25rem 0.55rem;
+  white-space: nowrap;
+}
+.raya-graph-relationship-focus-reset:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
 .raya-graph-detail-relationship-chip-list {
   display: flex;
   flex-wrap: wrap;
@@ -1988,6 +2018,11 @@ img {
   background: var(--raya-color-text);
   border-color: var(--raya-color-text);
   color: var(--raya-color-surface);
+}
+.raya-graph-detail-relationship-chip.is-hidden-by-filter {
+  background: color-mix(in srgb, var(--raya-color-surface) 78%, var(--raya-color-muted));
+  border-color: color-mix(in srgb, var(--raya-color-border) 72%, var(--raya-color-muted));
+  color: var(--raya-color-muted);
 }
 .raya-graph-detail-relationship-chip:focus-visible {
   outline: 3px solid var(--raya-color-accent);
@@ -2237,6 +2272,12 @@ img {
 .raya-graph-arrow-marker.is-dimmed path {
   opacity: 0.14;
 }
+.raya-graph-arrow-marker.is-relationship-focus path {
+  opacity: 1;
+}
+.raya-graph-arrow-marker.is-relationship-muted path {
+  opacity: 0.22;
+}
 .raya-graph-edge-kind-navigation {
   stroke-dasharray: none;
 }
@@ -2266,6 +2307,13 @@ img {
   stroke: var(--raya-graph-edge-color, var(--raya-color-success));
   stroke-opacity: 0.94;
   stroke-width: 3;
+}
+.raya-graph-edge.is-relationship-focus {
+  stroke-opacity: 1;
+  stroke-width: 3;
+}
+.raya-graph-edge.is-relationship-muted {
+  stroke-opacity: 0.22;
 }
 .raya-graph-edge.is-dimmed {
   stroke-opacity: 0.14;
