@@ -1091,6 +1091,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'tabindex="0"' in graph_html
     assert "raya-graph-instructions" in graph_html
     assert "Hover or focus a page" in graph_html
+    assert '<details class="raya-graph-guide" data-raya-graph-guide>' in graph_html
+    assert "<summary>Graph quick guide</summary>" in graph_html
     assert "data-raya-graph-hover-status" in graph_html
     assert "raya-graph-orientation" in graph_html
     assert "data-raya-graph-orientation" in graph_html
@@ -1107,7 +1109,6 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-orientation-clear" in graph_html
     assert "raya-graph-guide" in graph_html
     assert "data-raya-graph-guide" in graph_html
-    assert "<h2>Graph quick guide</h2>" in graph_html
     for label in ("Find", "Choose a view", "Inspect", "Move", "Filter"):
         assert f"<h3>{label}</h3>" in graph_html
     assert "Search titles, stable IDs, tags, groups, and status." in graph_html

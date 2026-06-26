@@ -4760,9 +4760,9 @@ def _render_graph_surface(
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
             (
-                '<section class="raya-graph-guide" data-raya-graph-guide '
-                'aria-label="Graph quick guide">'
-                "<h2>Graph quick guide</h2>"
+                '<details class="raya-graph-guide" data-raya-graph-guide>'
+                "<summary>Graph quick guide</summary>"
+                '<div class="raya-graph-guide-cards">'
                 '<article class="raya-graph-guide-card">'
                 "<h3>Find</h3>"
                 "<p>Search titles, stable IDs, tags, groups, and status. "
@@ -4795,7 +4795,8 @@ def _render_graph_surface(
                 "<p>Filters hide visible graph marks only. They keep source "
                 "data unchanged and can be cleared.</p>"
                 "</article>"
-                "</section>"
+                "</div>"
+                "</details>"
             ),
             (
                 '<section class="raya-graph-preview-bubble" '

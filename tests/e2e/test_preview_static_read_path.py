@@ -671,7 +671,7 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
 
 
 def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import expect, sync_playwright
     from raya_cli.preview import create_preview
 
     course = tmp_path / "render-fixture"
@@ -853,6 +853,19 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert item["width"] >= 34
                             assert item["height"] >= 34
                             assert abs(item["width"] - item["height"]) <= 12
+                        graph_guide = page.locator("[data-raya-graph-guide]")
+                        assert graph_guide.evaluate("node => node.tagName") == "DETAILS"
+                        assert graph_guide.evaluate(
+                            "node => node.hasAttribute('open')"
+                        ) is False
+                        expect(graph_guide.locator("summary")).to_be_visible()
+                        expect(
+                            graph_guide.locator(".raya-graph-guide-card").first
+                        ).to_be_hidden()
+                        graph_guide.locator("summary").click()
+                        expect(
+                            graph_guide.locator(".raya-graph-guide-card").first
+                        ).to_be_visible()
                         assert page.locator(".raya-discovery-command-bar").is_visible()
                         assert page.locator(
                             ".raya-discovery-command-bar .raya-command-home"

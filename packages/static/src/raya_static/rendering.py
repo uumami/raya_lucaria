@@ -2371,17 +2371,33 @@ img {
   margin: 0.65rem 0 0;
 }
 .raya-graph-guide {
+  background: color-mix(in srgb, var(--raya-color-surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, transparent);
+  border-radius: 0.375rem;
+  margin: 0 0 0.58rem;
+  padding: 0.42rem 0.5rem;
+}
+.raya-graph-guide > summary {
+  align-items: center;
+  color: var(--raya-color-heading);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 0;
+  min-height: 2rem;
+}
+.raya-graph-guide > summary:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-graph-guide-cards {
   display: grid;
   gap: 0.38rem;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin: 0 0 0.58rem;
-}
-.raya-graph-guide > h2 {
-  color: var(--raya-color-heading);
-  font-size: 0.76rem;
-  grid-column: 1 / -1;
-  letter-spacing: 0;
-  margin: 0;
+  margin-top: 0.42rem;
 }
 .raya-graph-guide-card {
   background: color-mix(in srgb, var(--raya-color-surface) 86%, transparent);
@@ -2406,7 +2422,7 @@ img {
   display: none;
 }
 @media (max-width: 900px) {
-  .raya-graph-guide {
+  .raya-graph-guide-cards {
     grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
   }
   .raya-graph-guide-desktop {
