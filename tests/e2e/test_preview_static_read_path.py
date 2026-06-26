@@ -8869,6 +8869,9 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
                           articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
                           railWidth: document.querySelector('.raya-learning-rail')?.getBoundingClientRect().width,
+                          currentChipVisible: !!document
+                            .querySelector('[data-raya-course-map-current-chip]')
+                            ?.checkVisibility(),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
@@ -8886,6 +8889,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert initial["listInert"] is False
                     assert "Toggle map" not in initial["mapText"]
                     assert "Collapse map" in initial["mapText"]
+                    assert initial["currentChipVisible"] is False
                     assert 220 <= initial["mapWidth"] <= 280
                     assert initial["articleWidth"] > 620
                     assert 240 <= initial["railWidth"] <= 320
@@ -8916,6 +8920,12 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         """() => document
                           .querySelector('#raya-course-map')
                           ?.getBoundingClientRect().width < 130"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
                     )
                     collapsed_without_focus = page.evaluate(
                         """() => {
@@ -8950,6 +8960,23 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           firstLinkPointerEvents: getComputedStyle(
                             document.querySelector('#raya-course-map a')
                           ).pointerEvents,
+                          currentChip: (() => {
+                            const chip = document
+                              .querySelector('[data-raya-course-map-current-chip]');
+                            const chipBox = chip?.getBoundingClientRect();
+                            const mapBox = document
+                              .querySelector('#raya-course-map')
+                              ?.getBoundingClientRect();
+                            return {
+                              visible: !!chip?.checkVisibility(),
+                              text: chip?.textContent.trim(),
+                              label: chip?.getAttribute('aria-label'),
+                              width: chipBox?.width,
+                              mapWidth: mapBox?.width,
+                              scrollWidth: chip?.scrollWidth,
+                              clientWidth: chip?.clientWidth,
+                            };
+                          })(),
                           buttonVisualLabel: getComputedStyle(
                             document.querySelector('#raya-course-map .raya-course-map-toggle'),
                             '::after'
@@ -8959,6 +8986,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             '::after'
                           ).writingMode,
                           wrappedLinkTexts: Array.from(document.querySelectorAll('#raya-course-map a'))
+                            .filter((link) => link.checkVisibility())
                             .map((link) => link.innerText)
                             .filter((text) => text.includes('\\n')),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
@@ -8981,6 +9009,17 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["texts"][1] in {"Expand map", "Map"}
                     assert collapsed["buttonVisualLabel"] == '"Map"'
                     assert collapsed["buttonVisualWritingMode"] == "horizontal-tb"
+                    assert collapsed["currentChip"]["visible"] is True
+                    assert collapsed["currentChip"]["text"] == "Projection Residuals"
+                    assert (
+                        collapsed["currentChip"]["label"]
+                        == "Current page: Projection Residuals"
+                    )
+                    assert collapsed["currentChip"]["width"] <= collapsed["mapWidth"]
+                    assert (
+                        collapsed["currentChip"]["scrollWidth"]
+                        <= collapsed["currentChip"]["clientWidth"] + 1
+                    )
                     assert collapsed["wrappedLinkTexts"] == []
                     assert collapsed["firstLinkWidth"] <= collapsed["mapWidth"]
                     assert collapsed["firstLinkPointerEvents"] == "auto"
@@ -9118,6 +9157,9 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                             .map((button) => button.textContent.trim()),
                           listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
                           listInert: document.querySelector('#raya-course-map-list')?.inert,
+                          currentChipVisible: !!document
+                            .querySelector('[data-raya-course-map-current-chip]')
+                            ?.checkVisibility(),
                           linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
                             .map((link) => link.getAttribute('tabindex')),
                         })"""
@@ -9133,6 +9175,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert expanded["texts"] == ["Course map", "Collapse map"]
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
+                    assert expanded["currentChipVisible"] is False
                     assert set(expanded["linkTabIndexes"]) == {None}
 
                     page.locator("#raya-course-map a").first.focus()

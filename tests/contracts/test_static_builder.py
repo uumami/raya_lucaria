@@ -4345,6 +4345,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert ".raya-asset-inspector" in css_text
     assert '.raya-course-map-actions button[aria-pressed="true"]' in css_text
     assert ".raya-course-map-drawer-chrome" in css_text
+    assert ".raya-course-map-current-chip" in css_text
+    assert '[data-raya-course-map="collapsed"] .raya-course-map-current-chip' in css_text
     assert ".raya-visually-hidden" in css_text
     assert ".raya-command-search-form" in css_text
     assert ".raya-command-search-input" in css_text
@@ -4434,6 +4436,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
     assert 'class="raya-course-map-drawer-grip"' in html
     assert 'class="raya-course-map-drawer-title">Course map</p>' in html
+    assert 'class="raya-course-map-current-chip"' in html
+    assert "data-raya-course-map-current-chip" in html
+    assert 'aria-label="Current page: Projection Residuals"' in html
     assert 'class="raya-course-map-actions"' in html
     assert 'role="group" aria-label="Course map section controls"' in html
     assert 'data-raya-course-map-action="current"' in html

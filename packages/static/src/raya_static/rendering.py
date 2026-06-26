@@ -3383,6 +3383,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail-expand {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 2px;
 }
+.raya-course-map-current-chip {
+  display: none;
+}
 .raya-rail-toggle {
   align-items: center;
   background: transparent;
@@ -4209,6 +4212,26 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     text-indent: 0;
     text-transform: uppercase;
     writing-mode: horizontal-tb;
+  }
+  [data-raya-course-map="collapsed"] .raya-course-map-current-chip,
+  .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-current-chip {
+    align-items: center;
+    background: color-mix(in srgb, var(--raya-color-success) 12%, var(--raya-color-surface));
+    border: 1px solid color-mix(in srgb, var(--raya-color-success) 58%, var(--raya-color-border));
+    border-radius: 0.375rem;
+    color: var(--raya-color-success);
+    display: flex;
+    font-size: 0.68rem;
+    font-weight: 850;
+    justify-content: center;
+    line-height: 1.05;
+    margin: 0;
+    max-width: 100%;
+    min-height: 3.5rem;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    padding: 0.35rem 0.25rem;
+    text-align: center;
   }
   [data-raya-course-map="collapsed"] .raya-course-map-list,
   .raya-course-map[data-raya-course-map="collapsed"] .raya-course-map-list {

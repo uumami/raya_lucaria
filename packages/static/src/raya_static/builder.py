@@ -1658,6 +1658,7 @@ def _render_course_map(
         if root_id in content_model.pages_by_id
     ]
     position = html.escape(_page_position(page, content_model))
+    current_map_label = html.escape(page.title or page.nav_title or _navigation_label(page))
     direct_official_count = sum(official_counts.get(page.id, {}).values())
     direct_task_count = sum(
         1
@@ -1812,6 +1813,13 @@ def _render_course_map(
             ),
             _render_course_map_toggle("Collapse map"),
             "</div>",
+            (
+                '<p class="raya-course-map-current-chip" '
+                "data-raya-course-map-current-chip "
+                f'aria-label="Current page: {current_map_label}">'
+                f"{current_map_label}"
+                "</p>"
+            ),
             workspace_html,
             '<div class="raya-course-map-actions" role="group" aria-label="Course map section controls">',
             '<button type="button" data-raya-course-map-action="current">Current</button>',
