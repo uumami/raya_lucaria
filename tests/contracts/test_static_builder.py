@@ -1030,6 +1030,16 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-expand" in graph_html
     assert "raya-graph-toolbar" in graph_html
     assert '<span class="raya-graph-toolbar-label">Find pages</span>' in graph_html
+    assert 'class="raya-graph-shortcut-hints"' in graph_html
+    assert 'aria-label="Graph keyboard shortcuts"' in graph_html
+    assert 'data-raya-graph-shortcut="search"' in graph_html
+    assert 'data-raya-graph-shortcut="fit"' in graph_html
+    assert 'data-raya-graph-shortcut="reset"' in graph_html
+    assert "<kbd>/</kbd><span>Search</span>" in graph_html
+    assert "<kbd>F</kbd><span>Fit</span>" in graph_html
+    assert "<kbd>R</kbd><span>Reset</span>" in graph_html
+    assert 'class="raya-graph-canvas-hint"' in graph_html
+    assert "Press / to search, F to fit, R to reset." in graph_html
     assert (
         '<span class="raya-graph-toolbar-label">Relationship filters</span>'
         in graph_html
@@ -1486,6 +1496,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'params.get("edges")' in graph_script
     assert 'params.get("neighborhood")' in graph_script
     assert ".raya-graph-pan-controls" in stylesheet
+    assert ".raya-graph-shortcut-hints" in stylesheet
+    assert ".raya-graph-shortcut-hint kbd" in stylesheet
+    assert ".raya-graph-canvas-hint" in stylesheet
     assert ".raya-graph-edge-kind-navigation" in stylesheet
     assert ".raya-graph-edge-kind-content" in stylesheet
     assert ".raya-graph-edge-kind-prerequisite" in stylesheet

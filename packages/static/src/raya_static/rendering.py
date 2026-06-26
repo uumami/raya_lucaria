@@ -1436,6 +1436,41 @@ img {
   justify-content: center;
   padding: 0;
 }
+.raya-graph-shortcut-hints {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 0;
+}
+.raya-graph-shortcut-hint {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 35%, var(--raya-color-border));
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  line-height: 1.1;
+  min-height: 1.7rem;
+  padding: 0.18rem 0.48rem;
+}
+.raya-graph-shortcut-hint kbd {
+  background: var(--raya-color-text);
+  border: 1px solid color-mix(in srgb, var(--raya-color-text) 78%, var(--raya-color-surface));
+  border-radius: 0.25rem;
+  color: var(--raya-color-surface);
+  font: inherit;
+  font-size: 0.68rem;
+  line-height: 1;
+  min-width: 1.2rem;
+  padding: 0.16rem 0.25rem;
+  text-align: center;
+}
 .raya-search-control-panel .raya-search-controls,
 .raya-practice-control-panel .raya-practice-controls {
   align-items: stretch;
@@ -2861,6 +2896,13 @@ img {
   display: block;
   height: clamp(28rem, 56vh, 40rem);
   width: 100%;
+}
+.raya-graph-canvas-hint {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0 0 0.45rem;
 }
 .raya-graph-canvas.is-panning {
   cursor: grabbing;

@@ -4701,6 +4701,17 @@ def _render_graph_surface(
             '<button id="graph-expand" type="button" '
             'aria-pressed="false" aria-label="Expand graph focus mode">Focus</button>',
             "</div>",
+            (
+                '<p class="raya-graph-shortcut-hints" '
+                'aria-label="Graph keyboard shortcuts">'
+                '<span class="raya-graph-shortcut-hint" '
+                'data-raya-graph-shortcut="search"><kbd>/</kbd><span>Search</span></span>'
+                '<span class="raya-graph-shortcut-hint" '
+                'data-raya-graph-shortcut="fit"><kbd>F</kbd><span>Fit</span></span>'
+                '<span class="raya-graph-shortcut-hint" '
+                'data-raya-graph-shortcut="reset"><kbd>R</kbd><span>Reset</span></span>'
+                "</p>"
+            ),
             "</section>",
             (
                 '<p class="raya-graph-instructions">'
@@ -4744,6 +4755,11 @@ def _render_graph_surface(
             "</div>",
             "</aside>",
             '<section class="raya-graph-map-panel" aria-label="Course graph map">',
+            (
+                '<p class="raya-graph-canvas-hint">'
+                "Press / to search, F to fit, R to reset."
+                "</p>"
+            ),
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             (
                 '<p class="raya-graph-arrangement-status" '

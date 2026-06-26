@@ -4229,19 +4229,37 @@ def test_render_fixture_graph_guide_uses_viewport_specific_movement_guidance(
                     )
                     _assert_no_horizontal_overflow(desktop)
                     _assert_no_horizontal_overflow(mobile)
+                    assert mobile.locator(
+                        "[data-raya-graph-shortcut='search']"
+                    ).is_visible()
+                    assert mobile.locator(
+                        "[data-raya-graph-shortcut='fit']"
+                    ).is_visible()
+                    assert mobile.locator(
+                        "[data-raya-graph-shortcut='reset']"
+                    ).is_visible()
+                    assert mobile.locator(".raya-graph-canvas-hint").is_visible()
 
-                    desktop_guide = desktop.locator(
-                        "[data-raya-graph-guide]"
-                    ).inner_text()
-                    mobile_guide = mobile.locator(
-                        "[data-raya-graph-guide]"
-                    ).inner_text()
+                    desktop_guide = desktop.locator("[data-raya-graph-guide]")
+                    mobile_guide = mobile.locator("[data-raya-graph-guide]")
+                    desktop_guide.locator("summary").click()
+                    mobile_guide.locator("summary").click()
+                    desktop_guide_text = desktop_guide.inner_text()
+                    mobile_guide_text = mobile_guide.inner_text()
 
-                    assert "On desktop, drag pages to tidy the map" in desktop_guide
-                    assert "Use Fit, zoom, and pan controls" not in desktop_guide
-                    assert "On desktop, drag pages to tidy the map" not in mobile_guide
-                    assert "Use Fit, zoom, and pan controls" in mobile_guide
-                    assert "Reset graph restores the generated layout" in mobile_guide
+                    assert (
+                        "On desktop, drag pages to tidy the map" in desktop_guide_text
+                    )
+                    assert "Use Fit, zoom, and pan controls" not in desktop_guide_text
+                    assert (
+                        "On desktop, drag pages to tidy the map"
+                        not in mobile_guide_text
+                    )
+                    assert "Use Fit, zoom, and pan controls" in mobile_guide_text
+                    assert (
+                        "Reset graph restores the generated layout"
+                        in mobile_guide_text
+                    )
                 finally:
                     desktop.close()
                     mobile.close()
@@ -4282,6 +4300,11 @@ def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
                     f"{handle.base_url}/_raya/graph/index.html",
                     wait_until="networkidle",
                 )
+                assert page.locator("[data-raya-graph-shortcut='search']").is_visible()
+                assert page.locator("[data-raya-graph-shortcut='fit']").is_visible()
+                assert page.locator("[data-raya-graph-shortcut='reset']").is_visible()
+                assert page.locator(".raya-graph-canvas-hint").is_visible()
+                _assert_no_horizontal_overflow(page)
                 page.locator("#raya-graph-canvas").focus()
                 page.keyboard.press("/")
                 page.wait_for_function(
