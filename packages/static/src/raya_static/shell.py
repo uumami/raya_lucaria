@@ -42,7 +42,9 @@ _SHELL_JAVASCRIPT = r"""
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
-  const currentSectionLink = document.querySelector("[data-raya-current-section-link]");
+  const currentSectionLinks = Array.from(
+    document.querySelectorAll("[data-raya-current-section-link]")
+  );
   const headings = tocLinks
     .map((link) => {
       const href = link.getAttribute("href");
@@ -1284,19 +1286,25 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function syncCurrentSection(activeLink) {
-    if (!currentSectionLink || !activeLink) {
+    if (currentSectionLinks.length === 0 || !activeLink) {
       return;
     }
     const href = activeLink.getAttribute("href") || "";
     const label = activeLink.textContent || "Current section";
-    if (
-      currentSectionLink.getAttribute("href") === href &&
-      currentSectionLink.textContent === label
-    ) {
-      return;
-    }
-    currentSectionLink.setAttribute("href", href);
-    currentSectionLink.textContent = label;
+    currentSectionLinks.forEach((currentSectionLink) => {
+      const isCommandChip = currentSectionLink.classList.contains("raya-reading-context-section");
+      const nextText = isCommandChip ? "Section" : label;
+      const nextLabel = isCommandChip ? `Current section: ${label}` : label;
+      if (currentSectionLink.getAttribute("href") !== href) {
+        currentSectionLink.setAttribute("href", href);
+      }
+      if (currentSectionLink.textContent !== nextText) {
+        currentSectionLink.textContent = nextText;
+      }
+      if (currentSectionLink.getAttribute("aria-label") !== nextLabel) {
+        currentSectionLink.setAttribute("aria-label", nextLabel);
+      }
+    });
   }
 
   if (headings.length > 0) {

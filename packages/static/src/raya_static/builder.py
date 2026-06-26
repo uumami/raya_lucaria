@@ -1005,6 +1005,7 @@ def _render_page(
                 course_title,
                 page,
                 content_model,
+                toc_html,
                 search_href,
                 graph_href,
                 practice_href,
@@ -1049,6 +1050,7 @@ def _render_top_command_bar(
     course_title: str,
     page: ContentPage,
     content_model: ContentModel,
+    toc_html: str,
     search_href: str,
     graph_href: str,
     practice_href: str,
@@ -1059,7 +1061,7 @@ def _render_top_command_bar(
         [
             '<header class="raya-top-command-bar" aria-label="Course tools">',
             '<div class="raya-top-command-bar-inner">',
-            _render_reading_context(course_title, page, content_model),
+            _render_reading_context(course_title, page, content_model, toc_html),
             '<div class="raya-course-tools">',
             _render_command_search_form(search_href),
             _render_command_link(
@@ -1391,9 +1393,11 @@ def _render_reading_context(
     course_title: str,
     page: ContentPage,
     content_model: ContentModel,
+    toc_html: str = "",
 ) -> str:
     position = _page_position(page, content_model)
     sequence = _reading_context_sequence_links(page, content_model)
+    section = _reading_context_section_link(toc_html)
     sequence_html = (
         '<nav class="raya-reading-context-sequence" '
         'aria-label="Compact previous and next pages">' + sequence + "</nav>"
@@ -1408,11 +1412,36 @@ def _render_reading_context(
         '<span class="raya-reading-context-separator">/</span>',
         f'<span class="raya-reading-context-position">{html.escape(position)}</span>',
     ]
+    if section:
+        section_href, section_label = section
+        parts.extend(
+            [
+                '<span class="raya-reading-context-separator">/</span>',
+                (
+                    '<a class="raya-reading-context-link '
+                    'raya-reading-context-section" '
+                    'data-raya-current-section-link '
+                    f'href="{html.escape(section_href, quote=True)}" '
+                    f'aria-label="Current section: {html.escape(section_label, quote=True)}">'
+                    "Section"
+                    "</a>"
+                ),
+            ]
+        )
     if sequence_html:
         parts.append('<span class="raya-reading-context-separator">/</span>')
         parts.append(sequence_html)
     parts.append("</div>")
     return "".join(parts)
+
+
+def _reading_context_section_link(toc_html: str) -> tuple[str, str] | None:
+    match = re.search(r'<a href="([^"]+)">([^<]+)</a>', toc_html)
+    if match is None:
+        return None
+    href = html.unescape(match.group(1))
+    label = html.unescape(match.group(2)).strip() or "Current section"
+    return href, label
 
 
 def _reading_context_sequence_links(
@@ -1900,11 +1929,77 @@ def _extract_page_toc(rendered_article_html: str) -> tuple[str, str]:
         flags=re.DOTALL,
     )
     if match is None:
-        return rendered_article_html, ""
+        return rendered_article_html, _render_generated_index_toc(
+            rendered_article_html
+        )
     article_without_toc = (
         rendered_article_html[: match.start()] + rendered_article_html[match.end() :]
     )
-    return article_without_toc, match.group(0)
+    toc_html = _append_generated_index_toc_items(
+        match.group(0),
+        article_without_toc,
+    )
+    return article_without_toc, toc_html
+
+
+def _append_generated_index_toc_items(toc_html: str, article_html: str) -> str:
+    generated_items = _generated_index_toc_items(article_html)
+    if not generated_items:
+        return toc_html
+    existing_hrefs = set(re.findall(r'<a href="([^"]+)">', toc_html))
+    new_items = [
+        item for item in generated_items if f"#{html.escape(item[1], quote=True)}" not in existing_hrefs
+    ]
+    if not new_items:
+        return toc_html
+    insertion = "\n".join(_toc_item_html(*item) for item in new_items)
+    return toc_html.replace("</ol>", insertion + "\n</ol>", 1)
+
+
+def _render_generated_index_toc(rendered_article_html: str) -> str:
+    headings = _generated_index_toc_items(rendered_article_html)
+    if len(headings) < 2:
+        return ""
+    return "\n".join(
+        [
+            '<nav class="raya-page-toc" aria-label="Page contents">',
+            '<p class="raya-page-toc-title">On This Page</p>',
+            "<ol>",
+            "\n".join(_toc_item_html(*item) for item in headings),
+            "</ol>",
+            "</nav>",
+        ]
+    )
+
+
+def _generated_index_toc_items(rendered_article_html: str) -> list[tuple[int, str, str]]:
+    generated_section = re.search(
+        r'<section class="[^"]*\braya-generated-index\b[^"]*".*?</section>',
+        rendered_article_html,
+        flags=re.DOTALL,
+    )
+    if generated_section is None:
+        return []
+    items: list[tuple[int, str, str]] = []
+    for match in re.finditer(
+        r'<h([2-6]) id="([^"]+)">(.*?)</h\1>',
+        generated_section.group(0),
+        flags=re.DOTALL,
+    ):
+        level = int(match.group(1))
+        anchor = html.unescape(match.group(2))
+        label = html.unescape(re.sub(r"<[^>]+>", "", match.group(3))).strip()
+        if anchor and label:
+            items.append((level, anchor, label))
+    return items
+
+
+def _toc_item_html(level: int, anchor: str, label: str) -> str:
+    return (
+        f'<li class="raya-page-toc-level-{level}">'
+        f'<a href="#{html.escape(anchor, quote=True)}">'
+        f"{html.escape(label)}</a></li>"
+    )
 
 
 class _PublicArticleTextParser(HTMLParser):
@@ -3308,7 +3403,12 @@ def _render_generated_index(
     parts = [f'<section class="{section_class}" aria-label="Generated index">']
     if child_ids:
         heading = "Course Index" if page.parent_id is None else "Topics"
-        parts.append(f"<h2>{html.escape(heading)}</h2>")
+        heading_id = (
+            "raya-generated-course-index"
+            if page.parent_id is None
+            else "raya-generated-topics"
+        )
+        parts.append(f'<h2 id="{heading_id}">{html.escape(heading)}</h2>')
         parts.append('<ol class="raya-section-card-list">')
         for child_id in child_ids:
             child = content_model.pages_by_id[child_id]
@@ -3346,7 +3446,7 @@ def _render_generated_index(
             parts.append("</li>")
         parts.append("</ol>")
     if counts:
-        parts.append("<h2>Study</h2>")
+        parts.append('<h2 id="raya-generated-study">Study</h2>')
         parts.append(f"<p>{html.escape(_study_counts_text(counts))}</p>")
     parts.append("</section>")
     return "\n".join(parts)

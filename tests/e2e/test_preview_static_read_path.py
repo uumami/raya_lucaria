@@ -527,6 +527,18 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
 
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    root_source = course / "course" / "0_index.md"
+    root_source.write_text(
+        root_source.read_text(encoding="utf-8").replace(
+            "# Raya Lucaria Render Fixture\n",
+            "# Raya Lucaria Render Fixture\n\n"
+            "## Course Index\n\n"
+            "Authored heading that intentionally collides with the generated "
+            "index label.\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -558,6 +570,68 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                         page.goto(f"{base_url}/index.html", wait_until="networkidle")
                         requested_urls.clear()
                         _assert_no_horizontal_overflow(page)
+                        generated_heading = page.locator(
+                            "#raya-generated-course-index"
+                        )
+                        assert generated_heading.is_visible()
+                        assert page.locator("#course-index").is_visible()
+                        assert (
+                            page.locator(
+                                '.raya-page-toc a[href="#raya-generated-course-index"]'
+                            ).count()
+                            == 1
+                        )
+                        page.evaluate(
+                            """() => {
+                              document
+                                .getElementById('raya-generated-course-index')
+                                ?.scrollIntoView({ block: 'start' });
+                              window.dispatchEvent(new Event('scroll'));
+                            }"""
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('.raya-page-toc a[aria-current="location"]')
+                              ?.getAttribute('href') === '#raya-generated-course-index'"""
+                        )
+                        current_sections = page.evaluate(
+                            """() => ({
+                              rail: {
+                                href: document
+                                  .querySelector('.raya-current-section-link')
+                                  ?.getAttribute('href'),
+                                text: document
+                                  .querySelector('.raya-current-section-link')
+                                  ?.textContent
+                                  ?.trim(),
+                                label: document
+                                  .querySelector('.raya-current-section-link')
+                                  ?.getAttribute('aria-label') || '',
+                              },
+                              command: {
+                                href: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.getAttribute('href'),
+                                text: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.textContent
+                                  ?.trim(),
+                                label: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.getAttribute('aria-label') || '',
+                              },
+                            })"""
+                        )
+                        assert current_sections["rail"] == {
+                            "href": "#raya-generated-course-index",
+                            "text": "Course Index",
+                            "label": "Course Index",
+                        }
+                        assert current_sections["command"] == {
+                            "href": "#raya-generated-course-index",
+                            "text": "Section",
+                            "label": "Current section: Course Index",
+                        }
                         cards = page.locator(".raya-section-card")
                         assert cards.count() >= 5
                         first_link = page.locator(".raya-section-card-link").first
@@ -6767,6 +6841,17 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 contextWidth: document
                                   .querySelector('.raya-reading-context')
                                   ?.getBoundingClientRect().width,
+                                sectionHref: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.getAttribute('href') || '',
+                                sectionText: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.textContent
+                                  ?.trim() || '',
+                                sectionWidth: document
+                                  .querySelector('.raya-reading-context-section')
+                                  ?.getBoundingClientRect()
+                                  ?.width || 0,
                                 prevHref: document
                                   .querySelector('.raya-reading-context-prev')
                                   ?.getAttribute('href') || '',
@@ -6824,6 +6909,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert "Raya Lucaria Render Fixture" in state["contextText"]
                         assert "Page 1 of 6" in state["contextText"]
                         assert state["contextWidth"] > 0
+                        assert state["sectionHref"] == "#rich-static-baseline"
+                        assert state["sectionText"] == "Section"
+                        assert state["sectionWidth"] >= 40
                         assert state["prevHref"] == ""
                         assert state["nextHref"] == "static-path/index.html"
 
@@ -10943,20 +11031,36 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     current_section = page.evaluate(
                         """() => ({
                           href: document
-                            .querySelector('[data-raya-current-section-link]')
+                            .querySelector('.raya-current-section-link')
                             ?.getAttribute('href'),
                           text: document
-                            .querySelector('[data-raya-current-section-link]')
+                            .querySelector('.raya-current-section-link')
                             ?.textContent
                             ?.trim(),
+                          commandHref: document
+                            .querySelector('.raya-reading-context-section')
+                            ?.getAttribute('href'),
+                          commandText: document
+                            .querySelector('.raya-reading-context-section')
+                            ?.textContent
+                            ?.trim(),
+                          commandLabel: document
+                            .querySelector('.raya-reading-context-section')
+                            ?.getAttribute('aria-label'),
                         })"""
                     )
                     assert current_section["href"] == "#worked-example"
                     assert current_section["text"] == "Worked Example"
+                    assert current_section["commandHref"] == "#worked-example"
+                    assert current_section["commandText"] == "Section"
+                    assert (
+                        current_section["commandLabel"]
+                        == "Current section: Worked Example"
+                    )
                     redundant_mutations = page.evaluate(
                         """async () => {
                           const current = document
-                            .querySelector('[data-raya-current-section-link]');
+                            .querySelector('.raya-current-section-link');
                           if (!current) {
                             return -1;
                           }
