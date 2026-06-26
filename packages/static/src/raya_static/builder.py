@@ -4503,6 +4503,11 @@ def _render_graph_surface(
             '<div class="raya-graph-panel-header">',
             "<h2>Pages</h2>",
             (
+                '<p class="raya-graph-panel-rail-summary" '
+                'data-raya-graph-panel-rail-summary="list" '
+                'aria-hidden="true"></p>'
+            ),
+            (
                 '<button type="button" data-raya-graph-toggle-panel="list" '
                 'aria-controls="raya-graph-list-panel-body" aria-expanded="true">'
                 "Collapse list</button>"
@@ -4635,6 +4640,11 @@ def _render_graph_surface(
             ),
             '<div class="raya-graph-panel-header">',
             "<h2>Inspector</h2>",
+            (
+                '<p class="raya-graph-panel-rail-summary" '
+                'data-raya-graph-panel-rail-summary="inspector" '
+                'aria-hidden="true"></p>'
+            ),
             (
                 '<button type="button" data-raya-graph-toggle-panel="inspector" '
                 'aria-controls="raya-graph-inspector-panel-body" aria-expanded="true">'

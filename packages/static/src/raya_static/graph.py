@@ -480,6 +480,7 @@ _GRAPH_JAVASCRIPT = r"""
   function syncGraphStateReadout() {
     updateGraphUrlState();
     updateGraphStateReadout(lastActiveNodes, lastActiveEdges);
+    updateGraphPanelRailSummaries();
   }
 
   function updateGraphOrientation(activeNodes, activeEdges) {
@@ -1448,12 +1449,48 @@ _GRAPH_JAVASCRIPT = r"""
     return panelName === "inspector" ? "inspector" : "list";
   }
 
+  function graphPanelStateAttribute(panelName) {
+    return panelName === "inspector"
+      ? "data-raya-graph-inspector-state"
+      : "data-raya-graph-list-state";
+  }
+
+  function graphPanelRailSummaryText(panelName) {
+    if (panelName === "list") {
+      const text = orientationCounts ? orientationCounts.textContent.trim() : "";
+      if (text) return text;
+      return `${lastActiveNodes.length} visible page(s), ${lastActiveEdges.length} visible relationship(s)`;
+    }
+    const selected = selectedId ? nodesById.get(selectedId) : null;
+    if (selected) {
+      const title = selected.title || selected.nav_title || selected.id;
+      const outgoing = explicitRelationshipsFor(selectedId, "out").length;
+      const incoming = explicitRelationshipsFor(selectedId, "in").length;
+      return `${title} - ${outgoing} out / ${incoming} in`;
+    }
+    const empty = detailEmpty ? detailEmpty.textContent.trim() : "";
+    return empty || "Select a page.";
+  }
+
+  function updateGraphPanelRailSummary(panelName) {
+    const collapsed = root.getAttribute(graphPanelStateAttribute(panelName)) === "collapsed";
+    document
+      .querySelectorAll(`[data-raya-graph-panel-rail-summary="${panelName}"]`)
+      .forEach((summary) => {
+        summary.textContent = graphPanelRailSummaryText(panelName);
+        summary.setAttribute("aria-hidden", collapsed ? "false" : "true");
+      });
+  }
+
+  function updateGraphPanelRailSummaries() {
+    updateGraphPanelRailSummary("list");
+    updateGraphPanelRailSummary("inspector");
+  }
+
   function setGraphPanelState(panelName, expanded) {
     const label = graphPanelLabel(panelName);
     const state = expanded ? "expanded" : "collapsed";
-    const attr = panelName === "inspector"
-      ? "data-raya-graph-inspector-state"
-      : "data-raya-graph-list-state";
+    const attr = graphPanelStateAttribute(panelName);
     root.setAttribute(attr, state);
     root.dataset[panelName === "inspector" ? "rayaGraphInspectorState" : "rayaGraphListState"] = state;
     const body = graphPanelBody(panelName);
@@ -1467,6 +1504,7 @@ _GRAPH_JAVASCRIPT = r"""
         button.setAttribute("aria-expanded", expanded ? "true" : "false");
         button.textContent = `${expanded ? "Collapse" : "Expand"} ${label}`;
       });
+    updateGraphPanelRailSummary(panelName);
   }
 
   function zoomGraphView(factor) {

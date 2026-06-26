@@ -3780,6 +3780,15 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "list=0" in page.locator(
                         "[data-raya-graph-state-url]"
                     ).inner_text()
+                    list_rail_summary = page.locator(
+                        '[data-raya-graph-panel-rail-summary="list"]'
+                    )
+                    assert list_rail_summary.is_visible()
+                    assert (
+                        list_rail_summary.get_attribute("aria-hidden")
+                        == "false"
+                    )
+                    assert "visible page" in list_rail_summary.inner_text()
                     page.click('[data-raya-graph-toggle-panel="inspector"]')
                     page.wait_for_function(
                         "() => new URL(window.location.href).searchParams.get('inspector') === '0'"
@@ -3787,8 +3796,35 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "inspector=0" in page.locator(
                         "[data-raya-graph-state-url]"
                     ).inner_text()
+                    inspector_rail_summary = page.locator(
+                        '[data-raya-graph-panel-rail-summary="inspector"]'
+                    )
+                    assert inspector_rail_summary.is_visible()
+                    assert (
+                        inspector_rail_summary.get_attribute("aria-hidden")
+                        == "false"
+                    )
+                    assert "Projection Residuals" in inspector_rail_summary.inner_text()
                     page.click('[data-raya-graph-toggle-panel="inspector"]')
                     page.click('[data-raya-graph-toggle-panel="list"]')
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-list-state') === 'expanded'
+                          && document
+                            .querySelector('[data-raya-graph-page]')
+                            ?.getAttribute('data-raya-graph-inspector-state') === 'expanded'"""
+                    )
+                    assert list_rail_summary.is_hidden()
+                    assert inspector_rail_summary.is_hidden()
+                    assert (
+                        list_rail_summary.get_attribute("aria-hidden")
+                        == "true"
+                    )
+                    assert (
+                        inspector_rail_summary.get_attribute("aria-hidden")
+                        == "true"
+                    )
 
                     page.goto(
                         f"{handle.base_url}/_raya/graph/index.html",

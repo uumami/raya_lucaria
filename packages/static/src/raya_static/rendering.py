@@ -1116,6 +1116,19 @@ img {
   font-size: 1rem;
   margin: 0;
 }
+.raya-graph-panel-rail-summary {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: var(--raya-color-muted);
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  max-width: 4.75rem;
+  overflow: hidden;
+  text-align: center;
+}
 .raya-graph-panel-header button {
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
@@ -1147,6 +1160,10 @@ img {
 [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel .raya-graph-panel-header,
 [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel .raya-graph-panel-header {
   flex-direction: column;
+}
+[data-raya-graph-list-state="collapsed"] [data-raya-graph-panel-rail-summary="list"],
+[data-raya-graph-inspector-state="collapsed"] [data-raya-graph-panel-rail-summary="inspector"] {
+  display: -webkit-box;
 }
 [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
 [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
