@@ -4781,7 +4781,8 @@ def _render_graph_surface(
                 '<article class="raya-graph-guide-card">'
                 "<h3>Move</h3>"
                 "<p>Pan, zoom, and fit change only this SVG viewport. Fit "
-                "selection frames selected graph context.</p>"
+                "selection frames context. On desktop, drag pages to tidy the map; "
+                "Reset graph restores the generated layout.</p>"
                 "</article>"
                 '<article class="raya-graph-guide-card">'
                 "<h3>Filter</h3>"

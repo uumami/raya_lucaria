@@ -1112,6 +1112,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert f"<h3>{label}</h3>" in graph_html
     assert "Search titles, stable IDs, tags, groups, and status." in graph_html
     assert "Pan, zoom, and fit change only this SVG viewport." in graph_html
+    assert (
+        "<h3>Move</h3><p>Pan, zoom, and fit change only this SVG viewport. "
+        "Fit selection frames context. On desktop, drag pages to tidy the "
+        "map; Reset graph restores the generated layout.</p>"
+    ) in graph_html
     assert "Filters hide visible graph marks only." in graph_html
     assert "raya-graph-inspection-preview" in graph_html
     assert "data-raya-graph-inspection-preview" in graph_html

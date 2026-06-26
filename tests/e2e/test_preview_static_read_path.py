@@ -3886,6 +3886,8 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                         "personalization",
                     ):
                         assert forbidden not in guide_text.lower()
+                    assert "On desktop, drag pages to tidy the map" in guide_text
+                    assert "Reset graph restores the generated layout" in guide_text
                     assert "visible page" in page.locator(
                         "[data-raya-graph-orientation-counts]"
                     ).inner_text()
