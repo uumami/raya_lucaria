@@ -4049,6 +4049,8 @@ def test_render_fixture_builds_rich_static_pages(
     accessibility_js = (
         site_dir / "_raya" / "render" / "accessibility" / "open-dyslexic-toggle.js"
     )
+    skin_prepaint_js = site_dir / "_raya" / "render" / "skin-prepaint.js"
+    skin_toggle_js = site_dir / "_raya" / "render" / "skin-toggle.js"
     accessibility_font = (
         site_dir
         / "_raya"
@@ -4060,8 +4062,12 @@ def test_render_fixture_builds_rich_static_pages(
     assert accessibility_css.is_file()
     assert accessibility_prepaint_js.is_file()
     assert accessibility_js.is_file()
+    assert skin_prepaint_js.is_file()
+    assert skin_toggle_js.is_file()
     assert accessibility_font.is_file()
     assert accessibility_prepaint_js in report.outputs_written
+    assert skin_prepaint_js in report.outputs_written
+    assert skin_toggle_js in report.outputs_written
     assert 'class="raya-generated-index raya-section-landing"' in html
     assert 'class="raya-section-card-list"' in html
     assert 'class="raya-section-card"' in html
@@ -4094,6 +4100,15 @@ def test_render_fixture_builds_rich_static_pages(
     assert "localStorage" in accessibility_js_text
     assert "raya:text-size" in accessibility_js_text
     assert "fetch(" not in accessibility_js_text
+    skin_prepaint_js_text = skin_prepaint_js.read_text(encoding="utf-8")
+    skin_toggle_js_text = skin_toggle_js.read_text(encoding="utf-8")
+    assert "raya:skin-override" in skin_prepaint_js_text
+    assert "raya:skin-override" in skin_toggle_js_text
+    assert "fetch(" not in skin_toggle_js_text
+    assert 'src="_raya/render/skin-prepaint.js"' in html
+    assert 'src="_raya/render/skin-toggle.js"' in html
+    assert 'localStorage.getItem("raya:skin-override")' not in html
+    assert 'class="raya-command raya-command-skin raya-skin-toggle"' in html
     numbered_objects_html_path = (
         course / "artifact" / "site" / "numbered-objects" / "index.html"
     )

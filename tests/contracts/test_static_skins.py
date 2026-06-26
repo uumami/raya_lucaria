@@ -541,6 +541,8 @@ def test_render_skin_css_is_deterministic_and_writes_token_variables() -> None:
     assert css.index('[data-raya-skin="a-skin"]') < css.index(
         '[data-raya-skin="z-skin"]'
     )
+    assert ':root[data-raya-skin-override="a-skin"]' in css
+    assert ':root[data-raya-skin-override="a-skin"] body' in css
     assert "--raya-color-page: #ffffff;" in css
     assert "--raya-color-accent: #111111;" in css
     assert "--raya-font-body: system-ui;" in css

@@ -127,11 +127,16 @@ from raya_static.rendering import (
     rich_render_css,
 )
 from raya_static.skins import (
+    SKIN_PREPAINT_JS_NAME,
     SKIN_STYLESHEET_PATH,
+    SKIN_TOGGLE_JS_NAME,
     SkinContext,
     load_skin_context,
     render_skin_css,
+    skin_cycle_entries,
     skin_id_for_source_path,
+    skin_prepaint_script,
+    skin_toggle_script,
 )
 from raya_static.search import (
     SEARCH_RESOURCE_PATH,
@@ -876,6 +881,14 @@ def _render_page(
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
     skin_id = skin_id_for_source_path(page.source_path, skin_context)
     skin_stylesheet_href = _relative_href(page.output_path, SKIN_STYLESHEET_PATH)
+    skin_prepaint_js_href = _relative_href(
+        page.output_path,
+        Path(SKIN_STYLESHEET_PATH).parent / SKIN_PREPAINT_JS_NAME,
+    )
+    skin_toggle_js_href = _relative_href(
+        page.output_path,
+        Path(SKIN_STYLESHEET_PATH).parent / SKIN_TOGGLE_JS_NAME,
+    )
     accessibility_css_href = _relative_href(
         page.output_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
@@ -1004,6 +1017,7 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(skin_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -1024,6 +1038,7 @@ def _render_page(
                 practice_href,
                 tasks_href,
                 schedule_href,
+                skin_context,
             ),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(
@@ -1051,6 +1066,7 @@ def _render_page(
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             f'<script src="{html.escape(shell_js_href)}" defer></script>',
+            f'<script src="{html.escape(skin_toggle_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
@@ -1069,6 +1085,7 @@ def _render_top_command_bar(
     practice_href: str,
     tasks_href: str,
     schedule_href: str,
+    skin_context: SkinContext,
 ) -> str:
     return "\n".join(
         [
@@ -1171,11 +1188,32 @@ def _render_top_command_bar(
                 label="OpenDyslexic",
                 aria_pressed="false",
             ),
+            _render_skin_toggle_command(skin_context),
             "</div>",
             "</div>",
             "</div>",
             "</header>",
         ]
+    )
+
+
+def _render_skin_toggle_command(skin_context: SkinContext) -> str:
+    entries = [("", "authored"), *skin_cycle_entries(skin_context)]
+    cycle = [skin_id for skin_id, _label in entries]
+    labels = {skin_id: label for skin_id, label in entries}
+    extra_attrs = (
+        " data-raya-skin-toggle "
+        f"data-raya-skin-cycle='{html.escape(json.dumps(cycle), quote=True)}' "
+        f"data-raya-skin-labels='{html.escape(json.dumps(labels), quote=True)}' "
+        'data-raya-skin-active="authored"'
+    )
+    return _render_command_button(
+        class_name="raya-command raya-command-skin raya-skin-toggle",
+        aria_label="Skin: authored",
+        icon="skin",
+        label="Skin",
+        aria_pressed="false",
+        extra_attrs=extra_attrs,
     )
 
 
@@ -2771,6 +2809,12 @@ _COMMAND_ICON_BODIES = {
     "font": (
         '<text class="raya-command-icon-text" x="11.8" y="14.8" '
         'text-anchor="middle">Aa</text>'
+    ),
+    "skin": (
+        '<path d="M5.5 8.2c1.8-2.2 4-3.3 6.5-3.3 4.2 0 7.5 3.2 7.5 7.1 0 3.5-2.7 6.5-6.3 6.5h-1.4c-.9 0-1.4-.8-1-1.5.5-.9-.1-1.8-1.2-1.8H8.4c-2.2 0-3.9-1.5-3.9-3.7 0-1.2.3-2.3 1-3.3Z"/>'
+        '<circle cx="8.5" cy="10" r=".8"/>'
+        '<circle cx="11.6" cy="8.4" r=".8"/>'
+        '<circle cx="15" cy="10.3" r=".8"/>'
     ),
 }
 
@@ -7468,6 +7512,12 @@ def _write_rich_render_resources(
     skin_stylesheet.parent.mkdir(parents=True, exist_ok=True)
     skin_stylesheet.write_text(render_skin_css(skin_context), encoding="utf-8")
     report.wrote_output(skin_stylesheet)
+    skin_prepaint_js_path = skin_stylesheet.parent / SKIN_PREPAINT_JS_NAME
+    skin_toggle_js_path = skin_stylesheet.parent / SKIN_TOGGLE_JS_NAME
+    skin_prepaint_js_path.write_text(skin_prepaint_script(), encoding="utf-8")
+    skin_toggle_js_path.write_text(skin_toggle_script(), encoding="utf-8")
+    report.wrote_output(skin_prepaint_js_path)
+    report.wrote_output(skin_toggle_js_path)
     accessibility = open_dyslexic_resources()
     accessibility_dir = site_dir / ACCESSIBILITY_RESOURCE_PATH
     accessibility_dir.mkdir(parents=True, exist_ok=True)

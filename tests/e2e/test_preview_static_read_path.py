@@ -8329,6 +8329,150 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "@media (max-width: 1279px)" in rich_css
 
 
+def test_render_fixture_skin_toggle_cycles_local_override(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const body = document.body;
+                          const button = document.querySelector('.raya-skin-toggle');
+                          return {
+                            authoredSkin: body.getAttribute('data-raya-skin'),
+                            override: root.getAttribute('data-raya-skin-override'),
+                            active: button?.getAttribute('data-raya-skin-active'),
+                            label: button?.getAttribute('aria-label'),
+                            pressed: button?.getAttribute('aria-pressed'),
+                            accent: getComputedStyle(body)
+                              .getPropertyValue('--raya-color-accent')
+                              .trim(),
+                          };
+                        }"""
+                    )
+                    assert initial == {
+                        "authoredSkin": "practice-lab",
+                        "override": None,
+                        "active": "authored",
+                        "label": "Skin: authored",
+                        "pressed": "false",
+                        "accent": initial["accent"],
+                    }
+
+                    page.click(".raya-skin-toggle")
+                    switched = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const body = document.body;
+                          const button = document.querySelector('.raya-skin-toggle');
+                          return {
+                            authoredSkin: body.getAttribute('data-raya-skin'),
+                            override: root.getAttribute('data-raya-skin-override'),
+                            active: button?.getAttribute('data-raya-skin-active'),
+                            label: button?.getAttribute('aria-label'),
+                            pressed: button?.getAttribute('aria-pressed'),
+                            stored: localStorage.getItem('raya:skin-override'),
+                            accent: getComputedStyle(body)
+                              .getPropertyValue('--raya-color-accent')
+                              .trim(),
+                          };
+                        }"""
+                    )
+                    assert switched["authoredSkin"] == "practice-lab"
+                    assert switched["override"]
+                    assert switched["active"] == switched["override"]
+                    assert switched["pressed"] == "true"
+                    assert switched["stored"] == switched["override"]
+                    assert switched["accent"] != initial["accent"]
+                    assert switched["label"].startswith("Skin: ")
+                    assert switched["label"] != "Skin: authored"
+
+                    page.reload(wait_until="networkidle")
+                    restored = page.evaluate(
+                        """() => ({
+                          authoredSkin: document.body.getAttribute('data-raya-skin'),
+                          override: document.documentElement
+                            .getAttribute('data-raya-skin-override'),
+                          active: document.querySelector('.raya-skin-toggle')
+                            ?.getAttribute('data-raya-skin-active'),
+                          stored: localStorage.getItem('raya:skin-override'),
+                        })"""
+                    )
+                    assert restored == {
+                        "authoredSkin": "practice-lab",
+                        "override": switched["override"],
+                        "active": switched["override"],
+                        "stored": switched["override"],
+                    }
+
+                    for _ in range(12):
+                        page.click(".raya-skin-toggle")
+                        if page.evaluate(
+                            """() => !document.documentElement
+                              .hasAttribute('data-raya-skin-override')"""
+                        ):
+                            break
+                    authored = page.evaluate(
+                        """() => ({
+                          authoredSkin: document.body.getAttribute('data-raya-skin'),
+                          override: document.documentElement
+                            .getAttribute('data-raya-skin-override'),
+                          active: document.querySelector('.raya-skin-toggle')
+                            ?.getAttribute('data-raya-skin-active'),
+                          label: document.querySelector('.raya-skin-toggle')
+                            ?.getAttribute('aria-label'),
+                          pressed: document.querySelector('.raya-skin-toggle')
+                            ?.getAttribute('aria-pressed'),
+                          stored: localStorage.getItem('raya:skin-override'),
+                        })"""
+                    )
+                    assert authored == {
+                        "authoredSkin": "practice-lab",
+                        "override": None,
+                        "active": "authored",
+                        "label": "Skin: authored",
+                        "pressed": "false",
+                        "stored": None,
+                    }
+                    assert requested_urls
+                    assert all(
+                        url.startswith(f"{handle.base_url}/")
+                        for url in requested_urls
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_comfort_labels_are_visible_on_desktop_only(
     tmp_path: Path,
 ) -> None:
