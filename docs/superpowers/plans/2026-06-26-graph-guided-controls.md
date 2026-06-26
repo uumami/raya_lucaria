@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10, static HTML/CSS generation, pytest, Playwright/Chromium.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in graph guide markup in `packages/static/src/raya_static/builder.py`,
+shared CSS in `packages/static/src/raya_static/rendering.py`, and focused graph
+contract/browser tests.
+
 ---
 
 ### Task 1: Contract Coverage

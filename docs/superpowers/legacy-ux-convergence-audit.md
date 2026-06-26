@@ -104,10 +104,12 @@ Do not port these behaviors into the current renderer:
 
 ## Remaining Candidate Subgoals
 
-1. **Convergence record cleanup.** Keep Superpowers plans and this audit
-   aligned with implemented work so future agents do not treat completed
-   discovery, graph, gallery, or skin slices as still missing. This is
-   documentation housekeeping, not renderer behavior.
+1. **Pre-paint comfort and reader-control discoverability.** The legacy branch
+   avoided comfort-control flash with early head logic and kept font controls
+   visible in the reader chrome. Current OpenDyslexic and text-size behavior is
+   local and accepted, but a future loop should verify whether reader pages
+   restore allowed comfort preferences before first paint and whether controls
+   are visible enough in the reader shell.
 
 2. **Usability review against built artifacts.** Use the gallery dashboard,
    local preview, and render-debug output to identify the next concrete visual
@@ -118,6 +120,20 @@ Do not port these behaviors into the current renderer:
    useful archived Superpowers records merely because their checklists are
    historical.
 
+## Cleanup Record
+
+The 2026-06-26 convergence cleanup pass marked these implemented UX plans as
+historical execution records so future agents do not redo completed work:
+
+- `docs/superpowers/plans/2026-06-26-graph-guided-controls.md`
+- `docs/superpowers/plans/2026-06-26-graph-list-scan-cards.md`
+- `docs/superpowers/plans/2026-06-26-graph-first-viewport-layout.md`
+- `docs/superpowers/plans/2026-06-26-learning-rail-first-viewport-polish.md`
+- `docs/superpowers/plans/2026-06-26-discovery-results-jump.md`
+
+This was documentation housekeeping only. It did not change renderer behavior
+or lower the verification requirements for future frontend/graph loops.
+
 ## Out Of Scope Until Foundation Decision
 
 - Static offline/service-worker behavior. Legacy `sw.js` and `sw-register.js`
@@ -127,18 +143,19 @@ Do not port these behaviors into the current renderer:
 
 ## Suggested Next Loop
 
-The best next loop is **Convergence Record Cleanup**, followed by a visual
-usability review against current built artifacts. Discovery workspace overview,
-switcher, quick guides, grouped controls, reset parity, graph toolbar comfort,
-graph skin palette support, gallery dashboard links, and graph reading keys are
-now implemented in current source and tests. The active risk is misleading
-workflow memory: stale unchecked Superpowers plans can send future agents back
-over completed ground.
+The best next renderer loop is a **current built-artifact visual review** with
+special attention to pre-paint comfort restore, reader comfort-control
+discoverability, and whether backlinks/sequence navigation remain obvious in
+the reading flow. Discovery workspace overview, switcher, quick guides, grouped
+controls, reset parity, graph toolbar comfort, graph skin palette support,
+gallery dashboard links, graph first-viewport layout, graph list scan cards,
+guided graph controls, and graph reading keys are now implemented in current
+source and tests.
 
-After this cleanup, choose the next renderer loop from a current preview or
-render-debug screenshot, not from legacy `main` alone. That keeps the UX fusion
-goal anchored in the current framework while still using old-main UX as
-historical inspiration.
+Choose the next renderer implementation from current preview or render-debug
+evidence, not from legacy `main` alone. That keeps the UX fusion goal anchored
+in the current framework while still using old-main UX as historical
+inspiration.
 
 ## Verification For Future Loops
 

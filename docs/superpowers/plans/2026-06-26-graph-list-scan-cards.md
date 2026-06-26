@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10 static builder, generated HTML/CSS, local vanilla graph script, pytest, Playwright.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in structured graph list markup in `packages/static/src/raya_static/builder.py`,
+graph list focus handling in `packages/static/src/raya_static/graph.py`, shared
+CSS in `packages/static/src/raya_static/rendering.py`, and focused graph tests.
+
 ---
 
 ### Task 1: Contract Test For Structured Graph List Items

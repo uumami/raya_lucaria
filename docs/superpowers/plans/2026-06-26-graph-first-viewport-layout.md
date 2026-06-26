@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10, `uv`, Playwright, Glintstone static renderer CSS in `packages/static/src/raya_static/rendering.py`.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in graph layout CSS in `packages/static/src/raya_static/rendering.py`
+and the focused first-viewport Playwright test in
+`tests/e2e/test_preview_static_read_path.py`.
+
 ---
 
 ### Task 1: Add Failing Graph First-Viewport Regression

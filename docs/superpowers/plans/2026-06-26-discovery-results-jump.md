@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10 static builder, generated HTML/CSS, pytest, Playwright/Chromium.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in discovery workspace markup in `packages/static/src/raya_static/builder.py`,
+shared discovery CSS in `packages/static/src/raya_static/rendering.py`, and
+focused contract/browser tests.
+
 ---
 
 ### Task 1: Contract Tests For Generated Results Jumps

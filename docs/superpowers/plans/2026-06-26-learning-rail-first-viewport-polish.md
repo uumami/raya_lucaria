@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python 3.10, `uv`, Playwright, Glintstone static renderer CSS generated from `packages/static/src/raya_static/rendering.py`.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in reader shell/rail CSS in `packages/static/src/raya_static/rendering.py`
+and focused first-viewport/collapse Playwright tests in
+`tests/e2e/test_preview_static_read_path.py`.
+
 ---
 
 ### Task 1: Add Failing Rail Visibility Regression
