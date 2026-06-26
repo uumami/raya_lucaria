@@ -2041,6 +2041,8 @@ _GRAPH_JAVASCRIPT = r"""
       const id = link ? link.getAttribute("data-raya-graph-node") || "" : "";
       nodeGroup.classList.toggle("is-inspected", id === inspectedId);
       nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
+      nodeGroup.classList.toggle("is-focus-origin", id === inspectedId);
+      nodeGroup.classList.toggle("is-focus-endpoint", inspectedConnectedIds.has(id));
       nodeGroup.classList.toggle(
         "is-label-visible",
         shouldShowGraphLabel(id, selectedConnectedIds, inspectedConnectedIds, searchContext)
@@ -2061,13 +2063,22 @@ _GRAPH_JAVASCRIPT = r"""
     canvas.querySelectorAll(".raya-graph-edge, .raya-graph-arrow-marker").forEach((edgeMark) => {
       const from = edgeMark.getAttribute("data-raya-graph-from") || "";
       const to = edgeMark.getAttribute("data-raya-graph-to") || "";
+      const edge = { from, to };
       edgeMark.classList.toggle(
         "is-inspected",
-        Boolean(inspectedId) && (from === inspectedId || to === inspectedId)
+        edgeTouchesNode(edge, inspectedId)
+      );
+      edgeMark.classList.toggle(
+        "is-focus-route",
+        edgeTouchesNode(edge, inspectedId)
       );
       edgeMark.classList.toggle(
         "is-dimmed",
-        Boolean(inspectedId) && !(from === inspectedId || to === inspectedId)
+        Boolean(inspectedId) && !edgeTouchesNode(edge, inspectedId)
+      );
+      edgeMark.classList.toggle(
+        "is-selection-muted",
+        isSelectionMutedEdge(edge)
       );
       edgeMark.classList.toggle(
         "is-search-context",
@@ -2077,7 +2088,7 @@ _GRAPH_JAVASCRIPT = r"""
         "is-search-dimmed",
         Boolean(query) &&
           !(matchIds.has(from) || matchIds.has(to)) &&
-          !(from === inspectedId || to === inspectedId)
+          !edgeTouchesNode(edge, inspectedId)
       );
     });
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
@@ -2244,20 +2255,30 @@ _GRAPH_JAVASCRIPT = r"""
     return `url(#${graphArrowMarkerId(edge, edgeIndex)})`;
   }
 
+  function edgeTouchesNode(edge, nodeId) {
+    return Boolean(nodeId && (edge.from === nodeId || edge.to === nodeId));
+  }
+
+  function isSelectionMutedEdge(edge) {
+    return Boolean(
+      selectedId &&
+        !edgeTouchesNode(edge, selectedId) &&
+        !edgeTouchesNode(edge, inspectedId)
+    );
+  }
+
   function edgeStateClassNames(edge) {
     return [
-      selectedId && (edge.from === selectedId || edge.to === selectedId) ? "is-active" : "",
-      inspectedId && (edge.from === inspectedId || edge.to === inspectedId)
-        ? "is-inspected"
-        : "",
-      inspectedId && !(edge.from === inspectedId || edge.to === inspectedId)
-        ? "is-dimmed"
-        : "",
+      edgeTouchesNode(edge, selectedId) ? "is-active" : "",
+      edgeTouchesNode(edge, inspectedId) ? "is-inspected" : "",
+      edgeTouchesNode(edge, inspectedId) ? "is-focus-route" : "",
+      inspectedId && !edgeTouchesNode(edge, inspectedId) ? "is-dimmed" : "",
+      isSelectionMutedEdge(edge) ? "is-selection-muted" : "",
       query && (matchIds.has(edge.from) || matchIds.has(edge.to))
         ? "is-search-context"
         : "",
       query && !(matchIds.has(edge.from) || matchIds.has(edge.to))
-        && !(edge.from === inspectedId || edge.to === inspectedId)
+        && !edgeTouchesNode(edge, inspectedId)
         ? "is-search-dimmed"
         : "",
     ].filter(Boolean);
@@ -3036,6 +3057,8 @@ _GRAPH_JAVASCRIPT = r"""
           isConnected ? "is-neighbor" : "",
           isInspected ? "is-inspected" : "",
           isInspectedNeighbor ? "is-inspected-neighbor" : "",
+          isInspected ? "is-focus-origin" : "",
+          isInspectedNeighbor ? "is-focus-endpoint" : "",
           inspectedId && !inspectedSpotlightIds.has(node.id) ? "is-dimmed" : "",
           matchIds.has(node.id) ? "is-match" : "",
           searchContext.has(node.id) && node.id !== inspectedId ? "is-search-context" : "",

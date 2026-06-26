@@ -2983,8 +2983,15 @@ img {
   fill: var(--raya-graph-edge-color, var(--raya-color-success));
   opacity: 0.94;
 }
+.raya-graph-arrow-marker.is-focus-route path {
+  fill: var(--raya-color-accent);
+  opacity: 0.96;
+}
 .raya-graph-arrow-marker.is-dimmed path {
   opacity: 0.14;
+}
+.raya-graph-arrow-marker.is-selection-muted path {
+  opacity: 0.18;
 }
 .raya-graph-arrow-marker.is-relationship-focus path {
   opacity: 1;
@@ -3022,6 +3029,11 @@ img {
   stroke-opacity: 0.94;
   stroke-width: 3;
 }
+.raya-graph-edge.is-focus-route {
+  stroke: var(--raya-color-accent);
+  stroke-opacity: 0.94;
+  stroke-width: 3.6;
+}
 .raya-graph-edge.is-relationship-focus {
   stroke-opacity: 1;
   stroke-width: 3;
@@ -3031,6 +3043,9 @@ img {
 }
 .raya-graph-edge.is-dimmed {
   stroke-opacity: 0.14;
+}
+.raya-graph-edge.is-selection-muted {
+  stroke-opacity: 0.18;
 }
 .raya-graph-node-link {
   cursor: grab;
@@ -3056,6 +3071,16 @@ img {
 .raya-graph-node.is-inspected-neighbor circle {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 38%, var(--raya-color-surface));
   stroke-width: 3;
+}
+.raya-graph-node.is-focus-origin circle {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 58%, var(--raya-color-surface));
+  stroke: var(--raya-color-accent);
+  stroke-width: 4.5;
+  filter: drop-shadow(0 0 0.38rem color-mix(in srgb, var(--raya-color-accent) 36%, transparent));
+}
+.raya-graph-node.is-focus-endpoint circle {
+  stroke: var(--raya-color-accent);
+  stroke-width: 3.4;
 }
 .raya-graph-node.is-selected circle {
   fill: var(--raya-color-success);

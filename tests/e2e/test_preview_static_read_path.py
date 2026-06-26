@@ -3308,8 +3308,20 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         muted_edges = page.locator(
                             "#raya-graph-canvas [data-raya-graph-edge].is-relationship-muted"
                         )
+                        selection_muted_edges = page.locator(
+                            "#raya-graph-canvas [data-raya-graph-edge].is-selection-muted"
+                        )
                         assert focused_edges.count() >= 1
                         assert muted_edges.count() >= 1
+                        assert selection_muted_edges.count() >= 1
+                        assert (
+                            page.locator(
+                                '#raya-graph-canvas [data-raya-graph-edge]'
+                                '[data-raya-graph-from="render-root"]'
+                                '[data-raya-graph-to="static-path"].is-selection-muted'
+                            ).count()
+                            >= 1
+                        )
                         visible_cards = walkthrough_cards.evaluate_all(
                             """cards => cards
                               .filter((card) => !card.hidden)
@@ -4421,6 +4433,186 @@ def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
                 browser.close()
     finally:
         handle.close()
+
+
+def test_render_fixture_graph_focus_route_affordances_are_explicit(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node-hit"
+                    ).hover()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-graph-canvas .raya-graph-node.is-focus-origin') !== null"""
+                    )
+                    route_state = page.evaluate(
+                        """() => {
+                          const nodeClass = (id) => Array.from(document
+                            .querySelector(
+                              `#raya-graph-canvas [data-raya-graph-node="${id}"] g`
+                            )
+                            ?.classList || []);
+                          const focusRoutes = Array.from(document.querySelectorAll(
+                            '#raya-graph-canvas .raya-graph-edge.is-focus-route'
+                          ));
+                          const dimmedRoutes = focusRoutes.filter((edge) =>
+                            edge.classList.contains('is-dimmed')
+                          );
+                          const markerStates = focusRoutes.map((edge) => {
+                            const markerId = edge
+                              .getAttribute('marker-end')
+                              ?.replace(/^url\\(#/, '')
+                              ?.replace(/\\)$/, '');
+                            const marker = markerId ? document.getElementById(markerId) : null;
+                            return Boolean(marker?.classList.contains('is-focus-route'));
+                          });
+                          const routeStyles = focusRoutes.map((edge) => {
+                            const style = getComputedStyle(edge);
+                            return {
+                              strokeWidth: Number.parseFloat(style.strokeWidth || '0'),
+                              opacity: Number.parseFloat(style.strokeOpacity || '0'),
+                            };
+                          });
+                          return {
+                            origin: nodeClass('authoring-matrix'),
+                            renderRoot: nodeClass('render-root'),
+                            mathAuthoring: nodeClass('math-authoring'),
+                            staticPath: nodeClass('static-path'),
+                            focusRouteCount: focusRoutes.length,
+                            dimmedRouteCount: dimmedRoutes.length,
+                            markerStates,
+                            routeStyles,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "is-focus-origin" in route_state["origin"]
+    assert "is-focus-endpoint" in route_state["renderRoot"]
+    assert "is-focus-endpoint" in route_state["mathAuthoring"]
+    assert "is-focus-endpoint" not in route_state["staticPath"]
+    assert "is-dimmed" in route_state["staticPath"]
+    assert route_state["focusRouteCount"] >= 4
+    assert route_state["dimmedRouteCount"] == 0
+    assert all(route_state["markerStates"])
+    assert all(style["strokeWidth"] >= 3.4 for style in route_state["routeStyles"])
+    assert all(style["opacity"] >= 0.88 for style in route_state["routeStyles"])
+
+
+def test_render_fixture_graph_selection_mutes_unrelated_edges(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node-hit"
+                    ).click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-graph-canvas .raya-graph-edge.is-active') !== null"""
+                    )
+                    edge_state = page.evaluate(
+                        """() => {
+                          const classesForEdge = (from, to) => Array.from(document
+                            .querySelector(
+                              `#raya-graph-canvas .raya-graph-edge[data-raya-graph-from="${from}"][data-raya-graph-to="${to}"]`
+                            )
+                            ?.classList || []);
+                          const markerForEdge = (from, to) => Array.from(document
+                            .querySelector(
+                              `#raya-graph-canvas .raya-graph-arrow-marker[data-raya-graph-from="${from}"][data-raya-graph-to="${to}"]`
+                            )
+                            ?.classList || []);
+                          const connectedEdge = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-edge[data-raya-graph-from="authoring-matrix"][data-raya-graph-to="math-authoring"]'
+                          );
+                          const mutedEdge = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-edge[data-raya-graph-from="render-root"][data-raya-graph-to="static-path"]'
+                          );
+                          const connectedStyle = connectedEdge ? getComputedStyle(connectedEdge) : null;
+                          const mutedStyle = mutedEdge ? getComputedStyle(mutedEdge) : null;
+                          return {
+                            connected: classesForEdge('authoring-matrix', 'math-authoring'),
+                            unrelated: classesForEdge('render-root', 'static-path'),
+                            unrelatedMarker: markerForEdge('render-root', 'static-path'),
+                            connectedOpacity: connectedStyle
+                              ? Number.parseFloat(connectedStyle.strokeOpacity || '0')
+                              : 0,
+                            mutedOpacity: mutedStyle
+                              ? Number.parseFloat(mutedStyle.strokeOpacity || '0')
+                              : 0,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "is-active" in edge_state["connected"]
+    assert "is-selection-muted" not in edge_state["connected"]
+    assert "is-selection-muted" in edge_state["unrelated"]
+    assert "is-selection-muted" in edge_state["unrelatedMarker"]
+    assert edge_state["mutedOpacity"] < edge_state["connectedOpacity"]
 
 
 def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
