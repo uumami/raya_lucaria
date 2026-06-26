@@ -9500,6 +9500,102 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     assert probe["firstPanelBody"]["bottom"] < probe["viewportHeight"]
 
 
+def test_render_fixture_study_object_families_are_visually_distinct(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        base_url = handle.base_url
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    probe = page.evaluate(
+                        """() => {
+                          const styleOf = (selector) => {
+                            const node = document.querySelector(selector);
+                            if (!node) {
+                              return null;
+                            }
+                            const rect = node.getBoundingClientRect();
+                            const style = getComputedStyle(node);
+                            return {
+                              background: style.backgroundColor,
+                              borderLeft: style.borderLeftColor,
+                              color: style.color,
+                              height: rect.height,
+                              width: rect.width,
+                            };
+                          };
+                          return {
+                            definitionBadge: styleOf(
+                              '#raya-object-orthogonal-definition .raya-numbered-object-badge'
+                            ),
+                            problemBadge: styleOf(
+                              '#raya-object-orthogonal-problem .raya-numbered-object-badge'
+                            ),
+                            officialCard: styleOf('.raya-official-card'),
+                            officialQuiz: styleOf('.raya-official-quiz'),
+                            officialCardKind: styleOf(
+                              '.raya-official-card .raya-official-kind'
+                            ),
+                            officialQuizKind: styleOf(
+                              '.raya-official-quiz .raya-official-kind'
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["definitionBadge"] is not None
+    assert probe["problemBadge"] is not None
+    assert probe["officialCard"] is not None
+    assert probe["officialQuiz"] is not None
+    assert probe["officialCardKind"] is not None
+    assert probe["officialQuizKind"] is not None
+    assert probe["definitionBadge"]["background"] != probe["problemBadge"]["background"]
+    assert probe["officialCard"]["borderLeft"] != probe["officialQuiz"]["borderLeft"]
+    assert probe["officialCardKind"]["background"] != probe["officialQuizKind"]["background"]
+    assert probe["officialCardKind"]["color"] != probe["officialCardKind"]["background"]
+    assert probe["officialQuizKind"]["color"] != probe["officialQuizKind"]["background"]
+    assert probe["definitionBadge"]["width"] >= 80
+    assert probe["definitionBadge"]["height"] >= 40
+    assert probe["officialCardKind"]["width"] >= 40
+    assert probe["officialCardKind"]["height"] >= 20
+    assert probe["officialQuizKind"]["width"] >= 40
+    assert probe["officialQuizKind"]["height"] >= 20
+    assert requested_urls
+    assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+
+
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
     tmp_path: Path,
 ) -> None:

@@ -3292,14 +3292,39 @@ html[data-raya-course-map-scroll-lock="true"] body {
   margin: 0;
 }
 .raya-official-object {
-  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
-  border: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, var(--raya-color-accent));
-  border-left: 0.35rem solid var(--raya-color-accent);
+  --raya-official-accent: var(--raya-color-accent);
+  --raya-official-accent-text: var(--raya-color-surface);
+  --raya-official-soft: color-mix(in srgb, var(--raya-official-accent) 14%, var(--raya-color-surface));
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-official-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 68%, var(--raya-official-accent));
+  border-left: 0.35rem solid var(--raya-official-accent);
   border-radius: 0.5rem;
   display: grid;
   gap: 0.75rem;
   padding: 1rem;
   scroll-margin-top: 32rem;
+}
+.raya-official-card {
+  --raya-official-accent: var(--raya-color-success);
+  --raya-official-accent-text: var(--raya-color-surface);
+}
+.raya-official-quiz {
+  --raya-official-accent: var(--raya-color-danger);
+  --raya-official-accent-text: var(--raya-color-surface);
+}
+.raya-official-assignment,
+.raya-official-task {
+  --raya-official-accent: var(--raya-color-warning);
+  --raya-official-accent-text: var(--raya-color-surface);
+}
+.raya-official-exam {
+  --raya-official-accent: color-mix(in srgb, var(--raya-color-danger) 78%, var(--raya-color-accent));
+  --raya-official-accent-text: var(--raya-color-surface);
+}
+.raya-official-project,
+.raya-official-example {
+  --raya-official-accent: color-mix(in srgb, var(--raya-color-success) 72%, var(--raya-color-accent));
+  --raya-official-accent-text: var(--raya-color-surface);
 }
 .raya-official-object-header {
   align-items: center;
@@ -3319,12 +3344,12 @@ html[data-raya-course-map-scroll-lock="true"] body {
   text-transform: uppercase;
 }
 .raya-official-kind {
-  background: var(--raya-color-accent);
-  color: var(--raya-color-accent-text);
+  background: var(--raya-official-accent);
+  color: var(--raya-official-accent-text);
 }
 .raya-official-authority {
-  background: var(--raya-color-accent-soft);
-  border: 1px solid var(--raya-color-border);
+  background: var(--raya-official-soft);
+  border: 1px solid color-mix(in srgb, var(--raya-official-accent) 42%, var(--raya-color-border));
   color: var(--raya-color-text);
 }
 .raya-official-prompt {
@@ -3345,8 +3370,8 @@ html[data-raya-course-map-scroll-lock="true"] body {
   gap: 0.3rem;
 }
 .raya-official-reveal {
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 48%, var(--raya-color-surface));
-  border: 1px solid var(--raya-color-border);
+  background: color-mix(in srgb, var(--raya-official-soft) 56%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-official-accent) 30%, var(--raya-color-border));
   border-radius: 0.375rem;
   padding: 0.55rem 0.75rem;
 }
@@ -3355,7 +3380,7 @@ html[data-raya-course-map-scroll-lock="true"] body {
   font-weight: 800;
 }
 .raya-official-reveal summary:focus-visible {
-  outline: 3px solid var(--raya-color-accent);
+  outline: 3px solid var(--raya-official-accent);
   outline-offset: 3px;
 }
 .raya-official-reveal-body {
@@ -4089,13 +4114,39 @@ html[data-raya-course-map-scroll-lock="true"] body {
   border-left-color: #bf8700;
 }
 .raya-numbered-object {
-  border: 1px solid #d8dee4;
+  --raya-numbered-accent: var(--raya-color-accent);
+  --raya-numbered-soft: color-mix(in srgb, var(--raya-numbered-accent) 13%, var(--raya-color-surface));
+  --raya-numbered-border: color-mix(in srgb, var(--raya-color-border) 72%, var(--raya-numbered-accent));
+  border: 1px solid var(--raya-numbered-border);
   margin: 1.25rem 0;
+}
+.raya-numbered-object--theorem,
+.raya-numbered-object--lemma,
+.raya-numbered-object--proposition,
+.raya-numbered-object--corollary {
+  --raya-numbered-accent: var(--raya-color-success);
+}
+.raya-numbered-object--definition {
+  --raya-numbered-accent: var(--raya-color-accent);
+}
+.raya-numbered-object--problem,
+.raya-numbered-object--activity,
+.raya-numbered-object--exercise {
+  --raya-numbered-accent: var(--raya-color-warning);
+}
+.raya-numbered-object--example,
+.raya-numbered-object--remark {
+  --raya-numbered-accent: color-mix(in srgb, var(--raya-color-success) 64%, var(--raya-color-accent));
+}
+.raya-numbered-object--figure,
+.raya-numbered-object--table,
+.raya-numbered-object--equation {
+  --raya-numbered-accent: var(--raya-color-muted);
 }
 .raya-numbered-object-heading {
   align-items: baseline;
-  background: #f6f8fa;
-  border-bottom: 1px solid #d8dee4;
+  background: var(--raya-numbered-soft);
+  border-bottom: 1px solid var(--raya-numbered-border);
   display: flex;
   font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   flex-wrap: wrap;
@@ -4104,7 +4155,7 @@ html[data-raya-course-map-scroll-lock="true"] body {
   padding: 0.65rem 0.85rem;
 }
 .raya-numbered-object-reference {
-  color: var(--raya-color-success);
+  color: var(--raya-numbered-accent);
   font-weight: 700;
 }
 .raya-numbered-object-title {
@@ -4122,28 +4173,28 @@ html[data-raya-course-map-scroll-lock="true"] body {
   margin-bottom: 0;
 }
 .raya-numbered-object--margin {
-  border-left: 0.35rem solid #1a7f37;
+  border-left: 0.35rem solid var(--raya-numbered-accent);
 }
 .raya-numbered-object--banded {
-  border-color: #d0d7de;
-  border-top: 0.35rem solid #0969da;
+  border-color: var(--raya-numbered-border);
+  border-top: 0.35rem solid var(--raya-numbered-accent);
 }
 .raya-numbered-object--banded .raya-numbered-object-heading {
-  background: #ddf4ff;
+  background: color-mix(in srgb, var(--raya-numbered-accent) 18%, var(--raya-color-surface));
 }
 .raya-numbered-object--caption {
-  border-color: #d0d7de;
+  border-color: var(--raya-numbered-border);
 }
 .raya-numbered-object--caption .raya-numbered-object-heading {
-  background: #ffffff;
+  background: var(--raya-color-surface);
   border-bottom: 0;
-  border-top: 1px solid #d8dee4;
+  border-top: 1px solid var(--raya-numbered-border);
 }
 .raya-numbered-object--caption .raya-numbered-object-body {
-  background: #f6f8fa;
+  background: var(--raya-numbered-soft);
 }
 .raya-numbered-object--equation {
-  border-color: #d0d7de;
+  border-color: var(--raya-numbered-border);
 }
 .raya-numbered-object--equation .raya-numbered-object-heading {
   justify-content: center;
@@ -4162,14 +4213,14 @@ html[data-raya-course-map-scroll-lock="true"] body {
 }
 .raya-numbered-object-badge {
   align-content: start;
-  background: #f6f8fa;
-  border-right: 1px solid #d8dee4;
+  background: color-mix(in srgb, var(--raya-numbered-accent) 18%, var(--raya-color-surface));
+  border-right: 1px solid var(--raya-numbered-border);
   display: grid;
   gap: 0.25rem;
   padding: 0.85rem;
 }
 .raya-numbered-object-badge-label {
-  color: var(--raya-color-success);
+  color: var(--raya-numbered-accent);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0;
@@ -4672,7 +4723,7 @@ mjx-container[display="true"] {
     display: block;
   }
   .raya-numbered-object-badge {
-    border-bottom: 1px solid #d8dee4;
+    border-bottom: 1px solid var(--raya-numbered-border);
     border-right: 0;
   }
 }
