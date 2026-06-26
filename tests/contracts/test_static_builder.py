@@ -125,6 +125,13 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     )
     assert '<section class="raya-official-practice"' in topic_html
     assert 'aria-label="Official practice"' in topic_html
+    official_section = _tag_html(topic_html, "section", "raya-official-practice")
+    assert 'class="raya-official-practice-actions"' in official_section
+    assert (
+        '<a class="raya-official-practice-open" '
+        'href="../../_raya/practice/index.html?page=first-topic">'
+        "Open all page practice</a>"
+    ) in official_section
     assert 'id="raya-official-first-topic-card"' in topic_html
     assert "What loop does Raya Lucaria support?" in topic_html
     assert "Read, retrieve, reflect, adapt, revisit, and contribute." in topic_html

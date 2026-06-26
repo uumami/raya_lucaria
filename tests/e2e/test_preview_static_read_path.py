@@ -9551,6 +9551,12 @@ def test_render_fixture_study_object_families_are_visually_distinct(
                             };
                           };
                           return {
+                            practiceAction: styleOf(
+                              '#raya-official-practice .raya-official-practice-open'
+                            ),
+                            practiceActionHref: document
+                              .querySelector('#raya-official-practice .raya-official-practice-open')
+                              ?.getAttribute('href'),
                             definitionBadge: styleOf(
                               '#raya-object-orthogonal-definition .raya-numbered-object-badge'
                             ),
@@ -9568,6 +9574,21 @@ def test_render_fixture_study_object_families_are_visually_distinct(
                           };
                         }"""
                     )
+                    practice_href = page.locator(
+                        "#raya-official-practice .raya-official-practice-open"
+                    ).get_attribute("href")
+                    assert practice_href == "../_raya/practice/index.html?page=reader-ux"
+                    page.goto(f"{base_url}/_raya/practice/index.html?page=reader-ux")
+                    page.wait_for_load_state("networkidle")
+                    practice_focus = page.locator("[data-raya-practice-page-focus]")
+                    assert practice_focus.is_visible()
+                    assert "Focused on page" in practice_focus.inner_text()
+                    assert "Projection Residuals" in practice_focus.inner_text()
+                    visible_pages = page.locator(
+                        "[data-raya-practice-object]:not([hidden])"
+                    ).evaluate_all(
+                        "nodes => nodes.map((node) => node.dataset.rayaPracticePage)"
+                    )
                 finally:
                     page.close()
             finally:
@@ -9577,6 +9598,8 @@ def test_render_fixture_study_object_families_are_visually_distinct(
 
     assert probe["definitionBadge"] is not None
     assert probe["problemBadge"] is not None
+    assert probe["practiceAction"] is not None
+    assert probe["practiceActionHref"] == "../_raya/practice/index.html?page=reader-ux"
     assert probe["officialCard"] is not None
     assert probe["officialQuiz"] is not None
     assert probe["officialCardKind"] is not None
@@ -9588,11 +9611,14 @@ def test_render_fixture_study_object_families_are_visually_distinct(
     assert probe["officialQuizKind"]["color"] != probe["officialQuizKind"]["background"]
     assert probe["definitionBadge"]["width"] >= 80
     assert probe["definitionBadge"]["height"] >= 40
+    assert probe["practiceAction"]["width"] >= 120
+    assert probe["practiceAction"]["height"] >= 28
     assert probe["officialCardKind"]["width"] >= 40
     assert probe["officialCardKind"]["height"] >= 20
     assert probe["officialQuizKind"]["width"] >= 40
     assert probe["officialQuizKind"]["height"] >= 20
     assert requested_urls
+    assert visible_pages == ["reader-ux", "reader-ux"]
     assert all(url.startswith(f"{base_url}/") for url in requested_urls)
 
 

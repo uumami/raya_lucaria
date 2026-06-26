@@ -3291,6 +3291,29 @@ html[data-raya-course-map-scroll-lock="true"] body {
   color: var(--raya-color-muted);
   margin: 0;
 }
+.raya-official-practice-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+.raya-official-practice-open {
+  background: var(--raya-color-accent);
+  border: 1px solid var(--raya-color-accent);
+  border-radius: 999px;
+  color: var(--raya-color-surface);
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 850;
+  line-height: 1;
+  padding: 0.55rem 0.75rem;
+  text-decoration: none;
+}
+.raya-official-practice-open:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-official-object {
   --raya-official-accent: var(--raya-color-accent);
   --raya-official-accent-text: var(--raya-color-surface);

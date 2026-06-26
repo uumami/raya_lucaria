@@ -960,7 +960,10 @@ def _render_page(
         page_graph_context,
         graph_href,
     )
-    official_practice_html = _render_official_practice_section(official_objects)
+    official_practice_html = _render_official_practice_section(
+        official_objects,
+        practice_href=course_map_practice_href,
+    )
     page_brief_html = _render_page_brief(
         page,
         content_model,
@@ -2940,7 +2943,11 @@ def _render_sequence_nav(page: ContentPage, content_model: ContentModel) -> str:
     return '<nav aria-label="Previous and next">' + sequence + "</nav>"
 
 
-def _render_official_practice_section(objects: list[dict[str, Any]]) -> str:
+def _render_official_practice_section(
+    objects: list[dict[str, Any]],
+    *,
+    practice_href: str,
+) -> str:
     if not objects:
         return ""
     ordered = sorted(
@@ -2968,6 +2975,12 @@ def _render_official_practice_section(objects: list[dict[str, Any]]) -> str:
             (
                 "<p>Official course prompts and checks for this page. Reveal support "
                 "when you want it; nothing is submitted or saved.</p>"
+            ),
+            (
+                '<p class="raya-official-practice-actions">'
+                f'<a class="raya-official-practice-open" href="{html.escape(practice_href)}">'
+                "Open all page practice</a>"
+                "</p>"
             ),
             *rendered_objects,
             "</section>",
