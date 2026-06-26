@@ -1683,6 +1683,34 @@ def test_graph_surface_exposes_canvas_group_legend(tmp_path: Path) -> None:
     assert "fetch(" not in legend
 
 
+def test_graph_surface_exposes_return_to_reading_path(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    graph_html = (
+        course / "artifact" / "site" / "_raya" / "graph" / "index.html"
+    ).read_text(encoding="utf-8")
+
+    assert 'class="raya-graph-detail-reading-path"' in graph_html
+    assert "data-raya-graph-detail-reading-path" in graph_html
+    assert "<h3>Reading path</h3>" in graph_html
+    assert "data-raya-graph-detail-reading-path-summary" in graph_html
+    assert "raya-graph-detail-primary-actions" in graph_html
+    assert "raya-graph-detail-secondary-actions" in graph_html
+    assert 'class="raya-graph-detail-sequence-card"' in graph_html
+    assert "Open selected page" in graph_html
+    assert "data-raya-graph-detail-previous" in graph_html
+    assert "data-raya-graph-detail-current" in graph_html
+    assert "data-raya-graph-detail-next" in graph_html
+    assert "localStorage" not in graph_html
+    assert "sessionStorage" not in graph_html
+    assert "fetch(" not in graph_html
+    assert "recommend" not in graph_html.lower()
+    assert "mastery" not in graph_html.lower()
+
+
 def test_build_writes_static_handout_print_css(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

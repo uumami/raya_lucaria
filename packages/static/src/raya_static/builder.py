@@ -5214,12 +5214,21 @@ def _render_graph_surface(
                 "data-raya-graph-relationship-walkthrough-list></div>"
                 "</section>"
             ),
-            '<p class="raya-graph-detail-actions">',
+            (
+                '<section class="raya-graph-detail-reading-path" '
+                "data-raya-graph-detail-reading-path>"
+                "<h3>Reading path</h3>"
+                '<p class="raya-graph-detail-reading-path-summary" '
+                "data-raya-graph-detail-reading-path-summary></p>"
+            ),
+            '<p class="raya-graph-detail-actions raya-graph-detail-primary-actions">',
             (
                 '<a class="raya-graph-detail-open-primary" '
                 'data-raya-graph-detail-link href="../../index.html">'
                 "Open selected page</a>"
             ),
+            "</p>",
+            '<p class="raya-graph-detail-actions raya-graph-detail-secondary-actions">',
             '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
             '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
             '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>',
@@ -5228,10 +5237,14 @@ def _render_graph_surface(
             "</p>",
             '<nav class="raya-graph-detail-sequence" data-raya-graph-detail-sequence '
             'aria-label="Selected page course order">',
-            '<a data-raya-graph-detail-previous href="../../index.html" hidden>Previous</a>',
-            '<a data-raya-graph-detail-current href="../../index.html">Selected page</a>',
-            '<a data-raya-graph-detail-next href="../../index.html" hidden>Next</a>',
+            '<a class="raya-graph-detail-sequence-card" '
+            'data-raya-graph-detail-previous href="../../index.html" hidden>Previous</a>',
+            '<a class="raya-graph-detail-sequence-card" '
+            'data-raya-graph-detail-current href="../../index.html">Selected page</a>',
+            '<a class="raya-graph-detail-sequence-card" '
+            'data-raya-graph-detail-next href="../../index.html" hidden>Next</a>',
             "</nav>",
+            "</section>",
             '<div class="raya-graph-detail-links">',
             "<section>",
             "<h3>Links from this page</h3>",

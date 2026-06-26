@@ -2900,13 +2900,32 @@ img {
   gap: 0.35rem;
   justify-content: space-between;
 }
+.raya-graph-detail-reading-path {
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 80%, var(--raya-color-accent));
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.8rem 0;
+  padding: 0.75rem;
+}
+.raya-graph-detail-reading-path h3 {
+  font-size: 0.98rem;
+  margin: 0;
+}
+.raya-graph-detail-reading-path-summary {
+  color: var(--raya-color-muted);
+  font-size: 0.86rem;
+  margin: 0;
+}
 .raya-graph-detail-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 0.65rem 0;
+  margin: 0;
 }
-.raya-graph-detail-actions a {
+.raya-graph-detail-actions a,
+.raya-graph-detail-secondary-actions button {
   align-items: center;
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
@@ -2917,34 +2936,41 @@ img {
   min-height: 2.25rem;
   padding: 0.25rem 0.65rem;
 }
+.raya-graph-detail-primary-actions {
+  align-items: stretch;
+}
 .raya-graph-detail-actions .raya-graph-detail-open-primary {
   background: var(--raya-color-accent);
   border-color: var(--raya-color-accent);
   color: var(--raya-color-accent-contrast);
   font-weight: 800;
+  justify-content: center;
+  min-width: min(100%, 14rem);
 }
 .raya-graph-detail-actions .raya-graph-detail-open-primary:focus-visible,
 .raya-graph-detail-actions .raya-graph-detail-open-primary:hover {
   filter: brightness(0.96);
 }
-.raya-graph-detail-actions a[hidden] {
+.raya-graph-detail-actions a[hidden],
+.raya-graph-detail-actions button[hidden] {
   display: none;
 }
 .raya-graph-detail-sequence {
-  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
-  border: 1px solid var(--raya-color-border);
-  border-radius: 0.375rem;
   display: grid;
-  gap: 0.4rem;
-  margin: 0.65rem 0;
-  padding: 0.55rem;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  margin: 0;
 }
 .raya-graph-detail-sequence a {
-  border-left: 0.2rem solid var(--raya-color-border);
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-left: 0.25rem solid var(--raya-color-border);
+  border-radius: 0.4rem;
   color: var(--raya-color-link);
   font-weight: 750;
   line-height: 1.35;
-  padding-left: 0.5rem;
+  min-height: 3rem;
+  padding: 0.45rem 0.55rem;
 }
 .raya-graph-detail-sequence a[hidden] {
   display: none;

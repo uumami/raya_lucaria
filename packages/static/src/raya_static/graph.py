@@ -109,6 +109,9 @@ _GRAPH_JAVASCRIPT = r"""
   const detailPracticeLink = document.querySelector("[data-raya-graph-detail-practice-link]");
   const detailTasksLink = document.querySelector("[data-raya-graph-detail-tasks-link]");
   const detailScheduleLink = document.querySelector("[data-raya-graph-detail-schedule-link]");
+  const detailReadingPathSummary = document.querySelector(
+    "[data-raya-graph-detail-reading-path-summary]"
+  );
   const detailPreviousLink = document.querySelector("[data-raya-graph-detail-previous]");
   const detailCurrentLink = document.querySelector("[data-raya-graph-detail-current]");
   const detailNextLink = document.querySelector("[data-raya-graph-detail-next]");
@@ -2801,6 +2804,7 @@ _GRAPH_JAVASCRIPT = r"""
         detailCurrentLink.href = "#";
         detailCurrentLink.textContent = "Selected page";
       }
+      if (detailReadingPathSummary) detailReadingPathSummary.textContent = "";
       setOptionalDetailLink(detailNextLink, "", "Next");
       return;
     }
@@ -2834,6 +2838,10 @@ _GRAPH_JAVASCRIPT = r"""
     if (detailLink) {
       detailLink.href = node.url;
       detailLink.textContent = "Open selected page";
+    }
+    if (detailReadingPathSummary) {
+      detailReadingPathSummary.textContent =
+        "Return to the selected lesson or inspect its course-order neighbors.";
     }
     if (detailSearchLink) {
       detailSearchLink.href = node.search_url || "../search/index.html";

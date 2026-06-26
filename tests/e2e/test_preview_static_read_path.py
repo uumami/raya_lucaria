@@ -14645,6 +14645,182 @@ def test_graph_canvas_legend_remains_visible_when_pages_panel_collapses(
     assert mobile_state["overflow"] <= 1
 
 
+def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        base_url = handle.base_url
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                desktop = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    requested_urls: list[str] = []
+                    desktop.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
+                    desktop.goto(
+                        f"{base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(desktop)
+                    desktop.wait_for_selector(
+                        "[data-raya-graph-detail-panel]:not([hidden])"
+                    )
+                    desktop_state = desktop.evaluate(
+                        """() => {
+                          const path = document.querySelector(
+                            '[data-raya-graph-detail-reading-path]'
+                          );
+                          const primary = path?.querySelector(
+                            '.raya-graph-detail-open-primary'
+                          );
+                          const previous = path?.querySelector(
+                            '[data-raya-graph-detail-previous]'
+                          );
+                          const current = path?.querySelector(
+                            '[data-raya-graph-detail-current]'
+                          );
+                          const next = path?.querySelector(
+                            '[data-raya-graph-detail-next]'
+                          );
+                          const secondary = path?.querySelector(
+                            '.raya-graph-detail-secondary-actions'
+                          );
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  width: rect.width,
+                                  height: rect.height,
+                                }
+                              : null;
+                          };
+                          return {
+                            path: box(path),
+                            primary: box(primary),
+                            previous: box(previous),
+                            current: box(current),
+                            next: box(next),
+                            primaryText: primary?.textContent.trim() || '',
+                            previousText: previous?.textContent.trim() || '',
+                            currentText: current?.textContent.trim() || '',
+                            nextText: next?.textContent.trim() || '',
+                            secondaryText: secondary?.textContent || '',
+                            text: path?.innerText || '',
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    desktop.close()
+
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile.goto(
+                        f"{base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(mobile)
+                    mobile.click('[data-raya-graph-toggle-panel="inspector"]')
+                    mobile.wait_for_selector(
+                        "[data-raya-graph-detail-panel]:not([hidden])"
+                    )
+                    mobile_state = mobile.evaluate(
+                        """() => {
+                          const path = document.querySelector(
+                            '[data-raya-graph-detail-reading-path]'
+                          );
+                          const primary = path?.querySelector(
+                            '.raya-graph-detail-open-primary'
+                          );
+                          const sequence = path?.querySelector(
+                            '.raya-graph-detail-sequence'
+                          );
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  width: rect.width,
+                                  height: rect.height,
+                                }
+                              : null;
+                          };
+                          return {
+                            path: box(path),
+                            primary: box(primary),
+                            sequence: box(sequence),
+                            text: path?.innerText || '',
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    mobile.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert requested_urls
+    assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+    assert desktop_state["path"] is not None
+    assert desktop_state["primary"] is not None
+    assert desktop_state["previous"] is not None
+    assert desktop_state["current"] is not None
+    assert desktop_state["next"] is not None
+    assert desktop_state["primaryText"] == "Open selected page"
+    assert "Reading path" in desktop_state["text"]
+    assert "Return to the selected lesson" in desktop_state["text"]
+    assert "Previous:" in desktop_state["previousText"]
+    assert "Numbered Objects" in desktop_state["previousText"]
+    assert "Selected:" in desktop_state["currentText"]
+    assert "Projection Residuals" in desktop_state["currentText"]
+    assert "Next:" in desktop_state["nextText"]
+    assert "Authoring Matrix Fixture" in desktop_state["nextText"]
+    assert "Find in search" in desktop_state["secondaryText"]
+    assert "Focus neighborhood" in desktop_state["secondaryText"]
+    assert "recommend" not in desktop_state["text"].lower()
+    assert "progress" not in desktop_state["text"].lower()
+    assert "mastery" not in desktop_state["text"].lower()
+    assert desktop_state["storage"] == [[], []]
+    assert desktop_state["overflow"] <= 1
+
+    assert mobile_state["path"] is not None
+    assert mobile_state["primary"] is not None
+    assert mobile_state["sequence"] is not None
+    assert "Reading path" in mobile_state["text"]
+    assert mobile_state["primary"]["width"] <= 390
+    assert mobile_state["sequence"]["width"] <= 390
+    assert mobile_state["overflow"] <= 1
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:
