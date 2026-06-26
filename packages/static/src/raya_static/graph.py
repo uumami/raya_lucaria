@@ -3075,6 +3075,7 @@ _GRAPH_JAVASCRIPT = r"""
       const hitTarget = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       hitTarget.setAttribute("class", "raya-graph-node-hit");
       hitTarget.setAttribute("r", String(Math.max(30, radius + 8)));
+      circle.setAttribute("class", "raya-graph-node-mark");
       circle.setAttribute("r", String(radius));
       const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
       text.setAttribute("class", "raya-graph-node-label");

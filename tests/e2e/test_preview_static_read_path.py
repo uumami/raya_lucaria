@@ -4395,7 +4395,7 @@ def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
                     .get_attribute("aria-pressed")
                     == "false"
                 )
-                page.click('#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]')
+                _click_graph_node_group(page, "authoring-matrix")
                 page.wait_for_function(
                     """() => document
                       .querySelector('[data-raya-graph-orientation-selected]')
@@ -4613,6 +4613,104 @@ def test_render_fixture_graph_selection_mutes_unrelated_edges(
     assert "is-selection-muted" in edge_state["unrelated"]
     assert "is-selection-muted" in edge_state["unrelatedMarker"]
     assert edge_state["mutedOpacity"] < edge_state["connectedOpacity"]
+
+
+def test_render_fixture_graph_visual_depth_styles_are_rendered(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node-hit"
+                    ).click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-graph-canvas .raya-graph-node.is-selected') !== null"""
+                    )
+                    visual_state = page.evaluate(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const selectedCircle = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-node.is-selected .raya-graph-node-mark'
+                          );
+                          const selectedHit = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-node.is-selected .raya-graph-node-hit'
+                          );
+                          const selectedLabel = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-node.is-selected text'
+                          );
+                          const baseCircle = document.querySelector(
+                            '#raya-graph-canvas .raya-graph-node:not(.is-selected) .raya-graph-node-mark'
+                          );
+                          const canvasStyle = getComputedStyle(canvas);
+                          const selectedCircleStyle = getComputedStyle(selectedCircle);
+                          const selectedHitStyle = getComputedStyle(selectedHit);
+                          const selectedLabelStyle = getComputedStyle(selectedLabel);
+                          const baseCircleStyle = getComputedStyle(baseCircle);
+                          return {
+                            canvasBackgroundImage: canvasStyle.backgroundImage,
+                            canvasBoxShadow: canvasStyle.boxShadow,
+                            selectedFilter: selectedCircleStyle.filter,
+                            selectedStrokeWidth: Number.parseFloat(
+                              selectedCircleStyle.strokeWidth || '0'
+                            ),
+                            selectedHitFill: selectedHitStyle.fill,
+                            selectedHitFilter: selectedHitStyle.filter,
+                            selectedHitStrokeWidth: Number.parseFloat(
+                              selectedHitStyle.strokeWidth || '0'
+                            ),
+                            baseFilter: baseCircleStyle.filter,
+                            labelPaintOrder: selectedLabelStyle.paintOrder,
+                            labelStrokeWidth: Number.parseFloat(
+                              selectedLabelStyle.strokeWidth || '0'
+                            ),
+                            labelStrokeLinejoin: selectedLabelStyle.strokeLinejoin,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "gradient" in visual_state["canvasBackgroundImage"]
+    assert visual_state["canvasBoxShadow"] != "none"
+    assert visual_state["selectedFilter"] != "none"
+    assert visual_state["selectedFilter"] != visual_state["baseFilter"]
+    assert visual_state["selectedStrokeWidth"] >= 4
+    assert visual_state["selectedHitFill"] in {"rgba(0, 0, 0, 0)", "transparent"}
+    assert visual_state["selectedHitFilter"] == "none"
+    assert visual_state["selectedHitStrokeWidth"] == 0
+    assert visual_state["labelPaintOrder"] == "stroke"
+    assert visual_state["labelStrokeWidth"] >= 3
+    assert visual_state["labelStrokeLinejoin"] == "round"
 
 
 def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(

@@ -1508,12 +1508,19 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert ".raya-graph-inspection-preview" in stylesheet
     assert ".raya-graph-preview-bubble" in stylesheet
+    assert "linear-gradient(" in stylesheet
+    assert "90deg," in stylesheet
+    assert "raya-graph-node-mark" in graph_script
+    assert ".raya-graph-canvas .raya-graph-node-mark" in stylesheet
+    assert "paint-order: stroke" in stylesheet
+    assert "stroke-linejoin: round" in stylesheet
+    assert ".raya-graph-node.is-selected .raya-graph-node-mark" in stylesheet
     assert ".raya-graph-edge.is-focus-route" in stylesheet
     assert ".raya-graph-edge.is-selection-muted" in stylesheet
     assert ".raya-graph-arrow-marker.is-focus-route path" in stylesheet
     assert ".raya-graph-arrow-marker.is-selection-muted path" in stylesheet
-    assert ".raya-graph-node.is-focus-origin circle" in stylesheet
-    assert ".raya-graph-node.is-focus-endpoint circle" in stylesheet
+    assert ".raya-graph-node.is-focus-origin .raya-graph-node-mark" in stylesheet
+    assert ".raya-graph-node.is-focus-endpoint .raya-graph-node-mark" in stylesheet
     assert "@media (max-width: 720px)" in stylesheet
     assert ".raya-graph-detail-open-primary" in stylesheet
     assert ".raya-graph-detail-relationship-chip" in stylesheet

@@ -2889,9 +2889,29 @@ img {
   padding: 0.35rem 0.65rem;
 }
 .raya-graph-canvas {
-  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
-  border: 1px solid var(--raya-color-border);
+  background:
+    radial-gradient(
+      circle at 20% 18%,
+      color-mix(in srgb, var(--raya-color-accent) 10%, transparent) 0,
+      transparent 22rem
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--raya-color-border) 28%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--raya-color-border) 22%, transparent) 1px,
+      transparent 1px
+    ),
+    color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
+  background-size: auto, 2.5rem 2.5rem, 2.5rem 2.5rem, auto;
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-page));
   border-radius: 0.375rem;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--raya-color-surface) 74%, white),
+    0 1rem 2.25rem color-mix(in srgb, var(--raya-color-text) 7%, transparent);
   cursor: grab;
   display: block;
   height: clamp(28rem, 56vh, 40rem);
@@ -2961,6 +2981,7 @@ img {
   stroke: var(--raya-graph-edge-color, var(--raya-color-border));
   stroke-opacity: 0.58;
   stroke-width: 2;
+  transition: stroke 140ms ease;
 }
 .raya-graph-arrow-marker path {
   fill: var(--raya-graph-edge-color, var(--raya-color-border));
@@ -3050,7 +3071,7 @@ img {
 .raya-graph-node-link {
   cursor: grab;
 }
-.raya-graph-node.is-dragging circle {
+.raya-graph-node.is-dragging .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 60%, var(--raya-color-surface));
   stroke-width: 4;
 }
@@ -3058,43 +3079,55 @@ img {
   fill: transparent;
   pointer-events: all;
   stroke: transparent;
+  stroke-width: 0;
 }
-.raya-graph-node circle {
+.raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 24%, var(--raya-color-surface));
   stroke: var(--raya-graph-node-color, var(--raya-color-accent));
   stroke-width: 2;
+  transition:
+    fill 140ms ease,
+    filter 140ms ease,
+    stroke 140ms ease;
 }
-.raya-graph-node.is-inspected circle {
+.raya-graph-canvas .raya-graph-node-mark {
+  filter: drop-shadow(0 0.18rem 0.18rem color-mix(in srgb, var(--raya-color-text) 8%, transparent));
+}
+.raya-graph-node.is-inspected .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 54%, var(--raya-color-surface));
   stroke-width: 4;
 }
-.raya-graph-node.is-inspected-neighbor circle {
+.raya-graph-node.is-inspected-neighbor .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 38%, var(--raya-color-surface));
   stroke-width: 3;
 }
-.raya-graph-node.is-focus-origin circle {
+.raya-graph-node.is-focus-origin .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 58%, var(--raya-color-surface));
   stroke: var(--raya-color-accent);
   stroke-width: 4.5;
   filter: drop-shadow(0 0 0.38rem color-mix(in srgb, var(--raya-color-accent) 36%, transparent));
 }
-.raya-graph-node.is-focus-endpoint circle {
+.raya-graph-node.is-focus-endpoint .raya-graph-node-mark {
   stroke: var(--raya-color-accent);
   stroke-width: 3.4;
 }
-.raya-graph-node.is-selected circle {
+.raya-graph-node.is-selected .raya-graph-node-mark {
   fill: var(--raya-color-success);
   stroke: var(--raya-color-success);
+  stroke-width: 4.5;
+  filter:
+    drop-shadow(0 0 0.42rem color-mix(in srgb, var(--raya-color-success) 42%, transparent))
+    drop-shadow(0 0.24rem 0.22rem color-mix(in srgb, var(--raya-color-text) 14%, transparent));
 }
-.raya-graph-node.is-neighbor circle {
+.raya-graph-node.is-neighbor .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-color-accent-soft) 58%, var(--raya-color-success));
   stroke: var(--raya-color-accent);
   stroke-width: 3;
 }
-.raya-graph-node.is-match circle {
+.raya-graph-node.is-match .raya-graph-node-mark {
   stroke-width: 4;
 }
-.raya-graph-node.is-search-context circle {
+.raya-graph-node.is-search-context .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 34%, var(--raya-color-surface));
 }
 .raya-graph-node text {
@@ -3102,7 +3135,11 @@ img {
   font-size: 0.78rem;
   font-weight: 700;
   opacity: 0;
+  paint-order: stroke;
   pointer-events: none;
+  stroke: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-page));
+  stroke-linejoin: round;
+  stroke-width: 3.5px;
   text-anchor: middle;
   transition: opacity 140ms ease;
   visibility: hidden;
