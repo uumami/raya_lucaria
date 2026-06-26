@@ -4748,6 +4748,8 @@ def _render_graph_surface(
                 '<p class="raya-graph-orientation-actions">'
                 '<a data-raya-graph-orientation-open href="../../index.html" hidden>'
                 "Open page</a>"
+                '<button type="button" data-raya-graph-orientation-details hidden>'
+                "Details</button>"
                 '<button type="button" data-raya-graph-orientation-neighborhood-toggle '
                 "hidden>Focus neighborhood</button>"
                 '<button type="button" data-raya-graph-orientation-clear hidden>'
@@ -4883,9 +4885,13 @@ def _render_graph_surface(
             ),
             '<section class="raya-graph-detail" aria-label="Selected page" data-raya-graph-detail>',
             "<p data-raya-graph-detail-empty>Select a page in the graph or list.</p>",
-            "<div data-raya-graph-detail-panel hidden>",
+            (
+                '<div data-raya-graph-detail-panel hidden tabindex="-1" '
+                'role="region" aria-labelledby="raya-graph-detail-title">'
+            ),
             '<div class="raya-graph-detail-header">',
-            "<h2 data-raya-graph-detail-title>Selected page</h2>",
+            '<h2 id="raya-graph-detail-title" data-raya-graph-detail-title>'
+            "Selected page</h2>",
             '<button type="button" data-raya-graph-detail-clear>Clear</button>',
             "</div>",
             '<p class="raya-graph-detail-summary" data-raya-graph-detail-summary></p>',

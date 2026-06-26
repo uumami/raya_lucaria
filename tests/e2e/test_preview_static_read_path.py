@@ -3867,6 +3867,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert guide_box["y"] > orientation_box["y"]
                     assert guide_box["y"] > canvas_box["y"]
                     assert guide_box["height"] <= 220
+                    guide.locator("summary").click()
                     guide_text = guide.inner_text()
                     for label in (
                         "Graph quick guide",
@@ -3920,6 +3921,21 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert open_from_orientation.get_attribute("href").endswith(
                         "/reader-ux/index.html"
                     )
+                    details_from_orientation = page.locator(
+                        "[data-raya-graph-orientation-details]"
+                    )
+                    assert details_from_orientation.is_visible()
+                    details_from_orientation.click()
+                    page.wait_for_function(
+                        """() => document.activeElement?.closest(
+                          '[data-raya-graph-detail-panel]'
+                        ) !== null"""
+                    )
+                    assert "Projection Residuals" in page.locator(
+                        "[data-raya-graph-detail-title]"
+                    ).inner_text()
+                    assert "projection" in page.locator("#graph-search").input_value()
+                    assert "page=reader-ux" in page.url
                     orientation_focus = page.locator(
                         "[data-raya-graph-orientation-neighborhood-toggle]"
                     )
@@ -4001,7 +4017,19 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                         == "false"
                     )
                     assert "Projection Residuals" in inspector_rail_summary.inner_text()
-                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    details_from_orientation.click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-inspector-state') === 'expanded'
+                          && document.activeElement?.closest(
+                            '[data-raya-graph-detail-panel]'
+                          ) !== null"""
+                    )
+                    assert "inspector=0" not in page.url
+                    assert page.locator(
+                        "[data-raya-graph-detail-panel]"
+                    ).get_attribute("aria-labelledby") == "raya-graph-detail-title"
                     page.click('[data-raya-graph-toggle-panel="list"]')
                     page.wait_for_function(
                         """() => document

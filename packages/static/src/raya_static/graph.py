@@ -137,6 +137,7 @@ _GRAPH_JAVASCRIPT = r"""
   const orientationFilters = document.querySelector("[data-raya-graph-orientation-filters]");
   const orientationNeighborhood = document.querySelector("[data-raya-graph-orientation-neighborhood]");
   const orientationOpen = document.querySelector("[data-raya-graph-orientation-open]");
+  const orientationDetails = document.querySelector("[data-raya-graph-orientation-details]");
   const orientationNeighborhoodToggle = document.querySelector(
     "[data-raya-graph-orientation-neighborhood-toggle]"
   );
@@ -560,6 +561,7 @@ _GRAPH_JAVASCRIPT = r"""
         orientationOpen.hidden = true;
       }
     }
+    if (orientationDetails) orientationDetails.hidden = !selected;
     if (orientationNeighborhoodToggle) {
       orientationNeighborhoodToggle.hidden = !selected;
       orientationNeighborhoodToggle.textContent = neighborhoodFocus
@@ -2686,6 +2688,16 @@ _GRAPH_JAVASCRIPT = r"""
     syncRelationshipFocusDom();
   }
 
+  function focusSelectedDetail() {
+    if (!selectedId || !detailPanel || detailPanel.hidden) return;
+    if (root.getAttribute("data-raya-graph-inspector-state") === "collapsed") {
+      setGraphPanelState("inspector", true);
+      syncGraphStateReadout();
+    }
+    detailPanel.scrollIntoView({ block: "nearest", inline: "nearest" });
+    detailPanel.focus({ preventScroll: true });
+  }
+
   function selectGraphNode(nodeId) {
     clearRelationshipFocus();
     neighborhoodFocus = false;
@@ -3208,6 +3220,9 @@ _GRAPH_JAVASCRIPT = r"""
   }
   if (orientationClear) {
     orientationClear.addEventListener("click", clearGraphSelection);
+  }
+  if (orientationDetails) {
+    orientationDetails.addEventListener("click", focusSelectedDetail);
   }
   if (orientationNeighborhoodToggle) {
     orientationNeighborhoodToggle.addEventListener("click", () => {

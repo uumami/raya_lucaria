@@ -1105,8 +1105,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-orientation-filters" in graph_html
     assert "data-raya-graph-orientation-neighborhood" in graph_html
     assert "data-raya-graph-orientation-open" in graph_html
+    assert "data-raya-graph-orientation-details" in graph_html
     assert "data-raya-graph-orientation-neighborhood-toggle" in graph_html
     assert "data-raya-graph-orientation-clear" in graph_html
+    assert (
+        'data-raya-graph-detail-panel hidden tabindex="-1" '
+        'role="region" aria-labelledby="raya-graph-detail-title"'
+    ) in graph_html
+    assert 'id="raya-graph-detail-title" data-raya-graph-detail-title' in graph_html
     assert "raya-graph-guide" in graph_html
     assert "data-raya-graph-guide" in graph_html
     for label in ("Find", "Choose a view", "Inspect", "Move", "Filter"):
