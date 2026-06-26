@@ -2060,6 +2060,8 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
         assert forbidden_practice_state_token not in practice_script
     rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
     assert "function setActiveObject" in practice_script
+    assert "function levenshtein" in practice_script
+    assert "function fuzzyMatch" in practice_script
     assert "updateContextActions" in practice_script
     assert "data-raya-practice-active" in practice_script
     assert 'event.key === "ArrowDown"' in practice_script
@@ -2122,6 +2124,8 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "sessionStorage" not in tasks_script
     assert "URLSearchParams" in tasks_script
     assert "matchesPage" in tasks_script
+    assert "function levenshtein" in tasks_script
+    assert "function fuzzyMatch" in tasks_script
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
     _assert_discovery_panel_shell(tasks_html, workspace="Tasks")
@@ -2280,6 +2284,8 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "sessionStorage" not in schedule_script
     assert "URLSearchParams" in schedule_script
     assert "matchesPage" in schedule_script
+    assert "function levenshtein" in schedule_script
+    assert "function fuzzyMatch" in schedule_script
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
     _assert_discovery_panel_shell(schedule_html, workspace="Schedule")

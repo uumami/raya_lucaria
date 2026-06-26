@@ -149,6 +149,10 @@ Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de cont
 pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los
 workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros
 de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
+Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
+titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
+coincidencia es comportamiento local de la pagina, no ranking, personalizacion
+ni recomendacion.
 Los paneles de contexto tambien pueden mostrar links estaticos directos para el
 resultado, objeto, task o item de Schedule activo, como Open page, View graph u
 otro workspace enfocado en la misma pagina. Son atajos de navegacion sobre datos
@@ -248,8 +252,8 @@ fuente ni cola personal de repaso.
 
 Algunos cursos tambien pueden incluir un workspace Official Tasks bajo
 `_raya/tasks/`. Usalo para escanear assignments, projects, exams y tasks
-aceptados por texto, tipo, orden del curso o fecha de entrega, y despues abre
-la pagina que los posee para ver el contexto completo. Puede mostrar campos
+aceptados por texto, coincidencia aproximada de texto, tipo, orden del curso o
+fecha de entrega, y despues abre la pagina que los posee para ver el contexto completo. Puede mostrar campos
 publicos de planeacion como titulo, pagina, fecha de entrega, puntos, status y
 tags cuando el equipo del curso los escribio. Search o Graph pueden abrir Tasks
 enfocado en una pagina, con un aviso visible y reset por Clear o Escape a todos
@@ -259,7 +263,8 @@ sincronizacion de calendario ni superficie de respuestas ocultas.
 
 Algunos cursos tambien pueden incluir un workspace Official Schedule bajo
 `_raya/schedule/`. Usalo para escanear assignments, projects, exams y tasks
-aceptados que tienen fechas `due` o `available`, y despues abre la pagina que
+aceptados que tienen fechas `due` o `available` por texto, coincidencia
+aproximada de texto, tipo de evento o tipo de task, y despues abre la pagina que
 los posee para ver el contexto completo. Es una vista estatica fechada sobre
 metadata del curso. Search o Graph pueden abrir Schedule enfocado en una
 pagina, con un aviso visible y reset por Clear o Escape a todos los items

@@ -119,16 +119,24 @@ _SEARCH_JAVASCRIPT = r"""
     return previous[right.length];
   }
 
+  function fuzzyTermMatch(term, words, haystack) {
+    if (words.some((word) => word.startsWith(term))) return true;
+    const threshold = term.length <= 3 ? 1 : Math.floor(term.length * 0.35);
+    return words.some((word) => levenshtein(term, word) <= threshold) ||
+      (haystack.length <= 28 && levenshtein(term, haystack) <= threshold);
+  }
+
   function fuzzyMatch(queryText, targetText) {
     const needle = normalize(queryText);
     const haystack = normalize(targetText);
     if (!needle) return true;
     if (haystack.includes(needle)) return true;
     const words = haystack.split(/[\s_\/-]+/).filter(Boolean);
-    if (words.some((word) => word.startsWith(needle))) return true;
-    const threshold = needle.length <= 3 ? 1 : Math.floor(needle.length * 0.35);
-    return words.some((word) => levenshtein(needle, word) <= threshold) ||
-      (haystack.length <= 28 && levenshtein(needle, haystack) <= threshold);
+    const terms = needle.split(/\s+/).filter(Boolean);
+    if (terms.length > 1) {
+      return terms.every((term) => fuzzyTermMatch(term, words, haystack));
+    }
+    return fuzzyTermMatch(needle, words, haystack);
   }
 
   function visibleResults() {

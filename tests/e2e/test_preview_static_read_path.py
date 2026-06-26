@@ -4145,6 +4145,17 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             "Authoring Matrix Fixture"
                             in page.locator("#raya-search-results").inner_text()
                         )
+                        page.fill("#raya-search-input", "matrx fixture")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-search-status')
+                              ?.textContent
+                              ?.includes('visible result')"""
+                        )
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in page.locator("#raya-search-results").inner_text()
+                        )
                         page.press("#raya-search-input", "ArrowDown")
                         active = page.locator(
                             '#raya-search-results [data-raya-search-active="true"]'
@@ -4619,6 +4630,34 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             in page.locator(
                                 "[data-raya-practice-context-title]"
                             ).inner_text()
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-prompt"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_hidden()
+                        page.click("#raya-practice-clear")
+                        page.fill("#raya-practice-search", "retrievel")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('1 visible practice object')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-prompt"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_hidden()
+                        page.click("#raya-practice-clear")
+                        page.fill("#raya-practice-search", "retrievel practice")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('1 visible practice object')"""
                         )
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-prompt"]'
@@ -5143,6 +5182,42 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 "[data-raya-tasks-summary-count]"
                             ).inner_text()
                         )
+                        page.click("#raya-tasks-clear")
+                        page.fill("#raya-tasks-search", "retrievel")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-tasks-status')
+                              ?.textContent
+                              ?.includes('2 visible tasks')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-task-object="unit-assignment"]'
+                        ).is_visible()
+                        assert page.locator(
+                            '[data-raya-task-object="unit-project"]'
+                        ).is_visible()
+                        page.click("#raya-tasks-clear")
+                        page.fill("#raya-tasks-search", "retrievel plan")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-tasks-status')
+                              ?.textContent
+                              ?.includes('1 visible task')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-task-object="unit-assignment"]'
+                        ).is_hidden()
+                        assert page.locator(
+                            '[data-raya-task-object="unit-project"]'
+                        ).is_visible()
+                        page.click("#raya-tasks-clear")
+                        page.fill("#raya-tasks-search", "retrieval")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-tasks-status')
+                              ?.textContent
+                              ?.includes('2 visible tasks')"""
+                        )
                         page.select_option("#raya-tasks-sort", "due")
                         task_context_actions = page.locator(
                             "[data-raya-tasks-context-actions]"
@@ -5393,6 +5468,35 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                   ?.textContent
                                   ?.includes('2 visible schedule items')"""
                             )
+                            schedule.click("#raya-schedule-clear")
+                            schedule.fill("#raya-schedule-search", "retrievel")
+                            schedule.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-schedule-status')
+                                  ?.textContent
+                                  ?.includes('2 visible schedule items')"""
+                            )
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-assignment"]'
+                            ).is_visible()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-project"]'
+                            ).is_visible()
+                            schedule.click("#raya-schedule-clear")
+                            schedule.fill("#raya-schedule-search", "retrievel plan")
+                            schedule.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-schedule-status')
+                                  ?.textContent
+                                  ?.includes('1 visible schedule item')"""
+                            )
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-assignment"]'
+                            ).is_hidden()
+                            assert schedule.locator(
+                                '[data-raya-schedule-item="unit-project"]'
+                            ).is_visible()
+                            schedule.click("#raya-schedule-clear")
                             schedule_context_actions = schedule.locator(
                                 "[data-raya-schedule-context-actions]"
                             )

@@ -329,3 +329,22 @@ def test_discovery_context_actions_are_documented() -> None:
     assert "Los paneles de contexto tambien pueden mostrar links estaticos directos" in (
         spanish_student_guide.read_text(encoding="utf-8")
     )
+
+
+def test_discovery_workspace_fuzzy_filters_are_documented() -> None:
+    contract = DOCS_ROOT / "foundation" / "20_learning_renderer_contract.md"
+    student_guide = DOCS_ROOT / "guides" / "en" / "students" / "index.md"
+    spanish_student_guide = DOCS_ROOT / "guides" / "es" / "estudiantes" / "index.md"
+
+    contract_text = contract.read_text(encoding="utf-8")
+    assert "approximate text matching over public fields" in contract_text
+    assert "help find likely public results despite small spelling mistakes" in contract_text
+    assert "not ranking, personalization, or recommendation" in contract_text
+
+    student_text = student_guide.read_text(encoding="utf-8")
+    assert "Text filters may tolerate small spelling mistakes" in student_text
+    assert "not ranking, personalization, or recommendation" in student_text
+
+    spanish_text = spanish_student_guide.read_text(encoding="utf-8")
+    assert "Los filtros de texto pueden tolerar errores pequenos" in spanish_text
+    assert "no ranking, personalizacion" in spanish_text

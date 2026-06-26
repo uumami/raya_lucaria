@@ -136,6 +136,9 @@ Tasks, and Schedule may also show controls, results, and a context panel on wide
 Those controls are for reading and scanning comfort; the workspaces do not
 store your query, selected node, graph layout, practice filters, or task
 filters as study state.
+Text filters may tolerate small spelling mistakes when matching public titles,
+tags, summaries, labels, and visible object text. That matching is local page
+behavior, not ranking, personalization, or recommendation.
 When one of those workspaces opens focused on a page, it may show a small notice
 naming that page and the number of visible results. Clear or Escape removes the
 focus and returns to the full static workspace; the notice is not saved progress
@@ -229,8 +232,8 @@ viewer, or personal review queue.
 
 Some courses may also include an Official Tasks workspace under
 `_raya/tasks/`. Use it to scan accepted assignments, projects, exams, and tasks
-by text, type, course order, or due date, then open the owning page for full
-context. It may show public planning fields such as title, page, due date,
+by text, approximate text match, type, course order, or due date, then open the
+owning page for full context. It may show public planning fields such as title, page, due date,
 points, status, and tags when the course team authored them. Search or Graph
 may open Tasks focused on one page, with a visible notice and a Clear/Escape
 reset to all visible tasks. It is not a
@@ -239,8 +242,8 @@ recommendation page, calendar sync, or hidden answer surface.
 
 Some courses may also include an Official Schedule workspace under
 `_raya/schedule/`. Use it to scan accepted assignments, projects, exams, and
-tasks that have authored due or available dates, then open the owning page for
-full context. Search or Graph may open Schedule focused on one page, with a
+tasks that have authored due or available dates by text, approximate text match,
+event kind, or task type, then open the owning page for full context. Search or Graph may open Schedule focused on one page, with a
 visible notice and a Clear/Escape reset to all visible dated items. It is a
 static dated view over course metadata; it is not a
 personal calendar, reminder system, progress tracker, recommendation page,

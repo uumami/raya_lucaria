@@ -53,6 +53,50 @@ _PRACTICE_JAVASCRIPT = r"""
       .trim();
   }
 
+  function levenshtein(a, b) {
+    const left = normalize(a);
+    const right = normalize(b);
+    if (left.length === 0) return right.length;
+    if (right.length === 0) return left.length;
+    const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    const current = Array(right.length + 1).fill(0);
+    for (let i = 1; i <= left.length; i += 1) {
+      current[0] = i;
+      for (let j = 1; j <= right.length; j += 1) {
+        const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+        current[j] = Math.min(
+          previous[j] + 1,
+          current[j - 1] + 1,
+          previous[j - 1] + cost
+        );
+      }
+      for (let j = 0; j <= right.length; j += 1) {
+        previous[j] = current[j];
+      }
+    }
+    return previous[right.length];
+  }
+
+  function fuzzyTermMatch(term, words, haystack) {
+    if (words.some((word) => word.startsWith(term))) return true;
+    const threshold = term.length <= 3 ? 1 : Math.floor(term.length * 0.35);
+    return words.some((word) => levenshtein(term, word) <= threshold) ||
+      (haystack.length <= 28 && levenshtein(term, haystack) <= threshold);
+  }
+
+  function fuzzyMatch(queryText, targetText) {
+    const needle = normalize(queryText);
+    const haystack = normalize(targetText);
+    if (!needle) return true;
+    if (haystack.includes(needle)) return true;
+    const words = haystack.split(/[\s_\/-]+/).filter(Boolean);
+    const terms = needle.split(/\s+/).filter(Boolean);
+    if (terms.length > 1) {
+      return terms.every((term) => fuzzyTermMatch(term, words, haystack));
+    }
+    return fuzzyTermMatch(needle, words, haystack);
+  }
+
   const items = Array.isArray(payload.objects) ? payload.objects : [];
   const itemsById = new Map(items.map((item) => [item.id, item]));
   const searchableText = new Map(
@@ -92,7 +136,7 @@ _PRACTICE_JAVASCRIPT = r"""
     if (!query) return true;
     const id = item.getAttribute("data-raya-practice-object") || "";
     const haystack = searchableText.get(id) || normalize(item.textContent);
-    return haystack.includes(query);
+    return fuzzyMatch(query, haystack);
   }
 
   function updateGroups() {
