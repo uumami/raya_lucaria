@@ -4251,6 +4251,118 @@ def test_render_fixture_graph_guide_uses_viewport_specific_movement_guidance(
         handle.close()
 
 
+def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.base_url is not None
+        graph_html = _fetch_text(f"{handle.base_url}/_raya/graph/index.html")
+        assert "Keyboard shortcuts" in graph_html
+        assert "/ focuses graph search" in graph_html
+        assert "F fits the current graph view" in graph_html
+        assert "R resets graph filters and selection" in graph_html
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.goto(
+                    f"{handle.base_url}/_raya/graph/index.html",
+                    wait_until="networkidle",
+                )
+                page.locator("#raya-graph-canvas").focus()
+                page.keyboard.press("/")
+                page.wait_for_function(
+                    "() => document.activeElement?.id === 'graph-search'"
+                )
+                page.keyboard.type("matrix")
+                assert page.locator("#graph-search").input_value() == "matrix"
+                page.keyboard.press("r")
+                assert page.locator("#graph-search").input_value() == "matrixr"
+                page.fill("#graph-search", "matrix")
+
+                page.locator("#graph-reset-view").focus()
+                page.keyboard.press("r")
+                assert page.locator("#graph-search").input_value() == "matrix"
+
+                page.locator("#raya-graph-canvas").focus()
+                page.click("#graph-zoom-in")
+                zoomed_viewbox = page.locator("#raya-graph-canvas").get_attribute(
+                    "viewBox"
+                )
+                page.locator("#raya-graph-canvas").focus()
+                page.keyboard.press("f")
+                page.wait_for_function(
+                    """(previous) => document
+                      .querySelector('#raya-graph-canvas')
+                      ?.getAttribute('viewBox') !== previous""",
+                    arg=zoomed_viewbox,
+                )
+
+                page.click('[data-raya-graph-group-filter="reader-ux"]')
+                assert (
+                    page.locator('[data-raya-graph-group-filter="reader-ux"]')
+                    .get_attribute("aria-pressed")
+                    == "false"
+                )
+                page.click('[data-raya-graph-edge-kind-filter="content"]')
+                assert (
+                    page.locator('[data-raya-graph-edge-kind-filter="content"]')
+                    .get_attribute("aria-pressed")
+                    == "false"
+                )
+                page.click('#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]')
+                page.wait_for_function(
+                    """() => document
+                      .querySelector('[data-raya-graph-orientation-selected]')
+                      ?.textContent
+                      ?.includes('Authoring Matrix Fixture')"""
+                )
+                page.locator("#raya-graph-canvas").focus()
+                page.keyboard.press("r")
+                page.wait_for_function(
+                    "() => document.querySelector('#graph-search')?.value === ''"
+                )
+                assert (
+                    page.locator("[data-raya-graph-page]").get_attribute(
+                        "data-raya-graph-layout"
+                    )
+                    == "connections"
+                )
+                assert (
+                    page.locator('[data-raya-graph-group-filter="reader-ux"]')
+                    .get_attribute("aria-pressed")
+                    == "true"
+                )
+                assert (
+                    page.locator('[data-raya-graph-edge-kind-filter="content"]')
+                    .get_attribute("aria-pressed")
+                    == "true"
+                )
+                assert (
+                    page.locator(
+                        "[data-raya-graph-orientation-selected]"
+                    ).inner_text()
+                    == "None"
+                )
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
     tmp_path: Path,
 ) -> None:

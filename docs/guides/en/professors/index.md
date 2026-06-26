@@ -282,6 +282,9 @@ The generated Course graph can help students inspect explicit page
 relationships through local fuzzy search, selected-page details, and an expanded
 graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to
 inspect dense visual graph areas without changing course data or saved state.
+When the graph workspace has focus and students are not typing in a field, `/`
+focuses graph search, `F` fits the current graph view, and `R` resets graph
+filters and selection.
 Selected-page details may include a Relationship walkthrough that explains
 explicit link kinds and directions with local page and graph-focus controls.
 Connection previews may label relationship kind and direction, such as

@@ -291,6 +291,8 @@ pueden incluir un Relationship walkthrough que explica tipos y direcciones de
 enlaces explicitos con controles locales de pagina y foco en grafo. Los
 previews de conexion pueden etiquetar tipo y direccion de relacion, como
 `Content` y `From this page`, usando solo contexto explicito generado del grafo.
+Cuando el estudiante no esta escribiendo en un campo, `/` enfoca busqueda del
+grafo, `F` ajusta la vista actual y `R` resetea filtros y seleccion.
 Los relationship chips pueden reducir temporalmente ese walkthrough para lectura,
 pero no crean recomendaciones, progreso, filtros guardados ni datos nuevos del
 curso. El grafo

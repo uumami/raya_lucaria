@@ -140,7 +140,9 @@ Review the Course graph as a static artifact surface. Graph search, selected-pag
 details, group filters, SVG viewport controls, and expanded graph workspace mode
 must use embedded artifact data and local renderer resources only. Zoom in, Zoom
 out, Fit, and Reset view may change the visual SVG viewport, but must not persist
-state, fetch graph data, or clear selected-page context. Do not add CDN graph
+state, fetch graph data, or clear selected-page context. Graph shortcuts may
+focus search, fit the SVG view, or reset graph filters and selection, but must
+not intercept typing in form fields. Do not add CDN graph
 engines, runtime fetches, persistent graph state, or recommendation/progress
 wording. Selected-page relationship walkthroughs must be built from explicit
 generated graph edges and local links only. Relationship chips may act as native

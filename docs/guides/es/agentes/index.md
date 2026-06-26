@@ -234,7 +234,9 @@ vecinas, de busqueda, resultado activo, arrastre y alto grado,
 layout determinista `Connections` por defecto,
 layouts alternos `Topology`, `Cluster`, `Map`, `Radial` y `List`, estado de area de trabajo
 expandida del grafo, controles SVG de viewport incluyendo botones de pan,
-pan con `Arrow keys` cuando el grafo tiene foco, pan por arrastre del puntero, chrome compartido de
+pan con `Arrow keys` cuando el grafo tiene foco, atajos del grafo para `/`
+enfocar busqueda, `F` ajustar y `R` resetear sin interceptar escritura en
+campos, pan por arrastre del puntero, chrome compartido de
 descubrimiento, chrome movil compacto, comportamiento movil sin overflow y sin
 solicitudes externas despues de cargar la pagina. El
 estado UI del grafo es no persistente y debe venir de datos de grafo embebidos

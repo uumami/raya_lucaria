@@ -147,7 +147,9 @@ grafo, los detalles de pagina seleccionada, filtros de grupo, controles SVG de
 viewport y workspace expandido del grafo deben usar solo datos embebidos del
 artifact y recursos locales del renderer. Zoom in, Zoom out, Fit y Reset view
 pueden cambiar el viewport SVG visual, pero no deben persistir estado, pedir
-datos del grafo ni limpiar el contexto de pagina seleccionada. No agregues
+datos del grafo ni limpiar el contexto de pagina seleccionada. Los atajos del
+grafo pueden enfocar busqueda, ajustar la vista SVG o resetear filtros y
+seleccion, pero no deben interceptar escritura en campos. No agregues
 motores de grafo CDN, fetches runtime, estado persistente del grafo ni lenguaje
 de recomendaciones/progreso. Los relationship walkthroughs de pagina
 seleccionada deben construirse solo desde edges explicitos generados del grafo

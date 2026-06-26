@@ -211,6 +211,8 @@ navigation, SVG graph node double-click page opening, focused SVG graph node
 Enter-to-open behavior, the primary selected-page open link, the default deterministic `Connections` layout, alternate
 `Topology`, `Cluster`, `Map`, `Radial`, and `List` layouts, expanded graph workspace state,
 SVG viewport controls including pan buttons, focused graph Arrow-key panning,
+graph-level `/` search-focus, `F` fit, and `R` reset shortcuts that do not
+intercept typing in fields,
 pointer drag panning, shared discovery chrome, compact mobile discovery
 chrome, mobile no-overflow behavior, and no external requests after page load. Graph UI
 state is non-persistent and must

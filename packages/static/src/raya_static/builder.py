@@ -5080,6 +5080,11 @@ def _render_graph_surface(
                 "visible page results and Enter opens the active result.</p>"
             ),
             (
+                "<p><strong>Keyboard shortcuts:</strong> / focuses graph search, "
+                "F fits the current graph view, and R resets graph filters and "
+                "selection. Shortcuts are ignored while typing in form fields.</p>"
+            ),
+            (
                 "<p>Click a graph page once to inspect it. Double-click a graph "
                 "page to open it. When a graph page has keyboard focus, press "
                 "Enter to open it.</p>"

@@ -1429,6 +1429,49 @@ _GRAPH_JAVASCRIPT = r"""
     setFitSelectionEnabled();
   }
 
+  function isEditableGraphShortcutTarget(target) {
+    if (!target || !(target instanceof Element)) return false;
+    return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+  }
+
+  function isInteractiveGraphShortcutTarget(target) {
+    if (!target || !(target instanceof Element)) return false;
+    return Boolean(target.closest("a[href], button, summary, [role='button']"));
+  }
+
+  function ownsGraphShortcutTarget(target) {
+    return Boolean(target && target instanceof Element && root.contains(target));
+  }
+
+  function resetGraphWorkspace() {
+    if (search) search.value = "";
+    if (layout) layout.value = "connections";
+    hiddenGroups.clear();
+    hiddenEdgeKinds.clear();
+    manualNodePositions.clear();
+    suppressedNodeClick = { id: "", until: 0 };
+    graphNodeClickSequence = { id: "", time: 0 };
+    clearRelationshipFocus();
+    updateEdgeKindFilters();
+    selectedId = "";
+    inspectedId = "";
+    activeResultId = "";
+    pageFocusId = "";
+    pendingInitialPageFit = false;
+    setGraphNeighborhoodFocus(false);
+    graphViewBox = null;
+    if (hoverStatus) hoverStatus.textContent = "";
+    hideGraphPreviewBubble();
+    setGraphExpanded(false);
+    setGraphPanelState("list", true);
+    setGraphPanelState("inspector", true);
+    renderDetail();
+    groupFilters.forEach((button) => {
+      button.setAttribute("aria-pressed", "true");
+    });
+    render();
+  }
+
   function setGraphViewportControlsEnabled(enabled) {
     [zoomIn, zoomOut, resetView, ...panButtons].forEach((button) => {
       if (button) button.disabled = !enabled;
@@ -3140,6 +3183,25 @@ _GRAPH_JAVASCRIPT = r"""
     if (event.key !== "Escape") return;
     hideGraphPreviewBubble();
   });
+  document.addEventListener("keydown", (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (!ownsGraphShortcutTarget(event.target)) return;
+    if (isEditableGraphShortcutTarget(event.target)) return;
+    if (isInteractiveGraphShortcutTarget(event.target)) return;
+    const key = event.key.toLowerCase();
+    if (key === "/" && search) {
+      event.preventDefault();
+      search.focus();
+      search.select();
+    } else if (key === "f") {
+      event.preventDefault();
+      graphViewBox = null;
+      render();
+    } else if (key === "r") {
+      event.preventDefault();
+      resetGraphWorkspace();
+    }
+  });
   canvas.addEventListener("wheel", wheelZoomGraphView, { passive: false });
   canvas.addEventListener("pointerdown", startGraphPan);
   canvas.addEventListener("pointermove", (event) => {
@@ -3162,34 +3224,7 @@ _GRAPH_JAVASCRIPT = r"""
     if (!endGraphNodeDrag(event)) endGraphPan(event);
   });
   if (reset) {
-    reset.addEventListener("click", () => {
-      if (search) search.value = "";
-      if (layout) layout.value = "connections";
-      hiddenGroups.clear();
-      hiddenEdgeKinds.clear();
-      manualNodePositions.clear();
-      suppressedNodeClick = { id: "", until: 0 };
-      graphNodeClickSequence = { id: "", time: 0 };
-      clearRelationshipFocus();
-      updateEdgeKindFilters();
-      selectedId = "";
-      inspectedId = "";
-      activeResultId = "";
-      pageFocusId = "";
-      pendingInitialPageFit = false;
-      setGraphNeighborhoodFocus(false);
-      graphViewBox = null;
-      if (hoverStatus) hoverStatus.textContent = "";
-      hideGraphPreviewBubble();
-      setGraphExpanded(false);
-      setGraphPanelState("list", true);
-      setGraphPanelState("inspector", true);
-      renderDetail();
-      groupFilters.forEach((button) => {
-        button.setAttribute("aria-pressed", "true");
-      });
-      render();
-    });
+    reset.addEventListener("click", resetGraphWorkspace);
   }
   if (graphExpand) {
     graphExpand.addEventListener("click", () => {
