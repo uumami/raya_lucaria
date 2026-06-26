@@ -5057,6 +5057,197 @@ def test_preview_graph_workspace_starts_in_first_desktop_viewport(
     assert probe["canvas"]["height"] >= 420
 
 
+def test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1440, "height": 900},
+                    {"width": 1024, "height": 768},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_selector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            ".raya-graph-node.is-selected"
+                        )
+                        probe = page.evaluate(
+                            """() => {
+                              const box = (selector) => {
+                                const node = document.querySelector(selector);
+                                const rect = node?.getBoundingClientRect();
+                                return rect
+                                  ? {
+                                      top: rect.top,
+                                      bottom: rect.bottom,
+                                      left: rect.left,
+                                      right: rect.right,
+                                      width: rect.width,
+                                      height: rect.height,
+                                    }
+                                  : null;
+                              };
+                              const intersectsViewport = (rect) => Boolean(
+                                rect &&
+                                rect.bottom > 0 &&
+                                rect.right > 0 &&
+                                rect.top < window.innerHeight &&
+                                rect.left < window.innerWidth
+                              );
+                              const parseTranslate = (value) => {
+                                const match = String(value || '').match(
+                                  /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                );
+                                return match
+                                  ? { x: Number(match[1]), y: Number(match[2]) }
+                                  : null;
+                              };
+                              const parseViewBox = (value) => {
+                                const parts = String(value || '')
+                                  .trim()
+                                  .split(/\\s+/)
+                                  .map(Number);
+                                return parts.length === 4 && parts.every(Number.isFinite)
+                                  ? {
+                                      x: parts[0],
+                                      y: parts[1],
+                                      width: parts[2],
+                                      height: parts[3],
+                                      right: parts[0] + parts[2],
+                                      bottom: parts[1] + parts[3],
+                                    }
+                                  : null;
+                              };
+                              const inBox = (point, viewBox) => Boolean(
+                                point &&
+                                viewBox &&
+                                point.x >= viewBox.x &&
+                                point.x <= viewBox.right &&
+                                point.y >= viewBox.y &&
+                                point.y <= viewBox.bottom
+                              );
+                              const canvas = document.querySelector('#raya-graph-canvas');
+                              const viewBox = parseViewBox(canvas?.getAttribute('viewBox'));
+                              const graphPoints = Array.from(
+                                document.querySelectorAll(
+                                  '#raya-graph-canvas [data-raya-graph-node] g'
+                                )
+                              )
+                                .map((node) => parseTranslate(node.getAttribute('transform')))
+                                .filter(Boolean);
+                              const selectedPoint = parseTranslate(
+                                document
+                                  .querySelector(
+                                    '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                                  )
+                                  ?.getAttribute('transform')
+                              );
+                              const graphSpan = graphPoints.length
+                                ? {
+                                    x: Math.max(...graphPoints.map((point) => point.x)) -
+                                      Math.min(...graphPoints.map((point) => point.x)),
+                                    y: Math.max(...graphPoints.map((point) => point.y)) -
+                                      Math.min(...graphPoints.map((point) => point.y)),
+                                  }
+                                : null;
+                              const focusedEdgeVisible = Array.from(
+                                document.querySelectorAll(
+                                  '#raya-graph-canvas .raya-graph-edge.is-active'
+                                )
+                              ).some((edge) => {
+                                const from = {
+                                  x: Number(edge.getAttribute('x1')),
+                                  y: Number(edge.getAttribute('y1')),
+                                };
+                                const to = {
+                                  x: Number(edge.getAttribute('x2')),
+                                  y: Number(edge.getAttribute('y2')),
+                                };
+                                return inBox(from, viewBox) || inBox(to, viewBox);
+                              });
+                              return {
+                                scrollY: window.scrollY,
+                                orientation: box('[data-raya-graph-orientation]'),
+                                toolbar: box('.raya-graph-toolbar'),
+                                selected: box(
+                                  '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                                ),
+                                detailTitle: document
+                                  .querySelector('[data-raya-graph-detail-title]')
+                                  ?.textContent
+                                  ?.trim() || '',
+                                selectedState: document
+                                  .querySelector('[data-raya-graph-state-selected]')
+                                  ?.textContent
+                                  ?.trim() || '',
+                                orientationVisible: intersectsViewport(
+                                  box('[data-raya-graph-orientation]')
+                                ),
+                                toolbarVisible: intersectsViewport(
+                                  box('.raya-graph-toolbar')
+                                ),
+                                selectedPointInViewBox: inBox(selectedPoint, viewBox),
+                                focusedEdgeVisible,
+                                viewBoxIsFocused: Boolean(
+                                  viewBox &&
+                                  graphSpan &&
+                                  viewBox.width < graphSpan.x &&
+                                  viewBox.height < graphSpan.y
+                                ),
+                                localStorageKeys: Object.keys(localStorage),
+                                sessionStorageKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                    finally:
+                        page.close()
+
+                    assert probe["selected"] is not None
+                    assert "Projection Residuals" in probe["detailTitle"]
+                    assert probe["selectedState"] == "reader-ux"
+                    assert probe["orientationVisible"] or probe["toolbarVisible"], (
+                        viewport,
+                        probe,
+                    )
+                    assert probe["scrollY"] < viewport["height"] * 0.5, (
+                        viewport,
+                        probe,
+                    )
+                    assert probe["selectedPointInViewBox"], (viewport, probe)
+                    assert probe["focusedEdgeVisible"], (viewport, probe)
+                    assert probe["viewBoxIsFocused"], (viewport, probe)
+                    assert probe["localStorageKeys"] == []
+                    assert probe["sessionStorageKeys"] == []
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
     tmp_path: Path,
 ) -> None:

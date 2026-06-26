@@ -1426,7 +1426,6 @@ _GRAPH_JAVASCRIPT = r"""
     const box = selectedNeighborhoodBounds();
     if (box) {
       setGraphViewBox(box);
-      canvas.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
     setFitSelectionEnabled();
   }
