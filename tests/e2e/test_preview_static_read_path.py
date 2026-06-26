@@ -5348,6 +5348,157 @@ def test_preview_graph_mobile_workspace_prioritizes_map_panel(
         handle.close()
 
 
+def test_preview_graph_mobile_toolbar_uses_compact_command_strip(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    probe = page.evaluate(
+                        """() => {
+                          const box = (selector) => {
+                            const node = document.querySelector(selector);
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  left: rect.left,
+                                  right: rect.right,
+                                  height: rect.height,
+                                  width: rect.width,
+                                }
+                              : null;
+                          };
+                          const toolbar = document.querySelector('.raya-graph-toolbar');
+                          const groups = Array.from(
+                            document.querySelectorAll('.raya-graph-toolbar-group')
+                          ).map((group) => {
+                            const rect = group.getBoundingClientRect();
+                            return {
+                              label: group.getAttribute('aria-label') || '',
+                              top: rect.top,
+                              bottom: rect.bottom,
+                              left: rect.left,
+                              right: rect.right,
+                              width: rect.width,
+                              height: rect.height,
+                            };
+                          });
+                          const contentFilter = document.querySelector(
+                            '[data-raya-graph-edge-kind-filter="content"]'
+                          );
+                          const fitSelection = document.querySelector(
+                            '#graph-fit-selection'
+                          );
+                          const panRight = document.querySelector(
+                            '[data-raya-graph-pan="right"]'
+                          );
+                          const initialContentFilterRight = contentFilter
+                            ?.getBoundingClientRect()
+                            ?.right || 0;
+                          if (toolbar) {
+                            panRight?.scrollIntoView({
+                              block: 'nearest',
+                              inline: 'center',
+                            });
+                          }
+                          panRight?.focus();
+                          const toolbarRect = toolbar?.getBoundingClientRect();
+                          const panRightRect = panRight?.getBoundingClientRect();
+                          const panRightStyle = panRight
+                            ? getComputedStyle(panRight)
+                            : null;
+                          return {
+                            toolbar: box('.raya-graph-toolbar'),
+                            toolbarClientWidth: toolbar?.clientWidth || 0,
+                            toolbarScrollWidth: toolbar?.scrollWidth || 0,
+                            toolbarScrollLeft: toolbar?.scrollLeft || 0,
+                            groups,
+                            search: box('#graph-search'),
+                            layout: box('#graph-layout'),
+                            contentFilterExists: Boolean(contentFilter),
+                            fitSelectionExists: Boolean(fitSelection),
+                            panRightExists: Boolean(panRight),
+                            initialContentFilterRight,
+                            panRightVisibleAfterScroll: Boolean(
+                              toolbarRect &&
+                              panRightRect &&
+                              panRightRect.left >= toolbarRect.left &&
+                              panRightRect.right <= toolbarRect.right
+                            ),
+                            panRightFocused: document.activeElement === panRight,
+                            panRightOutlineStyle: panRightStyle?.outlineStyle || '',
+                            panRightOutlineWidth: panRightStyle?.outlineWidth || '',
+                            panRightOutlineOffset: panRightStyle?.outlineOffset || '',
+                            map: box('.raya-graph-map-panel'),
+                            list: box('.raya-graph-list-panel'),
+                            selectedState: document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.trim() || '',
+                            localStorageKeys: Object.keys(localStorage),
+                            sessionStorageKeys: Object.keys(sessionStorage),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["toolbar"] is not None
+    assert probe["toolbar"]["height"] <= 120
+    assert probe["toolbarScrollWidth"] > probe["toolbarClientWidth"]
+    assert probe["toolbarScrollLeft"] > 0
+    assert len(probe["groups"]) >= 5
+    assert abs(probe["groups"][0]["top"] - probe["groups"][1]["top"]) <= 4
+    assert probe["search"] is not None
+    assert probe["layout"] is not None
+    assert probe["contentFilterExists"]
+    assert probe["fitSelectionExists"]
+    assert probe["panRightExists"]
+    assert probe["initialContentFilterRight"] > probe["toolbarClientWidth"]
+    assert probe["panRightVisibleAfterScroll"]
+    assert probe["panRightFocused"]
+    assert probe["panRightOutlineStyle"] == "solid"
+    assert probe["panRightOutlineWidth"] == "3px"
+    assert probe["panRightOutlineOffset"].startswith("-")
+    assert probe["map"]["top"] < probe["list"]["top"]
+    assert probe["selectedState"] == "reader-ux"
+    assert probe["localStorageKeys"] == []
+    assert probe["sessionStorageKeys"] == []
+
+
 def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
     tmp_path: Path,
 ) -> None:

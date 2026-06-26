@@ -5663,6 +5663,37 @@ mjx-container[display="true"] {
     white-space: nowrap;
     width: 1px;
   }
+  .raya-graph-toolbar {
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-gutter: stable;
+  }
+  .raya-graph-toolbar-group,
+  .raya-graph-pan-controls,
+  .raya-graph-shortcut-hints {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+  .raya-graph-toolbar-primary {
+    min-width: 20rem;
+  }
+  .raya-graph-toolbar-primary input {
+    min-width: 9rem;
+  }
+  .raya-graph-controls button,
+  .raya-graph-controls select,
+  .raya-graph-controls input {
+    white-space: nowrap;
+  }
+  .raya-graph-active-state {
+    max-width: 12rem;
+    white-space: nowrap;
+  }
+  .raya-graph-toolbar :is(input, select, button):focus-visible {
+    outline-offset: -2px;
+  }
   .raya-course-map,
   .raya-main-article,
   .raya-learning-rail,
