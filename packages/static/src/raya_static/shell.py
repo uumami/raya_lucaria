@@ -38,6 +38,7 @@ _SHELL_JAVASCRIPT = r"""
   const mapFilter = document.querySelector("[data-raya-course-map-filter]");
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
   const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
+  const assetInspectButtons = Array.from(document.querySelectorAll("[data-raya-asset-inspect]"));
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
@@ -66,6 +67,8 @@ _SHELL_JAVASCRIPT = r"""
   let activeCompactPreviewLink = null;
   let focusedCompactPreviewLink = null;
   let hoveredCompactPreviewLink = null;
+  let assetInspector = null;
+  let assetInspectorOpener = null;
 
   function updateMapLinkTabOrder(nextExpanded) {
     const mapList = map.querySelector("#raya-course-map-list");
@@ -896,6 +899,114 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function ensureAssetInspector() {
+    if (assetInspector) {
+      return assetInspector;
+    }
+    assetInspector = document.createElement("div");
+    assetInspector.className = "raya-asset-inspector";
+    assetInspector.hidden = true;
+    assetInspector.setAttribute("aria-hidden", "true");
+    assetInspector.setAttribute("aria-modal", "true");
+    assetInspector.setAttribute("data-raya-asset-inspector", "");
+    assetInspector.setAttribute("role", "dialog");
+    assetInspector.innerHTML = `
+      <div class="raya-asset-inspector-panel" data-raya-asset-inspector-panel>
+        <div class="raya-asset-inspector-header">
+          <h2 id="raya-asset-inspector-title" data-raya-asset-inspector-title>Image</h2>
+          <button class="raya-asset-inspector-close" type="button" data-raya-asset-inspector-close aria-label="Close image inspector">Close</button>
+        </div>
+        <figure class="raya-asset-inspector-figure">
+          <img data-raya-asset-inspector-image alt="">
+        </figure>
+        <p class="raya-asset-inspector-actions">
+          <a data-raya-asset-inspector-open href="">Open image file</a>
+        </p>
+      </div>
+    `;
+    assetInspector.setAttribute("aria-labelledby", "raya-asset-inspector-title");
+    document.body.appendChild(assetInspector);
+    assetInspector.addEventListener("click", (event) => {
+      if (event.target === assetInspector) {
+        closeAssetInspector({ restoreFocus: true });
+      }
+    });
+    const close = assetInspector.querySelector("[data-raya-asset-inspector-close]");
+    if (close) {
+      close.addEventListener("click", () => closeAssetInspector({ restoreFocus: true }));
+    }
+    return assetInspector;
+  }
+
+  function assetInspectorIsOpen() {
+    return Boolean(assetInspector && !assetInspector.hidden);
+  }
+
+  function trapAssetInspectorFocus(event) {
+    if (!assetInspectorIsOpen() || event.key !== "Tab" || !assetInspector) {
+      return false;
+    }
+    const focusable = focusableElementsWithin(assetInspector);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      assetInspector.focus();
+      return true;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return true;
+    }
+    if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+      return true;
+    }
+    return false;
+  }
+
+  function openAssetInspector(button) {
+    const inspector = ensureAssetInspector();
+    const src = button.getAttribute("data-raya-asset-src") || "";
+    const alt = button.getAttribute("data-raya-asset-alt") || "Image";
+    const title = inspector.querySelector("[data-raya-asset-inspector-title]");
+    const image = inspector.querySelector("[data-raya-asset-inspector-image]");
+    const open = inspector.querySelector("[data-raya-asset-inspector-open]");
+    assetInspectorOpener = button;
+    if (title) title.textContent = alt;
+    if (image) {
+      image.setAttribute("src", src);
+      image.setAttribute("alt", alt);
+    }
+    if (open) {
+      open.setAttribute("href", src);
+    }
+    inspector.hidden = false;
+    inspector.setAttribute("aria-hidden", "false");
+    const close = inspector.querySelector("[data-raya-asset-inspector-close]");
+    if (close) close.focus();
+  }
+
+  function closeAssetInspector({ restoreFocus } = { restoreFocus: false }) {
+    if (!assetInspector) {
+      return;
+    }
+    assetInspector.hidden = true;
+    assetInspector.setAttribute("aria-hidden", "true");
+    if (restoreFocus && assetInspectorOpener) {
+      assetInspectorOpener.focus();
+    }
+    assetInspectorOpener = null;
+  }
+
+  function initializeAssetInspectorControls() {
+    assetInspectButtons.forEach((button) => {
+      button.addEventListener("click", () => openAssetInspector(button));
+    });
+  }
+
   function printableDisclosureElements() {
     return Array.from(
       document.querySelectorAll(
@@ -1102,6 +1213,16 @@ _SHELL_JAVASCRIPT = r"""
   });
 
   document.addEventListener("keydown", (event) => {
+    if (assetInspectorIsOpen()) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeAssetInspector({ restoreFocus: true });
+        return;
+      }
+      if (trapAssetInspectorFocus(event)) {
+        return;
+      }
+    }
     if (handleSequenceKeyboardNavigation(event)) {
       return;
     }
@@ -1189,6 +1310,7 @@ _SHELL_JAVASCRIPT = r"""
   syncReaderFocusToggle(false);
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
+  initializeAssetInspectorControls();
   syncCourseMapDrawerState();
   root.dataset.rayaShellReady = "true";
 })();

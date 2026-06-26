@@ -3748,6 +3748,12 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(
     tmp_path: Path,
 ) -> None:
     course = _copy_render_fixture(tmp_path)
+    root_source = course / "course" / "0_index.md"
+    root_source.write_text(
+        root_source.read_text(encoding="utf-8")
+        + "\n[![Linked static path image](_assets/diagrams/static-path.svg)](raya:static-path)\n",
+        encoding="utf-8",
+    )
 
     report = build_course(course)
 
@@ -3791,6 +3797,22 @@ def test_render_fixture_local_asset_links_are_rewritten_and_copied(
 
     assert 'href="_raya/assets/_source/_local/diagrams/static-path.txt"' in root_html
     assert 'src="_raya/assets/_source/_local/diagrams/static-path.svg"' in root_html
+    assert 'class="raya-local-asset-image" data-raya-local-asset-image' in root_html
+    assert root_html.count("data-raya-asset-inspect") == 1
+    assert (
+        '<button class="raya-local-asset-inspect" type="button" '
+        'data-raya-asset-inspect aria-haspopup="dialog" '
+        'data-raya-asset-src="_raya/assets/_source/_local/diagrams/static-path.svg" '
+        'data-raya-asset-alt="Static path image fixture" '
+        'aria-label="Inspect image: Static path image fixture">Inspect</button>'
+        in root_html
+    )
+    assert (
+        '<a href="static-path/index.html"><img '
+        'src="_raya/assets/_source/_local/diagrams/static-path.svg" '
+        'alt="Linked static path image" /></a>'
+        in root_html
+    )
     assert 'href="static-path/index.html"' in root_html
     assert (
         'href="../_raya/assets/_source/_local/diagrams/static-path.txt"' in nested_html
@@ -4267,6 +4289,10 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "navigator.clipboard.writeText" in script_text
     assert 'execCommand("copy")' in script_text
     assert "Code block copied" in script_text
+    assert "data-raya-asset-inspect" in script_text
+    assert "function openAssetInspector" in script_text
+    assert "function closeAssetInspector" in script_text
+    assert "data-raya-asset-inspector-image" in script_text
     assert "function orientCourseMapToCurrentPage" in script_text
     assert "function openCourseMapDrawer" in script_text
     assert "function closeCourseMapDrawer" in script_text
@@ -4301,6 +4327,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "fetch(" not in script_text
     assert "XMLHttpRequest" not in script_text
     assert 'html[data-raya-course-map-scroll-lock="true"]' in css_text
+    assert ".raya-local-asset-inspect" in css_text
+    assert ".raya-asset-inspector" in css_text
     assert '.raya-course-map-actions button[aria-pressed="true"]' in css_text
     assert ".raya-course-map-drawer-chrome" in css_text
     assert ".raya-visually-hidden" in css_text

@@ -47,6 +47,16 @@ _LATEX_DOCUMENT_RE = re.compile(
 _SLUG_UNSAFE_RE = re.compile(r"[^a-z0-9 -]")
 _SLUG_SPACE_RE = re.compile(r"\s+")
 _LANGUAGE_RE = re.compile(r"^[A-Za-z0-9_+.#-]+")
+_INSPECTABLE_IMAGE_EXTENSIONS = {
+    ".apng",
+    ".avif",
+    ".gif",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".svg",
+    ".webp",
+}
 
 
 @dataclass(frozen=True)
@@ -60,6 +70,15 @@ class _Heading:
 class _Callout:
     kind: str
     body: str
+
+
+def _is_inspectable_local_image_src(src: str) -> bool:
+    lowered = src.lower().split("#", 1)[0].split("?", 1)[0]
+    if lowered.startswith(("http://", "https://", "//", "data:", "mailto:", "tel:")):
+        return False
+    return "_raya/assets/" in lowered and any(
+        lowered.endswith(extension) for extension in _INSPECTABLE_IMAGE_EXTENSIONS
+    )
 
 
 _CalloutFragment = tuple[_Callout, list[Token], dict]
@@ -89,6 +108,7 @@ class RichMarkdownRenderer:
         self._default_image_renderer = self._md.renderer.rules.get("image")
         self._md.renderer.rules["heading_open"] = self._render_heading_open
         self._md.renderer.rules["link_open"] = self._render_link_open
+        self._md.renderer.rules["link_close"] = self._render_link_close
         self._md.renderer.rules["image"] = self._render_image
         self._md.renderer.rules["fence"] = self._render_fence
         self._md.renderer.rules["math_inline"] = self._render_math
@@ -331,10 +351,22 @@ class RichMarkdownRenderer:
         options: dict,
         env: dict,
     ) -> str:
+        env["raya_link_depth"] = int(env.get("raya_link_depth", 0)) + 1
         href = tokens[idx].attrGet("href")
         if href:
             tokens[idx].attrSet("href", self._resolve_href(href))
         return self._md.renderer.renderToken(tokens, idx, options, env)
+
+    def _render_link_close(
+        self,
+        tokens: list[Token],
+        idx: int,
+        options: dict,
+        env: dict,
+    ) -> str:
+        rendered = self._md.renderer.renderToken(tokens, idx, options, env)
+        env["raya_link_depth"] = max(0, int(env.get("raya_link_depth", 0)) - 1)
+        return rendered
 
     def _render_image(
         self,
@@ -345,10 +377,33 @@ class RichMarkdownRenderer:
     ) -> str:
         src = tokens[idx].attrGet("src")
         if src:
-            tokens[idx].attrSet("src", self._resolve_href(src))
+            src = self._resolve_href(src)
+            tokens[idx].attrSet("src", src)
         if self._default_image_renderer is not None:
-            return self._default_image_renderer(tokens, idx, options, env)
-        return self._md.renderer.renderToken(tokens, idx, options, env)
+            image_html = self._default_image_renderer(tokens, idx, options, env)
+        else:
+            image_html = self._md.renderer.renderToken(tokens, idx, options, env)
+        if (
+            not src
+            or env.get("raya_link_depth", 0)
+            or not _is_inspectable_local_image_src(src)
+        ):
+            return image_html
+        alt = tokens[idx].content.strip() or "Local image asset"
+        escaped_alt = html.escape(alt, quote=True)
+        escaped_src = html.escape(src, quote=True)
+        return (
+            '<span class="raya-local-asset-image" data-raya-local-asset-image>'
+            f"{image_html}"
+            '<button class="raya-local-asset-inspect" type="button" '
+            'data-raya-asset-inspect aria-haspopup="dialog" '
+            f'data-raya-asset-src="{escaped_src}" '
+            f'data-raya-asset-alt="{escaped_alt}" '
+            f'aria-label="Inspect image: {escaped_alt}">'
+            "Inspect"
+            "</button>"
+            "</span>"
+        )
 
     def _render_fence(
         self,
@@ -486,6 +541,98 @@ a {
 img {
   height: auto;
   max-width: 100%;
+}
+.raya-local-asset-image {
+  display: inline-grid;
+  gap: 0.35rem;
+  justify-items: start;
+  max-width: 100%;
+}
+.raya-local-asset-inspect {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 850;
+  line-height: 1.1;
+  padding: 0.28rem 0.5rem;
+}
+.raya-local-asset-inspect:hover,
+.raya-local-asset-inspect:focus-visible {
+  background: var(--raya-color-accent);
+  color: var(--raya-color-page);
+}
+.raya-asset-inspector[hidden] {
+  display: none;
+}
+.raya-asset-inspector {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-text) 62%, transparent);
+  display: grid;
+  inset: 0;
+  justify-items: center;
+  padding: 1.25rem;
+  position: fixed;
+  z-index: 80;
+}
+.raya-asset-inspector-panel {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 1rem 2.5rem color-mix(in srgb, var(--raya-color-text) 28%, transparent);
+  display: grid;
+  gap: 0.75rem;
+  max-height: min(88vh, 56rem);
+  max-width: min(92vw, 68rem);
+  overflow: auto;
+  padding: 0.85rem;
+  width: 100%;
+}
+.raya-asset-inspector-header {
+  align-items: center;
+  border-bottom: 1px solid var(--raya-color-border);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+}
+.raya-asset-inspector-header h2 {
+  font-size: 1rem;
+  line-height: 1.2;
+  margin: 0;
+}
+.raya-asset-inspector-close {
+  background: var(--raya-color-accent-soft);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  padding: 0.35rem 0.55rem;
+}
+.raya-asset-inspector-close:hover,
+.raya-asset-inspector-close:focus-visible {
+  background: var(--raya-color-accent);
+  color: var(--raya-color-page);
+}
+.raya-asset-inspector-figure {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  min-height: 0;
+}
+.raya-asset-inspector-figure img {
+  max-height: 68vh;
+  object-fit: contain;
+  width: auto;
+}
+.raya-asset-inspector-actions {
+  margin: 0;
 }
 .raya-visually-hidden {
   clip: rect(0 0 0 0);
@@ -5073,6 +5220,8 @@ mjx-container[display="true"] {
   .raya-schedule-control-panel,
   .raya-schedule-context-panel,
   .raya-inspection-sidebar,
+  .raya-local-asset-inspect,
+  .raya-asset-inspector,
   .raya-code-copy {
     display: none !important;
   }

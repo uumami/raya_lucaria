@@ -427,6 +427,98 @@ def test_preview_serves_local_assets(tmp_path: Path) -> None:
     assert all(len(font) > 0 for font in math_fonts)
 
 
+def test_render_fixture_local_images_open_static_asset_inspector(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.on(
+                    "request",
+                    lambda request: record_external_request(
+                        request.url,
+                        base_url,
+                        external_requests,
+                    ),
+                )
+                try:
+                    page.goto(f"{base_url}/index.html", wait_until="networkidle")
+                    _assert_no_horizontal_overflow(page)
+                    inspect = page.locator("[data-raya-asset-inspect]").first
+                    assert inspect.is_visible()
+                    assert inspect.get_attribute("aria-haspopup") == "dialog"
+                    inspect.click()
+
+                    dialog = page.locator("[data-raya-asset-inspector]")
+                    assert dialog.is_visible()
+                    assert dialog.get_attribute("aria-hidden") == "false"
+                    assert (
+                        dialog.locator("[data-raya-asset-inspector-title]").inner_text()
+                        == "Static path image fixture"
+                    )
+                    preview = dialog.locator("[data-raya-asset-inspector-image]")
+                    assert preview.get_attribute("alt") == "Static path image fixture"
+                    assert preview.get_attribute("src") == (
+                        "_raya/assets/_source/_local/diagrams/static-path.svg"
+                    )
+                    assert (
+                        dialog.locator("[data-raya-asset-inspector-open]")
+                        .get_attribute("href")
+                        == "_raya/assets/_source/_local/diagrams/static-path.svg"
+                    )
+                    assert external_requests == []
+
+                    page.keyboard.press("Escape")
+                    assert dialog.is_hidden()
+                    assert dialog.get_attribute("aria-hidden") == "true"
+                    assert page.evaluate(
+                        "() => document.activeElement?.matches('[data-raya-asset-inspect]')"
+                    )
+
+                    inspect.click()
+                    assert dialog.is_visible()
+                    dialog.locator("[data-raya-asset-inspector-close]").click()
+                    assert dialog.is_hidden()
+                    assert page.evaluate(
+                        "() => document.activeElement?.matches('[data-raya-asset-inspect]')"
+                    )
+
+                    inspect.click()
+                    assert dialog.is_visible()
+                    dialog.click(position={"x": 8, "y": 8})
+                    assert dialog.is_hidden()
+                    assert page.evaluate(
+                        "() => document.activeElement?.matches('[data-raya-asset-inspect]')"
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_section_landing_cards_are_static_navigation(
     tmp_path: Path,
 ) -> None:
