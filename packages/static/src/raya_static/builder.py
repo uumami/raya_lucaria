@@ -4700,6 +4700,15 @@ def _render_graph_surface(
                 "data-raya-graph-detail-neighborhood></p>"
             ),
             (
+                '<section class="raya-graph-detail-relationship-overview" '
+                "data-raya-graph-detail-relationship-overview hidden>"
+                "<h3>Relationship overview</h3>"
+                '<p data-raya-graph-detail-relationship-overview-counts></p>'
+                '<div class="raya-graph-relationship-overview-grid" '
+                "data-raya-graph-relationship-overview-list></div>"
+                "</section>"
+            ),
+            (
                 '<section class="raya-graph-detail-relationship-chips" '
                 "data-raya-graph-detail-relationship-chips hidden>"
                 "<h3>Relationship types</h3>"

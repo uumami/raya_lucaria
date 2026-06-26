@@ -2974,6 +2974,30 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ) in page.locator(
                             "[data-raya-graph-detail-neighborhood]"
                         ).inner_text()
+                        relationship_overview = page.locator(
+                            "[data-raya-graph-detail-relationship-overview]"
+                        )
+                        assert relationship_overview.is_visible()
+                        overview_text = relationship_overview.inner_text()
+                        assert "Relationship overview" in overview_text
+                        assert "4 outgoing" in overview_text
+                        assert "2 incoming" in overview_text
+                        assert "4 connected" in overview_text
+                        overview_cards = relationship_overview.locator(
+                            "[data-raya-graph-relationship-overview-card]"
+                        )
+                        assert overview_cards.count() == 4
+                        overview_card_texts = overview_cards.evaluate_all(
+                            "cards => cards.map((card) => card.textContent.trim())"
+                        )
+                        assert any(
+                            "Content from this page" in text and "3 links" in text
+                            for text in overview_card_texts
+                        )
+                        assert any(
+                            "Content to this page" in text and "1 link" in text
+                            for text in overview_card_texts
+                        )
                         relationship_chips = page.locator(
                             "[data-raya-graph-detail-relationship-chips]"
                         )
@@ -3027,7 +3051,16 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert content_out_chip.get_attribute("aria-pressed") == "false"
                         relationship_focus_url = page.url
-                        content_out_chip.click()
+                        overview_content_out = relationship_overview.locator(
+                            '[data-raya-graph-relationship-overview-card]'
+                            '[data-raya-graph-relationship-kind="content"]'
+                            '[data-raya-graph-relationship-direction="out"]'
+                        )
+                        overview_content_out.click()
+                        assert (
+                            overview_content_out.get_attribute("aria-pressed")
+                            == "true"
+                        )
                         assert content_out_chip.get_attribute("aria-pressed") == "true"
                         assert page.url == relationship_focus_url
                         focus_summary = page.locator(
@@ -3188,7 +3221,17 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "true"
                         )
+                        assert (
+                            overview_content_out.get_attribute(
+                                "data-raya-graph-relationship-hidden-by-filter"
+                            )
+                            == "true"
+                        )
                         assert content_out_chip.get_attribute("aria-pressed") == "true"
+                        assert (
+                            overview_content_out.get_attribute("aria-pressed")
+                            == "true"
+                        )
                         assert focus_reset.is_visible()
                         assert (
                             "Content relationships are hidden by Relationship filters."

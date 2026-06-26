@@ -74,6 +74,15 @@ _GRAPH_JAVASCRIPT = r"""
     "[data-raya-graph-detail-study-object-list]"
   );
   const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
+  const detailRelationshipOverview = document.querySelector(
+    "[data-raya-graph-detail-relationship-overview]"
+  );
+  const detailRelationshipOverviewCounts = document.querySelector(
+    "[data-raya-graph-detail-relationship-overview-counts]"
+  );
+  const detailRelationshipOverviewList = document.querySelector(
+    "[data-raya-graph-relationship-overview-list]"
+  );
   const detailRelationshipChips = document.querySelector(
     "[data-raya-graph-detail-relationship-chips]"
   );
@@ -636,6 +645,31 @@ _GRAPH_JAVASCRIPT = r"""
           );
           chip.classList.toggle("is-hidden-by-filter", hiddenByFilter);
           chip.setAttribute(
+            "aria-pressed",
+            key === activeRelationshipFocus ? "true" : "false"
+          );
+        });
+    }
+    if (detailRelationshipOverviewList) {
+      detailRelationshipOverviewList
+        .querySelectorAll("[data-raya-graph-relationship-overview-card]")
+        .forEach((card) => {
+          const cardKind =
+            card.getAttribute("data-raya-graph-relationship-kind") || "";
+          const key = relationshipFocusKey(
+            cardKind,
+            card.getAttribute("data-raya-graph-relationship-direction") || ""
+          );
+          const hiddenByFilter = hiddenEdgeKinds.has(cardKind);
+          if (hiddenByFilter && !firstHiddenRelationshipKind) {
+            firstHiddenRelationshipKind = cardKind;
+          }
+          card.setAttribute(
+            "data-raya-graph-relationship-hidden-by-filter",
+            hiddenByFilter ? "true" : "false"
+          );
+          card.classList.toggle("is-hidden-by-filter", hiddenByFilter);
+          card.setAttribute(
             "aria-pressed",
             key === activeRelationshipFocus ? "true" : "false"
           );
@@ -2311,6 +2345,53 @@ _GRAPH_JAVASCRIPT = r"""
     detailRelationshipChips.hidden = false;
   }
 
+  function renderRelationshipOverview(nodeId) {
+    if (!detailRelationshipOverview || !detailRelationshipOverviewList) return;
+    detailRelationshipOverviewList.replaceChildren();
+    if (!nodeId) {
+      detailRelationshipOverview.hidden = true;
+      if (detailRelationshipOverviewCounts) detailRelationshipOverviewCounts.textContent = "";
+      return;
+    }
+    const groupsForNode = relationshipWalkthroughGroupsFor(nodeId);
+    if (!groupsForNode.length) {
+      detailRelationshipOverview.hidden = true;
+      if (detailRelationshipOverviewCounts) detailRelationshipOverviewCounts.textContent = "";
+      return;
+    }
+    const counts = relationshipCountsFor(nodeId);
+    if (detailRelationshipOverviewCounts) {
+      detailRelationshipOverviewCounts.textContent =
+        `${counts.outgoingCount} outgoing, ${counts.incomingCount} incoming, ${counts.connectedCount} connected.`;
+    }
+    groupsForNode.forEach((group) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "raya-graph-relationship-overview-card";
+      card.setAttribute("data-raya-graph-relationship-overview-card", "");
+      card.setAttribute("data-raya-graph-relationship-kind", group.kind);
+      card.setAttribute("data-raya-graph-relationship-direction", group.direction);
+      card.setAttribute("aria-pressed", "false");
+      card.addEventListener("click", () =>
+        setRelationshipFocus(group.kind, group.direction)
+      );
+
+      const title = document.createElement("span");
+      title.className = "raya-graph-relationship-overview-title";
+      title.textContent = relationshipWalkthroughTitle(group.kind, group.direction);
+      const count = document.createElement("span");
+      count.className = "raya-graph-relationship-overview-count";
+      count.textContent = `${group.items.length} link${group.items.length === 1 ? "" : "s"}`;
+      const meaning = document.createElement("span");
+      meaning.className = "raya-graph-relationship-overview-meaning";
+      meaning.textContent = relationshipWalkthroughMeaning(group.kind, group.direction);
+      card.append(title, count, meaning);
+      detailRelationshipOverviewList.appendChild(card);
+    });
+    syncRelationshipFocusDom();
+    detailRelationshipOverview.hidden = false;
+  }
+
   function relationshipWalkthroughGroupsFor(nodeId) {
     const groupsByKey = new Map();
     const addItem = (kind, direction, item) => {
@@ -2455,6 +2536,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
       renderDetailStudyObjects(null);
+      renderRelationshipOverview("");
       renderRelationshipChips("");
       if (detailNeighborhood) detailNeighborhood.textContent = "";
       setOptionalDetailLink(detailTasksLink, "", "Open tasks");
@@ -2488,6 +2570,7 @@ _GRAPH_JAVASCRIPT = r"""
       detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
     }
     renderDetailStudyObjects(node);
+    renderRelationshipOverview(node.id);
     renderRelationshipChips(node.id);
     renderRelationshipWalkthrough(node.id);
     if (detailNeighborhood) {

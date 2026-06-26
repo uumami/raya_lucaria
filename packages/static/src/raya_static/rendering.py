@@ -2296,6 +2296,69 @@ img {
   color: var(--raya-color-muted);
   font-size: 0.85rem;
 }
+.raya-graph-detail-relationship-overview {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem;
+}
+.raya-graph-detail-relationship-overview h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.35rem;
+}
+.raya-graph-detail-relationship-overview p {
+  color: var(--raya-color-muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.55rem;
+}
+.raya-graph-relationship-overview-grid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+.raya-graph-relationship-overview-card {
+  background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-left: 0.25rem solid var(--raya-color-accent);
+  border-radius: 0.35rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 0.22rem;
+  min-height: 4.25rem;
+  padding: 0.55rem 0.6rem;
+  text-align: left;
+}
+.raya-graph-relationship-overview-card[aria-pressed="true"] {
+  background: var(--raya-color-text);
+  border-color: var(--raya-color-text);
+  color: var(--raya-color-surface);
+}
+.raya-graph-relationship-overview-card.is-hidden-by-filter {
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-muted));
+  border-color: color-mix(in srgb, var(--raya-color-border) 72%, var(--raya-color-muted));
+  color: var(--raya-color-muted);
+}
+.raya-graph-relationship-overview-card:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
+.raya-graph-relationship-overview-title {
+  font-weight: 800;
+}
+.raya-graph-relationship-overview-count {
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.raya-graph-relationship-overview-meaning {
+  color: var(--raya-color-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+.raya-graph-relationship-overview-card[aria-pressed="true"] .raya-graph-relationship-overview-meaning {
+  color: color-mix(in srgb, var(--raya-color-surface) 78%, var(--raya-color-accent-soft));
+}
 .raya-graph-detail-relationship-chips {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.375rem;
