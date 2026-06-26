@@ -178,6 +178,7 @@ _GRAPH_JAVASCRIPT = r"""
   let matchIds = new Set();
   let graphListPrioritized = false;
   let pendingSelectTimer = 0;
+  let suppressHoverInspectionUntil = 0;
   let fullViewBox = null;
   let graphViewBox = null;
   let graphPanStart = null;
@@ -1942,7 +1943,7 @@ _GRAPH_JAVASCRIPT = r"""
   function renderInspectionPreview(nodeId) {
     if (!inspectionPreview) return;
     const node = nodesById.get(nodeId);
-    if (!node) {
+    if (!node || (lastActiveNodes.length > 0 && !isActiveGraphNodeId(nodeId))) {
       inspectionPreview.hidden = true;
       if (inspectionPreviewSelect) inspectionPreviewSelect.dataset.rayaGraphNode = "";
       if (inspectionPreviewOpen) inspectionPreviewOpen.removeAttribute("href");
@@ -2101,6 +2102,9 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function inspectGraphNode(nodeId, options = {}) {
+    if (!options.force && Date.now() < suppressHoverInspectionUntil) {
+      return;
+    }
     if (query && document.activeElement === search && !options.force) {
       return;
     }
@@ -2139,6 +2143,10 @@ _GRAPH_JAVASCRIPT = r"""
     const visibleIds = currentVisibleListIds();
     if (!query) return visibleIds;
     return visibleIds.filter((id) => matchIds.has(id));
+  }
+
+  function isActiveGraphNodeId(nodeId) {
+    return Boolean(nodeId && lastActiveNodes.some((node) => node.id === nodeId));
   }
 
   function graphListOrderFor(item, activeIds) {
@@ -2236,7 +2244,7 @@ _GRAPH_JAVASCRIPT = r"""
   function clearGraphInspection(nodeId) {
     const applyClear = () => {
       const focusedNodeId = focusedInspectionNodeId();
-      if (focusedNodeId) {
+      if (isActiveGraphNodeId(focusedNodeId)) {
         inspectGraphNode(focusedNodeId);
         return;
       }
@@ -3450,8 +3458,15 @@ _GRAPH_JAVASCRIPT = r"""
       if (activeResultId && hiddenGroups.has(nodesById.get(activeResultId)?.group || "")) {
         activeResultId = "";
       }
+      window.clearTimeout(pendingSelectTimer);
+      pendingSelectTimer = 0;
+      inspectedId = "";
+      suppressHoverInspectionUntil = Date.now() + 400;
+      if (hoverStatus) hoverStatus.textContent = "";
       graphViewBox = null;
       render();
+      renderInspectionPreview("");
+      hideGraphPreviewBubble();
     });
   });
   list.addEventListener("focusin", (event) => {

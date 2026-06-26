@@ -131,6 +131,10 @@ busqueda y filtros, y si el foco de vecindario esta activo. Usa sus acciones
 Open page, Focus neighborhood, Show full graph y Clear selection como controles
 locales del grafo; la banda no es progreso guardado, ranking, dominio ni
 recomendacion.
+Cerca del canvas del grafo, unas claves compactas de lectura pueden explicar
+los circulos de paginas, la direccion de flechas, la seleccion y los filtros de
+relaciones. Esas claves describen como leer las marcas del grafo estatico; no
+son progreso ni recomendaciones.
 En pantallas anchas, pasar el puntero sobre un nodo del grafo o enfocarlo puede
 mostrar una vista previa pequena cerca del nodo con titulo de pagina, contexto
 estatico, resumen y conteos de enlaces explicitos. Usala como ayuda rapida de

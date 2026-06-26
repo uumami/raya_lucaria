@@ -4650,6 +4650,28 @@ def _render_graph_surface(
                 "generated from this course.</p>"
             ),
             "</header>",
+            (
+                '<section class="raya-graph-reading-keys" '
+                'data-raya-graph-reading-keys aria-label="Graph reading keys">'
+                '<article data-raya-graph-reading-key="pages">'
+                "<h2>Pages</h2>"
+                "<p>Circles are pages. Color follows course groups.</p>"
+                "</article>"
+                '<article data-raya-graph-reading-key="arrows">'
+                "<h2>Arrows</h2>"
+                "<p>Arrows point source to target.</p>"
+                "</article>"
+                '<article data-raya-graph-reading-key="selection">'
+                "<h2>Selection</h2>"
+                "<p>Click inspects. Double-click or Enter opens.</p>"
+                "</article>"
+                '<article data-raya-graph-reading-key="filters">'
+                "<h2>Filters</h2>"
+                "<p>Relationship filters hide visible graph marks only. "
+                "Source data stays unchanged.</p>"
+                "</article>"
+                "</section>"
+            ),
             '<section class="raya-graph-controls raya-graph-toolbar" aria-label="Graph controls">',
             (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-primary" '

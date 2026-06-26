@@ -118,6 +118,9 @@ current layout, selected page, page focus, search and filter context, and
 whether neighborhood focus is on. Use its Open page, Focus neighborhood, Show
 full graph, and Clear selection actions as local graph controls; the band is
 not saved progress, ranking, mastery, or a recommendation.
+Near the graph canvas, compact reading keys may explain page circles, arrow
+direction, selection, and relationship filters. These keys describe how to read
+the static graph marks; they are not progress or recommendations.
 On wider screens, hovering or focusing a graph node may show a small preview
 near the node with the page title, static context, summary, and explicit link
 counts. Treat it as a quick reading aid; the inspector panel and normal page

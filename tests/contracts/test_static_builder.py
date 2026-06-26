@@ -1192,6 +1192,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-orientation-details" in graph_html
     assert "data-raya-graph-orientation-neighborhood-toggle" in graph_html
     assert "data-raya-graph-orientation-clear" in graph_html
+    assert "data-raya-graph-reading-keys" in graph_html
+    for label in ("pages", "arrows", "selection", "filters"):
+        assert f'data-raya-graph-reading-key="{label}"' in graph_html
+    assert "Circles are pages" in graph_html
+    assert "Arrows point source to target" in graph_html
+    assert "hide visible graph marks only" in graph_html
     assert (
         'data-raya-graph-detail-panel hidden tabindex="-1" '
         'role="region" aria-labelledby="raya-graph-detail-title"'

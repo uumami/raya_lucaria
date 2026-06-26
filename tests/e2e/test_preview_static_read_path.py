@@ -890,6 +890,37 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert item["width"] >= 34
                             assert item["height"] >= 34
                             assert abs(item["width"] - item["height"]) <= 12
+                        reading_keys = page.locator("[data-raya-graph-reading-keys]")
+                        assert reading_keys.is_visible()
+                        reading_keys_box = reading_keys.bounding_box()
+                        canvas_box = page.locator("#raya-graph-canvas").bounding_box()
+                        orientation_box = page.locator(
+                            "[data-raya-graph-orientation]"
+                        ).bounding_box()
+                        assert reading_keys_box is not None
+                        assert canvas_box is not None
+                        assert orientation_box is not None
+                        assert reading_keys_box["y"] < canvas_box["y"]
+                        assert reading_keys_box["y"] < orientation_box["y"]
+                        assert reading_keys_box["height"] <= 140
+                        assert reading_keys_box["y"] < viewport["height"]
+                        assert (
+                            reading_keys_box["y"] + reading_keys_box["height"]
+                            <= viewport["height"]
+                        )
+                        for key in ("pages", "arrows", "selection", "filters"):
+                            assert page.locator(
+                                f'[data-raya-graph-reading-key="{key}"]'
+                            ).is_visible()
+                        reading_text = reading_keys.inner_text().lower()
+                        for forbidden in (
+                            "progress",
+                            "mastery",
+                            "ranking",
+                            "recommendation",
+                            "personalization",
+                        ):
+                            assert forbidden not in reading_text
                         graph_guide = page.locator("[data-raya-graph-guide]")
                         assert graph_guide.evaluate("node => node.tagName") == "DETAILS"
                         assert graph_guide.evaluate(
@@ -1123,7 +1154,20 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               .querySelector('[data-raya-graph-inspection-preview]')
                               ?.hasAttribute('hidden')"""
                         )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-preview-bubble]')
+                              ?.hasAttribute('hidden')"""
+                        )
                         assert preview.is_hidden()
+                        assert page.locator(
+                            "[data-raya-graph-preview-bubble]"
+                        ).is_hidden()
+                        page.wait_for_timeout(500)
+                        assert preview.is_hidden()
+                        assert page.locator(
+                            "[data-raya-graph-preview-bubble]"
+                        ).is_hidden()
                         assert (
                             page.locator("[data-raya-graph-hover-status]")
                             .inner_text()

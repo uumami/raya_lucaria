@@ -1009,10 +1009,10 @@ img {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.5rem;
   display: grid;
-  font-size: 0.875rem;
-  gap: 0.35rem 0.75rem;
-  margin-bottom: 0.5rem;
-  padding: 0.4rem 0.55rem;
+  font-size: 0.84rem;
+  gap: 0.22rem 0.6rem;
+  margin-bottom: 0.35rem;
+  padding: 0.28rem 0.46rem;
 }
 .raya-graph-status {
   margin: 0 0 0.45rem;
@@ -1035,7 +1035,7 @@ img {
   align-items: baseline;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.8rem;
+  gap: 0.16rem 0.65rem;
   justify-content: space-between;
 }
 .raya-graph-orientation-counts,
@@ -1044,7 +1044,7 @@ img {
 }
 .raya-graph-orientation-meta {
   display: grid;
-  gap: 0.25rem 0.55rem;
+  gap: 0.14rem 0.45rem;
   grid-template-columns: repeat(auto-fit, minmax(5.75rem, 1fr));
   margin: 0;
 }
@@ -1059,15 +1059,55 @@ img {
   text-transform: uppercase;
 }
 .raya-graph-orientation-meta dd {
-  line-height: 1.2;
-  margin: 0.05rem 0 0;
+  line-height: 1.15;
+  margin: 0.02rem 0 0;
   overflow-wrap: anywhere;
 }
 .raya-graph-orientation-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.24rem;
   margin: 0;
+}
+.raya-graph-reading-keys {
+  display: grid;
+  gap: 0.28rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 0.24rem;
+}
+.raya-graph-reading-keys article {
+  align-items: baseline;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, transparent);
+  border-radius: 0.375rem;
+  display: flex;
+  gap: 0.22rem;
+  min-width: 0;
+  padding: 0.26rem 0.36rem;
+}
+.raya-graph-reading-keys h2 {
+  color: var(--raya-color-heading);
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  margin: 0;
+}
+.raya-graph-reading-keys p {
+  color: var(--raya-color-muted);
+  font-size: 0.65rem;
+  line-height: 1.18;
+  margin: 0;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .raya-graph-reading-keys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .raya-graph-reading-keys {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .raya-discovery-overview {
   background: color-mix(

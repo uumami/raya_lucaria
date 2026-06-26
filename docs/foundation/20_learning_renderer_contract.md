@@ -124,7 +124,9 @@ and relationship counts, layout, selected page, URL page focus, search, filters,
 selected-neighborhood focus state, and local actions for the selected page. It
 may also show a compact state readout and share URL for debugging and
 orientation over the already loaded static artifact data inside an intentional
-native disclosure. Selected-page incoming/outgoing detail lists must use the
+native disclosure. The graph may show compact first-viewport reading keys for
+page nodes, arrows, selection, and filters as structural interpretation cues.
+Selected-page incoming/outgoing detail lists must use the
 same explicit generated edge kinds as relationship chips and walkthroughs, so
 visible lists, counts, and walkthrough cards do not describe different graph
 subsets. Desktop
