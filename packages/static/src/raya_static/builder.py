@@ -1576,7 +1576,10 @@ def _render_course_map(
                     f'data-raya-map-active="{active_state}" '
                     f'data-raya-map-expanded="{"true" if expanded else "false"}">'
                 ),
-                '<div class="raya-course-map-node-row">',
+                (
+                    '<div class="raya-course-map-node-row" '
+                    f'data-raya-map-label="{html.escape(label, quote=True)}">'
+                ),
                 toggle,
                 (
                     "<a "
@@ -1724,6 +1727,10 @@ def _render_course_map(
             "\n".join(nav_items),
             "</ol>",
             "</div>",
+            (
+                '<div class="raya-course-map-compact-preview" '
+                'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
+            ),
             "</nav>",
             (
                 '<div class="raya-course-map-drawer-backdrop" '

@@ -8334,6 +8334,19 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "() => document.documentElement.dataset.rayaCourseMap"
                     )
                     assert after_hover == "expanded"
+                    page.locator("#raya-course-map-list a").first.focus()
+                    expanded_preview_state = page.evaluate(
+                        """() => {
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          window.dispatchEvent(new Event('resize'));
+                          return {
+                            hidden: preview?.hidden,
+                            text: preview?.textContent.trim(),
+                          };
+                        }"""
+                    )
+                    assert expanded_preview_state == {"hidden": True, "text": ""}
 
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(
@@ -8341,6 +8354,18 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           .querySelector('#raya-course-map')
                           ?.getBoundingClientRect().width < 130"""
                     )
+                    collapsed_without_focus = page.evaluate(
+                        """() => {
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          window.dispatchEvent(new Event('resize'));
+                          return {
+                            hidden: preview?.hidden,
+                            text: preview?.textContent.trim(),
+                          };
+                        }"""
+                    )
+                    assert collapsed_without_focus == {"hidden": True, "text": ""}
                     collapsed = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -8398,6 +8423,118 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["firstLinkPointerEvents"] == "auto"
                     assert collapsed["linkTabIndexes"]
                     assert set(collapsed["linkTabIndexes"]) == {None}
+                    first_map_link = page.locator("#raya-course-map-list a").first
+                    page.evaluate(
+                        """() => {
+                          const link = document.querySelector('#raya-course-map-list a');
+                          const label = Array.from({ length: 180 }, (_, index) => `Viewport label ${index + 1}`)
+                            .join(' ');
+                          link.setAttribute('data-raya-map-label', label);
+                        }"""
+                    )
+                    first_map_link.focus()
+                    tall_preview = page.evaluate(
+                        """() => {
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          const box = preview?.getBoundingClientRect();
+                          const style = preview ? getComputedStyle(preview) : null;
+                          return {
+                            bottom: box?.bottom,
+                            height: box?.height,
+                            overflowY: style?.overflowY,
+                            maxHeight: style?.maxHeight,
+                            viewportHeight: window.innerHeight,
+                          };
+                        }"""
+                    )
+                    assert tall_preview["bottom"] <= tall_preview["viewportHeight"]
+                    assert tall_preview["height"] <= tall_preview["viewportHeight"] - 16
+                    assert tall_preview["overflowY"] == "auto"
+                    assert tall_preview["maxHeight"] != "none"
+                    page.evaluate(
+                        """() => {
+                          const link = document.querySelector('#raya-course-map-list a');
+                          link.setAttribute('data-raya-map-label', 'Raya Lucaria Render Fixture');
+                          link.blur();
+                        }"""
+                    )
+                    first_map_link.focus()
+                    page.wait_for_function(
+                        """() => {
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          return preview
+                            && !preview.hidden
+                            && preview.textContent.includes('Raya Lucaria Render Fixture');
+                        }"""
+                    )
+                    focused_label = page.evaluate(
+                        """() => {
+                          const row = document
+                            .querySelector('#raya-course-map-list a')
+                            ?.closest('.raya-course-map-node-row');
+                          const map = document.querySelector('#raya-course-map');
+                          const link = document.querySelector('#raya-course-map-list a');
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          const previewBox = preview?.getBoundingClientRect();
+                          const mapBox = map?.getBoundingClientRect();
+                          return {
+                            mapWidth: map?.getBoundingClientRect().width,
+                            linkTitle: link?.getAttribute('title'),
+                            rowLabel: row?.getAttribute('data-raya-map-label'),
+                            previewText: preview?.textContent.trim(),
+                            previewHidden: preview?.hidden,
+                            previewTop: previewBox?.top,
+                            previewBottom: previewBox?.bottom,
+                            previewLeft: previewBox?.left,
+                            previewRight: previewBox?.right,
+                            mapRight: mapBox?.right,
+                            viewportWidth: window.innerWidth,
+                            viewportHeight: window.innerHeight,
+                            mapScrollWidth: map?.scrollWidth,
+                            mapClientWidth: map?.clientWidth,
+                          };
+                        }"""
+                    )
+                    assert focused_label["mapWidth"] == collapsed["mapWidth"]
+                    assert focused_label["linkTitle"] is None
+                    assert focused_label["rowLabel"] == "Raya Lucaria Render Fixture"
+                    assert focused_label["previewHidden"] is False
+                    assert focused_label["previewText"] == "Raya Lucaria Render Fixture"
+                    assert focused_label["previewTop"] >= 0
+                    assert (
+                        focused_label["previewBottom"]
+                        <= focused_label["viewportHeight"]
+                    )
+                    assert focused_label["previewLeft"] > focused_label["mapRight"]
+                    assert focused_label["previewRight"] <= focused_label["viewportWidth"]
+                    assert (
+                        focused_label["mapScrollWidth"]
+                        <= focused_label["mapClientWidth"] + 1
+                    )
+                    mixed_trigger_state = page.evaluate(
+                        """() => {
+                          const links = Array.from(document.querySelectorAll('#raya-course-map-list a'));
+                          const preview = document
+                            .querySelector('[data-raya-course-map-compact-preview]');
+                          links[0].focus();
+                          links[1].dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+                          links[1].dispatchEvent(new PointerEvent('pointerleave', { bubbles: true }));
+                          return {
+                            hidden: preview?.hidden,
+                            text: preview?.textContent.trim(),
+                            activeElementText: document.activeElement?.textContent.trim(),
+                          };
+                        }"""
+                    )
+                    assert mixed_trigger_state["activeElementText"] == "Raya Lucaria Render Fixture"
+                    assert mixed_trigger_state["hidden"] is False
+                    assert (
+                        mixed_trigger_state["text"]
+                        == mixed_trigger_state["activeElementText"]
+                    )
 
                     page.click(".raya-course-map-toggle")
                     page.wait_for_function(

@@ -37,6 +37,7 @@ _SHELL_JAVASCRIPT = r"""
   const mapDrawerBackdrop = document.querySelector("[data-raya-course-map-drawer-backdrop]");
   const mapFilter = document.querySelector("[data-raya-course-map-filter]");
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
+  const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
@@ -62,6 +63,9 @@ _SHELL_JAVASCRIPT = r"""
     return;
   }
   let courseMapDrawerOpener = null;
+  let activeCompactPreviewLink = null;
+  let focusedCompactPreviewLink = null;
+  let hoveredCompactPreviewLink = null;
 
   function updateMapLinkTabOrder(nextExpanded) {
     const mapList = map.querySelector("#raya-course-map-list");
@@ -240,6 +244,8 @@ _SHELL_JAVASCRIPT = r"""
     if (!nextExpanded) {
       clearCourseMapFilter();
       setCourseMapScanMode(false);
+    } else {
+      hideCourseMapCompactPreview();
     }
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
@@ -551,6 +557,75 @@ _SHELL_JAVASCRIPT = r"""
     return true;
   }
 
+  function compactPreviewLabel(link) {
+    return link ? link.getAttribute("data-raya-map-label") || link.textContent || "" : "";
+  }
+
+  function positionCourseMapCompactPreview(link) {
+    if (!mapCompactPreview || !link || root.dataset.rayaCourseMap !== "collapsed") {
+      hideCourseMapCompactPreview();
+      return;
+    }
+    const label = compactPreviewLabel(link).trim();
+    if (!label || !isDesktopShell()) {
+      hideCourseMapCompactPreview();
+      return;
+    }
+    const linkBox = link.getBoundingClientRect();
+    const mapBox = map.getBoundingClientRect();
+    const previewWidth = Math.min(288, Math.max(168, window.innerWidth - mapBox.right - 24));
+    mapCompactPreview.textContent = label;
+    mapCompactPreview.hidden = false;
+    mapCompactPreview.style.width = `${previewWidth}px`;
+    mapCompactPreview.style.left = `${Math.min(mapBox.right + 8, window.innerWidth - previewWidth - 8)}px`;
+    mapCompactPreview.style.top = "0px";
+    const previewHeight = mapCompactPreview.getBoundingClientRect().height;
+    const idealTop = linkBox.top + linkBox.height / 2 - previewHeight / 2;
+    const maxTop = Math.max(8, window.innerHeight - previewHeight - 8);
+    const clampedTop = Math.max(8, Math.min(idealTop, maxTop));
+    mapCompactPreview.style.top = `${clampedTop}px`;
+  }
+
+  function activeCourseMapCompactPreviewLink() {
+    return hoveredCompactPreviewLink || focusedCompactPreviewLink;
+  }
+
+  function updateCourseMapCompactPreview() {
+    const link = activeCourseMapCompactPreviewLink();
+    if (
+      !mapCompactPreview ||
+      !link ||
+      !map.contains(link) ||
+      root.dataset.rayaCourseMap !== "collapsed" ||
+      !isDesktopShell()
+    ) {
+      hideCourseMapCompactPreviewSurface();
+      return;
+    }
+    activeCompactPreviewLink = link;
+    positionCourseMapCompactPreview(link);
+  }
+
+  function hideCourseMapCompactPreviewSurface() {
+    if (!mapCompactPreview) {
+      return;
+    }
+    activeCompactPreviewLink = null;
+    mapCompactPreview.hidden = true;
+    mapCompactPreview.textContent = "";
+    mapCompactPreview.removeAttribute("style");
+  }
+
+  function hideCourseMapCompactPreview() {
+    focusedCompactPreviewLink = null;
+    hoveredCompactPreviewLink = null;
+    hideCourseMapCompactPreviewSurface();
+  }
+
+  function refreshCourseMapCompactPreview() {
+    updateCourseMapCompactPreview();
+  }
+
   function currentCourseMapNodes() {
     const currentLink = map.querySelector("#raya-course-map-list a[aria-current='page']");
     if (!currentLink) {
@@ -624,6 +699,7 @@ _SHELL_JAVASCRIPT = r"""
   function closeCourseMapDrawer(options = {}) {
     root.dataset.rayaCourseMapDrawer = "closed";
     setCourseMapScanMode(false);
+    hideCourseMapCompactPreview();
     syncCourseMapDrawerState();
     if (options.restoreFocus && courseMapDrawerOpener) {
       courseMapDrawerOpener.focus();
@@ -857,6 +933,7 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   desktopMapQuery.addEventListener("change", () => {
+    hideCourseMapCompactPreview();
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
       if (root.dataset.rayaReaderFocus === "active") {
@@ -887,6 +964,9 @@ _SHELL_JAVASCRIPT = r"""
       }
       setExpanded(root.dataset.rayaCourseMap !== "expanded");
       clearReaderFocus();
+      if (root.dataset.rayaCourseMap !== "collapsed") {
+        hideCourseMapCompactPreview();
+      }
       if (root.dataset.rayaCourseMap === "expanded") {
         window.requestAnimationFrame(() =>
           orientCourseMapToCurrentPage({ repeat: true })
@@ -944,6 +1024,32 @@ _SHELL_JAVASCRIPT = r"""
     });
     applyCourseMapFilter();
   }
+
+  map.querySelectorAll("#raya-course-map-list a[href]").forEach((link) => {
+    link.addEventListener("focus", () => {
+      focusedCompactPreviewLink = root.dataset.rayaCourseMap === "collapsed" ? link : null;
+      updateCourseMapCompactPreview();
+    });
+    link.addEventListener("blur", () => {
+      if (focusedCompactPreviewLink === link) {
+        focusedCompactPreviewLink = null;
+      }
+      updateCourseMapCompactPreview();
+    });
+    link.addEventListener("pointerenter", () => {
+      hoveredCompactPreviewLink = root.dataset.rayaCourseMap === "collapsed" ? link : null;
+      updateCourseMapCompactPreview();
+    });
+    link.addEventListener("pointerleave", () => {
+      if (hoveredCompactPreviewLink === link) {
+        hoveredCompactPreviewLink = null;
+      }
+      updateCourseMapCompactPreview();
+    });
+  });
+
+  map.addEventListener("scroll", refreshCourseMapCompactPreview, { passive: true });
+  window.addEventListener("resize", refreshCourseMapCompactPreview);
 
   map.addEventListener("keydown", handleCourseMapKeyboardNavigation);
 

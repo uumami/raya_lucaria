@@ -3915,6 +3915,29 @@ html[data-raya-course-map-scroll-lock="true"] body {
     position: absolute;
     text-indent: 0;
   }
+  .raya-course-map-compact-preview {
+    background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
+    border: 1px solid color-mix(in srgb, var(--raya-color-accent) 50%, var(--raya-color-border));
+    border-radius: 0.375rem;
+    box-shadow: 0 0.7rem 1.4rem rgba(31, 35, 40, 0.18);
+    color: var(--raya-color-text);
+    font-size: 0.78rem;
+    font-weight: 850;
+    line-height: 1.2;
+    max-height: calc(100vh - 1rem);
+    max-width: min(18rem, calc(100vw - 9rem));
+    overflow-y: auto;
+    overflow-wrap: break-word;
+    padding: 0.42rem 0.55rem;
+    pointer-events: none;
+    position: fixed;
+    text-indent: 0;
+    white-space: normal;
+    z-index: 90;
+  }
+  .raya-course-map-compact-preview[hidden] {
+    display: none;
+  }
   [data-raya-course-map="collapsed"] .raya-course-map a[aria-current="page"],
   .raya-course-map[data-raya-course-map="collapsed"] a[aria-current="page"] {
     border-color: var(--raya-color-success);
