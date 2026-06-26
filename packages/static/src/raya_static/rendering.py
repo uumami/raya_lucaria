@@ -5289,6 +5289,24 @@ mjx-container[display="true"] {
   [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
     writing-mode: horizontal-tb;
   }
+  [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel,
+  [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel {
+    align-items: stretch;
+    padding: 0.55rem 0.7rem;
+  }
+  [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel .raya-graph-panel-header,
+  [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel .raya-graph-panel-header {
+    flex-direction: row;
+    gap: 0.65rem;
+    margin-bottom: 0;
+  }
+  [data-raya-graph-list-state="collapsed"] [data-raya-graph-panel-rail-summary="list"],
+  [data-raya-graph-inspector-state="collapsed"] [data-raya-graph-panel-rail-summary="inspector"] {
+    flex: 1 1 auto;
+    line-clamp: 2;
+    max-width: none;
+    text-align: left;
+  }
   [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel,
   [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel,
   [data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel,

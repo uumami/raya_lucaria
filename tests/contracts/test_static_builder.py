@@ -1530,8 +1530,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "incomingByNode" in graph_script
     assert "outgoingByNode" in graph_script
     assert "setGraphPanelState" in graph_script
-    assert 'setGraphPanelState("list", !nextExpanded)' in graph_script
-    assert 'setGraphPanelState("inspector", !nextExpanded)' in graph_script
+    assert "function graphPanelsDefaultExpanded" in graph_script
+    assert "setGraphPanelsToResponsiveDefault" in graph_script
+    assert 'params.set("list", "1")' in graph_script
+    assert 'params.set("inspector", "1")' in graph_script
     assert "data-raya-graph-list-state" in graph_script
     assert "data-raya-graph-inspector-state" in graph_script
     assert "URLSearchParams" in graph_script

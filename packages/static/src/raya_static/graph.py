@@ -477,11 +477,20 @@ _GRAPH_JAVASCRIPT = r"""
     if (hiddenEdgeKinds.size > 0) params.set("edges", visibleEdgeKinds().join(","));
     if (neighborhoodFocus && selectedId) params.set("neighborhood", "1");
     if (root.dataset.rayaGraphExpanded === "true") params.set("expanded", "1");
-    if (root.getAttribute("data-raya-graph-list-state") === "collapsed") {
+    const defaultPanelsExpanded = graphPanelsDefaultExpanded();
+    const listCollapsed =
+      root.getAttribute("data-raya-graph-list-state") === "collapsed";
+    const inspectorCollapsed =
+      root.getAttribute("data-raya-graph-inspector-state") === "collapsed";
+    if (defaultPanelsExpanded && listCollapsed) {
       params.set("list", "0");
+    } else if (!defaultPanelsExpanded && !listCollapsed) {
+      params.set("list", "1");
     }
-    if (root.getAttribute("data-raya-graph-inspector-state") === "collapsed") {
+    if (defaultPanelsExpanded && inspectorCollapsed) {
       params.set("inspector", "0");
+    } else if (!defaultPanelsExpanded && !inspectorCollapsed) {
+      params.set("inspector", "1");
     }
     const queryString = params.toString();
     const nextUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash || ""}`;
@@ -1464,8 +1473,7 @@ _GRAPH_JAVASCRIPT = r"""
     if (hoverStatus) hoverStatus.textContent = "";
     hideGraphPreviewBubble();
     setGraphExpanded(false);
-    setGraphPanelState("list", true);
-    setGraphPanelState("inspector", true);
+    setGraphPanelsToResponsiveDefault();
     renderDetail();
     groupFilters.forEach((button) => {
       button.setAttribute("aria-pressed", "true");
@@ -1522,6 +1530,17 @@ _GRAPH_JAVASCRIPT = r"""
     return panelName === "inspector"
       ? "data-raya-graph-inspector-state"
       : "data-raya-graph-list-state";
+  }
+
+  function graphPanelsDefaultExpanded() {
+    if (!window.matchMedia) return true;
+    return !window.matchMedia("(max-width: 1279px)").matches;
+  }
+
+  function setGraphPanelsToResponsiveDefault() {
+    const defaultExpanded = graphPanelsDefaultExpanded();
+    setGraphPanelState("list", defaultExpanded);
+    setGraphPanelState("inspector", defaultExpanded);
   }
 
   function graphPanelRailSummaryText(panelName) {
@@ -2934,11 +2953,17 @@ _GRAPH_JAVASCRIPT = r"""
     if (params.get("expanded") === "1") {
       setGraphExpanded(true);
     }
-    if (params.get("list") === "0") {
+    const listParam = params.get("list") || "";
+    const inspectorParam = params.get("inspector") || "";
+    if (listParam === "0") {
       setGraphPanelState("list", false);
+    } else if (listParam === "1") {
+      setGraphPanelState("list", true);
     }
-    if (params.get("inspector") === "0") {
+    if (inspectorParam === "0") {
       setGraphPanelState("inspector", false);
+    } else if (inspectorParam === "1") {
+      setGraphPanelState("inspector", true);
     }
     if (params.get("neighborhood") === "1" && selectedId) {
       setGraphNeighborhoodFocus(true);
@@ -3371,8 +3396,7 @@ _GRAPH_JAVASCRIPT = r"""
     graphExpand.addEventListener("click", () => {
       const nextExpanded = root.dataset.rayaGraphExpanded !== "true";
       setGraphExpanded(nextExpanded);
-      setGraphPanelState("list", !nextExpanded);
-      setGraphPanelState("inspector", !nextExpanded);
+      if (!nextExpanded) setGraphPanelsToResponsiveDefault();
       render();
     });
   }
@@ -3386,6 +3410,9 @@ _GRAPH_JAVASCRIPT = r"""
       const nextExpanded = root.getAttribute(attr) === "collapsed";
       if (nextExpanded && root.dataset.rayaGraphExpanded === "true") {
         setGraphExpanded(false);
+        setGraphPanelsToResponsiveDefault();
+        syncGraphStateReadout();
+        return;
       }
       setGraphPanelState(panelName, nextExpanded);
       syncGraphStateReadout();
@@ -3508,8 +3535,7 @@ _GRAPH_JAVASCRIPT = r"""
   });
 
   root.setAttribute("data-raya-graph-neighborhood-focus", "false");
-  setGraphPanelState("list", true);
-  setGraphPanelState("inspector", true);
+  setGraphPanelsToResponsiveDefault();
   setGraphExpanded(false);
   updateEdgeKindFilters();
   updateGroupFilters();

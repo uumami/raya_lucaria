@@ -1020,6 +1020,39 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert page.locator(".raya-command-size").is_visible()
                         assert page.locator(".raya-command-font").is_visible()
+                        if viewport["width"] < 1280:
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-list-state"
+                                )
+                                == "collapsed"
+                            )
+                            assert page.locator(
+                                '[data-raya-graph-panel-rail-summary="list"]'
+                            ).is_visible()
+                            page.locator(
+                                '[data-raya-graph-toggle-panel="list"]'
+                            ).click()
+                            expect(
+                                page.locator('[data-raya-graph-panel-body="list"]')
+                            ).to_have_attribute("aria-hidden", "false")
+                            assert (
+                                page.locator("[data-raya-graph-page]").get_attribute(
+                                    "data-raya-graph-inspector-state"
+                                )
+                                == "collapsed"
+                            )
+                            assert page.locator(
+                                '[data-raya-graph-panel-rail-summary="inspector"]'
+                            ).is_visible()
+                            page.locator(
+                                '[data-raya-graph-toggle-panel="inspector"]'
+                            ).click()
+                            expect(
+                                page.locator(
+                                    '[data-raya-graph-panel-body="inspector"]'
+                                )
+                            ).to_have_attribute("aria-hidden", "false")
                         assert page.locator(".raya-graph-legend").is_visible()
                         assert page.locator(".raya-graph-workspace").is_visible()
                         assert page.locator(".raya-graph-map-panel").is_visible()
@@ -1085,6 +1118,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             == "connections"
                         )
+                        if viewport["width"] < 1280:
+                            continue
                         root_x, _ = _graph_node_translate(page, "render-root")
                         static_x, _ = _graph_node_translate(page, "static-path")
                         math_x, _ = _graph_node_translate(page, "math-authoring")
@@ -2865,7 +2900,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 page.locator("[data-raya-graph-page]").get_attribute(
                                     "data-raya-graph-inspector-state"
                                 )
-                                == "collapsed"
+                                == "expanded"
                             )
                             page.click("#graph-expand")
                             assert (
@@ -2903,7 +2938,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 page.locator("[data-raya-graph-page]").get_attribute(
                                     "data-raya-graph-list-state"
                                 )
-                                == "collapsed"
+                                == "expanded"
                             )
                             page.click("#graph-expand")
                             assert (
@@ -5610,6 +5645,349 @@ def test_preview_graph_mobile_keeps_canvas_in_first_viewport(
         "Neighborhood",
     ]
     assert probe["orientationActionCount"] >= 3
+
+
+def test_preview_graph_mobile_defaults_to_compact_panels(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    mobile.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    mobile_probe = mobile.evaluate(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          const box = (selector) => {
+                            const node = document.querySelector(selector);
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? { top: rect.top, height: rect.height, width: rect.width }
+                              : null;
+                          };
+                          const listLink = document.querySelector(
+                            '#raya-graph-list [data-raya-graph-node] a'
+                          );
+                          const inspectorButton = document.querySelector(
+                            '[data-raya-graph-detail-clear]'
+                          );
+                          return {
+                            listState: root?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: root?.getAttribute(
+                              'data-raya-graph-inspector-state'
+                            ),
+                            listBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="list"]')
+                              ?.getAttribute('aria-hidden'),
+                            inspectorBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="inspector"]')
+                              ?.getAttribute('aria-hidden'),
+                            listPanel: box('.raya-graph-list-panel'),
+                            inspectorPanel: box('.raya-graph-inspector-panel'),
+                            listSummaryVisible: Boolean(
+                              document
+                                .querySelector(
+                                  '[data-raya-graph-panel-rail-summary="list"]'
+                                )
+                                ?.checkVisibility()
+                            ),
+                            inspectorSummaryVisible: Boolean(
+                              document
+                                .querySelector(
+                                  '[data-raya-graph-panel-rail-summary="inspector"]'
+                                )
+                                ?.checkVisibility()
+                            ),
+                            listSummary: document
+                              .querySelector('[data-raya-graph-panel-rail-summary="list"]')
+                              ?.textContent
+                              ?.trim() || '',
+                            inspectorSummary: document
+                              .querySelector(
+                                '[data-raya-graph-panel-rail-summary="inspector"]'
+                              )
+                              ?.textContent
+                              ?.trim() || '',
+                            listButton: document
+                              .querySelector('[data-raya-graph-toggle-panel="list"]')
+                              ?.textContent
+                              ?.trim() || '',
+                            inspectorButton: document
+                              .querySelector('[data-raya-graph-toggle-panel="inspector"]')
+                              ?.textContent
+                              ?.trim() || '',
+                            listLinkTabindex: listLink?.getAttribute('tabindex'),
+                            inspectorButtonTabindex: inspectorButton?.getAttribute(
+                              'tabindex'
+                            ),
+                            url: window.location.href,
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                    mobile.click('[data-raya-graph-toggle-panel="list"]')
+                    mobile.click('[data-raya-graph-toggle-panel="inspector"]')
+                    mobile.wait_for_function(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return root?.getAttribute('data-raya-graph-list-state') === 'expanded'
+                            && root?.getAttribute('data-raya-graph-inspector-state') === 'expanded';
+                        }"""
+                    )
+                    expanded_mobile_probe = mobile.evaluate(
+                        """() => ({
+                          listBodyHidden: document
+                            .querySelector('[data-raya-graph-panel-body="list"]')
+                            ?.getAttribute('aria-hidden'),
+                          inspectorBodyHidden: document
+                            .querySelector('[data-raya-graph-panel-body="inspector"]')
+                            ?.getAttribute('aria-hidden'),
+                          listButton: document
+                            .querySelector('[data-raya-graph-toggle-panel="list"]')
+                            ?.textContent
+                            ?.trim() || '',
+                          inspectorButton: document
+                            .querySelector('[data-raya-graph-toggle-panel="inspector"]')
+                            ?.textContent
+                            ?.trim() || '',
+                          listLinkTabindex: document
+                            .querySelector('#raya-graph-list [data-raya-graph-node] a')
+                            ?.getAttribute('tabindex'),
+                          inspectorButtonTabindex: document
+                            .querySelector('[data-raya-graph-detail-clear]')
+                            ?.getAttribute('tabindex'),
+                          url: window.location.href,
+                        })"""
+                    )
+                    mobile.click("#graph-reset")
+                    mobile.wait_for_function(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return root?.getAttribute('data-raya-graph-list-state') === 'collapsed'
+                            && root?.getAttribute('data-raya-graph-inspector-state') === 'collapsed';
+                        }"""
+                    )
+                    reset_mobile_probe = mobile.evaluate(
+                        """() => ({
+                          listBodyHidden: document
+                            .querySelector('[data-raya-graph-panel-body="list"]')
+                            ?.getAttribute('aria-hidden'),
+                          inspectorBodyHidden: document
+                            .querySelector('[data-raya-graph-panel-body="inspector"]')
+                            ?.getAttribute('aria-hidden'),
+                          url: window.location.href,
+                        })"""
+                    )
+                    mobile.click("#graph-expand")
+                    mobile.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-expanded') === 'true'"""
+                    )
+                    mobile.click('[data-raya-graph-toggle-panel="list"]')
+                    mobile.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-expanded') === 'false'"""
+                    )
+                    mobile_focus_exit_probe = mobile.evaluate(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return {
+                            listState: root?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: root?.getAttribute(
+                              'data-raya-graph-inspector-state'
+                            ),
+                            listBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="list"]')
+                              ?.getAttribute('aria-hidden'),
+                            inspectorBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="inspector"]')
+                              ?.getAttribute('aria-hidden'),
+                            url: window.location.href,
+                          };
+                        }"""
+                    )
+                finally:
+                    mobile.close()
+
+                mobile_explicit = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile_explicit.goto(
+                        f"{handle.base_url}/_raya/graph/index.html"
+                        "?page=reader-ux&list=1&inspector=1",
+                        wait_until="networkidle",
+                    )
+                    explicit_probe = mobile_explicit.evaluate(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return {
+                            listState: root?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: root?.getAttribute(
+                              'data-raya-graph-inspector-state'
+                            ),
+                            listBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="list"]')
+                              ?.getAttribute('aria-hidden'),
+                            inspectorBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="inspector"]')
+                              ?.getAttribute('aria-hidden'),
+                            url: window.location.href,
+                          };
+                        }"""
+                    )
+                finally:
+                    mobile_explicit.close()
+
+                desktop = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    desktop.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    desktop_probe = desktop.evaluate(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return {
+                            listState: root?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: root?.getAttribute(
+                              'data-raya-graph-inspector-state'
+                            ),
+                            listBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="list"]')
+                              ?.getAttribute('aria-hidden'),
+                            inspectorBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="inspector"]')
+                              ?.getAttribute('aria-hidden'),
+                            url: window.location.href,
+                          };
+                        }"""
+                    )
+                    desktop.click("#graph-expand")
+                    desktop.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-expanded') === 'true'"""
+                    )
+                    desktop.click('[data-raya-graph-toggle-panel="list"]')
+                    desktop.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-expanded') === 'false'"""
+                    )
+                    desktop_focus_exit_probe = desktop.evaluate(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return {
+                            listState: root?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: root?.getAttribute(
+                              'data-raya-graph-inspector-state'
+                            ),
+                            listBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="list"]')
+                              ?.getAttribute('aria-hidden'),
+                            inspectorBodyHidden: document
+                              .querySelector('[data-raya-graph-panel-body="inspector"]')
+                              ?.getAttribute('aria-hidden'),
+                            url: window.location.href,
+                          };
+                        }"""
+                    )
+                finally:
+                    desktop.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert mobile_probe["listState"] == "collapsed"
+    assert mobile_probe["inspectorState"] == "collapsed"
+    assert mobile_probe["listBodyHidden"] == "true"
+    assert mobile_probe["inspectorBodyHidden"] == "true"
+    assert mobile_probe["listPanel"]["height"] < 160
+    assert mobile_probe["inspectorPanel"]["height"] < 180
+    assert mobile_probe["listSummaryVisible"]
+    assert mobile_probe["inspectorSummaryVisible"]
+    assert "visible page" in mobile_probe["listSummary"]
+    assert "Projection Residuals" in mobile_probe["inspectorSummary"]
+    assert mobile_probe["listButton"] == "Open"
+    assert mobile_probe["inspectorButton"] == "Open"
+    assert mobile_probe["listLinkTabindex"] == "-1"
+    assert mobile_probe["inspectorButtonTabindex"] == "-1"
+    assert "list=0" not in mobile_probe["url"]
+    assert "inspector=0" not in mobile_probe["url"]
+    assert mobile_probe["overflow"] <= 1
+
+    assert expanded_mobile_probe["listBodyHidden"] == "false"
+    assert expanded_mobile_probe["inspectorBodyHidden"] == "false"
+    assert expanded_mobile_probe["listButton"] == "Hide"
+    assert expanded_mobile_probe["inspectorButton"] == "Hide"
+    assert expanded_mobile_probe["listLinkTabindex"] is None
+    assert expanded_mobile_probe["inspectorButtonTabindex"] is None
+    assert "list=1" in expanded_mobile_probe["url"]
+    assert "inspector=1" in expanded_mobile_probe["url"]
+
+    assert reset_mobile_probe["listBodyHidden"] == "true"
+    assert reset_mobile_probe["inspectorBodyHidden"] == "true"
+    assert "list=1" not in reset_mobile_probe["url"]
+    assert "inspector=1" not in reset_mobile_probe["url"]
+
+    assert mobile_focus_exit_probe["listState"] == "collapsed"
+    assert mobile_focus_exit_probe["inspectorState"] == "collapsed"
+    assert mobile_focus_exit_probe["listBodyHidden"] == "true"
+    assert mobile_focus_exit_probe["inspectorBodyHidden"] == "true"
+    assert "expanded=1" not in mobile_focus_exit_probe["url"]
+    assert "list=1" not in mobile_focus_exit_probe["url"]
+    assert "inspector=1" not in mobile_focus_exit_probe["url"]
+
+    assert explicit_probe["listState"] == "expanded"
+    assert explicit_probe["inspectorState"] == "expanded"
+    assert explicit_probe["listBodyHidden"] == "false"
+    assert explicit_probe["inspectorBodyHidden"] == "false"
+    assert "list=1" in explicit_probe["url"]
+    assert "inspector=1" in explicit_probe["url"]
+
+    assert desktop_probe["listState"] == "expanded"
+    assert desktop_probe["inspectorState"] == "expanded"
+    assert desktop_probe["listBodyHidden"] == "false"
+    assert desktop_probe["inspectorBodyHidden"] == "false"
+    assert "list=1" not in desktop_probe["url"]
+    assert "inspector=1" not in desktop_probe["url"]
+
+    assert desktop_focus_exit_probe["listState"] == "expanded"
+    assert desktop_focus_exit_probe["inspectorState"] == "expanded"
+    assert desktop_focus_exit_probe["listBodyHidden"] == "false"
+    assert desktop_focus_exit_probe["inspectorBodyHidden"] == "false"
+    assert "expanded=1" not in desktop_focus_exit_probe["url"]
+    assert "list=0" not in desktop_focus_exit_probe["url"]
+    assert "inspector=0" not in desktop_focus_exit_probe["url"]
 
 
 def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
