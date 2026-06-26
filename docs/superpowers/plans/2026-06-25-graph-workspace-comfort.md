@@ -8,6 +8,11 @@
 
 **Tech Stack:** Python static builder, generated local HTML/CSS/JS, Playwright e2e tests, pytest.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in the generated Graph toolbar in
+`packages/static/src/raya_static/builder.py`, shared graph CSS in
+`packages/static/src/raya_static/rendering.py`, and focused graph tests.
+
 ---
 
 ### Task 1: Graph Toolbar Markup Contract

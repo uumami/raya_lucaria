@@ -8,6 +8,11 @@
 
 **Tech Stack:** Markdown, Git history inspection, current foundation docs, current Superpowers specs/plans.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in `docs/superpowers/legacy-ux-convergence-audit.md`; later
+renderer loops have already completed several subgoals that this plan originally
+listed as candidates.
+
 ---
 
 ### Task 1: Add The Audit Document

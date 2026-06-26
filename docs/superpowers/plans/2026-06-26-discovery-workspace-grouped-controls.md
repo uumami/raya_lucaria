@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python static builder, generated HTML/CSS, pytest contract tests.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in the discovery workspace control panels, shared
+`.raya-discovery-control-group` CSS, and static-builder contract tests.
+
 ---
 
 ### Task 1: Contract Tests For Grouped Controls

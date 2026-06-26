@@ -104,26 +104,19 @@ Do not port these behaviors into the current renderer:
 
 ## Remaining Candidate Subgoals
 
-1. **Convergence cleanup pass.** Remove or rewrite stale Superpowers wording
-   that implies legacy behavior is still missing when it is now converged.
-   This is documentation housekeeping, not renderer behavior.
+1. **Convergence record cleanup.** Keep Superpowers plans and this audit
+   aligned with implemented work so future agents do not treat completed
+   discovery, graph, gallery, or skin slices as still missing. This is
+   documentation housekeeping, not renderer behavior.
 
-2. **Skin polish through source profiles.** Improve course-local skin examples
-   and documentation through validated `skins/*.yaml` profiles only. Avoid
-   browser-side skin switching.
+2. **Usability review against built artifacts.** Use the gallery dashboard,
+   local preview, and render-debug output to identify the next concrete visual
+   issue from actual pages rather than old plan text.
 
-3. **Graph learning affordance polish.** Continue improving current graph
-   affordances only where they help students interpret explicit relationships:
-   orientation text, selected-page detail language, preview bubble clarity, and
-   graph help wording. Do not add inferred recommendations.
-
-4. **Discovery workspace comfort parity.** Compare Search, Practice, Tasks, and
-   Schedule controls against Graph's newer grouped control style and bring
-   useful consistency to those surfaces.
-
-5. **Housecleaning.** After another convergence pass, clean docs and ignored
-   local evidence files so current guidance, examples, and Superpowers records
-   do not drift.
+3. **Housecleaning.** Clean only current stale guidance, ignored evidence files,
+   or misleading historical notes that affect active development. Do not remove
+   useful archived Superpowers records merely because their checklists are
+   historical.
 
 ## Out Of Scope Until Foundation Decision
 
@@ -134,16 +127,18 @@ Do not port these behaviors into the current renderer:
 
 ## Suggested Next Loop
 
-The best next implementation loop is **Discovery Workspace Comfort Parity**.
-The Graph workspace now has the most mature control grouping and context
-language. Search, Practice, Tasks, and Schedule should be inspected for the
-same usability qualities: grouped controls, clear active context, visible reset
-paths, stable keyboard behavior, and no storage or external requests.
+The best next loop is **Convergence Record Cleanup**, followed by a visual
+usability review against current built artifacts. Discovery workspace overview,
+switcher, quick guides, grouped controls, reset parity, graph toolbar comfort,
+graph skin palette support, gallery dashboard links, and graph reading keys are
+now implemented in current source and tests. The active risk is misleading
+workflow memory: stale unchecked Superpowers plans can send future agents back
+over completed ground.
 
-This is more useful than theme switching because it improves daily student
-workflow without violating skin authority. It is also more immediately useful
-than offline support because it builds on current static workspaces and can be
-verified with existing e2e/static-read-path patterns.
+After this cleanup, choose the next renderer loop from a current preview or
+render-debug screenshot, not from legacy `main` alone. That keeps the UX fusion
+goal anchored in the current framework while still using old-main UX as
+historical inspiration.
 
 ## Verification For Future Loops
 

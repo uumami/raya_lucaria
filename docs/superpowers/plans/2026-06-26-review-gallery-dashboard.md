@@ -8,6 +8,10 @@
 
 **Tech Stack:** Static HTML/CSS, pytest, Playwright static server tests.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in `examples/gallery/index.html` and gallery static-read
+path tests.
+
 ---
 
 ### Task 1: Gallery Contract Tests

@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python static builder, generated HTML/CSS, pytest, Playwright, Superpowers design/plan docs.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in Graph reading-key markup, stale-preview cleanup in
+`packages/static/src/raya_static/graph.py`, shared CSS, and focused tests.
+
 ---
 
 ## File Structure

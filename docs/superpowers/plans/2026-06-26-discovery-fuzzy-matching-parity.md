@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python-generated local JavaScript resources in `packages/static/src/raya_static/{practice,tasks,schedule}.py`, pytest contract tests, Playwright e2e tests.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in local `fuzzyMatch` helpers for Practice, Tasks, and
+Schedule plus contract/browser checks.
+
 ---
 
 ### Task 1: RED Tests For Fuzzy Workspace Filtering

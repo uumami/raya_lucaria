@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python 3.10, generated static HTML/CSS/JS, pytest, Playwright/Chromium.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in course-map keyboard helpers in
+`packages/static/src/raya_static/shell.py` and focused contract/browser tests.
+
 ---
 
 ### Task 1: Contract Test for Shell Resource

@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python static builder, generated HTML/CSS/JavaScript, pytest contract tests, Playwright e2e.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in `packages/static/src/raya_static/discovery.py`, generated
+workspace panel markup, shared CSS, and focused tests.
+
 ---
 
 ### Task 1: Contract Tests

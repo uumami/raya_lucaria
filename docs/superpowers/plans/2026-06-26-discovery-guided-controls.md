@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python 3.10, Glintstone static builder, pytest, Playwright, local static assets only.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in `_render_discovery_quick_guide`, shared discovery CSS,
+contract tests, and browser static-read-path checks.
+
 ---
 
 ### Task 1: Contract Tests For Generated Guides

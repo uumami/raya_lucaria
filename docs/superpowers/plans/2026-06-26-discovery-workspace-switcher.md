@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python 3.10, generated static HTML/CSS, pytest, Playwright/Chromium.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in `_render_discovery_command_bar`, active discovery command
+CSS, contract tests, and browser no-overflow checks.
+
 ---
 
 ### Task 1: Contract Tests For Current Workspace State

@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python static HTML generation in `packages/static/src/raya_static/builder.py`, local JavaScript resources in `packages/static/src/raya_static/{search,practice,tasks,schedule}.py`, CSS in `packages/static/src/raya_static/rendering.py`, pytest + Playwright.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in generated `.raya-discovery-context-actions` containers,
+workspace scripts, shared CSS, and focused tests.
+
 ---
 
 ### Task 1: Contract And Browser RED Tests

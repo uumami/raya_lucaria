@@ -8,6 +8,10 @@
 
 **Tech Stack:** Python-generated static HTML, local JavaScript resource strings, Playwright e2e tests through `uv`.
 
+**Status: implemented.** This checklist is a historical execution record. Current
+source support lives in the Search, Practice, Tasks, and Schedule workspace
+reset helpers, shared `Escape` handling, and focused browser tests.
+
 ---
 
 ## Files
@@ -42,4 +46,3 @@
 - [ ] Rebuild the render fixture and run `./scripts/check-render-debug.sh`.
 - [ ] Run `./scripts/check.sh` and `./scripts/check-docker.sh` sequentially after focused gates pass.
 - [ ] Request independent review for spec compliance and code quality.
-

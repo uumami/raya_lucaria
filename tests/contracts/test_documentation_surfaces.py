@@ -119,6 +119,31 @@ def test_guidance_surfaces_allow_user_selected_superpowers_renderer_loops() -> N
             assert needle in text, f"{relative_path} must mention {needle}"
 
 
+def test_implemented_superpowers_ux_plans_are_marked_as_completed_records() -> None:
+    implemented_plan_paths = (
+        "docs/superpowers/plans/2026-06-26-course-map-keyboard-navigation.md",
+        "docs/superpowers/plans/2026-06-26-discovery-context-actions.md",
+        "docs/superpowers/plans/2026-06-26-discovery-fuzzy-matching-parity.md",
+        "docs/superpowers/plans/2026-06-25-graph-skin-palette.md",
+        "docs/superpowers/plans/2026-06-25-graph-workspace-comfort.md",
+        "docs/superpowers/plans/2026-06-26-discovery-guided-controls.md",
+        "docs/superpowers/plans/2026-06-26-discovery-workspace-panel-collapse.md",
+        "docs/superpowers/plans/2026-06-26-discovery-workspace-reset-parity.md",
+        "docs/superpowers/plans/2026-06-26-discovery-workspace-grouped-controls.md",
+        "docs/superpowers/plans/2026-06-26-discovery-workspace-switcher.md",
+        "docs/superpowers/plans/2026-06-26-discovery-workspace-comfort-parity.md",
+        "docs/superpowers/plans/2026-06-26-graph-reading-keys.md",
+        "docs/superpowers/plans/2026-06-26-legacy-ux-convergence-audit.md",
+        "docs/superpowers/plans/2026-06-26-review-gallery-dashboard.md",
+    )
+    for relative_path in implemented_plan_paths:
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        assert "Status: implemented" in text, (
+            f"{relative_path} should identify its checklist as historical "
+            "after the UX convergence work lands"
+        )
+
+
 def test_role_documentation_covers_renderer_skins_and_accessibility() -> None:
     needles = {
         "docs/guides/en/professors/index.md": ["render.skin", "skins/", "eva-unit-02"],
