@@ -513,6 +513,43 @@ def test_render_fixture_local_images_open_static_asset_inspector(
                     )
                 finally:
                     page.close()
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(mobile)
+                    mobile.click('[data-raya-graph-toggle-panel="list"]')
+                    mobile.click('[data-raya-graph-toggle-panel="inspector"]')
+                    mobile.wait_for_function(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return root?.getAttribute('data-raya-graph-list-state') === 'collapsed'
+                            && root?.getAttribute('data-raya-graph-inspector-state') === 'collapsed';
+                        }"""
+                    )
+                    _assert_no_horizontal_overflow(mobile)
+                    assert mobile.locator(
+                        "[data-raya-graph-panel-body='list']"
+                    ).is_hidden()
+                    assert mobile.locator(
+                        "[data-raya-graph-panel-body='inspector']"
+                    ).is_hidden()
+                    assert (
+                        mobile.locator("[data-raya-graph-toggle-panel='list']")
+                        .inner_text()
+                        .strip()
+                        == "Open"
+                    )
+                    assert (
+                        mobile.locator("[data-raya-graph-toggle-panel='inspector']")
+                        .inner_text()
+                        .strip()
+                        == "Open"
+                    )
+                finally:
+                    mobile.close()
             finally:
                 browser.close()
     finally:
@@ -12163,6 +12200,130 @@ def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+def test_render_fixture_graph_collapsed_rails_prioritize_canvas_space(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    expanded = page.evaluate(
+                        """() => {
+                          const box = (selector) => document
+                            .querySelector(selector)
+                            .getBoundingClientRect().width;
+                          return {
+                            list: box('.raya-graph-list-panel'),
+                            map: box('.raya-graph-map-panel'),
+                            inspector: box('.raya-graph-inspector-panel'),
+                          };
+                        }"""
+                    )
+
+                    page.click('[data-raya-graph-toggle-panel="list"]')
+                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    page.wait_for_function(
+                        """() => {
+                          const root = document.querySelector('[data-raya-graph-page]');
+                          return root?.getAttribute('data-raya-graph-list-state') === 'collapsed'
+                            && root?.getAttribute('data-raya-graph-inspector-state') === 'collapsed';
+                        }"""
+                    )
+                    collapsed = page.evaluate(
+                        """() => {
+                          const box = (selector) => document
+                            .querySelector(selector)
+                            .getBoundingClientRect().width;
+                          const bodyState = (name) => {
+                            const body = document.querySelector(
+                              `[data-raya-graph-panel-body="${name}"]`
+                            );
+                            const tabbables = body
+                              ? Array.from(
+                                  body.querySelectorAll(
+                                    'a[href], button, input, select, textarea, summary, [tabindex]'
+                                  )
+                                ).filter((element) => {
+                                  const disabled = element.disabled
+                                    || element.getAttribute('aria-disabled') === 'true';
+                                  return !disabled && element.getAttribute('tabindex') !== '-1';
+                                })
+                              : [];
+                            return {
+                              ariaHidden: body?.getAttribute('aria-hidden'),
+                              tabbable: tabbables.length,
+                            };
+                          };
+                          const labelFor = (name) => {
+                            const button = document.querySelector(
+                              `[data-raya-graph-toggle-panel="${name}"]`
+                            );
+                            return {
+                              text: button?.textContent.trim(),
+                              ariaLabel: button?.getAttribute('aria-label'),
+                              expanded: button?.getAttribute('aria-expanded'),
+                            };
+                          };
+                          return {
+                            list: box('.raya-graph-list-panel'),
+                            map: box('.raya-graph-map-panel'),
+                            inspector: box('.raya-graph-inspector-panel'),
+                            listBody: bodyState('list'),
+                            inspectorBody: bodyState('inspector'),
+                            listToggle: labelFor('list'),
+                            inspectorToggle: labelFor('inspector'),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert expanded["list"] >= 240
+    assert expanded["inspector"] >= 260
+    assert collapsed["list"] <= 96
+    assert collapsed["inspector"] <= 96
+    assert collapsed["map"] >= expanded["map"] + 240
+    assert collapsed["listBody"] == {"ariaHidden": "true", "tabbable": 0}
+    assert collapsed["inspectorBody"] == {"ariaHidden": "true", "tabbable": 0}
+    assert collapsed["listToggle"] == {
+        "text": "Open",
+        "ariaLabel": "Open graph pages panel",
+        "expanded": "false",
+    }
+    assert collapsed["inspectorToggle"] == {
+        "text": "Open",
+        "ariaLabel": "Open graph inspector panel",
+        "expanded": "false",
+    }
 
 
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(

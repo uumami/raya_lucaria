@@ -1513,8 +1513,8 @@ _GRAPH_JAVASCRIPT = r"""
     return document.querySelector(`[data-raya-graph-panel-body="${panelName}"]`);
   }
 
-  function graphPanelLabel(panelName) {
-    return panelName === "inspector" ? "inspector" : "list";
+  function graphPanelAccessibleLabel(panelName) {
+    return panelName === "inspector" ? "graph inspector panel" : "graph pages panel";
   }
 
   function graphPanelStateAttribute(panelName) {
@@ -1556,7 +1556,6 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function setGraphPanelState(panelName, expanded) {
-    const label = graphPanelLabel(panelName);
     const state = expanded ? "expanded" : "collapsed";
     const attr = graphPanelStateAttribute(panelName);
     root.setAttribute(attr, state);
@@ -1570,7 +1569,11 @@ _GRAPH_JAVASCRIPT = r"""
       .filter((button) => button.getAttribute("data-raya-graph-toggle-panel") === panelName)
       .forEach((button) => {
         button.setAttribute("aria-expanded", expanded ? "true" : "false");
-        button.textContent = `${expanded ? "Collapse" : "Expand"} ${label}`;
+        button.setAttribute(
+          "aria-label",
+          `${expanded ? "Collapse" : "Open"} ${graphPanelAccessibleLabel(panelName)}`
+        );
+        button.textContent = expanded ? "Hide" : "Open";
       });
     updateGraphPanelRailSummary(panelName);
   }
