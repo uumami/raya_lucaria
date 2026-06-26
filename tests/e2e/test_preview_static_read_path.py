@@ -5248,6 +5248,106 @@ def test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport(
         handle.close()
 
 
+def test_preview_graph_mobile_workspace_prioritizes_map_panel(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1440, "height": 900},
+                    {"width": 1024, "height": 768},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_selector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            ".raya-graph-node.is-selected"
+                        )
+                        probe = page.evaluate(
+                            """() => {
+                              const box = (selector) => {
+                                const node = document.querySelector(selector);
+                                const rect = node?.getBoundingClientRect();
+                                return rect
+                                  ? {
+                                      top: rect.top,
+                                      bottom: rect.bottom,
+                                      left: rect.left,
+                                      right: rect.right,
+                                      height: rect.height,
+                                      width: rect.width,
+                                    }
+                                  : null;
+                              };
+                              return {
+                                list: box('.raya-graph-list-panel'),
+                                map: box('.raya-graph-map-panel'),
+                                inspector: box('.raya-graph-inspector-panel'),
+                                selectedState: document
+                                  .querySelector('[data-raya-graph-state-selected]')
+                                  ?.textContent
+                                  ?.trim() || '',
+                                localStorageKeys: Object.keys(localStorage),
+                                sessionStorageKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                    finally:
+                        page.close()
+
+                    assert probe["list"] is not None
+                    assert probe["map"] is not None
+                    assert probe["inspector"] is not None
+                    assert probe["selectedState"] == "reader-ux"
+                    if viewport["width"] >= 1280:
+                        assert probe["list"]["left"] < probe["map"]["left"], (
+                            viewport,
+                            probe,
+                        )
+                    else:
+                        assert probe["map"]["top"] < probe["list"]["top"], (
+                            viewport,
+                            probe,
+                        )
+                        assert probe["map"]["top"] < probe["inspector"]["top"], (
+                            viewport,
+                            probe,
+                        )
+                        assert probe["map"]["top"] < viewport["height"], (
+                            viewport,
+                            probe,
+                        )
+                    assert probe["localStorageKeys"] == []
+                    assert probe["sessionStorageKeys"] == []
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
     tmp_path: Path,
 ) -> None:

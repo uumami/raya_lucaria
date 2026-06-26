@@ -5248,6 +5248,15 @@ mjx-container[display="true"] {
   [data-raya-graph-expanded="true"] .raya-graph-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
+  .raya-graph-map-panel {
+    order: 1;
+  }
+  .raya-graph-list-panel {
+    order: 2;
+  }
+  .raya-graph-inspector-panel {
+    order: 3;
+  }
   .raya-search-workspace,
   .raya-practice-workspace,
   .raya-tasks-workspace,
