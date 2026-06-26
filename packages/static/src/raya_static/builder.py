@@ -1271,6 +1271,57 @@ def _render_discovery_command_bar(
     )
 
 
+def _render_discovery_overview(
+    *,
+    kind: str,
+    title: str,
+    summary: str,
+    meta: list[tuple[str, str]],
+    actions: list[tuple[str, str]],
+) -> str:
+    meta_html = "\n".join(
+        [
+            "<div>"
+            f"<dt>{html.escape(label)}</dt>"
+            f"<dd>{html.escape(value)}</dd>"
+            "</div>"
+            for label, value in meta
+        ]
+    )
+    action_html = "\n".join(
+        [
+            (
+                f'<a href="{html.escape(href, quote=True)}">'
+                f"{html.escape(label)}</a>"
+            )
+            for label, href in actions
+        ]
+    )
+    return "\n".join(
+        [
+            (
+                '<section class="raya-discovery-overview" '
+                f'data-raya-discovery-overview="{html.escape(kind, quote=True)}" '
+                f'aria-label="{html.escape(title, quote=True)} overview">'
+            ),
+            '<div class="raya-discovery-overview-main">',
+            f"<h2>{html.escape(title)}</h2>",
+            f"<p>{html.escape(summary)}</p>",
+            "</div>",
+            '<dl class="raya-discovery-overview-meta">',
+            meta_html,
+            "</dl>",
+            (
+                '<nav class="raya-discovery-overview-actions" '
+                'aria-label="Related discovery workspaces">'
+            ),
+            action_html,
+            "</nav>",
+            "</section>",
+        ]
+    )
+
+
 def _render_reading_context(
     course_title: str,
     page: ContentPage,
@@ -4877,6 +4928,9 @@ def _render_search_surface(
         official_by_page,
         search_records,
     )
+    search_section_count = sum(
+        len(page.get("sections", [])) for page in browser_search["pages"]
+    )
     search_payload = _json_script_text(browser_search)
     result_items = []
     for page in browser_search["pages"]:
@@ -4998,6 +5052,26 @@ def _render_search_surface(
             "<h1>Course Search</h1>",
             "<p>Search public page metadata and public article text.</p>",
             "</header>",
+            _render_discovery_overview(
+                kind="search",
+                title="Search workspace",
+                summary=(
+                    "Use local search to scan public pages, section anchors, "
+                    "and generated handoffs without leaving the static site."
+                ),
+                meta=[
+                    ("Public pages", f"{len(browser_search['pages'])}"),
+                    ("Section anchors", f"{search_section_count}"),
+                    ("Source scope", "Public page metadata and article text"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls">',
             "<h2>Find pages</h2>",
@@ -5341,6 +5415,26 @@ def _render_practice_surface(
                 "Open the owning page when you are ready to work with the full context.</p>"
             ),
             "</header>",
+            _render_discovery_overview(
+                kind="practice",
+                title="Official practice workspace",
+                summary=(
+                    "Use local filters to inspect accepted official objects "
+                    "and return to their owning course pages."
+                ),
+                meta=[
+                    ("Official objects", f"{len(browser_practice['objects'])}"),
+                    ("Object types", f"{len(browser_practice['types'])}"),
+                    ("Source scope", "Accepted official objects"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
             '<aside class="raya-practice-control-panel" aria-label="Official practice controls">',
             "<h2>Find practice</h2>",
@@ -5652,6 +5746,29 @@ def _render_tasks_surface(
                 "Open the owning page when you need the full course context.</p>"
             ),
             "</header>",
+            _render_discovery_overview(
+                kind="tasks",
+                title="Official tasks workspace",
+                summary=(
+                    "Use local filters and sorting to inspect accepted "
+                    "task-family objects from course source."
+                ),
+                meta=[
+                    ("Task-family objects", f"{len(browser_tasks['objects'])}"),
+                    ("Object types", f"{len(browser_tasks['types'])}"),
+                    (
+                        "Source scope",
+                        "Accepted assignments, exams, projects, and tasks",
+                    ),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
             '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
             '<aside class="raya-tasks-control-panel" aria-label="Official task controls">',
             "<h2>Find tasks</h2>",
@@ -5774,6 +5891,9 @@ def _render_schedule_surface(
     )
     schedule_payload = _browser_schedule_payload(content_model, official_by_page)
     schedule_payload_text = _json_script_text(schedule_payload)
+    dated_event_type_count = sum(
+        1 for count in schedule_payload["event_counts"].values() if count
+    )
     type_buttons = [
         (
             '<button class="raya-schedule-chip" type="button" '
@@ -5921,6 +6041,26 @@ def _render_schedule_surface(
                 "Dates are authored course metadata from accepted official objects.</p>"
             ),
             "</header>",
+            _render_discovery_overview(
+                kind="schedule",
+                title="Official schedule workspace",
+                summary=(
+                    "Use local filters to scan authored due and available "
+                    "dates across accepted task-family objects."
+                ),
+                meta=[
+                    ("Dated objects", f"{len(schedule_payload['items'])}"),
+                    ("Dated event types", f"{dated_event_type_count}"),
+                    ("Source scope", "Authored due and available dates"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                ],
+            ),
             '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
             '<aside class="raya-schedule-control-panel" aria-label="Official schedule controls">',
             "<h2>Find schedule items</h2>",

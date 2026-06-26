@@ -826,6 +826,75 @@ img {
   gap: 0.35rem;
   margin: 0;
 }
+.raya-discovery-overview {
+  background: color-mix(
+    in srgb,
+    var(--raya-color-surface) 88%,
+    var(--raya-color-accent) 12%
+  );
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.65rem 0.85rem;
+  margin: 0 0 var(--raya-space-block);
+  padding: 0.75rem;
+}
+.raya-discovery-overview-main {
+  display: grid;
+  gap: 0.25rem;
+}
+.raya-discovery-overview-main h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.raya-discovery-overview-main p {
+  color: var(--raya-color-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+.raya-discovery-overview-meta {
+  display: grid;
+  gap: 0.35rem 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  margin: 0;
+}
+.raya-discovery-overview-meta div {
+  min-width: 0;
+}
+.raya-discovery-overview-meta dt {
+  color: var(--raya-color-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+.raya-discovery-overview-meta dd {
+  line-height: 1.25;
+  margin: 0.05rem 0 0;
+  overflow-wrap: anywhere;
+}
+.raya-discovery-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.raya-discovery-overview-actions a {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-accent));
+  border-radius: 0.45rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  text-decoration: none;
+}
+.raya-discovery-overview-actions a:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-graph-workspace {
   align-items: start;
   display: grid;

@@ -1551,6 +1551,16 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-control-panel" in search_html
     assert "raya-search-results-panel" in search_html
     assert "raya-search-context-panel" in search_html
+    assert 'data-raya-discovery-overview="search"' in search_html
+    assert "raya-discovery-overview-meta" in search_html
+    assert "Public pages" in search_html
+    assert "Section anchors" in search_html
+    assert "Reset path" in search_html
+    assert "Clear or Escape" in search_html
+    assert "View graph" in search_html
+    assert "Open practice" in search_html
+    assert "Open tasks" in search_html
+    assert "Open schedule" in search_html
     assert "data-raya-search-summary-count" in search_html
     assert "data-raya-search-context" in search_html
     assert "data-raya-search-context-title" in search_html
@@ -1843,6 +1853,16 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "raya-practice-control-panel" in practice_html
     assert "raya-practice-results-panel" in practice_html
     assert "raya-practice-context-panel" in practice_html
+    assert 'data-raya-discovery-overview="practice"' in practice_html
+    assert "raya-discovery-overview-meta" in practice_html
+    assert "Official objects" in practice_html
+    assert "Object types" in practice_html
+    assert "Reset path" in practice_html
+    assert "Clear or Escape" in practice_html
+    assert "Open search" in practice_html
+    assert "View graph" in practice_html
+    assert "Open tasks" in practice_html
+    assert "Open schedule" in practice_html
     assert "data-raya-practice-summary-count" in practice_html
     assert "data-raya-practice-context" in practice_html
     assert "data-raya-practice-context-title" in practice_html
@@ -2000,6 +2020,16 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "sessionStorage" not in tasks_script
     assert "URLSearchParams" in tasks_script
     assert "matchesPage" in tasks_script
+    assert 'data-raya-discovery-overview="tasks"' in tasks_html
+    assert "raya-discovery-overview-meta" in tasks_html
+    assert "Task-family objects" in tasks_html
+    assert "Object types" in tasks_html
+    assert "Reset path" in tasks_html
+    assert "Clear or Escape" in tasks_html
+    assert "Open search" in tasks_html
+    assert "View graph" in tasks_html
+    assert "Open practice" in tasks_html
+    assert "Open schedule" in tasks_html
     assert 'data-raya-task-object="private-task"' not in tasks_html
     assert 'data-raya-task-object="unit-assignment"' in tasks_html
     assert 'data-raya-task-page="first-topic"' in tasks_html
@@ -2125,6 +2155,16 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "sessionStorage" not in schedule_script
     assert "URLSearchParams" in schedule_script
     assert "matchesPage" in schedule_script
+    assert 'data-raya-discovery-overview="schedule"' in schedule_html
+    assert "raya-discovery-overview-meta" in schedule_html
+    assert "Dated objects" in schedule_html
+    assert "Dated event types" in schedule_html
+    assert "Reset path" in schedule_html
+    assert "Clear or Escape" in schedule_html
+    assert "Open search" in schedule_html
+    assert "View graph" in schedule_html
+    assert "Open practice" in schedule_html
+    assert "Open tasks" in schedule_html
     assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
     assert 'data-raya-schedule-page="first-topic"' in schedule_html
     assert 'data-raya-schedule-item="unit-project"' in schedule_html
