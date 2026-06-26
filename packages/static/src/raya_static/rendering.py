@@ -3198,6 +3198,20 @@ img {
   padding: 0.25rem 0.45rem;
   text-transform: uppercase;
 }
+.raya-graph-list-search-role {
+  background: color-mix(in srgb, var(--raya-color-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 45%, var(--raya-color-border));
+  border-radius: 999px;
+  color: var(--raya-color-accent);
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 850;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+}
+.raya-graph-list-search-role[hidden] {
+  display: none;
+}
 .raya-graph-list-metrics {
   color: var(--raya-color-muted);
   display: flex;

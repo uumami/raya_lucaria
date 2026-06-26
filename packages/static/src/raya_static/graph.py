@@ -176,6 +176,7 @@ _GRAPH_JAVASCRIPT = r"""
   let pendingInitialPageFit = false;
   let neighborhoodFocus = false;
   let matchIds = new Set();
+  let graphListPrioritized = false;
   let pendingSelectTimer = 0;
   let fullViewBox = null;
   let graphViewBox = null;
@@ -2140,6 +2141,41 @@ _GRAPH_JAVASCRIPT = r"""
     return visibleIds.filter((id) => matchIds.has(id));
   }
 
+  function graphListOrderFor(item, activeIds) {
+    const id = item.getAttribute("data-raya-graph-node") || "";
+    const node = nodesById.get(id);
+    const courseOrder = Number(node ? node.order || 0 : 0);
+    if (!activeIds.has(id)) {
+      return { rank: 3, courseOrder };
+    }
+    if (!query) {
+      return { rank: 0, courseOrder };
+    }
+    return {
+      rank: matchIds.has(id) ? 0 : 1,
+      courseOrder,
+    };
+  }
+
+  function prioritizeGraphListForSearch(activeIds) {
+    if (!query && !graphListPrioritized) {
+      return;
+    }
+    Array.from(list.querySelectorAll("[data-raya-graph-node]"))
+      .map((item, originalIndex) => ({
+        item,
+        originalIndex,
+        order: graphListOrderFor(item, activeIds),
+      }))
+      .sort((left, right) => (
+        left.order.rank - right.order.rank ||
+        left.order.courseOrder - right.order.courseOrder ||
+        left.originalIndex - right.originalIndex
+      ))
+      .forEach(({ item }) => list.appendChild(item));
+    graphListPrioritized = Boolean(query);
+  }
+
   function activeResultUrl() {
     if (!activeResultId) return "";
     const item = Array.from(list.querySelectorAll("[data-raya-graph-node]"))
@@ -2904,6 +2940,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function renderList(activeIds) {
     list.querySelector("[data-raya-graph-empty]")?.remove();
+    prioritizeGraphListForSearch(activeIds);
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
@@ -2922,6 +2959,14 @@ _GRAPH_JAVASCRIPT = r"""
         } else {
           link.removeAttribute("aria-current");
         }
+      }
+      const searchRole = item.querySelector("[data-raya-graph-list-search-role]");
+      if (searchRole) {
+        const showSearchRole = Boolean(query) && activeIds.has(id);
+        searchRole.hidden = !showSearchRole;
+        searchRole.textContent = showSearchRole
+          ? (matchIds.has(id) ? "Search match" : "Connected context")
+          : "";
       }
     });
     if (query && activeIds.size === 0) {

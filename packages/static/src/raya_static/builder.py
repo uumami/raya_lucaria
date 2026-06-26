@@ -4573,6 +4573,8 @@ def _render_graph_surface(
             '<div class="raya-graph-list-title-row">'
             f'<a href="{html.escape(node["url"])}">{html.escape(node["title"])}</a>'
             f'<span class="raya-graph-list-status">{html.escape(node["status"])}</span>'
+            '<span class="raya-graph-list-search-role" '
+            'data-raya-graph-list-search-role hidden></span>'
             "</div>"
             '<span class="raya-graph-list-metrics">'
             f'<span class="raya-graph-list-stable-id">Stable ID '

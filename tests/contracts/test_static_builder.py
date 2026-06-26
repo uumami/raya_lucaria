@@ -1275,6 +1275,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-list-status" in graph_html
     assert "raya-graph-list-relationship-counts" in graph_html
     assert "raya-graph-list-stable-id" in graph_html
+    assert "data-raya-graph-list-search-role" in graph_html
     assert '<span class="raya-graph-list-status">ready</span>' in graph_html
     assert graph_html.index("raya-graph-list-title-row") < graph_html.index(
         "raya-graph-list-metrics"
@@ -1455,6 +1456,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "edgeLayerRank" in graph_script
     assert "graphLayerRankForClassNames" in graph_script
     assert "reorderGraphEdgesByLayer" in graph_script
+    assert "prioritizeGraphListForSearch" in graph_script
     assert "Graph arrows show link direction" in graph_html
     assert "data-raya-graph-kind" in graph_script
     assert "raya-graph-edge-kind-" in graph_script

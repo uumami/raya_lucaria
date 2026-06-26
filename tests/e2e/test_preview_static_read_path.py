@@ -1312,6 +1312,41 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "matrix"
                             in page.locator("#raya-graph-list").inner_text().lower()
                         )
+                        query_rows = page.locator(
+                            "#raya-graph-list [data-raya-graph-node]:visible"
+                        ).evaluate_all(
+                            """rows => rows.map((row) => ({
+                              id: row.getAttribute('data-raya-graph-node'),
+                              isMatch: row.classList.contains('is-match'),
+                              badge: row.querySelector('[data-raya-graph-list-search-role]')?.textContent?.trim() || '',
+                              badgeHidden: row.querySelector('[data-raya-graph-list-search-role]')?.hidden ?? true,
+                            }))"""
+                        )
+                        assert query_rows
+                        first_context_index = next(
+                            (
+                                index
+                                for index, row in enumerate(query_rows)
+                                if not row["isMatch"]
+                            ),
+                            len(query_rows),
+                        )
+                        assert all(
+                            row["isMatch"] for row in query_rows[:first_context_index]
+                        )
+                        assert all(
+                            not row["isMatch"] for row in query_rows[first_context_index:]
+                        )
+                        assert [
+                            row["id"] for row in query_rows if row["isMatch"]
+                        ] == ["numbered-objects", "authoring-matrix"]
+                        assert {
+                            row["badge"] for row in query_rows if row["isMatch"]
+                        } == {"Search match"}
+                        assert {
+                            row["badge"] for row in query_rows if not row["isMatch"]
+                        } == {"Connected context"}
+                        assert all(not row["badgeHidden"] for row in query_rows)
                         page.wait_for_function(
                             """() => document
                               .querySelector('#raya-graph-list [data-raya-graph-node].is-active-result')
@@ -1403,6 +1438,38 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
+                        assert page.locator(
+                            "#raya-graph-list [data-raya-graph-list-search-role]:visible"
+                        ).count() == 0
+                        restored_order = page.locator(
+                            "#raya-graph-list [data-raya-graph-node]:visible"
+                        ).evaluate_all(
+                            """rows => {
+                              const payload = JSON.parse(
+                                document.getElementById('raya-graph-data').textContent
+                              );
+                              const orderById = new Map(
+                                payload.nodes.map((node) => [
+                                  node.id,
+                                  Number(node.order || 0),
+                                ])
+                              );
+                              const ids = rows.map((row) =>
+                                row.getAttribute('data-raya-graph-node')
+                              );
+                              return {
+                                firstId: ids[0],
+                                courseOrdered: ids.every((id, index) =>
+                                  index === 0 ||
+                                  orderById.get(ids[index - 1]) <= orderById.get(id)
+                                ),
+                              };
+                            }"""
+                        )
+                        assert restored_order == {
+                            "firstId": "render-root",
+                            "courseOrdered": True,
+                        }
                         if viewport["width"] >= 520:
                             page.locator(
                                 '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
