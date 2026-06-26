@@ -10049,8 +10049,31 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
                             articleBackground: articleStyle.backgroundColor,
                             articleWidth: article.getBoundingClientRect().width,
                             shellWidth: shell.getBoundingClientRect().width,
+                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            articlePaddingInline: parseFloat(articleStyle.paddingLeft),
+                            articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
+                            articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
                             mapWidth: courseMap.getBoundingClientRect().width,
                             railWidth: rail.getBoundingClientRect().width,
+                          };
+                        }"""
+                    )
+                    page.set_viewport_size({"width": 1280, "height": 900})
+                    page.wait_for_function(
+                        """() => window.innerWidth === 1280"""
+                    )
+                    threshold = page.evaluate(
+                        """() => {
+                          const article = document.querySelector('article.raya-main-article');
+                          const shell = document.querySelector('.raya-learning-shell');
+                          const articleStyle = getComputedStyle(article);
+                          return {
+                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            articlePaddingInline: parseFloat(articleStyle.paddingLeft),
+                            articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
+                            articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
+                            articleRight: article.getBoundingClientRect().right,
+                            viewportWidth: window.innerWidth,
                           };
                         }"""
                     )
@@ -10064,6 +10087,15 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
     assert hierarchy["articleWidth"] > hierarchy["mapWidth"] * 2
     assert hierarchy["articleWidth"] > hierarchy["railWidth"] * 2
     assert hierarchy["articleWidth"] < hierarchy["shellWidth"]
+    assert hierarchy["shellColumnGap"] >= 24
+    assert hierarchy["articlePaddingInline"] >= 28
+    assert hierarchy["articleBorderLeftWidth"] >= 1
+    assert 4 <= hierarchy["articleBorderRadius"] <= 8
+    assert threshold["shellColumnGap"] >= 24
+    assert threshold["articlePaddingInline"] >= 28
+    assert threshold["articleBorderLeftWidth"] >= 1
+    assert 4 <= threshold["articleBorderRadius"] <= 8
+    assert threshold["articleRight"] <= threshold["viewportWidth"]
     assert hierarchy["articleBackground"] != hierarchy["bodyBackground"]
     assert not _looks_like_eva_warm_wash(hierarchy["bodyBackground"])
     assert not _looks_like_eva_warm_wash(hierarchy["articleBackground"])
@@ -10130,6 +10162,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             paragraphWidth: firstParagraph.getBoundingClientRect().width,
                             mapWidth: courseMap.getBoundingClientRect().width,
                             railWidth: rail.getBoundingClientRect().width,
+                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            articlePaddingInline: parseFloat(articleStyle.paddingLeft),
+                            articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
+                            articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
                             courseMapButtonVisible: !!document
                               .querySelector('.raya-course-map-toggle')
                               ?.getClientRects().length,
@@ -10197,6 +10233,12 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           && document.querySelector('aside.raya-learning-rail')
                           ?.getBoundingClientRect().width <= 112"""
                     )
+                    page.wait_for_function(
+                        """() => !document.querySelector('nav.raya-course-map')
+                          ?.hasAttribute('data-raya-course-map-transition')
+                          && !document.querySelector('aside.raya-learning-rail')
+                          ?.hasAttribute('data-raya-learning-rail-transition')"""
+                    )
                     collapsed = page.evaluate(
                         """() => {
                           const map = document.querySelector('nav.raya-course-map');
@@ -10249,6 +10291,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["articleWidth"] > chrome["railWidth"] * 3
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
+    assert chrome["shellColumnGap"] >= 24
+    assert chrome["articlePaddingInline"] >= 28
+    assert chrome["articleBorderLeftWidth"] >= 1
+    assert 4 <= chrome["articleBorderRadius"] <= 8
     assert 180 <= chrome["mapWidth"] <= 280
     assert 200 <= chrome["railWidth"] <= 320
     assert (

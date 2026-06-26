@@ -4087,6 +4087,14 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
 }
 @media (min-width: 1280px) {
+  .raya-learning-shell {
+    gap: 1.5rem;
+  }
+  .raya-main-article {
+    border: 1px solid color-mix(in srgb, var(--raya-color-border) 58%, transparent);
+    border-radius: 0.5rem;
+    padding: clamp(1.75rem, 1vw + 1rem, 2rem);
+  }
   [data-raya-course-map="expanded"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"] {
     grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);
