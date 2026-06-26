@@ -826,25 +826,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             <= viewport["width"] + 1
                         )
                         assert page.locator(
-                            ".raya-graph-toolbar-label", has_text="Find pages"
+                            '.raya-graph-toolbar-group[aria-label="Find pages"]'
                         ).is_visible()
                         assert page.locator(
-                            ".raya-graph-toolbar-label", has_text="Canvas view"
+                            '.raya-graph-toolbar-group[aria-label="Canvas view"]'
                         ).is_visible()
-                        toolbar_label_style = page.locator(
-                            ".raya-graph-toolbar-label", has_text="Find pages"
-                        ).evaluate(
-                            """node => {
-                              const style = getComputedStyle(node);
-                              const weight = Number.parseInt(style.fontWeight, 10);
-                              return {
-                                textTransform: style.textTransform,
-                                fontWeight: Number.isNaN(weight) ? 0 : weight,
-                              };
-                            }"""
-                        )
-                        assert toolbar_label_style["textTransform"] == "uppercase"
-                        assert toolbar_label_style["fontWeight"] >= 700
                         pan_boxes = page.locator(
                             "[data-raya-graph-pan]"
                         ).evaluate_all(
@@ -4381,13 +4367,56 @@ def test_preview_graph_workspace_starts_in_first_desktop_viewport(
     assert probe["rootLayout"] == "connections"
     assert probe["nodes"] >= 6
     assert probe["edges"] >= 10
-    assert probe["toolbar"]["height"] <= 125
+    assert probe["toolbar"]["height"] <= 88
     assert probe["instructions"]["height"] <= 36
     assert probe["workspace"]["top"] < 340
     assert probe["mapPanel"]["top"] < 360
     assert probe["canvas"]["top"] < 520
     assert probe["canvas"]["bottom"] <= probe["viewportHeight"] + 260
     assert probe["canvas"]["height"] >= 420
+
+
+def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1501, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    toolbar_height = page.locator(
+                        ".raya-graph-toolbar"
+                    ).evaluate("node => node.getBoundingClientRect().height")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert toolbar_height <= 88
 
 
 def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:

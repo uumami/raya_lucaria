@@ -1369,25 +1369,32 @@ img {
   background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
   border-radius: 0.5rem;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: 0.25rem;
+  padding: 0.25rem;
 }
 .raya-graph-toolbar-group {
   align-items: center;
   border-right: 1px solid var(--raya-color-border);
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  padding-right: 0.55rem;
+  gap: 0.28rem;
+  padding-right: 0.42rem;
 }
 .raya-graph-toolbar-label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   color: var(--raya-color-text-muted);
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 800;
+  height: 1px;
   letter-spacing: 0;
   line-height: 1.2;
+  overflow: hidden;
+  position: absolute;
   text-transform: uppercase;
+  white-space: nowrap;
+  width: 1px;
 }
 .raya-graph-toolbar-group:last-child {
   border-right: 0;
@@ -1412,20 +1419,20 @@ img {
   border-radius: 999px;
   color: var(--raya-color-text);
   display: inline-flex;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 800;
   line-height: 1.15;
-  min-height: 2.25rem;
+  min-height: 1.9rem;
   max-width: min(26rem, 100%);
   overflow-wrap: anywhere;
-  padding: 0.35rem 0.65rem;
+  padding: 0.28rem 0.55rem;
 }
 .raya-graph-toolbar-pan [data-raya-graph-pan] {
   align-items: center;
   aspect-ratio: 1;
   display: inline-flex;
   font-weight: 800;
-  inline-size: 2.5rem;
+  inline-size: 2.125rem;
   justify-content: center;
   padding: 0;
 }
@@ -1490,8 +1497,9 @@ img {
 .raya-graph-controls select,
 .raya-graph-controls button,
 .raya-graph-chip {
-  min-height: 2.25rem;
-  padding: 0.35rem 0.6rem;
+  line-height: 1.1;
+  min-height: 1.9rem;
+  padding: 0.18rem 0.45rem;
 }
 .raya-search-controls input {
   min-width: 0;
