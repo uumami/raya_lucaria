@@ -4662,6 +4662,11 @@ def _render_graph_surface(
                 'role="group" aria-label="Workspace">'
             ),
             '<span class="raya-graph-toolbar-label">Workspace</span>',
+            (
+                '<span class="raya-graph-active-state" '
+                'data-raya-graph-active-state aria-live="polite">'
+                "Ready: full graph</span>"
+            ),
             '<button id="graph-reset" type="button">Reset graph</button>',
             '<button id="graph-expand" type="button" '
             'aria-pressed="false" aria-label="Expand graph focus mode">Focus</button>',

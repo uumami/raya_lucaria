@@ -125,6 +125,7 @@ _GRAPH_JAVASCRIPT = r"""
   const stateNeighborhood = document.querySelector("[data-raya-graph-state-neighborhood]");
   const statePageFocus = document.querySelector("[data-raya-graph-state-page-focus]");
   const stateUrl = document.querySelector("[data-raya-graph-state-url]");
+  const activeState = document.querySelector("[data-raya-graph-active-state]");
   const copyUrl = document.querySelector("[data-raya-graph-copy-url]");
   const copyStatus = document.querySelector("[data-raya-graph-copy-status]");
   const orientation = document.querySelector("[data-raya-graph-orientation]");
@@ -440,6 +441,27 @@ _GRAPH_JAVASCRIPT = r"""
     return `${hiddenEdgeKinds.size} hidden: ${labels.join(", ")}`;
   }
 
+  function activeGraphStateText() {
+    const active = [];
+    const searchValue = search ? search.value.trim() : "";
+    const layoutValue = layout ? layout.value : defaultLayout;
+    if (searchValue) active.push("search");
+    if (selectedId) active.push("selection");
+    if (pageFocusId && pageFocusId !== selectedId) active.push("page focus");
+    if (layoutValue && layoutValue !== defaultLayout) active.push("layout");
+    if (hiddenGroups.size > 0 || hiddenEdgeKinds.size > 0) active.push("filters");
+    if (neighborhoodFocus) active.push("neighborhood");
+    if (root.dataset.rayaGraphExpanded === "true") active.push("focus mode");
+    if (root.getAttribute("data-raya-graph-list-state") === "collapsed") {
+      active.push("list collapsed");
+    }
+    if (root.getAttribute("data-raya-graph-inspector-state") === "collapsed") {
+      active.push("inspector collapsed");
+    }
+    if (manualNodePositions.size > 0) active.push("manual layout");
+    return active.length ? `Active: ${active.join(", ")}` : "Ready: full graph";
+  }
+
   function updateGraphUrlState() {
     if (!window.history || !window.history.replaceState) return;
     const params = new URLSearchParams();
@@ -481,6 +503,7 @@ _GRAPH_JAVASCRIPT = r"""
     updateGraphUrlState();
     updateGraphStateReadout(lastActiveNodes, lastActiveEdges);
     updateGraphPanelRailSummaries();
+    if (activeState) activeState.textContent = activeGraphStateText();
   }
 
   function updateGraphOrientation(activeNodes, activeEdges) {
@@ -1718,6 +1741,7 @@ _GRAPH_JAVASCRIPT = r"""
     latestRenderedPositions.set(nodeId, nextPoint);
     manualNodePositions.set(nodeId, nextPoint);
     syncGraphArrangementStatus();
+    syncGraphStateReadout();
     canvas.querySelectorAll("[data-raya-graph-node]").forEach((link) => {
       if ((link.getAttribute("data-raya-graph-node") || "") !== nodeId) return;
       const group = link.querySelector("g");

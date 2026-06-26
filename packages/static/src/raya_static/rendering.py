@@ -1405,6 +1405,21 @@ img {
 .raya-graph-toolbar-state {
   flex: 0 1 auto;
 }
+.raya-graph-active-state {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 70%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 38%, var(--raya-color-border));
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.15;
+  min-height: 2.25rem;
+  max-width: min(26rem, 100%);
+  overflow-wrap: anywhere;
+  padding: 0.35rem 0.65rem;
+}
 .raya-graph-toolbar-pan [data-raya-graph-pan] {
   align-items: center;
   aspect-ratio: 1;

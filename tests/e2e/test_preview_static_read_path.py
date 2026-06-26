@@ -1557,6 +1557,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.value === 'connections'"""
                         )
                         if viewport["width"] >= 1280:
+                            active_state = page.locator(
+                                "[data-raya-graph-active-state]"
+                            )
                             arrangement_status = page.locator(
                                 "[data-raya-graph-arrangement-status]"
                             )
@@ -1614,6 +1617,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert arrangement_status.is_visible()
                             assert "Manual arrangement" in arrangement_status.inner_text()
                             assert "Reset graph" in arrangement_status.inner_text()
+                            assert "manual layout" in active_state.inner_text().lower()
                             assert (
                                 page.locator("#raya-graph-data").text_content()
                                 == graph_data_before_drag
@@ -1676,6 +1680,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                   ?.value === ''"""
                             )
                             assert arrangement_status.is_hidden()
+                            assert active_state.inner_text() == "Ready: full graph"
                             assert page.evaluate(
                                 "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
                             ) == [[], []]
@@ -3899,6 +3904,11 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "projection" in page.locator(
                         "[data-raya-graph-orientation-query]"
                     ).inner_text()
+                    active_state = page.locator("[data-raya-graph-active-state]")
+                    assert active_state.is_visible()
+                    assert "Active" in active_state.inner_text()
+                    assert "search" in active_state.inner_text().lower()
+                    assert "selection" in active_state.inner_text().lower()
                     assert "All groups and relationships visible" in page.locator(
                         "[data-raya-graph-orientation-filters]"
                     ).inner_text()
@@ -3944,10 +3954,24 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert "q=projection" in page.url
                     assert "layout=connections" not in page.url
 
+                    page.select_option("#graph-layout", "radial")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-active-state]')
+                          ?.textContent.includes('layout')"""
+                    )
+                    assert "layout" in active_state.inner_text().lower()
+                    assert "layout=radial" in page.url
+                    page.select_option("#graph-layout", "connections")
+                    page.wait_for_function(
+                        "() => !new URL(window.location.href).searchParams.get('layout')"
+                    )
+
                     page.click('[data-raya-graph-toggle-panel="list"]')
                     page.wait_for_function(
                         "() => new URL(window.location.href).searchParams.get('list') === '0'"
                     )
+                    assert "list collapsed" in active_state.inner_text().lower()
                     assert "list=0" in page.locator(
                         "[data-raya-graph-state-url]"
                     ).inner_text()
@@ -4024,6 +4048,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                         "[data-raya-graph-orientation-filters]"
                     ).inner_text()
                     assert "edges=" in page.url
+                    assert "filters" in active_state.inner_text().lower()
 
                     page.locator("[data-raya-graph-group-filter]").first.click()
                     page.wait_for_function(
@@ -4038,6 +4063,32 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert handle.base_url in page.locator(
                         "[data-raya-graph-state-url]"
                     ).inner_text()
+                    assert "filters" in active_state.inner_text().lower()
+                    page.click("#graph-reset")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-active-state]')
+                          ?.textContent.includes('Ready: full graph')"""
+                    )
+                    assert page.locator("#graph-search").input_value() == ""
+                    assert page.locator("#graph-layout").input_value() == "connections"
+                    assert "page=" not in page.url
+                    assert "q=" not in page.url
+                    assert "edges=" not in page.url
+                    assert "groups=" not in page.url
+
+                    page.fill("#graph-search", "projection")
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('page') === 'reader-ux'"
+                    )
+                    page.click('[data-raya-graph-edge-kind-filter="parent"]')
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('edges')"
+                    )
+                    page.locator("[data-raya-graph-group-filter]").first.click()
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('groups')"
+                    )
                     copy_button = page.locator("[data-raya-graph-copy-url]")
                     assert copy_button.is_visible()
                     assert copy_button.inner_text() == "Copy URL"
