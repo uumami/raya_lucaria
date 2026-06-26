@@ -3476,11 +3476,10 @@ _GRAPH_JAVASCRIPT = r"""
       const group = button.getAttribute("data-raya-graph-group-filter") || "";
       if (hiddenGroups.has(group)) {
         hiddenGroups.delete(group);
-        button.setAttribute("aria-pressed", "true");
       } else {
         hiddenGroups.add(group);
-        button.setAttribute("aria-pressed", "false");
       }
+      updateGroupFilters();
       if (activeResultId && hiddenGroups.has(nodesById.get(activeResultId)?.group || "")) {
         activeResultId = "";
       }

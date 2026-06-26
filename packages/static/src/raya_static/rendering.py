@@ -2317,10 +2317,45 @@ img {
   border-radius: 0.45rem;
 }
 .raya-graph-toolbar,
-.raya-graph-legend {
+.raya-graph-legend,
+.raya-graph-canvas-legend {
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-page));
   border-color: color-mix(in srgb, var(--raya-color-border) 76%, var(--raya-color-page));
   box-shadow: 0 0.5rem 1.25rem rgba(31, 35, 40, 0.035);
+}
+.raya-graph-canvas-legend {
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-page));
+  border-radius: 0.55rem;
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.55rem 0;
+  padding: 0.55rem;
+}
+.raya-graph-canvas-legend h2 {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+.raya-graph-canvas-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.raya-graph-canvas-legend .raya-graph-chip {
+  min-height: 2rem;
+  padding: 0.2rem 0.55rem;
+}
+@media (max-width: 720px) {
+  .raya-graph-canvas-legend-items {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+  .raya-graph-canvas-legend .raya-graph-chip {
+    flex: 0 0 auto;
+  }
 }
 .raya-graph-edge-kind-filters {
   align-items: center;

@@ -1658,6 +1658,31 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in graph_script
 
 
+def test_graph_surface_exposes_canvas_group_legend(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    graph_html = (
+        course / "artifact" / "site" / "_raya" / "graph" / "index.html"
+    ).read_text(encoding="utf-8")
+    legend_start = graph_html.index('<section class="raya-graph-canvas-legend"')
+    legend_end = graph_html.index("</section>", legend_start) + len("</section>")
+    legend = graph_html[legend_start:legend_end]
+
+    assert 'aria-label="Graph group legend"' in legend
+    assert "<h2>Groups</h2>" in legend
+    assert legend.count('data-raya-graph-group-filter=') >= 2
+    assert "raya-graph-group-swatch" in legend
+    assert "raya-graph-canvas-legend-items" in legend
+    assert "https://cdn" not in graph_html
+    assert "cytoscape" not in graph_html.lower()
+    assert "localStorage" not in legend
+    assert "sessionStorage" not in legend
+    assert "fetch(" not in legend
+
+
 def test_build_writes_static_handout_print_css(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

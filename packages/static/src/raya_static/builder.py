@@ -4748,20 +4748,7 @@ def _render_graph_surface(
         official_by_page,
     )
     graph_payload = _json_script_text(browser_graph)
-    group_buttons = []
-    for index, group in enumerate(graph_index["groups"]):
-        group_color = GRAPH_GROUP_COLORS[index % len(GRAPH_GROUP_COLORS)]
-        group_buttons.append(
-            (
-                '<button class="raya-graph-chip" type="button" '
-                f'style="--raya-graph-group-color: {html.escape(group_color, quote=True)}" '
-                f'data-raya-graph-group-filter="{html.escape(group["id"], quote=True)}" '
-                'aria-pressed="true">'
-                '<span class="raya-graph-group-swatch" aria-hidden="true"></span>'
-                f"{html.escape(group['title'])}"
-                "</button>"
-            )
-        )
+    group_buttons = _graph_group_filter_buttons(graph_index["groups"])
     edge_counts: dict[str, int] = defaultdict(int)
     for edge in browser_graph["edges"]:
         edge_counts[str(edge["from"])] += 1
@@ -5027,6 +5014,15 @@ def _render_graph_surface(
                 '<button type="button" data-raya-graph-orientation-clear hidden>'
                 "Clear selection</button>"
                 "</p>"
+                "</section>"
+            ),
+            (
+                '<section class="raya-graph-canvas-legend" '
+                'aria-label="Graph group legend">'
+                "<h2>Groups</h2>"
+                '<div class="raya-graph-canvas-legend-items">'
+                + "\n".join(_graph_group_filter_buttons(graph_index["groups"]))
+                + "</div>"
                 "</section>"
             ),
             (
@@ -5415,6 +5411,24 @@ def _render_graph_surface(
             "",
         ]
     )
+
+
+def _graph_group_filter_buttons(groups: list[dict[str, Any]]) -> list[str]:
+    buttons: list[str] = []
+    for index, group in enumerate(groups):
+        group_color = GRAPH_GROUP_COLORS[index % len(GRAPH_GROUP_COLORS)]
+        buttons.append(
+            (
+                '<button class="raya-graph-chip" type="button" '
+                f'style="--raya-graph-group-color: {html.escape(group_color, quote=True)}" '
+                f'data-raya-graph-group-filter="{html.escape(str(group["id"]), quote=True)}" '
+                'aria-pressed="true">'
+                '<span class="raya-graph-group-swatch" aria-hidden="true"></span>'
+                f"{html.escape(str(group['title']))}"
+                "</button>"
+            )
+        )
+    return buttons
 
 
 def _browser_graph_payload(

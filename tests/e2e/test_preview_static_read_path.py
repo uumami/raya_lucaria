@@ -14479,6 +14479,172 @@ def test_render_fixture_graph_collapsed_rails_prioritize_canvas_space(
     }
 
 
+def test_graph_canvas_legend_remains_visible_when_pages_panel_collapses(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        base_url = handle.base_url
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    page.click('[data-raya-graph-toggle-panel="list"]')
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-list-state') === 'collapsed'"""
+                    )
+                    before = page.evaluate(
+                        """() => {
+                          const legend = document.querySelector('.raya-graph-canvas-legend');
+                          const firstButton = legend?.querySelector(
+                            '[data-raya-graph-group-filter]'
+                          );
+                          const canvas = document.querySelector('.raya-graph-canvas');
+                          const listBody = document.querySelector(
+                            '[data-raya-graph-panel-body="list"]'
+                          );
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  width: rect.width,
+                                  height: rect.height,
+                                }
+                              : null;
+                          };
+                          return {
+                            legend: box(legend),
+                            firstButton: box(firstButton),
+                            canvas: box(canvas),
+                            pressed: firstButton?.getAttribute('aria-pressed'),
+                            group: firstButton?.getAttribute(
+                              'data-raya-graph-group-filter'
+                            ),
+                            listHidden: listBody?.getAttribute('aria-hidden'),
+                            legendText: legend?.innerText || '',
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                    page.click(
+                        ".raya-graph-canvas-legend "
+                        "[data-raya-graph-group-filter]"
+                    )
+                    page.wait_for_function(
+                        """(group) => Array
+                          .from(document.querySelectorAll(
+                            `[data-raya-graph-group-filter="${group}"]`
+                          ))
+                          .every((button) => button.getAttribute('aria-pressed') === 'false')""",
+                        arg=before["group"],
+                    )
+                    after = page.evaluate(
+                        """(group) => Array
+                          .from(document.querySelectorAll(
+                            `[data-raya-graph-group-filter="${group}"]`
+                          ))
+                          .map((button) => button.getAttribute('aria-pressed'))""",
+                        arg=before["group"],
+                    )
+                finally:
+                    page.close()
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    mobile.goto(
+                        f"{base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(mobile)
+                    mobile_state = mobile.evaluate(
+                        """() => {
+                          const legend = document.querySelector('.raya-graph-canvas-legend');
+                          const firstButton = legend?.querySelector(
+                            '[data-raya-graph-group-filter]'
+                          );
+                          const canvas = document.querySelector('.raya-graph-canvas');
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  width: rect.width,
+                                  height: rect.height,
+                                }
+                              : null;
+                          };
+                          return {
+                            legend: box(legend),
+                            firstButton: box(firstButton),
+                            canvas: box(canvas),
+                            pressed: firstButton?.getAttribute('aria-pressed'),
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    mobile.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert requested_urls
+    assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+    assert before["listHidden"] == "true"
+    assert before["legend"] is not None
+    assert before["firstButton"] is not None
+    assert before["canvas"] is not None
+    assert before["pressed"] == "true"
+    assert before["legend"]["top"] < before["canvas"]["top"]
+    assert before["legend"]["bottom"] < before["canvas"]["top"] + 4
+    assert before["legend"]["height"] <= 120
+    assert before["firstButton"]["width"] > 32
+    assert before["firstButton"]["height"] > 24
+    assert before["overflow"] <= 1
+    assert "groups" in before["legendText"].lower()
+    assert after
+    assert set(after) == {"false"}
+    assert mobile_state["legend"] is not None
+    assert mobile_state["firstButton"] is not None
+    assert mobile_state["canvas"] is not None
+    assert mobile_state["legend"]["top"] < mobile_state["canvas"]["top"]
+    assert mobile_state["legend"]["height"] <= 150
+    assert mobile_state["firstButton"]["height"] > 24
+    assert mobile_state["overflow"] <= 1
+
+
 def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     tmp_path: Path,
 ) -> None:
