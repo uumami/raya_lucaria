@@ -295,7 +295,8 @@ raw TeX, cache keys, answer/support-only content, and learner state. Generated
 query context and context-panel summaries must remain transient. Exact Search
 page focus from `?page=<page-id>` may initially narrow visible results to one
 public page ID; Clear and Escape must restore all visible results without
-writing browser storage or changing source authority.
+writing browser storage or changing source authority, including when focus is
+on a visible result link or context action instead of the query input.
 Search result graph-focus links must come from stable page IDs and generated
 local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
 or progress language. Search, Graph, Practice, and Tasks discovery pages may load
@@ -307,8 +308,9 @@ When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
 Search or Graph. The destination workspace may initially narrow visible public
 task-family objects to the requested page, but Clear and Escape must restore the
 full static workspace without writing browser storage or changing source
-authority. Treat the page query as transient navigation context, not progress,
-recommendation, mastery, grading, or personal due state.
+authority. Escape must work from focused result links or context actions, not
+only from the query input. Treat the page query as transient navigation context,
+not progress, recommendation, mastery, grading, or personal due state.
 
 When changing Search or Graph discovery cards, verify that embedded payloads and
 visible cards use only public generated data: page title, nav title, stable ID,

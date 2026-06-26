@@ -335,6 +335,16 @@ _TASKS_JAVASCRIPT = r"""
     });
   });
 
+  function resetTasksWorkspace() {
+    input.value = "";
+    activeType = "all";
+    activePage = "";
+    activeIndex = -1;
+    if (sort) sort.value = "course";
+    render();
+    input.focus();
+  }
+
   input.addEventListener("input", () => {
     activeIndex = -1;
     render();
@@ -356,11 +366,7 @@ _TASKS_JAVASCRIPT = r"""
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
-      input.value = "";
-      activeType = "all";
-      activePage = "";
-      activeIndex = -1;
-      render();
+      resetTasksWorkspace();
     }
   });
 
@@ -372,16 +378,15 @@ _TASKS_JAVASCRIPT = r"""
   }
 
   if (clear) {
-    clear.addEventListener("click", () => {
-      input.value = "";
-      activeType = "all";
-      activePage = "";
-      activeIndex = -1;
-      if (sort) sort.value = "course";
-      render();
-      input.focus();
-    });
+    clear.addEventListener("click", resetTasksWorkspace);
   }
+  root.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    resetTasksWorkspace();
+  });
 
   render();
 })();

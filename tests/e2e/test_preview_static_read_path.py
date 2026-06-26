@@ -5707,6 +5707,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).count()
                             == 1
                         )
+                        search_focus_notice = page.locator(
+                            "[data-raya-search-page-focus]"
+                        )
                         exact_card = page.locator(
                             '[data-raya-search-result="authoring-matrix"]'
                         )
@@ -5724,9 +5727,6 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 "[data-raya-search-context-title]"
                             ).inner_text()
                         )
-                        search_focus_notice = page.locator(
-                            "[data-raya-search-page-focus]"
-                        )
                         assert search_focus_notice.is_visible()
                         assert "Focused on page" in search_focus_notice.inner_text()
                         assert (
@@ -5734,13 +5734,14 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             in search_focus_notice.inner_text()
                         )
                         assert "1 visible result" in search_focus_notice.inner_text()
-                        page.locator("#raya-search-input").focus()
-                        page.press("#raya-search-input", "Escape")
+                        exact_card.locator("a").first.focus()
+                        page.keyboard.press("Escape")
                         page.wait_for_function(
-                            """() => document
-                              .querySelector('#raya-search-status')
-                              ?.textContent
-                              ?.includes('visible result')"""
+                            """() => document.activeElement?.id === 'raya-search-input'
+                              && document
+                                .querySelector('#raya-search-status')
+                                ?.textContent
+                                ?.includes('visible result')"""
                         )
                         assert (
                             page.locator(
@@ -5748,6 +5749,15 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             ).count()
                             > 1
                         )
+                        assert (
+                            page.locator(
+                                '#raya-search-results [data-raya-search-active="true"]'
+                            ).count()
+                            == 0
+                        )
+                        assert page.locator(
+                            "[data-raya-search-context-actions]"
+                        ).is_hidden()
                         assert search_focus_notice.is_hidden()
                         page.goto(
                             (
@@ -6222,6 +6232,46 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             )
                             == [[], []]
                         )
+                        page.click('[data-raya-practice-filter="quiz"]')
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-practice-status')
+                              ?.textContent
+                              ?.includes('1 visible practice object')"""
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_hidden()
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-quiz"]'
+                        ).is_visible()
+                        page.locator(
+                            '[data-raya-practice-object="first-topic-quiz"] '
+                            ".raya-practice-open"
+                        ).focus()
+                        page.keyboard.press("Escape")
+                        page.wait_for_function(
+                            """() => document.activeElement?.id === 'raya-practice-search'
+                              && document
+                                .querySelector('#raya-practice-status')
+                                ?.textContent
+                                ?.includes('3 visible practice object')"""
+                        )
+                        assert practice_focus_notice.is_hidden()
+                        assert (
+                            page.locator('[data-raya-practice-active="true"]').count()
+                            == 0
+                        )
+                        assert (
+                            page.locator(
+                                '[data-raya-practice-filter="all"]'
+                            ).get_attribute("aria-pressed")
+                            == "true"
+                        )
+                        assert page.locator(
+                            '[data-raya-practice-object="first-topic-card"]'
+                        ).is_visible()
+                        assert practice_context_actions.is_hidden()
                         page.click("#raya-practice-clear")
                         page.wait_for_function(
                             """() => document
@@ -6586,6 +6636,68 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             )
                             assert scoped_tasks.evaluate("() => localStorage.length") == 0
                             assert scoped_tasks.evaluate("() => sessionStorage.length") == 0
+                            scoped_tasks.click('[data-raya-task-filter="assignment"]')
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('1 visible task')"""
+                            )
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="unit-project"]'
+                            ).is_hidden()
+                            scoped_tasks.select_option("#raya-tasks-sort", "due")
+                            scoped_tasks.locator(
+                                '[data-raya-task-object="unit-assignment"] '
+                                ".raya-task-open"
+                            ).focus()
+                            scoped_tasks.keyboard.press("Escape")
+                            scoped_tasks.wait_for_function(
+                                """() => document.activeElement?.id === 'raya-tasks-search'
+                                  && document
+                                    .querySelector('#raya-tasks-status')
+                                    ?.textContent
+                                    ?.includes('5 visible tasks')"""
+                            )
+                            assert scoped_tasks.input_value("#raya-tasks-search") == ""
+                            assert (
+                                scoped_tasks.locator("#raya-tasks-sort").input_value()
+                                == "course"
+                            )
+                            assert (
+                                scoped_tasks.locator(
+                                    '[data-raya-task-filter="all"]'
+                                ).get_attribute("aria-pressed")
+                                == "true"
+                            )
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="extension-assignment"]'
+                            ).is_visible()
+                            assert scoped_tasks.locator(
+                                '[data-raya-task-object="unit-project"]'
+                            ).is_visible()
+                            assert tasks_focus_notice.is_hidden()
+                            assert (
+                                scoped_tasks.locator(
+                                    '[data-raya-task-active="true"]'
+                                ).count()
+                                == 0
+                            )
+                            assert scoped_task_actions.is_hidden()
+                            scoped_tasks.goto(
+                                f"{base_url}/_raya/tasks/index.html?page=first-topic",
+                                wait_until="networkidle",
+                            )
+                            scoped_tasks.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-tasks-status')
+                                  ?.textContent
+                                  ?.includes('4 visible tasks')"""
+                            )
+                            tasks_focus_notice = scoped_tasks.locator(
+                                "[data-raya-tasks-page-focus]"
+                            )
+                            assert tasks_focus_notice.is_visible()
                             scoped_tasks.locator("#raya-tasks-search").focus()
                             scoped_tasks.press("#raya-tasks-search", "Escape")
                             scoped_tasks.wait_for_function(
@@ -6893,6 +7005,76 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 ).evaluate("node => node.href").endswith(
                                     "/_raya/graph/index.html?page=first-topic"
                                 )
+                                scoped_schedule.click(
+                                    '[data-raya-schedule-kind-filter="due"]'
+                                )
+                                scoped_schedule.click(
+                                    '[data-raya-schedule-type-filter="assignment"]'
+                                )
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('1 visible schedule item')"""
+                                )
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="unit-project"]'
+                                ).is_hidden()
+                                scoped_schedule.locator(
+                                    '[data-raya-schedule-item="unit-assignment"] '
+                                    ".raya-schedule-open"
+                                ).focus()
+                                scoped_schedule.keyboard.press("Escape")
+                                scoped_schedule.wait_for_function(
+                                    """() => document.activeElement?.id === 'raya-schedule-search'
+                                      && document
+                                        .querySelector('#raya-schedule-status')
+                                        ?.textContent
+                                        ?.includes('4 visible schedule items')"""
+                                )
+                                assert scoped_schedule.input_value(
+                                    "#raya-schedule-search"
+                                ) == ""
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="extension-assignment"]'
+                                ).is_visible()
+                                assert scoped_schedule.locator(
+                                    '[data-raya-schedule-item="unit-project"]'
+                                ).is_visible()
+                                assert (
+                                    scoped_schedule.locator(
+                                        '[data-raya-schedule-kind-filter="all"]'
+                                    ).get_attribute("aria-pressed")
+                                    == "true"
+                                )
+                                assert (
+                                    scoped_schedule.locator(
+                                        '[data-raya-schedule-type-filter="all"]'
+                                    ).get_attribute("aria-pressed")
+                                    == "true"
+                                )
+                                assert schedule_focus_notice.is_hidden()
+                                assert (
+                                    scoped_schedule.locator(
+                                        '[data-raya-schedule-active="true"]'
+                                    ).count()
+                                    == 0
+                                )
+                                assert scoped_schedule_actions.is_hidden()
+                                scoped_schedule.goto(
+                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
+                                    wait_until="networkidle",
+                                )
+                                scoped_schedule.wait_for_function(
+                                    """() => document
+                                      .querySelector('#raya-schedule-status')
+                                      ?.textContent
+                                      ?.includes('3 visible schedule items')"""
+                                )
+                                schedule_focus_notice = scoped_schedule.locator(
+                                    "[data-raya-schedule-page-focus]"
+                                )
+                                assert schedule_focus_notice.is_visible()
                                 scoped_schedule.click("#raya-schedule-clear")
                                 scoped_schedule.wait_for_function(
                                     """() => document

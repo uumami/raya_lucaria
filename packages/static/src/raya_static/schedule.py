@@ -341,6 +341,16 @@ _SCHEDULE_JAVASCRIPT = r"""
     });
   });
 
+  function resetScheduleWorkspace() {
+    input.value = "";
+    activeType = "all";
+    activeKind = "all";
+    activePage = "";
+    activeIndex = -1;
+    render();
+    input.focus();
+  }
+
   input.addEventListener("input", () => {
     activeIndex = -1;
     render();
@@ -362,26 +372,20 @@ _SCHEDULE_JAVASCRIPT = r"""
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
-      input.value = "";
-      activeType = "all";
-      activeKind = "all";
-      activePage = "";
-      activeIndex = -1;
-      render();
+      resetScheduleWorkspace();
     }
   });
 
   if (clear) {
-    clear.addEventListener("click", () => {
-      input.value = "";
-      activeType = "all";
-      activeKind = "all";
-      activePage = "";
-      activeIndex = -1;
-      render();
-      input.focus();
-    });
+    clear.addEventListener("click", resetScheduleWorkspace);
   }
+  root.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    resetScheduleWorkspace();
+  });
 
   render();
 })();

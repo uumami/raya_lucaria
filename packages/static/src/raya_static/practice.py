@@ -304,11 +304,13 @@ _PRACTICE_JAVASCRIPT = r"""
     });
   });
 
-  function resetPracticeFocus() {
+  function resetPracticeWorkspace() {
     input.value = "";
     activeType = "all";
     activePage = "";
     activeIndex = -1;
+    render();
+    input.focus();
   }
 
   input.addEventListener("input", () => {
@@ -332,18 +334,20 @@ _PRACTICE_JAVASCRIPT = r"""
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
-      resetPracticeFocus();
-      render();
+      resetPracticeWorkspace();
     }
   });
 
   if (clear) {
-    clear.addEventListener("click", () => {
-      resetPracticeFocus();
-      render();
-      input.focus();
-    });
+    clear.addEventListener("click", resetPracticeWorkspace);
   }
+  root.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    resetPracticeWorkspace();
+  });
 
   render();
 })();

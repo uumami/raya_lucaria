@@ -156,6 +156,12 @@ Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
 coincidencia es comportamiento local de la pagina, no ranking, personalizacion
 ni recomendacion.
+Cuando uno de esos workspaces abre enfocado en una pagina, puede mostrar un
+aviso pequeno con el nombre de esa pagina y el numero de resultados visibles.
+Clear o Escape quitan ese foco y vuelven al workspace estatico completo,
+incluso cuando el foco de teclado esta en un resultado visible o una accion de
+contexto en vez del campo de busqueda. El aviso no es progreso guardado ni una
+recomendacion.
 Los paneles de contexto tambien pueden mostrar links estaticos directos para el
 resultado, objeto, task o item de Schedule activo, como Open page, View graph u
 otro workspace enfocado en la misma pagina. Son atajos de navegacion sobre datos

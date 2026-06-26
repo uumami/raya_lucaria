@@ -330,7 +330,9 @@ del estudiante. El contexto de consulta generado y los resumenes del panel de
 contexto deben permanecer transitorios. El foco exacto de pagina Search desde
 `?page=<page-id>` puede reducir inicialmente los resultados visibles a un ID
 publico de pagina; Clear y Escape deben restaurar todos los resultados visibles
-sin escribir storage del navegador ni cambiar autoridad de fuente. Los enlaces
+sin escribir storage del navegador ni cambiar autoridad de fuente, incluso
+cuando el foco esta en un link de resultado visible o una accion de contexto en
+vez del input de busqueda. Los enlaces
 graph-focus de resultados de busqueda deben venir de stable IDs y URLs locales
 generadas del grafo, preservar Enter para abrir la pagina, y evitar lenguaje de
 recomendacion o progreso. Las paginas de descubrimiento Search, Graph, Practice
@@ -349,8 +351,9 @@ inicialmente los objetos publicos de la familia task a la pagina solicitada,
 mostrar un aviso compacto con el titulo publico de la pagina y el conteo
 visible, pero Clear y Escape deben ocultar ese aviso y restaurar el workspace
 estatico completo sin escribir storage del navegador ni cambiar la autoridad de
-fuente. Trata el query de
-pagina como contexto transitorio de navegacion, no como progreso,
+fuente. Escape debe funcionar desde links de resultados o acciones de contexto
+enfocados, no solo desde el input de busqueda. Trata el query de pagina como
+contexto transitorio de navegacion, no como progreso,
 recomendacion, dominio, calificacion ni estado personal de fechas.
 
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads

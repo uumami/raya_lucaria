@@ -430,6 +430,13 @@ _SEARCH_JAVASCRIPT = r"""
   if (clear) {
     clear.addEventListener("click", clearSearch);
   }
+  root.addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.key !== "Escape") {
+      return;
+    }
+    event.preventDefault();
+    clearSearch();
+  });
   const params = initialParams();
   activePage = params.page;
   input.value = params.query;

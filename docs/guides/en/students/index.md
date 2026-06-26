@@ -144,8 +144,9 @@ tags, summaries, labels, and visible object text. That matching is local page
 behavior, not ranking, personalization, or recommendation.
 When one of those workspaces opens focused on a page, it may show a small notice
 naming that page and the number of visible results. Clear or Escape removes the
-focus and returns to the full static workspace; the notice is not saved progress
-or a recommendation.
+focus and returns to the full static workspace, even when keyboard focus is on a
+visible result or context action instead of the search field. The notice is not
+saved progress or a recommendation.
 Context panels may also show direct static links for the active result, object,
 task, or schedule item, such as Open page, View graph, or another workspace
 focused on the same page. These are navigation shortcuts over public generated
