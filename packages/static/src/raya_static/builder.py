@@ -3017,6 +3017,9 @@ def _render_page_brief(
     position = _page_position(page, content_model)
     if position:
         facts.append(_page_brief_fact("Position", html.escape(position), "position"))
+    sequence_links = _page_brief_sequence_links(page, content_model)
+    if sequence_links:
+        facts.append(_page_brief_fact("Learning path", sequence_links, "path"))
     if estimated_reading_time is not None:
         label, value = estimated_reading_time
         facts.append(
@@ -3107,6 +3110,10 @@ def _page_brief_prerequisite_links(
         title = target.nav_title or target.title
         links.append(f'<a href="{html.escape(href)}">{html.escape(title)}</a>')
     return ", ".join(links)
+
+
+def _page_brief_sequence_links(page: ContentPage, content_model: ContentModel) -> str:
+    return _sequence_links(page, content_model)
 
 
 def _page_brief_connection_text(

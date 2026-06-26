@@ -4712,8 +4712,36 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.raya-page-brief-path .raya-page-brief-value,
+.raya-page-brief-prerequisites .raya-page-brief-value,
+.raya-page-brief-connections .raya-page-brief-value,
+.raya-page-brief-practice .raya-page-brief-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
 .raya-page-brief-value a {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 76%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 54%, var(--raya-color-border));
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
   font-weight: 800;
+  line-height: 1.15;
+  max-width: 100%;
+  min-height: 1.9rem;
+  overflow-wrap: anywhere;
+  padding: 0.34rem 0.58rem;
+  text-decoration: none;
+}
+.raya-page-brief-value a:hover {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 62%, var(--raya-color-surface));
+  border-color: var(--raya-color-accent);
+}
+.raya-page-brief-value a:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
 }
 .raya-page-brief-tag {
   display: inline-block;

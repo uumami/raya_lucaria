@@ -12762,6 +12762,107 @@ def test_preview_reader_page_brief_is_visible_static_and_responsive(
         handle.close()
 
 
+def test_render_fixture_page_brief_exposes_learning_path_actions(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request", lambda request: requested_urls.append(request.url)
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/static-path/index.html",
+                            wait_until="networkidle",
+                        )
+                        requested_urls.clear()
+                        _assert_no_horizontal_overflow(page)
+                        brief = page.locator(".raya-page-brief")
+                        path_fact = brief.locator(".raya-page-brief-path")
+                        previous = path_fact.locator("[rel='prev']")
+                        next_link = path_fact.locator("[rel='next']")
+                        assert path_fact.is_visible()
+                        assert "learning path" in path_fact.inner_text().lower()
+                        assert previous.get_attribute("data-raya-prev-page") == ""
+                        assert previous.get_attribute("aria-keyshortcuts") == (
+                            "ArrowLeft"
+                        )
+                        assert next_link.get_attribute("data-raya-next-page") == ""
+                        assert next_link.get_attribute("aria-keyshortcuts") == (
+                            "ArrowRight"
+                        )
+                        assert previous.get_attribute("href") == "../index.html"
+                        assert next_link.get_attribute("href") == (
+                            "../math-authoring/index.html"
+                        )
+                        state = path_fact.evaluate(
+                            """(node) => {
+                              const previous = node.querySelector('[rel="prev"]');
+                              const graph = document.querySelector(
+                                '.raya-page-brief-connections a'
+                              );
+                              const previousStyle = getComputedStyle(previous);
+                              const graphStyle = getComputedStyle(graph);
+                              return {
+                                text: node.textContent,
+                                previousDisplay: previousStyle.display,
+                                previousBorderStyle: previousStyle.borderTopStyle,
+                                previousBackgroundColor: previousStyle.backgroundColor,
+                                previousTextDecoration: previousStyle.textDecorationLine,
+                                graphDisplay: graphStyle.display,
+                                graphBorderStyle: graphStyle.borderTopStyle,
+                              };
+                            }"""
+                        )
+                        assert state["previousDisplay"] in {"inline-flex", "flex"}
+                        assert state["previousBorderStyle"] == "solid"
+                        assert state["previousBackgroundColor"] != (
+                            "rgba(0, 0, 0, 0)"
+                        )
+                        assert state["previousTextDecoration"] == "none"
+                        assert state["graphDisplay"] in {"inline-flex", "flex"}
+                        assert state["graphBorderStyle"] == "solid"
+                        assert "progress" not in state["text"].lower()
+                        assert "recommend" not in state["text"].lower()
+                        assert "complete" not in state["text"].lower()
+                        box = brief.bounding_box()
+                        assert box is not None
+                        assert box["width"] <= viewport["width"]
+                        if viewport["width"] <= 480:
+                            assert box["y"] < viewport["height"]
+                        assert requested_urls == []
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
