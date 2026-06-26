@@ -4166,6 +4166,64 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
         handle.close()
 
 
+def test_render_fixture_graph_guide_uses_viewport_specific_movement_guidance(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                desktop = browser.new_page(viewport={"width": 1440, "height": 950})
+                mobile = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    desktop.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    mobile.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(desktop)
+                    _assert_no_horizontal_overflow(mobile)
+
+                    desktop_guide = desktop.locator(
+                        "[data-raya-graph-guide]"
+                    ).inner_text()
+                    mobile_guide = mobile.locator(
+                        "[data-raya-graph-guide]"
+                    ).inner_text()
+
+                    assert "On desktop, drag pages to tidy the map" in desktop_guide
+                    assert "Use Fit, zoom, and pan controls" not in desktop_guide
+                    assert "On desktop, drag pages to tidy the map" not in mobile_guide
+                    assert "Use Fit, zoom, and pan controls" in mobile_guide
+                    assert "Reset graph restores the generated layout" in mobile_guide
+                finally:
+                    desktop.close()
+                    mobile.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
     tmp_path: Path,
 ) -> None:

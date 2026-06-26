@@ -2394,9 +2394,18 @@ img {
   line-height: 1.24;
   margin: 0;
 }
+.raya-graph-guide-mobile {
+  display: none;
+}
 @media (max-width: 900px) {
   .raya-graph-guide {
     grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+  .raya-graph-guide-desktop {
+    display: none;
+  }
+  .raya-graph-guide-mobile {
+    display: inline;
   }
 }
 .raya-graph-detail {

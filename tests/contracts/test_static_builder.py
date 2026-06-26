@@ -1114,8 +1114,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Pan, zoom, and fit change only this SVG viewport." in graph_html
     assert (
         "<h3>Move</h3><p>Pan, zoom, and fit change only this SVG viewport. "
-        "Fit selection frames context. On desktop, drag pages to tidy the "
-        "map; Reset graph restores the generated layout.</p>"
+        'Fit selection frames context. <span class="raya-graph-guide-desktop">'
+        "On desktop, drag pages to tidy the map; </span>"
+        '<span class="raya-graph-guide-mobile">Use Fit, zoom, and pan controls; '
+        "</span>Reset graph restores the generated layout.</p>"
     ) in graph_html
     assert "Filters hide visible graph marks only." in graph_html
     assert "raya-graph-inspection-preview" in graph_html
