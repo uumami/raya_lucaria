@@ -3707,6 +3707,82 @@ def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
         handle.close()
 
 
+def test_preview_graph_workspace_starts_in_first_desktop_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    probe = page.evaluate(
+                        """() => {
+                          const workspace = document.querySelector('.raya-graph-workspace');
+                          const mapPanel = document.querySelector('.raya-graph-map-panel');
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const toolbar = document.querySelector('.raya-graph-toolbar');
+                          const instructions = document.querySelector('.raya-graph-instructions');
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? { top: rect.top, bottom: rect.bottom, height: rect.height }
+                              : null;
+                          };
+                          return {
+                            workspace: box(workspace),
+                            mapPanel: box(mapPanel),
+                            canvas: box(canvas),
+                            toolbar: box(toolbar),
+                            instructions: box(instructions),
+                            viewportHeight: window.innerHeight,
+                            nodes: document.querySelectorAll('#raya-graph-canvas [data-raya-graph-node]').length,
+                            edges: document.querySelectorAll('#raya-graph-canvas [data-raya-graph-edge]').length,
+                            rootLayout: document.querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-layout'),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["rootLayout"] == "connections"
+    assert probe["nodes"] >= 6
+    assert probe["edges"] >= 10
+    assert probe["toolbar"]["height"] <= 125
+    assert probe["instructions"]["height"] <= 36
+    assert probe["workspace"]["top"] < 340
+    assert probe["mapPanel"]["top"] < 360
+    assert probe["canvas"]["top"] < 520
+    assert probe["canvas"]["bottom"] <= probe["viewportHeight"] + 260
+    assert probe["canvas"]["height"] >= 420
+
+
 def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

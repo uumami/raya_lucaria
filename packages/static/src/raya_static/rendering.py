@@ -774,6 +774,34 @@ img {
 .raya-practice-header {
   max-width: 72rem;
 }
+.raya-graph-page {
+  padding-top: 0.75rem;
+}
+.raya-graph-header {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  max-width: none;
+}
+.raya-graph-header h1 {
+  margin: 0;
+}
+.raya-graph-header p {
+  color: var(--raya-color-muted);
+  flex: 1 1 24rem;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.raya-graph-controls.raya-graph-toolbar,
+.raya-graph-instructions {
+  margin-bottom: 0.55rem;
+}
+.raya-graph-instructions {
+  color: var(--raya-color-muted);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
 .raya-graph-orientation {
   background: color-mix(
     in srgb,
@@ -785,8 +813,11 @@ img {
   display: grid;
   font-size: 0.875rem;
   gap: 0.35rem 0.75rem;
-  margin-bottom: 0.75rem;
-  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.55rem;
+}
+.raya-graph-status {
+  margin-bottom: 0.45rem;
 }
 .raya-graph-orientation-main {
   align-items: baseline;
@@ -900,7 +931,7 @@ img {
   display: grid;
   gap: var(--raya-space-block);
   grid-template-columns: minmax(16rem, 22rem) minmax(34rem, 1fr) minmax(18rem, 24rem);
-  margin-top: var(--raya-space-block);
+  margin-top: 0.55rem;
 }
 .raya-graph-list-panel,
 .raya-graph-map-panel,
@@ -1070,20 +1101,21 @@ img {
   background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
   border-radius: 0.5rem;
-  padding: 0.65rem;
+  gap: 0.5rem;
+  padding: 0.5rem;
 }
 .raya-graph-toolbar-group {
   align-items: center;
   border-right: 1px solid var(--raya-color-border);
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding-right: 0.75rem;
+  gap: 0.4rem;
+  padding-right: 0.55rem;
 }
 .raya-graph-toolbar-label {
   color: var(--raya-color-text-muted);
-  flex: 0 0 100%;
-  font-size: 0.76rem;
+  flex: 0 0 auto;
+  font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.2;
@@ -1094,12 +1126,12 @@ img {
   padding-right: 0;
 }
 .raya-graph-toolbar-primary {
-  align-items: end;
+  align-items: center;
   flex: 1 1 28rem;
 }
 .raya-graph-toolbar-primary input {
-  flex: 1 1 16rem;
-  min-width: min(16rem, 100%);
+  flex: 1 1 12rem;
+  min-width: min(12rem, 100%);
 }
 .raya-graph-toolbar-viewport,
 .raya-graph-toolbar-state {
@@ -1170,6 +1202,13 @@ img {
 .raya-graph-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.52;
+}
+.raya-graph-controls input,
+.raya-graph-controls select,
+.raya-graph-controls button,
+.raya-graph-chip {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
 }
 .raya-search-controls input {
   min-width: 0;
@@ -1785,12 +1824,17 @@ img {
 .raya-search-results-panel,
 .raya-practice-results-panel,
 .raya-tasks-results-panel,
-.raya-schedule-results-panel,
-.raya-graph-map-panel {
+.raya-schedule-results-panel {
   background: var(--raya-color-surface);
   border-color: color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-page));
   box-shadow: 0 1rem 2.5rem rgba(31, 35, 40, 0.06);
   padding: 1rem;
+}
+.raya-graph-map-panel {
+  background: var(--raya-color-surface);
+  border-color: color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-page));
+  box-shadow: 0 1rem 2.5rem rgba(31, 35, 40, 0.06);
+  padding: 0.75rem;
 }
 .raya-search-control-panel h2,
 .raya-search-context-panel h2,
