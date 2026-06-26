@@ -6745,8 +6745,30 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               const commandTops = visibleCommands.map(
                                 (item) => Math.round(item.getBoundingClientRect().top)
                               );
+                              const groups = Array.from(
+                                document.querySelectorAll('[data-raya-command-group]')
+                              ).map((group) => ({
+                                kind: group.getAttribute('data-raya-command-group'),
+                                label: group.getAttribute('aria-label'),
+                                role: group.getAttribute('role'),
+                                classes: Array.from(
+                                  group.querySelectorAll('.raya-command')
+                                ).map((command) => Array.from(command.classList)
+                                  .find((name) => name.startsWith('raya-command-')
+                                    && name !== 'raya-command-icon'
+                                    && name !== 'raya-command-label')),
+                                box: (() => {
+                                  const rect = group.getBoundingClientRect();
+                                  return {
+                                    left: rect.left,
+                                    right: rect.right,
+                                    width: rect.width,
+                                  };
+                                })(),
+                              }));
                               return {
                                 count: commands.length,
+                                groups,
                                 visibleCount: visibleCommands.length,
                                 minHeights: visibleCommands.map(
                                   (item) => item.getBoundingClientRect().height
@@ -6877,6 +6899,41 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         }"""
                         )
                         assert state["count"] == 10
+                        assert [group["kind"] for group in state["groups"]] == [
+                            "discovery",
+                            "layout",
+                            "comfort",
+                        ]
+                        assert [group["label"] for group in state["groups"]] == [
+                            "Discovery workspaces",
+                            "Reader layout",
+                            "Reading comfort",
+                        ]
+                        assert [group["role"] for group in state["groups"]] == [
+                            "group",
+                            "group",
+                            "group",
+                        ]
+                        assert state["groups"][0]["classes"] == [
+                            "raya-command-search",
+                            "raya-command-graph",
+                            "raya-command-practice",
+                            "raya-command-tasks",
+                            "raya-command-schedule",
+                        ]
+                        assert state["groups"][1]["classes"] == [
+                            "raya-command-map",
+                            "raya-command-focus",
+                            "raya-command-context",
+                        ]
+                        assert state["groups"][2]["classes"] == [
+                            "raya-command-size",
+                            "raya-command-font",
+                        ]
+                        for group in state["groups"]:
+                            assert group["box"]["left"] >= 0
+                            assert group["box"]["right"] <= state["viewportWidth"]
+                            assert group["box"]["width"] > 0
                         assert state["visibleCount"] == (
                             9 if viewport["width"] >= 1280 else 7
                         )

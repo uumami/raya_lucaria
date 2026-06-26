@@ -797,9 +797,28 @@ img {
   align-items: center;
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
   justify-content: flex-end;
   min-width: 0;
+}
+.raya-command-group {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 76%, transparent);
+  border-radius: 0.55rem;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0.2rem;
+}
+.raya-command-group-discovery {
+  flex: 1 1 auto;
+}
+.raya-command-group-layout,
+.raya-command-group-comfort {
+  flex: 0 0 auto;
 }
 .raya-command-search-form {
   align-items: center;
@@ -3992,9 +4011,16 @@ html[data-raya-course-map-scroll-lock="true"] body {
     display: none;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+    align-items: stretch;
     flex-wrap: wrap;
     justify-content: flex-start;
     overflow-x: visible;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+    flex-wrap: wrap;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-discovery {
+    flex: 1 1 100%;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
     order: -1;
@@ -5103,6 +5129,8 @@ mjx-container[display="true"] {
   .raya-top-command-bar-inner {
     align-items: stretch;
     display: grid;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
   }
   .raya-reading-context {
     display: grid;
@@ -5131,9 +5159,29 @@ mjx-container[display="true"] {
     justify-content: flex-start;
     overflow-x: visible;
   }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+    gap: 0.25rem;
+    padding: 0.15rem;
+    width: 100%;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-layout,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort {
+    flex: 1 1 auto;
+    width: auto;
+  }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+    min-height: 2.25rem;
     min-width: 2.5rem;
     padding: 0.45rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-icon {
+    height: 1.35rem;
+    width: 1.35rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-input,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-submit {
+    height: 2.25rem;
+    min-height: 2.25rem;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map {
     font-size: 0;

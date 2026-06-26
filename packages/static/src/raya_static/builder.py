@@ -1063,6 +1063,12 @@ def _render_top_command_bar(
             '<div class="raya-top-command-bar-inner">',
             _render_reading_context(course_title, page, content_model, toc_html),
             '<div class="raya-course-tools">',
+            (
+                '<div class="raya-command-group raya-command-group-discovery" '
+                'data-raya-command-group="discovery" '
+                'role="group" '
+                'aria-label="Discovery workspaces">'
+            ),
             _render_command_search_form(search_href),
             _render_command_link(
                 class_name="raya-command raya-command-search",
@@ -1099,6 +1105,13 @@ def _render_top_command_bar(
                 icon="schedule",
                 label="Schedule",
             ),
+            "</div>",
+            (
+                '<div class="raya-command-group raya-command-group-layout" '
+                'data-raya-command-group="layout" '
+                'role="group" '
+                'aria-label="Reader layout">'
+            ),
             _render_course_map_toggle(
                 "Course map",
                 class_name="raya-command raya-command-map raya-course-map-toggle",
@@ -1124,6 +1137,13 @@ def _render_top_command_bar(
                     'aria-expanded="true"'
                 ),
             ),
+            "</div>",
+            (
+                '<div class="raya-command-group raya-command-group-comfort" '
+                'data-raya-command-group="comfort" '
+                'role="group" '
+                'aria-label="Reading comfort">'
+            ),
             _render_command_button(
                 class_name="raya-command raya-command-size raya-text-size-toggle",
                 aria_label="Text size: normal",
@@ -1138,6 +1158,7 @@ def _render_top_command_bar(
                 label="OpenDyslexic",
                 aria_pressed="false",
             ),
+            "</div>",
             "</div>",
             "</div>",
             "</header>",
