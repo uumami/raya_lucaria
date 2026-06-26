@@ -131,6 +131,7 @@ _GRAPH_JAVASCRIPT = r"""
     "[data-raya-graph-orientation-neighborhood-toggle]"
   );
   const orientationClear = document.querySelector("[data-raya-graph-orientation-clear]");
+  const arrangementStatus = document.querySelector("[data-raya-graph-arrangement-status]");
 
   if (!root || !dataEl || !canvas || !list) {
     return;
@@ -1220,6 +1221,17 @@ _GRAPH_JAVASCRIPT = r"""
     }
   }
 
+  function syncGraphArrangementStatus() {
+    if (!arrangementStatus) return;
+    const arrangedCount = manualNodePositions.size;
+    arrangementStatus.hidden = arrangedCount === 0;
+    if (arrangedCount > 0) {
+      arrangementStatus.textContent = arrangedCount === 1
+        ? "Manual arrangement active for 1 page. Reset graph restores the generated layout."
+        : `Manual arrangement active for ${arrangedCount} pages. Reset graph restores the generated layout.`;
+    }
+  }
+
   function resetGraphView() {
     if (!fullViewBox) return;
     setGraphViewBox({ ...fullViewBox });
@@ -1633,6 +1645,7 @@ _GRAPH_JAVASCRIPT = r"""
     const nextPoint = constrainGraphPoint(point);
     latestRenderedPositions.set(nodeId, nextPoint);
     manualNodePositions.set(nodeId, nextPoint);
+    syncGraphArrangementStatus();
     canvas.querySelectorAll("[data-raya-graph-node]").forEach((link) => {
       if ((link.getAttribute("data-raya-graph-node") || "") !== nodeId) return;
       const group = link.querySelector("g");
@@ -2724,6 +2737,7 @@ _GRAPH_JAVASCRIPT = r"""
       pendingInitialPageFit = false;
       latestRenderedPositions = new Map();
       latestRenderedEdges = [];
+      syncGraphArrangementStatus();
       hideGraphPreviewBubble();
       setGraphViewportControlsEnabled(false);
       setFitSelectionEnabled();
@@ -2749,6 +2763,7 @@ _GRAPH_JAVASCRIPT = r"""
       }
     });
     latestRenderedEdges = activeEdges;
+    syncGraphArrangementStatus();
 
     fullViewBox = nextFullViewBox;
     if (!graphViewBox) {

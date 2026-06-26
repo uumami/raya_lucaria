@@ -1386,6 +1386,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.value === 'connections'"""
                         )
                         if viewport["width"] >= 1280:
+                            arrangement_status = page.locator(
+                                "[data-raya-graph-arrangement-status]"
+                            )
+                            assert arrangement_status.is_hidden()
                             drag_target = "authoring-matrix"
                             drag_edge = page.locator(
                                 "#raya-graph-canvas "
@@ -1436,6 +1440,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert drag_after[0] > drag_start[0] + 20
                             assert drag_after[1] > drag_start[1] + 15
                             assert page.url == graph_url_before_drag
+                            assert arrangement_status.is_visible()
+                            assert "Manual arrangement" in arrangement_status.inner_text()
+                            assert "Reset graph" in arrangement_status.inner_text()
                             assert (
                                 page.locator("#raya-graph-data").text_content()
                                 == graph_data_before_drag
@@ -1451,6 +1458,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert drag_edge_after != drag_edge_before
                             page.click("#graph-fit")
                             assert _graph_node_translate(page, drag_target) == drag_after
+                            assert arrangement_status.is_visible()
                             assert (
                                 drag_edge.evaluate(
                                     """node => ({
@@ -1489,12 +1497,14 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 }""",
                                 arg=drag_target,
                             )
+                            assert arrangement_status.is_visible()
                             page.click("#graph-reset")
                             page.wait_for_function(
                                 """() => document
                                   .querySelector('#graph-search')
                                   ?.value === ''"""
                             )
+                            assert arrangement_status.is_hidden()
                             assert page.evaluate(
                                 "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
                             ) == [[], []]
@@ -1617,6 +1627,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 arg=drag_target,
                             )
                             page.select_option("#graph-layout", "topology")
+                            assert arrangement_status.is_hidden()
                             page.wait_for_function(
                                 """nodeId => {
                                   const transform = document
@@ -3896,7 +3907,7 @@ def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
                     node = page.locator(
                         '#raya-graph-canvas [data-raya-graph-node="render-root"]'
                     )
-                    node.hover()
+                    node.locator(".raya-graph-node-hit").hover()
                     expect(bubble).to_be_visible()
                     expect(
                         page.locator("[data-raya-graph-preview-title]")

@@ -834,6 +834,20 @@ img {
 .raya-graph-status {
   margin: 0 0 0.45rem;
 }
+.raya-graph-arrangement-status {
+  background: color-mix(in srgb, var(--raya-color-warning-soft) 70%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-warning) 44%, var(--raya-color-border));
+  border-left: 0.25rem solid var(--raya-color-warning);
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  font-size: 0.86rem;
+  font-weight: 750;
+  margin: 0 0 0.65rem;
+  padding: 0.5rem 0.65rem;
+}
+.raya-graph-arrangement-status[hidden] {
+  display: none;
+}
 .raya-graph-orientation-main {
   align-items: baseline;
   display: flex;

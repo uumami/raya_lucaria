@@ -4523,6 +4523,12 @@ def _render_graph_surface(
             '<section class="raya-graph-map-panel" aria-label="Course graph map">',
             '<p id="graph-status" class="raya-graph-status" aria-live="polite"></p>',
             (
+                '<p class="raya-graph-arrangement-status" '
+                'data-raya-graph-arrangement-status aria-live="polite" hidden>'
+                "Manual arrangement active. Reset graph restores the generated layout."
+                "</p>"
+            ),
+            (
                 '<section class="raya-graph-orientation" '
                 'data-raya-graph-orientation aria-label="Graph orientation">'
                 '<div class="raya-graph-orientation-main">'
