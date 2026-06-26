@@ -13345,6 +13345,93 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     assert probe["firstPanelBody"]["bottom"] < probe["viewportHeight"]
 
 
+def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    requested_urls: list[str] = []
+                    page.on("request", lambda request: requested_urls.append(request.url))
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    probe = page.evaluate(
+                        """() => {
+                          const panel = document.querySelector('.raya-page-reading-flow');
+                          const previous = panel?.querySelector('[data-raya-prev-page]');
+                          const next = panel?.querySelector('[data-raya-next-page]');
+                          const graph = panel?.querySelector('.raya-reading-flow-graph-link');
+                          const counts = panel?.querySelector('.raya-reading-flow-counts');
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height }
+                              : null;
+                          };
+                          return {
+                            panel: box(panel),
+                            previous: box(previous),
+                            next: box(next),
+                            graph: box(graph),
+                            counts: counts?.innerText || '',
+                            state: panel?.getAttribute('data-raya-rail-panel-state'),
+                            hidden: panel?.querySelector('.raya-rail-panel-body')
+                              ?.getAttribute('aria-hidden'),
+                            graphHref: graph?.getAttribute('href'),
+                            text: panel?.innerText || '',
+                          };
+                        }"""
+                    )
+                    assert requested_urls
+                    assert all(
+                        url.startswith(f"{handle.base_url}/")
+                        for url in requested_urls
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["state"] == "expanded"
+    assert probe["hidden"] == "false"
+    assert probe["panel"]["top"] < 360
+    assert probe["panel"]["bottom"] < 950
+    assert probe["previous"]["width"] > 40
+    assert probe["previous"]["height"] > 32
+    assert probe["next"]["width"] > 40
+    assert probe["next"]["height"] > 32
+    assert probe["graph"]["width"] > 80
+    assert probe["graph"]["height"] > 24
+    assert "from this page" in probe["counts"]
+    assert "links here" in probe["counts"]
+    assert probe["graphHref"] == "../_raya/graph/index.html?page=reader-ux"
+    assert "Open in course graph" in probe["text"]
+
+
 def test_render_fixture_study_object_families_are_visually_distinct(
     tmp_path: Path,
 ) -> None:

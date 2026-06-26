@@ -1919,16 +1919,27 @@ def _render_learning_rail(
     page_graph_context: dict[str, list[dict[str, str]]],
     estimated_reading_time: tuple[str, str] | None,
 ) -> str:
+    graph_href = _href_with_query(
+        _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
+        {"page": page.id},
+    )
+    reading_flow = _render_reading_flow_rail(
+        page,
+        content_model,
+        page_graph_context,
+        graph_href,
+    )
     panels = [
+        reading_flow,
         _render_page_summary_rail(page),
         _render_page_status_rail(page),
         _render_estimated_time_rail(estimated_reading_time),
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
-        _render_linked_pages_rail(page, page_graph_context),
+        "" if reading_flow else _render_linked_pages_rail(page, page_graph_context),
         _render_current_section_rail(toc_html),
         _render_page_contents_rail(toc_html),
-        _render_sequence_rail(page, content_model),
+        "" if reading_flow else _render_sequence_rail(page, content_model),
         support_panels,
     ]
     body = "\n".join(panel for panel in panels if panel)
@@ -2442,6 +2453,111 @@ def _render_page_summary_rail(page: ContentPage) -> str:
         f"<p>{html.escape(page.summary)}</p>",
         expanded=True,
     )
+
+
+def _render_reading_flow_rail(
+    page: ContentPage,
+    content_model: ContentModel,
+    page_graph_context: dict[str, list[dict[str, str]]],
+    graph_href: str,
+) -> str:
+    targets = _sequence_targets(page, content_model)
+    outgoing = page_graph_context.get("outgoing", [])
+    incoming = page_graph_context.get("incoming", [])
+    if not targets and not outgoing and not incoming:
+        return ""
+
+    parts: list[str] = []
+    sequence_links: list[str] = []
+    previous = targets.get("previous")
+    if previous is not None:
+        previous_page = previous["page"]
+        assert isinstance(previous_page, ContentPage)
+        sequence_links.append(
+            '<a class="raya-reading-flow-link raya-reading-flow-prev" '
+            'rel="prev" data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+            f'href="{html.escape(str(previous["href"]))}">'
+            '<span class="raya-reading-flow-link-label">Previous</span>'
+            f'<span class="raya-reading-flow-link-title">{html.escape(previous_page.nav_title or previous_page.title)}</span>'
+            "</a>"
+        )
+    next_target = targets.get("next")
+    if next_target is not None:
+        next_page = next_target["page"]
+        assert isinstance(next_page, ContentPage)
+        sequence_links.append(
+            '<a class="raya-reading-flow-link raya-reading-flow-next" '
+            'rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+            f'href="{html.escape(str(next_target["href"]))}">'
+            '<span class="raya-reading-flow-link-label">Next</span>'
+            f'<span class="raya-reading-flow-link-title">{html.escape(next_page.nav_title or next_page.title)}</span>'
+            "</a>"
+        )
+    if sequence_links:
+        parts.append(
+            '<div class="raya-reading-flow-grid" aria-label="Previous and next pages">'
+            + "\n".join(sequence_links)
+            + "</div>"
+        )
+
+    if outgoing or incoming:
+        parts.extend(
+            [
+                '<div class="raya-reading-flow-graph">',
+                '<p class="raya-reading-flow-counts">',
+                (
+                    f"<span><strong>{len(outgoing)}</strong> "
+                    f"{_relationship_count_label(len(outgoing), 'from this page', 'from this page')}</span>"
+                ),
+                (
+                    f"<span><strong>{len(incoming)}</strong> "
+                    f"{_relationship_count_label(len(incoming), 'links here', 'link here')}</span>"
+                ),
+                "</p>",
+                (
+                    f'<a class="raya-reading-flow-graph-link" href="{html.escape(graph_href)}">'
+                    "Open in course graph</a>"
+                ),
+                "</div>",
+            ]
+        )
+        connection_chips = _reading_flow_connection_chips(page, outgoing, incoming)
+        if connection_chips:
+            parts.append(
+                '<ul class="raya-reading-flow-connections" aria-label="Connected pages">'
+                + connection_chips
+                + "</ul>"
+            )
+    return _render_rail_panel(
+        "raya-page-reading-flow",
+        "Reading flow",
+        "\n".join(parts),
+        expanded=True,
+    )
+
+
+def _reading_flow_connection_chips(
+    page: ContentPage,
+    outgoing: list[dict[str, str]],
+    incoming: list[dict[str, str]],
+    *,
+    limit: int = 4,
+) -> str:
+    chips: list[str] = []
+    for direction, items in (("From this page", outgoing), ("Links here", incoming)):
+        for item in items[: max(0, limit - len(chips))]:
+            href = _relative_href(page.output_path, item["url"])
+            chips.append(
+                '<li>'
+                f'<a href="{html.escape(href)}">'
+                f'<span class="raya-reading-flow-connection-direction">{html.escape(direction)}</span>'
+                f'<span class="raya-reading-flow-connection-title">{html.escape(item["title"])}</span>'
+                "</a>"
+                "</li>"
+            )
+            if len(chips) >= limit:
+                break
+    return "\n".join(chips)
 
 
 def _render_page_status_rail(page: ContentPage) -> str:

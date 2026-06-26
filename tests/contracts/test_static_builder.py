@@ -4765,50 +4765,22 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'href="../reader-ux/index.html"' in last_html
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
-    connections_panel = _section_html(last_html, "raya-page-linked-pages")
-    assert 'aria-expanded="false">Connections</button>' in connections_panel
-    assert '<p class="raya-rail-connection-summary">' in connections_panel
-    assert "<strong>3</strong> from this page" in connections_panel
-    assert "<strong>1</strong> link here" in connections_panel
-    assert '<span class="raya-rail-count">3</span>' in connections_panel
-    assert '<span class="raya-rail-count">1</span>' in connections_panel
-    assert "From this page" in connections_panel
-    assert "Links here" in connections_panel
-    assert 'href="../math-authoring/index.html"' in connections_panel
-    assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
-    assert (
-        'class="raya-connection-preview raya-connection-preview-rail"'
-        in connections_panel
-    )
-    assert (
-        '<span class="raya-connection-preview-title">Projection Residuals</span>'
-        in connections_panel
-    )
-    assert "A compact lesson on projection residuals" in connections_panel
-    assert (
-        '<span class="raya-connection-preview-status">ready</span>' in connections_panel
-    )
-    assert '<span class="raya-connection-preview-kind">Content</span>' in connections_panel
-    assert (
-        '<span class="raya-connection-preview-direction">Links here</span>'
-        in connections_panel
-    )
-    assert (
-        "This target page links here through an explicit content link."
-        in connections_panel
-    )
-    assert "<span><strong>1</strong> from this page</span>" in connections_panel
-    assert "<span><strong>2</strong> links here</span>" in connections_panel
-    assert (
-        'class="raya-connection-preview-open" href="../reader-ux/index.html"'
-        in connections_panel
-    )
-    assert (
-        'class="raya-connection-preview-graph" '
-        'href="../_raya/graph/index.html?page=reader-ux"'
-    ) in connections_panel
-    assert "recommend" not in connections_panel.lower()
-    assert "progress" not in connections_panel.lower()
+    reading_flow_panel = _section_html(last_html, "raya-page-reading-flow")
+    assert 'aria-expanded="true">Reading flow</button>' in reading_flow_panel
+    assert '<p class="raya-reading-flow-counts">' in reading_flow_panel
+    assert "<strong>3</strong> from this page" in reading_flow_panel
+    assert "<strong>1</strong> link here" in reading_flow_panel
+    assert "From this page" in reading_flow_panel
+    assert "Links here" in reading_flow_panel
+    assert 'href="../math-authoring/index.html"' in reading_flow_panel
+    assert 'href="../reader-ux/index.html"' in reading_flow_panel
+    assert 'href="../_raya/graph/index.html?page=authoring-matrix"' in reading_flow_panel
+    assert "Projection Residuals" in reading_flow_panel
+    assert "Math Authoring Fixture" in reading_flow_panel
+    assert '<section class="raya-rail-panel raya-page-linked-pages"' not in last_html
+    assert '<section class="raya-rail-panel raya-page-sequence"' not in last_html
+    assert "recommend" not in reading_flow_panel.lower()
+    assert "progress" not in reading_flow_panel.lower()
     article_connections = _article_connections_html(last_html)
     assert '<section class="raya-article-connections"' in article_connections
     assert (
@@ -4917,6 +4889,40 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert root_html.index('<aside id="raya-learning-rail"') < root_html.index(toc)
     assert "related practice" not in _visible_text(html).lower()
     assert "personal progress" not in _visible_text(html).lower()
+
+
+def test_render_fixture_learning_rail_exposes_reading_flow_panel(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    reading_flow = _section_html(html, "raya-page-reading-flow")
+    visible_text = _visible_text(reading_flow).lower()
+
+    assert '<section class="raya-rail-panel raya-page-reading-flow"' in html
+    assert 'data-raya-rail-panel-state="expanded"' in reading_flow
+    assert 'aria-expanded="true">Reading flow</button>' in reading_flow
+    assert 'aria-hidden="false"' in reading_flow
+    assert "data-raya-prev-page" in reading_flow
+    assert "data-raya-next-page" in reading_flow
+    assert "from this page" in reading_flow
+    assert "links here" in reading_flow
+    assert "Open in course graph" in reading_flow
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in reading_flow
+    assert '<section class="raya-rail-panel raya-page-linked-pages"' not in html
+    assert '<section class="raya-rail-panel raya-page-sequence"' not in html
+    assert "progress" not in visible_text
+    assert "mastery" not in visible_text
+    assert "recommend" not in visible_text
+    assert "localStorage" not in reading_flow
+    assert "sessionStorage" not in reading_flow
+    assert "fetch(" not in reading_flow
 
 
 def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None:

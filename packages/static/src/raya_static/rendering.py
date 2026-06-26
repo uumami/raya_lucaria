@@ -4143,6 +4143,84 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 2px;
 }
+.raya-reading-flow-grid {
+  display: grid;
+  gap: 0.4rem;
+}
+.raya-reading-flow-link,
+.raya-reading-flow-graph-link,
+.raya-reading-flow-connections a {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 60%, var(--raya-color-surface));
+  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 46%, var(--raya-color-border));
+  border-radius: 0.375rem;
+  color: var(--raya-color-text);
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  padding: 0.45rem 0.5rem;
+  text-decoration: none;
+}
+.raya-reading-flow-link:focus-visible,
+.raya-reading-flow-graph-link:focus-visible,
+.raya-reading-flow-connections a:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 2px;
+}
+.raya-reading-flow-link-label,
+.raya-reading-flow-connection-direction {
+  color: var(--raya-color-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.raya-reading-flow-link-title,
+.raya-reading-flow-connection-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.18;
+  overflow-wrap: break-word;
+}
+.raya-reading-flow-graph {
+  border-top: 1px solid color-mix(in srgb, var(--raya-color-border) 64%, transparent);
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+}
+.raya-reading-flow-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+}
+.raya-reading-flow-counts > span {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0.28rem 0.45rem;
+}
+.raya-reading-flow-counts strong {
+  color: var(--raya-color-text);
+}
+.raya-reading-flow-graph-link {
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 850;
+  justify-self: start;
+  line-height: 1;
+}
+.raya-reading-flow-connections {
+  display: grid;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
 .raya-course-map ol {
   list-style: none;
   padding-left: 0;
