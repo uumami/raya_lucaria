@@ -2062,6 +2062,43 @@ img {
 .raya-graph-help p {
   margin: 0.65rem 0 0;
 }
+.raya-graph-guide {
+  display: grid;
+  gap: 0.38rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 0 0.58rem;
+}
+.raya-graph-guide > h2 {
+  color: var(--raya-color-heading);
+  font-size: 0.76rem;
+  grid-column: 1 / -1;
+  letter-spacing: 0;
+  margin: 0;
+}
+.raya-graph-guide-card {
+  background: color-mix(in srgb, var(--raya-color-surface) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, transparent);
+  border-radius: 0.375rem;
+  min-width: 0;
+  padding: 0.42rem 0.48rem;
+}
+.raya-graph-guide-card h3 {
+  color: var(--raya-color-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  margin: 0 0 0.16rem;
+}
+.raya-graph-guide-card p {
+  color: var(--raya-color-muted);
+  font-size: 0.68rem;
+  line-height: 1.24;
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .raya-graph-guide {
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  }
+}
 .raya-graph-detail {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);

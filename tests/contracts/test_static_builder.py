@@ -1039,6 +1039,14 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-orientation-open" in graph_html
     assert "data-raya-graph-orientation-neighborhood-toggle" in graph_html
     assert "data-raya-graph-orientation-clear" in graph_html
+    assert "raya-graph-guide" in graph_html
+    assert "data-raya-graph-guide" in graph_html
+    assert "<h2>Graph quick guide</h2>" in graph_html
+    for label in ("Find", "Choose a view", "Inspect", "Move", "Filter"):
+        assert f"<h3>{label}</h3>" in graph_html
+    assert "Search titles, stable IDs, tags, groups, and status." in graph_html
+    assert "Pan, zoom, and fit change only this SVG viewport." in graph_html
+    assert "Filters hide visible graph marks only." in graph_html
     assert "raya-graph-inspection-preview" in graph_html
     assert "data-raya-graph-inspection-preview" in graph_html
     assert "data-raya-graph-inspection-preview-title" in graph_html
@@ -1411,6 +1419,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-detail-open-primary" in stylesheet
     assert ".raya-graph-detail-relationship-chip" in stylesheet
     assert ".raya-graph-orientation" in stylesheet
+    assert ".raya-graph-guide" in stylesheet
+    assert ".raya-graph-guide-card" in stylesheet
     assert "cytoscape" not in graph_script.lower()
     for forbidden_runtime_token in (
         "fetch(",

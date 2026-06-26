@@ -17,13 +17,14 @@
 
 - [ ] **Step 1: Add failing contract assertions**
 
-In `test_static_builder_renders_local_visual_graph_surface`, after the existing orientation assertions, add:
+In `test_build_writes_local_visual_graph_surface`, after the existing orientation assertions, add:
 
 ```python
     assert "raya-graph-guide" in graph_html
     assert "data-raya-graph-guide" in graph_html
+    assert "<h2>Graph quick guide</h2>" in graph_html
     for label in ("Find", "Choose a view", "Inspect", "Move", "Filter"):
-        assert f"<h2>{label}</h2>" in graph_html
+        assert f"<h3>{label}</h3>" in graph_html
     assert "Search titles, stable IDs, tags, groups, and status." in graph_html
     assert "Pan, zoom, and fit change only this SVG viewport." in graph_html
     assert "Filters hide visible graph marks only." in graph_html
@@ -34,7 +35,7 @@ In `test_static_builder_renders_local_visual_graph_surface`, after the existing 
 Run:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_static_builder_renders_local_visual_graph_surface -q
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph_surface -q
 ```
 
 Expected: FAIL because `raya-graph-guide` is not yet generated.
@@ -57,9 +58,23 @@ In `test_render_fixture_graph_url_state_and_debug_readout`, after the orientatio
                     assert guide_box["y"] < canvas_box["y"]
                     assert guide_box["height"] <= 180
                     guide_text = guide.inner_text()
-                    for label in ("Find", "Choose a view", "Inspect", "Move", "Filter"):
+                    for label in (
+                        "Graph quick guide",
+                        "Find",
+                        "Choose a view",
+                        "Inspect",
+                        "Move",
+                        "Filter",
+                    ):
                         assert label in guide_text
-                    assert "not progress" in guide_text.lower()
+                    for forbidden in (
+                        "progress",
+                        "mastery",
+                        "ranking",
+                        "recommendation",
+                        "personalization",
+                    ):
+                        assert forbidden not in guide_text.lower()
 ```
 
 - [ ] **Step 2: Run the browser test to verify it fails**
@@ -93,8 +108,8 @@ Add this generated section inside the graph map panel after `</section>` for
 ```
 
 Use five cards matching the contract test labels. Keep text explicit that graph
-filters and viewport changes are structural readability only, not progress,
-mastery, ranking, or recommendation.
+filters and viewport changes are structural readability controls only, and do
+not include learner-state or personalization language in the guide.
 
 ### Task 4: Style the Guide
 
@@ -124,7 +139,7 @@ fixed pixel width that can overflow mobile.
 - [ ] **Step 1: Run focused tests**
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_static_builder_renders_local_visual_graph_surface tests/e2e/test_preview_static_read_path.py::test_render_fixture_graph_url_state_and_debug_readout -q
+UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph_surface tests/e2e/test_preview_static_read_path.py::test_render_fixture_graph_url_state_and_debug_readout -q
 ```
 
 Expected: PASS.
@@ -149,7 +164,7 @@ Expected: no whitespace errors and only intended files changed.
 - [ ] **Step 4: Request independent review**
 
 Ask reviewers to inspect visual placement, renderer constraints, no storage or
-fetch, and whether the guide adds progress/recommendation language.
+fetch, and whether the guide avoids learner-state language.
 
 - [ ] **Step 5: Commit and push**
 

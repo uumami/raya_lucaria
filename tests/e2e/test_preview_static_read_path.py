@@ -3497,6 +3497,31 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     assert orientation_box["y"] < canvas_box["y"]
                     assert orientation_box["y"] < 900
                     assert orientation_box["height"] <= 140
+                    guide = page.locator("[data-raya-graph-guide]")
+                    assert guide.is_visible()
+                    guide_box = guide.bounding_box()
+                    assert guide_box is not None
+                    assert guide_box["y"] > orientation_box["y"]
+                    assert guide_box["y"] < canvas_box["y"]
+                    assert guide_box["height"] <= 180
+                    guide_text = guide.inner_text()
+                    for label in (
+                        "Graph quick guide",
+                        "Find",
+                        "Choose a view",
+                        "Inspect",
+                        "Move",
+                        "Filter",
+                    ):
+                        assert label in guide_text
+                    for forbidden in (
+                        "progress",
+                        "mastery",
+                        "ranking",
+                        "recommendation",
+                        "personalization",
+                    ):
+                        assert forbidden not in guide_text.lower()
                     assert "visible page" in page.locator(
                         "[data-raya-graph-orientation-counts]"
                     ).inner_text()

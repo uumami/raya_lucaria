@@ -4485,6 +4485,37 @@ def _render_graph_surface(
                 "</section>"
             ),
             (
+                '<section class="raya-graph-guide" data-raya-graph-guide '
+                'aria-label="Graph quick guide">'
+                "<h2>Graph quick guide</h2>"
+                '<article class="raya-graph-guide-card">'
+                "<h3>Find</h3>"
+                "<p>Search titles, stable IDs, tags, groups, and status. "
+                "Arrow keys move results; Enter opens the active result.</p>"
+                "</article>"
+                '<article class="raya-graph-guide-card">'
+                "<h3>Choose a view</h3>"
+                "<p>Connections reads link flow. Topology follows relationships; "
+                "Cluster groups pages. Other views are visual only.</p>"
+                "</article>"
+                '<article class="raya-graph-guide-card">'
+                "<h3>Inspect</h3>"
+                "<p>Hover or focus previews. Click once to select; double-click "
+                "or press Enter to open.</p>"
+                "</article>"
+                '<article class="raya-graph-guide-card">'
+                "<h3>Move</h3>"
+                "<p>Pan, zoom, and fit change only this SVG viewport. Fit "
+                "selection frames selected graph context.</p>"
+                "</article>"
+                '<article class="raya-graph-guide-card">'
+                "<h3>Filter</h3>"
+                "<p>Filters hide visible graph marks only. They keep source "
+                "data unchanged and can be cleared.</p>"
+                "</article>"
+                "</section>"
+            ),
+            (
                 '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),

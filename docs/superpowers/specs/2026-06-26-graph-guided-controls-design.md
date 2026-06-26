@@ -31,7 +31,7 @@ in short scan-friendly cards:
 - `Move`: pan/zoom/fit change only the SVG viewport; `Fit selection` frames the
   selected page and visible relationship context.
 - `Filter`: group and relationship filters hide visible marks only; they do not
-  delete pages, mutate authored graph data, or become learner progress.
+  delete pages, mutate authored graph data, and can be cleared.
 
 The guide is static HTML generated with the graph page. It is not a tutorial
 engine, does not persist state, and does not add JavaScript. The existing longer
@@ -43,8 +43,7 @@ reference.
 - No `fetch`, `XMLHttpRequest`, external scripts, Cytoscape, CDN requests, or
   browser-side renderer calls.
 - No `localStorage` or `sessionStorage`.
-- No learner progress, mastery, ranking, recommendation, or personalization
-  language.
+- No learner-state or personalization language in the quick guide.
 - Keep the current graph controls, graph data payload, URL state, orientation
   band, inspector, legend, and graph behavior intact.
 - Keep the guide compact enough to stay above the canvas on desktop.
