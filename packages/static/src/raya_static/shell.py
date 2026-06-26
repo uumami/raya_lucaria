@@ -26,6 +26,9 @@ _SHELL_JAVASCRIPT = r"""
   const learningRailBody = document.querySelector("#raya-learning-rail-body");
   const learningRailCollapse = document.querySelector("[data-raya-learning-rail-collapse]");
   const learningRailExpand = document.querySelector("[data-raya-learning-rail-expand]");
+  const learningRailDrawerBackdrop = document.querySelector(
+    "[data-raya-learning-rail-drawer-backdrop]"
+  );
   const learningRailToggleButtons = Array.from(
     document.querySelectorAll("[data-raya-learning-rail-toggle]")
   );
@@ -71,6 +74,7 @@ _SHELL_JAVASCRIPT = r"""
   let hoveredCompactPreviewLink = null;
   let assetInspector = null;
   let assetInspectorOpener = null;
+  let learningRailDrawerOpener = null;
   let courseMapTransitionTimer = 0;
   let learningRailTransitionTimer = 0;
   const SHELL_TRANSITION_MS = 240;
@@ -162,6 +166,42 @@ _SHELL_JAVASCRIPT = r"""
     const last = focusable[focusable.length - 1];
     const activeElement = document.activeElement;
     if (!map.contains(activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+      return true;
+    }
+    if (event.shiftKey && activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      return true;
+    }
+    if (!event.shiftKey && activeElement === last) {
+      event.preventDefault();
+      first.focus();
+      return true;
+    }
+    return false;
+  }
+
+  function trapLearningRailDrawerFocus(event) {
+    if (
+      event.key !== "Tab" ||
+      root.dataset.rayaLearningRailDrawer !== "open" ||
+      isDesktopShell() ||
+      !learningRail
+    ) {
+      return false;
+    }
+    const focusable = focusableElementsWithin(learningRail);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      learningRail.focus();
+      return true;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const activeElement = document.activeElement;
+    if (!learningRail.contains(activeElement)) {
       event.preventDefault();
       (event.shiftKey ? last : first).focus();
       return true;
@@ -731,13 +771,60 @@ _SHELL_JAVASCRIPT = r"""
     orientCourseMapToCurrentPage({ repeat: true });
 
   function syncLearningRailToggleButtons(nextExpanded) {
+    const drawerOpen = root.dataset.rayaLearningRailDrawer === "open";
+    const commandExpanded = !isDesktopShell() ? drawerOpen : nextExpanded;
     learningRailToggleButtons.forEach((button) => {
-      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+      button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
       button.setAttribute(
         "aria-label",
-        nextExpanded ? "Hide learning context" : "Show learning context"
+        !isDesktopShell()
+          ? commandExpanded
+            ? "Close learning context"
+            : "Open learning context"
+          : nextExpanded
+            ? "Hide learning context"
+            : "Show learning context"
       );
     });
+  }
+
+  function syncLearningRailDrawerState() {
+    if (!learningRail || !learningRailBody) {
+      return;
+    }
+    const drawerOpen = root.dataset.rayaLearningRailDrawer === "open";
+    root.setAttribute(
+      "data-raya-learning-rail-scroll-lock",
+      drawerOpen && !isDesktopShell() ? "true" : "false"
+    );
+    if (learningRailDrawerBackdrop) {
+      learningRailDrawerBackdrop.hidden = !drawerOpen;
+    }
+    if (!isDesktopShell()) {
+      learningRail.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
+      setElementInert(learningRail, !drawerOpen);
+      setFocusableDescendantsEnabled(learningRail, drawerOpen);
+      learningRailBody.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
+      setElementInert(learningRailBody, !drawerOpen);
+      setFocusableDescendantsEnabled(learningRailBody, drawerOpen);
+      syncLearningRailToggleButtons(root.dataset.rayaLearningRail !== "collapsed");
+      return;
+    }
+    learningRail.setAttribute("aria-hidden", "false");
+    setElementInert(learningRail, false);
+    setFocusableDescendantsEnabled(learningRail, true);
+    const railExpanded = root.dataset.rayaLearningRail !== "collapsed";
+    learningRailBody.setAttribute("aria-hidden", railExpanded ? "false" : "true");
+    setElementInert(learningRailBody, !railExpanded);
+    setFocusableDescendantsEnabled(learningRailBody, railExpanded);
+    if (root.dataset.rayaLearningRailDrawer !== "closed") {
+      root.dataset.rayaLearningRailDrawer = "closed";
+    }
+    root.setAttribute("data-raya-learning-rail-scroll-lock", "false");
+    if (learningRailDrawerBackdrop) {
+      learningRailDrawerBackdrop.hidden = true;
+    }
+    syncLearningRailToggleButtons(root.dataset.rayaLearningRail !== "collapsed");
   }
 
   function setLearningRailExpanded(nextExpanded) {
@@ -774,6 +861,34 @@ _SHELL_JAVASCRIPT = r"""
     }
     if (learningRailExpand) {
       learningRailExpand.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+    }
+    syncLearningRailDrawerState();
+  }
+
+  function openLearningRailDrawer(opener = null) {
+    if (!learningRail || !learningRailBody) {
+      return;
+    }
+    if (opener instanceof Element) {
+      learningRailDrawerOpener = opener;
+    }
+    root.dataset.rayaLearningRailDrawer = "open";
+    syncLearningRailDrawerState();
+    window.requestAnimationFrame(() => {
+      const focusTarget = learningRail.querySelector("button, a[href], summary");
+      if (focusTarget) {
+        focusTarget.focus();
+      } else {
+        learningRail.focus();
+      }
+    });
+  }
+
+  function closeLearningRailDrawer(options = {}) {
+    root.dataset.rayaLearningRailDrawer = "closed";
+    syncLearningRailDrawerState();
+    if (options.restoreFocus && learningRailDrawerOpener) {
+      learningRailDrawerOpener.focus();
     }
   }
 
@@ -1081,8 +1196,11 @@ _SHELL_JAVASCRIPT = r"""
       }
       setLearningRailExpanded(true);
       syncReaderFocusToggle(false);
+    } else {
+      closeLearningRailDrawer();
     }
     syncCourseMapDrawerState();
+    syncLearningRailDrawerState();
   });
   if (printQuery.addEventListener) {
     printQuery.addEventListener("change", syncPrintDisclosureState);
@@ -1139,6 +1257,12 @@ _SHELL_JAVASCRIPT = r"""
   if (mapDrawerBackdrop) {
     mapDrawerBackdrop.addEventListener("click", () => {
       closeCourseMapDrawer({ restoreFocus: true });
+    });
+  }
+
+  if (learningRailDrawerBackdrop) {
+    learningRailDrawerBackdrop.addEventListener("click", () => {
+      closeLearningRailDrawer({ restoreFocus: true });
     });
   }
 
@@ -1203,7 +1327,7 @@ _SHELL_JAVASCRIPT = r"""
   if (learningRailCollapse) {
     learningRailCollapse.addEventListener("click", () => {
       if (!isDesktopShell()) {
-        setLearningRailExpanded(true);
+        closeLearningRailDrawer({ restoreFocus: true });
         return;
       }
       setLearningRailExpanded(false);
@@ -1233,7 +1357,11 @@ _SHELL_JAVASCRIPT = r"""
   learningRailToggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
       if (!isDesktopShell()) {
-        setLearningRailExpanded(true);
+        if (root.dataset.rayaLearningRailDrawer === "open") {
+          closeLearningRailDrawer({ restoreFocus: true });
+        } else {
+          openLearningRailDrawer(button);
+        }
         return;
       }
       setLearningRailExpanded(root.dataset.rayaLearningRail !== "expanded");
@@ -1258,8 +1386,15 @@ _SHELL_JAVASCRIPT = r"""
     if (trapCourseMapDrawerFocus(event)) {
       return;
     }
+    if (trapLearningRailDrawerFocus(event)) {
+      return;
+    }
     if (event.key === "Escape" && root.dataset.rayaCourseMapDrawer === "open") {
       closeCourseMapDrawer({ restoreFocus: true });
+      return;
+    }
+    if (event.key === "Escape" && root.dataset.rayaLearningRailDrawer === "open") {
+      closeLearningRailDrawer({ restoreFocus: true });
       return;
     }
     if (event.key === "Escape" && root.dataset.rayaCourseMap === "expanded") {
@@ -1349,10 +1484,12 @@ _SHELL_JAVASCRIPT = r"""
   setExpanded(true);
   setLearningRailExpanded(true);
   syncReaderFocusToggle(false);
+  root.dataset.rayaLearningRailDrawer = "closed";
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
   initializeAssetInspectorControls();
   syncCourseMapDrawerState();
+  syncLearningRailDrawerState();
   root.dataset.rayaShellReady = "true";
 })();
 """

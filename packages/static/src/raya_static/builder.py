@@ -1897,6 +1897,10 @@ def _render_learning_rail(
                 'aria-label="Show learning context">Context</button>'
             ),
             "</aside>",
+            (
+                '<div class="raya-learning-rail-drawer-backdrop" '
+                "data-raya-learning-rail-drawer-backdrop hidden></div>"
+            ),
         ]
     )
 

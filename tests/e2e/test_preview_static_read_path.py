@@ -10960,18 +10960,180 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     _assert_no_horizontal_overflow(page)
                     topbar = _bounding_box(page, ".raya-top-command-bar")
                     assert topbar["height"] <= 220
-                    assert not page.locator(
+                    assert page.locator(
                         "[data-raya-learning-rail-toggle]"
                     ).is_visible()
+                    assert (
+                        page.locator("[data-raya-learning-rail-toggle]")
+                        .get_attribute("aria-expanded")
+                        == "false"
+                    )
                     assert (
                         page.locator("#raya-learning-rail-body").get_attribute(
                             "aria-hidden"
                         )
-                        == "false"
+                        == "true"
                     )
                     article = _bounding_box(page, "article.raya-main-article")
-                    rail = _bounding_box(page, "aside.raya-learning-rail")
-                    assert article["y"] < rail["y"]
+                    closed_context = page.evaluate(
+                        """() => ({
+                          drawerState: document.documentElement
+                            .dataset
+                            .rayaLearningRailDrawer,
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                        })"""
+                    )
+                    assert closed_context == {
+                        "drawerState": "closed",
+                        "railHidden": "true",
+                        "railInert": True,
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                    }
+                    page.click("[data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'open'"""
+                    )
+                    opened_context = page.evaluate(
+                        """() => ({
+                          drawerState: document.documentElement
+                            .dataset
+                            .rayaLearningRailDrawer,
+                          scrollLock: document.documentElement
+                            .dataset
+                            .rayaLearningRailScrollLock,
+                          commandExpanded: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                          box: (() => {
+                            const box = document
+                              .querySelector('#raya-learning-rail')
+                              ?.getBoundingClientRect();
+                            return box
+                              ? { left: box.left, right: box.right, width: box.width, height: box.height }
+                              : null;
+                          })(),
+                          activeInsideRail: document
+                            .querySelector('#raya-learning-rail')
+                            ?.contains(document.activeElement),
+                        })"""
+                    )
+                    assert opened_context["drawerState"] == "open"
+                    assert opened_context["scrollLock"] == "true"
+                    assert opened_context["commandExpanded"] == "true"
+                    assert opened_context["railHidden"] == "false"
+                    assert opened_context["railInert"] is False
+                    assert opened_context["bodyHidden"] == "false"
+                    assert opened_context["bodyInert"] is False
+                    assert opened_context["box"]["left"] >= 0
+                    assert opened_context["box"]["right"] == 390
+                    assert opened_context["box"]["width"] >= 300
+                    assert opened_context["box"]["height"] >= 600
+                    assert opened_context["activeInsideRail"] is True
+                    _assert_no_horizontal_overflow(page)
+
+                    for _ in range(8):
+                        page.keyboard.press("Tab")
+                        rail_tab_state = page.evaluate(
+                            """() => ({
+                              drawerState: document.documentElement
+                                .dataset
+                                .rayaLearningRailDrawer,
+                              activeInsideRail: document
+                                .querySelector('#raya-learning-rail')
+                                ?.contains(document.activeElement),
+                              activeInCommandBar: !!document.activeElement
+                                ?.closest('.raya-top-command-bar'),
+                              activeInArticle: !!document.activeElement
+                                ?.closest('article.raya-main-article'),
+                              activeInMap: !!document.activeElement
+                                ?.closest('#raya-course-map'),
+                            })"""
+                        )
+                        assert rail_tab_state == {
+                            "drawerState": "open",
+                            "activeInsideRail": True,
+                            "activeInCommandBar": False,
+                            "activeInArticle": False,
+                            "activeInMap": False,
+                        }
+
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
+                    )
+                    closed_context_again = page.evaluate(
+                        """() => ({
+                          drawerState: document.documentElement
+                            .dataset
+                            .rayaLearningRailDrawer,
+                          scrollLock: document.documentElement
+                            .dataset
+                            .rayaLearningRailScrollLock,
+                          commandExpanded: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          commandFocused: document.activeElement
+                            ?.getAttribute('data-raya-learning-rail-toggle') !== null,
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                        })"""
+                    )
+                    assert closed_context_again == {
+                        "drawerState": "closed",
+                        "scrollLock": "false",
+                        "commandExpanded": "false",
+                        "commandFocused": True,
+                        "railHidden": "true",
+                        "railInert": True,
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                    }
+                    page.set_viewport_size({"width": 1440, "height": 900})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'
+                          && document.querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getAttribute('aria-expanded') === 'true'"""
+                    )
+                    desktop_context = page.evaluate(
+                        """() => ({
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                          firstRailLinkTabIndex: document
+                            .querySelector('#raya-learning-rail a, #raya-learning-rail button')
+                            ?.getAttribute('tabindex'),
+                        })"""
+                    )
+                    assert desktop_context == {
+                        "railHidden": "false",
+                        "railInert": False,
+                        "bodyHidden": "false",
+                        "bodyInert": False,
+                        "firstRailLinkTabIndex": None,
+                    }
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
+                    )
                     assert not page.locator(
                         "#raya-course-map .raya-course-map-toggle"
                     ).is_visible()
@@ -11126,8 +11288,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         "mapHidden": "true",
                         "mapInert": True,
                         "commandFocused": True,
-                        "railBodyHidden": "false",
-                        "railBodyInert": False,
+                        "railBodyHidden": "true",
+                        "railBodyInert": True,
                         "scan": "",
                         "scanPressed": "false",
                     }
