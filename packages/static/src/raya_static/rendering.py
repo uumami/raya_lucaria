@@ -1094,6 +1094,36 @@ img {
   display: grid;
   gap: 0.65rem;
 }
+.raya-discovery-control-group {
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-accent));
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0.65rem 0.7rem 0.7rem;
+}
+.raya-discovery-control-group legend {
+  color: var(--raya-color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  padding: 0 0.25rem;
+  text-transform: uppercase;
+}
+.raya-discovery-control-state {
+  border-top: 1px solid var(--raya-color-border);
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+  padding-top: 0.8rem;
+}
+.raya-discovery-control-state .raya-discovery-summary,
+.raya-discovery-control-state .raya-discovery-page-focus {
+  margin: 0;
+}
 .raya-graph-controls input,
 .raya-search-controls input,
 .raya-practice-controls input,
@@ -1359,7 +1389,6 @@ img {
   align-items: stretch;
   display: grid;
   gap: 0.65rem;
-  margin-bottom: var(--raya-space-block);
 }
 .raya-tasks-controls input,
 .raya-tasks-controls select,
@@ -1506,7 +1535,6 @@ img {
   align-items: stretch;
   display: grid;
   gap: 0.65rem;
-  margin-bottom: var(--raya-space-block);
 }
 .raya-schedule-controls input,
 .raya-schedule-controls button,

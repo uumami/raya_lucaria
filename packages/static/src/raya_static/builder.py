@@ -5076,11 +5076,18 @@ def _render_search_surface(
             '<aside class="raya-search-control-panel" aria-label="Search controls">',
             "<h2>Find pages</h2>",
             '<section class="raya-search-controls" aria-label="Course search controls">',
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Query</legend>",
             '<label for="raya-search-input">Search</label>',
             '<input id="raya-search-input" type="search" autocomplete="off">',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Reset</legend>",
             '<button id="raya-search-clear" type="button">Clear</button>',
-            '<p id="raya-search-status" class="raya-search-status" aria-live="polite"></p>',
+            "</fieldset>",
             "</section>",
+            '<div class="raya-discovery-control-state" aria-label="Search workspace state">',
+            '<p id="raya-search-status" class="raya-search-status" aria-live="polite"></p>',
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-search-summary-count>{len(browser_search['pages'])} visible result(s).</p>"
@@ -5089,6 +5096,7 @@ def _render_search_surface(
                 '<p class="raya-discovery-page-focus" '
                 'data-raya-search-page-focus hidden aria-live="polite"></p>'
             ),
+            "</div>",
             "</aside>",
             '<section class="raya-search-results-panel" aria-label="Search results">',
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
@@ -5439,14 +5447,24 @@ def _render_practice_surface(
             '<aside class="raya-practice-control-panel" aria-label="Official practice controls">',
             "<h2>Find practice</h2>",
             '<section class="raya-practice-controls" aria-label="Official practice controls">',
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Query</legend>",
             '<label for="raya-practice-search">Search</label>',
             '<input id="raya-practice-search" type="search" autocomplete="off">',
-            '<button id="raya-practice-clear" type="button">Clear</button>',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Object type</legend>",
             '<div class="raya-practice-filters" aria-label="Practice type filters">',
             "\n".join(type_buttons),
             "</div>",
-            '<p id="raya-practice-status" class="raya-practice-status" aria-live="polite"></p>',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Reset</legend>",
+            '<button id="raya-practice-clear" type="button">Clear</button>',
+            "</fieldset>",
             "</section>",
+            '<div class="raya-discovery-control-state" aria-label="Practice workspace state">',
+            '<p id="raya-practice-status" class="raya-practice-status" aria-live="polite"></p>',
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-practice-summary-count>{len(browser_practice['objects'])} visible practice object(s).</p>"
@@ -5455,6 +5473,7 @@ def _render_practice_surface(
                 '<p class="raya-discovery-page-focus" '
                 'data-raya-practice-page-focus hidden aria-live="polite"></p>'
             ),
+            "</div>",
             "</aside>",
             '<section class="raya-practice-results-panel" aria-label="Official practice results">',
             (
@@ -5773,20 +5792,33 @@ def _render_tasks_surface(
             '<aside class="raya-tasks-control-panel" aria-label="Official task controls">',
             "<h2>Find tasks</h2>",
             '<section class="raya-tasks-controls" aria-label="Official task controls">',
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Query</legend>",
             '<label for="raya-tasks-search">Search</label>',
             '<input id="raya-tasks-search" type="search" autocomplete="off">',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Sort</legend>",
             '<label for="raya-tasks-sort">Sort</label>',
             '<select id="raya-tasks-sort">',
             '<option value="course">Course order</option>',
             '<option value="due">Due date</option>',
             '<option value="type">Type</option>',
             "</select>",
-            '<button id="raya-tasks-clear" type="button">Clear</button>',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Object type</legend>",
             '<div class="raya-task-filters" aria-label="Task type filters">',
             "\n".join(type_buttons),
             "</div>",
-            '<p id="raya-tasks-status" class="raya-tasks-status" aria-live="polite"></p>',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Reset</legend>",
+            '<button id="raya-tasks-clear" type="button">Clear</button>',
+            "</fieldset>",
             "</section>",
+            '<div class="raya-discovery-control-state" aria-label="Tasks workspace state">',
+            '<p id="raya-tasks-status" class="raya-tasks-status" aria-live="polite"></p>',
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-tasks-summary-count>{len(browser_tasks['objects'])} visible task(s).</p>"
@@ -5795,6 +5827,7 @@ def _render_tasks_surface(
                 '<p class="raya-discovery-page-focus" '
                 'data-raya-tasks-page-focus hidden aria-live="polite"></p>'
             ),
+            "</div>",
             "</aside>",
             '<section class="raya-tasks-results-panel" aria-label="Official task results">',
             (
@@ -6065,17 +6098,30 @@ def _render_schedule_surface(
             '<aside class="raya-schedule-control-panel" aria-label="Official schedule controls">',
             "<h2>Find schedule items</h2>",
             '<section class="raya-schedule-controls" aria-label="Official schedule controls">',
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Query</legend>",
             '<label for="raya-schedule-search">Search</label>',
             '<input id="raya-schedule-search" type="search" autocomplete="off">',
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Date kind</legend>",
             '<div class="raya-schedule-filters" aria-label="Schedule event filters">',
             "\n".join(kind_buttons),
             "</div>",
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Object type</legend>",
             '<div class="raya-schedule-filters" aria-label="Schedule type filters">',
             "\n".join(type_buttons),
             "</div>",
+            "</fieldset>",
+            '<fieldset class="raya-discovery-control-group">',
+            "<legend>Reset</legend>",
             '<button id="raya-schedule-clear" type="button">Clear</button>',
-            '<p id="raya-schedule-status" class="raya-schedule-status" aria-live="polite"></p>',
+            "</fieldset>",
             "</section>",
+            '<div class="raya-discovery-control-state" aria-label="Schedule workspace state">',
+            '<p id="raya-schedule-status" class="raya-schedule-status" aria-live="polite"></p>',
             (
                 '<p class="raya-discovery-summary" '
                 f"data-raya-schedule-summary-count>{len(schedule_payload['items'])} visible schedule item(s).</p>"
@@ -6084,6 +6130,7 @@ def _render_schedule_surface(
                 '<p class="raya-discovery-page-focus" '
                 'data-raya-schedule-page-focus hidden aria-live="polite"></p>'
             ),
+            "</div>",
             "</aside>",
             '<section class="raya-schedule-results-panel" aria-label="Official schedule results">',
             (

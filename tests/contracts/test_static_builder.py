@@ -38,6 +38,28 @@ RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
 
 
+def _assert_control_group(html: str, legend: str) -> None:
+    pattern = (
+        r'<fieldset class="[^"]*\braya-discovery-control-group\b[^"]*"[^>]*>\s*'
+        rf"<legend>{re.escape(legend)}</legend>"
+    )
+    assert re.search(pattern, html), legend
+
+
+def _assert_control_state_contains(
+    html: str, *, label: str, tokens: list[str]
+) -> None:
+    pattern = (
+        r'<div class="[^"]*\braya-discovery-control-state\b[^"]*" '
+        rf'aria-label="{re.escape(label)}">\s*(.*?)\s*</div>'
+    )
+    match = re.search(pattern, html, re.DOTALL)
+    assert match, label
+    state_html = match.group(1)
+    for token in tokens:
+        assert token in state_html
+
+
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -1551,6 +1573,20 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-control-panel" in search_html
     assert "raya-search-results-panel" in search_html
     assert "raya-search-context-panel" in search_html
+    _assert_control_group(search_html, "Query")
+    _assert_control_group(search_html, "Reset")
+    _assert_control_state_contains(
+        search_html,
+        label="Search workspace state",
+        tokens=[
+            'id="raya-search-status"',
+            "data-raya-search-summary-count",
+            "data-raya-search-page-focus",
+        ],
+    )
+    assert 'id="raya-search-input"' in search_html
+    assert 'id="raya-search-clear"' in search_html
+    assert 'id="raya-search-status"' in search_html
     assert 'data-raya-discovery-overview="search"' in search_html
     assert "raya-discovery-overview-meta" in search_html
     assert "Public pages" in search_html
@@ -1853,6 +1889,23 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "raya-practice-control-panel" in practice_html
     assert "raya-practice-results-panel" in practice_html
     assert "raya-practice-context-panel" in practice_html
+    _assert_control_group(practice_html, "Query")
+    _assert_control_group(practice_html, "Object type")
+    _assert_control_group(practice_html, "Reset")
+    _assert_control_state_contains(
+        practice_html,
+        label="Practice workspace state",
+        tokens=[
+            'id="raya-practice-status"',
+            "data-raya-practice-summary-count",
+            "data-raya-practice-page-focus",
+        ],
+    )
+    assert 'id="raya-practice-search"' in practice_html
+    assert 'id="raya-practice-clear"' in practice_html
+    assert 'id="raya-practice-status"' in practice_html
+    assert "raya-practice-filters" in practice_html
+    assert 'data-raya-practice-filter="all"' in practice_html
     assert 'data-raya-discovery-overview="practice"' in practice_html
     assert "raya-discovery-overview-meta" in practice_html
     assert "Official objects" in practice_html
@@ -2022,6 +2075,25 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "matchesPage" in tasks_script
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
+    _assert_control_group(tasks_html, "Query")
+    _assert_control_group(tasks_html, "Sort")
+    _assert_control_group(tasks_html, "Object type")
+    _assert_control_group(tasks_html, "Reset")
+    _assert_control_state_contains(
+        tasks_html,
+        label="Tasks workspace state",
+        tokens=[
+            'id="raya-tasks-status"',
+            "data-raya-tasks-summary-count",
+            "data-raya-tasks-page-focus",
+        ],
+    )
+    assert 'id="raya-tasks-search"' in tasks_html
+    assert 'id="raya-tasks-sort"' in tasks_html
+    assert 'id="raya-tasks-clear"' in tasks_html
+    assert 'id="raya-tasks-status"' in tasks_html
+    assert "raya-task-filters" in tasks_html
+    assert 'data-raya-task-filter="all"' in tasks_html
     assert "Task-family objects" in tasks_html
     assert "Object types" in tasks_html
     assert "Reset path" in tasks_html
@@ -2157,6 +2229,27 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "matchesPage" in schedule_script
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
+    _assert_control_group(schedule_html, "Query")
+    _assert_control_group(schedule_html, "Date kind")
+    _assert_control_group(schedule_html, "Object type")
+    _assert_control_group(schedule_html, "Reset")
+    _assert_control_state_contains(
+        schedule_html,
+        label="Schedule workspace state",
+        tokens=[
+            'id="raya-schedule-status"',
+            "data-raya-schedule-summary-count",
+            "data-raya-schedule-page-focus",
+        ],
+    )
+    assert 'id="raya-schedule-search"' in schedule_html
+    assert 'id="raya-schedule-clear"' in schedule_html
+    assert 'id="raya-schedule-status"' in schedule_html
+    assert 'aria-label="Schedule event filters"' in schedule_html
+    assert 'aria-label="Schedule type filters"' in schedule_html
+    assert 'data-raya-schedule-kind-filter="all"' in schedule_html
+    assert 'data-raya-schedule-kind-filter="due"' in schedule_html
+    assert 'data-raya-schedule-type-filter="all"' in schedule_html
     assert "Dated objects" in schedule_html
     assert "Dated event types" in schedule_html
     assert "Reset path" in schedule_html
