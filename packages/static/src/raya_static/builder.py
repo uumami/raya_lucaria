@@ -1581,7 +1581,7 @@ def _render_course_map(
             if target.id in active_path
             else "inactive"
         )
-        expanded = bool(child_pages)
+        expanded = bool(child_pages) and target.id in active_path
         node_id = (
             f"raya-map-children-{sequence_index[target.id]}-"
             f"{_safe_map_fragment_id(target.id)}"

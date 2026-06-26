@@ -7901,7 +7901,7 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
         handle.close()
 
 
-def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
+def test_minimal_course_map_current_path_is_expanded_and_collapsible(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright

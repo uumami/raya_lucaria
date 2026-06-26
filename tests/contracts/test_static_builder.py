@@ -4813,12 +4813,20 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         in html
     )
     assert (
-        'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"'
+        'id="raya-map-children-2-first-unit" data-raya-map-children hidden aria-hidden="true"'
         in html
     )
     assert (
-        'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="true"'
+        'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="false"'
         in html
+    )
+    assert (
+        'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"'
+        in middle_html
+    )
+    assert (
+        'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="current" data-raya-map-expanded="true"'
+        in middle_html
     )
     assert "data-raya-map-node-toggle" in html
     assert "raya-map-filter-empty" in html
