@@ -198,10 +198,13 @@ accepts them as metadata.
 
 Rendered pages may show a Page brief near the start of the article. It is built
 from accepted metadata such as summary, status, structural page position,
-estimated time, tags, resolved prerequisites, explicit graph-link counts, and
-official-practice counts. Keep those fields accurate; the brief is orientation
-for students, not grading, progress, mastery, personalization, or a
-recommendation engine.
+authored estimated time or computed estimated read time, tags, resolved
+prerequisites, explicit graph-link counts, and official-practice counts.
+Author `estimated_time` when you want a deliberate course-team estimate; if you
+omit it, Glintstone may show an approximate static read-time cue from public
+page text. Keep authored fields accurate; the brief is orientation for
+students, not grading, progress, mastery, personalization, or a recommendation
+engine.
 
 The static official practice renderer shows page-level objects from
 colocated `_official/` files on their owning page in an `Official practice`

@@ -163,6 +163,12 @@ contenidos de pagina y anchors de heading, que se actualice con el heading activ
 en tests de browser, que siga siendo un enlace local normal, que no escriba
 storage del browser y que no use lenguaje de porcentaje leido, finalizacion,
 dominio, recomendacion o progreso.
+Si una pagina no tiene `estimated_time` escrito, verifica que cualquier
+`Estimated read time` mostrado en el Page brief o riel derecho se calcule
+durante build desde texto publico del articulo, no use storage del browser ni
+fetch runtime, y siga siendo orientacion aproximada, no progreso, dominio,
+recomendacion ni personalizacion. Cuando exista `estimated_time`, debe tener
+precedencia como `Estimated time`.
 Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
 colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
 layout expandido, no cambie el estado de URL y no escriba storage del browser.

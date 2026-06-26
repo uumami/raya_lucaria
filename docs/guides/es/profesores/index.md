@@ -201,10 +201,14 @@ metadata.
 
 Las paginas renderizadas pueden mostrar un Page brief cerca del inicio del
 articulo. Se construye desde metadata aceptada como resumen, status, posicion
-estructural de pagina, tiempo estimado, tags, prerrequisitos resueltos, conteos
-de enlaces explicitos del grafo y conteos de practica oficial. Mantiene esos
-campos precisos; el brief orienta a estudiantes, pero no es evaluacion,
-progreso, dominio, personalizacion ni motor de recomendaciones.
+estructural de pagina, tiempo estimado escrito por el equipo del curso o
+estimacion aproximada de lectura, tags, prerrequisitos resueltos, conteos de
+enlaces explicitos del grafo y conteos de practica oficial. Escribe
+`estimated_time` cuando quieras una estimacion deliberada del equipo del curso;
+si lo omites, Glintstone puede mostrar una estimacion estatica aproximada desde
+el texto publico de la pagina. Mantiene los campos escritos precisos; el brief
+orienta a estudiantes, pero no es evaluacion, progreso, dominio,
+personalizacion ni motor de recomendaciones.
 
 El renderizador estatico de practica oficial muestra objetos de nivel
 pagina desde archivos `_official/` colocados junto a su pagina en una seccion

@@ -19,10 +19,11 @@ completion, mastery, or recommendations about what to study next.
 Static pages may include pre-rendered math, highlighted code, copy buttons on fenced code blocks, tables, callouts, footnotes, heading anchors, and page contents. Math should already be typeset in the generated page and should not require a CDN, account, backend, or browser-side MathJax conversion. Displayed code is not run by the static page unless a future course explicitly adds an accepted execution workflow.
 
 Some pages show a Page brief near the start. It summarizes public course
-metadata such as summary, status, page position, estimated time, tags,
-prerequisites, explicit page connections, and available official practice. Use
-it to orient yourself quickly. It is not a progress tracker, recommendation,
-grade, mastery estimate, or personalized next step.
+metadata such as summary, status, page position, authored estimated time or an
+approximate estimated read time, tags, prerequisites, explicit page
+connections, and available official practice. Use it to orient yourself
+quickly. It is not a progress tracker, recommendation, grade, mastery estimate,
+or personalized next step.
 
 Some courses use skins for visual presentation or to emphasize a unit, lab,
 appendix, practice section, or review section. A skin does not change source

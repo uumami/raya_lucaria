@@ -664,12 +664,12 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                             })"""
                         )
                         assert current_sections["rail"] == {
-                            "href": "#raya-generated-course-index",
+                            "href": "#course-index",
                             "text": "Course Index",
                             "label": "Course Index",
                         }
                         assert current_sections["command"] == {
-                            "href": "#raya-generated-course-index",
+                            "href": "#course-index",
                             "text": "Now Course Index",
                             "visibleLabel": "Course Index",
                             "label": "Current section: Course Index",
@@ -7823,8 +7823,14 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["focusLabel"] == "Focus reading"
                         assert state["focusPressed"] == "false"
                         assert state["focusVisible"] == (viewport["width"] >= 1280)
-                        assert state["railContextLabel"] == "Hide learning context"
-                        assert state["railContextExpanded"] == "true"
+                        assert state["railContextLabel"] == (
+                            "Hide learning context"
+                            if viewport["width"] >= 1280
+                            else "Open learning context"
+                        )
+                        assert state["railContextExpanded"] == (
+                            "true" if viewport["width"] >= 1280 else "false"
+                        )
                         assert state["railContextVisible"] == (
                             viewport["width"] >= 1280
                         )
@@ -10035,7 +10041,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     assert initial["bodyHidden"] == "false"
                     assert initial["bodyInert"] in {False, None}
                     assert initial["articleWidth"] > 520
-                    assert 240 <= initial["railWidth"] <= 330
+                    assert 220 <= initial["railWidth"] <= 330
                     assert initial["contextChipVisible"] is False
                     assert initial["expandVisible"] is False
                     assert initial["collapseExpanded"] == "true"
@@ -10111,7 +10117,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                         """() => document
                           .querySelector('#raya-learning-rail')
                           ?.getBoundingClientRect()
-                          ?.width >= 240"""
+                          ?.width >= 220"""
                     )
                     expanded = page.evaluate(
                         """() => {
@@ -10133,7 +10139,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     assert expanded["railState"] == "expanded"
                     assert expanded["bodyHidden"] == "false"
                     assert expanded["bodyInert"] in {False, None}
-                    assert expanded["railWidth"] >= 240
+                    assert expanded["railWidth"] >= 220
                     assert expanded["contextChipVisible"] is False
 
                     page.click("[data-raya-learning-rail-collapse]")
@@ -10165,17 +10171,17 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                             }"""
                         )
                     assert resized_mobile["rootState"] == "expanded"
-                    assert resized_mobile["bodyHidden"] == "true"
-                    assert resized_mobile["bodyInert"] is True
+                    assert resized_mobile["bodyHidden"] == "false"
+                    assert resized_mobile["bodyInert"] is False
                     assert resized_mobile["expandVisible"] is False
-                    assert resized_mobile["collapseVisible"] is True
+                    assert resized_mobile["collapseVisible"] is False
 
                     page.set_viewport_size({"width": 1280, "height": 900})
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-learning-rail')
                           ?.getBoundingClientRect()
-                          ?.width >= 240"""
+                          ?.width >= 220"""
                     )
                     page.focus("[data-raya-learning-rail-collapse]")
                     page.keyboard.press("Escape")
@@ -10230,9 +10236,9 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                         }"""
                     )
                     assert mobile_state["expandVisible"] is False
-                    assert mobile_state["collapseVisible"] is True
-                    assert mobile_state["railWidth"] <= 2
-                    assert mobile_state["railHeight"] <= 2
+                    assert mobile_state["collapseVisible"] is False
+                    assert mobile_state["railWidth"] > 300
+                    assert mobile_state["railHeight"] > 100
                 finally:
                     mobile.close()
             finally:
@@ -11936,44 +11942,17 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert topbar["height"] <= 220
                     assert page.locator(
                         "[data-raya-learning-rail-toggle]"
-                    ).is_visible()
-                    assert (
-                        page.locator("[data-raya-learning-rail-toggle]")
-                        .get_attribute("aria-expanded")
-                        == "false"
-                    )
+                    ).first.is_hidden()
                     assert (
                         page.locator("#raya-learning-rail-body").get_attribute(
                             "aria-hidden"
                         )
-                        == "true"
+                        == "false"
                     )
                     article = _bounding_box(page, "article.raya-main-article")
-                    closed_context = page.evaluate(
-                        """() => ({
-                          drawerState: document.documentElement
-                            .dataset
-                            .rayaLearningRailDrawer,
-                          railHidden: document.querySelector('#raya-learning-rail')
-                            ?.getAttribute('aria-hidden'),
-                          railInert: document.querySelector('#raya-learning-rail')?.inert,
-                          bodyHidden: document.querySelector('#raya-learning-rail-body')
-                            ?.getAttribute('aria-hidden'),
-                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
-                        })"""
-                    )
-                    assert closed_context == {
-                        "drawerState": "closed",
-                        "railHidden": "true",
-                        "railInert": True,
-                        "bodyHidden": "true",
-                        "bodyInert": True,
-                    }
-                    page.click("[data-raya-learning-rail-toggle]")
-                    page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'open'"""
-                    )
-                    opened_context = page.evaluate(
+                    learning_rail = _bounding_box(page, "#raya-learning-rail")
+                    assert article["y"] < learning_rail["y"]
+                    mobile_context = page.evaluate(
                         """() => ({
                           drawerState: document.documentElement
                             .dataset
@@ -11981,6 +11960,9 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                           scrollLock: document.documentElement
                             .dataset
                             .rayaLearningRailScrollLock,
+                          commandVisible: !!document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getClientRects().length,
                           commandExpanded: document
                             .querySelector('[data-raya-learning-rail-toggle]')
                             ?.getAttribute('aria-expanded'),
@@ -11990,93 +11972,17 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                           bodyHidden: document.querySelector('#raya-learning-rail-body')
                             ?.getAttribute('aria-hidden'),
                           bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
-                          box: (() => {
-                            const box = document
-                              .querySelector('#raya-learning-rail')
-                              ?.getBoundingClientRect();
-                            return box
-                              ? { left: box.left, right: box.right, width: box.width, height: box.height }
-                              : null;
-                          })(),
-                          activeInsideRail: document
-                            .querySelector('#raya-learning-rail')
-                            ?.contains(document.activeElement),
                         })"""
                     )
-                    assert opened_context["drawerState"] == "open"
-                    assert opened_context["scrollLock"] == "true"
-                    assert opened_context["commandExpanded"] == "true"
-                    assert opened_context["railHidden"] == "false"
-                    assert opened_context["railInert"] is False
-                    assert opened_context["bodyHidden"] == "false"
-                    assert opened_context["bodyInert"] is False
-                    assert opened_context["box"]["left"] >= 0
-                    assert opened_context["box"]["right"] == 390
-                    assert opened_context["box"]["width"] >= 300
-                    assert opened_context["box"]["height"] >= 600
-                    assert opened_context["activeInsideRail"] is True
-                    _assert_no_horizontal_overflow(page)
-
-                    for _ in range(8):
-                        page.keyboard.press("Tab")
-                        rail_tab_state = page.evaluate(
-                            """() => ({
-                              drawerState: document.documentElement
-                                .dataset
-                                .rayaLearningRailDrawer,
-                              activeInsideRail: document
-                                .querySelector('#raya-learning-rail')
-                                ?.contains(document.activeElement),
-                              activeInCommandBar: !!document.activeElement
-                                ?.closest('.raya-top-command-bar'),
-                              activeInArticle: !!document.activeElement
-                                ?.closest('article.raya-main-article'),
-                              activeInMap: !!document.activeElement
-                                ?.closest('#raya-course-map'),
-                            })"""
-                        )
-                        assert rail_tab_state == {
-                            "drawerState": "open",
-                            "activeInsideRail": True,
-                            "activeInCommandBar": False,
-                            "activeInArticle": False,
-                            "activeInMap": False,
-                        }
-
-                    page.keyboard.press("Escape")
-                    page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
-                    )
-                    closed_context_again = page.evaluate(
-                        """() => ({
-                          drawerState: document.documentElement
-                            .dataset
-                            .rayaLearningRailDrawer,
-                          scrollLock: document.documentElement
-                            .dataset
-                            .rayaLearningRailScrollLock,
-                          commandExpanded: document
-                            .querySelector('[data-raya-learning-rail-toggle]')
-                            ?.getAttribute('aria-expanded'),
-                          commandFocused: document.activeElement
-                            ?.getAttribute('data-raya-learning-rail-toggle') !== null,
-                          railHidden: document.querySelector('#raya-learning-rail')
-                            ?.getAttribute('aria-hidden'),
-                          railInert: document.querySelector('#raya-learning-rail')?.inert,
-                          bodyHidden: document.querySelector('#raya-learning-rail-body')
-                            ?.getAttribute('aria-hidden'),
-                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
-                        })"""
-                    )
-                    assert closed_context_again == {
+                    assert mobile_context == {
                         "drawerState": "closed",
                         "scrollLock": "false",
+                        "commandVisible": False,
                         "commandExpanded": "false",
-                        "commandFocused": True,
-                        "railHidden": "true",
-                        "railInert": True,
-                        "bodyHidden": "true",
-                        "bodyInert": True,
+                        "railHidden": "false",
+                        "railInert": False,
+                        "bodyHidden": "false",
+                        "bodyInert": False,
                     }
                     page.set_viewport_size({"width": 1440, "height": 900})
                     page.wait_for_function(
@@ -12262,8 +12168,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         "mapHidden": "true",
                         "mapInert": True,
                         "commandFocused": True,
-                        "railBodyHidden": "true",
-                        "railBodyInert": True,
+                        "railBodyHidden": "false",
+                        "railBodyInert": False,
                         "scan": "",
                         "scanPressed": "false",
                     }

@@ -137,9 +137,10 @@ siguiente paso personal.
 
 Revisa el Page brief como orientacion estatica inicial sobre metadata ya
 aceptada. Puede mostrar resumen, status, posicion estructural de pagina, tiempo
-estimado, tags, prerrequisitos resueltos, conteos de enlaces explicitos del
-grafo y conteos de practica oficial. Debe usar solo enlaces y anchors locales,
-ser responsivo y evitar rutas de fuente, rutas privadas, fetches, storage del
+estimado escrito por el curso o estimacion aproximada de lectura, tags,
+prerrequisitos resueltos, conteos de enlaces explicitos del grafo y conteos de
+practica oficial. Debe usar solo enlaces y anchors locales, ser responsivo y
+evitar rutas de fuente, rutas privadas, fetches, storage del
 browser, progreso, dominio, recomendaciones, evaluacion o personalizacion.
 
 Revisa el Course graph como una superficie estatica de artifact. La busqueda del

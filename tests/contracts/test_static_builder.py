@@ -288,6 +288,8 @@ def test_build_renders_reader_page_brief_from_public_metadata(
     assert "ready" in brief
     assert '<li class="raya-page-brief-fact raya-page-brief-position">' in brief
     assert "Page 3 of 3" in brief
+    assert "Estimated time" in brief
+    assert "Estimated read time" not in brief
     assert "12 minutes" in brief
     assert "retrieval" in brief
     assert "orientation" in brief
@@ -309,6 +311,78 @@ def test_build_renders_reader_page_brief_from_public_metadata(
     assert "localStorage" not in brief
     assert "sessionStorage" not in brief
     assert "<script" not in brief
+
+
+def test_build_renders_computed_read_time_when_estimated_time_is_not_authored(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    topic = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic.write_text(
+        "---\n"
+        "id: first-topic\n"
+        "title: First Topic\n"
+        "summary: Fixture topic without authored estimated time.\n"
+        "status: ready\n"
+        "---\n"
+        "# First Topic\n\n"
+        + " ".join(f"readingword{index}" for index in range(260))
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    brief = _tag_html(html, "section", "raya-page-brief")
+    estimated_panel = _section_html(html, "raya-page-estimated-time")
+    visible = _visible_text(brief).lower()
+    assert "Estimated read time" in brief
+    assert "2 min read" in brief
+    assert 'aria-expanded="false">Estimated read time</button>' in estimated_panel
+    assert "2 min read" in estimated_panel
+    assert "recommend" not in visible
+    assert "progress" not in visible
+    assert "mastery" not in visible
+
+
+def test_build_renders_computed_read_time_for_section_pages(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    unit = course / "course" / "1_unit" / "0_index.md"
+    unit.write_text(
+        "---\n"
+        "id: first-unit\n"
+        "title: First Unit\n"
+        "summary: Fixture unit without authored estimated time.\n"
+        "status: ready\n"
+        "---\n"
+        "# First Unit\n\n"
+        + " ".join(f"sectionword{index}" for index in range(260))
+        + "\n\n<!-- raya:index -->\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    brief = _tag_html(html, "section", "raya-page-brief")
+    estimated_panel = _section_html(html, "raya-page-estimated-time")
+    visible = _visible_text(brief).lower()
+    assert "Estimated read time" in brief
+    assert "2 min read" in brief
+    assert 'aria-expanded="false">Estimated read time</button>' in estimated_panel
+    assert "2 min read" in estimated_panel
+    assert "recommend" not in visible
+    assert "progress" not in visible
+    assert "mastery" not in visible
 
 
 def test_page_brief_omits_practice_link_when_no_official_section_renders(
@@ -4182,10 +4256,10 @@ def test_render_fixture_builds_rich_static_pages(
     assert "raya-numbered-object-reference" in numbered_objects_html
     assert "raya-numbered-object-title" in numbered_objects_html
     assert "RAYA_PROOF_" not in numbered_objects_visible
-    assert (
-        ".raya-numbered-object {\n  border: 1px solid #d8dee4;\n  margin: 1.25rem 0;\n}"
-        in rich_css
-    )
+    assert ".raya-numbered-object {" in rich_css
+    assert "--raya-numbered-accent: var(--raya-color-accent);" in rich_css
+    assert "border: 1px solid var(--raya-numbered-border);" in rich_css
+    assert "margin: 1.25rem 0;" in rich_css
     assert (
         ".raya-numbered-object-body {\n  overflow-x: auto;\n  padding: 0.85rem;\n}"
         in rich_css
@@ -5134,6 +5208,10 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     assert "height: clamp(34rem, 72vh, 48rem);" in css
     assert (
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
+        in css
+    )
+    assert (
+        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(13.75rem, 13.75rem);"
         in css
     )
     assert (

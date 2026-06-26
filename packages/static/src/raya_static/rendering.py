@@ -4181,7 +4181,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
 }
 @media (max-width: 1279px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {
     display: none;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
@@ -4215,7 +4216,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
   [data-raya-course-map="expanded"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"] {
-    grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);
+    grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(13.75rem, 13.75rem);
   }
   [data-raya-course-map="expanded"][data-raya-learning-rail="collapsed"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="expanded"][data-raya-learning-rail="collapsed"] {
@@ -4507,6 +4508,12 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   [data-raya-course-map="collapsed"] .raya-course-map a[aria-current="page"]::after,
   .raya-course-map[data-raya-course-map="collapsed"] a[aria-current="page"]::after {
     color: var(--raya-color-success);
+  }
+}
+@media (min-width: 1400px) {
+  [data-raya-course-map="expanded"] .raya-learning-shell,
+  .raya-learning-shell[data-raya-course-map="expanded"] {
+    grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);
   }
 }
 .raya-breadcrumbs {
@@ -5306,17 +5313,6 @@ mjx-container[display="true"] {
   .raya-course-map-drawer-backdrop[hidden] {
     display: none;
   }
-  html[data-raya-learning-rail-drawer="closed"] .raya-learning-rail {
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    height: 1px;
-    margin: 0;
-    overflow: hidden;
-    padding: 0;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
-  }
   html[data-raya-learning-rail-drawer="open"] .raya-learning-rail {
     all: revert;
     background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-page));
@@ -5379,6 +5375,13 @@ mjx-container[display="true"] {
   }
   .raya-learning-rail-expand {
     display: none;
+  }
+  .raya-learning-rail-collapse {
+    display: none;
+  }
+  html[data-raya-learning-rail-drawer="open"] .raya-learning-rail-collapse {
+    display: inline-flex;
+    justify-content: center;
   }
   .raya-learning-rail {
     margin-top: 1rem;

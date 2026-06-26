@@ -801,12 +801,15 @@ _SHELL_JAVASCRIPT = r"""
       learningRailDrawerBackdrop.hidden = !drawerOpen;
     }
     if (!isDesktopShell()) {
-      learningRail.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
-      setElementInert(learningRail, !drawerOpen);
-      setFocusableDescendantsEnabled(learningRail, drawerOpen);
-      learningRailBody.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
-      setElementInert(learningRailBody, !drawerOpen);
-      setFocusableDescendantsEnabled(learningRailBody, drawerOpen);
+      learningRail.setAttribute("aria-hidden", "false");
+      setElementInert(learningRail, false);
+      setFocusableDescendantsEnabled(learningRail, true);
+      learningRailBody.setAttribute("aria-hidden", "false");
+      setElementInert(learningRailBody, false);
+      setFocusableDescendantsEnabled(learningRailBody, true);
+      railToggleButtons.forEach((button) => {
+        setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
+      });
       syncLearningRailToggleButtons(root.dataset.rayaLearningRail !== "collapsed");
       return;
     }
@@ -825,6 +828,11 @@ _SHELL_JAVASCRIPT = r"""
       learningRailDrawerBackdrop.hidden = true;
     }
     syncLearningRailToggleButtons(root.dataset.rayaLearningRail !== "collapsed");
+    if (railExpanded) {
+      railToggleButtons.forEach((button) => {
+        setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
+      });
+    }
   }
 
   function setLearningRailExpanded(nextExpanded) {
@@ -1452,6 +1460,9 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     const href = activeLink.getAttribute("href") || "";
+    if (href.startsWith("#raya-generated-")) {
+      return;
+    }
     const label = activeLink.textContent || "Current section";
     currentSectionLinks.forEach((currentSectionLink) => {
       const isCommandChip = currentSectionLink.classList.contains("raya-reading-context-section");

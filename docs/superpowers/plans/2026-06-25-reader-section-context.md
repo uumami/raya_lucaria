@@ -27,7 +27,7 @@
 - Modify: `packages/static/src/raya_static/builder.py`
 - Modify: `packages/static/src/raya_static/shell.py`
 
-- [ ] **Step 1: Write the failing contract assertions**
+- [x] **Step 1: Write the failing contract assertions**
 
 In `test_render_fixture_builds_rich_static_pages`, add:
 
@@ -46,7 +46,7 @@ In the shell script contract test that reads `shell.js`, add:
     assert "data-raya-current-section-link" in script_text
 ```
 
-- [ ] **Step 2: Run the contract tests to verify RED**
+- [x] **Step 2: Run the contract tests to verify RED**
 
 Run:
 
@@ -56,7 +56,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 
 Expected: FAIL because the current-section component and shell hook do not exist.
 
-- [ ] **Step 3: Render current-section markup**
+- [x] **Step 3: Render current-section markup**
 
 In `packages/static/src/raya_static/builder.py`, add a helper near `_render_page_contents_rail`:
 
@@ -88,7 +88,7 @@ def _render_current_section_rail(toc_html: str) -> str:
 
 Then include `_render_current_section_rail(toc_html)` immediately before `_render_page_contents_rail(toc_html)` in `_render_learning_rail`.
 
-- [ ] **Step 4: Add shell hook**
+- [x] **Step 4: Add shell hook**
 
 In `packages/static/src/raya_static/shell.py`, define:
 
@@ -115,7 +115,7 @@ Add:
   }
 ```
 
-- [ ] **Step 5: Run the contract tests to verify GREEN**
+- [x] **Step 5: Run the contract tests to verify GREEN**
 
 Run:
 
@@ -132,7 +132,7 @@ Expected: PASS.
 - Modify: `packages/static/src/raya_static/rendering.py`
 - Modify: `packages/static/src/raya_static/shell.py`
 
-- [ ] **Step 1: Write failing e2e assertions**
+- [x] **Step 1: Write failing e2e assertions**
 
 In `test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading`, after the existing `#worked-example` active-heading assertion, add:
 
@@ -162,7 +162,7 @@ After scrolling to `#1-numeric-heading`, add:
                     )
 ```
 
-- [ ] **Step 2: Run e2e to verify RED**
+- [x] **Step 2: Run e2e to verify RED**
 
 Run:
 
@@ -172,7 +172,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: FAIL until the current-section markup and shell sync exist.
 
-- [ ] **Step 3: Add CSS**
+- [x] **Step 3: Add CSS**
 
 In `packages/static/src/raya_static/rendering.py`, near `.raya-page-toc` styles, add:
 
@@ -203,7 +203,7 @@ In `packages/static/src/raya_static/rendering.py`, near `.raya-page-toc` styles,
 }
 ```
 
-- [ ] **Step 4: Run e2e to verify GREEN**
+- [x] **Step 4: Run e2e to verify GREEN**
 
 Run:
 
@@ -222,15 +222,15 @@ Expected: PASS.
 - Modify: `docs/guides/es/estudiantes/index.md`
 - Modify: `docs/guides/es/agentes/index.md`
 
-- [ ] **Step 1: Update docs**
+- [x] **Step 1: Update docs**
 
 Update the right learning rail contract to say it may show the current article section derived from generated page headings and active TOC links. Update role docs to describe it as structural orientation only, not progress.
 
-- [ ] **Step 2: Request review**
+- [x] **Step 2: Request review**
 
 Ask an independent review agent to inspect the changes for static-boundary, accessibility, and test coverage issues.
 
-- [ ] **Step 3: Run focused verification**
+- [x] **Step 3: Run focused verification**
 
 Run:
 
@@ -241,7 +241,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/contracts/test_static_bui
 
 Expected: PASS.
 
-- [ ] **Step 4: Run full host gate**
+- [x] **Step 4: Run full host gate**
 
 Run:
 
@@ -251,7 +251,7 @@ Run:
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 Run:
 

@@ -149,6 +149,11 @@ page contents and heading anchors, updates with the active heading in browser
 tests, remains a normal local anchor link, writes no browser storage, and does
 not use reading percentage, completion, mastery, recommendation, or progress
 language.
+If a page lacks authored `estimated_time`, verify any `Estimated read time`
+shown in the Page brief or right rail is computed during build from public
+article text, uses no browser storage or runtime fetch, and remains approximate
+orientation rather than progress, mastery, recommendation, or personalization.
+When authored `estimated_time` exists, it takes precedence as `Estimated time`.
 If the shell exposes `Focus reading`, verify it is keyboard reachable, collapses
 the desktop course map and right learning rail together, toggles back to the
 expanded layout, does not change URL state, and writes no browser storage.

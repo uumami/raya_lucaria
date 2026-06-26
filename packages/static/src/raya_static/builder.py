@@ -949,6 +949,11 @@ def _render_page(
     article_html, toc_html = _extract_page_toc(article_html)
     public_article_text = _public_article_search_text(article_html)
     public_sections = _public_article_search_sections(article_html, page_id=page.id)
+    estimated_reading_time = _page_reading_time(
+        page,
+        public_article_text,
+        content_model,
+    )
     search_record = {
         "id": page.id,
         "search_text": public_article_text,
@@ -970,6 +975,7 @@ def _render_page(
         _renderable_official_object_count(official_objects),
         page_graph_context,
         graph_href,
+        estimated_reading_time,
     )
     learning_rail = _render_learning_rail(
         page,
@@ -977,6 +983,7 @@ def _render_page(
         content_model,
         support_panels,
         page_graph_context,
+        estimated_reading_time,
     )
 
     rendered_page = "\n".join(
@@ -1463,6 +1470,8 @@ def _reading_context_section_link(toc_html: str) -> tuple[str, str] | None:
     if match is None:
         return None
     href = html.unescape(match.group(1))
+    if href.startswith("#raya-generated-"):
+        return None
     label = html.unescape(match.group(2)).strip() or "Current section"
     return href, label
 
@@ -1864,11 +1873,12 @@ def _render_learning_rail(
     content_model: ContentModel,
     support_panels: str,
     page_graph_context: dict[str, list[dict[str, str]]],
+    estimated_reading_time: tuple[str, str] | None,
 ) -> str:
     panels = [
         _render_page_summary_rail(page),
         _render_page_status_rail(page),
-        _render_estimated_time_rail(page),
+        _render_estimated_time_rail(estimated_reading_time),
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
         _render_linked_pages_rail(page, page_graph_context),
@@ -2353,6 +2363,8 @@ def _render_current_section_rail(toc_html: str) -> str:
     if match is None:
         return ""
     href = match.group(1)
+    if href.startswith("#raya-generated-"):
+        return ""
     label = html.unescape(match.group(2))
     body = "\n".join(
         [
@@ -2398,13 +2410,14 @@ def _render_page_status_rail(page: ContentPage) -> str:
     )
 
 
-def _render_estimated_time_rail(page: ContentPage) -> str:
-    if not page.estimated_time:
+def _render_estimated_time_rail(estimated_reading_time: tuple[str, str] | None) -> str:
+    if estimated_reading_time is None:
         return ""
+    label, value = estimated_reading_time
     return _render_rail_panel(
         "raya-page-estimated-time",
-        "Estimated time",
-        f"<p>{html.escape(page.estimated_time)}</p>",
+        label,
+        f"<p>{html.escape(value)}</p>",
     )
 
 
@@ -2973,12 +2986,27 @@ def _count_label(count: int, singular: str) -> str:
     return f"{count} {suffix}"
 
 
+def _page_reading_time(
+    page: ContentPage,
+    public_article_text: str,
+    content_model: ContentModel,
+) -> tuple[str, str] | None:
+    if page.estimated_time:
+        return ("Estimated time", page.estimated_time)
+    word_count = len(re.findall(r"\b[\w'-]+\b", public_article_text))
+    if word_count == 0:
+        return None
+    minutes = max(1, (word_count + 199) // 200)
+    return ("Estimated read time", f"{minutes} min read")
+
+
 def _render_page_brief(
     page: ContentPage,
     content_model: ContentModel,
     official_practice_count: int,
     page_graph_context: dict[str, list[dict[str, str]]],
     graph_href: str,
+    estimated_reading_time: tuple[str, str] | None,
 ) -> str:
     facts: list[str] = []
     status = page.status.strip() if page.status else ""
@@ -2987,9 +3015,10 @@ def _render_page_brief(
     position = _page_position(page, content_model)
     if position:
         facts.append(_page_brief_fact("Position", html.escape(position), "position"))
-    if page.estimated_time:
+    if estimated_reading_time is not None:
+        label, value = estimated_reading_time
         facts.append(
-            _page_brief_fact("Estimated time", html.escape(page.estimated_time), "time")
+            _page_brief_fact(label, html.escape(value), "time")
         )
     if page.tags:
         tag_items = " ".join(
