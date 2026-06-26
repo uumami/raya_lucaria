@@ -4347,6 +4347,11 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert ".raya-course-map-drawer-chrome" in css_text
     assert ".raya-course-map-current-chip" in css_text
     assert '[data-raya-course-map="collapsed"] .raya-course-map-current-chip' in css_text
+    assert ".raya-learning-rail-context-chip" in css_text
+    assert (
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip'
+        in css_text
+    )
     assert ".raya-visually-hidden" in css_text
     assert ".raya-command-search-form" in css_text
     assert ".raya-command-search-input" in css_text
@@ -4506,6 +4511,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     ) in html
     assert "data-raya-learning-rail-collapse" in html
     assert "data-raya-learning-rail-expand" in html
+    assert "data-raya-learning-rail-context-chip" in html
+    assert 'aria-label="Learning context for Projection Residuals, status ready"' in html
+    assert 'class="raya-learning-rail-context-chip-title">Projection Residuals</span>' in html
+    assert 'class="raya-learning-rail-context-chip-status">ready</span>' in html
     assert 'aria-controls="raya-learning-rail-body"' in html
     assert '<section class="raya-rail-panel raya-page-summary"' in html
     assert '<section class="raya-rail-panel raya-page-status"' in html

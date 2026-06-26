@@ -1878,6 +1878,7 @@ def _render_learning_rail(
     body = "\n".join(panel for panel in panels if panel)
     if not body:
         return ""
+    context_chip = _render_learning_rail_context_chip(page)
     return "\n".join(
         [
             (
@@ -1897,6 +1898,7 @@ def _render_learning_rail(
             '<div id="raya-learning-rail-body" class="raya-learning-rail-body" aria-hidden="false">',
             body,
             "</div>",
+            context_chip,
             (
                 '<button class="raya-learning-rail-expand" type="button" '
                 "data-raya-learning-rail-expand "
@@ -1910,6 +1912,20 @@ def _render_learning_rail(
                 "data-raya-learning-rail-drawer-backdrop hidden></div>"
             ),
         ]
+    )
+
+
+def _render_learning_rail_context_chip(page: ContentPage) -> str:
+    title = page.title or page.nav_title or page.id
+    status = page.status or "ready"
+    return (
+        '<p class="raya-learning-rail-context-chip" '
+        "data-raya-learning-rail-context-chip "
+        f'aria-label="Learning context for {html.escape(title, quote=True)}, '
+        f'status {html.escape(status, quote=True)}">'
+        f'<span class="raya-learning-rail-context-chip-title">{html.escape(title)}</span>'
+        f'<span class="raya-learning-rail-context-chip-status">{html.escape(status)}</span>'
+        "</p>"
     )
 
 

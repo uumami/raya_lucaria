@@ -3238,6 +3238,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   display: grid;
   gap: 0;
 }
+.raya-learning-rail-context-chip {
+  display: none;
+}
 .raya-learning-rail-collapse,
 .raya-learning-rail-expand {
   background: var(--raya-color-accent-soft);
@@ -4148,6 +4151,34 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     line-height: 1;
     text-transform: uppercase;
     writing-mode: horizontal-tb;
+  }
+  [data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip,
+  .raya-learning-rail[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip {
+    align-items: center;
+    background: color-mix(in srgb, var(--raya-color-accent) 11%, var(--raya-color-surface));
+    border: 1px solid color-mix(in srgb, var(--raya-color-accent) 52%, var(--raya-color-border));
+    border-radius: 0.375rem;
+    color: var(--raya-color-text);
+    display: flex;
+    flex-direction: column;
+    font-size: 0.66rem;
+    font-weight: 850;
+    gap: 0.3rem;
+    justify-content: center;
+    line-height: 1.05;
+    margin: 0;
+    max-width: 100%;
+    min-height: 4.5rem;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    padding: 0.35rem 0.25rem;
+    text-align: center;
+  }
+  [data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip-status,
+  .raya-learning-rail[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip-status {
+    color: var(--raya-color-success);
+    font-size: 0.62rem;
+    text-transform: uppercase;
   }
   [data-raya-learning-rail="collapsed"] .raya-learning-rail[data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body,
   .raya-learning-rail[data-raya-learning-rail="collapsed"][data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body {

@@ -9347,6 +9347,9 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
                             railWidth: rail?.getBoundingClientRect().width,
+                            contextChipVisible: !!document
+                              .querySelector('[data-raya-learning-rail-context-chip]')
+                              ?.checkVisibility(),
                             expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
                             collapseExpanded: document
                               .querySelector('[data-raya-learning-rail-collapse]')
@@ -9361,6 +9364,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     assert initial["bodyInert"] in {False, None}
                     assert initial["articleWidth"] > 520
                     assert 240 <= initial["railWidth"] <= 330
+                    assert initial["contextChipVisible"] is False
                     assert initial["expandVisible"] is False
                     assert initial["collapseExpanded"] == "true"
 
@@ -9380,6 +9384,9 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const article = document.querySelector('#raya-article');
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           const bodyLink = body?.querySelector('a');
+                          const chip = document
+                            .querySelector('[data-raya-learning-rail-context-chip]');
+                          const chipBox = chip?.getBoundingClientRect();
                           return {
                             rootState: root.dataset.rayaLearningRail,
                             shellState: shell?.dataset.rayaLearningRail,
@@ -9391,6 +9398,14 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                             expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
                             expandExpanded: expand?.getAttribute('aria-expanded'),
                             bodyLinkTabIndex: bodyLink?.getAttribute('tabindex'),
+                            contextChip: {
+                              visible: !!chip?.checkVisibility(),
+                              text: chip?.textContent.trim(),
+                              label: chip?.getAttribute('aria-label'),
+                              width: chipBox?.width,
+                              scrollWidth: chip?.scrollWidth,
+                              clientWidth: chip?.clientWidth,
+                            },
                             wrappedExpandText: expand?.innerText.includes('\\n'),
                           };
                         }"""
@@ -9405,6 +9420,18 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     assert collapsed["expandVisible"] is True
                     assert collapsed["expandExpanded"] == "false"
                     assert collapsed["bodyLinkTabIndex"] == "-1"
+                    assert collapsed["contextChip"]["visible"] is True
+                    assert "Projection Residuals" in collapsed["contextChip"]["text"]
+                    assert "ready" in collapsed["contextChip"]["text"]
+                    assert (
+                        collapsed["contextChip"]["label"]
+                        == "Learning context for Projection Residuals, status ready"
+                    )
+                    assert collapsed["contextChip"]["width"] <= collapsed["railWidth"]
+                    assert (
+                        collapsed["contextChip"]["scrollWidth"]
+                        <= collapsed["contextChip"]["clientWidth"] + 1
+                    )
                     assert collapsed["wrappedExpandText"] is False
 
                     page.click("[data-raya-learning-rail-expand]")
@@ -9424,6 +9451,9 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             railWidth: rail?.getBoundingClientRect().width,
+                            contextChipVisible: !!document
+                              .querySelector('[data-raya-learning-rail-context-chip]')
+                              ?.checkVisibility(),
                           };
                         }"""
                     )
@@ -9432,6 +9462,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     assert expanded["bodyHidden"] == "false"
                     assert expanded["bodyInert"] in {False, None}
                     assert expanded["railWidth"] >= 240
+                    assert expanded["contextChipVisible"] is False
 
                     page.click("[data-raya-learning-rail-collapse]")
                     page.wait_for_function(
@@ -9453,19 +9484,19 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
                           return {
-                            rootState: document.documentElement.dataset.rayaLearningRail,
-                            bodyHidden: body?.getAttribute('aria-hidden'),
-                            bodyInert: body?.inert,
-                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
-                            collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
-                          };
-                        }"""
-                    )
+                                rootState: document.documentElement.dataset.rayaLearningRail,
+                                bodyHidden: body?.getAttribute('aria-hidden'),
+                                bodyInert: body?.inert,
+                                expandVisible: !!expand?.checkVisibility(),
+                                collapseVisible: !!collapse?.checkVisibility(),
+                              };
+                            }"""
+                        )
                     assert resized_mobile["rootState"] == "expanded"
-                    assert resized_mobile["bodyHidden"] == "false"
-                    assert resized_mobile["bodyInert"] in {False, None}
+                    assert resized_mobile["bodyHidden"] == "true"
+                    assert resized_mobile["bodyInert"] is True
                     assert resized_mobile["expandVisible"] is False
-                    assert resized_mobile["collapseVisible"] is False
+                    assert resized_mobile["collapseVisible"] is True
 
                     page.set_viewport_size({"width": 1280, "height": 900})
                     page.wait_for_function(
@@ -9517,18 +9548,19 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
                           const rail = document.querySelector('#raya-learning-rail');
-                          const article = document.querySelector('#raya-article');
+                          const railBox = rail?.getBoundingClientRect();
                           return {
-                            expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
-                            collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
-                            articleTop: article?.getBoundingClientRect().top,
-                            railTop: rail?.getBoundingClientRect().top,
+                            expandVisible: !!expand?.checkVisibility(),
+                            collapseVisible: !!collapse?.checkVisibility(),
+                            railWidth: railBox?.width,
+                            railHeight: railBox?.height,
                           };
                         }"""
                     )
                     assert mobile_state["expandVisible"] is False
-                    assert mobile_state["collapseVisible"] is False
-                    assert mobile_state["articleTop"] < mobile_state["railTop"]
+                    assert mobile_state["collapseVisible"] is True
+                    assert mobile_state["railWidth"] <= 2
+                    assert mobile_state["railHeight"] <= 2
                 finally:
                     mobile.close()
             finally:
