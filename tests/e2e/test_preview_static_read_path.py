@@ -5368,6 +5368,12 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 == "true"
                             )
                             assert (
+                                page.locator(
+                                    '[data-raya-discovery-panel-body="controls"]'
+                                ).evaluate("node => getComputedStyle(node).display")
+                                == "none"
+                            )
+                            assert (
                                 page.locator("#raya-search-input").get_attribute(
                                     "tabindex"
                                 )
@@ -5451,18 +5457,51 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 '[data-raya-discovery-toggle-panel="controls"]'
                             )
                             assert mobile_controls_toggle.is_visible()
+                            mobile_storage_before = page.evaluate(
+                                "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                            )
                             mobile_controls_toggle.click()
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('[data-raya-search-page]')
+                                  ?.getAttribute('data-raya-discovery-controls-state') === 'collapsed'"""
+                            )
                             assert (
-                                page.locator("[data-raya-search-page]").get_attribute(
-                                    "data-raya-discovery-controls-state"
-                                )
-                                == "expanded"
+                                mobile_controls_toggle.get_attribute("aria-expanded")
+                                == "false"
                             )
                             assert (
                                 page.locator(
                                     '[data-raya-discovery-panel-body="controls"]'
                                 ).get_attribute("aria-hidden")
-                                == "false"
+                                == "true"
+                            )
+                            assert (
+                                page.locator("#raya-search-input").get_attribute(
+                                    "tabindex"
+                                )
+                                == "-1"
+                            )
+                            assert page.locator(
+                                '[data-raya-discovery-panel-rail-summary="controls"]'
+                            ).is_visible()
+                            assert (
+                                page.evaluate(
+                                    "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                                )
+                                == mobile_storage_before
+                            )
+                            mobile_controls_toggle.click()
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('[data-raya-search-page]')
+                                  ?.getAttribute('data-raya-discovery-controls-state') === 'expanded'"""
+                            )
+                            assert (
+                                page.locator("#raya-search-input").get_attribute(
+                                    "tabindex"
+                                )
+                                is None
                             )
                         assert (
                             page.locator(".raya-command-graph")

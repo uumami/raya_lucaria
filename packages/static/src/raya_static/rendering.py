@@ -5212,9 +5212,6 @@ mjx-container[display="true"] {
   [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
     writing-mode: horizontal-tb;
   }
-  .raya-discovery-panel-body[aria-hidden="true"] {
-    display: block;
-  }
   [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel,
   [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel,
   [data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel,

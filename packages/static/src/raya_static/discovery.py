@@ -19,7 +19,6 @@ def discovery_resources() -> DiscoveryResources:
 _DISCOVERY_JAVASCRIPT = r"""
 (() => {
   const roots = Array.from(document.querySelectorAll("[data-raya-discovery-page]"));
-  const collapseMedia = window.matchMedia("(min-width: 1280px)");
 
   if (roots.length === 0) {
     return;
@@ -101,9 +100,9 @@ _DISCOVERY_JAVASCRIPT = r"""
   function setPanelState(root, panelName, expanded) {
     const state = expanded ? "expanded" : "collapsed";
     const body = root.querySelector(`[data-raya-discovery-panel-body="${panelName}"]`);
-    updatePanelRailSummary(root, panelName);
     root.setAttribute(stateAttribute(panelName), state);
     root.dataset[stateDatasetName(panelName)] = state;
+    updatePanelRailSummary(root, panelName);
     if (body) {
       body.setAttribute("aria-hidden", expanded ? "false" : "true");
       setPanelFocusable(body, expanded);
@@ -142,31 +141,10 @@ _DISCOVERY_JAVASCRIPT = r"""
         button.getAttribute("data-raya-discovery-toggle-panel") || ""
       );
       button.addEventListener("click", () => {
-        if (!collapseMedia.matches) {
-          setPanelState(root, panelName, true);
-          return;
-        }
         const expanded = root.getAttribute(stateAttribute(panelName)) !== "collapsed";
         setPanelState(root, panelName, !expanded);
       });
     });
   });
-
-  function restoreSmallViewportPanels() {
-    if (collapseMedia.matches) {
-      return;
-    }
-    roots.forEach((root) => {
-      setPanelState(root, "controls", true);
-      setPanelState(root, "context", true);
-    });
-  }
-
-  if (typeof collapseMedia.addEventListener === "function") {
-    collapseMedia.addEventListener("change", restoreSmallViewportPanels);
-  } else if (typeof collapseMedia.addListener === "function") {
-    collapseMedia.addListener(restoreSmallViewportPanels);
-  }
-  restoreSmallViewportPanels();
 })();
 """
