@@ -5697,6 +5697,79 @@ mjx-container[display="true"] {
   .raya-graph-toolbar :is(input, select, button):focus-visible {
     outline-offset: -2px;
   }
+  .raya-graph-reading-keys {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.1rem;
+    scrollbar-gutter: stable;
+  }
+  .raya-graph-reading-keys article {
+    flex: 0 0 11.25rem;
+    min-height: 2.35rem;
+    padding: 0.24rem 0.34rem;
+  }
+  .raya-graph-reading-keys h2 {
+    font-size: 0.66rem;
+  }
+  .raya-graph-reading-keys p {
+    display: -webkit-box;
+    font-size: 0.62rem;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .raya-graph-instructions {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .raya-graph-orientation {
+    gap: 0.28rem;
+    padding: 0.34rem 0.42rem;
+  }
+  .raya-graph-orientation-main {
+    align-items: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-gutter: stable;
+  }
+  .raya-graph-orientation-counts,
+  .raya-graph-orientation-selection {
+    flex: 0 0 auto;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .raya-graph-orientation-selection {
+    text-align: left;
+  }
+  .raya-graph-orientation-meta,
+  .raya-graph-orientation-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-gutter: stable;
+  }
+  .raya-graph-orientation-meta {
+    gap: 0.35rem;
+  }
+  .raya-graph-orientation-meta div {
+    flex: 0 0 7.25rem;
+  }
+  .raya-graph-orientation-meta dd {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .raya-graph-orientation-actions {
+    gap: 0.35rem;
+    padding-bottom: 0.05rem;
+  }
+  .raya-graph-orientation-actions > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
   .raya-course-map,
   .raya-main-article,
   .raya-learning-rail,

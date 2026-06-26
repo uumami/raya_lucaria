@@ -5500,6 +5500,118 @@ def test_preview_graph_mobile_toolbar_uses_compact_command_strip(
     assert probe["sessionStorageKeys"] == []
 
 
+def test_preview_graph_mobile_keeps_canvas_in_first_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    probe = page.evaluate(
+                        """() => {
+                          const box = (selector) => {
+                            const node = document.querySelector(selector);
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? {
+                                  top: rect.top,
+                                  bottom: rect.bottom,
+                                  height: rect.height,
+                                  width: rect.width,
+                                }
+                              : null;
+                          };
+                          const toolbar = document.querySelector('.raya-graph-toolbar');
+                          return {
+                            readingKeys: box('[data-raya-graph-reading-keys]'),
+                            readingKeyCount: document.querySelectorAll(
+                              '[data-raya-graph-reading-key]'
+                            ).length,
+                            instructions: box('.raya-graph-instructions'),
+                            orientation: box('[data-raya-graph-orientation]'),
+                            orientationMeta: box('.raya-graph-orientation-meta'),
+                            orientationActions: box('.raya-graph-orientation-actions'),
+                            canvas: box('#raya-graph-canvas'),
+                            toolbarScrollWidth: toolbar?.scrollWidth || 0,
+                            toolbarClientWidth: toolbar?.clientWidth || 0,
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                            selectedState: document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent
+                              ?.trim() || '',
+                            orientationLabels: Array.from(
+                              document.querySelectorAll(
+                                '.raya-graph-orientation-meta dt'
+                              )
+                            ).map((node) => node.textContent.trim()),
+                            orientationActionCount: Array.from(
+                              document.querySelectorAll(
+                                '.raya-graph-orientation-actions > *'
+                              )
+                            ).filter((node) => !node.hidden).length,
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["readingKeys"] is not None
+    assert probe["instructions"] is not None
+    assert probe["orientation"] is not None
+    assert probe["orientationMeta"] is not None
+    assert probe["orientationActions"] is not None
+    assert probe["canvas"] is not None
+    assert probe["readingKeyCount"] == 4
+    assert probe["readingKeys"]["height"] <= 48
+    assert probe["instructions"]["height"] <= 40
+    assert probe["orientation"]["height"] <= 100
+    assert probe["canvas"]["top"] <= 620
+    assert probe["canvas"]["top"] < 844
+    assert probe["toolbarScrollWidth"] > probe["toolbarClientWidth"]
+    assert probe["overflow"] <= 1
+    assert probe["selectedState"] == "reader-ux"
+    assert probe["orientationLabels"] == [
+        "Layout",
+        "Page focus",
+        "Search",
+        "Filters",
+        "Neighborhood",
+    ]
+    assert probe["orientationActionCount"] >= 3
+
+
 def test_preview_graph_toolbar_remains_compact_above_label_breakpoint(
     tmp_path: Path,
 ) -> None:
