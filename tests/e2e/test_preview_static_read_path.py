@@ -4269,7 +4269,18 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 )
                                 == "-1"
                             )
+                            controls_rail_summary = page.locator(
+                                '[data-raya-discovery-panel-rail-summary="controls"]'
+                            )
+                            assert controls_rail_summary.is_visible()
+                            assert (
+                                "visible result"
+                                in controls_rail_summary.inner_text()
+                            )
                             _assert_no_horizontal_overflow(page)
+                            context_title = page.locator(
+                                "[data-raya-search-context-title]"
+                            ).inner_text()
                             context_toggle.click()
                             page.wait_for_function(
                                 """() => document
@@ -4285,6 +4296,14 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                     '[data-raya-discovery-panel-body="context"]'
                                 ).get_attribute("aria-hidden")
                                 == "true"
+                            )
+                            context_rail_summary = page.locator(
+                                '[data-raya-discovery-panel-rail-summary="context"]'
+                            )
+                            assert context_rail_summary.is_visible()
+                            assert (
+                                context_title
+                                in context_rail_summary.inner_text()
                             )
                             _assert_no_horizontal_overflow(page)
                             assert (
@@ -4316,6 +4335,8 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 context_toggle.get_attribute("aria-expanded")
                                 == "true"
                             )
+                            assert controls_rail_summary.is_hidden()
+                            assert context_rail_summary.is_hidden()
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
                                 ".raya-discovery-command-bar"

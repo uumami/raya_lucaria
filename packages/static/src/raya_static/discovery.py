@@ -68,9 +68,40 @@ _DISCOVERY_JAVASCRIPT = r"""
     });
   }
 
+  function panelRailSummaryText(body, panelName) {
+    if (!body) {
+      return panelName === "context" ? "Context ready." : "Controls ready.";
+    }
+    const source = panelName === "context"
+      ? body.querySelector(
+          "[data-raya-search-context-title], " +
+          "[data-raya-practice-context-title], " +
+          "[data-raya-tasks-context-title], " +
+          "[data-raya-schedule-context-title]"
+        )
+      : body.querySelector(".raya-discovery-summary");
+    const text = source ? source.textContent.trim() : "";
+    if (text) {
+      return text;
+    }
+    return panelName === "context" ? "Context ready." : "Controls ready.";
+  }
+
+  function updatePanelRailSummary(root, panelName) {
+    const body = root.querySelector(`[data-raya-discovery-panel-body="${panelName}"]`);
+    const collapsed = root.getAttribute(stateAttribute(panelName)) === "collapsed";
+    root
+      .querySelectorAll(`[data-raya-discovery-panel-rail-summary="${panelName}"]`)
+      .forEach((summary) => {
+        summary.textContent = panelRailSummaryText(body, panelName);
+        summary.setAttribute("aria-hidden", collapsed ? "false" : "true");
+      });
+  }
+
   function setPanelState(root, panelName, expanded) {
     const state = expanded ? "expanded" : "collapsed";
     const body = root.querySelector(`[data-raya-discovery-panel-body="${panelName}"]`);
+    updatePanelRailSummary(root, panelName);
     root.setAttribute(stateAttribute(panelName), state);
     root.dataset[stateDatasetName(panelName)] = state;
     if (body) {
@@ -90,6 +121,22 @@ _DISCOVERY_JAVASCRIPT = r"""
   }
 
   roots.forEach((root) => {
+    ["controls", "context"].forEach((panelName) => {
+      const body = root.querySelector(`[data-raya-discovery-panel-body="${panelName}"]`);
+      updatePanelRailSummary(root, panelName);
+      if (body && typeof MutationObserver === "function") {
+        new MutationObserver(() => updatePanelRailSummary(root, panelName)).observe(
+          body,
+          {
+            attributes: true,
+            attributeFilter: ["hidden"],
+            characterData: true,
+            childList: true,
+            subtree: true,
+          }
+        );
+      }
+    });
     root.querySelectorAll("[data-raya-discovery-toggle-panel]").forEach((button) => {
       const panelName = normalizePanelName(
         button.getAttribute("data-raya-discovery-toggle-panel") || ""

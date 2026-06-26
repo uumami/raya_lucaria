@@ -5245,6 +5245,11 @@ def _render_search_surface(
             '<div class="raya-discovery-panel-header">',
             "<h2>Find pages</h2>",
             (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="controls" '
+                'aria-hidden="true"></p>'
+            ),
+            (
                 '<button type="button" data-raya-discovery-toggle-panel="controls" '
                 'aria-controls="raya-search-control-panel-body" aria-expanded="true" '
                 'aria-label="Collapse controls panel">'
@@ -5291,6 +5296,11 @@ def _render_search_surface(
             ),
             '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="context" '
+                'aria-hidden="true"></p>'
+            ),
             (
                 '<button type="button" data-raya-discovery-toggle-panel="context" '
                 'aria-controls="raya-search-context-panel-body" aria-expanded="true" '
@@ -5664,6 +5674,11 @@ def _render_practice_surface(
             '<div class="raya-discovery-panel-header">',
             "<h2>Find practice</h2>",
             (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="controls" '
+                'aria-hidden="true"></p>'
+            ),
+            (
                 '<button type="button" data-raya-discovery-toggle-panel="controls" '
                 'aria-controls="raya-practice-control-panel-body" aria-expanded="true" '
                 'aria-label="Collapse controls panel">'
@@ -5719,6 +5734,11 @@ def _render_practice_surface(
             ),
             '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="context" '
+                'aria-hidden="true"></p>'
+            ),
             (
                 '<button type="button" data-raya-discovery-toggle-panel="context" '
                 'aria-controls="raya-practice-context-panel-body" aria-expanded="true" '
@@ -6057,6 +6077,11 @@ def _render_tasks_surface(
             '<div class="raya-discovery-panel-header">',
             "<h2>Find tasks</h2>",
             (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="controls" '
+                'aria-hidden="true"></p>'
+            ),
+            (
                 '<button type="button" data-raya-discovery-toggle-panel="controls" '
                 'aria-controls="raya-tasks-control-panel-body" aria-expanded="true" '
                 'aria-label="Collapse controls panel">'
@@ -6124,6 +6149,11 @@ def _render_tasks_surface(
             ),
             '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="context" '
+                'aria-hidden="true"></p>'
+            ),
             (
                 '<button type="button" data-raya-discovery-toggle-panel="context" '
                 'aria-controls="raya-tasks-context-panel-body" aria-expanded="true" '
@@ -6417,6 +6447,11 @@ def _render_schedule_surface(
             '<div class="raya-discovery-panel-header">',
             "<h2>Find schedule items</h2>",
             (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="controls" '
+                'aria-hidden="true"></p>'
+            ),
+            (
                 '<button type="button" data-raya-discovery-toggle-panel="controls" '
                 'aria-controls="raya-schedule-control-panel-body" aria-expanded="true" '
                 'aria-label="Collapse controls panel">'
@@ -6481,6 +6516,11 @@ def _render_schedule_surface(
             ),
             '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<p class="raya-discovery-panel-rail-summary" '
+                'data-raya-discovery-panel-rail-summary="context" '
+                'aria-hidden="true"></p>'
+            ),
             (
                 '<button type="button" data-raya-discovery-toggle-panel="context" '
                 'aria-controls="raya-schedule-context-panel-body" aria-expanded="true" '

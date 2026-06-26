@@ -1806,6 +1806,19 @@ img {
 .raya-discovery-panel-header h2 {
   margin: 0;
 }
+.raya-discovery-panel-rail-summary {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: var(--raya-color-muted);
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  max-width: 4.75rem;
+  overflow: hidden;
+  text-align: center;
+}
 .raya-discovery-panel-header button {
   background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
   border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-accent));
@@ -1863,6 +1876,10 @@ img {
 [data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel .raya-discovery-panel-header,
 [data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel .raya-discovery-panel-header {
   flex-direction: column;
+}
+[data-raya-discovery-controls-state="collapsed"] [data-raya-discovery-panel-rail-summary="controls"],
+[data-raya-discovery-context-state="collapsed"] [data-raya-discovery-panel-rail-summary="context"] {
+  display: -webkit-box;
 }
 [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel h2,
 [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel h2,
