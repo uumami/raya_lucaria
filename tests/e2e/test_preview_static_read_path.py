@@ -10598,6 +10598,23 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
                     assert initial["railWidth"] >= 220
 
                     page.click("#raya-course-map .raya-course-map-toggle")
+                    map_transitioning = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                          const map = document.querySelector('#raya-course-map');
+                          const mapList = document.querySelector('#raya-course-map-list');
+                          return {
+                            transition: map?.getAttribute('data-raya-course-map-transition'),
+                            listDisplay: mapList ? getComputedStyle(mapList).display : null,
+                            listVisibility: mapList ? getComputedStyle(mapList).visibility : null,
+                          };
+                        }"""
+                    )
+                    assert map_transitioning == {
+                        "transition": "collapsing",
+                        "listDisplay": "block",
+                        "listVisibility": "hidden",
+                    }
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
                     )
@@ -10639,6 +10656,27 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
                     assert map_collapsed["firstMapLinkPointerEvents"] == "auto"
 
                     page.click("[data-raya-learning-rail-toggle]")
+                    rail_transitioning = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            transition: rail?.getAttribute('data-raya-learning-rail-transition'),
+                            bodyDisplay: body ? getComputedStyle(body).display : null,
+                            bodyVisibility: body ? getComputedStyle(body).visibility : null,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                          };
+                        }"""
+                    )
+                    assert rail_transitioning == {
+                        "transition": "collapsing",
+                        "bodyDisplay": "block",
+                        "bodyVisibility": "hidden",
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                    }
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
                     )

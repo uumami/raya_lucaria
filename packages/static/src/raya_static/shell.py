@@ -71,6 +71,9 @@ _SHELL_JAVASCRIPT = r"""
   let hoveredCompactPreviewLink = null;
   let assetInspector = null;
   let assetInspectorOpener = null;
+  let courseMapTransitionTimer = 0;
+  let learningRailTransitionTimer = 0;
+  const SHELL_TRANSITION_MS = 240;
 
   function updateMapLinkTabOrder(nextExpanded) {
     const mapList = map.querySelector("#raya-course-map-list");
@@ -246,11 +249,22 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function setExpanded(nextExpanded) {
+    const previousExpanded = root.dataset.rayaCourseMap !== "collapsed";
     if (!nextExpanded) {
       clearCourseMapFilter();
       setCourseMapScanMode(false);
     } else {
       hideCourseMapCompactPreview();
+    }
+    if (isDesktopShell() && previousExpanded !== nextExpanded) {
+      window.clearTimeout(courseMapTransitionTimer);
+      map.dataset.rayaCourseMapTransition = nextExpanded ? "expanding" : "collapsing";
+      courseMapTransitionTimer = window.setTimeout(() => {
+        delete map.dataset.rayaCourseMapTransition;
+      }, SHELL_TRANSITION_MS);
+    } else {
+      window.clearTimeout(courseMapTransitionTimer);
+      delete map.dataset.rayaCourseMapTransition;
     }
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
@@ -729,6 +743,19 @@ _SHELL_JAVASCRIPT = r"""
   function setLearningRailExpanded(nextExpanded) {
     if (!learningRail || !learningRailBody) {
       return;
+    }
+    const previousExpanded = root.dataset.rayaLearningRail !== "collapsed";
+    if (isDesktopShell() && previousExpanded !== nextExpanded) {
+      window.clearTimeout(learningRailTransitionTimer);
+      learningRail.dataset.rayaLearningRailTransition = nextExpanded
+        ? "expanding"
+        : "collapsing";
+      learningRailTransitionTimer = window.setTimeout(() => {
+        delete learningRail.dataset.rayaLearningRailTransition;
+      }, SHELL_TRANSITION_MS);
+    } else {
+      window.clearTimeout(learningRailTransitionTimer);
+      delete learningRail.dataset.rayaLearningRailTransition;
     }
     root.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
