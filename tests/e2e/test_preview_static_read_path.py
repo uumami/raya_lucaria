@@ -4615,6 +4615,149 @@ def test_render_fixture_graph_selection_mutes_unrelated_edges(
     assert edge_state["mutedOpacity"] < edge_state["connectedOpacity"]
 
 
+def test_render_fixture_graph_layers_muted_edges_below_emphasized_edges(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node-hit"
+                    ).click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-graph-canvas .raya-graph-edge.is-active') !== null"""
+                    )
+                    edge_order = page.evaluate(
+                        """() => Array.from(
+                          document.querySelectorAll('#raya-graph-canvas .raya-graph-edge')
+                        ).map((edge, index) => ({
+                          index,
+                          from: edge.getAttribute('data-raya-graph-from'),
+                          to: edge.getAttribute('data-raya-graph-to'),
+                          markerMatches: (() => {
+                            const markerId = (edge.getAttribute('marker-end') || '')
+                              .replace(/^url\\(#/, '')
+                              .replace(/\\)$/, '');
+                            const marker = document.getElementById(markerId);
+                            return Boolean(marker) &&
+                              marker.getAttribute('data-raya-graph-from') === edge.getAttribute('data-raya-graph-from') &&
+                              marker.getAttribute('data-raya-graph-to') === edge.getAttribute('data-raya-graph-to') &&
+                              marker.getAttribute('data-raya-graph-kind') === edge.getAttribute('data-raya-graph-kind');
+                          })(),
+                          classes: Array.from(edge.classList),
+                        }))"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    muted_indexes = [
+        edge["index"]
+        for edge in edge_order
+        if "is-selection-muted" in edge["classes"]
+    ]
+    emphasized_indexes = [
+        edge["index"]
+        for edge in edge_order
+        if "is-active" in edge["classes"]
+    ]
+    assert muted_indexes
+    assert emphasized_indexes
+    assert max(muted_indexes) < min(emphasized_indexes)
+    assert all(edge["markerMatches"] for edge in edge_order)
+
+
+def test_render_fixture_graph_reorders_edges_after_hover_inspection(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.locator(
+                        '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node-hit"
+                    ).hover()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-graph-canvas .raya-graph-edge.is-focus-route') !== null"""
+                    )
+                    edge_order = page.evaluate(
+                        """() => Array.from(
+                          document.querySelectorAll('#raya-graph-canvas .raya-graph-edge')
+                        ).map((edge, index) => ({
+                          index,
+                          classes: Array.from(edge.classList),
+                        }))"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    dimmed_indexes = [
+        edge["index"] for edge in edge_order if "is-dimmed" in edge["classes"]
+    ]
+    focus_indexes = [
+        edge["index"] for edge in edge_order if "is-focus-route" in edge["classes"]
+    ]
+    assert dimmed_indexes
+    assert focus_indexes
+    assert max(dimmed_indexes) < min(focus_indexes)
+
+
 def test_render_fixture_graph_visual_depth_styles_are_rendered(
     tmp_path: Path,
 ) -> None:

@@ -2091,6 +2091,7 @@ _GRAPH_JAVASCRIPT = r"""
           !edgeTouchesNode(edge, inspectedId)
       );
     });
+    reorderGraphEdgesByLayer();
     list.querySelectorAll("[data-raya-graph-node]").forEach((item) => {
       const id = item.getAttribute("data-raya-graph-node") || "";
       item.classList.toggle("is-inspected", id === inspectedId);
@@ -2297,9 +2298,69 @@ _GRAPH_JAVASCRIPT = r"""
     ].filter(Boolean);
   }
 
-  function appendGraphArrowMarkers(activeEdges) {
+  function graphLayerRankForClassNames(classNames) {
+    const hasClass = (className) => (
+      typeof classNames.has === "function"
+        ? classNames.has(className)
+        : classNames.contains(className)
+    );
+    if (
+      hasClass("is-focus-route") ||
+      hasClass("is-active") ||
+      hasClass("is-inspected") ||
+      hasClass("is-search-context") ||
+      hasClass("is-relationship-focus")
+    ) {
+      return 2;
+    }
+    if (
+      hasClass("is-dimmed") ||
+      hasClass("is-selection-muted") ||
+      hasClass("is-search-dimmed") ||
+      hasClass("is-relationship-muted")
+    ) {
+      return 0;
+    }
+    return 1;
+  }
+
+  function edgeLayerRank(edge) {
+    return graphLayerRankForClassNames(new Set([
+      ...edgeStateClassNames(edge),
+      ...relationshipEdgeStateClassNames(edge),
+    ]));
+  }
+
+  function layeredGraphEdges(activeEdges) {
+    return activeEdges
+      .map((edge, edgeIndex) => ({ edge, edgeIndex, layerRank: edgeLayerRank(edge) }))
+      .sort((left, right) => (
+        left.layerRank - right.layerRank ||
+        left.edgeIndex - right.edgeIndex
+      ));
+  }
+
+  function reorderGraphEdgesByLayer() {
+    const nodeAnchor = canvas.querySelector(".raya-graph-node-link");
+    if (!nodeAnchor) return;
+    Array.from(canvas.querySelectorAll(".raya-graph-edge"))
+      .map((edge, edgeIndex) => ({
+        edge,
+        edgeIndex,
+        layerRank: graphLayerRankForClassNames(edge.classList),
+      }))
+      .sort((left, right) => (
+        left.layerRank - right.layerRank ||
+        left.edgeIndex - right.edgeIndex
+      ))
+      .forEach(({ edge }) => {
+        canvas.insertBefore(edge, nodeAnchor);
+      });
+  }
+
+  function appendGraphArrowMarkers(layeredEdges) {
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    activeEdges.forEach((edge, edgeIndex) => {
+    layeredEdges.forEach(({ edge, edgeIndex }) => {
       const markerId = graphArrowMarkerId(edge, edgeIndex);
       const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
       marker.setAttribute("id", markerId);
@@ -2998,9 +3059,10 @@ _GRAPH_JAVASCRIPT = r"""
     fitInitialPageFocus();
     setGraphViewportControlsEnabled(true);
     canvas.replaceChildren();
-    appendGraphArrowMarkers(activeEdges);
+    const layeredEdges = layeredGraphEdges(activeEdges);
+    appendGraphArrowMarkers(layeredEdges);
 
-    activeEdges.forEach((edge, edgeIndex) => {
+    layeredEdges.forEach(({ edge, edgeIndex }) => {
       const from = latestRenderedPositions.get(edge.from);
       const to = latestRenderedPositions.get(edge.to);
       if (!from || !to) return;
