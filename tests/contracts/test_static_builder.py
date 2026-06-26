@@ -4144,6 +4144,12 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "function collapseCourseMapToCurrentPath" in script_text
     assert "rayaCourseMapScan" in script_text
     assert "collapseExpandedSiblingMapNodes" in script_text
+    assert "function visibleCourseMapLinks" in script_text
+    assert "function handleCourseMapKeyboardNavigation" in script_text
+    assert (
+        'map.addEventListener("keydown", handleCourseMapKeyboardNavigation)'
+        in script_text
+    )
     assert "currentSectionLink" in script_text
     assert "function syncCurrentSection" in script_text
     assert "data-raya-current-section-link" in script_text

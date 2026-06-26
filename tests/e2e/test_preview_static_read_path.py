@@ -7350,6 +7350,150 @@ def test_minimal_course_map_nested_sections_are_expanded_and_collapsible(
                         "sessionStorageKeys": [],
                     }
 
+                    page.focus(
+                        '[data-raya-map-node="map-branch-b"] > .raya-course-map-node-row a'
+                    )
+                    page.keyboard.press("ArrowRight")
+                    keyboard_branch_child = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                        })"""
+                    )
+                    assert keyboard_branch_child == {
+                        "activeNode": "map-branch-b-child",
+                        "branchBExpanded": "true",
+                    }
+
+                    leaf_url_before_arrow = page.url
+                    page.keyboard.press("ArrowRight")
+                    page.wait_for_timeout(250)
+                    keyboard_leaf_noop = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          url: window.location.href,
+                        })"""
+                    )
+                    assert keyboard_leaf_noop == {
+                        "activeNode": "map-branch-b-child",
+                        "url": leaf_url_before_arrow,
+                    }
+
+                    page.keyboard.press("ArrowLeft")
+                    keyboard_parent_focus = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                        })"""
+                    )
+                    assert keyboard_parent_focus == {
+                        "activeNode": "map-branch-b",
+                        "branchBExpanded": "true",
+                    }
+
+                    page.keyboard.press("ArrowLeft")
+                    keyboard_parent_collapse = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          branchBExpanded: document
+                            .querySelector('[data-raya-map-node="map-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          branchBChildVisible: !!document
+                            .querySelector('[data-raya-map-node="map-branch-b-child"]')
+                            ?.checkVisibility(),
+                        })"""
+                    )
+                    assert keyboard_parent_collapse == {
+                        "activeNode": "map-branch-b",
+                        "branchBExpanded": "false",
+                        "branchBChildVisible": False,
+                    }
+
+                    page.keyboard.press("ArrowUp")
+                    keyboard_previous_visible = page.evaluate(
+                        """() => document.activeElement
+                          ?.closest("[data-raya-map-node]")
+                          ?.getAttribute("data-raya-map-node")"""
+                    )
+                    assert keyboard_previous_visible == "map-branch-a"
+
+                    page.keyboard.press("ArrowDown")
+                    keyboard_next_visible = page.evaluate(
+                        """() => document.activeElement
+                          ?.closest("[data-raya-map-node]")
+                          ?.getAttribute("data-raya-map-node")"""
+                    )
+                    assert keyboard_next_visible == "map-branch-b"
+
+                    page.keyboard.press("Home")
+                    keyboard_first_visible = page.evaluate(
+                        """() => document.activeElement
+                          ?.closest("[data-raya-map-node]")
+                          ?.getAttribute("data-raya-map-node")"""
+                    )
+                    assert keyboard_first_visible == "course-root"
+
+                    root_url_before_collapse = page.url
+                    page.keyboard.press("ArrowLeft")
+                    page.wait_for_timeout(250)
+                    keyboard_root_collapse = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          rootExpanded: document
+                            .querySelector('[data-raya-map-node="course-root"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          url: window.location.href,
+                        })"""
+                    )
+                    assert keyboard_root_collapse == {
+                        "activeNode": "course-root",
+                        "rootExpanded": "false",
+                        "url": root_url_before_collapse,
+                    }
+
+                    root_url_before_noop = page.url
+                    page.keyboard.press("ArrowLeft")
+                    page.wait_for_timeout(250)
+                    keyboard_root_noop = page.evaluate(
+                        """() => ({
+                          activeNode: document.activeElement
+                            ?.closest("[data-raya-map-node]")
+                            ?.getAttribute("data-raya-map-node"),
+                          rootExpanded: document
+                            .querySelector('[data-raya-map-node="course-root"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          url: window.location.href,
+                        })"""
+                    )
+                    assert keyboard_root_noop == {
+                        "activeNode": "course-root",
+                        "rootExpanded": "false",
+                        "url": root_url_before_noop,
+                    }
+
+                    page.keyboard.press("ArrowRight")
+                    page.keyboard.press("End")
+                    keyboard_last_visible = page.evaluate(
+                        """() => document.activeElement
+                          ?.closest("[data-raya-map-node]")
+                          ?.getAttribute("data-raya-map-node")"""
+                    )
+                    assert keyboard_last_visible == "map-branch-b"
+
                     page.click('[data-raya-course-map-action="expand-all"]')
                     scan_exited = page.evaluate(
                         """() => ({
