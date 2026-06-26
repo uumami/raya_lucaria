@@ -12725,6 +12725,85 @@ def test_render_fixture_reader_ux_is_learning_showcase(
         handle.close()
 
 
+def test_render_fixture_reader_command_bar_is_compact_on_desktop(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1600, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    metrics = page.evaluate(
+                        """() => {
+                          const topBar = document.querySelector('.raya-top-command-bar');
+                          const article = document.querySelector('#raya-article');
+                          const searchInput = document.querySelector('.raya-command-search-input');
+                          const groups = Array.from(
+                            document.querySelectorAll(
+                              '.raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group'
+                            )
+                          );
+                          const visibleGroups = groups.filter((group) => {
+                            const box = group.getBoundingClientRect();
+                            const style = getComputedStyle(group);
+                            return box.width > 0
+                              && box.height > 0
+                              && style.display !== 'none';
+                          });
+                          const visibleGroupNames = visibleGroups.map(
+                            (group) => group.getAttribute('data-raya-command-group')
+                          );
+                          const topBox = topBar.getBoundingClientRect();
+                          const articleBox = article.getBoundingClientRect();
+                          return {
+                            topBarHeight: topBox.height,
+                            articleTop: articleBox.top,
+                            searchVisible: !!searchInput
+                              && searchInput.getClientRects().length > 0,
+                            searchWidth: searchInput?.getBoundingClientRect().width ?? 0,
+                            visibleGroupNames,
+                          };
+                        }"""
+                    )
+                    assert metrics["topBarHeight"] <= 112
+                    assert metrics["articleTop"] <= 190
+                    assert {
+                        "discovery",
+                        "layout",
+                        "comfort",
+                    }.issubset(set(metrics["visibleGroupNames"]))
+                    assert metrics["searchVisible"] is True
+                    assert metrics["searchWidth"] >= 120
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_top_context_command_toggles_right_rail_only(
     tmp_path: Path,
 ) -> None:

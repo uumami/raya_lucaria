@@ -4262,13 +4262,74 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 @media (min-width: 1280px) and (max-width: 1500px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort .raya-command-label {
-    clip: auto;
-    height: auto;
-    line-height: 1.15;
-    overflow: visible;
-    position: static;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
     white-space: nowrap;
-    width: auto;
+    width: 1px;
+  }
+}
+@media (min-width: 1280px) {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-top-command-bar-inner {
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.65rem;
+    padding-block: 0.45rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context {
+    flex: 1 1 24rem;
+    flex-wrap: nowrap;
+    max-width: min(38rem, 40vw);
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-course,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-page {
+    flex: 0 1 auto;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-section {
+    max-width: min(18rem, 22vw);
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    max-width: calc(100% - 24rem);
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+    align-self: center;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.15rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-discovery {
+    flex: 0 1 auto;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+    flex: 0 1 12rem;
+    min-width: 8.5rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-input,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-submit {
+    height: 2.2rem;
+    min-height: 2.2rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+    gap: 0.25rem;
+    min-height: 2.3rem;
+    min-width: 2.5rem;
+    padding: 0.35rem 0.45rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-icon {
+    height: 1.25rem;
+    padding: 0.14rem;
+    width: 1.25rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
   }
 }
 @media (max-width: 1279px) {
