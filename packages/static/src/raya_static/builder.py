@@ -4258,8 +4258,9 @@ def _render_graph_surface(
             '<section class="raya-graph-controls raya-graph-toolbar" aria-label="Graph controls">',
             (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-primary" '
-                'role="group" aria-label="Search and layout controls">'
+                'role="group" aria-label="Find pages">'
             ),
+            '<span class="raya-graph-toolbar-label">Find pages</span>',
             '<label for="graph-search">Search</label>',
             '<input id="graph-search" type="search" autocomplete="off">',
             '<label for="graph-layout">Layout</label>',
@@ -4276,9 +4277,9 @@ def _render_graph_surface(
             "</div>",
             (
                 '<div class="raya-graph-toolbar-group raya-graph-edge-kind-filters" '
-                'role="group" aria-label="Edge filters">'
+                'role="group" aria-label="Relationship filters">'
             ),
-            "<span>Edges</span>",
+            '<span class="raya-graph-toolbar-label">Relationship filters</span>',
             (
                 '<button type="button" class="raya-graph-edge-kind-filter" '
                 'data-raya-graph-edge-kind-filter="navigation" '
@@ -4302,8 +4303,9 @@ def _render_graph_surface(
             "</div>",
             (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-viewport" '
-                'role="group" aria-label="Graph viewport controls">'
+                'role="group" aria-label="Canvas view">'
             ),
+            '<span class="raya-graph-toolbar-label">Canvas view</span>',
             '<button id="graph-fit" type="button">Fit</button>',
             '<button id="graph-fit-selection" type="button" disabled>'
             "Fit selection</button>",
@@ -4313,17 +4315,19 @@ def _render_graph_surface(
             "</div>",
             (
                 '<span class="raya-graph-pan-controls raya-graph-toolbar-group '
-                'raya-graph-toolbar-pan" role="group" aria-label="Pan graph">'
+                'raya-graph-toolbar-pan" role="group" aria-label="Move canvas">'
             ),
-            '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">L</button>',
-            '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">R</button>',
-            '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">U</button>',
-            '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">D</button>',
+            '<span class="raya-graph-toolbar-label">Move canvas</span>',
+            '<button type="button" data-raya-graph-pan="left" aria-label="Pan graph left">&#8592;</button>',
+            '<button type="button" data-raya-graph-pan="right" aria-label="Pan graph right">&#8594;</button>',
+            '<button type="button" data-raya-graph-pan="up" aria-label="Pan graph up">&#8593;</button>',
+            '<button type="button" data-raya-graph-pan="down" aria-label="Pan graph down">&#8595;</button>',
             "</span>",
             (
                 '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
-                'role="group" aria-label="Graph state controls">'
+                'role="group" aria-label="Workspace">'
             ),
+            '<span class="raya-graph-toolbar-label">Workspace</span>',
             '<button id="graph-reset" type="button">Reset graph</button>',
             '<button id="graph-expand" type="button" '
             'aria-pressed="false" aria-label="Expand graph focus mode">Focus</button>',
@@ -4668,7 +4672,7 @@ def _render_graph_surface(
                 "the target page. Direction is generated graph structure.</p>"
             ),
             (
-                "<p>Edge filters hide or show relationship kinds in the SVG "
+                "<p>Relationship filters hide or show relationship kinds in the SVG "
                 "graph. They do not remove pages from the list or selected-page "
                 "inspector.</p>"
             ),

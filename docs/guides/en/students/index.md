@@ -100,6 +100,12 @@ can see its explicit links first. The learning rail may also show a Connections
 panel with counts for links from the current page and links into it; those
 counts describe authored static relationships, not recommendations or personal
 progress.
+The graph toolbar groups controls as `Find pages`, `Relationship filters`,
+`Canvas view`, `Move canvas`, and `Workspace`. Use `Find pages` to search or
+change layout, `Relationship filters` to show or hide explicit link kinds,
+`Canvas view` and `Move canvas` to adjust the SVG view, and `Workspace` to reset
+or focus the graph surface. These controls are temporary inspection tools; they
+do not rewrite course links or save study state.
 The graph may also show an orientation band near the canvas. It names the
 current layout, selected page, page focus, search and filter context, and
 whether neighborhood focus is on. Use its Open page, Focus neighborhood, Show

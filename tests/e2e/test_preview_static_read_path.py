@@ -620,6 +620,48 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             toolbar_box["x"] + toolbar_box["width"]
                             <= viewport["width"] + 1
                         )
+                        assert page.locator(
+                            ".raya-graph-toolbar-label", has_text="Find pages"
+                        ).is_visible()
+                        assert page.locator(
+                            ".raya-graph-toolbar-label", has_text="Canvas view"
+                        ).is_visible()
+                        toolbar_label_style = page.locator(
+                            ".raya-graph-toolbar-label", has_text="Find pages"
+                        ).evaluate(
+                            """node => {
+                              const style = getComputedStyle(node);
+                              const weight = Number.parseInt(style.fontWeight, 10);
+                              return {
+                                textTransform: style.textTransform,
+                                fontWeight: Number.isNaN(weight) ? 0 : weight,
+                              };
+                            }"""
+                        )
+                        assert toolbar_label_style["textTransform"] == "uppercase"
+                        assert toolbar_label_style["fontWeight"] >= 700
+                        pan_boxes = page.locator(
+                            "[data-raya-graph-pan]"
+                        ).evaluate_all(
+                            """buttons => buttons.map((button) => {
+                              const box = button.getBoundingClientRect();
+                              return {
+                                width: box.width,
+                                height: box.height,
+                                text: button.textContent.trim(),
+                              };
+                            })"""
+                        )
+                        assert [item["text"] for item in pan_boxes] == [
+                            "←",
+                            "→",
+                            "↑",
+                            "↓",
+                        ]
+                        for item in pan_boxes:
+                            assert item["width"] >= 34
+                            assert item["height"] >= 34
+                            assert abs(item["width"] - item["height"]) <= 12
                         assert page.locator(".raya-discovery-command-bar").is_visible()
                         assert page.locator(
                             ".raya-discovery-command-bar .raya-command-home"

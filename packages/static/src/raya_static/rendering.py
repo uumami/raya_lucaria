@@ -985,19 +985,39 @@ img {
   gap: 0.5rem;
   padding-right: 0.75rem;
 }
+.raya-graph-toolbar-label {
+  color: var(--raya-color-text-muted);
+  flex: 0 0 100%;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
 .raya-graph-toolbar-group:last-child {
   border-right: 0;
   padding-right: 0;
 }
 .raya-graph-toolbar-primary {
-  flex: 1 1 22rem;
+  align-items: end;
+  flex: 1 1 28rem;
 }
 .raya-graph-toolbar-primary input {
+  flex: 1 1 16rem;
   min-width: min(16rem, 100%);
 }
 .raya-graph-toolbar-viewport,
 .raya-graph-toolbar-state {
   flex: 0 1 auto;
+}
+.raya-graph-toolbar-pan [data-raya-graph-pan] {
+  align-items: center;
+  aspect-ratio: 1;
+  display: inline-flex;
+  font-weight: 800;
+  inline-size: 2.5rem;
+  justify-content: center;
+  padding: 0;
 }
 .raya-search-control-panel .raya-search-controls,
 .raya-practice-control-panel .raya-practice-controls {

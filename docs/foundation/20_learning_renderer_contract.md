@@ -82,7 +82,9 @@ not mean inferred recommendations, related practice, personal next steps, or
 mastery guidance.
 
 The static graph page is a reader-facing view of generated artifact graph data.
-It may provide local fuzzy search, deterministic layouts, group filters,
+It may provide grouped local controls for `Find pages`, `Relationship filters`,
+`Canvas view`, `Move canvas`, and `Workspace`; local fuzzy search,
+deterministic layouts, group filters,
 selected-page details, incoming/outgoing link lists, a static legend/help panel,
 selected-page neighborhood summaries, selected-page relationship walkthroughs
 that group explicit edges by kind and direction with local page links and
@@ -110,7 +112,8 @@ selected page owns accepted public task-family metadata,
 non-persistent selected-neighborhood focus mode,
 detail-list controls that select connected pages inside the graph workspace without replacing normal page links,
 non-persistent SVG viewport controls such as Zoom in, Zoom
-out, pan buttons, focused canvas Arrow-key panning, pointer drag panning, Fit,
+out, explicit direction-symbol pan buttons, focused canvas Arrow-key panning,
+pointer drag panning, Fit,
 Fit selection, Reset view, and a non-persistent graph focus mode that collapses
 side panels into operable rails, and URL-addressable
 static graph state for selected page, search query, layout, visible groups,

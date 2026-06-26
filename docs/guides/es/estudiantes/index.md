@@ -110,6 +110,13 @@ describen relaciones estaticas autoradas, no recomendaciones ni progreso
 personal. Los detalles `Graph state` y share URL pueden estar dentro de un
 disclosure para que el flujo principal del grafo mantenga foco en busqueda,
 canvas y contexto de pagina seleccionada.
+La barra del grafo agrupa controles como `Find pages`, `Relationship filters`,
+`Canvas view`, `Move canvas` y `Workspace`. Usa `Find pages` para buscar o
+cambiar layout, `Relationship filters` para mostrar u ocultar tipos de enlaces
+explicitos, `Canvas view` y `Move canvas` para ajustar la vista SVG, y
+`Workspace` para resetear o enfocar la superficie del grafo. Son herramientas
+temporales de inspeccion; no reescriben enlaces del curso ni guardan estado de
+estudio.
 El grafo tambien puede mostrar una banda de orientacion cerca del canvas.
 Nombra el layout actual, pagina seleccionada, foco de pagina, contexto de
 busqueda y filtros, y si el foco de vecindario esta activo. Usa sus acciones

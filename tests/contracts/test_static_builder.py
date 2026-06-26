@@ -919,21 +919,30 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "graph-reset" in graph_html
     assert "graph-expand" in graph_html
     assert "raya-graph-toolbar" in graph_html
+    assert '<span class="raya-graph-toolbar-label">Find pages</span>' in graph_html
+    assert (
+        '<span class="raya-graph-toolbar-label">Relationship filters</span>'
+        in graph_html
+    )
+    assert '<span class="raya-graph-toolbar-label">Canvas view</span>' in graph_html
+    assert '<span class="raya-graph-toolbar-label">Move canvas</span>' in graph_html
+    assert '<span class="raya-graph-toolbar-label">Workspace</span>' in graph_html
     assert (
         '<div class="raya-graph-toolbar-group raya-graph-toolbar-primary" '
-        'role="group" aria-label="Search and layout controls">'
+        'role="group" aria-label="Find pages">'
     ) in graph_html
+    assert 'aria-label="Relationship filters"' in graph_html
     assert (
         '<div class="raya-graph-toolbar-group raya-graph-toolbar-viewport" '
-        'role="group" aria-label="Graph viewport controls">'
+        'role="group" aria-label="Canvas view">'
     ) in graph_html
     assert (
         '<span class="raya-graph-pan-controls raya-graph-toolbar-group '
-        'raya-graph-toolbar-pan" role="group" aria-label="Pan graph">'
+        'raya-graph-toolbar-pan" role="group" aria-label="Move canvas">'
     ) in graph_html
     assert (
         '<div class="raya-graph-toolbar-group raya-graph-toolbar-state" '
-        'role="group" aria-label="Graph state controls">'
+        'role="group" aria-label="Workspace">'
     ) in graph_html
     assert (
         '<button id="graph-zoom-in" type="button" '
@@ -950,19 +959,19 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "Reset graph" in graph_html
     assert (
         '<button type="button" data-raya-graph-pan="left" '
-        'aria-label="Pan graph left">L</button>'
+        'aria-label="Pan graph left">&#8592;</button>'
     ) in graph_html
     assert (
         '<button type="button" data-raya-graph-pan="right" '
-        'aria-label="Pan graph right">R</button>'
+        'aria-label="Pan graph right">&#8594;</button>'
     ) in graph_html
     assert (
         '<button type="button" data-raya-graph-pan="up" '
-        'aria-label="Pan graph up">U</button>'
+        'aria-label="Pan graph up">&#8593;</button>'
     ) in graph_html
     assert (
         '<button type="button" data-raya-graph-pan="down" '
-        'aria-label="Pan graph down">D</button>'
+        'aria-label="Pan graph down">&#8595;</button>'
     ) in graph_html
     assert (
         '<button id="graph-expand" type="button" aria-pressed="false" '
@@ -1009,7 +1018,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-graph-legend="edge-content"' in graph_html
     assert 'data-raya-graph-legend="edge-prerequisite"' in graph_html
     assert 'data-raya-graph-legend="edge-parent"' in graph_html
-    assert 'aria-label="Edge filters"' in graph_html
+    assert 'aria-label="Relationship filters"' in graph_html
     for kind, label in (
         ("navigation", "Navigation"),
         ("content", "Content"),
