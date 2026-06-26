@@ -4260,6 +4260,17 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     width: 1px;
   }
 }
+@media (min-width: 1280px) and (max-width: 1500px) {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort .raya-command-label {
+    clip: auto;
+    height: auto;
+    line-height: 1.15;
+    overflow: visible;
+    position: static;
+    white-space: nowrap;
+    width: auto;
+  }
+}
 @media (max-width: 1279px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus,
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {

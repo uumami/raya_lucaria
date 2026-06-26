@@ -7389,6 +7389,120 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "@media (max-width: 1279px)" in rich_css
 
 
+def test_reader_comfort_labels_are_visible_on_desktop_only(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1366, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    _assert_no_horizontal_overflow(page)
+                    desktop = page.evaluate(
+                        """() => {
+                          const labelBox = (selector) => {
+                            const label = document.querySelector(selector);
+                            const box = label.getBoundingClientRect();
+                            const style = getComputedStyle(label);
+                            return {
+                              text: label.textContent.trim(),
+                              width: box.width,
+                              height: box.height,
+                              position: style.position,
+                              overflow: style.overflow,
+                            };
+                          };
+                          return {
+                            size: labelBox('.raya-command-size .raya-command-label'),
+                            font: labelBox('.raya-command-font .raya-command-label'),
+                            topBarHeight: document
+                              .querySelector('.raya-top-command-bar')
+                              .getBoundingClientRect().height,
+                            scrollWidth: document.documentElement.scrollWidth,
+                            clientWidth: document.documentElement.clientWidth,
+                            localKeys: Object.keys(window.localStorage),
+                            sessionKeys: Object.keys(window.sessionStorage),
+                          };
+                        }"""
+                    )
+                    assert desktop["size"]["text"] == "Text size"
+                    assert desktop["font"]["text"] == "OpenDyslexic"
+                    assert desktop["size"]["width"] >= 48
+                    assert desktop["font"]["width"] >= 80
+                    assert desktop["size"]["height"] >= 16
+                    assert desktop["font"]["height"] >= 16
+                    assert desktop["size"]["position"] == "static"
+                    assert desktop["font"]["position"] == "static"
+                    assert desktop["topBarHeight"] <= 96
+                    assert desktop["scrollWidth"] <= desktop["clientWidth"]
+                    assert desktop["localKeys"] == []
+                    assert desktop["sessionKeys"] == []
+                    assert requested_urls == []
+
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        "() => document.documentElement.clientWidth === 390"
+                    )
+                    mobile = page.evaluate(
+                        """() => {
+                          const labelBox = (selector) => {
+                            const label = document.querySelector(selector);
+                            const box = label.getBoundingClientRect();
+                            const style = getComputedStyle(label);
+                            return {
+                              width: box.width,
+                              height: box.height,
+                              position: style.position,
+                              overflow: style.overflow,
+                            };
+                          };
+                          return {
+                            size: labelBox('.raya-command-size .raya-command-label'),
+                            font: labelBox('.raya-command-font .raya-command-label'),
+                            scrollWidth: document.documentElement.scrollWidth,
+                            clientWidth: document.documentElement.clientWidth,
+                          };
+                        }"""
+                    )
+                    assert mobile["size"]["width"] <= 2
+                    assert mobile["font"]["width"] <= 2
+                    assert mobile["size"]["height"] <= 2
+                    assert mobile["font"]["height"] <= 2
+                    assert mobile["size"]["position"] == "absolute"
+                    assert mobile["font"]["position"] == "absolute"
+                    assert mobile["scrollWidth"] <= mobile["clientWidth"]
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_open_dyslexic_toggle_changes_computed_font(
     tmp_path: Path,
 ) -> None:
