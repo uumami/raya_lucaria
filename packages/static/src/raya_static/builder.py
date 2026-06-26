@@ -1423,7 +1423,9 @@ def _render_reading_context(
                     'data-raya-current-section-link '
                     f'href="{html.escape(section_href, quote=True)}" '
                     f'aria-label="Current section: {html.escape(section_label, quote=True)}">'
-                    "Section"
+                    '<span class="raya-reading-context-section-kicker">Now</span> '
+                    '<span class="raya-reading-context-section-label">'
+                    f"{html.escape(section_label)}</span>"
                     "</a>"
                 ),
             ]

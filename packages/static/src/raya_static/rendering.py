@@ -750,17 +750,34 @@ img {
   gap: 0.35rem;
 }
 .raya-reading-context-link {
+  align-items: center;
   background: var(--raya-color-accent-soft);
   border: 1px solid color-mix(in srgb, var(--raya-color-accent) 58%, var(--raya-color-border));
   border-radius: 0.375rem;
   color: var(--raya-color-text);
   display: inline-flex;
+  gap: 0.32rem;
   font-size: 0.75rem;
   font-weight: 800;
   line-height: 1;
+  max-width: min(18rem, 38vw);
   min-height: 1.9rem;
+  min-width: 0;
   padding: 0.35rem 0.5rem;
   text-decoration: none;
+}
+.raya-reading-context-section {
+  flex: 0 1 auto;
+}
+.raya-reading-context-section-kicker {
+  flex: 0 0 auto;
+  text-transform: uppercase;
+}
+.raya-reading-context-section-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .raya-reading-context-link:focus-visible {
   outline: 3px solid var(--raya-color-accent);
@@ -5105,6 +5122,9 @@ mjx-container[display="true"] {
   }
   .raya-reading-context-sequence {
     flex-wrap: wrap;
+  }
+  .raya-reading-context-section-label {
+    display: none;
   }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
     flex-wrap: wrap;

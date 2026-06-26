@@ -1293,13 +1293,19 @@ _SHELL_JAVASCRIPT = r"""
     const label = activeLink.textContent || "Current section";
     currentSectionLinks.forEach((currentSectionLink) => {
       const isCommandChip = currentSectionLink.classList.contains("raya-reading-context-section");
-      const nextText = isCommandChip ? "Section" : label;
       const nextLabel = isCommandChip ? `Current section: ${label}` : label;
       if (currentSectionLink.getAttribute("href") !== href) {
         currentSectionLink.setAttribute("href", href);
       }
-      if (currentSectionLink.textContent !== nextText) {
-        currentSectionLink.textContent = nextText;
+      if (isCommandChip) {
+        const visibleLabel = currentSectionLink.querySelector(".raya-reading-context-section-label");
+        if (visibleLabel && visibleLabel.textContent !== label) {
+          visibleLabel.textContent = label;
+        } else if (!visibleLabel && currentSectionLink.textContent !== `Now ${label}`) {
+          currentSectionLink.textContent = `Now ${label}`;
+        }
+      } else if (currentSectionLink.textContent !== label) {
+        currentSectionLink.textContent = label;
       }
       if (currentSectionLink.getAttribute("aria-label") !== nextLabel) {
         currentSectionLink.setAttribute("aria-label", nextLabel);

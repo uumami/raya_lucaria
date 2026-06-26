@@ -616,6 +616,10 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                                   .querySelector('.raya-reading-context-section')
                                   ?.textContent
                                   ?.trim(),
+                                visibleLabel: document
+                                  .querySelector('.raya-reading-context-section-label')
+                                  ?.textContent
+                                  ?.trim(),
                                 label: document
                                   .querySelector('.raya-reading-context-section')
                                   ?.getAttribute('aria-label') || '',
@@ -629,7 +633,8 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                         }
                         assert current_sections["command"] == {
                             "href": "#raya-generated-course-index",
-                            "text": "Section",
+                            "text": "Now Course Index",
+                            "visibleLabel": "Course Index",
                             "label": "Current section: Course Index",
                         }
                         cards = page.locator(".raya-section-card")
@@ -6848,6 +6853,16 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                   .querySelector('.raya-reading-context-section')
                                   ?.textContent
                                   ?.trim() || '',
+                                sectionLabelText: document
+                                  .querySelector('.raya-reading-context-section-label')
+                                  ?.textContent
+                                  ?.trim() || '',
+                                sectionLabelVisible: (() => {
+                                  const label = document
+                                    .querySelector('.raya-reading-context-section-label');
+                                  return !!label && label.getClientRects().length > 0
+                                    && getComputedStyle(label).display !== 'none';
+                                })(),
                                 sectionWidth: document
                                   .querySelector('.raya-reading-context-section')
                                   ?.getBoundingClientRect()
@@ -6910,7 +6925,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert "Page 1 of 6" in state["contextText"]
                         assert state["contextWidth"] > 0
                         assert state["sectionHref"] == "#rich-static-baseline"
-                        assert state["sectionText"] == "Section"
+                        assert state["sectionText"].startswith("Now")
+                        assert state["sectionLabelText"] == "Rich Static Baseline"
+                        assert state["sectionLabelVisible"] == (
+                            viewport["width"] >= 520
+                        )
                         assert state["sectionWidth"] >= 40
                         assert state["prevHref"] == ""
                         assert state["nextHref"] == "static-path/index.html"
@@ -11044,6 +11063,10 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                             .querySelector('.raya-reading-context-section')
                             ?.textContent
                             ?.trim(),
+                          commandVisibleLabel: document
+                            .querySelector('.raya-reading-context-section-label')
+                            ?.textContent
+                            ?.trim(),
                           commandLabel: document
                             .querySelector('.raya-reading-context-section')
                             ?.getAttribute('aria-label'),
@@ -11052,7 +11075,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert current_section["href"] == "#worked-example"
                     assert current_section["text"] == "Worked Example"
                     assert current_section["commandHref"] == "#worked-example"
-                    assert current_section["commandText"] == "Section"
+                    assert current_section["commandText"] == "Now Worked Example"
+                    assert current_section["commandVisibleLabel"] == "Worked Example"
                     assert (
                         current_section["commandLabel"]
                         == "Current section: Worked Example"
