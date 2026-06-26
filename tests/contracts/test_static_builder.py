@@ -60,6 +60,21 @@ def _assert_control_state_contains(
         assert token in state_html
 
 
+def _assert_discovery_panel_shell(html: str, *, workspace: str) -> None:
+    assert "data-raya-discovery-page" in html
+    assert 'data-raya-discovery-controls-state="expanded"' in html
+    assert 'data-raya-discovery-context-state="expanded"' in html
+    assert 'src="../render/discovery.js"' in html
+    assert 'data-raya-discovery-toggle-panel="controls"' in html
+    assert 'data-raya-discovery-toggle-panel="context"' in html
+    assert 'data-raya-discovery-panel-body="controls"' in html
+    assert 'data-raya-discovery-panel-body="context"' in html
+    assert f'aria-label="{workspace} controls panel"' in html
+    assert f'aria-label="{workspace} context panel"' in html
+    assert "Collapse controls" in html
+    assert "Collapse context" in html
+
+
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -1525,13 +1540,16 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     site = course / "artifact" / "site"
     search_page = site / "_raya" / "search" / "index.html"
     search_js = site / "_raya" / "render" / "search.js"
+    discovery_js = site / "_raya" / "render" / "discovery.js"
     index_html = (site / "index.html").read_text(encoding="utf-8")
     search_html = search_page.read_text(encoding="utf-8")
     search_script = search_js.read_text(encoding="utf-8")
+    discovery_script = discovery_js.read_text(encoding="utf-8") if discovery_js.exists() else ""
     rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
 
     assert search_page.exists()
     assert search_js.exists()
+    assert discovery_js.exists()
     assert (
         'href="_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"'
         in index_html
@@ -1554,7 +1572,9 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "localStorage" not in search_html
     assert (
         '<main id="raya-search-main" class="raya-search-page" '
-        'data-raya-search-page tabindex="-1">'
+        'data-raya-search-page data-raya-discovery-page '
+        'data-raya-discovery-controls-state="expanded" '
+        'data-raya-discovery-context-state="expanded" tabindex="-1">'
     ) in search_html
     assert '<script type="application/json" id="raya-search-data">' in search_html
     assert 'src="../render/search.js"' in search_html
@@ -1573,6 +1593,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-control-panel" in search_html
     assert "raya-search-results-panel" in search_html
     assert "raya-search-context-panel" in search_html
+    _assert_discovery_panel_shell(search_html, workspace="Search")
     _assert_control_group(search_html, "Query")
     _assert_control_group(search_html, "Reset")
     _assert_control_state_contains(
@@ -1601,9 +1622,20 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "data-raya-search-context" in search_html
     assert "data-raya-search-context-title" in search_html
     assert "data-raya-search-context-meta" in search_html
-    assert 'aria-label="Search context" aria-live="polite"' in search_html
+    assert 'aria-label="Search context panel"' in search_html
+    assert (
+        'data-raya-discovery-panel-body="context" aria-hidden="false" '
+        'aria-live="polite"'
+    ) in search_html
     assert "course/5_authoring_matrix" not in search_html
     assert "raya-search-results" in search_html
+    assert "data-raya-discovery-toggle-panel" in discovery_script
+    assert "aria-expanded" in discovery_script
+    assert "aria-hidden" in discovery_script
+    assert "localStorage" not in discovery_script
+    assert "sessionStorage" not in discovery_script
+    assert "fetch(" not in discovery_script
+    assert "XMLHttpRequest" not in discovery_script
     assert "Authoring Matrix Fixture" in search_html
     assert (
         '<a class="raya-search-result-page" href="../../authoring-matrix/index.html">'
@@ -1889,6 +1921,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "raya-practice-control-panel" in practice_html
     assert "raya-practice-results-panel" in practice_html
     assert "raya-practice-context-panel" in practice_html
+    _assert_discovery_panel_shell(practice_html, workspace="Practice")
     _assert_control_group(practice_html, "Query")
     _assert_control_group(practice_html, "Object type")
     _assert_control_group(practice_html, "Reset")
@@ -1920,7 +1953,11 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "data-raya-practice-context" in practice_html
     assert "data-raya-practice-context-title" in practice_html
     assert "data-raya-practice-context-meta" in practice_html
-    assert 'aria-label="Official practice context" aria-live="polite"' in practice_html
+    assert 'aria-label="Practice context panel"' in practice_html
+    assert (
+        'data-raya-discovery-panel-body="context" aria-hidden="false" '
+        'aria-live="polite"'
+    ) in practice_html
     assert 'data-raya-practice-filter="quiz"' in practice_html
     assert 'data-raya-practice-object="first-topic-card"' in practice_html
     assert 'data-raya-practice-active="false"' in practice_html
@@ -2075,6 +2112,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "matchesPage" in tasks_script
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
+    _assert_discovery_panel_shell(tasks_html, workspace="Tasks")
     _assert_control_group(tasks_html, "Query")
     _assert_control_group(tasks_html, "Sort")
     _assert_control_group(tasks_html, "Object type")
@@ -2229,6 +2267,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "matchesPage" in schedule_script
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
+    _assert_discovery_panel_shell(schedule_html, workspace="Schedule")
     _assert_control_group(schedule_html, "Query")
     _assert_control_group(schedule_html, "Date kind")
     _assert_control_group(schedule_html, "Object type")

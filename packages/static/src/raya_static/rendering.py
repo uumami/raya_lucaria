@@ -1663,6 +1663,84 @@ img {
   gap: 1rem;
   grid-template-columns: minmax(17rem, 22rem) minmax(34rem, 1fr) minmax(18rem, 24rem);
 }
+.raya-discovery-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+.raya-discovery-panel-header h2 {
+  margin: 0;
+}
+.raya-discovery-panel-header button {
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-accent));
+  border-radius: 0.45rem;
+  color: var(--raya-color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
+}
+.raya-discovery-panel-header button:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-discovery-panel-body[aria-hidden="true"] {
+  display: none;
+}
+[data-raya-discovery-controls-state="collapsed"] .raya-search-workspace,
+[data-raya-discovery-controls-state="collapsed"] .raya-practice-workspace,
+[data-raya-discovery-controls-state="collapsed"] .raya-tasks-workspace,
+[data-raya-discovery-controls-state="collapsed"] .raya-schedule-workspace {
+  grid-template-columns: minmax(4.5rem, 5.75rem) minmax(36rem, 1fr) minmax(18rem, 24rem);
+}
+[data-raya-discovery-context-state="collapsed"] .raya-search-workspace,
+[data-raya-discovery-context-state="collapsed"] .raya-practice-workspace,
+[data-raya-discovery-context-state="collapsed"] .raya-tasks-workspace,
+[data-raya-discovery-context-state="collapsed"] .raya-schedule-workspace {
+  grid-template-columns: minmax(17rem, 22rem) minmax(36rem, 1fr) minmax(4.5rem, 5.75rem);
+}
+[data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-search-workspace,
+[data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-practice-workspace,
+[data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-tasks-workspace,
+[data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-schedule-workspace {
+  grid-template-columns: minmax(4.5rem, 5.75rem) minmax(42rem, 1fr) minmax(4.5rem, 5.75rem);
+}
+[data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel,
+[data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel,
+[data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel,
+[data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel,
+[data-raya-discovery-context-state="collapsed"] .raya-search-context-panel,
+[data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel,
+[data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel,
+[data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+[data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel .raya-discovery-panel-header,
+[data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel .raya-discovery-panel-header,
+[data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel .raya-discovery-panel-header,
+[data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel .raya-discovery-panel-header,
+[data-raya-discovery-context-state="collapsed"] .raya-search-context-panel .raya-discovery-panel-header,
+[data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel .raya-discovery-panel-header,
+[data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel .raya-discovery-panel-header,
+[data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel .raya-discovery-panel-header {
+  flex-direction: column;
+}
+[data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel h2,
+[data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel h2,
+[data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel h2,
+[data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel h2,
+[data-raya-discovery-context-state="collapsed"] .raya-search-context-panel h2,
+[data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel h2,
+[data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel h2,
+[data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel h2 {
+  writing-mode: vertical-rl;
+}
 .raya-search-control-panel,
 .raya-search-context-panel,
 .raya-practice-control-panel,
@@ -4188,7 +4266,19 @@ mjx-container[display="true"] {
   .raya-search-workspace,
   .raya-practice-workspace,
   .raya-tasks-workspace,
-  .raya-schedule-workspace {
+  .raya-schedule-workspace,
+  [data-raya-discovery-controls-state="collapsed"] .raya-search-workspace,
+  [data-raya-discovery-controls-state="collapsed"] .raya-practice-workspace,
+  [data-raya-discovery-controls-state="collapsed"] .raya-tasks-workspace,
+  [data-raya-discovery-controls-state="collapsed"] .raya-schedule-workspace,
+  [data-raya-discovery-context-state="collapsed"] .raya-search-workspace,
+  [data-raya-discovery-context-state="collapsed"] .raya-practice-workspace,
+  [data-raya-discovery-context-state="collapsed"] .raya-tasks-workspace,
+  [data-raya-discovery-context-state="collapsed"] .raya-schedule-workspace,
+  [data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-search-workspace,
+  [data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-practice-workspace,
+  [data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-tasks-workspace,
+  [data-raya-discovery-controls-state="collapsed"][data-raya-discovery-context-state="collapsed"] .raya-schedule-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
   .raya-search-control-panel,
@@ -4203,6 +4293,40 @@ mjx-container[display="true"] {
   }
   [data-raya-graph-list-state="collapsed"] .raya-graph-list-panel h2,
   [data-raya-graph-inspector-state="collapsed"] .raya-graph-inspector-panel h2 {
+    writing-mode: horizontal-tb;
+  }
+  .raya-discovery-panel-body[aria-hidden="true"] {
+    display: block;
+  }
+  [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel,
+  [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel,
+  [data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel,
+  [data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel,
+  [data-raya-discovery-context-state="collapsed"] .raya-search-context-panel,
+  [data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel,
+  [data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel,
+  [data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel {
+    align-items: stretch;
+    display: block;
+  }
+  [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel .raya-discovery-panel-header,
+  [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel .raya-discovery-panel-header,
+  [data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel .raya-discovery-panel-header,
+  [data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel .raya-discovery-panel-header,
+  [data-raya-discovery-context-state="collapsed"] .raya-search-context-panel .raya-discovery-panel-header,
+  [data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel .raya-discovery-panel-header,
+  [data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel .raya-discovery-panel-header,
+  [data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel .raya-discovery-panel-header {
+    flex-direction: row;
+  }
+  [data-raya-discovery-controls-state="collapsed"] .raya-search-control-panel h2,
+  [data-raya-discovery-controls-state="collapsed"] .raya-practice-control-panel h2,
+  [data-raya-discovery-controls-state="collapsed"] .raya-tasks-control-panel h2,
+  [data-raya-discovery-controls-state="collapsed"] .raya-schedule-control-panel h2,
+  [data-raya-discovery-context-state="collapsed"] .raya-search-context-panel h2,
+  [data-raya-discovery-context-state="collapsed"] .raya-practice-context-panel h2,
+  [data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel h2,
+  [data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel h2 {
     writing-mode: horizontal-tb;
   }
 }

@@ -3743,12 +3743,109 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             assert (
                                 control_box["x"] < results_box["x"] < context_box["x"]
                             )
+                            storage_before = page.evaluate(
+                                "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                            )
+                            controls_toggle = page.locator(
+                                '[data-raya-discovery-toggle-panel="controls"]'
+                            )
+                            context_toggle = page.locator(
+                                '[data-raya-discovery-toggle-panel="context"]'
+                            )
+                            assert controls_toggle.is_visible()
+                            assert context_toggle.is_visible()
+                            controls_toggle.click()
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('[data-raya-search-page]')
+                                  ?.getAttribute('data-raya-discovery-controls-state') === 'collapsed'"""
+                            )
+                            assert (
+                                controls_toggle.get_attribute("aria-expanded")
+                                == "false"
+                            )
+                            assert (
+                                page.locator(
+                                    '[data-raya-discovery-panel-body="controls"]'
+                                ).get_attribute("aria-hidden")
+                                == "true"
+                            )
+                            assert (
+                                page.locator("#raya-search-input").get_attribute(
+                                    "tabindex"
+                                )
+                                == "-1"
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            context_toggle.click()
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('[data-raya-search-page]')
+                                  ?.getAttribute('data-raya-discovery-context-state') === 'collapsed'"""
+                            )
+                            assert (
+                                context_toggle.get_attribute("aria-expanded")
+                                == "false"
+                            )
+                            assert (
+                                page.locator(
+                                    '[data-raya-discovery-panel-body="context"]'
+                                ).get_attribute("aria-hidden")
+                                == "true"
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            assert (
+                                page.evaluate(
+                                    "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
+                                )
+                                == storage_before
+                            )
+                            context_toggle.click()
+                            controls_toggle.click()
+                            page.wait_for_function(
+                                """() => {
+                                  const root = document.querySelector('[data-raya-search-page]');
+                                  return root?.getAttribute('data-raya-discovery-controls-state') === 'expanded'
+                                    && root?.getAttribute('data-raya-discovery-context-state') === 'expanded';
+                                }"""
+                            )
+                            assert (
+                                controls_toggle.get_attribute("aria-expanded")
+                                == "true"
+                            )
+                            assert (
+                                page.locator("#raya-search-input").get_attribute(
+                                    "tabindex"
+                                )
+                                is None
+                            )
+                            assert (
+                                context_toggle.get_attribute("aria-expanded")
+                                == "true"
+                            )
                         if viewport["width"] < 520:
                             discovery_box = page.locator(
                                 ".raya-discovery-command-bar"
                             ).bounding_box()
                             assert discovery_box is not None
                             assert discovery_box["height"] <= 150
+                            mobile_controls_toggle = page.locator(
+                                '[data-raya-discovery-toggle-panel="controls"]'
+                            )
+                            assert mobile_controls_toggle.is_visible()
+                            mobile_controls_toggle.click()
+                            assert (
+                                page.locator("[data-raya-search-page]").get_attribute(
+                                    "data-raya-discovery-controls-state"
+                                )
+                                == "expanded"
+                            )
+                            assert (
+                                page.locator(
+                                    '[data-raya-discovery-panel-body="controls"]'
+                                ).get_attribute("aria-hidden")
+                                == "false"
+                            )
                         assert (
                             page.locator(".raya-command-graph")
                             .evaluate("node => node.href")

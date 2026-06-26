@@ -90,6 +90,11 @@ from raya_static.accessibility import (
     OPEN_DYSLEXIC_VOLATILE_JS_NAME,
     open_dyslexic_resources,
 )
+from raya_static.discovery import (
+    DISCOVERY_RESOURCE_PATH,
+    DISCOVERY_SCRIPT_NAME,
+    discovery_resources,
+)
 from raya_static.graph import GRAPH_RESOURCE_PATH, GRAPH_SCRIPT_NAME, graph_resources
 from raya_static.math_renderer import MathRenderer
 from raya_static.numbered_objects import (
@@ -414,6 +419,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_rich_render_resources(site_dir, report, skin_context=skin_context)
     _write_shell_resources(site_dir, report)
     _write_graph_resources(site_dir, report)
+    _write_discovery_resources(site_dir, report)
     _write_search_resources(site_dir, report)
     _write_practice_resources(site_dir, report)
     _write_tasks_resources(site_dir, report)
@@ -4914,6 +4920,10 @@ def _render_search_surface(
         STATIC_SEARCH_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    discovery_js_href = _relative_href(
+        STATIC_SEARCH_PATH.as_posix(),
+        Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
+    )
     search_js_href = _relative_href(
         STATIC_SEARCH_PATH.as_posix(),
         Path(SEARCH_RESOURCE_PATH) / SEARCH_SCRIPT_NAME,
@@ -5046,7 +5056,9 @@ def _render_search_surface(
             ),
             (
                 '<main id="raya-search-main" class="raya-search-page" '
-                'data-raya-search-page tabindex="-1">'
+                'data-raya-search-page data-raya-discovery-page '
+                'data-raya-discovery-controls-state="expanded" '
+                'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
             '<header class="raya-search-header raya-discovery-header">',
             "<h1>Course Search</h1>",
@@ -5073,8 +5085,20 @@ def _render_search_surface(
                 ],
             ),
             '<section class="raya-search-workspace" aria-label="Search workspace">',
-            '<aside class="raya-search-control-panel" aria-label="Search controls">',
+            '<aside class="raya-search-control-panel" aria-label="Search controls panel">',
+            '<div class="raya-discovery-panel-header">',
             "<h2>Find pages</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="controls" '
+                'aria-controls="raya-search-control-panel-body" aria-expanded="true" '
+                'aria-label="Collapse controls panel">'
+                "Collapse controls</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-search-control-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="controls" aria-hidden="false">'
+            ),
             '<section class="raya-search-controls" aria-label="Course search controls">',
             '<fieldset class="raya-discovery-control-group">',
             "<legend>Query</legend>",
@@ -5097,6 +5121,7 @@ def _render_search_surface(
                 'data-raya-search-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            "</div>",
             "</aside>",
             '<section class="raya-search-results-panel" aria-label="Search results">',
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
@@ -5106,14 +5131,28 @@ def _render_search_surface(
             "</section>",
             (
                 '<aside class="raya-search-context-panel" data-raya-search-context '
-                'aria-label="Search context" aria-live="polite">'
+                'aria-label="Search context panel">'
             ),
+            '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="context" '
+                'aria-controls="raya-search-context-panel-body" aria-expanded="true" '
+                'aria-label="Collapse context panel">'
+                "Collapse context</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-search-context-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="context" aria-hidden="false" '
+                'aria-live="polite">'
+            ),
             "<p data-raya-search-context-title>Select or filter a page.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-search-context-meta>Public page metadata only.</p>"
             ),
+            "</div>",
             "</aside>",
             "</section>",
             '<script type="application/json" id="raya-search-data">',
@@ -5121,6 +5160,7 @@ def _render_search_surface(
             "</script>",
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(search_js_href)}" defer></script>',
             "</body>",
             "</html>",
@@ -5287,6 +5327,10 @@ def _render_practice_surface(
         STATIC_PRACTICE_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    discovery_js_href = _relative_href(
+        STATIC_PRACTICE_PATH.as_posix(),
+        Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
+    )
     practice_js_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
         Path(PRACTICE_RESOURCE_PATH) / PRACTICE_SCRIPT_NAME,
@@ -5414,7 +5458,9 @@ def _render_practice_surface(
             ),
             (
                 '<main id="raya-practice-main" class="raya-practice-page" '
-                'data-raya-practice-page tabindex="-1">'
+                'data-raya-practice-page data-raya-discovery-page '
+                'data-raya-discovery-controls-state="expanded" '
+                'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
             '<header class="raya-practice-header raya-discovery-header">',
             "<h1>Official Practice</h1>",
@@ -5444,8 +5490,20 @@ def _render_practice_surface(
                 ],
             ),
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
-            '<aside class="raya-practice-control-panel" aria-label="Official practice controls">',
+            '<aside class="raya-practice-control-panel" aria-label="Practice controls panel">',
+            '<div class="raya-discovery-panel-header">',
             "<h2>Find practice</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="controls" '
+                'aria-controls="raya-practice-control-panel-body" aria-expanded="true" '
+                'aria-label="Collapse controls panel">'
+                "Collapse controls</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-practice-control-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="controls" aria-hidden="false">'
+            ),
             '<section class="raya-practice-controls" aria-label="Official practice controls">',
             '<fieldset class="raya-discovery-control-group">',
             "<legend>Query</legend>",
@@ -5474,6 +5532,7 @@ def _render_practice_surface(
                 'data-raya-practice-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            "</div>",
             "</aside>",
             '<section class="raya-practice-results-panel" aria-label="Official practice results">',
             (
@@ -5486,14 +5545,28 @@ def _render_practice_surface(
             "</section>",
             (
                 '<aside class="raya-practice-context-panel" data-raya-practice-context '
-                'aria-label="Official practice context" aria-live="polite">'
+                'aria-label="Practice context panel">'
             ),
+            '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="context" '
+                'aria-controls="raya-practice-context-panel-body" aria-expanded="true" '
+                'aria-label="Collapse context panel">'
+                "Collapse context</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-practice-context-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="context" aria-hidden="false" '
+                'aria-live="polite">'
+            ),
             "<p data-raya-practice-context-title>Select or filter an official object.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-practice-context-meta>Accepted public object metadata only.</p>"
             ),
+            "</div>",
             "</aside>",
             "</section>",
             '<script type="application/json" id="raya-practice-data">',
@@ -5501,6 +5574,7 @@ def _render_practice_surface(
             "</script>",
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(practice_js_href)}" defer></script>',
             "</body>",
             "</html>",
@@ -5629,6 +5703,10 @@ def _render_tasks_surface(
         STATIC_TASKS_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    discovery_js_href = _relative_href(
+        STATIC_TASKS_PATH.as_posix(),
+        Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
+    )
     tasks_js_href = _relative_href(
         STATIC_TASKS_PATH.as_posix(),
         Path(TASKS_RESOURCE_PATH) / TASKS_SCRIPT_NAME,
@@ -5756,7 +5834,9 @@ def _render_tasks_surface(
             ),
             (
                 '<main id="raya-tasks-main" class="raya-tasks-page" '
-                'data-raya-tasks-page tabindex="-1">'
+                'data-raya-tasks-page data-raya-discovery-page '
+                'data-raya-discovery-controls-state="expanded" '
+                'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
             '<header class="raya-tasks-header raya-discovery-header">',
             "<h1>Official Tasks</h1>",
@@ -5789,8 +5869,20 @@ def _render_tasks_surface(
                 ],
             ),
             '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
-            '<aside class="raya-tasks-control-panel" aria-label="Official task controls">',
+            '<aside class="raya-tasks-control-panel" aria-label="Tasks controls panel">',
+            '<div class="raya-discovery-panel-header">',
             "<h2>Find tasks</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="controls" '
+                'aria-controls="raya-tasks-control-panel-body" aria-expanded="true" '
+                'aria-label="Collapse controls panel">'
+                "Collapse controls</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-tasks-control-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="controls" aria-hidden="false">'
+            ),
             '<section class="raya-tasks-controls" aria-label="Official task controls">',
             '<fieldset class="raya-discovery-control-group">',
             "<legend>Query</legend>",
@@ -5828,6 +5920,7 @@ def _render_tasks_surface(
                 'data-raya-tasks-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            "</div>",
             "</aside>",
             '<section class="raya-tasks-results-panel" aria-label="Official task results">',
             (
@@ -5843,14 +5936,28 @@ def _render_tasks_surface(
             "</section>",
             (
                 '<aside class="raya-tasks-context-panel" data-raya-tasks-context '
-                'aria-label="Official task context" aria-live="polite">'
+                'aria-label="Tasks context panel">'
             ),
+            '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="context" '
+                'aria-controls="raya-tasks-context-panel-body" aria-expanded="true" '
+                'aria-label="Collapse context panel">'
+                "Collapse context</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-tasks-context-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="context" aria-hidden="false" '
+                'aria-live="polite">'
+            ),
             "<p data-raya-tasks-context-title>Select or filter an official task.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-tasks-context-meta>Accepted public task metadata only.</p>"
             ),
+            "</div>",
             "</aside>",
             "</section>",
             '<script type="application/json" id="raya-tasks-data">',
@@ -5858,6 +5965,7 @@ def _render_tasks_surface(
             "</script>",
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(tasks_js_href)}" defer></script>',
             "</body>",
             "</html>",
@@ -5914,6 +6022,10 @@ def _render_schedule_surface(
     accessibility_js_href = _relative_href(
         STATIC_SCHEDULE_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
+    )
+    discovery_js_href = _relative_href(
+        STATIC_SCHEDULE_PATH.as_posix(),
+        Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
     )
     schedule_js_href = _relative_href(
         STATIC_SCHEDULE_PATH.as_posix(),
@@ -6065,7 +6177,9 @@ def _render_schedule_surface(
             ),
             (
                 '<main id="raya-schedule-main" class="raya-schedule-page" '
-                'data-raya-schedule-page tabindex="-1">'
+                'data-raya-schedule-page data-raya-discovery-page '
+                'data-raya-discovery-controls-state="expanded" '
+                'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
             '<header class="raya-schedule-header raya-discovery-header">',
             "<h1>Official Schedule</h1>",
@@ -6095,8 +6209,20 @@ def _render_schedule_surface(
                 ],
             ),
             '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
-            '<aside class="raya-schedule-control-panel" aria-label="Official schedule controls">',
+            '<aside class="raya-schedule-control-panel" aria-label="Schedule controls panel">',
+            '<div class="raya-discovery-panel-header">',
             "<h2>Find schedule items</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="controls" '
+                'aria-controls="raya-schedule-control-panel-body" aria-expanded="true" '
+                'aria-label="Collapse controls panel">'
+                "Collapse controls</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-schedule-control-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="controls" aria-hidden="false">'
+            ),
             '<section class="raya-schedule-controls" aria-label="Official schedule controls">',
             '<fieldset class="raya-discovery-control-group">',
             "<legend>Query</legend>",
@@ -6131,6 +6257,7 @@ def _render_schedule_surface(
                 'data-raya-schedule-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            "</div>",
             "</aside>",
             '<section class="raya-schedule-results-panel" aria-label="Official schedule results">',
             (
@@ -6146,14 +6273,28 @@ def _render_schedule_surface(
             "</section>",
             (
                 '<aside class="raya-schedule-context-panel" data-raya-schedule-context '
-                'aria-label="Official schedule context" aria-live="polite">'
+                'aria-label="Schedule context panel">'
             ),
+            '<div class="raya-discovery-panel-header">',
             "<h2>Context</h2>",
+            (
+                '<button type="button" data-raya-discovery-toggle-panel="context" '
+                'aria-controls="raya-schedule-context-panel-body" aria-expanded="true" '
+                'aria-label="Collapse context panel">'
+                "Collapse context</button>"
+            ),
+            "</div>",
+            (
+                '<div id="raya-schedule-context-panel-body" class="raya-discovery-panel-body" '
+                'data-raya-discovery-panel-body="context" aria-hidden="false" '
+                'aria-live="polite">'
+            ),
             "<p data-raya-schedule-context-title>Select or filter a dated official item.</p>",
             (
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-schedule-context-meta>Accepted public dated task metadata only.</p>"
             ),
+            "</div>",
             "</aside>",
             "</section>",
             '<script type="application/json" id="raya-schedule-data">',
@@ -6161,6 +6302,7 @@ def _render_schedule_surface(
             "</script>",
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(schedule_js_href)}" defer></script>',
             "</body>",
             "</html>",
@@ -6763,6 +6905,16 @@ def _write_graph_resources(site_dir: Path, report: ValidationReport) -> None:
     graph_dir.mkdir(parents=True, exist_ok=True)
     report.wrote_output(graph_dir)
     script_path = graph_dir / GRAPH_SCRIPT_NAME
+    script_path.write_text(resources.javascript, encoding="utf-8")
+    report.wrote_output(script_path)
+
+
+def _write_discovery_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = discovery_resources()
+    discovery_dir = site_dir / DISCOVERY_RESOURCE_PATH
+    discovery_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(discovery_dir)
+    script_path = discovery_dir / DISCOVERY_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 
