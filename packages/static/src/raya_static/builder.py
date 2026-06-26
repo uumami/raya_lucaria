@@ -1175,6 +1175,7 @@ def _render_discovery_command_bar(
     *,
     course_title: str,
     workspace_label: str,
+    current_workspace: str,
     home_href: str,
     search_href: str | None,
     graph_href: str | None,
@@ -1191,10 +1192,33 @@ def _render_discovery_command_bar(
             label="Course",
         )
     ]
+
+    def workspace_command(
+        *,
+        kind: str,
+        href: str,
+        aria_label: str,
+        icon: str,
+        label: str,
+    ) -> str:
+        attrs = (
+            {"aria-current": "page", "data-raya-current-workspace": kind}
+            if current_workspace == kind
+            else None
+        )
+        return _render_command_link(
+            class_name=f"raya-command raya-command-{kind}",
+            href=href,
+            aria_label=aria_label,
+            icon=icon,
+            label=label,
+            attrs=attrs,
+        )
+
     if search_href is not None:
         commands.append(
-            _render_command_link(
-                class_name="raya-command raya-command-search",
+            workspace_command(
+                kind="search",
                 href=search_href,
                 aria_label="Open course search",
                 icon="search",
@@ -1203,8 +1227,8 @@ def _render_discovery_command_bar(
         )
     if graph_href is not None:
         commands.append(
-            _render_command_link(
-                class_name="raya-command raya-command-graph",
+            workspace_command(
+                kind="graph",
                 href=graph_href,
                 aria_label="Open course graph",
                 icon="graph",
@@ -1213,8 +1237,8 @@ def _render_discovery_command_bar(
         )
     if practice_href is not None:
         commands.append(
-            _render_command_link(
-                class_name="raya-command raya-command-practice",
+            workspace_command(
+                kind="practice",
                 href=practice_href,
                 aria_label="Open official practice",
                 icon="practice",
@@ -1223,8 +1247,8 @@ def _render_discovery_command_bar(
         )
     if tasks_href is not None:
         commands.append(
-            _render_command_link(
-                class_name="raya-command raya-command-tasks",
+            workspace_command(
+                kind="tasks",
                 href=tasks_href,
                 aria_label="Open official tasks",
                 icon="tasks",
@@ -1233,8 +1257,8 @@ def _render_discovery_command_bar(
         )
     if schedule_href is not None:
         commands.append(
-            _render_command_link(
-                class_name="raya-command raya-command-schedule",
+            workspace_command(
+                kind="schedule",
                 href=schedule_href,
                 aria_label="Open official schedule",
                 icon="schedule",
@@ -2540,11 +2564,19 @@ def _render_command_link(
     aria_label: str,
     icon: str,
     label: str,
+    attrs: dict[str, str] | None = None,
 ) -> str:
+    attrs_text = "".join(
+        (
+            f' {html.escape(name, quote=True)}='
+            f'"{html.escape(value, quote=True)}"'
+        )
+        for name, value in (attrs or {}).items()
+    )
     return (
         f'<a class="{html.escape(class_name, quote=True)}" '
         f'href="{html.escape(href)}" '
-        f'aria-label="{html.escape(aria_label, quote=True)}">'
+        f'aria-label="{html.escape(aria_label, quote=True)}"{attrs_text}>'
         f"{_command_icon(icon)}"
         f'<span class="raya-command-label">{html.escape(label)}</span>'
         "</a>"
@@ -4351,9 +4383,10 @@ def _render_graph_surface(
             _render_discovery_command_bar(
                 course_title=course_title,
                 workspace_label="Graph workspace",
+                current_workspace="graph",
                 home_href="../../index.html",
                 search_href="../search/index.html",
-                graph_href=None,
+                graph_href="index.html",
                 practice_href="../practice/index.html",
                 tasks_href="../tasks/index.html",
                 schedule_href="../schedule/index.html",
@@ -5132,8 +5165,9 @@ def _render_search_surface(
             _render_discovery_command_bar(
                 course_title=course_title,
                 workspace_label="Search workspace",
+                current_workspace="search",
                 home_href="../../index.html",
-                search_href=None,
+                search_href="index.html",
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
                 tasks_href="../tasks/index.html",
@@ -5553,10 +5587,11 @@ def _render_practice_surface(
             _render_discovery_command_bar(
                 course_title=course_title,
                 workspace_label="Official practice workspace",
+                current_workspace="practice",
                 home_href="../../index.html",
                 search_href="../search/index.html",
                 graph_href="../graph/index.html",
-                practice_href=None,
+                practice_href="index.html",
                 tasks_href="../tasks/index.html",
                 schedule_href="../schedule/index.html",
             ),
@@ -5942,11 +5977,12 @@ def _render_tasks_surface(
             _render_discovery_command_bar(
                 course_title=course_title,
                 workspace_label="Official tasks workspace",
+                current_workspace="tasks",
                 home_href="../../index.html",
                 search_href="../search/index.html",
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
-                tasks_href=None,
+                tasks_href="index.html",
                 schedule_href="../schedule/index.html",
             ),
             (
@@ -6298,12 +6334,13 @@ def _render_schedule_surface(
             _render_discovery_command_bar(
                 course_title=course_title,
                 workspace_label="Official schedule workspace",
+                current_workspace="schedule",
                 home_href="../../index.html",
                 search_href="../search/index.html",
                 graph_href="../graph/index.html",
                 practice_href="../practice/index.html",
                 tasks_href="../tasks/index.html",
-                schedule_href=None,
+                schedule_href="index.html",
             ),
             (
                 '<main id="raya-schedule-main" class="raya-schedule-page" '

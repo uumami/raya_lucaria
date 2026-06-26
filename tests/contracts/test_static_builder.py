@@ -114,6 +114,32 @@ def _assert_discovery_quick_guide(
         assert forbidden not in guide_text
 
 
+def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
+    for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
+        assert f'<span class="raya-command-label">{label}</span>' in html
+    assert html.count('aria-current="page"') == 1
+    assert f'data-raya-current-workspace="{current}"' in html
+    command_bar_match = re.search(
+        r'<header class="[^"]*\braya-discovery-command-bar\b[^"]*"[^>]*>'
+        r"(.*?)</header>",
+        html,
+        re.DOTALL,
+    )
+    assert command_bar_match is not None
+    command_bar_html = command_bar_match.group(1)
+    assert "https://" not in command_bar_html
+    assert "http://" not in command_bar_html
+    current_link_match = re.search(
+        rf'<a class="[^"]*\braya-command-{re.escape(current)}\b[^"]*" '
+        r'href="index\.html" '
+        r'aria-label="[^"]+" '
+        r'aria-current="page" '
+        rf'data-raya-current-workspace="{re.escape(current)}">',
+        command_bar_html,
+    )
+    assert current_link_match is not None
+
+
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -959,6 +985,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'data-raya-surface="graph"' in graph_html
     assert "raya-discovery-command-bar" in graph_html
     assert "Graph workspace" in graph_html
+    _assert_discovery_workspace_switcher(graph_html, current="graph")
     assert 'href="../search/index.html"' in graph_html
     assert 'href="../tasks/index.html"' in graph_html
     assert '<span class="raya-command-label">Search</span>' in graph_html
@@ -1685,6 +1712,12 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-discovery-overview-meta" in search_html
     assert ".raya-discovery-quick-guide" in rich_css
     assert ".raya-discovery-guide-card" in rich_css
+    assert (
+        '.raya-discovery-command-bar .raya-command[aria-current="page"]'
+        in rich_css
+    )
+    assert "data-raya-current-workspace" in search_html
+    _assert_discovery_workspace_switcher(search_html, current="search")
     _assert_discovery_quick_guide(
         search_html,
         kind="search",
@@ -2030,6 +2063,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert 'data-raya-practice-filter="all"' in practice_html
     assert 'data-raya-discovery-overview="practice"' in practice_html
     assert "raya-discovery-overview-meta" in practice_html
+    _assert_discovery_workspace_switcher(practice_html, current="practice")
     _assert_discovery_quick_guide(
         practice_html,
         kind="practice",
@@ -2219,6 +2253,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "function fuzzyMatch" in tasks_script
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
+    _assert_discovery_workspace_switcher(tasks_html, current="tasks")
     _assert_discovery_quick_guide(
         tasks_html,
         kind="tasks",
@@ -2371,7 +2406,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Graph</span>' in schedule_html
     assert '<span class="raya-command-label">Practice</span>' in schedule_html
     assert '<span class="raya-command-label">Tasks</span>' in schedule_html
-    assert '<span class="raya-command-label">Schedule</span>' not in schedule_html
+    assert '<span class="raya-command-label">Schedule</span>' in schedule_html
     assert 'src="../render/schedule.js"' in schedule_html
     assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in schedule_html
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in schedule_html
@@ -2390,6 +2425,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "function fuzzyMatch" in schedule_script
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
+    _assert_discovery_workspace_switcher(schedule_html, current="schedule")
     _assert_discovery_quick_guide(
         schedule_html,
         kind="schedule",

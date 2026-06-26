@@ -10984,6 +10984,107 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
         handle.close()
 
 
+def test_discovery_command_bar_marks_current_workspace_without_overflow(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1366, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        for workspace_path, kind, label in (
+                            ("_raya/search/index.html", "search", "Search"),
+                            ("_raya/graph/index.html", "graph", "Graph"),
+                            ("_raya/practice/index.html", "practice", "Practice"),
+                            ("_raya/tasks/index.html", "tasks", "Tasks"),
+                            ("_raya/schedule/index.html", "schedule", "Schedule"),
+                        ):
+                            page.goto(
+                                f"{base_url}/{workspace_path}",
+                                wait_until="networkidle",
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            current = page.locator(
+                                '.raya-discovery-command-bar '
+                                '.raya-command[aria-current="page"]'
+                            )
+                            assert current.count() == 1
+                            assert (
+                                current.get_attribute("data-raya-current-workspace")
+                                == kind
+                            )
+                            assert label in current.inner_text()
+                            box = current.bounding_box()
+                            assert box is not None
+                            assert box["width"] > 0
+                            assert box["x"] >= 0
+                            assert box["x"] + box["width"] <= viewport["width"] + 1
+                            contrast = current.evaluate(
+                                """element => {
+                                    const parseRgb = value => {
+                                        const match = value.match(/rgba?\\(([^)]+)\\)/);
+                                        if (!match) return null;
+                                        return match[1].split(",").slice(0, 3).map(
+                                            part => Number.parseFloat(part.trim())
+                                        );
+                                    };
+                                    const linear = channel => {
+                                        const normalized = channel / 255;
+                                        return normalized <= 0.03928
+                                            ? normalized / 12.92
+                                            : Math.pow((normalized + 0.055) / 1.055, 2.4);
+                                    };
+                                    const luminance = rgb =>
+                                        0.2126 * linear(rgb[0]) +
+                                        0.7152 * linear(rgb[1]) +
+                                        0.0722 * linear(rgb[2]);
+                                    const style = window.getComputedStyle(element);
+                                    const foreground = parseRgb(style.color);
+                                    const background = parseRgb(style.backgroundColor);
+                                    if (!foreground || !background) return 0;
+                                    const light = Math.max(
+                                        luminance(foreground),
+                                        luminance(background)
+                                    );
+                                    const dark = Math.min(
+                                        luminance(foreground),
+                                        luminance(background)
+                                    );
+                                    return (light + 0.05) / (dark + 0.05);
+                                }"""
+                            )
+                            assert contrast >= 4.5
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_math_renders_in_browser_without_external_requests(
     tmp_path: Path,
 ) -> None:

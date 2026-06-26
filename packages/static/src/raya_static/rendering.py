@@ -525,6 +525,15 @@ img {
 .raya-discovery-command-bar {
   box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--raya-color-text) 18%, transparent);
 }
+.raya-discovery-command-bar .raya-command[aria-current="page"] {
+  background: var(--raya-color-surface);
+  border-color: var(--raya-color-accent);
+  box-shadow: inset 0 -0.18rem 0 var(--raya-color-accent), 0 0 0 1px var(--raya-color-accent);
+  color: var(--raya-color-text);
+}
+.raya-discovery-command-bar .raya-command[aria-current="page"] .raya-command-icon {
+  color: inherit;
+}
 .raya-top-command-bar-inner,
 .raya-learning-shell,
 .raya-page-footer,
