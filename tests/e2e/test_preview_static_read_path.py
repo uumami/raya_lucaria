@@ -10912,6 +10912,78 @@ def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
         handle.close()
 
 
+def test_discovery_workspace_guides_are_visible_without_overflow(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1366, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        for workspace_path, kind in (
+                            ("_raya/search/index.html", "search"),
+                            ("_raya/practice/index.html", "practice"),
+                            ("_raya/tasks/index.html", "tasks"),
+                            ("_raya/schedule/index.html", "schedule"),
+                        ):
+                            page.goto(
+                                f"{base_url}/{workspace_path}",
+                                wait_until="networkidle",
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            guide = page.locator(
+                                f'[data-raya-discovery-guide="{kind}"]'
+                            )
+                            assert guide.is_visible()
+                            box = guide.bounding_box()
+                            assert box is not None
+                            assert box["x"] >= 0
+                            assert box["x"] + box["width"] <= viewport["width"] + 1
+                            cards = guide.locator(".raya-discovery-guide-card")
+                            assert (
+                                cards.count() == 4
+                            )
+                            for index in range(cards.count()):
+                                card_box = cards.nth(index).bounding_box()
+                                assert card_box is not None
+                                assert card_box["width"] > 0
+                                assert card_box["height"] > 0
+                                assert card_box["x"] >= box["x"] - 1
+                                assert (
+                                    card_box["x"] + card_box["width"]
+                                    <= box["x"] + box["width"] + 1
+                                )
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_math_renders_in_browser_without_external_requests(
     tmp_path: Path,
 ) -> None:

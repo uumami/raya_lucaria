@@ -1331,6 +1331,38 @@ def _render_discovery_overview(
     )
 
 
+def _render_discovery_quick_guide(
+    *,
+    kind: str,
+    cards: list[tuple[str, str]],
+) -> str:
+    card_html = "\n".join(
+        [
+            (
+                '<article class="raya-discovery-guide-card">'
+                f"<h3>{html.escape(label)}</h3>"
+                f"<p>{html.escape(text)}</p>"
+                "</article>"
+            )
+            for label, text in cards
+        ]
+    )
+    return "\n".join(
+        [
+            (
+                '<section class="raya-discovery-quick-guide" '
+                f'data-raya-discovery-guide="{html.escape(kind, quote=True)}" '
+                'aria-label="Workspace quick guide">'
+            ),
+            "<h2>Quick guide</h2>",
+            '<div class="raya-discovery-guide-cards">',
+            card_html,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
 def _render_reading_context(
     course_title: str,
     page: ContentPage,
@@ -5137,6 +5169,21 @@ def _render_search_surface(
                     ("Open schedule", "../schedule/index.html"),
                 ],
             ),
+            _render_discovery_quick_guide(
+                kind="search",
+                cards=[
+                    ("Find", "Type public page, section, tag, or stable-ID text."),
+                    (
+                        "Inspect",
+                        "Pointer, focus, or keyboard movement updates the context panel.",
+                    ),
+                    (
+                        "Open",
+                        "Use result links to open the page, graph, or matching workspaces.",
+                    ),
+                    ("Reset", "Clear or Escape returns to all visible public pages."),
+                ],
+            ),
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -5546,6 +5593,15 @@ def _render_practice_surface(
                     ("Open schedule", "../schedule/index.html"),
                 ],
             ),
+            _render_discovery_quick_guide(
+                kind="practice",
+                cards=[
+                    ("Find", "Search accepted official objects and filter by type."),
+                    ("Inspect", "Select visible objects to read public metadata."),
+                    ("Open", "Return to the owning page or graph focus."),
+                    ("Reset", "Clear or Escape shows accepted objects again."),
+                ],
+            ),
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
             '<aside class="raya-practice-control-panel" aria-label="Practice controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -5929,6 +5985,15 @@ def _render_tasks_surface(
                     ("Open schedule", "../schedule/index.html"),
                 ],
             ),
+            _render_discovery_quick_guide(
+                kind="tasks",
+                cards=[
+                    ("Find", "Filter accepted task-family objects by text and type."),
+                    ("Sort", "Switch course order, authored due date, or type."),
+                    ("Inspect", "Select visible tasks to read public planning fields."),
+                    ("Open", "Return to the owning page or graph focus."),
+                ],
+            ),
             '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
             '<aside class="raya-tasks-control-panel" aria-label="Tasks controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -6271,6 +6336,21 @@ def _render_schedule_surface(
                     ("View graph", "../graph/index.html"),
                     ("Open practice", "../practice/index.html"),
                     ("Open tasks", "../tasks/index.html"),
+                ],
+            ),
+            _render_discovery_quick_guide(
+                kind="schedule",
+                cards=[
+                    ("Find", "Filter dated official work by text, date kind, and type."),
+                    (
+                        "Scan dates",
+                        "Read authored due and available dates as course metadata.",
+                    ),
+                    (
+                        "Inspect",
+                        "Select visible dated items to read public planning fields.",
+                    ),
+                    ("Open", "Return to the owning page or graph focus."),
                 ],
             ),
             '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',

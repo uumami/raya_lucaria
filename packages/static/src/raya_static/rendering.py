@@ -926,6 +926,45 @@ img {
   outline: 3px solid var(--raya-color-accent);
   outline-offset: 3px;
 }
+.raya-discovery-quick-guide {
+  background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-accent));
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 var(--raya-space-block);
+  padding: 0.75rem;
+}
+.raya-discovery-quick-guide h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.raya-discovery-guide-cards {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+}
+.raya-discovery-guide-card {
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-page));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, transparent);
+  border-radius: 0.45rem;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.65rem;
+}
+.raya-discovery-guide-card h3 {
+  color: var(--raya-color-text);
+  font-size: 0.9rem;
+  margin: 0;
+}
+.raya-discovery-guide-card p {
+  color: var(--raya-color-muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 .raya-graph-workspace {
   align-items: start;
   display: grid;

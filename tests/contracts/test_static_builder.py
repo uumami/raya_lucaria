@@ -75,6 +75,45 @@ def _assert_discovery_panel_shell(html: str, *, workspace: str) -> None:
     assert "Collapse context" in html
 
 
+def _assert_discovery_quick_guide(
+    html: str,
+    *,
+    kind: str,
+    labels: tuple[str, ...],
+    snippets: tuple[str, ...],
+) -> None:
+    assert (
+        '<section class="raya-discovery-quick-guide" '
+        f'data-raya-discovery-guide="{kind}" '
+    ) in html
+    assert "<h2>Quick guide</h2>" in html
+    for label in labels:
+        assert f"<h3>{label}</h3>" in html
+    for snippet in snippets:
+        assert snippet in html
+    guide_match = re.search(
+        rf'<section class="raya-discovery-quick-guide" '
+        rf'data-raya-discovery-guide="{re.escape(kind)}" '
+        r".*?</section>",
+        html,
+        re.DOTALL,
+    )
+    assert guide_match is not None
+    guide_text = guide_match.group(0).lower()
+    for forbidden in (
+        "progress",
+        "mastery",
+        "recommend",
+        "personal",
+        "ranking",
+        "adaptive",
+        "grade",
+        "score",
+        "submit",
+    ):
+        assert forbidden not in guide_text
+
+
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -1644,6 +1683,19 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert 'id="raya-search-status"' in search_html
     assert 'data-raya-discovery-overview="search"' in search_html
     assert "raya-discovery-overview-meta" in search_html
+    assert ".raya-discovery-quick-guide" in rich_css
+    assert ".raya-discovery-guide-card" in rich_css
+    _assert_discovery_quick_guide(
+        search_html,
+        kind="search",
+        labels=("Find", "Inspect", "Open", "Reset"),
+        snippets=(
+            "Type public page, section, tag, or stable-ID text.",
+            "Pointer, focus, or keyboard movement updates the context panel.",
+            "Use result links to open the page, graph, or matching workspaces.",
+            "Clear or Escape returns to all visible public pages.",
+        ),
+    )
     assert "Public pages" in search_html
     assert "Section anchors" in search_html
     assert "Reset path" in search_html
@@ -1978,6 +2030,17 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert 'data-raya-practice-filter="all"' in practice_html
     assert 'data-raya-discovery-overview="practice"' in practice_html
     assert "raya-discovery-overview-meta" in practice_html
+    _assert_discovery_quick_guide(
+        practice_html,
+        kind="practice",
+        labels=("Find", "Inspect", "Open", "Reset"),
+        snippets=(
+            "Search accepted official objects and filter by type.",
+            "Select visible objects to read public metadata.",
+            "Return to the owning page or graph focus.",
+            "Clear or Escape shows accepted objects again.",
+        ),
+    )
     assert "Official objects" in practice_html
     assert "Object types" in practice_html
     assert "Reset path" in practice_html
@@ -2156,6 +2219,17 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "function fuzzyMatch" in tasks_script
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
+    _assert_discovery_quick_guide(
+        tasks_html,
+        kind="tasks",
+        labels=("Find", "Sort", "Inspect", "Open"),
+        snippets=(
+            "Filter accepted task-family objects by text and type.",
+            "Switch course order, authored due date, or type.",
+            "Select visible tasks to read public planning fields.",
+            "Return to the owning page or graph focus.",
+        ),
+    )
     _assert_discovery_panel_shell(tasks_html, workspace="Tasks")
     _assert_control_group(tasks_html, "Query")
     _assert_control_group(tasks_html, "Sort")
@@ -2316,6 +2390,17 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "function fuzzyMatch" in schedule_script
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
+    _assert_discovery_quick_guide(
+        schedule_html,
+        kind="schedule",
+        labels=("Find", "Scan dates", "Inspect", "Open"),
+        snippets=(
+            "Filter dated official work by text, date kind, and type.",
+            "Read authored due and available dates as course metadata.",
+            "Select visible dated items to read public planning fields.",
+            "Return to the owning page or graph focus.",
+        ),
+    )
     _assert_discovery_panel_shell(schedule_html, workspace="Schedule")
     _assert_control_group(schedule_html, "Query")
     _assert_control_group(schedule_html, "Date kind")
