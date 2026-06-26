@@ -5665,7 +5665,10 @@ mjx-container[display="true"] {
   }
   .raya-graph-toolbar {
     align-items: center;
+    contain: layout;
     flex-wrap: nowrap;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-gutter: stable;

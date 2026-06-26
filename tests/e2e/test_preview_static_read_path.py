@@ -5381,6 +5381,7 @@ def test_preview_graph_mobile_toolbar_uses_compact_command_strip(
                         '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
                         ".raya-graph-node.is-selected"
                     )
+                    _assert_no_horizontal_overflow(page)
                     probe = page.evaluate(
                         """() => {
                           const box = (selector) => {
