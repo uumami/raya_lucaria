@@ -6355,8 +6355,36 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                         right: box.right,
                                         width: box.width,
                                       }
+                                      : null;
+                                })(),
+                                submitBox: (() => {
+                                  const box = document
+                                    .querySelector('.raya-command-search-submit')
+                                    ?.getBoundingClientRect();
+                                  return box
+                                    ? {
+                                        width: box.width,
+                                        height: box.height,
+                                      }
                                     : null;
                                 })(),
+                                submitLabelBox: (() => {
+                                  const box = document
+                                    .querySelector('.raya-command-search-submit span')
+                                    ?.getBoundingClientRect();
+                                  return box
+                                    ? {
+                                        width: box.width,
+                                        height: box.height,
+                                      }
+                                    : null;
+                                })(),
+                                submitWhiteSpace: getComputedStyle(
+                                  document.querySelector('.raya-command-search-submit')
+                                ).whiteSpace,
+                                submitLabelWhiteSpace: getComputedStyle(
+                                  document.querySelector('.raya-command-search-submit span')
+                                ).whiteSpace,
                                 searchHref: document
                                   .querySelector('.raya-command-search')
                                   ?.getAttribute('href'),
@@ -6427,6 +6455,12 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["formBox"]["left"] >= 0
                         assert state["formBox"]["right"] <= state["viewportWidth"]
                         assert state["formBox"]["width"] >= 160
+                        assert state["submitBox"] is not None
+                        assert state["submitLabelBox"] is not None
+                        assert state["submitWhiteSpace"] == "nowrap"
+                        assert state["submitLabelWhiteSpace"] == "nowrap"
+                        assert state["submitBox"]["width"] >= 48
+                        assert state["submitLabelBox"]["height"] < 24
                         if viewport["width"] >= 1024:
                             assert state["topBarHeight"] <= 96
                             assert state["commandRows"] == 1

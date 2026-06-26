@@ -669,13 +669,19 @@ img {
   color: var(--raya-color-text);
   cursor: pointer;
   display: inline-flex;
+  flex: 0 0 auto;
   font: inherit;
   font-weight: 800;
   justify-content: center;
   line-height: 1.2;
   height: 2.5rem;
   min-height: 2.5rem;
+  min-width: 3rem;
   padding: 0.45rem 0.65rem;
+  white-space: nowrap;
+}
+.raya-command-search-submit span {
+  white-space: nowrap;
 }
 .raya-command-search-input:focus-visible,
 .raya-command-search-submit:focus-visible {
