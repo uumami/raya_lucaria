@@ -1118,27 +1118,28 @@ img {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.5rem;
   display: grid;
-  gap: 0.65rem 0.85rem;
-  margin: 0 0 var(--raya-space-block);
-  padding: 0.75rem;
+  gap: 0.45rem 0.65rem;
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.65rem;
 }
 .raya-discovery-overview-main {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.18rem;
 }
 .raya-discovery-overview-main h2 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin: 0;
 }
 .raya-discovery-overview-main p {
   color: var(--raya-color-muted);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.32;
   margin: 0;
 }
 .raya-discovery-overview-meta {
   display: grid;
-  gap: 0.35rem 0.65rem;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.25rem 0.55rem;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   margin: 0;
 }
 .raya-discovery-overview-meta div {
@@ -1146,20 +1147,21 @@ img {
 }
 .raya-discovery-overview-meta dt {
   color: var(--raya-color-muted);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 800;
   line-height: 1.1;
   text-transform: uppercase;
 }
 .raya-discovery-overview-meta dd {
-  line-height: 1.25;
-  margin: 0.05rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.18;
+  margin: 0.03rem 0 0;
   overflow-wrap: anywhere;
 }
 .raya-discovery-overview-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
 .raya-discovery-overview-actions a {
   align-items: center;
@@ -1168,10 +1170,10 @@ img {
   border-radius: 0.45rem;
   color: var(--raya-color-text);
   display: inline-flex;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 800;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.65rem;
+  min-height: 1.85rem;
+  padding: 0.25rem 0.5rem;
   text-decoration: none;
 }
 .raya-discovery-overview-actions a:focus-visible {
@@ -1183,18 +1185,27 @@ img {
   border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-accent));
   border-radius: 0.5rem;
   display: grid;
-  gap: 0.65rem;
-  margin: 0 0 var(--raya-space-block);
-  padding: 0.75rem;
+  gap: 0.55rem;
+  margin: 0 0 0.75rem;
+  padding: 0.45rem 0.65rem;
 }
-.raya-discovery-quick-guide h2 {
-  font-size: 1rem;
+.raya-discovery-quick-guide summary {
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.25;
   margin: 0;
+}
+.raya-discovery-quick-guide summary:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
 }
 .raya-discovery-guide-cards {
   display: grid;
   gap: 0.65rem;
   grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  margin-top: 0.55rem;
 }
 .raya-discovery-guide-card {
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-page));

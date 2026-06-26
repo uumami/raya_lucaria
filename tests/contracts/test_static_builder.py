@@ -83,18 +83,19 @@ def _assert_discovery_quick_guide(
     snippets: tuple[str, ...],
 ) -> None:
     assert (
-        '<section class="raya-discovery-quick-guide" '
+        '<details class="raya-discovery-quick-guide" '
         f'data-raya-discovery-guide="{kind}" '
     ) in html
-    assert "<h2>Quick guide</h2>" in html
+    assert "<summary>Quick guide</summary>" in html
+    assert "<h2>Quick guide</h2>" not in html
     for label in labels:
         assert f"<h3>{label}</h3>" in html
     for snippet in snippets:
         assert snippet in html
     guide_match = re.search(
-        rf'<section class="raya-discovery-quick-guide" '
+        rf'<details class="raya-discovery-quick-guide" '
         rf'data-raya-discovery-guide="{re.escape(kind)}" '
-        r".*?</section>",
+        r".*?</details>",
         html,
         re.DOTALL,
     )

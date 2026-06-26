@@ -13173,6 +13173,29 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
                                 f'[data-raya-discovery-guide="{kind}"]'
                             )
                             assert guide.is_visible()
+                            assert (
+                                guide.evaluate("node => node.tagName.toLowerCase()")
+                                == "details"
+                            )
+                            assert guide.evaluate("node => node.open") is False
+                            summary = guide.locator("summary")
+                            assert summary.is_visible()
+                            workspace = page.locator(
+                                {
+                                    "search": ".raya-search-workspace",
+                                    "practice": ".raya-practice-workspace",
+                                    "tasks": ".raya-tasks-workspace",
+                                    "schedule": ".raya-schedule-workspace",
+                                }[kind]
+                            )
+                            workspace_box = workspace.bounding_box()
+                            assert workspace_box is not None
+                            assert workspace_box["y"] < viewport["height"] * 0.72
+                            guide_box = guide.bounding_box()
+                            assert guide_box is not None
+                            assert workspace_box["y"] < guide_box["y"]
+                            summary.click()
+                            assert guide.evaluate("node => node.open") is True
                             box = guide.bounding_box()
                             assert box is not None
                             assert box["x"] >= 0

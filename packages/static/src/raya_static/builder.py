@@ -1404,15 +1404,15 @@ def _render_discovery_quick_guide(
     return "\n".join(
         [
             (
-                '<section class="raya-discovery-quick-guide" '
+                '<details class="raya-discovery-quick-guide" '
                 f'data-raya-discovery-guide="{html.escape(kind, quote=True)}" '
                 'aria-label="Workspace quick guide">'
             ),
-            "<h2>Quick guide</h2>",
+            "<summary>Quick guide</summary>",
             '<div class="raya-discovery-guide-cards">',
             card_html,
             "</div>",
-            "</section>",
+            "</details>",
         ]
     )
 
@@ -5521,41 +5521,6 @@ def _render_search_surface(
             "<h1>Course Search</h1>",
             "<p>Search public page metadata and public article text.</p>",
             "</header>",
-            _render_discovery_overview(
-                kind="search",
-                title="Search workspace",
-                summary=(
-                    "Use local search to scan public pages, section anchors, "
-                    "and generated handoffs without leaving the static site."
-                ),
-                meta=[
-                    ("Public pages", f"{len(browser_search['pages'])}"),
-                    ("Section anchors", f"{search_section_count}"),
-                    ("Source scope", "Public page metadata and article text"),
-                    ("Reset path", "Clear or Escape"),
-                ],
-                actions=[
-                    ("View graph", "../graph/index.html"),
-                    ("Open practice", "../practice/index.html"),
-                    ("Open tasks", "../tasks/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
-                ],
-            ),
-            _render_discovery_quick_guide(
-                kind="search",
-                cards=[
-                    ("Find", "Type public page, section, tag, or stable-ID text."),
-                    (
-                        "Inspect",
-                        "Pointer, focus, or keyboard movement updates the context panel.",
-                    ),
-                    (
-                        "Open",
-                        "Use result links to open the page, graph, or matching workspaces.",
-                    ),
-                    ("Reset", "Clear or Escape returns to all visible public pages."),
-                ],
-            ),
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -5641,6 +5606,41 @@ def _render_search_surface(
             "</div>",
             "</aside>",
             "</section>",
+            _render_discovery_overview(
+                kind="search",
+                title="Search workspace",
+                summary=(
+                    "Use local search to scan public pages, section anchors, "
+                    "and generated handoffs without leaving the static site."
+                ),
+                meta=[
+                    ("Public pages", f"{len(browser_search['pages'])}"),
+                    ("Section anchors", f"{search_section_count}"),
+                    ("Source scope", "Public page metadata and article text"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
+            _render_discovery_quick_guide(
+                kind="search",
+                cards=[
+                    ("Find", "Type public page, section, tag, or stable-ID text."),
+                    (
+                        "Inspect",
+                        "Pointer, focus, or keyboard movement updates the context panel.",
+                    ),
+                    (
+                        "Open",
+                        "Use result links to open the page, graph, or matching workspaces.",
+                    ),
+                    ("Reset", "Clear or Escape returns to all visible public pages."),
+                ],
+            ),
             '<script type="application/json" id="raya-search-data">',
             search_payload,
             "</script>",
@@ -5956,35 +5956,6 @@ def _render_practice_surface(
                 "Open the owning page when you are ready to work with the full context.</p>"
             ),
             "</header>",
-            _render_discovery_overview(
-                kind="practice",
-                title="Official practice workspace",
-                summary=(
-                    "Use local filters to inspect accepted official objects "
-                    "and return to their owning course pages."
-                ),
-                meta=[
-                    ("Official objects", f"{len(browser_practice['objects'])}"),
-                    ("Object types", f"{len(browser_practice['types'])}"),
-                    ("Source scope", "Accepted official objects"),
-                    ("Reset path", "Clear or Escape"),
-                ],
-                actions=[
-                    ("Open search", "../search/index.html"),
-                    ("View graph", "../graph/index.html"),
-                    ("Open tasks", "../tasks/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
-                ],
-            ),
-            _render_discovery_quick_guide(
-                kind="practice",
-                cards=[
-                    ("Find", "Search accepted official objects and filter by type."),
-                    ("Inspect", "Select visible objects to read public metadata."),
-                    ("Open", "Return to the owning page or graph focus."),
-                    ("Reset", "Clear or Escape shows accepted objects again."),
-                ],
-            ),
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
             '<aside class="raya-practice-control-panel" aria-label="Practice controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -6079,6 +6050,35 @@ def _render_practice_surface(
             "</div>",
             "</aside>",
             "</section>",
+            _render_discovery_overview(
+                kind="practice",
+                title="Official practice workspace",
+                summary=(
+                    "Use local filters to inspect accepted official objects "
+                    "and return to their owning course pages."
+                ),
+                meta=[
+                    ("Official objects", f"{len(browser_practice['objects'])}"),
+                    ("Object types", f"{len(browser_practice['types'])}"),
+                    ("Source scope", "Accepted official objects"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
+            _render_discovery_quick_guide(
+                kind="practice",
+                cards=[
+                    ("Find", "Search accepted official objects and filter by type."),
+                    ("Inspect", "Select visible objects to read public metadata."),
+                    ("Open", "Return to the owning page or graph focus."),
+                    ("Reset", "Clear or Escape shows accepted objects again."),
+                ],
+            ),
             '<script type="application/json" id="raya-practice-data">',
             practice_payload,
             "</script>",
@@ -6356,38 +6356,6 @@ def _render_tasks_surface(
                 "Open the owning page when you need the full course context.</p>"
             ),
             "</header>",
-            _render_discovery_overview(
-                kind="tasks",
-                title="Official tasks workspace",
-                summary=(
-                    "Use local filters and sorting to inspect accepted "
-                    "task-family objects from course source."
-                ),
-                meta=[
-                    ("Task-family objects", f"{len(browser_tasks['objects'])}"),
-                    ("Object types", f"{len(browser_tasks['types'])}"),
-                    (
-                        "Source scope",
-                        "Accepted assignments, exams, projects, and tasks",
-                    ),
-                    ("Reset path", "Clear or Escape"),
-                ],
-                actions=[
-                    ("Open search", "../search/index.html"),
-                    ("View graph", "../graph/index.html"),
-                    ("Open practice", "../practice/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
-                ],
-            ),
-            _render_discovery_quick_guide(
-                kind="tasks",
-                cards=[
-                    ("Find", "Filter accepted task-family objects by text and type."),
-                    ("Sort", "Switch course order, authored due date, or type."),
-                    ("Inspect", "Select visible tasks to read public planning fields."),
-                    ("Open", "Return to the owning page or graph focus."),
-                ],
-            ),
             '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
             '<aside class="raya-tasks-control-panel" aria-label="Tasks controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -6494,6 +6462,38 @@ def _render_tasks_surface(
             "</div>",
             "</aside>",
             "</section>",
+            _render_discovery_overview(
+                kind="tasks",
+                title="Official tasks workspace",
+                summary=(
+                    "Use local filters and sorting to inspect accepted "
+                    "task-family objects from course source."
+                ),
+                meta=[
+                    ("Task-family objects", f"{len(browser_tasks['objects'])}"),
+                    ("Object types", f"{len(browser_tasks['types'])}"),
+                    (
+                        "Source scope",
+                        "Accepted assignments, exams, projects, and tasks",
+                    ),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open schedule", "../schedule/index.html"),
+                ],
+            ),
+            _render_discovery_quick_guide(
+                kind="tasks",
+                cards=[
+                    ("Find", "Filter accepted task-family objects by text and type."),
+                    ("Sort", "Switch course order, authored due date, or type."),
+                    ("Inspect", "Select visible tasks to read public planning fields."),
+                    ("Open", "Return to the owning page or graph focus."),
+                ],
+            ),
             '<script type="application/json" id="raya-tasks-data">',
             tasks_payload,
             "</script>",
@@ -6723,41 +6723,6 @@ def _render_schedule_surface(
                 "Dates are authored course metadata from accepted official objects.</p>"
             ),
             "</header>",
-            _render_discovery_overview(
-                kind="schedule",
-                title="Official schedule workspace",
-                summary=(
-                    "Use local filters to scan authored due and available "
-                    "dates across accepted task-family objects."
-                ),
-                meta=[
-                    ("Dated objects", f"{len(schedule_payload['items'])}"),
-                    ("Dated event types", f"{dated_event_type_count}"),
-                    ("Source scope", "Authored due and available dates"),
-                    ("Reset path", "Clear or Escape"),
-                ],
-                actions=[
-                    ("Open search", "../search/index.html"),
-                    ("View graph", "../graph/index.html"),
-                    ("Open practice", "../practice/index.html"),
-                    ("Open tasks", "../tasks/index.html"),
-                ],
-            ),
-            _render_discovery_quick_guide(
-                kind="schedule",
-                cards=[
-                    ("Find", "Filter dated official work by text, date kind, and type."),
-                    (
-                        "Scan dates",
-                        "Read authored due and available dates as course metadata.",
-                    ),
-                    (
-                        "Inspect",
-                        "Select visible dated items to read public planning fields.",
-                    ),
-                    ("Open", "Return to the owning page or graph focus."),
-                ],
-            ),
             '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
             '<aside class="raya-schedule-control-panel" aria-label="Schedule controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -6861,6 +6826,41 @@ def _render_schedule_surface(
             "</div>",
             "</aside>",
             "</section>",
+            _render_discovery_overview(
+                kind="schedule",
+                title="Official schedule workspace",
+                summary=(
+                    "Use local filters to scan authored due and available "
+                    "dates across accepted task-family objects."
+                ),
+                meta=[
+                    ("Dated objects", f"{len(schedule_payload['items'])}"),
+                    ("Dated event types", f"{dated_event_type_count}"),
+                    ("Source scope", "Authored due and available dates"),
+                    ("Reset path", "Clear or Escape"),
+                ],
+                actions=[
+                    ("Open search", "../search/index.html"),
+                    ("View graph", "../graph/index.html"),
+                    ("Open practice", "../practice/index.html"),
+                    ("Open tasks", "../tasks/index.html"),
+                ],
+            ),
+            _render_discovery_quick_guide(
+                kind="schedule",
+                cards=[
+                    ("Find", "Filter dated official work by text, date kind, and type."),
+                    (
+                        "Scan dates",
+                        "Read authored due and available dates as course metadata.",
+                    ),
+                    (
+                        "Inspect",
+                        "Select visible dated items to read public planning fields.",
+                    ),
+                    ("Open", "Return to the owning page or graph focus."),
+                ],
+            ),
             '<script type="application/json" id="raya-schedule-data">',
             schedule_payload_text,
             "</script>",
