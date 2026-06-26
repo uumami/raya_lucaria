@@ -4423,12 +4423,18 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<nav class="raya-reading-context-sequence" '
         'aria-label="Compact previous and next pages">'
     ) in html
-    assert 'class="raya-reading-context-link raya-reading-context-prev"' in html
-    assert 'href="../numbered-objects/index.html"' in html
-    assert 'aria-label="Previous page: Numbered Objects"' in html
-    assert 'class="raya-reading-context-link raya-reading-context-next"' in html
-    assert 'href="../authoring-matrix/index.html"' in html
-    assert 'aria-label="Next page: Authoring Matrix Fixture"' in html
+    assert (
+        '<a class="raya-reading-context-link raya-reading-context-prev" '
+        'href="../numbered-objects/index.html" '
+        'aria-keyshortcuts="ArrowLeft" '
+        'aria-label="Previous page: Numbered Objects">Previous</a>'
+    ) in html
+    assert (
+        '<a class="raya-reading-context-link raya-reading-context-next" '
+        'href="../authoring-matrix/index.html" '
+        'aria-keyshortcuts="ArrowRight" '
+        'aria-label="Next page: Authoring Matrix Fixture">Next</a>'
+    ) in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
@@ -4558,11 +4564,19 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert (
         'class="raya-reading-context-link raya-reading-context-prev"' not in root_html
     )
+    assert (
+        'data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="static-path/index.html"' in root_html
+    )
     last_html = (
         course / "artifact" / "site" / "authoring-matrix" / "index.html"
     ).read_text(encoding="utf-8")
     assert (
         'class="raya-reading-context-link raya-reading-context-next"' not in last_html
+    )
+    assert (
+        'data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+        'href="../reader-ux/index.html"' in last_html
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     connections_panel = _section_html(last_html, "raya-page-linked-pages")
@@ -4691,7 +4705,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     assert (
         'class="raya-sequence-card raya-sequence-card-prev" '
-        'rel="prev" data-raya-prev-page href="../reader-ux/index.html"'
+        'rel="prev" data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+        'href="../reader-ux/index.html"'
     ) in last_sequence_cards
     assert (
         '<span class="raya-sequence-card-kicker">Previous page</span>'
@@ -4851,9 +4866,18 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
-    assert 'rel="next" data-raya-next-page href="unit/index.html"' in html
-    assert 'rel="prev" data-raya-prev-page href="../index.html"' in middle_html
-    assert 'rel="next" data-raya-next-page href="topic/index.html"' in middle_html
+    assert (
+        'rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="unit/index.html"' in html
+    )
+    assert (
+        'rel="prev" data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+        'href="../index.html"' in middle_html
+    )
+    assert (
+        'rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="topic/index.html"' in middle_html
+    )
     root_sequence_cards = _article_sequence_cards_html(html)
     assert (
         '<nav class="raya-article-sequence-cards" aria-label="End-of-page navigation">'
@@ -4863,7 +4887,8 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     )
     assert (
         'class="raya-sequence-card raya-sequence-card-next" '
-        'rel="next" data-raya-next-page href="unit/index.html"'
+        'rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="unit/index.html"'
     ) in root_sequence_cards
     assert (
         '<span class="raya-sequence-card-kicker">Next page</span>'
@@ -4880,11 +4905,13 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     middle_sequence_cards = _article_sequence_cards_html(middle_html)
     assert (
         'class="raya-sequence-card raya-sequence-card-prev" '
-        'rel="prev" data-raya-prev-page href="../index.html"'
+        'rel="prev" data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+        'href="../index.html"'
     ) in middle_sequence_cards
     assert (
         'class="raya-sequence-card raya-sequence-card-next" '
-        'rel="next" data-raya-next-page href="topic/index.html"'
+        'rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="topic/index.html"'
     ) in middle_sequence_cards
     assert (
         '<span class="raya-sequence-card-title">Minimal Course</span>'

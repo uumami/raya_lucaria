@@ -1490,6 +1490,7 @@ def _reading_context_sequence_links(
         links.append(
             '<a class="raya-reading-context-link raya-reading-context-prev" '
             f'href="{html.escape(href)}" '
+            'aria-keyshortcuts="ArrowLeft" '
             f'aria-label="Previous page: {html.escape(title, quote=True)}">'
             "Previous</a>"
         )
@@ -1500,6 +1501,7 @@ def _reading_context_sequence_links(
         links.append(
             '<a class="raya-reading-context-link raya-reading-context-next" '
             f'href="{html.escape(href)}" '
+            'aria-keyshortcuts="ArrowRight" '
             f'aria-label="Next page: {html.escape(title, quote=True)}">'
             "Next</a>"
         )
@@ -3145,6 +3147,7 @@ def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
         assert isinstance(previous_page, ContentPage)
         links.append(
             '<a rel="prev" data-raya-prev-page '
+            'aria-keyshortcuts="ArrowLeft" '
             f'href="{html.escape(str(previous["href"]))}">'
             f"Previous: {html.escape(previous_page.nav_title or previous_page.title)}</a>"
         )
@@ -3154,6 +3157,7 @@ def _sequence_links(page: ContentPage, content_model: ContentModel) -> str:
         assert isinstance(next_page, ContentPage)
         links.append(
             '<a rel="next" data-raya-next-page '
+            'aria-keyshortcuts="ArrowRight" '
             f'href="{html.escape(str(next_target["href"]))}">'
             f"Next: {html.escape(next_page.nav_title or next_page.title)}</a>"
         )
@@ -3185,6 +3189,7 @@ def _render_article_sequence_cards(
         cards.append(
             '<a class="raya-sequence-card raya-sequence-card-prev" '
             'rel="prev" data-raya-prev-page '
+            'aria-keyshortcuts="ArrowLeft" '
             f'href="{html.escape(str(previous["href"]))}">'
             '<span class="raya-sequence-card-kicker">Previous page</span>'
             '<span class="raya-sequence-card-title">'
@@ -3200,6 +3205,7 @@ def _render_article_sequence_cards(
         cards.append(
             '<a class="raya-sequence-card raya-sequence-card-next" '
             'rel="next" data-raya-next-page '
+            'aria-keyshortcuts="ArrowRight" '
             f'href="{html.escape(str(next_target["href"]))}">'
             '<span class="raya-sequence-card-kicker">Next page</span>'
             '<span class="raya-sequence-card-title">'
