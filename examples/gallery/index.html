@@ -17,27 +17,57 @@
       border-left: 0.25rem solid #1a7f37;
       padding-left: 1rem;
     }
+    .gallery-section {
+      margin: 2rem 0;
+    }
+    .gallery-section h2 {
+      margin: 0 0 0.35rem;
+    }
+    .gallery-section > p {
+      color: #57606a;
+      margin: 0 0 1rem;
+    }
     .gallery-grid {
       display: grid;
       gap: 1rem;
       grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
       margin: 1.5rem 0;
     }
-    .gallery-card {
+    .gallery-review-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+      margin: 1rem 0;
+    }
+    .gallery-card,
+    .gallery-review-card {
       border: 1px solid #d8dee4;
       padding: 1rem;
     }
-    .gallery-card h2 {
+    .gallery-card h2,
+    .gallery-review-card h3 {
       font-size: 1rem;
       margin: 0 0 0.5rem;
     }
-    .gallery-card p {
+    .gallery-card p,
+    .gallery-review-card p {
       margin: 0 0 0.75rem;
     }
     .gallery-links {
       display: flex;
       flex-wrap: wrap;
       gap: 0.5rem 0.75rem;
+    }
+    .gallery-checklist,
+    .gallery-command-list {
+      border: 1px solid #d8dee4;
+      margin: 1rem 0;
+      padding: 1rem 1rem 1rem 2rem;
+    }
+    .gallery-command-list code {
+      display: inline-block;
+      max-width: 100%;
+      overflow-wrap: anywhere;
     }
     code {
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -47,6 +77,9 @@
         margin-top: 1rem;
       }
       .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+      .gallery-review-grid {
         grid-template-columns: 1fr;
       }
       .gallery-links {
@@ -59,39 +92,87 @@
   <main>
     <h1>Raya Lucaria Example Gallery</h1>
     <p class="gallery-notice">This page is fixture material for contributors and agents. It links to rendered examples for manual preview. Foundation docs and accepted OpenSpec specs remain the authority.</p>
-    <section class="gallery-grid" aria-label="Fixture previews">
-      <article class="gallery-card">
-        <h2><code>minimal</code></h2>
-        <p>Minimal source course, official objects, generated indexes.</p>
-        <p class="gallery-links"><a href="../courses/minimal/artifact/site/index.html">Entrypoint</a><a href="../courses/minimal/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
-      <article class="gallery-card">
-        <h2><code>ordered-fixture</code></h2>
-        <p>Ordered navigation, appendix labels, breadcrumbs, previous/next links.</p>
-        <p class="gallery-links"><a href="../courses/ordered-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/ordered-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
-      <article class="gallery-card">
-        <h2><code>render-fixture</code></h2>
-        <p>Rich static Markdown, math, callouts, footnotes, local assets.</p>
-        <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/render-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
-      <article class="gallery-card">
-        <h2><code>reference-fixture</code></h2>
-        <p>Code and notebook references, compact panels, copied static files.</p>
-        <p class="gallery-links"><a href="../courses/reference-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/reference-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
-      <article class="gallery-card">
-        <h2><code>runtime-fixture</code></h2>
-        <p>Runtime profile and cache metadata without execution.</p>
-        <p class="gallery-links"><a href="../courses/runtime-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/runtime-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
-      <article class="gallery-card">
-        <h2><code>execution-fixture</code></h2>
-        <p>Explicit execution metadata, frozen policy, reviewed output surfaces.</p>
-        <p class="gallery-links"><a href="../courses/execution-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/execution-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
-      </article>
+
+    <section class="gallery-section" aria-labelledby="fixture-previews-title">
+      <h2 id="fixture-previews-title">Fixture previews</h2>
+      <p>Open the built fixture site and its generated inspection page.</p>
+      <section class="gallery-grid" aria-label="Fixture previews">
+        <article class="gallery-card">
+          <h2><code>minimal</code></h2>
+          <p>Minimal source course, official objects, generated indexes.</p>
+          <p class="gallery-links"><a href="../courses/minimal/artifact/site/index.html">Entrypoint</a><a href="../courses/minimal/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+        <article class="gallery-card">
+          <h2><code>ordered-fixture</code></h2>
+          <p>Ordered navigation, appendix labels, breadcrumbs, previous/next links.</p>
+          <p class="gallery-links"><a href="../courses/ordered-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/ordered-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+        <article class="gallery-card">
+          <h2><code>render-fixture</code></h2>
+          <p>Rich static Markdown, math, callouts, footnotes, local assets.</p>
+          <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/render-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+        <article class="gallery-card">
+          <h2><code>reference-fixture</code></h2>
+          <p>Code and notebook references, compact panels, copied static files.</p>
+          <p class="gallery-links"><a href="../courses/reference-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/reference-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+        <article class="gallery-card">
+          <h2><code>runtime-fixture</code></h2>
+          <p>Runtime profile and cache metadata without execution.</p>
+          <p class="gallery-links"><a href="../courses/runtime-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/runtime-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+        <article class="gallery-card">
+          <h2><code>execution-fixture</code></h2>
+          <p>Explicit execution metadata, frozen policy, reviewed output surfaces.</p>
+          <p class="gallery-links"><a href="../courses/execution-fixture/artifact/site/index.html">Entrypoint</a><a href="../courses/execution-fixture/artifact/site/_raya/inspect/index.html">Inspection</a></p>
+        </article>
+      </section>
     </section>
-    <p><a href="../../docs/foundation/15_system_overview.md">System overview</a> and <a href="../../docs/foundation/17_rendering_execution_plan.md">rendering and execution plan</a> describe the accepted direction.</p>
+
+    <section class="gallery-section" aria-labelledby="review-states-title">
+      <h2 id="review-states-title">Review states</h2>
+      <p>Use these direct links when checking reader UX, graph/search handoffs, official workspaces, and static debugging surfaces.</p>
+      <ul class="gallery-checklist">
+        <li>Check desktop and mobile widths.</li>
+        <li>Check command bar, course map, article, and learning rail hierarchy.</li>
+        <li>Check graph/search/practice/tasks/schedule links without browser storage.</li>
+        <li>Check inspection pages for generated artifact surfaces.</li>
+      </ul>
+      <div class="gallery-review-grid" aria-label="Review state links">
+        <article class="gallery-review-card">
+          <h3>Reader shell</h3>
+          <p>Representative rich reader pages for the course map, article, rail, math, and numbered content.</p>
+          <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/reader-ux/index.html">Reader UX</a><a href="../courses/render-fixture/artifact/site/math-authoring/index.html">Math authoring</a><a href="../courses/render-fixture/artifact/site/numbered-objects/index.html">Numbered objects</a></p>
+        </article>
+        <article class="gallery-review-card">
+          <h3>Graph and search</h3>
+          <p>Generated discovery surfaces for local graph focus, query handoff, and page inspection.</p>
+          <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/_raya/graph/index.html?page=reader-ux">Graph focus</a><a href="../courses/render-fixture/artifact/site/_raya/search/index.html?q=matrix">Search query</a><a href="../courses/render-fixture/artifact/site/_raya/search/index.html?page=reader-ux">Search page</a></p>
+        </article>
+        <article class="gallery-review-card">
+          <h3>Official workspaces</h3>
+          <p>Accepted official-object views generated from fixture source support.</p>
+          <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/_raya/practice/index.html?page=reader-ux">Practice focus</a><a href="../courses/render-fixture/artifact/site/_raya/tasks/index.html?page=reader-ux">Tasks focus</a><a href="../courses/render-fixture/artifact/site/_raya/schedule/index.html?page=reader-ux">Schedule focus</a></p>
+        </article>
+        <article class="gallery-review-card">
+          <h3>Render debug</h3>
+          <p>Local debugging surfaces are rebuilt on demand; generated screenshots and reports stay outside source control.</p>
+          <p class="gallery-links"><a href="../courses/render-fixture/artifact/site/_raya/inspect/index.html">Inspect render fixture</a><a href="../courses/render-fixture/artifact/site/_raya/graph/index.html">Graph workspace</a></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="gallery-section" aria-labelledby="local-commands-title">
+      <h2 id="local-commands-title">Local commands</h2>
+      <p>Run these from the repository root when refreshing the fixture artifacts before opening this gallery.</p>
+      <ul class="gallery-command-list">
+        <li><code>uv run raya build examples/courses/render-fixture</code></li>
+        <li><code>uv run raya preview examples/courses/render-fixture</code></li>
+        <li><code>scripts/check-render-debug.sh</code></li>
+      </ul>
+    </section>
+    <p>For architecture and renderer direction, read the foundation docs from the repository checkout.</p>
   </main>
 </body>
 </html>

@@ -272,6 +272,26 @@ def test_examples_gallery_static_read_path_links_built_fixtures(
 
     with _serve(examples_root) as base_url:
         gallery_html = _fetch_text(f"{base_url}/gallery/index.html")
+        gallery_links = re.findall(r'href="([^"]+)"', gallery_html)
+        fixture_links = [
+            href for href in gallery_links if href.startswith("../courses/")
+        ]
+        for href in gallery_links:
+            assert not href.startswith(("http:", "https:", "file:", "//", "/"))
+            assert "/_official/" not in href
+            assert "/_drafts/" not in href
+            assert "/_partials/" not in href
+            assert not href.endswith((".png", ".jpg", ".jpeg", ".webp"))
+        for _, name in fixtures:
+            assert (
+                f"../courses/{name}/artifact/site/index.html" in fixture_links
+            )
+            assert (
+                f"../courses/{name}/artifact/site/_raya/inspect/index.html"
+                in fixture_links
+            )
+        for href in fixture_links:
+            _fetch_text(f"{base_url}/gallery/{href}")
         minimal_html = _fetch_text(f"{base_url}/courses/minimal/artifact/site/index.html")
         reference_inspection_html = _fetch_text(
             f"{base_url}/courses/reference-fixture/artifact/site/_raya/inspect/index.html"
@@ -283,10 +303,48 @@ def test_examples_gallery_static_read_path_links_built_fixtures(
     assert "fixture material" in gallery_html
     assert "../courses/minimal/artifact/site/index.html" in gallery_html
     assert "../courses/execution-fixture/artifact/site/index.html" in gallery_html
+    assert "Review states" in gallery_html
+    assert "../courses/render-fixture/artifact/site/reader-ux/index.html" in gallery_html
+    assert (
+        "../courses/render-fixture/artifact/site/_raya/graph/index.html?page=reader-ux"
+        in gallery_html
+    )
+    assert (
+        "../courses/render-fixture/artifact/site/_raya/search/index.html?q=matrix"
+        in gallery_html
+    )
+    assert (
+        "../courses/render-fixture/artifact/site/_raya/practice/index.html?page=reader-ux"
+        in gallery_html
+    )
+    assert (
+        "../courses/render-fixture/artifact/site/_raya/tasks/index.html?page=reader-ux"
+        in gallery_html
+    )
+    assert (
+        "../courses/render-fixture/artifact/site/_raya/schedule/index.html?page=reader-ux"
+        in gallery_html
+    )
+    assert "scripts/check-render-debug.sh" in gallery_html
+    assert "./scripts/check-render-debug.sh" not in gallery_html
+    assert "<script" not in gallery_html
+    assert "<iframe" not in gallery_html
+    assert "https://" not in gallery_html
+    assert "http://" not in gallery_html
+    assert ".png" not in gallery_html
     assert "Foundation docs and accepted OpenSpec specs remain the authority" in gallery_html
     assert "Minimal Course Fixture" in minimal_html
     assert "Artifact Inspection" in reference_inspection_html
     assert reviewed_file == "frozen reviewed output fixture\n"
+
+
+def test_examples_gallery_contains_only_source_dashboard_files() -> None:
+    files = [path for path in EXAMPLES_GALLERY.rglob("*") if path.is_file()]
+
+    assert files
+    assert all(path.suffix in {".html", ".css"} for path in files)
+    assert not any("artifact" in path.parts for path in files)
+    assert not any(path.suffix in {".png", ".jpg", ".jpeg", ".webp"} for path in files)
 
 
 def test_current_documentation_static_read_path_serves_live_docs(

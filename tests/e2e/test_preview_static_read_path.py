@@ -10645,6 +10645,8 @@ def test_examples_gallery_has_reviewable_responsive_fixture_cards() -> None:
     assert (
         '<section class="gallery-grid" aria-label="Fixture previews">' in gallery_html
     )
+    assert "Review states" in gallery_html
+    assert "gallery-review-grid" in gallery_html
     assert "../courses/minimal/artifact/site/index.html" in gallery_html
     assert "../courses/minimal/artifact/site/_raya/inspect/index.html" in gallery_html
     assert (
@@ -10653,6 +10655,12 @@ def test_examples_gallery_has_reviewable_responsive_fixture_cards() -> None:
     )
     assert "@media (max-width: 720px)" in gallery_html
     assert "overflow-wrap: anywhere" in gallery_html
+    assert "<script" not in gallery_html
+    assert "<iframe" not in gallery_html
+    assert "https://" not in gallery_html
+    assert "http://" not in gallery_html
+    assert "progress" not in gallery_html.lower()
+    assert "mastery" not in gallery_html.lower()
 
 
 def test_rendered_surfaces_have_no_obvious_layout_overlap_at_viewports(
@@ -11775,13 +11783,17 @@ def _assert_no_overlap(page, first_selector: str, second_selector: str) -> None:
 
 
 def _assert_gallery_cards_do_not_overlap(page) -> None:
-    cards = page.locator(".gallery-card")
-    boxes = [cards.nth(index).bounding_box() for index in range(cards.count())]
-    visible_boxes = [box for box in boxes if box is not None]
-    assert len(visible_boxes) >= 6
-    for index, first in enumerate(visible_boxes):
-        for second in visible_boxes[index + 1 :]:
-            assert not _boxes_overlap(first, second)
+    for selector, minimum in (
+        (".gallery-card", 6),
+        (".gallery-review-card", 4),
+    ):
+        cards = page.locator(selector)
+        boxes = [cards.nth(index).bounding_box() for index in range(cards.count())]
+        visible_boxes = [box for box in boxes if box is not None]
+        assert len(visible_boxes) >= minimum
+        for index, first in enumerate(visible_boxes):
+            for second in visible_boxes[index + 1 :]:
+                assert not _boxes_overlap(first, second)
 
 
 def _assert_visible_mathjax_output(page, *, minimum: int) -> None:
