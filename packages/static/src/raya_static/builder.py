@@ -4550,6 +4550,10 @@ def _render_graph_surface(
                 "</section>"
             ),
             (
+                '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
+                'role="img" aria-label="Course graph" tabindex="0"></svg>'
+            ),
+            (
                 '<section class="raya-graph-guide" data-raya-graph-guide '
                 'aria-label="Graph quick guide">'
                 "<h2>Graph quick guide</h2>"
@@ -4579,10 +4583,6 @@ def _render_graph_surface(
                 "data unchanged and can be cleared.</p>"
                 "</article>"
                 "</section>"
-            ),
-            (
-                '<svg id="raya-graph-canvas" class="raya-graph-canvas" '
-                'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
             (
                 '<section class="raya-graph-preview-bubble" '

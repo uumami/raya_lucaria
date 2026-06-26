@@ -826,7 +826,7 @@ img {
   padding: 0.4rem 0.55rem;
 }
 .raya-graph-status {
-  margin-bottom: 0.45rem;
+  margin: 0 0 0.45rem;
 }
 .raya-graph-orientation-main {
   align-items: baseline;

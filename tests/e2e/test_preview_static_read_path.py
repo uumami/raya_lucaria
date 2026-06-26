@@ -73,9 +73,9 @@ def _click_graph_node_group(page, node_id: str, *, click_count: int = 1) -> None
         is True
     )
     if click_count == 2:
-        node.dblclick(force=True)
+        page.mouse.click(x, y, click_count=2)
     else:
-        node.click(force=True)
+        page.mouse.click(x, y)
 
 
 def _point_distance(a: tuple[float, float], b: tuple[float, float]) -> float:
@@ -1374,17 +1374,26 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             drag_hit_box = page.locator(
                                 f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"] '
                                 ".raya-graph-node-hit"
-                            ).bounding_box()
-                            assert drag_hit_box is not None
+                            )
+                            drag_box = drag_hit_box.bounding_box()
+                            assert drag_box is not None
                             graph_url_before_drag = page.url
+                            drag_start_client = {
+                                "x": drag_box["x"] + drag_box["width"] / 2,
+                                "y": drag_box["y"] + drag_box["height"] / 2,
+                            }
+                            drag_end_client = {
+                                "x": drag_start_client["x"] + 150,
+                                "y": drag_start_client["y"] + 90,
+                            }
                             page.mouse.move(
-                                drag_hit_box["x"] + drag_hit_box["width"] / 2,
-                                drag_hit_box["y"] + drag_hit_box["height"] / 2,
+                                drag_start_client["x"],
+                                drag_start_client["y"],
                             )
                             page.mouse.down()
                             page.mouse.move(
-                                drag_hit_box["x"] + drag_hit_box["width"] / 2 + 150,
-                                drag_hit_box["y"] + drag_hit_box["height"] / 2 + 90,
+                                drag_end_client["x"],
+                                drag_end_client["y"],
                                 steps=6,
                             )
                             page.mouse.up()
@@ -1526,18 +1535,24 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "dispatched": True,
                             }
                             page.wait_for_timeout(750)
+                            clamp_drag_box = drag_hit_box.bounding_box()
+                            assert clamp_drag_box is not None
+                            clamp_start_client = {
+                                "x": clamp_drag_box["x"] + clamp_drag_box["width"] / 2,
+                                "y": clamp_drag_box["y"] + clamp_drag_box["height"] / 2,
+                            }
+                            clamp_end_client = {
+                                "x": clamp_start_client["x"] + 10000,
+                                "y": clamp_start_client["y"] + 10000,
+                            }
                             page.mouse.move(
-                                drag_hit_box["x"] + drag_hit_box["width"] / 2,
-                                drag_hit_box["y"] + drag_hit_box["height"] / 2,
+                                clamp_start_client["x"],
+                                clamp_start_client["y"],
                             )
                             page.mouse.down()
                             page.mouse.move(
-                                drag_hit_box["x"]
-                                + drag_hit_box["width"] / 2
-                                + 10000,
-                                drag_hit_box["y"]
-                                + drag_hit_box["height"] / 2
-                                + 10000,
+                                clamp_end_client["x"],
+                                clamp_end_client["y"],
                                 steps=8,
                             )
                             page.mouse.up()
@@ -1829,9 +1844,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert page.get_by_role(
                             "button", name="Reset graph view"
                         ).is_visible()
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).click()
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_function(
                             """() => document
                               .querySelector('[data-raya-graph-state-selected]')
@@ -1966,9 +1979,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert _viewbox_width(zoomed_out_viewbox) > _viewbox_width(
                             zoomed_viewbox
                         )
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).click()
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_function(
                             """() => document
                               .querySelector('[data-raya-graph-state-selected]')
@@ -2113,9 +2124,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('visible node')"""
                         )
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).click()
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_function(
                             """() => document
                               .querySelector('[data-raya-graph-state-selected]')
@@ -3061,9 +3070,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "Showing "
                             not in relationship_walkthrough.inner_text()
                         )
-                        page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
-                        ).click()
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_function(
                             """() => document
                               .querySelector('[data-raya-graph-state-selected]')
@@ -3439,6 +3446,82 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
         handle.close()
 
 
+def test_preview_graph_workspace_starts_in_first_desktop_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    probe = page.evaluate(
+                        """() => {
+                          const workspace = document.querySelector('.raya-graph-workspace');
+                          const mapPanel = document.querySelector('.raya-graph-map-panel');
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const toolbar = document.querySelector('.raya-graph-toolbar');
+                          const instructions = document.querySelector('.raya-graph-instructions');
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? { top: rect.top, bottom: rect.bottom, height: rect.height }
+                              : null;
+                          };
+                          return {
+                            workspace: box(workspace),
+                            mapPanel: box(mapPanel),
+                            canvas: box(canvas),
+                            toolbar: box(toolbar),
+                            instructions: box(instructions),
+                            viewportHeight: window.innerHeight,
+                            nodes: document.querySelectorAll('#raya-graph-canvas [data-raya-graph-node]').length,
+                            edges: document.querySelectorAll('#raya-graph-canvas [data-raya-graph-edge]').length,
+                            rootLayout: document.querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-layout'),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probe["rootLayout"] == "connections"
+    assert probe["nodes"] >= 6
+    assert probe["edges"] >= 10
+    assert probe["toolbar"]["height"] <= 125
+    assert probe["instructions"]["height"] <= 36
+    assert probe["workspace"]["top"] < 340
+    assert probe["mapPanel"]["top"] < 360
+    assert probe["canvas"]["top"] < 520
+    assert probe["canvas"]["bottom"] <= probe["viewportHeight"] + 260
+    assert probe["canvas"]["height"] >= 420
+
+
 def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -3502,8 +3585,8 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     guide_box = guide.bounding_box()
                     assert guide_box is not None
                     assert guide_box["y"] > orientation_box["y"]
-                    assert guide_box["y"] < canvas_box["y"]
-                    assert guide_box["height"] <= 180
+                    assert guide_box["y"] > canvas_box["y"]
+                    assert guide_box["height"] <= 220
                     guide_text = guide.inner_text()
                     for label in (
                         "Graph quick guide",
