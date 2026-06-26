@@ -5563,9 +5563,17 @@ def _render_search_surface(
                 'data-raya-search-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            (
+                '<p class="raya-discovery-results-jump">'
+                '<a href="#raya-search-results-panel">Results</a></p>'
+            ),
             "</div>",
             "</aside>",
-            '<section class="raya-search-results-panel" aria-label="Search results">',
+            (
+                '<section id="raya-search-results-panel" '
+                'class="raya-search-results-panel" '
+                'aria-label="Search results" tabindex="-1">'
+            ),
             '<p id="raya-search-empty" class="raya-search-empty" hidden>No matching pages.</p>',
             '<ol id="raya-search-results" class="raya-search-results">',
             "\n".join(result_items),
@@ -6004,9 +6012,17 @@ def _render_practice_surface(
                 'data-raya-practice-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            (
+                '<p class="raya-discovery-results-jump">'
+                '<a href="#raya-practice-results-panel">Results</a></p>'
+            ),
             "</div>",
             "</aside>",
-            '<section class="raya-practice-results-panel" aria-label="Official practice results">',
+            (
+                '<section id="raya-practice-results-panel" '
+                'class="raya-practice-results-panel" '
+                'aria-label="Official practice results" tabindex="-1">'
+            ),
             (
                 '<p id="raya-practice-empty" class="raya-practice-empty" hidden>'
                 "No matching official practice objects.</p>"
@@ -6413,9 +6429,17 @@ def _render_tasks_surface(
                 'data-raya-tasks-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            (
+                '<p class="raya-discovery-results-jump">'
+                '<a href="#raya-tasks-results-panel">Results</a></p>'
+            ),
             "</div>",
             "</aside>",
-            '<section class="raya-tasks-results-panel" aria-label="Official task results">',
+            (
+                '<section id="raya-tasks-results-panel" '
+                'class="raya-tasks-results-panel" '
+                'aria-label="Official task results" tabindex="-1">'
+            ),
             (
                 '<p id="raya-tasks-empty" class="raya-tasks-empty" hidden>'
                 "No matching official tasks.</p>"
@@ -6777,9 +6801,17 @@ def _render_schedule_surface(
                 'data-raya-schedule-page-focus hidden aria-live="polite"></p>'
             ),
             "</div>",
+            (
+                '<p class="raya-discovery-results-jump">'
+                '<a href="#raya-schedule-results-panel">Results</a></p>'
+            ),
             "</div>",
             "</aside>",
-            '<section class="raya-schedule-results-panel" aria-label="Official schedule results">',
+            (
+                '<section id="raya-schedule-results-panel" '
+                'class="raya-schedule-results-panel" '
+                'aria-label="Official schedule results" tabindex="-1">'
+            ),
             (
                 '<p id="raya-schedule-empty" class="raya-schedule-empty" hidden>'
                 "No matching dated official work.</p>"

@@ -1558,6 +1558,29 @@ img {
 .raya-discovery-control-state .raya-discovery-page-focus {
   margin: 0;
 }
+.raya-discovery-results-jump {
+  display: none;
+  margin: 0.75rem 0 0;
+}
+.raya-discovery-results-jump a {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-accent));
+  border-radius: 0.45rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  text-decoration: none;
+  width: 100%;
+}
+.raya-discovery-results-jump a:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-graph-controls input,
 .raya-search-controls input,
 .raya-practice-controls input,
@@ -2262,6 +2285,12 @@ img {
 .raya-task-object,
 .raya-schedule-item,
 .raya-graph-list li {
+  scroll-margin-top: calc(var(--raya-topbar-height, 4rem) + 1rem);
+}
+.raya-search-results-panel,
+.raya-practice-results-panel,
+.raya-tasks-results-panel,
+.raya-schedule-results-panel {
   scroll-margin-top: calc(var(--raya-topbar-height, 4rem) + 1rem);
 }
 .raya-search-results li[data-raya-search-active="true"],
@@ -5242,6 +5271,11 @@ mjx-container[display="true"] {
   [data-raya-discovery-context-state="collapsed"] .raya-tasks-context-panel h2,
   [data-raya-discovery-context-state="collapsed"] .raya-schedule-context-panel h2 {
     writing-mode: horizontal-tb;
+  }
+}
+@media (max-width: 519px) {
+  .raya-discovery-results-jump {
+    display: block;
   }
 }
 @media (max-width: 1279px) {

@@ -13193,10 +13193,17 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
             try:
                 for viewport in (
                     {"width": 1366, "height": 900},
+                    {"width": 768, "height": 1024},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
                     try:
+                        kind_to_results_id = {
+                            "search": "raya-search-results-panel",
+                            "practice": "raya-practice-results-panel",
+                            "tasks": "raya-tasks-results-panel",
+                            "schedule": "raya-schedule-results-panel",
+                        }
                         for workspace_path, kind in (
                             ("_raya/search/index.html", "search"),
                             ("_raya/practice/index.html", "practice"),
@@ -13230,6 +13237,26 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
                             workspace_box = workspace.bounding_box()
                             assert workspace_box is not None
                             assert workspace_box["y"] < viewport["height"] * 0.72
+                            if viewport["width"] < 520:
+                                jump = page.locator(".raya-discovery-results-jump a")
+                                assert jump.is_visible()
+                                assert jump.evaluate("node => new URL(node.href).hash") == (
+                                    f"#{kind_to_results_id[kind]}"
+                                )
+                                jump.click()
+                                assert page.locator(
+                                    f"#{kind_to_results_id[kind]}"
+                                ).evaluate("node => document.activeElement === node")
+                                _assert_intersects_viewport(
+                                    page, f"#{kind_to_results_id[kind]}"
+                                )
+                            else:
+                                assert (
+                                    page.locator(".raya-discovery-results-jump a")
+                                    .first
+                                    .is_visible()
+                                    is False
+                                )
                             guide_box = guide.bounding_box()
                             assert guide_box is not None
                             assert workspace_box["y"] < guide_box["y"]

@@ -75,6 +75,33 @@ def _assert_discovery_panel_shell(html: str, *, workspace: str) -> None:
     assert "Collapse context" in html
 
 
+def _assert_discovery_results_jump(
+    html: str, *, workspace_class: str, control_body_id: str, results_id: str
+) -> None:
+    jump = (
+        '<p class="raya-discovery-results-jump">'
+        f'<a href="#{results_id}">Results</a></p>'
+    )
+    assert re.search(
+        rf'<section id="{re.escape(results_id)}" '
+        rf'class="{re.escape(workspace_class)}" '
+        r'aria-label="[^"]+" tabindex="-1">',
+        html,
+    )
+    assert jump in html
+    assert re.search(
+        rf'<div id="{re.escape(control_body_id)}" '
+        r'class="raya-discovery-panel-body" '
+        r'data-raya-discovery-panel-body="controls" aria-hidden="false">'
+        r'.*?<div class="raya-discovery-control-state" aria-label="[^"]+">'
+        r".*?</div>\s*"
+        rf"{re.escape(jump)}\s*</div>\s*</aside>",
+        html,
+        re.DOTALL,
+    )
+    assert html.index(jump) < html.index(f'id="{results_id}"')
+
+
 def _assert_discovery_quick_guide(
     html: str,
     *,
@@ -1821,6 +1848,12 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-search-results-panel" in search_html
     assert "raya-search-context-panel" in search_html
     _assert_discovery_panel_shell(search_html, workspace="Search")
+    _assert_discovery_results_jump(
+        search_html,
+        workspace_class="raya-search-results-panel",
+        control_body_id="raya-search-control-panel-body",
+        results_id="raya-search-results-panel",
+    )
     _assert_control_group(search_html, "Query")
     _assert_control_group(search_html, "Reset")
     _assert_control_state_contains(
@@ -2171,6 +2204,12 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "raya-practice-results-panel" in practice_html
     assert "raya-practice-context-panel" in practice_html
     _assert_discovery_panel_shell(practice_html, workspace="Practice")
+    _assert_discovery_results_jump(
+        practice_html,
+        workspace_class="raya-practice-results-panel",
+        control_body_id="raya-practice-control-panel-body",
+        results_id="raya-practice-results-panel",
+    )
     _assert_control_group(practice_html, "Query")
     _assert_control_group(practice_html, "Object type")
     _assert_control_group(practice_html, "Reset")
@@ -2381,6 +2420,12 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
     _assert_discovery_workspace_switcher(tasks_html, current="tasks")
+    _assert_discovery_results_jump(
+        tasks_html,
+        workspace_class="raya-tasks-results-panel",
+        control_body_id="raya-tasks-control-panel-body",
+        results_id="raya-tasks-results-panel",
+    )
     _assert_discovery_quick_guide(
         tasks_html,
         kind="tasks",
@@ -2553,6 +2598,12 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
     _assert_discovery_workspace_switcher(schedule_html, current="schedule")
+    _assert_discovery_results_jump(
+        schedule_html,
+        workspace_class="raya-schedule-results-panel",
+        control_body_id="raya-schedule-control-panel-body",
+        results_id="raya-schedule-results-panel",
+    )
     _assert_discovery_quick_guide(
         schedule_html,
         kind="schedule",
