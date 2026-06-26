@@ -2664,6 +2664,8 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   width: 100%;
 }
 .raya-learning-rail {
+  align-content: start;
+  align-self: start;
   grid-area: learning-rail;
   font-size: calc(1rem * var(--raya-reader-text-scale, 1));
 }
@@ -3843,6 +3845,7 @@ html[data-raya-course-map-scroll-lock="true"] body {
   max-width: 100%;
 }
 .raya-learning-rail {
+  align-content: start;
   display: grid;
   gap: 0;
 }

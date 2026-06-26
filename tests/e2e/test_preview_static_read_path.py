@@ -9349,6 +9349,81 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
         handle.close()
 
 
+def test_render_fixture_learning_rail_content_starts_in_first_viewport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    probe = page.evaluate(
+                        """() => {
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const header = rail?.querySelector('.raya-learning-rail-header');
+                          const body = rail?.querySelector('#raya-learning-rail-body');
+                          const firstPanel = rail?.querySelector('.raya-rail-panel');
+                          const firstPanelBody = firstPanel?.querySelector('.raya-rail-panel-body');
+                          const viewportHeight = window.innerHeight;
+                          const box = (node) => {
+                            const rect = node?.getBoundingClientRect();
+                            return rect
+                              ? { top: rect.top, bottom: rect.bottom, height: rect.height }
+                              : null;
+                          };
+                          return {
+                            railText: rail?.innerText || '',
+                            railTop: rail?.getBoundingClientRect().top || 0,
+                            header: box(header),
+                            body: box(body),
+                            firstPanel: box(firstPanel),
+                            firstPanelBody: box(firstPanelBody),
+                            viewportHeight,
+                            railState: rail?.getAttribute('data-raya-learning-rail'),
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "Learning context" in probe["railText"]
+    assert "Summary" in probe["railText"]
+    assert probe["railState"] == "expanded"
+    assert probe["bodyHidden"] == "false"
+    assert probe["header"]["top"] < 140
+    assert probe["body"]["top"] < 190
+    assert probe["firstPanel"]["top"] < 210
+    assert probe["firstPanelBody"]["top"] < 260
+    assert probe["firstPanelBody"]["bottom"] < probe["viewportHeight"]
+
+
 def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
     tmp_path: Path,
 ) -> None:
