@@ -5152,6 +5152,10 @@ def _render_search_surface(
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-search-context-meta>Public page metadata only.</p>"
             ),
+            (
+                '<p class="raya-discovery-context-actions" '
+                "data-raya-search-context-actions hidden></p>"
+            ),
             "</div>",
             "</aside>",
             "</section>",
@@ -5566,6 +5570,10 @@ def _render_practice_surface(
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-practice-context-meta>Accepted public object metadata only.</p>"
             ),
+            (
+                '<p class="raya-discovery-context-actions" '
+                "data-raya-practice-context-actions hidden></p>"
+            ),
             "</div>",
             "</aside>",
             "</section>",
@@ -5957,6 +5965,10 @@ def _render_tasks_surface(
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-tasks-context-meta>Accepted public task metadata only.</p>"
             ),
+            (
+                '<p class="raya-discovery-context-actions" '
+                "data-raya-tasks-context-actions hidden></p>"
+            ),
             "</div>",
             "</aside>",
             "</section>",
@@ -6293,6 +6305,10 @@ def _render_schedule_surface(
             (
                 '<p class="raya-discovery-context-meta" '
                 "data-raya-schedule-context-meta>Accepted public dated task metadata only.</p>"
+            ),
+            (
+                '<p class="raya-discovery-context-actions" '
+                "data-raya-schedule-context-actions hidden></p>"
             ),
             "</div>",
             "</aside>",

@@ -4025,6 +4025,16 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 "[data-raya-search-context-meta]"
                             ).inner_text()
                         )
+                        search_context_actions = page.locator(
+                            "[data-raya-search-context-actions]"
+                        )
+                        assert (
+                            page.locator(
+                                '#raya-search-results [data-raya-search-active="true"]'
+                            ).count()
+                            == 0
+                        )
+                        assert search_context_actions.is_hidden()
                         result_card.hover()
                         assert (
                             result_card.get_attribute("data-raya-search-active")
@@ -4040,6 +4050,49 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             in page.locator(
                                 "[data-raya-search-context-title]"
                             ).inner_text()
+                        )
+                        assert search_context_actions.is_visible()
+                        search_context_open = search_context_actions.locator(
+                            "a", has_text="Open page"
+                        )
+                        assert (
+                            search_context_open.evaluate(
+                                "node => { node.focus(); return document.activeElement === node; }"
+                            )
+                            is True
+                        )
+                        assert (
+                            "Authoring Matrix Fixture"
+                            in search_context_open.get_attribute("aria-label")
+                        )
+                        assert (
+                            search_context_open.evaluate("node => node.href").endswith(
+                                "/authoring-matrix/index.html"
+                            )
+                        )
+                        assert (
+                            search_context_actions.locator("a", has_text="View graph")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/graph/index.html?page=authoring-matrix")
+                        )
+                        assert (
+                            search_context_actions.locator("a", has_text="Open practice")
+                            .evaluate("node => node.href")
+                            .endswith(
+                                "/_raya/practice/index.html?page=authoring-matrix"
+                            )
+                        )
+                        assert (
+                            search_context_actions.locator("a", has_text="Open tasks")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/tasks/index.html?page=authoring-matrix")
+                        )
+                        assert (
+                            search_context_actions.locator("a", has_text="Open schedule")
+                            .evaluate("node => node.href")
+                            .endswith(
+                                "/_raya/schedule/index.html?page=authoring-matrix"
+                            )
                         )
                         assert "Explicit links" in result_card.inner_text()
                         assert (
@@ -4073,6 +4126,13 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         assert (
                             graph_focus_href
                             == "../graph/index.html?page=authoring-matrix"
+                        )
+                        with page.expect_navigation():
+                            search_context_open.click()
+                        assert page.url.endswith("/authoring-matrix/index.html")
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html",
+                            wait_until="networkidle",
                         )
                         page.fill("#raya-search-input", "matrx")
                         page.wait_for_function(
@@ -4122,6 +4182,9 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 "[data-raya-search-context-title]"
                             ).inner_text()
                         )
+                        assert page.locator(
+                            "[data-raya-search-context-actions]"
+                        ).is_hidden()
                         page.goto(
                             f"{base_url}/_raya/search/index.html?q=Authoring%20Matrix%20Fixture",
                             wait_until="networkidle",
@@ -4448,6 +4511,14 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-quiz"]'
                         ).is_visible()
+                        practice_context_actions = page.locator(
+                            "[data-raya-practice-context-actions]"
+                        )
+                        assert (
+                            page.locator('[data-raya-practice-active="true"]').count()
+                            == 0
+                        )
+                        assert practice_context_actions.is_hidden()
                         quiz_card = page.locator(
                             '[data-raya-practice-object="first-topic-quiz"]'
                         )
@@ -4473,17 +4544,43 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             '[data-raya-practice-active="true"]'
                         )
                         assert active_practice.count() == 1
+                        assert practice_context_actions.is_visible()
+                        practice_context_open = practice_context_actions.locator(
+                            "a", has_text="Open page"
+                        )
+                        assert (
+                            practice_context_open.evaluate(
+                                "node => { node.focus(); return document.activeElement === node; }"
+                            )
+                            is True
+                        )
+                        assert (
+                            practice_context_open.get_attribute("aria-label").startswith(
+                                "Open page: "
+                            )
+                        )
+                        assert (
+                            "/unit/topic/index.html#raya-official-first-topic-"
+                            in practice_context_open.evaluate("node => node.href")
+                        )
+                        assert (
+                            practice_context_actions.locator(
+                                "a", has_text="View graph"
+                            )
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/graph/index.html?page=first-topic")
+                        )
                         assert (
                             "No visible"
                             not in page.locator(
                                 "[data-raya-practice-context-title]"
                             ).inner_text()
                         )
-                        active_open_href = active_practice.locator(
-                            ".raya-practice-open"
-                        ).first.evaluate("node => node.href")
+                        active_open_href = practice_context_open.evaluate(
+                            "node => node.href"
+                        )
                         with page.expect_navigation():
-                            page.press("#raya-practice-search", "Enter")
+                            practice_context_open.click()
                         assert page.url == active_open_href
                         page.goto(
                             f"{base_url}/_raya/practice/index.html",
@@ -4514,6 +4611,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             page.locator('[data-raya-practice-active="true"]').count()
                             == 0
                         )
+                        assert page.locator(
+                            "[data-raya-practice-context-actions]"
+                        ).is_hidden()
                         assert (
                             "Explain how retrieval practice differs from rereading."
                             in page.locator(
@@ -4541,6 +4641,9 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                                 "[data-raya-practice-context-title]"
                             ).inner_text()
                         )
+                        assert page.locator(
+                            "[data-raya-practice-context-actions]"
+                        ).is_hidden()
 
                         page.click("#raya-practice-clear")
                         page.click('[data-raya-practice-filter="quiz"]')
@@ -5005,6 +5108,9 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             assert scoped_tasks.locator(
                                 "[data-raya-tasks-page-focus]"
                             ).is_hidden()
+                            assert scoped_tasks.locator(
+                                "[data-raya-tasks-context-actions]"
+                            ).is_hidden()
                         finally:
                             scoped_tasks.close()
                         page.click('[data-raya-task-filter="assignment"]')
@@ -5038,6 +5144,14 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             ).inner_text()
                         )
                         page.select_option("#raya-tasks-sort", "due")
+                        task_context_actions = page.locator(
+                            "[data-raya-tasks-context-actions]"
+                        )
+                        assert (
+                            page.locator('[data-raya-task-active="true"]').count()
+                            == 0
+                        )
+                        assert task_context_actions.is_hidden()
                         first_visible = page.locator(
                             '[data-raya-task-object]:not([hidden])'
                         ).first
@@ -5060,11 +5174,35 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         page.press("#raya-tasks-search", "ArrowDown")
                         active_task = page.locator('[data-raya-task-active="true"]')
                         assert active_task.count() == 1
-                        active_open_href = active_task.locator(
-                            ".raya-task-open"
-                        ).first.evaluate("node => node.href")
+                        assert task_context_actions.is_visible()
+                        task_context_open = task_context_actions.locator(
+                            "a", has_text="Open page"
+                        )
+                        assert (
+                            task_context_open.evaluate(
+                                "node => { node.focus(); return document.activeElement === node; }"
+                            )
+                            is True
+                        )
+                        assert (
+                            "Build a retrieval plan"
+                            in task_context_open.get_attribute("aria-label")
+                        )
+                        assert (
+                            task_context_open.evaluate("node => node.href").endswith(
+                                "/unit/topic/index.html#raya-official-unit-project"
+                            )
+                        )
+                        assert (
+                            task_context_actions.locator("a", has_text="View graph")
+                            .evaluate("node => node.href")
+                            .endswith("/_raya/graph/index.html?page=first-topic")
+                        )
+                        active_open_href = task_context_open.evaluate(
+                            "node => node.href"
+                        )
                         with page.expect_navigation():
-                            page.press("#raya-tasks-search", "Enter")
+                            task_context_open.click()
                         assert page.url == active_open_href
                         assert "/unit/topic/index.html#raya-official-unit-" in page.url
                         task_anchor = page.url.rsplit("#", 1)[1]
@@ -5214,6 +5352,9 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 assert scoped_schedule.locator(
                                     "[data-raya-schedule-page-focus]"
                                 ).is_hidden()
+                                assert scoped_schedule.locator(
+                                    "[data-raya-schedule-context-actions]"
+                                ).is_hidden()
                                 assert (
                                     scoped_schedule.evaluate(
                                         "() => localStorage.length"
@@ -5252,12 +5393,50 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                   ?.textContent
                                   ?.includes('2 visible schedule items')"""
                             )
+                            schedule_context_actions = schedule.locator(
+                                "[data-raya-schedule-context-actions]"
+                            )
+                            assert (
+                                schedule.locator(
+                                    '[data-raya-schedule-active="true"]'
+                                ).count()
+                                == 0
+                            )
+                            assert schedule_context_actions.is_hidden()
                             schedule.locator("#raya-schedule-search").focus()
                             schedule.press("#raya-schedule-search", "ArrowDown")
                             active_item = schedule.locator(
                                 '[data-raya-schedule-active="true"]'
                             )
                             assert active_item.count() == 1
+                            assert schedule_context_actions.is_visible()
+                            schedule_context_open = schedule_context_actions.locator(
+                                "a", has_text="Open page"
+                            )
+                            assert (
+                                schedule_context_open.evaluate(
+                                    "node => { node.focus(); return document.activeElement === node; }"
+                                )
+                                is True
+                            )
+                            assert (
+                                "Problem Set 1"
+                                in schedule_context_open.get_attribute("aria-label")
+                            )
+                            assert (
+                                schedule_context_open
+                                .evaluate("node => node.href")
+                                .endswith(
+                                    "/unit/topic/index.html#raya-official-unit-assignment"
+                                )
+                            )
+                            assert (
+                                schedule_context_actions.locator(
+                                    "a", has_text="View graph"
+                                )
+                                .evaluate("node => node.href")
+                                .endswith("/_raya/graph/index.html?page=first-topic")
+                            )
                             assert (
                                 "2026-09-15"
                                 in schedule.locator(
@@ -5266,6 +5445,12 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             )
                             assert schedule.evaluate("() => localStorage.length") == 0
                             assert schedule.evaluate("() => sessionStorage.length") == 0
+                            schedule_open_href = schedule_context_open.evaluate(
+                                "node => node.href"
+                            )
+                            with schedule.expect_navigation():
+                                schedule_context_open.click()
+                            assert schedule.url == schedule_open_href
                         finally:
                             schedule.close()
                     finally:

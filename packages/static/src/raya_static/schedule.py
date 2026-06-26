@@ -28,6 +28,7 @@ _SCHEDULE_JAVASCRIPT = r"""
   const pageFocusNotice = document.querySelector("[data-raya-schedule-page-focus]");
   const contextTitle = document.querySelector("[data-raya-schedule-context-title]");
   const contextMeta = document.querySelector("[data-raya-schedule-context-meta]");
+  const contextActions = document.querySelector("[data-raya-schedule-context-actions]");
   const typeFilters = Array.from(document.querySelectorAll("[data-raya-schedule-type-filter]"));
   const kindFilters = Array.from(document.querySelectorAll("[data-raya-schedule-kind-filter]"));
   const items = Array.from(document.querySelectorAll("[data-raya-schedule-item]"));
@@ -169,6 +170,23 @@ _SCHEDULE_JAVASCRIPT = r"""
     ].filter(Boolean).join(" | ");
   }
 
+  function updateContextActions(actions, contextLabel) {
+    if (!contextActions) return;
+    contextActions.replaceChildren();
+    const visibleActions = actions.filter((action) => action.href);
+    contextActions.hidden = visibleActions.length === 0;
+    visibleActions.forEach((action) => {
+      const link = document.createElement("a");
+      link.href = action.href;
+      link.textContent = action.label;
+      link.tabIndex = 0;
+      if (contextLabel) {
+        link.setAttribute("aria-label", `${action.label}: ${contextLabel}`);
+      }
+      contextActions.appendChild(link);
+    });
+  }
+
   function updateContext() {
     const visible = visibleItems();
     const item = itemForObject(bestContextObject(visible));
@@ -178,14 +196,24 @@ _SCHEDULE_JAVASCRIPT = r"""
     if (!item) {
       if (contextTitle) contextTitle.textContent = "No visible schedule item.";
       if (contextMeta) contextMeta.textContent = "Clear the search or choose another filter.";
+      updateContextActions([]);
       return;
     }
+    const title = item.title || item.preview || item.id || "Schedule item";
     if (contextTitle) {
-      contextTitle.textContent = item.title || item.preview || item.id || "Schedule item";
+      contextTitle.textContent = title;
     }
     if (contextMeta) {
       contextMeta.textContent = scheduleMeta(item);
     }
+    if (activeIndex < 0) {
+      updateContextActions([]);
+      return;
+    }
+    updateContextActions([
+      { label: "Open page", href: item.page_url },
+      { label: "View graph", href: item.graph_url },
+    ], title);
   }
 
   function setActiveObject(nextIndex) {

@@ -29,6 +29,7 @@ _TASKS_JAVASCRIPT = r"""
   const pageFocusNotice = document.querySelector("[data-raya-tasks-page-focus]");
   const contextTitle = document.querySelector("[data-raya-tasks-context-title]");
   const contextMeta = document.querySelector("[data-raya-tasks-context-meta]");
+  const contextActions = document.querySelector("[data-raya-tasks-context-actions]");
   const filters = Array.from(document.querySelectorAll("[data-raya-task-filter]"));
   const objects = Array.from(document.querySelectorAll("[data-raya-task-object]"));
   const results = document.querySelector("[data-raya-tasks-results]");
@@ -170,6 +171,23 @@ _TASKS_JAVASCRIPT = r"""
     return `${count} visible ${count === 1 ? "task" : "tasks"}.`;
   }
 
+  function updateContextActions(actions, contextLabel) {
+    if (!contextActions) return;
+    contextActions.replaceChildren();
+    const visibleActions = actions.filter((action) => action.href);
+    contextActions.hidden = visibleActions.length === 0;
+    visibleActions.forEach((action) => {
+      const link = document.createElement("a");
+      link.href = action.href;
+      link.textContent = action.label;
+      link.tabIndex = 0;
+      if (contextLabel) {
+        link.setAttribute("aria-label", `${action.label}: ${contextLabel}`);
+      }
+      contextActions.appendChild(link);
+    });
+  }
+
   function updatePageFocusNotice(visibleCount) {
     if (!pageFocusNotice) return;
     const title = pageTitleForActivePage();
@@ -192,14 +210,24 @@ _TASKS_JAVASCRIPT = r"""
     if (!item) {
       if (contextTitle) contextTitle.textContent = "No visible task.";
       if (contextMeta) contextMeta.textContent = "Clear the search or choose another task type.";
+      updateContextActions([]);
       return;
     }
+    const title = item.title || item.preview || item.id || "Official task";
     if (contextTitle) {
-      contextTitle.textContent = item.title || item.preview || item.id || "Official task";
+      contextTitle.textContent = title;
     }
     if (contextMeta) {
       contextMeta.textContent = taskMeta(item);
     }
+    if (activeIndex < 0) {
+      updateContextActions([]);
+      return;
+    }
+    updateContextActions([
+      { label: "Open page", href: item.page_url },
+      { label: "View graph", href: item.graph_url },
+    ], title);
   }
 
   function sortObjects() {

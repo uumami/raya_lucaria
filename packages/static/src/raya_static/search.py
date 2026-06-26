@@ -27,6 +27,7 @@ _SEARCH_JAVASCRIPT = r"""
   const pageFocusNotice = document.querySelector("[data-raya-search-page-focus]");
   const contextTitle = document.querySelector("[data-raya-search-context-title]");
   const contextMeta = document.querySelector("[data-raya-search-context-meta]");
+  const contextActions = document.querySelector("[data-raya-search-context-actions]");
   const results = Array.from(document.querySelectorAll("[data-raya-search-result]"));
   const empty = document.getElementById("raya-search-empty");
 
@@ -264,6 +265,23 @@ _SEARCH_JAVASCRIPT = r"""
     }) || visible[0];
   }
 
+  function updateContextActions(actions, contextLabel) {
+    if (!contextActions) return;
+    contextActions.replaceChildren();
+    const visibleActions = actions.filter((action) => action.href);
+    contextActions.hidden = visibleActions.length === 0;
+    visibleActions.forEach((action) => {
+      const link = document.createElement("a");
+      link.href = action.href;
+      link.textContent = action.label;
+      link.tabIndex = 0;
+      if (contextLabel) {
+        link.setAttribute("aria-label", `${action.label}: ${contextLabel}`);
+      }
+      contextActions.appendChild(link);
+    });
+  }
+
   function updateContext() {
     const visible = visibleResults();
     const selectedItem = bestContextItem(visible);
@@ -274,8 +292,10 @@ _SEARCH_JAVASCRIPT = r"""
     if (!page) {
       if (contextTitle) contextTitle.textContent = "No visible result.";
       if (contextMeta) contextMeta.textContent = "Try a different page title, stable ID, tag, or status.";
+      updateContextActions([]);
       return;
     }
+    const title = page.title || page.nav_title || page.id || "Visible page";
     const counts = page.link_counts || {};
     const studyCounts = page.study_counts || {};
     const studyTotal = Object.keys(studyCounts).reduce(
@@ -283,7 +303,7 @@ _SEARCH_JAVASCRIPT = r"""
       0
     );
     if (contextTitle) {
-      contextTitle.textContent = page.title || page.nav_title || page.id || "Visible page";
+      contextTitle.textContent = title;
     }
     if (contextMeta) {
       const snippet = page.search_snippet ? `Match text: ${page.search_snippet}` : "";
@@ -298,6 +318,17 @@ _SEARCH_JAVASCRIPT = r"""
         snippet,
       ].filter(Boolean).join(" | ");
     }
+    if (activeIndex < 0) {
+      updateContextActions([]);
+      return;
+    }
+    updateContextActions([
+      { label: "Open page", href: page.url },
+      { label: "View graph", href: page.graph_url },
+      { label: "Open practice", href: page.practice_url },
+      { label: "Open tasks", href: page.tasks_url },
+      { label: "Open schedule", href: page.schedule_url },
+    ], title);
   }
 
   function clearSearch() {

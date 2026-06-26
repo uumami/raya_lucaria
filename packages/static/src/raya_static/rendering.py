@@ -969,6 +969,32 @@ img {
 .raya-discovery-page-focus[hidden] {
   display: none;
 }
+.raya-discovery-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+}
+.raya-discovery-context-actions[hidden] {
+  display: none;
+}
+.raya-discovery-context-actions a {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, var(--raya-color-accent));
+  border-radius: 0.45rem;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.65rem;
+  text-decoration: none;
+}
+.raya-discovery-context-actions a:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-search-context-panel [data-raya-search-context-title],
 .raya-practice-context-panel [data-raya-practice-context-title] {
   font-weight: 800;

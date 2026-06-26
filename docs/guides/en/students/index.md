@@ -140,6 +140,10 @@ When one of those workspaces opens focused on a page, it may show a small notice
 naming that page and the number of visible results. Clear or Escape removes the
 focus and returns to the full static workspace; the notice is not saved progress
 or a recommendation.
+Context panels may also show direct static links for the active result, object,
+task, or schedule item, such as Open page, View graph, or another workspace
+focused on the same page. These are navigation shortcuts over public generated
+course data, not recommendations or saved study state.
 When a page is selected in the graph, connected pages may be highlighted and
 summarized as outgoing links, incoming links, and connected pages. Those numbers
 describe the current static graph, not how far you have progressed.

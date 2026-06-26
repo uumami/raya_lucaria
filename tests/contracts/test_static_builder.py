@@ -1628,6 +1628,8 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "data-raya-search-context" in search_html
     assert "data-raya-search-context-title" in search_html
     assert "data-raya-search-context-meta" in search_html
+    assert "data-raya-search-context-actions" in search_html
+    assert 'class="raya-discovery-context-actions"' in search_html
     assert 'aria-label="Search context panel"' in search_html
     assert (
         'data-raya-discovery-panel-body="context" aria-hidden="false" '
@@ -1851,6 +1853,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     ):
         assert private_token not in serialized_search_payload
     assert "raya-search-data" in search_script
+    assert "updateContextActions" in search_script
     assert "levenshtein" in search_script
     assert "setActiveResult" in search_script
     assert 'addEventListener("focusin"' in search_script
@@ -1959,6 +1962,8 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "data-raya-practice-context" in practice_html
     assert "data-raya-practice-context-title" in practice_html
     assert "data-raya-practice-context-meta" in practice_html
+    assert "data-raya-practice-context-actions" in practice_html
+    assert 'class="raya-discovery-context-actions"' in practice_html
     assert 'aria-label="Practice context panel"' in practice_html
     assert (
         'data-raya-discovery-panel-body="context" aria-hidden="false" '
@@ -2055,6 +2060,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
         assert forbidden_practice_state_token not in practice_script
     rich_css = (site / "_raya" / "render" / "rich.css").read_text(encoding="utf-8")
     assert "function setActiveObject" in practice_script
+    assert "updateContextActions" in practice_script
     assert "data-raya-practice-active" in practice_script
     assert 'event.key === "ArrowDown"' in practice_script
     assert 'event.key === "ArrowUp"' in practice_script
@@ -2146,6 +2152,8 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "View graph" in tasks_html
     assert "Open practice" in tasks_html
     assert "Open schedule" in tasks_html
+    assert "data-raya-tasks-context-actions" in tasks_html
+    assert 'class="raya-discovery-context-actions"' in tasks_html
     assert 'data-raya-task-object="private-task"' not in tasks_html
     assert 'data-raya-task-object="unit-assignment"' in tasks_html
     assert 'data-raya-task-page="first-topic"' in tasks_html
@@ -2198,6 +2206,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     }
     for item in tasks_payload["objects"]:
         assert set(item) == allowed_object_keys
+    assert "updateContextActions" in tasks_script
     serialized_payload = json.dumps(tasks_payload)
     for private_token in (
         "_official",
@@ -2303,6 +2312,8 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "View graph" in schedule_html
     assert "Open practice" in schedule_html
     assert "Open tasks" in schedule_html
+    assert "data-raya-schedule-context-actions" in schedule_html
+    assert 'class="raya-discovery-context-actions"' in schedule_html
     assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
     assert 'data-raya-schedule-page="first-topic"' in schedule_html
     assert 'data-raya-schedule-item="unit-project"' in schedule_html
@@ -2354,6 +2365,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     ):
         assert private_token not in serialized_payload
         assert private_token not in schedule_html
+    assert "updateContextActions" in schedule_script
 
 
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(

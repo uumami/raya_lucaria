@@ -149,6 +149,10 @@ Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de cont
 pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los
 workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros
 de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
+Los paneles de contexto tambien pueden mostrar links estaticos directos para el
+resultado, objeto, task o item de Schedule activo, como Open page, View graph u
+otro workspace enfocado en la misma pagina. Son atajos de navegacion sobre datos
+publicos generados del curso, no recomendaciones ni estado de estudio guardado.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
 resaltarse y resumirse como enlaces salientes, enlaces entrantes y paginas
 conectadas. Esos numeros describen el grafo estatico actual, no tu avance.

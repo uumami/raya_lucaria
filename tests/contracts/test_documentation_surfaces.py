@@ -313,3 +313,19 @@ def test_learning_science_foundation_pages_are_rendered() -> None:
     render_content = DOCS_ROOT / "render-content" / "1_foundation"
     assert (render_content / "19_learning_science_principles.md").resolve() == learning.resolve()
     assert (render_content / "20_learning_renderer_contract.md").resolve() == contract.resolve()
+
+
+def test_discovery_context_actions_are_documented() -> None:
+    contract = DOCS_ROOT / "foundation" / "20_learning_renderer_contract.md"
+    student_guide = DOCS_ROOT / "guides" / "en" / "students" / "index.md"
+    spanish_student_guide = DOCS_ROOT / "guides" / "es" / "estudiantes" / "index.md"
+
+    assert "context panels may expose static action links" in contract.read_text(
+        encoding="utf-8"
+    )
+    assert "Context panels may also show direct static links" in student_guide.read_text(
+        encoding="utf-8"
+    )
+    assert "Los paneles de contexto tambien pueden mostrar links estaticos directos" in (
+        spanish_student_guide.read_text(encoding="utf-8")
+    )
