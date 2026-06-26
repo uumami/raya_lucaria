@@ -5064,6 +5064,24 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             in practice_focus_notice.inner_text()
                         )
                         assert (
+                            page.locator('[data-raya-practice-active="true"]').count()
+                            == 1
+                        )
+                        practice_context_actions = page.locator(
+                            "[data-raya-practice-context-actions]"
+                        )
+                        assert practice_context_actions.is_visible()
+                        assert practice_context_actions.locator(
+                            "a", has_text="Open page"
+                        ).evaluate("node => node.href").endswith(
+                            "/unit/topic/index.html#raya-official-first-topic-card"
+                        )
+                        assert practice_context_actions.locator(
+                            "a", has_text="View graph"
+                        ).evaluate("node => node.href").endswith(
+                            "/_raya/graph/index.html?page=first-topic"
+                        )
+                        assert (
                             page.evaluate(
                                 "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
                             )
@@ -5077,6 +5095,11 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               ?.includes('3 visible practice object')"""
                         )
                         assert practice_focus_notice.is_hidden()
+                        assert (
+                            page.locator('[data-raya-practice-active="true"]').count()
+                            == 0
+                        )
+                        assert practice_context_actions.is_hidden()
                         page.goto(
                             f"{base_url}/_raya/practice/index.html?page=first-topic",
                             wait_until="networkidle",
@@ -5406,6 +5429,26 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             )
                             assert "First Topic" in tasks_focus_notice.inner_text()
                             assert "4 visible tasks" in tasks_focus_notice.inner_text()
+                            assert (
+                                scoped_tasks.locator(
+                                    '[data-raya-task-active="true"]'
+                                ).count()
+                                == 1
+                            )
+                            scoped_task_actions = scoped_tasks.locator(
+                                "[data-raya-tasks-context-actions]"
+                            )
+                            assert scoped_task_actions.is_visible()
+                            assert scoped_task_actions.locator(
+                                "a", has_text="Open page"
+                            ).evaluate("node => node.href").endswith(
+                                "/unit/topic/index.html#raya-official-unit-assignment"
+                            )
+                            assert scoped_task_actions.locator(
+                                "a", has_text="View graph"
+                            ).evaluate("node => node.href").endswith(
+                                "/_raya/graph/index.html?page=first-topic"
+                            )
                             assert scoped_tasks.evaluate("() => localStorage.length") == 0
                             assert scoped_tasks.evaluate("() => sessionStorage.length") == 0
                             scoped_tasks.locator("#raya-tasks-search").focus()
@@ -5420,6 +5463,13 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 '[data-raya-task-object="extension-assignment"]'
                             ).is_visible()
                             assert tasks_focus_notice.is_hidden()
+                            assert (
+                                scoped_tasks.locator(
+                                    '[data-raya-task-active="true"]'
+                                ).count()
+                                == 0
+                            )
+                            assert scoped_task_actions.is_hidden()
                             scoped_tasks.goto(
                                 f"{base_url}/_raya/tasks/index.html?page=first-topic",
                                 wait_until="networkidle",
@@ -5688,6 +5738,26 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                     "3 visible schedule item"
                                     in schedule_focus_notice.inner_text()
                                 )
+                                assert (
+                                    scoped_schedule.locator(
+                                        '[data-raya-schedule-active="true"]'
+                                    ).count()
+                                    == 1
+                                )
+                                scoped_schedule_actions = scoped_schedule.locator(
+                                    "[data-raya-schedule-context-actions]"
+                                )
+                                assert scoped_schedule_actions.is_visible()
+                                assert scoped_schedule_actions.locator(
+                                    "a", has_text="Open page"
+                                ).evaluate("node => node.href").endswith(
+                                    "/unit/topic/index.html#raya-official-unit-assignment"
+                                )
+                                assert scoped_schedule_actions.locator(
+                                    "a", has_text="View graph"
+                                ).evaluate("node => node.href").endswith(
+                                    "/_raya/graph/index.html?page=first-topic"
+                                )
                                 scoped_schedule.click("#raya-schedule-clear")
                                 scoped_schedule.wait_for_function(
                                     """() => document
@@ -5699,6 +5769,13 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                     '[data-raya-schedule-item="extension-assignment"]'
                                 ).is_visible()
                                 assert schedule_focus_notice.is_hidden()
+                                assert (
+                                    scoped_schedule.locator(
+                                        '[data-raya-schedule-active="true"]'
+                                    ).count()
+                                    == 0
+                                )
+                                assert scoped_schedule_actions.is_hidden()
                                 scoped_schedule.goto(
                                     f"{base_url}/_raya/schedule/index.html?page=first-topic",
                                     wait_until="networkidle",

@@ -310,7 +310,10 @@ _TASKS_JAVASCRIPT = r"""
       status.textContent = taskCountText(visible);
     }
     updatePageFocusNotice(visible);
-    setActiveObject(Math.min(activeIndex, visible - 1));
+    const nextIndex = activePage && visible > 0 && activeIndex < 0
+      ? 0
+      : Math.min(activeIndex, visible - 1);
+    setActiveObject(nextIndex);
   }
 
   filters.forEach((button) => {
