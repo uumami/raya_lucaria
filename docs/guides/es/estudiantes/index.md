@@ -117,6 +117,11 @@ explicitos, `Canvas view` y `Move canvas` para ajustar la vista SVG, y
 `Workspace` para resetear o enfocar la superficie del grafo. Son herramientas
 temporales de inspeccion; no reescriben enlaces del curso ni guardan estado de
 estudio.
+En pantallas anchas con mouse, tambien puedes reposicionar nodos visibles del grafo
+para desenredar la vista actual. Es solo limpieza visual temporal:
+Reset graph restaura el layout generado, Fit y zoom mantienen legible la vista
+movida, y el movimiento no es un editor de layout, cambio de datos del curso,
+preferencia guardada, recomendacion, progreso, dominio ni senal de autoridad.
 El grafo tambien puede mostrar una banda de orientacion cerca del canvas.
 Nombra el layout actual, pagina seleccionada, foco de pagina, contexto de
 busqueda y filtros, y si el foco de vecindario esta activo. Usa sus acciones

@@ -155,6 +155,37 @@ def test_role_documentation_covers_renderer_skins_and_accessibility() -> None:
             assert needle in text
 
 
+def test_student_docs_cover_constrained_graph_node_repositioning() -> None:
+    required = {
+        "docs/foundation/20_learning_renderer_contract.md": [
+            "temporarily reposition visible SVG graph nodes",
+            "must not persist to browser storage",
+            "must not mutate URL state",
+            "must not imply recommendation, ranking, progress, mastery, or authority",
+        ],
+        "docs/guides/en/students/index.md": [
+            "reposition visible graph nodes",
+            "Reset graph restores the generated layout",
+            "not a layout editor",
+            "course-data change",
+            "saved preference",
+            "recommendation, progress, mastery, or authority signal",
+        ],
+        "docs/guides/es/estudiantes/index.md": [
+            "reposicionar nodos visibles del grafo",
+            "Reset graph restaura el layout generado",
+            "no es un editor de layout",
+            "cambio de datos del curso",
+            "preferencia guardada",
+            "recomendacion, progreso, dominio ni senal de autoridad",
+        ],
+    }
+    for relative_path, needles in required.items():
+        text = (ROOT / relative_path).read_text(encoding="utf-8")
+        for needle in needles:
+            assert needle in text, f"{relative_path} must mention {needle}"
+
+
 def test_rendered_documentation_fixture_is_labeled_and_separate() -> None:
     assert DOCS_FIXTURE.exists()
     assert DOCS_FIXTURE.relative_to(ROOT).parts[:2] == ("examples", "docs")

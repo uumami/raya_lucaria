@@ -1320,6 +1320,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                   y2: Number(node.getAttribute('y2')),
                                 })"""
                             )
+                            graph_data_before_drag = page.locator(
+                                "#raya-graph-data"
+                            ).text_content()
                             drag_start = _graph_node_translate(page, drag_target)
                             drag_hit_box = page.locator(
                                 f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"] '
@@ -1343,6 +1346,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             assert drag_after[0] > drag_start[0] + 20
                             assert drag_after[1] > drag_start[1] + 15
                             assert page.url == graph_url_before_drag
+                            assert (
+                                page.locator("#raya-graph-data").text_content()
+                                == graph_data_before_drag
+                            )
                             drag_edge_after = drag_edge.evaluate(
                                 """node => ({
                                   x1: Number(node.getAttribute('x1')),
@@ -1431,6 +1438,127 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "defaultPrevented": False,
                                 "dispatched": True,
                             }
+                            compatibility_mouse_state = page.locator(
+                                f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"]'
+                            ).evaluate(
+                                """node => {
+                                  const canvas = document.querySelector('#raya-graph-canvas');
+                                  const hit = node.querySelector('.raya-graph-node-hit') || node;
+                                  const box = hit.getBoundingClientRect();
+                                  const touch = new PointerEvent('pointerdown', {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    pointerId: 73,
+                                    pointerType: 'touch',
+                                    button: 0,
+                                    clientX: box.left + box.width / 2,
+                                    clientY: box.top + box.height / 2,
+                                  });
+                                  node.dispatchEvent(touch);
+                                  const mouse = new MouseEvent('mousedown', {
+                                    bubbles: true,
+                                    cancelable: true,
+                                    button: 0,
+                                    clientX: box.left + box.width / 2,
+                                    clientY: box.top + box.height / 2,
+                                  });
+                                  const dispatched = node.dispatchEvent(mouse);
+                                  const afterMouseDown = canvas.classList.contains('is-dragging-node');
+                                  return {
+                                    afterMouseDown,
+                                    afterPanStart: canvas.classList.contains('is-panning'),
+                                    mouseDefaultPrevented: mouse.defaultPrevented,
+                                    dispatched,
+                                  };
+                                }"""
+                            )
+                            assert compatibility_mouse_state == {
+                                "afterMouseDown": False,
+                                "afterPanStart": False,
+                                "mouseDefaultPrevented": False,
+                                "dispatched": True,
+                            }
+                            page.wait_for_timeout(750)
+                            page.mouse.move(
+                                drag_hit_box["x"] + drag_hit_box["width"] / 2,
+                                drag_hit_box["y"] + drag_hit_box["height"] / 2,
+                            )
+                            page.mouse.down()
+                            page.mouse.move(
+                                drag_hit_box["x"]
+                                + drag_hit_box["width"] / 2
+                                + 10000,
+                                drag_hit_box["y"]
+                                + drag_hit_box["height"] / 2
+                                + 10000,
+                                steps=8,
+                            )
+                            page.mouse.up()
+                            page.wait_for_function(
+                                """nodeId => {
+                                  const canvas = document.querySelector('#raya-graph-canvas');
+                                  const group = document
+                                    .querySelector(
+                                      `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+                                    );
+                                  if (!canvas || !group) return false;
+                                  const viewBox = canvas
+                                    .getAttribute('viewBox')
+                                    .split(/\\s+/)
+                                    .map(Number);
+                                  const transform = group.getAttribute('transform') || '';
+                                  const match = transform.match(
+                                    /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                  );
+                                  if (!match) return false;
+                                  const x = Number(match[1]);
+                                  const y = Number(match[2]);
+                                  return x >= viewBox[0] + 35.99 &&
+                                    x <= viewBox[0] + viewBox[2] - 35.99 &&
+                                    y >= viewBox[1] + 35.99 &&
+                                    y <= viewBox[1] + viewBox[3] - 35.99;
+                                }""",
+                                arg=drag_target,
+                            )
+                            page.select_option("#graph-layout", "topology")
+                            page.wait_for_function(
+                                """nodeId => {
+                                  const transform = document
+                                    .querySelector(
+                                      `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+                                    )
+                                    ?.getAttribute('transform') || '';
+                                  const match = transform.match(
+                                    /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                  );
+                                  if (!match) return false;
+                                  return Math.abs(Number(match[1]) - 36) > 0.01 ||
+                                    Math.abs(Number(match[2]) - 36) > 0.01;
+                                }""",
+                                arg=drag_target,
+                            )
+                            page.select_option("#graph-layout", "connections")
+                            page.wait_for_function(
+                                """([nodeId, expected]) => {
+                                  if (document
+                                    .querySelector('#graph-layout')
+                                    ?.value !== 'connections') {
+                                    return false;
+                                  }
+                                  const transform = document
+                                    .querySelector(
+                                      `#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`
+                                    )
+                                    ?.getAttribute('transform') || '';
+                                  const match = transform.match(
+                                    /translate\\(([-0-9.]+)\\s+([-0-9.]+)\\)/
+                                  );
+                                  return !!match &&
+                                    Math.abs(Number(match[1]) - expected[0]) < 0.01 &&
+                                    Math.abs(Number(match[2]) - expected[1]) < 0.01;
+                                }""",
+                                arg=[drag_target, list(drag_start)],
+                            )
                             page.click("#graph-reset")
                             page.wait_for_function(
                                 """([nodeId, expected]) => {

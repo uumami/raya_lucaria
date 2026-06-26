@@ -1354,6 +1354,12 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "panGraphView" in graph_script
     assert "startGraphPan" in graph_script
     assert "data-raya-graph-pan" in graph_script
+    assert "startGraphNodeDrag" in graph_script
+    assert "moveGraphNodeDrag" in graph_script
+    assert "manualNodePositions" in graph_script
+    assert 'pointerType !== "mouse"' in graph_script
+    assert "is-dragging-node" in graph_script
+    assert "suppressedNodeClick" in graph_script
     assert "activeResultId" in graph_script
     assert "setActiveResult" in graph_script
     assert "moveActiveResult" in graph_script

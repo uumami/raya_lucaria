@@ -142,7 +142,12 @@ selected-page details, or authored graph data. Fit selection may frame the
 selected page and visible directly connected graph context, and may scroll the
 graph canvas into view as a local viewport affordance, but it must not change
 graph data, selection, filters, URL state, storage, progress, ranking,
-recommendation, or mastery semantics. The default `Connections` layout may arrange visible pages by normalized
+recommendation, or mastery semantics. Desktop mouse users may temporarily reposition visible SVG graph nodes to untangle the current view; this updates
+only local node and visible edge geometry, must stay within graph bounds, must
+reset through `Reset graph` or layout changes, must not persist to browser
+storage, must not mutate URL state, graph data, or authored relationships, and
+must not imply recommendation, ranking, progress, mastery, or authority. The
+default `Connections` layout may arrange visible pages by normalized
 explicit graph relationships and course order so students can read link flow.
 `Topology` may place visible pages by explicit generated graph relationships
 using a deterministic local layout over the current visible edge set, while

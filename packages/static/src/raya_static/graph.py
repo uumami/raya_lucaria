@@ -169,6 +169,7 @@ _GRAPH_JAVASCRIPT = r"""
   let graphViewBox = null;
   let graphPanStart = null;
   let graphNodeDrag = null;
+  let recentTouchNodePointerUntil = 0;
   let suppressedNodeClick = { id: "", until: 0 };
   let graphNodeClickSequence = { id: "", time: 0 };
   let lastActiveNodes = [];
@@ -1585,12 +1586,19 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function startGraphNodeDrag(event, nodeId) {
+    if (event.type.startsWith("pointer") && event.pointerType && event.pointerType !== "mouse") {
+      recentTouchNodePointerUntil = Date.now() + 700;
+      return;
+    }
+    if (event.type.startsWith("mouse") && Date.now() < recentTouchNodePointerUntil) {
+      event.stopPropagation();
+      return;
+    }
     if (
       graphNodeDrag ||
       !nodeId ||
       !latestRenderedPositions.has(nodeId) ||
       root.getAttribute("data-raya-graph-layout") === "list" ||
-      (event.type.startsWith("pointer") && event.pointerType && event.pointerType !== "mouse") ||
       event.button !== 0
     ) {
       return;

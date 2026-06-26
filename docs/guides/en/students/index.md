@@ -106,6 +106,10 @@ change layout, `Relationship filters` to show or hide explicit link kinds,
 `Canvas view` and `Move canvas` to adjust the SVG view, and `Workspace` to reset
 or focus the graph surface. These controls are temporary inspection tools; they
 do not rewrite course links or save study state.
+On wider screens with a mouse, you may also reposition visible graph nodes to
+untangle the current view. This is temporary visual cleanup only: Reset graph restores the generated layout, Fit and zoom keep the moved view readable, and
+the move is not a layout editor, course-data change, saved preference,
+recommendation, progress, mastery, or authority signal.
 The graph may also show an orientation band near the canvas. It names the
 current layout, selected page, page focus, search and filter context, and
 whether neighborhood focus is on. Use its Open page, Focus neighborhood, Show
