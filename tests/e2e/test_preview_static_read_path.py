@@ -6962,6 +6962,17 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       .querySelector('.raya-course-map-workspace-badge')
                                       ?.textContent
                                       ?.trim() || ''),
+                                    details: Object.fromEntries(links.map((link) => [
+                                      link
+                                        .querySelector('.raya-course-map-workspace-label')
+                                        ?.textContent
+                                        ?.trim() || '',
+                                      Array.from(
+                                        link.querySelectorAll(
+                                          '[data-raya-course-map-workspace-detail]'
+                                        )
+                                      ).map((detail) => detail.textContent.trim()),
+                                    ])),
                                     hrefs: links.map((link) => link.getAttribute('href')),
                                   };
                                 }"""
@@ -6975,7 +6986,11 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "Schedule",
                             ]
                             assert workspace["badges"][0] == "Course"
-                            assert re.fullmatch(r"\d+ links?", workspace["badges"][1])
+                            assert workspace["badges"][1] == "2 links"
+                            assert workspace["details"]["Graph"] == [
+                                "0 from this page",
+                                "2 links here",
+                            ]
                             assert workspace["badges"][2] == "2 official"
                             assert workspace["badges"][3] == "Course"
                             assert workspace["badges"][4] == "Course"

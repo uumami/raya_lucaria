@@ -4413,6 +4413,20 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         in html
     )
     assert (
+        'aria-label="Graph workspace, 2 links, 0 from this page, 2 links here"'
+        in html
+    )
+    assert (
+        '<span class="raya-course-map-workspace-detail" '
+        'data-raya-course-map-workspace-detail>0 from this page</span>'
+        in html
+    )
+    assert (
+        '<span class="raya-course-map-workspace-detail" '
+        'data-raya-course-map-workspace-detail>2 links here</span>'
+        in html
+    )
+    assert (
         'class="raya-course-map-workspace-link raya-course-map-workspace-practice"'
         in html
     )
@@ -4470,6 +4484,20 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
+    )
+    assert (
+        'aria-label="Graph workspace, 6 links, 5 from this page, 1 link here"'
+        in root_html
+    )
+    assert (
+        '<span class="raya-course-map-workspace-detail" '
+        'data-raya-course-map-workspace-detail>5 from this page</span>'
+        in root_html
+    )
+    assert (
+        '<span class="raya-course-map-workspace-detail" '
+        'data-raya-course-map-workspace-detail>1 link here</span>'
+        in root_html
     )
     assert (
         'class="raya-reading-context-link raya-reading-context-prev"' not in root_html

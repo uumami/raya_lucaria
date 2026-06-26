@@ -1618,9 +1618,19 @@ def _render_course_map(
         if _official_public_task_summary(item) is not None
         and _official_task_event_date(item)
     )
-    direct_link_count = len(page_graph_context.get("outgoing", [])) + len(
-        page_graph_context.get("incoming", [])
-    )
+    outgoing_link_count = len(page_graph_context.get("outgoing", []))
+    incoming_link_count = len(page_graph_context.get("incoming", []))
+    direct_link_count = outgoing_link_count + incoming_link_count
+    graph_detail_badges = [
+        (
+            f"{outgoing_link_count} "
+            f'{_relationship_count_label(outgoing_link_count, "from this page", "from this page")}'
+        ),
+        (
+            f"{incoming_link_count} "
+            f'{_relationship_count_label(incoming_link_count, "links here", "link here")}'
+        ),
+    ]
     course_map_tasks_href = tasks_href
     if direct_task_count:
         course_map_tasks_href = _href_with_query(
@@ -1634,8 +1644,14 @@ def _render_course_map(
             {"page": page.id},
         )
     workspace_links = [
-        ("search", "Search", search_href, "Course"),
-        ("graph", "Graph", graph_href, _count_label(direct_link_count, "link")),
+        ("search", "Search", search_href, "Course", []),
+        (
+            "graph",
+            "Graph",
+            graph_href,
+            _count_label(direct_link_count, "link"),
+            graph_detail_badges,
+        ),
         (
             "practice",
             "Practice",
@@ -1643,20 +1659,67 @@ def _render_course_map(
             f"{direct_official_count} official"
             if direct_official_count
             else "Course",
+            [],
         ),
         (
             "tasks",
             "Tasks",
             course_map_tasks_href,
             _count_label(direct_task_count, "task") if direct_task_count else "Course",
+            [],
         ),
         (
             "schedule",
             "Schedule",
             course_map_schedule_href,
             f"{direct_dated_task_count} dated" if direct_dated_task_count else "Course",
+            [],
         ),
     ]
+
+    def render_workspace_link(
+        kind: str,
+        label: str,
+        href: str,
+        badge: str,
+        details: list[str],
+    ) -> str:
+        detail_html = ""
+        if details:
+            detail_html = (
+                '<span class="raya-course-map-workspace-details">'
+                + "".join(
+                    (
+                        '<span class="raya-course-map-workspace-detail" '
+                        "data-raya-course-map-workspace-detail>"
+                        f"{html.escape(detail)}"
+                        "</span>"
+                    )
+                    for detail in details
+                )
+                + "</span>"
+            )
+        aria_detail = html.escape(", ".join([badge, *details]), quote=True)
+        return "\n".join(
+            [
+                (
+                    f'<a class="raya-course-map-workspace-link '
+                    f'raya-course-map-workspace-{html.escape(kind, quote=True)}" '
+                    "data-raya-course-map-workspace-link "
+                    f'href="{html.escape(href)}" '
+                    f'aria-label="{html.escape(label, quote=True)} workspace, {aria_detail}">'
+                ),
+                '<span class="raya-course-map-workspace-label">'
+                f"{html.escape(label)}"
+                "</span>",
+                '<span class="raya-course-map-workspace-badge">'
+                f"{html.escape(badge)}"
+                "</span>",
+                detail_html,
+                "</a>",
+            ]
+        )
+
     workspace_html = "\n".join(
         [
             '<section class="raya-course-map-workspaces" '
@@ -1664,21 +1727,14 @@ def _render_course_map(
             '<p class="raya-course-map-workspaces-label">Course workspaces</p>',
             '<div class="raya-course-map-workspace-links">',
             "\n".join(
-                (
-                    f'<a class="raya-course-map-workspace-link '
-                    f'raya-course-map-workspace-{html.escape(kind, quote=True)}" '
-                    "data-raya-course-map-workspace-link "
-                    f'href="{html.escape(href)}" '
-                    f'aria-label="{html.escape(label, quote=True)} workspace, {html.escape(badge, quote=True)}">'
-                    '<span class="raya-course-map-workspace-label">'
-                    f"{html.escape(label)}"
-                    "</span>"
-                    '<span class="raya-course-map-workspace-badge">'
-                    f"{html.escape(badge)}"
-                    "</span>"
-                    "</a>"
+                render_workspace_link(
+                    kind,
+                    label,
+                    href,
+                    badge,
+                    details,
                 )
-                for kind, label, href, badge in workspace_links
+                for kind, label, href, badge, details in workspace_links
             ),
             "</div>",
             "</section>",

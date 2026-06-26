@@ -3078,6 +3078,25 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   font-weight: 800;
   line-height: 1.1;
 }
+.raya-course-map-workspace-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.18rem;
+}
+.raya-course-map-workspace-detail {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 42%, transparent);
+  border: 1px solid color-mix(in srgb, var(--raya-color-border) 80%, transparent);
+  border-radius: 0.25rem;
+  color: var(--raya-color-muted);
+  display: inline-flex;
+  font-size: 0.64rem;
+  font-weight: 850;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow-wrap: normal;
+  padding: 0.12rem 0.22rem;
+  white-space: nowrap;
+}
 .raya-course-map-actions {
   display: flex;
   flex-wrap: wrap;
