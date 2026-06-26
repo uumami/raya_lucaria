@@ -1214,7 +1214,10 @@ _GRAPH_JAVASCRIPT = r"""
 
   function setGraphViewBox(box) {
     graphViewBox = box;
-    if (canvas && box) canvas.setAttribute("viewBox", viewBoxString(box));
+    if (canvas && box) {
+      canvas.setAttribute("viewBox", viewBoxString(box));
+      placeVisibleGraphNodeLabels(box);
+    }
   }
 
   function resetGraphView() {
@@ -1577,6 +1580,55 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
+  function placeGraphNodeLabel(group, point, box = fullViewBox) {
+    const label = group ? group.querySelector(".raya-graph-node-label") : null;
+    if (!label || !point || !box) return;
+    label.removeAttribute("x");
+    label.removeAttribute("textLength");
+    label.removeAttribute("lengthAdjust");
+    let labelBox;
+    try {
+      labelBox = label.getBBox();
+    } catch {
+      return;
+    }
+    const margin = 8;
+    const availableWidth = Math.max(24, box.width - margin * 2);
+    if (labelBox.width > availableWidth) {
+      label.setAttribute("textLength", String(availableWidth));
+      label.setAttribute("lengthAdjust", "spacingAndGlyphs");
+      try {
+        labelBox = label.getBBox();
+      } catch {
+        labelBox = {
+          x: -availableWidth / 2,
+          width: availableWidth,
+        };
+      }
+    }
+    const left = point.x + labelBox.x;
+    const right = left + labelBox.width;
+    let offsetX = 0;
+    if (left < box.x + margin) {
+      offsetX = box.x + margin - left;
+    } else if (right > box.x + box.width - margin) {
+      offsetX = box.x + box.width - margin - right;
+    }
+    if (offsetX !== 0) {
+      label.setAttribute("x", String(offsetX));
+    }
+  }
+
+  function placeVisibleGraphNodeLabels(box = graphViewBox || fullViewBox) {
+    if (!canvas || !box) return;
+    canvas.querySelectorAll("[data-raya-graph-node]").forEach((link) => {
+      const nodeId = link.getAttribute("data-raya-graph-node") || "";
+      const point = latestRenderedPositions.get(nodeId);
+      const group = link.querySelector("g");
+      if (point && group) placeGraphNodeLabel(group, point, box);
+    });
+  }
+
   function updateVisibleNodePosition(nodeId, point) {
     const nextPoint = constrainGraphPoint(point);
     latestRenderedPositions.set(nodeId, nextPoint);
@@ -1587,6 +1639,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (group) {
         group.setAttribute("transform", `translate(${nextPoint.x} ${nextPoint.y})`);
         group.classList.add("is-dragging");
+        placeGraphNodeLabel(group, nextPoint, graphViewBox || fullViewBox);
       }
     });
     updateVisibleEdgeGeometryForNode(nodeId);
@@ -2820,7 +2873,9 @@ _GRAPH_JAVASCRIPT = r"""
       link.addEventListener("pointerdown", (event) => startGraphNodeDrag(event, node.id));
       link.addEventListener("mousedown", (event) => startGraphNodeDrag(event, node.id));
       canvas.appendChild(link);
+      placeGraphNodeLabel(group, point, graphViewBox || nextFullViewBox);
     });
+    placeVisibleGraphNodeLabels();
     if (activeResultId) setActiveResult(activeResultId, { scroll: false });
     updateInspectionDom();
     setFitSelectionEnabled();
@@ -3065,6 +3120,7 @@ _GRAPH_JAVASCRIPT = r"""
     clearGraphInspection(item ? item.getAttribute("data-raya-graph-node") || "" : "");
   });
   list.addEventListener("pointerover", (event) => {
+    if (graphListHasFocus()) return;
     const item = event.target.closest("[data-raya-graph-node]");
     if (!item || item.hidden) return;
     inspectGraphNode(item.getAttribute("data-raya-graph-node") || "");

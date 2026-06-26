@@ -53,9 +53,43 @@ def _graph_node_translate(page, node_id: str) -> tuple[float, float]:
     return float(match.group(1)), float(match.group(2))
 
 
+def _visible_graph_label_bounds(page) -> list[dict]:
+    return page.locator("#raya-graph-canvas").evaluate(
+        """(svg) => {
+          const svgBox = svg.getBoundingClientRect();
+          return Array.from(svg.querySelectorAll('.raya-graph-node-label'))
+            .filter((label) => {
+              const style = getComputedStyle(label);
+              return style.visibility !== 'hidden' && Number(style.opacity) > 0;
+            })
+            .map((label) => {
+              const box = label.getBoundingClientRect();
+              return {
+                text: label.textContent.trim(),
+                left: box.left,
+                right: box.right,
+                svgLeft: svgBox.left,
+                svgRight: svgBox.right,
+              };
+            });
+        }"""
+    )
+
+
+def _assert_visible_graph_labels_inside_canvas(page) -> None:
+    visible_label_bounds = _visible_graph_label_bounds(page)
+    assert visible_label_bounds
+    assert all(
+        label["left"] >= label["svgLeft"] - 1
+        and label["right"] <= label["svgRight"] + 1
+        for label in visible_label_bounds
+    )
+
+
 def _click_graph_node_group(page, node_id: str, *, click_count: int = 1) -> None:
     node = page.locator(
-        f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] g'
+        f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] '
+        ".raya-graph-node-hit"
     )
     node.scroll_into_view_if_needed()
     box = node.bounding_box()
@@ -1815,7 +1849,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert requested_urls == []
                         graph_node = page.locator(
-                            "#raya-graph-canvas [data-raya-graph-node]"
+                            "#raya-graph-canvas [data-raya-graph-node] "
+                            ".raya-graph-node-hit"
                         ).first
                         graph_node.hover()
                         assert page.locator(
@@ -2379,13 +2414,16 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.includes('visible node')"""
                         )
                         page.locator(
-                            "#raya-graph-canvas [data-raya-graph-node]"
+                            "#raya-graph-canvas [data-raya-graph-node] "
+                            ".raya-graph-node-hit"
                         ).first.click()
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
                         page.locator(
-                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
+                            '#raya-graph-canvas '
+                            '[data-raya-graph-node="authoring-matrix"] '
+                            ".raya-graph-node-hit"
                         ).click()
                         page.wait_for_function(
                             """() => document
@@ -2452,6 +2490,18 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         if viewport["width"] >= 1280:
                             assert after_width > before_width
                             assert page.locator("#raya-graph-canvas").is_visible()
+                            page.locator(
+                                '#raya-graph-canvas '
+                                '[data-raya-graph-node="render-root"] '
+                                ".raya-graph-node-label"
+                            ).evaluate(
+                                """node => {
+                                  node.textContent =
+                                    'Raya Lucaria Render Fixture With A Deliberately Long Visible Graph Label';
+                                }"""
+                            )
+                            page.click("#graph-zoom-in")
+                            _assert_visible_graph_labels_inside_canvas(page)
                             page.click('[data-raya-graph-toggle-panel="list"]')
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
@@ -2861,6 +2911,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert plain_label_state["render-root"]["visible"]
                         assert plain_label_state["authoring-matrix"]["visible"]
                         assert not plain_label_state["static-path"]["visible"]
+                        _assert_visible_graph_labels_inside_canvas(page)
                         page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
                             wait_until="networkidle",

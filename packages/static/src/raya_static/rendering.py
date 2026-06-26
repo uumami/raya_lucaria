@@ -2573,6 +2573,7 @@ img {
   margin-top: 0.35rem;
 }
 .raya-graph-edge {
+  pointer-events: none;
   stroke: var(--raya-graph-edge-color, var(--raya-color-border));
   stroke-opacity: 0.58;
   stroke-width: 2;
