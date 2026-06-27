@@ -6152,10 +6152,18 @@ def test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport(
                                 };
                                 return inBox(from, viewBox) || inBox(to, viewBox);
                               });
+                              const activeEdgeIntersectsViewport = Array.from(
+                                document.querySelectorAll(
+                                  '#raya-graph-canvas .raya-graph-edge.is-active'
+                                )
+                              ).some((edge) =>
+                                intersectsViewport(edge.getBoundingClientRect())
+                              );
                               return {
                                 scrollY: window.scrollY,
                                 orientation: box('[data-raya-graph-orientation]'),
                                 toolbar: box('.raya-graph-toolbar'),
+                                canvas: box('#raya-graph-canvas'),
                                 selected: box(
                                   '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
                                 ),
@@ -6173,8 +6181,17 @@ def test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport(
                                 toolbarVisible: intersectsViewport(
                                   box('.raya-graph-toolbar')
                                 ),
+                                canvasIntersectsViewport: intersectsViewport(
+                                  box('#raya-graph-canvas')
+                                ),
+                                selectedIntersectsViewport: intersectsViewport(
+                                  box(
+                                    '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                                  )
+                                ),
                                 selectedPointInViewBox: inBox(selectedPoint, viewBox),
                                 focusedEdgeVisible,
+                                activeEdgeIntersectsViewport,
                                 viewBoxIsFocused: Boolean(
                                   viewBox &&
                                   graphSpan &&
@@ -6193,6 +6210,22 @@ def test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport(
                     assert "Projection Residuals" in probe["detailTitle"]
                     assert probe["selectedState"] == "reader-ux"
                     assert probe["orientationVisible"] or probe["toolbarVisible"], (
+                        viewport,
+                        probe,
+                    )
+                    assert probe["canvasIntersectsViewport"], (viewport, probe)
+                    assert probe["selectedIntersectsViewport"], (viewport, probe)
+                    assert probe["activeEdgeIntersectsViewport"], (viewport, probe)
+                    if viewport["width"] >= 1280:
+                        assert probe["canvas"]["height"] >= viewport["height"] * 0.48, (
+                            viewport,
+                            probe,
+                        )
+                    else:
+                        assert probe["canvas"]["height"] >= min(
+                            360, viewport["height"] * 0.42
+                        ), (viewport, probe)
+                    assert probe["canvas"]["height"] <= viewport["height"] * 0.78, (
                         viewport,
                         probe,
                     )
@@ -15772,8 +15805,7 @@ def test_graph_canvas_legend_remains_visible_when_pages_panel_collapses(
     assert before["firstButton"] is not None
     assert before["canvas"] is not None
     assert before["pressed"] == "true"
-    assert before["legend"]["top"] < before["canvas"]["top"]
-    assert before["legend"]["bottom"] < before["canvas"]["top"] + 4
+    assert before["legend"]["top"] >= before["canvas"]["bottom"] - 4
     assert before["legend"]["height"] <= 120
     assert before["firstButton"]["width"] > 32
     assert before["firstButton"]["height"] > 24
@@ -15784,7 +15816,7 @@ def test_graph_canvas_legend_remains_visible_when_pages_panel_collapses(
     assert mobile_state["legend"] is not None
     assert mobile_state["firstButton"] is not None
     assert mobile_state["canvas"] is not None
-    assert mobile_state["legend"]["top"] < mobile_state["canvas"]["top"]
+    assert mobile_state["legend"]["top"] >= mobile_state["canvas"]["bottom"] - 4
     assert mobile_state["legend"]["height"] <= 150
     assert mobile_state["firstButton"]["height"] > 24
     assert mobile_state["overflow"] <= 1

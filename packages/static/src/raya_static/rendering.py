@@ -974,7 +974,7 @@ img {
   max-width: 72rem;
 }
 .raya-graph-page {
-  padding-top: 0.75rem;
+  padding-top: 0.35rem;
 }
 .raya-graph-header {
   align-items: baseline;
@@ -994,7 +994,7 @@ img {
 }
 .raya-graph-controls.raya-graph-toolbar,
 .raya-graph-instructions {
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.35rem;
 }
 .raya-graph-instructions {
   color: var(--raya-color-muted);
@@ -1238,9 +1238,9 @@ img {
 .raya-graph-workspace {
   align-items: start;
   display: grid;
-  gap: var(--raya-space-block);
+  gap: 0.75rem;
   grid-template-columns: minmax(16rem, 22rem) minmax(34rem, 1fr) minmax(18rem, 24rem);
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
 }
 .raya-graph-list-panel,
 .raya-graph-map-panel,
@@ -3148,7 +3148,9 @@ img {
     0 1rem 2.25rem color-mix(in srgb, var(--raya-color-text) 7%, transparent);
   cursor: grab;
   display: block;
-  height: clamp(28rem, 56vh, 40rem);
+  flex: 0 0 auto;
+  height: clamp(24rem, 50vh, 36rem);
+  order: 4;
   width: 100%;
 }
 .raya-graph-canvas-hint {
@@ -3157,6 +3159,20 @@ img {
   font-weight: 800;
   line-height: 1.3;
   margin: 0 0 0.45rem;
+  order: 1;
+}
+.raya-graph-status,
+.raya-graph-arrangement-status {
+  order: 2;
+}
+.raya-graph-orientation {
+  order: 5;
+}
+.raya-graph-canvas-legend {
+  order: 6;
+}
+.raya-graph-minimap-panel {
+  order: 7;
 }
 .raya-graph-canvas.is-panning {
   cursor: grabbing;
@@ -5690,6 +5706,12 @@ mjx-container[display="true"] {
   }
   .raya-graph-map-panel {
     order: 1;
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+  .raya-graph-instructions {
+    display: none;
   }
   .raya-graph-list-panel {
     order: 2;
@@ -5975,7 +5997,7 @@ mjx-container[display="true"] {
     margin-top: 1rem;
   }
   .raya-graph-canvas {
-    height: clamp(22rem, 58vh, 30rem);
+    height: clamp(18rem, 43vh, 23rem);
   }
   .raya-graph-minimap-panel {
     grid-template-columns: minmax(0, 1fr);

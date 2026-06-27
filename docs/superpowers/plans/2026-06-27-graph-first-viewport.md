@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add a strict deeplink first-viewport assertion**
+- [x] **Step 1: Add a strict deeplink first-viewport assertion**
 
 In `test_preview_graph_deeplink_keeps_orientation_controls_in_initial_viewport`, extend the existing browser probe to return viewport intersections for the selected SVG node, selected canvas, active edge, and canvas dimensions:
 
@@ -46,7 +46,7 @@ else:
 assert probe["canvas"]["height"] <= viewport["height"] * 0.78, (viewport, probe)
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run:
 
@@ -62,7 +62,7 @@ Expected: fail because selected graph content is below the first viewport on at 
 **Files:**
 - Modify: `packages/static/src/raya_static/rendering.py`
 
-- [ ] **Step 1: Tighten graph page spacing**
+- [x] **Step 1: Tighten graph page spacing**
 
 Update the graph page and workspace CSS so the graph surface starts sooner:
 
@@ -80,39 +80,41 @@ Update the graph page and workspace CSS so the graph surface starts sooner:
 }
 ```
 
-- [ ] **Step 2: Make the map panel allocate remaining height to the canvas**
+- [x] **Step 2: Prioritize the canvas inside the map panel**
 
-Change `.raya-graph-map-panel` into a bounded grid:
+Keep `.raya-graph-map-panel` as a flex column and use flex ordering so first-paint shows the graph before secondary orientation, legend, and minimap controls:
 
 ```css
 .raya-graph-map-panel {
-  display: grid;
-  grid-template-rows: auto auto auto auto minmax(18rem, 1fr) auto;
-  max-height: calc(100vh - var(--raya-topbar-height, 4rem) - 1.5rem);
-  min-height: min(42rem, calc(100vh - var(--raya-topbar-height, 4rem) - 1.5rem));
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   position: relative;
+}
+.raya-graph-canvas {
+  order: 4;
+}
+.raya-graph-orientation {
+  order: 5;
+}
+.raya-graph-canvas-legend {
+  order: 6;
 }
 ```
 
-- [ ] **Step 3: Let the SVG fill its map-panel row**
+- [x] **Step 3: Give the SVG a viewport-bounded useful height**
 
 Update the canvas height rules:
 
 ```css
 .raya-graph-canvas {
-  height: 100%;
-  min-height: 24rem;
-}
-[data-raya-graph-expanded="true"] .raya-graph-canvas {
-  height: 100%;
-  min-height: min(42rem, 78vh);
+  flex: 0 0 auto;
+  height: clamp(24rem, 50vh, 36rem);
 }
 ```
 
-- [ ] **Step 4: Add responsive bounds**
+- [x] **Step 4: Add responsive bounds**
 
-Inside the existing `@media (max-width: 1279px)` block, set:
+Inside the existing `@media (max-width: 1279px)` block, keep the map panel unclipped and reduce above-canvas explanation:
 
 ```css
 .raya-graph-map-panel {
@@ -120,24 +122,15 @@ Inside the existing `@media (max-width: 1279px)` block, set:
   min-height: 0;
   overflow: visible;
 }
+.raya-graph-instructions {
+  display: none;
+}
 .raya-graph-canvas {
-  height: clamp(18rem, 44vh, 24rem);
-  min-height: 18rem;
+  height: clamp(18rem, 43vh, 23rem);
 }
 ```
 
-Inside the existing mobile graph media block, keep the existing compact toolbar behavior and add:
-
-```css
-.raya-graph-page {
-  padding-top: 0.3rem;
-}
-.raya-graph-canvas {
-  height: clamp(18rem, 42vh, 22rem);
-}
-```
-
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 Run:
 
@@ -153,7 +146,7 @@ Expected: pass.
 **Files:**
 - Inspect only unless failures require fixes.
 
-- [ ] **Step 1: Run graph first-viewport and workspace tests**
+- [x] **Step 1: Run graph first-viewport and workspace tests**
 
 Run:
 
@@ -168,7 +161,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: pass with no horizontal overflow and preserved mobile toolbar behavior.
 
-- [ ] **Step 2: Run render-debug gate**
+- [x] **Step 2: Run render-debug gate**
 
 Run:
 
