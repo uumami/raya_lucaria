@@ -2556,10 +2556,16 @@ def _reading_flow_connection_chips(
     for direction, items in (("From this page", outgoing), ("Links here", incoming)):
         for item in items[: max(0, limit - len(chips))]:
             href = _relative_href(page.output_path, item["url"])
+            kind = item.get("kind", "content")
+            kind_label = _connection_kind_label(kind)
             chips.append(
                 '<li>'
-                f'<a href="{html.escape(href)}">'
+                f'<a href="{html.escape(href)}" '
+                f'data-raya-reading-flow-kind="{html.escape(kind, quote=True)}">'
+                '<span class="raya-reading-flow-connection-meta">'
                 f'<span class="raya-reading-flow-connection-direction">{html.escape(direction)}</span>'
+                f'<span class="raya-reading-flow-connection-kind">{html.escape(kind_label)}</span>'
+                "</span>"
                 f'<span class="raya-reading-flow-connection-title">{html.escape(item["title"])}</span>'
                 "</a>"
                 "</li>"

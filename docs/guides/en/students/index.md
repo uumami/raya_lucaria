@@ -97,10 +97,11 @@ graph workspace are local reading tools over current course structure. They do
 not store progress, recommend what to study next, or change course authority.
 Fit and Reset view only change the visual graph view; the list and selected-page
 details stay available. Opening it from a course page may focus that page so you
-can see its explicit links first. The learning rail may also show a Connections
-panel with counts for links from the current page and links into it; those
-counts describe authored static relationships, not recommendations or personal
-progress.
+can see its explicit links first. The learning rail may also show Reading flow
+counts and compact connected-page chips for links from the current page and
+links into it. Those chips can show the relationship kind, such as `Content`,
+so you can understand the link before opening the graph. They describe authored
+static relationships, not recommendations or personal progress.
 The graph toolbar groups controls as `Find pages`, `Relationship filters`,
 `Canvas view`, `Move canvas`, and `Workspace`. Use `Find pages` to search or
 change layout, `Relationship filters` to show or hide explicit link kinds,

@@ -13555,6 +13555,10 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                           const next = panel?.querySelector('[data-raya-next-page]');
                           const graph = panel?.querySelector('.raya-reading-flow-graph-link');
                           const counts = panel?.querySelector('.raya-reading-flow-counts');
+                          const connection = panel?.querySelector('.raya-reading-flow-connections a');
+                          const kind = connection?.querySelector('.raya-reading-flow-connection-kind');
+                          const direction = connection?.querySelector('.raya-reading-flow-connection-direction');
+                          const title = connection?.querySelector('.raya-reading-flow-connection-title');
                           const box = (node) => {
                             const rect = node?.getBoundingClientRect();
                             return rect
@@ -13566,8 +13570,15 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                             previous: box(previous),
                             next: box(next),
                             graph: box(graph),
+                            connection: box(connection),
+                            kind: box(kind),
+                            direction: box(direction),
+                            title: box(title),
                             viewportHeight: window.innerHeight,
                             counts: counts?.innerText || '',
+                            connectionKind: kind?.innerText || '',
+                            connectionDirection: direction?.innerText || '',
+                            connectionTitle: title?.innerText || '',
                             state: panel?.getAttribute('data-raya-rail-panel-state'),
                             hidden: panel?.querySelector('.raya-rail-panel-body')
                               ?.getAttribute('aria-hidden'),
@@ -13597,6 +13608,15 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
     assert probe["next"]["height"] > 32
     assert probe["graph"]["width"] > 80
     assert probe["graph"]["height"] > 24
+    assert probe["connection"]["width"] > 80
+    assert probe["connection"]["height"] > 42
+    assert probe["connection"]["height"] <= 72
+    assert probe["kind"]["width"] > 24
+    assert probe["direction"]["width"] > 40
+    assert probe["title"]["width"] > 40
+    assert probe["connectionKind"] == "Content"
+    assert probe["connectionDirection"] in {"FROM THIS PAGE", "LINKS HERE"}
+    assert probe["connectionTitle"]
     assert "from this page" in probe["counts"]
     assert "links here" in probe["counts"]
     assert probe["graphHref"] == "../_raya/graph/index.html?page=reader-ux"

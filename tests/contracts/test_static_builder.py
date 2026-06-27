@@ -5012,6 +5012,12 @@ def test_render_fixture_learning_rail_exposes_reading_flow_panel(
     assert "data-raya-next-page" in reading_flow
     assert "from this page" in reading_flow
     assert "links here" in reading_flow
+    assert 'class="raya-reading-flow-connection-kind">Content</span>' in reading_flow
+    assert 'data-raya-reading-flow-kind="content"' in reading_flow
+    assert (
+        '<span class="raya-reading-flow-connection-direction">Links here</span>'
+        in reading_flow
+    )
     assert "Open in course graph" in reading_flow
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in reading_flow
     assert '<section class="raya-rail-panel raya-page-linked-pages"' not in html

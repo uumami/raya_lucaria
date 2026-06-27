@@ -105,10 +105,12 @@ estudiar despues y no cambian la autoridad del curso. Fit y Reset view solo
 cambian la vista visual del grafo; la lista y los detalles de pagina
 seleccionada siguen disponibles. Abrirlo desde una pagina del curso puede
 enfocar esa pagina para ver primero sus enlaces explicitos. El riel de
-aprendizaje tambien puede mostrar un panel Connections con conteos de enlaces
-que salen de la pagina actual y enlaces que apuntan a ella; esos conteos
-describen relaciones estaticas autoradas, no recomendaciones ni progreso
-personal. Los detalles `Graph state` y share URL pueden estar dentro de un
+aprendizaje tambien puede mostrar conteos de Reading flow y chips compactos de
+paginas conectadas para enlaces que salen de la pagina actual y enlaces que
+apuntan a ella. Esos chips pueden mostrar el tipo de relacion, como `Content`,
+para entender el enlace antes de abrir el grafo. Describen relaciones estaticas
+autoradas, no recomendaciones ni progreso personal. Los detalles `Graph state`
+y share URL pueden estar dentro de un
 disclosure para que el flujo principal del grafo mantenga foco en busqueda,
 canvas y contexto de pagina seleccionada.
 La barra del grafo agrupa controles como `Find pages`, `Relationship filters`,

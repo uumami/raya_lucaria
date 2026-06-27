@@ -4289,6 +4289,24 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   line-height: 1;
   text-transform: uppercase;
 }
+.raya-reading-flow-connection-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.raya-reading-flow-connection-kind {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-text);
+  display: inline-flex;
+  font-size: 0.66rem;
+  font-weight: 850;
+  line-height: 1;
+  padding: 0.16rem 0.34rem;
+}
 .raya-reading-flow-link-title,
 .raya-reading-flow-connection-title {
   font-size: 0.84rem;
