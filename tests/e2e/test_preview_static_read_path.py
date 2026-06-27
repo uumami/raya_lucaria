@@ -14978,10 +14978,69 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         wait_until="networkidle",
                     )
                     _assert_no_horizontal_overflow(page)
+                    visible_controls = page.locator(
+                        ".raya-top-command-bar .raya-command:visible, "
+                        ".raya-top-command-bar .raya-command-search-input:visible, "
+                        ".raya-top-command-bar .raya-command-search-submit:visible"
+                    )
+                    control_boxes = visible_controls.evaluate_all(
+                        """controls => controls.map((control) => {
+                          const rect = control.getBoundingClientRect();
+                          return {
+                            label: control.getAttribute('aria-label') ||
+                              control.textContent.trim(),
+                            width: rect.width,
+                            height: rect.height,
+                          };
+                        })"""
+                    )
+                    assert control_boxes
+                    assert all(box["height"] >= 36 for box in control_boxes)
+                    command_state = page.evaluate(
+                        """() => ({
+                          searchInput: !!document.querySelector(
+                            '.raya-command-search-input'
+                          )?.getClientRects().length,
+                          searchSubmit: !!document.querySelector(
+                            '.raya-command-search-submit'
+                          )?.getClientRects().length,
+                          graphLink: !!document.querySelector('.raya-command-graph')
+                            ?.getClientRects().length,
+                          practiceLink: !!document.querySelector(
+                            '.raya-command-practice'
+                          )?.getClientRects().length,
+                          tasksLink: !!document.querySelector('.raya-command-tasks')
+                            ?.getClientRects().length,
+                          scheduleLink: !!document.querySelector(
+                            '.raya-command-schedule'
+                          )?.getClientRects().length,
+                          mapButton: !!document.querySelector('.raya-command-map')
+                            ?.getClientRects().length,
+                          textSizeButton: !!document.querySelector(
+                            '.raya-text-size-toggle'
+                          )?.getClientRects().length,
+                          fontButton: !!document.querySelector('.raya-font-toggle')
+                            ?.getClientRects().length,
+                          skinButton: !!document.querySelector('[data-raya-skin-toggle]')
+                            ?.getClientRects().length,
+                        })"""
+                    )
+                    assert command_state == {
+                        "searchInput": True,
+                        "searchSubmit": True,
+                        "graphLink": True,
+                        "practiceLink": True,
+                        "tasksLink": True,
+                        "scheduleLink": True,
+                        "mapButton": True,
+                        "textSizeButton": True,
+                        "fontButton": True,
+                        "skinButton": True,
+                    }
                     topbar = _bounding_box(page, ".raya-top-command-bar")
                     first_heading = _bounding_box(page, "#raya-article h1")
-                    assert topbar["height"] <= 180
-                    assert first_heading["y"] <= 360
+                    assert topbar["height"] <= 150
+                    assert first_heading["y"] <= 320
                     assert page.locator(
                         "[data-raya-learning-rail-toggle]"
                     ).first.is_hidden()

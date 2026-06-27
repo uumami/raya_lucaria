@@ -23,7 +23,7 @@ No docs update is required for this slice because it changes presentation densit
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Strengthen the existing mobile reader test**
+- [x] **Step 1: Strengthen the existing mobile reader test**
 
 In `test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading`, replace the loose thresholds:
 
@@ -65,8 +65,6 @@ command_state = page.evaluate(
         ?.getClientRects().length,
       searchSubmit: !!document.querySelector('.raya-command-search-submit')
         ?.getClientRects().length,
-      searchLink: !!document.querySelector('.raya-command-search')
-        ?.getClientRects().length,
       graphLink: !!document.querySelector('.raya-command-graph')
         ?.getClientRects().length,
       practiceLink: !!document.querySelector('.raya-command-practice')
@@ -88,7 +86,6 @@ command_state = page.evaluate(
 assert command_state == {
     "searchInput": True,
     "searchSubmit": True,
-    "searchLink": True,
     "graphLink": True,
     "practiceLink": True,
     "tasksLink": True,
@@ -100,7 +97,7 @@ assert command_state == {
 }
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run:
 
@@ -110,12 +107,14 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_stati
 
 Expected: FAIL because the current mobile top command bar is about `178px` high and the first `h1` starts around `355px`.
 
+Fresh evidence: failed as expected with `assert 177.96875 <= 150`.
+
 ## Task 2: Compact Mobile Reader Chrome CSS
 
 **Files:**
 - Modify: `packages/static/src/raya_static/rendering.py`
 
-- [ ] **Step 1: Tighten the reader-only mobile command bar**
+- [x] **Step 1: Tighten the reader-only mobile command bar**
 
 Inside the existing `@media (max-width: 520px)` block, update only the non-discovery reader command-bar rules:
 
@@ -169,7 +168,7 @@ Inside the existing `@media (max-width: 520px)` block, update only the non-disco
 
 Keep the existing `.raya-command-label` clipping so accessible labels remain the control names.
 
-- [ ] **Step 2: Verify GREEN**
+- [x] **Step 2: Verify GREEN**
 
 Run:
 
@@ -179,12 +178,14 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_stati
 
 Expected: PASS.
 
+Fresh evidence: `1 passed in 5.79s`.
+
 ## Task 3: Broader Verification, Review, Commit
 
 **Files:**
 - Modify: `docs/superpowers/plans/2026-06-27-mobile-reader-chrome-compaction.md`
 
-- [ ] **Step 1: Run focused reader-shell and mobile chrome tests**
+- [x] **Step 1: Run focused reader-shell and mobile chrome tests**
 
 Run:
 
@@ -196,7 +197,10 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: both tests pass.
 
-- [ ] **Step 2: Run render debug**
+Fresh evidence after the review fix: mobile reader, keyboard sequence, and
+discovery command-bar regression tests passed with `3 passed in 21.31s`.
+
+- [x] **Step 2: Run render debug**
 
 Run:
 
@@ -206,7 +210,9 @@ Run:
 
 Expected: `check-render-debug: passed`.
 
-- [ ] **Step 3: Run diff hygiene**
+Fresh evidence after the review fix: `render-debug-report: passed (129 check(s), report=/tmp/raya-render-debug.ICel06/index.html)` and `check-render-debug: passed`.
+
+- [x] **Step 3: Run diff hygiene**
 
 Run:
 
@@ -216,7 +222,9 @@ git diff --check
 
 Expected: no output, exit code 0.
 
-- [ ] **Step 4: Request independent code review**
+Fresh evidence after the review fix: no output, exit code 0.
+
+- [x] **Step 4: Request independent code review**
 
 Use `superpowers:requesting-code-review`. Ask the reviewer to inspect:
 
@@ -225,7 +233,11 @@ Use `superpowers:requesting-code-review`. Ask the reviewer to inspect:
 - no new storage, fetch, external request, or browser-side MathJax dependency;
 - no unintended changes to discovery workspace chrome.
 
-- [ ] **Step 5: Commit**
+Fresh evidence: review found one Important issue where shared mobile padding
+also affected discovery command bars. The CSS now restores shared padding and
+applies compact padding only to non-discovery reader command bars.
+
+- [x] **Step 5: Commit**
 
 Run:
 
@@ -237,3 +249,5 @@ git commit -m "Compact mobile reader chrome"
 ```
 
 Expected: commit succeeds.
+
+Fresh evidence: commit `7e4a852` created with subject `Compact mobile reader chrome`.
