@@ -4552,6 +4552,46 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   display: grid;
   gap: 0.3rem;
 }
+.raya-official-options > li {
+  margin-block: 0.2rem;
+}
+.raya-official-option {
+  background: var(--raya-color-surface);
+  border: 1px solid color-mix(in srgb, var(--raya-official-accent) 32%, var(--raya-color-border));
+  border-radius: 0.45rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.35;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+.raya-official-option:disabled {
+  cursor: default;
+}
+.raya-official-option:focus-visible,
+.raya-official-quiz-reset:focus-visible {
+  outline: 3px solid var(--raya-official-accent);
+  outline-offset: 3px;
+}
+.raya-official-option[data-raya-official-quiz-result="correct"] {
+  background: color-mix(in srgb, var(--raya-color-success) 18%, var(--raya-color-surface));
+  border-color: var(--raya-color-success);
+}
+.raya-official-option[data-raya-official-quiz-result="incorrect"] {
+  background: color-mix(in srgb, var(--raya-color-danger) 14%, var(--raya-color-surface));
+  border-color: var(--raya-color-danger);
+}
+.raya-official-quiz-feedback {
+  font-weight: 800;
+  margin: 0;
+}
+.raya-official-quiz-reset {
+  justify-self: start;
+}
 .raya-official-reveal {
   background: color-mix(in srgb, var(--raya-official-soft) 56%, var(--raya-color-surface));
   border: 1px solid color-mix(in srgb, var(--raya-official-accent) 30%, var(--raya-color-border));

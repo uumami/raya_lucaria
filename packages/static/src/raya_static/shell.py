@@ -1544,6 +1544,67 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function initializeOfficialQuizControls() {
+    const questions = Array.from(document.querySelectorAll("[data-raya-official-quiz-question]"));
+    questions.forEach((question) => {
+      const options = Array.from(
+        question.querySelectorAll("[data-raya-official-quiz-option]")
+      );
+      const reset = question.querySelector("[data-raya-official-quiz-reset]");
+      const feedback = question.querySelector("[data-raya-official-quiz-feedback]");
+      if (options.length === 0 || !reset || !feedback) {
+        return;
+      }
+
+      function setReady() {
+        question.setAttribute("data-raya-official-quiz-state", "ready");
+        options.forEach((option) => {
+          option.disabled = false;
+          option.removeAttribute("aria-pressed");
+          option.removeAttribute("data-raya-official-quiz-selected");
+          option.removeAttribute("data-raya-official-quiz-result");
+        });
+        reset.hidden = true;
+        feedback.textContent = "Choose an option.";
+      }
+
+      options.forEach((option) => {
+        option.addEventListener("click", () => {
+          const isCorrect =
+            option.getAttribute("data-raya-official-quiz-correct") === "true";
+          question.setAttribute("data-raya-official-quiz-state", "answered");
+          options.forEach((candidate) => {
+            const candidateCorrect =
+              candidate.getAttribute("data-raya-official-quiz-correct") === "true";
+            candidate.disabled = true;
+            candidate.setAttribute(
+              "aria-pressed",
+              candidate === option ? "true" : "false"
+            );
+            candidate.removeAttribute("data-raya-official-quiz-selected");
+            candidate.removeAttribute("data-raya-official-quiz-result");
+            if (candidate === option) {
+              candidate.setAttribute("data-raya-official-quiz-selected", "true");
+            }
+            if (candidateCorrect) {
+              candidate.setAttribute("data-raya-official-quiz-result", "correct");
+            }
+          });
+          if (!isCorrect) {
+            option.setAttribute("data-raya-official-quiz-result", "incorrect");
+          }
+          feedback.textContent = isCorrect
+            ? "Correct."
+            : "Try again. The correct option is available below.";
+          reset.hidden = false;
+        });
+      });
+
+      reset.addEventListener("click", setReady);
+      setReady();
+    });
+  }
+
   if (headings.length > 0) {
     updateActiveHeading();
     window.addEventListener("scroll", updateActiveHeading, { passive: true });
@@ -1572,6 +1633,7 @@ _SHELL_JAVASCRIPT = r"""
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
   initializeAssetInspectorControls();
+  initializeOfficialQuizControls();
   syncCourseMapDrawerState();
   syncLearningRailDrawerState();
   root.dataset.rayaShellReady = "true";

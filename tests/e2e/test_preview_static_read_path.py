@@ -347,6 +347,113 @@ def test_preview_reader_official_quiz_renders_page_local_controls(
         handle.close()
 
 
+def test_preview_reader_official_quiz_checks_and_resets_locally(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        shell_js = _fetch_text(f"{handle.base_url}/_raya/render/shell.js")
+        assert "fetch(" not in shell_js
+        assert "XMLHttpRequest" not in shell_js
+        assert "localStorage" not in shell_js
+        assert "sessionStorage" not in shell_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/unit/topic/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    quiz = page.locator("#raya-official-first-topic-quiz")
+                    question = quiz.locator(
+                        "[data-raya-official-quiz-question]"
+                    ).first
+                    wrong = question.locator(
+                        "[data-raya-official-quiz-option]"
+                        '[data-raya-official-quiz-correct="false"]'
+                    ).first
+                    correct = question.locator(
+                        "[data-raya-official-quiz-option]"
+                        '[data-raya-official-quiz-correct="true"]'
+                    ).first
+                    reset = question.locator("[data-raya-official-quiz-reset]")
+                    feedback = question.locator(
+                        "[data-raya-official-quiz-feedback]"
+                    )
+
+                    assert (
+                        question.get_attribute("data-raya-official-quiz-state")
+                        == "ready"
+                    )
+                    wrong.click()
+                    assert (
+                        question.get_attribute("data-raya-official-quiz-state")
+                        == "answered"
+                    )
+                    assert (
+                        wrong.get_attribute("data-raya-official-quiz-result")
+                        == "incorrect"
+                    )
+                    assert (
+                        correct.get_attribute("data-raya-official-quiz-result")
+                        == "correct"
+                    )
+                    assert "Try again" in feedback.inner_text()
+                    assert reset.is_visible()
+
+                    reset.click()
+                    assert (
+                        question.get_attribute("data-raya-official-quiz-state")
+                        == "ready"
+                    )
+                    assert wrong.get_attribute("data-raya-official-quiz-result") is None
+                    assert (
+                        correct.get_attribute("data-raya-official-quiz-result")
+                        is None
+                    )
+
+                    correct.click()
+                    assert (
+                        question.get_attribute("data-raya-official-quiz-state")
+                        == "answered"
+                    )
+                    assert (
+                        correct.get_attribute("data-raya-official-quiz-result")
+                        == "correct"
+                    )
+                    assert "Correct." in feedback.inner_text()
+                    assert requested_urls == []
+                    assert page.evaluate("() => localStorage.length") == 0
+                    assert page.evaluate("() => sessionStorage.length") == 0
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
