@@ -4437,6 +4437,148 @@ def test_render_fixture_graph_focus_mode_refits_selected_context(
     assert probe["overflow"] <= 1
 
 
+def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        base_url = handle.base_url
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    page.wait_for_selector(
+                        "#raya-graph-minimap [data-raya-graph-minimap-node]"
+                    )
+                    before = page.evaluate(
+                        """() => {
+                          const minimap = document.querySelector('#raya-graph-minimap');
+                          const viewport = minimap?.querySelector(
+                            '[data-raya-graph-minimap-viewport]'
+                          );
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            + '.raya-graph-node.is-selected'
+                          );
+                          const box = (node) => {
+                            const rect = node.getBoundingClientRect();
+                            return {
+                              x: rect.x,
+                              y: rect.y,
+                              width: rect.width,
+                              height: rect.height,
+                            };
+                          };
+                          return {
+                            minimap: box(minimap),
+                            viewport: box(viewport),
+                            viewportX: Number(viewport?.getAttribute('x') || '0'),
+                            viewBox: minimap?.getAttribute('viewBox'),
+                            nodes: minimap?.querySelectorAll(
+                              '[data-raya-graph-minimap-node]'
+                            ).length,
+                            edges: minimap?.querySelectorAll(
+                              '[data-raya-graph-minimap-edge]'
+                            ).length,
+                            selected: Boolean(selected),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                    requested_urls.clear()
+                    page.click("#graph-zoom-in")
+                    page.click('[data-raya-graph-pan="right"]')
+                    page.wait_for_function(
+                        """(beforeX) => {
+                          const viewport = document.querySelector(
+                            '#raya-graph-minimap [data-raya-graph-minimap-viewport]'
+                          );
+                          if (!viewport) return false;
+                          const x = Number(viewport.getAttribute('x') || '0');
+                          return Math.abs(x - beforeX) > 0.01;
+                        }""",
+                        arg=before["viewportX"],
+                    )
+                    after = page.evaluate(
+                        """() => {
+                          const viewport = document.querySelector(
+                            '#raya-graph-minimap [data-raya-graph-minimap-viewport]'
+                          );
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            + '.raya-graph-node.is-selected'
+                          );
+                          const rect = viewport.getBoundingClientRect();
+                          return {
+                            viewport: {
+                              x: rect.x,
+                              y: rect.y,
+                              width: rect.width,
+                              height: rect.height,
+                            },
+                            viewportX: Number(viewport.getAttribute('x') || '0'),
+                            selected: Boolean(selected),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert before["minimap"]["width"] >= 120
+    assert before["minimap"]["height"] >= 80
+    assert before["viewBox"]
+    assert before["nodes"] >= 3
+    assert before["edges"] >= 1
+    assert before["viewport"]["width"] > 0
+    assert before["viewport"]["height"] > 0
+    assert before["selected"] is True
+    assert after["selected"] is True
+    assert after["viewportX"] != before["viewportX"]
+    assert after["viewport"] != before["viewport"]
+    assert before["storage"] == [[], []]
+    assert after["storage"] == [[], []]
+    assert before["overflow"] <= 1
+    assert all(url.startswith(f"{base_url}/") for url in requested_urls)
+
+
 def test_render_fixture_graph_search_matches_key_object_text(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

@@ -1298,6 +1298,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-relationship-preview-target-action" in graph_html
     assert "data-raya-graph-relationship-preview-kind-action" in graph_html
     assert "data-raya-graph-edge-hit" in graph_script
+    assert "data-raya-graph-minimap-node" in graph_script
+    assert "data-raya-graph-minimap-edge" in graph_script
+    assert "data-raya-graph-minimap-viewport" in graph_script
+    assert "renderGraphMinimap" in graph_script
     assert "inspectGraphEdge" in graph_script
     assert "clearGraphEdgeInspection" in graph_script
     assert 'class="raya-graph-legend"' in graph_html
@@ -1349,6 +1353,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-detail" in graph_html
     assert "raya-graph-workspace" in graph_html
     assert "raya-graph-map-panel" in graph_html
+    assert 'id="raya-graph-minimap"' in graph_html
+    assert 'aria-label="Graph overview and current viewport"' in graph_html
+    assert "data-raya-graph-minimap-viewport" in graph_html
+    assert "raya-graph-minimap-panel" in stylesheet
+    assert "raya-graph-minimap-viewport" in stylesheet
     assert "data-raya-graph-list-panel" in graph_html
     assert "data-raya-graph-inspector-panel" in graph_html
     assert 'data-raya-graph-toggle-panel="list"' in graph_html
@@ -1643,7 +1652,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-edge-kind-filter" in graph_script
     assert "edge kind" in graph_script.lower()
     assert "Math.random" not in graph_script
-    assert "requestAnimationFrame" not in graph_script
+    assert "refitGraphFocusContext" in graph_script
+    assert "requestAnimationFrame" in graph_script
     assert "is-dimmed" in graph_script
     assert "searchSpotlightIds" in graph_script
     assert "searchContextNodeIds" in graph_script
@@ -1717,6 +1727,8 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     for forbidden_runtime_token in (
         "fetch(",
         "XMLHttpRequest",
+        "localStorage",
+        "sessionStorage",
         "indexedDB",
         "caches.",
         "navigator.sendBeacon",

@@ -3140,6 +3140,49 @@ img {
 .raya-graph-canvas[hidden] {
   display: none;
 }
+.raya-graph-minimap-panel {
+  align-items: start;
+  display: grid;
+  gap: 0.28rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 0.55rem 0 0;
+}
+.raya-graph-minimap-panel h2 {
+  color: var(--raya-color-heading);
+  font-size: 0.76rem;
+  line-height: 1.2;
+  margin: 0;
+}
+.raya-graph-minimap {
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--raya-color-surface) 70%, white);
+  display: block;
+  height: 6.5rem;
+  max-width: min(13.5rem, 100%);
+  width: 13.5rem;
+}
+.raya-graph-minimap-caption {
+  color: var(--raya-color-muted);
+  font-size: 0.72rem;
+  grid-column: 1 / -1;
+  line-height: 1.25;
+  margin: 0;
+}
+.raya-graph-minimap-edge {
+  stroke: color-mix(in srgb, var(--raya-color-muted) 55%, transparent);
+  stroke-width: 1.2;
+}
+.raya-graph-minimap-node {
+  fill: var(--raya-graph-node-color, var(--raya-color-accent));
+  opacity: 0.72;
+}
+.raya-graph-minimap-viewport {
+  fill: color-mix(in srgb, var(--raya-color-accent) 13%, transparent);
+  stroke: var(--raya-color-accent);
+  stroke-width: 2;
+}
 .raya-graph-preview-bubble {
   background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-accent);
@@ -5890,6 +5933,12 @@ mjx-container[display="true"] {
   .raya-graph-canvas {
     height: clamp(22rem, 58vh, 30rem);
   }
+  .raya-graph-minimap-panel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .raya-graph-minimap {
+    width: min(100%, 15rem);
+  }
   .raya-graph-detail-links {
     grid-template-columns: 1fr;
   }
@@ -6206,6 +6255,7 @@ mjx-container[display="true"] {
   .raya-graph-instructions,
   .raya-graph-inspector-panel,
   .raya-graph-canvas,
+  .raya-graph-minimap-panel,
   .raya-graph-panel-header button,
   .raya-search-controls,
   .raya-search-control-panel,

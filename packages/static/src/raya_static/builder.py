@@ -5103,6 +5103,20 @@ def _render_graph_surface(
                 'role="img" aria-label="Course graph" tabindex="0"></svg>'
             ),
             (
+                '<aside class="raya-graph-minimap-panel" aria-label="Graph overview">'
+                "<h2>Overview</h2>"
+                '<svg id="raya-graph-minimap" class="raya-graph-minimap" '
+                'role="img" aria-label="Graph overview and current viewport" '
+                'focusable="false">'
+                '<rect class="raya-graph-minimap-viewport" '
+                'data-raya-graph-minimap-viewport hidden></rect>'
+                "</svg>"
+                '<p class="raya-graph-minimap-caption">'
+                "The rectangle shows the visible canvas area."
+                "</p>"
+                "</aside>"
+            ),
+            (
                 '<details class="raya-graph-guide" data-raya-graph-guide>'
                 "<summary>Graph quick guide</summary>"
                 '<div class="raya-graph-guide-cards">'

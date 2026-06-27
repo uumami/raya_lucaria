@@ -21,6 +21,7 @@ _GRAPH_JAVASCRIPT = r"""
   const root = document.querySelector("[data-raya-graph-page]");
   const dataEl = document.getElementById("raya-graph-data");
   const canvas = document.getElementById("raya-graph-canvas");
+  const minimap = document.getElementById("raya-graph-minimap");
   const list = document.getElementById("raya-graph-list");
   const search = document.getElementById("graph-search");
   const layout = document.getElementById("graph-layout");
@@ -1340,11 +1341,78 @@ _GRAPH_JAVASCRIPT = r"""
     return `${box.x} ${box.y} ${box.width} ${box.height}`;
   }
 
+  function clearMinimap() {
+    if (minimap) minimap.replaceChildren();
+  }
+
+  function minimapPoint(point) {
+    if (!fullViewBox) return { x: 0, y: 0 };
+    const width = 216;
+    const height = 104;
+    return {
+      x: ((point.x - fullViewBox.x) / fullViewBox.width) * width,
+      y: ((point.y - fullViewBox.y) / fullViewBox.height) * height,
+    };
+  }
+
+  function renderGraphMinimap(activeNodes = lastActiveNodes, activeEdges = lastActiveEdges) {
+    if (!minimap || !fullViewBox || !graphViewBox) return;
+    const width = 216;
+    const height = 104;
+    minimap.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    minimap.replaceChildren();
+    activeEdges.forEach((edge) => {
+      const from = latestRenderedPositions.get(edge.from);
+      const to = latestRenderedPositions.get(edge.to);
+      if (!from || !to) return;
+      const start = minimapPoint(from);
+      const end = minimapPoint(to);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("class", "raya-graph-minimap-edge");
+      line.setAttribute("data-raya-graph-minimap-edge", "");
+      line.setAttribute("x1", String(start.x));
+      line.setAttribute("y1", String(start.y));
+      line.setAttribute("x2", String(end.x));
+      line.setAttribute("y2", String(end.y));
+      minimap.appendChild(line);
+    });
+    activeNodes.forEach((node) => {
+      const point = latestRenderedPositions.get(node.id);
+      if (!point) return;
+      const mapped = minimapPoint(point);
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("class", "raya-graph-minimap-node");
+      circle.setAttribute("data-raya-graph-minimap-node", node.id);
+      circle.setAttribute("cx", String(mapped.x));
+      circle.setAttribute("cy", String(mapped.y));
+      circle.setAttribute("r", node.id === selectedId ? "3.4" : "2.4");
+      circle.style.setProperty(
+        "--raya-graph-node-color",
+        `var(--raya-graph-group-${groupColorIndex(node.group || "")})`
+      );
+      minimap.appendChild(circle);
+    });
+    const topLeft = minimapPoint({ x: graphViewBox.x, y: graphViewBox.y });
+    const bottomRight = minimapPoint({
+      x: graphViewBox.x + graphViewBox.width,
+      y: graphViewBox.y + graphViewBox.height,
+    });
+    const viewport = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    viewport.setAttribute("class", "raya-graph-minimap-viewport");
+    viewport.setAttribute("data-raya-graph-minimap-viewport", "");
+    viewport.setAttribute("x", String(Math.min(topLeft.x, bottomRight.x)));
+    viewport.setAttribute("y", String(Math.min(topLeft.y, bottomRight.y)));
+    viewport.setAttribute("width", String(Math.abs(bottomRight.x - topLeft.x)));
+    viewport.setAttribute("height", String(Math.abs(bottomRight.y - topLeft.y)));
+    minimap.appendChild(viewport);
+  }
+
   function setGraphViewBox(box) {
     graphViewBox = box;
     if (canvas && box) {
       canvas.setAttribute("viewBox", viewBoxString(box));
       placeVisibleGraphNodeLabels(box);
+      renderGraphMinimap();
     }
   }
 
@@ -3282,6 +3350,7 @@ _GRAPH_JAVASCRIPT = r"""
       pendingInitialPageFit = false;
       latestRenderedPositions = new Map();
       latestRenderedEdges = [];
+      clearMinimap();
       syncGraphArrangementStatus();
       hideGraphPreviewBubble();
       setGraphViewportControlsEnabled(false);
@@ -3469,6 +3538,7 @@ _GRAPH_JAVASCRIPT = r"""
       placeGraphNodeLabel(group, point, graphViewBox || nextFullViewBox);
     });
     placeVisibleGraphNodeLabels();
+    renderGraphMinimap(activeNodes, activeEdges);
     if (activeResultId) setActiveResult(activeResultId, { scroll: false });
     updateInspectionDom();
     setFitSelectionEnabled();
