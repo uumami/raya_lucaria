@@ -9388,7 +9388,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 10
+                        assert state["count"] == 11
                         assert [group["kind"] for group in state["groups"]] == [
                             "discovery",
                             "layout",
@@ -9419,13 +9419,14 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["groups"][2]["classes"] == [
                             "raya-command-size",
                             "raya-command-font",
+                            "raya-command-skin",
                         ]
                         for group in state["groups"]:
                             assert group["box"]["left"] >= 0
                             assert group["box"]["right"] <= state["viewportWidth"]
                             assert group["box"]["width"] > 0
                         assert state["visibleCount"] == (
-                            9 if viewport["width"] >= 1280 else 7
+                            10 if viewport["width"] >= 1280 else 8
                         )
                         assert all(height >= 36 for height in state["minHeights"])
                         assert state["topBarWidth"] <= state["viewportWidth"]
@@ -9586,6 +9587,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                     {"width": 1100, "height": 900},
                     {"width": 960, "height": 900},
                     {"width": 1024, "height": 900},
+                    {"width": 1920, "height": 900},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
@@ -9622,6 +9624,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const article = document.querySelector('#raya-article');
                                   const rail = document.querySelector('#raya-learning-rail');
                                   const commandBar = document.querySelector('.raya-top-command-bar');
+                                  const commandBarInner = document.querySelector('.raya-top-command-bar-inner');
                                   const commands = Array.from(document.querySelectorAll('.raya-command'));
                                   const visibleCommands = commands.filter(
                                     (button) => button.getClientRects().length > 0
@@ -9629,6 +9632,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
+                                    commandBarInnerWidth: commandBarInner.getBoundingClientRect().width,
                                     mapWidth: map.getBoundingClientRect().width,
                                     articleWidth: article.getBoundingClientRect().width,
                                     railWidth: rail.getBoundingClientRect().width,
@@ -9648,6 +9652,15 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert 188 <= metrics["mapWidth"] <= 250
                             assert metrics["articleWidth"] >= 760
                             assert 220 <= metrics["railWidth"] <= 285
+                            if viewport["width"] >= 1900:
+                                assert (
+                                    metrics["shellWidth"]
+                                    >= viewport["width"] - 32
+                                )
+                                assert (
+                                    metrics["commandBarInnerWidth"]
+                                    >= viewport["width"] - 32
+                                )
                             assert metrics["commandBarHeight"] <= 96
                             assert all(
                                 36 <= height <= 48

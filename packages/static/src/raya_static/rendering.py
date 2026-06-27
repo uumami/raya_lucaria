@@ -689,8 +689,9 @@ img {
   max-width: 110rem;
   padding: var(--raya-space-page);
 }
+.raya-top-command-bar-inner,
 .raya-learning-shell {
-  max-width: 116rem;
+  max-width: 128rem;
 }
 .raya-top-command-bar-inner {
   align-items: center;
