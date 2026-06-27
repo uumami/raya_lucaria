@@ -5084,6 +5084,8 @@ def _render_graph_surface(
                 "Details</button>"
                 '<button type="button" data-raya-graph-orientation-neighborhood-toggle '
                 "hidden>Focus neighborhood</button>"
+                '<button type="button" data-raya-graph-orientation-fit-selection '
+                "hidden disabled>Fit selection</button>"
                 '<button type="button" data-raya-graph-orientation-clear hidden>'
                 "Clear selection</button>"
                 "</p>"

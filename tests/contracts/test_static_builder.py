@@ -1249,6 +1249,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-orientation-open" in graph_html
     assert "data-raya-graph-orientation-details" in graph_html
     assert "data-raya-graph-orientation-neighborhood-toggle" in graph_html
+    assert "data-raya-graph-orientation-fit-selection" in graph_html
+    assert (
+        '<button type="button" data-raya-graph-orientation-fit-selection hidden '
+        "disabled>Fit selection</button>"
+    ) in graph_html
     assert "data-raya-graph-orientation-clear" in graph_html
     assert "data-raya-graph-reading-keys" in graph_html
     for label in ("pages", "arrows", "selection", "filters"):
@@ -1306,6 +1311,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "centerGraphViewFromMinimapEvent" in graph_script
     assert "minimap.addEventListener(\"click\"" in graph_script
     assert "minimap.addEventListener(\"keydown\"" in graph_script
+    assert "orientationFitSelection" in graph_script
+    assert (
+        'orientationFitSelection.addEventListener("click", '
+        "fitSelectedGraphContext)"
+    ) in graph_script
     assert "inspectGraphEdge" in graph_script
     assert "clearGraphEdgeInspection" in graph_script
     assert 'class="raya-graph-legend"' in graph_html

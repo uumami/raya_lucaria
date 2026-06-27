@@ -171,6 +171,9 @@ _GRAPH_JAVASCRIPT = r"""
   const orientationNeighborhoodToggle = document.querySelector(
     "[data-raya-graph-orientation-neighborhood-toggle]"
   );
+  const orientationFitSelection = document.querySelector(
+    "[data-raya-graph-orientation-fit-selection]"
+  );
   const orientationClear = document.querySelector("[data-raya-graph-orientation-clear]");
   const arrangementStatus = document.querySelector("[data-raya-graph-arrangement-status]");
 
@@ -1528,14 +1531,17 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function setFitSelectionEnabled() {
-    if (!fitSelection) return;
     const enabled = Boolean(
       selectedId &&
       fullViewBox &&
       root.getAttribute("data-raya-graph-layout") !== "list" &&
       latestRenderedPositions.has(selectedId)
     );
-    fitSelection.disabled = !enabled;
+    if (fitSelection) fitSelection.disabled = !enabled;
+    if (orientationFitSelection) {
+      orientationFitSelection.hidden = !enabled;
+      orientationFitSelection.disabled = !enabled;
+    }
   }
 
   function constrainedZoomBox(factor, anchor = null) {
@@ -3675,6 +3681,9 @@ _GRAPH_JAVASCRIPT = r"""
   }
   if (fitSelection) {
     fitSelection.addEventListener("click", fitSelectedGraphContext);
+  }
+  if (orientationFitSelection) {
+    orientationFitSelection.addEventListener("click", fitSelectedGraphContext);
   }
   if (zoomIn) zoomIn.addEventListener("click", () => zoomGraphView(0.82));
   if (zoomOut) zoomOut.addEventListener("click", () => zoomGraphView(1.22));

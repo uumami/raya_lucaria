@@ -4437,6 +4437,184 @@ def test_render_fixture_graph_focus_mode_refits_selected_context(
     assert probe["overflow"] <= 1
 
 
+def test_render_fixture_graph_orientation_fit_selection_frames_context(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    page.wait_for_selector(
+                        "[data-raya-graph-detail-panel]:not([hidden])"
+                    )
+                    orientation_fit = page.locator(
+                        "[data-raya-graph-orientation-fit-selection]"
+                    )
+                    assert orientation_fit.is_visible()
+                    assert orientation_fit.is_enabled()
+                    assert (
+                        "Projection Residuals"
+                        in page.locator("[data-raya-graph-detail-title]").inner_text()
+                    )
+                    page.fill("#graph-search", "projection")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-orientation-query]')
+                          ?.textContent === 'projection'"""
+                    )
+                    stable_url = page.url
+                    before = page.locator("#raya-graph-canvas").get_attribute(
+                        "viewBox"
+                    )
+                    page.click("#graph-zoom-in")
+                    page.click('[data-raya-graph-pan="right"]')
+                    page.wait_for_function(
+                        """(previousViewBox) => document
+                          .querySelector('#raya-graph-canvas')
+                          ?.getAttribute('viewBox') !== previousViewBox""",
+                        arg=before,
+                    )
+                    drifted = page.locator("#raya-graph-canvas").get_attribute(
+                        "viewBox"
+                    )
+                    orientation_fit.click()
+                    page.wait_for_function(
+                        """(previousViewBox) => document
+                          .querySelector('#raya-graph-canvas')
+                          ?.getAttribute('viewBox') !== previousViewBox""",
+                        arg=drifted,
+                    )
+                    fitted = page.locator("#raya-graph-canvas").get_attribute(
+                        "viewBox"
+                    )
+                    context = _visible_graph_context(
+                        page, "reader-ux", {"width": 1440, "height": 950}
+                    )
+                    state = page.evaluate(
+                        """() => ({
+                          detailVisible: !document
+                            .querySelector('[data-raya-graph-detail-panel]')
+                            ?.hasAttribute('hidden'),
+                          detailTitle: document
+                            .querySelector('[data-raya-graph-detail-title]')
+                            ?.textContent.trim(),
+                          search: document.querySelector('#graph-search')?.value,
+                          selected: document
+                            .querySelector('[data-raya-graph-orientation-selected]')
+                            ?.textContent.trim(),
+                          storage: [
+                            Object.keys(localStorage),
+                            Object.keys(sessionStorage),
+                          ],
+                          overflow: Math.ceil(
+                            document.documentElement.scrollWidth - window.innerWidth
+                          ),
+                        })"""
+                    )
+                    after_fit_url = page.url
+                    page.select_option("#graph-layout", "list")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-layout') === 'list'"""
+                    )
+                    list_state = page.evaluate(
+                        """() => {
+                          const action = document.querySelector(
+                            '[data-raya-graph-orientation-fit-selection]'
+                          );
+                          return {
+                            hidden: action?.hasAttribute('hidden'),
+                            disabled: action?.hasAttribute('disabled'),
+                            selected: document
+                              .querySelector('[data-raya-graph-orientation-selected]')
+                              ?.textContent.trim(),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                          };
+                        }"""
+                    )
+                    page.select_option("#graph-layout", "connections")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-layout') === 'connections'"""
+                    )
+                    page.click("[data-raya-graph-orientation-clear]")
+                    clear_state = page.evaluate(
+                        """() => {
+                          const action = document.querySelector(
+                            '[data-raya-graph-orientation-fit-selection]'
+                          );
+                          return {
+                            hidden: action?.hasAttribute('hidden'),
+                            disabled: action?.hasAttribute('disabled'),
+                            selected: document
+                              .querySelector('[data-raya-graph-orientation-selected]')
+                              ?.textContent.trim(),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert fitted != drifted
+    assert fitted != before
+    assert context["selectedVisible"]
+    assert context["activeEdgeVisible"]
+    assert state["detailVisible"] is True
+    assert "Projection Residuals" in state["detailTitle"]
+    assert state["selected"] == "Projection Residuals"
+    assert state["search"] == "projection"
+    assert after_fit_url == stable_url
+    assert state["storage"] == [[], []]
+    assert state["overflow"] <= 1
+    assert list_state["hidden"] is True
+    assert list_state["disabled"] is True
+    assert list_state["selected"] == "Projection Residuals"
+    assert list_state["storage"] == [[], []]
+    assert clear_state["hidden"] is True
+    assert clear_state["disabled"] is True
+    assert clear_state["selected"] == "None"
+    assert clear_state["storage"] == [[], []]
+
+
 def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

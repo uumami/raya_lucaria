@@ -16,11 +16,11 @@
 - Modify: `tests/contracts/test_static_builder.py`
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add contract assertions**
+- [x] **Step 1: Add contract assertions**
 
 In `tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph_surface`, assert that generated graph HTML contains `data-raya-graph-orientation-fit-selection`, and that generated graph JavaScript contains `orientationFitSelection` and `orientationFitSelection.addEventListener("click", fitSelectedGraphContext)`.
 
-- [ ] **Step 2: Add browser behavior test**
+- [x] **Step 2: Add browser behavior test**
 
 In `tests/e2e/test_preview_static_read_path.py`, add `test_render_fixture_graph_orientation_fit_selection_frames_context`. The test opens `_raya/graph/index.html?page=reader-ux`, verifies the orientation action is visible and enabled, enters a search query that still matches the selected page, moves the graph viewport away with zoom/pan controls, clicks the orientation action, and asserts:
 
@@ -32,7 +32,7 @@ In `tests/e2e/test_preview_static_read_path.py`, add `test_render_fixture_graph_
 - the page URL is unchanged;
 - `localStorage` and `sessionStorage` keys remain empty.
 
-- [ ] **Step 3: Verify RED**
+- [x] **Step 3: Verify RED**
 
 Run:
 
@@ -49,7 +49,7 @@ Expected: fail because the orientation fit-selection button and JavaScript bindi
 **Files:**
 - Modify: `packages/static/src/raya_static/builder.py`
 
-- [ ] **Step 1: Add the orientation action**
+- [x] **Step 1: Add the orientation action**
 
 Add this button to the existing `raya-graph-orientation-actions` markup after `Focus neighborhood` and before `Clear selection`:
 
@@ -57,7 +57,7 @@ Add this button to the existing `raya-graph-orientation-actions` markup after `F
 <button type="button" data-raya-graph-orientation-fit-selection hidden disabled>Fit selection</button>
 ```
 
-- [ ] **Step 2: Run the contract test**
+- [x] **Step 2: Run the contract test**
 
 Run:
 
@@ -73,7 +73,7 @@ Expected: still fail on missing JavaScript binding until Task 3 is complete.
 **Files:**
 - Modify: `packages/static/src/raya_static/graph.py`
 
-- [ ] **Step 1: Select the orientation action**
+- [x] **Step 1: Select the orientation action**
 
 Add:
 
@@ -83,11 +83,11 @@ const orientationFitSelection = document.querySelector(
 );
 ```
 
-- [ ] **Step 2: Share the fit-selection availability state**
+- [x] **Step 2: Share the fit-selection availability state**
 
 Update `setFitSelectionEnabled()` so it computes `enabled` once, applies it to the toolbar button when present, and applies `hidden` plus `disabled` to `orientationFitSelection`.
 
-- [ ] **Step 3: Reuse the existing viewport behavior**
+- [x] **Step 3: Reuse the existing viewport behavior**
 
 Add:
 
@@ -97,7 +97,7 @@ if (orientationFitSelection) {
 }
 ```
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run:
 
@@ -114,7 +114,7 @@ Expected: pass.
 **Files:**
 - Inspect only unless failures require fixes.
 
-- [ ] **Step 1: Run graph-focused tests**
+- [x] **Step 1: Run graph-focused tests**
 
 Run:
 
@@ -128,7 +128,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: pass.
 
-- [ ] **Step 2: Run render-debug gate**
+- [x] **Step 2: Run render-debug gate**
 
 Run:
 
@@ -143,15 +143,15 @@ Expected: pass with no raw TeX leakage, no external renderer requests, no graph 
 **Files:**
 - Inspect diff and review output.
 
-- [ ] **Step 1: Request independent review**
+- [x] **Step 1: Request independent review**
 
 Ask a fresh subagent to review the diff for UX regressions, state persistence mistakes, foundation-contract drift, missing tests, and static deployment parity.
 
-- [ ] **Step 2: Fix confirmed issues**
+- [x] **Step 2: Fix confirmed issues**
 
 For any confirmed issue, write or update the failing test first, verify RED, implement the smallest fix, and rerun the focused gate.
 
-- [ ] **Step 3: Final verification**
+- [x] **Step 3: Final verification**
 
 Run:
 

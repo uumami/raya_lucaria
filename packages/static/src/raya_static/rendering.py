@@ -1066,9 +1066,15 @@ img {
 }
 .raya-graph-orientation-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.24rem;
   margin: 0;
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+.raya-graph-orientation-actions > * {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .raya-graph-reading-keys {
   display: grid;
