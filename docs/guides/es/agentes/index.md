@@ -268,10 +268,12 @@ implicar recomendacion, progreso, ranking, importancia, dominio o autoridad.
 Los conteos del riel Connections deben venir solo de contexto
 explicito del grafo. Los enlaces de foco al grafo en el riel deben apuntar solo
 a prerequisitos explicitos o contexto de grafo entrante/saliente.
-Zoom in, Zoom out, Fit, Fit selection y Reset view pueden cambiar el `viewBox`
-SVG; no deben pedir datos del grafo, persistir estado del grafo, limpiar
-detalles de pagina seleccionada ni quedar habilitados cuando el grafo SVG esta
-oculto por el layout de lista. Para el ajuste de pagina seleccionada, verifica
+Zoom in, Zoom out, Fit, Fit selection, Reset view y la activacion del minimapa
+pueden cambiar el `viewBox` SVG; no deben pedir datos del grafo, persistir
+estado del grafo, limpiar detalles de pagina seleccionada ni quedar habilitados
+cuando el grafo SVG esta oculto por el layout de lista. Cuando cambie la
+activacion del minimapa, verifica que click y teclado muevan el viewport del
+canvas principal sin limpiar seleccion, filtros, URL ni storage. Para el ajuste de pagina seleccionada, verifica
 que `Fit selection` este deshabilitado sin pagina seleccionada y en layout de
 lista, se habilite despues de seleccionar una pagina, mantenga intactos
 detalles de pagina seleccionada, busqueda, filtros y estado de URL, encuadre la

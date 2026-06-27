@@ -144,9 +144,9 @@ position are readability cues for current graph structure only; they are not
 progress, authority, recommendation rank, importance rank, mastery, or
 completion signals. The orientation band is structural graph context only and
 must not become progress, mastery, ranking, recommendation, or personalization.
-Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view
+Pan, Zoom in, Zoom out, Fit, Fit selection, Reset view, and minimap activation
 change only the visual graph viewport; they must not clear search, filters,
-selected-page details, or authored graph data. Fit selection may frame the
+selected-page details, URL state, storage, or authored graph data. Fit selection may frame the
 selected page and visible directly connected graph context, and may scroll the
 graph canvas into view as a local viewport affordance, but it must not change
 graph data, selection, filters, URL state, storage, progress, ranking,

@@ -304,7 +304,9 @@ puede ocultar labels de bajo contexto hasta que una seleccion, busqueda,
 hover o foco de teclado los vuelva utiles. Los detalles de debug `Graph state`
 pueden estar cerrados por defecto en un disclosure nativo. Estudiantes tambien pueden usar
 Zoom in, Zoom out, Fit y Reset view para inspeccionar zonas visuales densas del
-grafo sin cambiar datos del curso ni estado guardado. Tratalo como estructura
+grafo sin cambiar datos del curso ni estado guardado. Si el minimapa esta
+visible, activarlo puede centrar el viewport SVG del grafo en la posicion
+general elegida sin cambiar seleccion, filtros, URL ni storage. Tratalo como estructura
 del curso desde datos actuales de artifact, no como analiticas,
 recomendaciones, dominio o progreso personal. Los links generados de pagina
 pueden abrir el grafo enfocado en la pagina actual.

@@ -5106,8 +5106,9 @@ def _render_graph_surface(
                 '<aside class="raya-graph-minimap-panel" aria-label="Graph overview">'
                 "<h2>Overview</h2>"
                 '<svg id="raya-graph-minimap" class="raya-graph-minimap" '
-                'role="img" aria-label="Graph overview and current viewport" '
-                'focusable="false">'
+                'role="button" '
+                'aria-label="Graph overview and current viewport; activate to center the graph view" '
+                'aria-disabled="false" tabindex="0" focusable="true">'
                 '<rect class="raya-graph-minimap-viewport" '
                 'data-raya-graph-minimap-viewport hidden></rect>'
                 "</svg>"

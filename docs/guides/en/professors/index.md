@@ -285,6 +285,9 @@ The generated Course graph can help students inspect explicit page
 relationships through local fuzzy search, selected-page details, and an expanded
 graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to
 inspect dense visual graph areas without changing course data or saved state.
+If a minimap is visible, activating it may center the SVG graph viewport on the
+chosen overview position without changing selection, filters, URL state, or
+storage.
 When the graph workspace has focus and students are not typing in a field, `/`
 focuses graph search, `F` fits the current graph view, and `R` resets graph
 filters and selection.

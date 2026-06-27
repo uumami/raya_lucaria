@@ -1302,6 +1302,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-minimap-edge" in graph_script
     assert "data-raya-graph-minimap-viewport" in graph_script
     assert "renderGraphMinimap" in graph_script
+    assert "setMinimapEnabled" in graph_script
+    assert "centerGraphViewFromMinimapEvent" in graph_script
+    assert "minimap.addEventListener(\"click\"" in graph_script
+    assert "minimap.addEventListener(\"keydown\"" in graph_script
     assert "inspectGraphEdge" in graph_script
     assert "clearGraphEdgeInspection" in graph_script
     assert 'class="raya-graph-legend"' in graph_html
@@ -1354,10 +1358,18 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-graph-workspace" in graph_html
     assert "raya-graph-map-panel" in graph_html
     assert 'id="raya-graph-minimap"' in graph_html
-    assert 'aria-label="Graph overview and current viewport"' in graph_html
+    assert (
+        'aria-label="Graph overview and current viewport; activate to center the graph view"'
+        in graph_html
+    )
+    assert 'role="button"' in graph_html
+    assert 'aria-disabled="false"' in graph_html
+    assert 'tabindex="0"' in graph_html
     assert "data-raya-graph-minimap-viewport" in graph_html
     assert "raya-graph-minimap-panel" in stylesheet
     assert "raya-graph-minimap-viewport" in stylesheet
+    assert "cursor: crosshair" in stylesheet
+    assert '.raya-graph-minimap[aria-disabled="true"]' in stylesheet
     assert "data-raya-graph-list-panel" in graph_html
     assert "data-raya-graph-inspector-panel" in graph_html
     assert 'data-raya-graph-toggle-panel="list"' in graph_html

@@ -245,10 +245,12 @@ Graph layout positions are readability cues over explicit generated graph data.
 relationships and the current visible edge set;
 they must not come from external graph libraries or imply recommendation,
 progress, ranking, importance, mastery, or authority.
-Pan, Zoom in, Zoom out, Fit, Fit selection, and Reset view may change the SVG
+Pan, Zoom in, Zoom out, Fit, Fit selection, Reset view, and minimap activation may change the SVG
 `viewBox`; they must not fetch graph data, persist graph state, clear
 selected-page details, or remain enabled when the SVG graph is hidden by list
-layout. For selected-page fit behavior, verify that `Fit selection` is disabled
+layout. When minimap activation changes, verify click and keyboard activation
+move the main canvas viewport without clearing selection, filters, URL state, or
+storage. For selected-page fit behavior, verify that `Fit selection` is disabled
 without a selected page and in list layout, becomes enabled after page
 selection, keeps selected-page details/search/filter/URL state intact, frames
 the selected page plus at least one visible connected edge when such an edge

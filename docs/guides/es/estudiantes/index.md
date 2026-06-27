@@ -101,9 +101,11 @@ Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada, Zoom in, Zoom out, Fit,
 Reset view y workspace expandido del grafo son herramientas locales de lectura
 sobre la estructura actual del curso. No guardan progreso, no recomiendan que
-estudiar despues y no cambian la autoridad del curso. Fit y Reset view solo
-cambian la vista visual del grafo; la lista y los detalles de pagina
-seleccionada siguen disponibles. Abrirlo desde una pagina del curso puede
+estudiar despues y no cambian la autoridad del curso. Fit, Reset view y la
+activacion del minimapa solo cambian la vista visual del grafo; la lista y los
+detalles de pagina seleccionada siguen disponibles. Hacer click en el minimapa
+o enfocarlo y presionar Enter o Space centra el canvas en esa posicion general
+sin guardar estado del grafo. Abrirlo desde una pagina del curso puede
 enfocar esa pagina para ver primero sus enlaces explicitos. El riel de
 aprendizaje tambien puede mostrar conteos de Reading flow y chips compactos de
 paginas conectadas para enlaces que salen de la pagina actual y enlaces que

@@ -95,8 +95,9 @@ Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, Zoom in, Zoom out, Fit, Reset view, and expanded
 graph workspace are local reading tools over current course structure. They do
 not store progress, recommend what to study next, or change course authority.
-Fit and Reset view only change the visual graph view; the list and selected-page
-details stay available. Opening it from a course page may focus that page so you
+Fit, Reset view, and minimap activation only change the visual graph view; the list and selected-page
+details stay available. Clicking the minimap, or focusing it and pressing Enter
+or Space, centers the canvas on that overview position without saving graph state. Opening it from a course page may focus that page so you
 can see its explicit links first. The learning rail may also show Reading flow
 counts and compact connected-page chips for links from the current page and
 links into it. Those chips can show the relationship kind, such as `Content`,

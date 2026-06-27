@@ -4531,6 +4531,7 @@ def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:
                     )
                     after = page.evaluate(
                         """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
                           const viewport = document.querySelector(
                             '#raya-graph-minimap [data-raya-graph-minimap-viewport]'
                           );
@@ -4546,7 +4547,116 @@ def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:
                               width: rect.width,
                               height: rect.height,
                             },
+                            canvasViewBox: canvas?.getAttribute('viewBox'),
                             viewportX: Number(viewport.getAttribute('x') || '0'),
+                            selected: Boolean(selected),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                          };
+                        }"""
+                    )
+                    minimap = page.locator("#raya-graph-minimap")
+                    minimap.scroll_into_view_if_needed()
+                    minimap_box = minimap.bounding_box()
+                    assert minimap_box is not None
+                    requested_urls.clear()
+                    minimap.click(
+                        position={
+                            "x": minimap_box["width"] * 0.18,
+                            "y": minimap_box["height"] * 0.5,
+                        }
+                    )
+                    page.wait_for_function(
+                        """(previousViewBox) => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          return canvas?.getAttribute('viewBox') !== previousViewBox;
+                        }""",
+                        arg=after["canvasViewBox"],
+                    )
+                    clicked = page.evaluate(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const minimap = document.querySelector('#raya-graph-minimap');
+                          const viewport = minimap?.querySelector(
+                            '[data-raya-graph-minimap-viewport]'
+                          );
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            + '.raya-graph-node.is-selected'
+                          );
+                          return {
+                            canvasViewBox: canvas?.getAttribute('viewBox'),
+                            viewportX: Number(viewport?.getAttribute('x') || '0'),
+                            selected: Boolean(selected),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                            role: minimap?.getAttribute('role'),
+                            tabIndex: minimap?.getAttribute('tabindex'),
+                            label: minimap?.getAttribute('aria-label'),
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                    requested_urls.clear()
+                    page.click('[data-raya-graph-pan="right"]')
+                    keyboard_before = page.locator("#raya-graph-canvas").get_attribute(
+                        "viewBox"
+                    )
+                    minimap.focus()
+                    page.keyboard.press("Enter")
+                    page.wait_for_function(
+                        """(previousViewBox) => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          return canvas?.getAttribute('viewBox') !== previousViewBox;
+                        }""",
+                        arg=keyboard_before,
+                    )
+                    keyboarded = page.evaluate(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const minimap = document.querySelector('#raya-graph-minimap');
+                          const viewport = minimap?.querySelector(
+                            '[data-raya-graph-minimap-viewport]'
+                          );
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                            + '.raya-graph-node.is-selected'
+                          );
+                          return {
+                            canvasViewBox: canvas?.getAttribute('viewBox'),
+                            viewportX: Number(viewport?.getAttribute('x') || '0'),
+                            selected: Boolean(selected),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                          };
+                        }"""
+                    )
+                    page.select_option("#graph-layout", "list")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-layout') === 'list'"""
+                    )
+                    list_state = page.evaluate(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const minimap = document.querySelector('#raya-graph-minimap');
+                          const selected = document.querySelector(
+                            '#raya-graph-list [data-raya-graph-node="reader-ux"].is-active'
+                          );
+                          return {
+                            canvasHidden: canvas?.hasAttribute('hidden'),
+                            minimapChildren: minimap?.children.length,
+                            ariaDisabled: minimap?.getAttribute('aria-disabled'),
+                            tabIndex: minimap?.getAttribute('tabindex'),
                             selected: Boolean(selected),
                             storage: [
                               Object.keys(localStorage),
@@ -4573,9 +4683,27 @@ def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:
     assert after["selected"] is True
     assert after["viewportX"] != before["viewportX"]
     assert after["viewport"] != before["viewport"]
+    assert clicked["selected"] is True
+    assert clicked["canvasViewBox"] != after["canvasViewBox"]
+    assert clicked["viewportX"] != after["viewportX"]
+    assert clicked["role"] == "button"
+    assert clicked["tabIndex"] == "0"
+    assert "center the graph view" in clicked["label"]
+    assert keyboarded["selected"] is True
+    assert keyboarded["canvasViewBox"] != keyboard_before
+    assert keyboarded["viewportX"] != clicked["viewportX"]
+    assert list_state["canvasHidden"] is True
+    assert list_state["minimapChildren"] == 0
+    assert list_state["ariaDisabled"] == "true"
+    assert list_state["tabIndex"] == "-1"
+    assert list_state["selected"] is True
     assert before["storage"] == [[], []]
     assert after["storage"] == [[], []]
+    assert clicked["storage"] == [[], []]
+    assert keyboarded["storage"] == [[], []]
+    assert list_state["storage"] == [[], []]
     assert before["overflow"] <= 1
+    assert clicked["overflow"] <= 1
     assert all(url.startswith(f"{base_url}/") for url in requested_urls)
 
 

@@ -1345,6 +1345,12 @@ _GRAPH_JAVASCRIPT = r"""
     if (minimap) minimap.replaceChildren();
   }
 
+  function setMinimapEnabled(enabled) {
+    if (!minimap) return;
+    minimap.setAttribute("aria-disabled", enabled ? "false" : "true");
+    minimap.setAttribute("tabindex", enabled ? "0" : "-1");
+  }
+
   function minimapPoint(point) {
     if (!fullViewBox) return { x: 0, y: 0 };
     const width = 216;
@@ -1414,6 +1420,21 @@ _GRAPH_JAVASCRIPT = r"""
       placeVisibleGraphNodeLabels(box);
       renderGraphMinimap();
     }
+  }
+
+  function clampGraphViewBox(box) {
+    if (!fullViewBox) return box;
+    const width = Math.min(box.width, fullViewBox.width);
+    const height = Math.min(box.height, fullViewBox.height);
+    const x = Math.max(
+      fullViewBox.x,
+      Math.min(fullViewBox.x + fullViewBox.width - width, box.x)
+    );
+    const y = Math.max(
+      fullViewBox.y,
+      Math.min(fullViewBox.y + fullViewBox.height - height, box.y)
+    );
+    return { x, y, width, height };
   }
 
   function syncGraphArrangementStatus() {
@@ -1797,12 +1818,38 @@ _GRAPH_JAVASCRIPT = r"""
     if (!graphViewBox || !fullViewBox || root.getAttribute("data-raya-graph-layout") === "list") {
       return;
     }
-    setGraphViewBox({
+    setGraphViewBox(clampGraphViewBox({
       x: graphViewBox.x + graphViewBox.width * dxRatio,
       y: graphViewBox.y + graphViewBox.height * dyRatio,
       width: graphViewBox.width,
       height: graphViewBox.height,
-    });
+    }));
+  }
+
+  function centerGraphViewFromMinimapEvent(event) {
+    if (
+      !minimap ||
+      !graphViewBox ||
+      !fullViewBox ||
+      root.getAttribute("data-raya-graph-layout") === "list"
+    ) {
+      return;
+    }
+    const rect = minimap.getBoundingClientRect();
+    const ratioX = event && typeof event.clientX === "number"
+      ? Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width)))
+      : 0.5;
+    const ratioY = event && typeof event.clientY === "number"
+      ? Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)))
+      : 0.5;
+    const centerX = fullViewBox.x + fullViewBox.width * ratioX;
+    const centerY = fullViewBox.y + fullViewBox.height * ratioY;
+    setGraphViewBox(clampGraphViewBox({
+      x: centerX - graphViewBox.width / 2,
+      y: centerY - graphViewBox.height / 2,
+      width: graphViewBox.width,
+      height: graphViewBox.height,
+    }));
   }
 
   function startGraphPan(event) {
@@ -3351,6 +3398,7 @@ _GRAPH_JAVASCRIPT = r"""
       latestRenderedPositions = new Map();
       latestRenderedEdges = [];
       clearMinimap();
+      setMinimapEnabled(false);
       syncGraphArrangementStatus();
       hideGraphPreviewBubble();
       setGraphViewportControlsEnabled(false);
@@ -3359,6 +3407,7 @@ _GRAPH_JAVASCRIPT = r"""
       return;
     }
     canvas.removeAttribute("hidden");
+    setMinimapEnabled(true);
     const connectedIds = selectedId ? connectedNodeIds(selectedId) : new Set();
     const selectedCluster = selectedId ? new Set([selectedId, ...connectedIds]) : new Set();
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
@@ -3698,6 +3747,14 @@ _GRAPH_JAVASCRIPT = r"""
   canvas.addEventListener("mouseleave", (event) => {
     if (!endGraphNodeDrag(event)) endGraphPan(event);
   });
+  if (minimap) {
+    minimap.addEventListener("click", centerGraphViewFromMinimapEvent);
+    minimap.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      centerGraphViewFromMinimapEvent(null);
+    });
+  }
   if (reset) {
     reset.addEventListener("click", resetGraphWorkspace);
   }

@@ -3158,10 +3158,19 @@ img {
   border: 1px solid var(--raya-color-border);
   border-radius: 0.35rem;
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--raya-color-surface) 70%, white);
+  cursor: crosshair;
   display: block;
   height: 6.5rem;
   max-width: min(13.5rem, 100%);
   width: 13.5rem;
+}
+.raya-graph-minimap:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
+.raya-graph-minimap[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.68;
 }
 .raya-graph-minimap-caption {
   color: var(--raya-color-muted);
