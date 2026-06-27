@@ -1182,6 +1182,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "[data-raya-graph-inspection-preview]:not([hidden])"
                         )
                         page.locator(
+                            'section[aria-label="Graph groups"] '
                             '[data-raya-graph-group-filter="authoring-matrix"]'
                         ).dispatch_event("click")
                         page.wait_for_function(
@@ -1210,6 +1211,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             == ""
                         )
                         page.click(
+                            'section[aria-label="Graph groups"] '
                             '[data-raya-graph-group-filter="authoring-matrix"]'
                         )
                         page.wait_for_selector(
@@ -1769,6 +1771,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 f'#raya-graph-canvas [data-raya-graph-node="{drag_target}"] '
                                 ".raya-graph-node-hit"
                             )
+                            drag_hit_box.scroll_into_view_if_needed()
                             drag_box = drag_hit_box.bounding_box()
                             assert drag_box is not None
                             graph_url_before_drag = page.url
@@ -2535,6 +2538,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('authoring-matrix')"""
                         )
+                        page.click("#graph-zoom-in")
                         before_key_pan = _viewbox_values(
                             page.locator("#raya-graph-canvas").get_attribute("viewBox")
                         )
@@ -3302,6 +3306,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             plain_graph_viewbox
                         )
                         assert page.locator("#graph-fit-selection").is_enabled()
+                        page.locator("#raya-graph-canvas").scroll_into_view_if_needed()
                         context = _visible_graph_context(
                             page, "authoring-matrix", viewport
                         )
@@ -3762,6 +3767,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.getAttribute('data-raya-graph-neighborhood-focus') === 'true'"""
                         )
                         page.locator(
+                            'section[aria-label="Graph groups"] '
                             '[data-raya-graph-group-filter="authoring-matrix"]'
                         ).click()
                         page.wait_for_function(
@@ -3877,6 +3883,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
                         ".raya-graph-node.is-selected"
                     )
+                    page.locator("#raya-graph-canvas").scroll_into_view_if_needed()
                     canvas_box = page.locator("#raya-graph-canvas").bounding_box()
                     selected_box = page.locator(
                         '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
@@ -4613,6 +4620,114 @@ def test_render_fixture_graph_orientation_fit_selection_frames_context(
     assert clear_state["disabled"] is True
     assert clear_state["selected"] == "None"
     assert clear_state["storage"] == [[], []]
+
+
+def test_render_fixture_graph_detail_shows_public_section_jumps(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=authoring-matrix",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas '
+                        '[data-raya-graph-node="authoring-matrix"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    page.wait_for_selector(
+                        "[data-raya-graph-detail-panel]:not([hidden])"
+                    )
+                    section_block = page.locator(
+                        "[data-raya-graph-detail-sections]"
+                    )
+                    assert section_block.is_visible()
+                    section_link = section_block.locator("a").filter(
+                        has_text="Matrix norm fixture"
+                    ).first
+                    assert section_link.is_visible()
+                    state = page.evaluate(
+                        """() => {
+                          const detail = document.querySelector(
+                            '[data-raya-graph-detail-panel]'
+                          );
+                          const sectionBlock = document.querySelector(
+                            '[data-raya-graph-detail-sections]'
+                          );
+                          const sectionLink = Array.from(
+                            sectionBlock?.querySelectorAll('a') || []
+                          ).find((link) =>
+                            link.textContent.includes('Matrix norm fixture')
+                          );
+                          return {
+                            detailTitle: document
+                              .querySelector('[data-raya-graph-detail-title]')
+                              ?.textContent.trim(),
+                            sectionHref: sectionLink?.getAttribute('href') || '',
+                            sectionText: sectionLink?.textContent.trim() || '',
+                            pageParam: new URL(window.location.href)
+                              .searchParams.get('page'),
+                            detailHtml: detail?.innerHTML || '',
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert state["detailTitle"] == "Authoring Matrix Fixture"
+    assert "Matrix norm fixture" in state["sectionText"]
+    assert state["sectionHref"].endswith(
+        "/authoring-matrix/index.html#raya-object-authoring-theorem"
+    )
+    assert state["pageParam"] == "authoring-matrix"
+    assert state["storage"] == [[], []]
+    assert state["overflow"] <= 1
+    detail_html = state["detailHtml"].lower()
+    for forbidden in (
+        "_official",
+        "_reviewed",
+        "_assets",
+        "source_path",
+        "artifact",
+        "mjx-container",
+        "\\begin",
+        "progress",
+        "recommend",
+        "mastery",
+    ):
+        assert forbidden not in detail_html
 
 
 def test_render_fixture_graph_minimap_tracks_viewport(tmp_path: Path) -> None:

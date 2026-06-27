@@ -92,6 +92,8 @@ _GRAPH_JAVASCRIPT = r"""
   const detailSummary = document.querySelector("[data-raya-graph-detail-summary]");
   const detailMeta = document.querySelector("[data-raya-graph-detail-meta]");
   const detailStudyCounts = document.querySelector("[data-raya-graph-detail-study-counts]");
+  const detailSections = document.querySelector("[data-raya-graph-detail-sections]");
+  const detailSectionList = document.querySelector("[data-raya-graph-detail-section-list]");
   const detailStudyObjects = document.querySelector("[data-raya-graph-detail-study-objects]");
   const detailStudyObjectList = document.querySelector(
     "[data-raya-graph-detail-study-object-list]"
@@ -2840,6 +2842,39 @@ _GRAPH_JAVASCRIPT = r"""
     detailStudyObjects.hidden = false;
   }
 
+  function sectionKindLabel(kind) {
+    if (kind === "numbered-object") return "Object";
+    if (kind === "proof") return "Proof";
+    if (kind === "heading") return "Section";
+    return "";
+  }
+
+  function renderDetailSections(node) {
+    if (!detailSections || !detailSectionList) return;
+    detailSectionList.replaceChildren();
+    const sections = Array.isArray(node && node.sections) ? node.sections : [];
+    if (!sections.length) {
+      detailSections.hidden = true;
+      return;
+    }
+    sections.forEach((section) => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = section.url || node.url || "#";
+      link.textContent = section.title || section.anchor || "Page section";
+      li.appendChild(link);
+      const kindLabel = sectionKindLabel(section.kind || "");
+      if (kindLabel) {
+        const meta = document.createElement("span");
+        meta.className = "raya-graph-detail-section-kind";
+        meta.textContent = kindLabel;
+        li.appendChild(meta);
+      }
+      detailSectionList.appendChild(li);
+    });
+    detailSections.hidden = false;
+  }
+
   function renderDetailKeyObjects(node) {
     if (!detailKeyObjects || !detailKeyObjectList) return;
     detailKeyObjectList.replaceChildren();
@@ -3084,6 +3119,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailPanel) detailPanel.hidden = true;
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
+      renderDetailSections(null);
       renderDetailStudyObjects(null);
       renderDetailKeyObjects(null);
       renderRelationshipOverview("");
@@ -3120,6 +3156,7 @@ _GRAPH_JAVASCRIPT = r"""
       const countsText = studyCountsText(node.study_counts);
       detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
     }
+    renderDetailSections(node);
     renderDetailStudyObjects(node);
     renderDetailKeyObjects(node);
     renderRelationshipOverview(node.id);
@@ -3194,6 +3231,9 @@ _GRAPH_JAVASCRIPT = r"""
     clearRelationshipFocus();
     inspectedEdgeKey = "";
     neighborhoodFocus = false;
+    if (activeResultId !== nodeId) {
+      activeResultId = "";
+    }
     pageFocusId = "";
     pendingInitialPageFit = false;
     selectedId = nodeId;

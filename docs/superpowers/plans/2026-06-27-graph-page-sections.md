@@ -16,7 +16,7 @@
 - Modify: `tests/contracts/test_static_builder.py`
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add graph payload contract assertions**
+- [x] **Step 1: Add graph payload contract assertions**
 
 In `tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph_surface`, add `sections` to the allowed graph node keys. Assert `authoring_node["sections"]` contains a section titled `Matrix norm fixture` with:
 
@@ -32,7 +32,7 @@ In `tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph
 
 Also assert every section item has only `id`, `anchor`, `kind`, `title`, and `url`; every URL starts with the selected node rendered `url` plus `#`; and no section item contains `search_text`, `search_snippet`, `source_path`, `_official`, `_reviewed`, `_assets`, `artifact`, `cache_key`, raw TeX, or MathJax internals.
 
-- [ ] **Step 2: Add graph detail hook assertions**
+- [x] **Step 2: Add graph detail hook assertions**
 
 In the same contract test, assert generated graph HTML contains:
 
@@ -44,7 +44,7 @@ data-raya-graph-detail-section-list
 
 Assert generated graph JavaScript contains `renderDetailSections`.
 
-- [ ] **Step 3: Add browser behavior test**
+- [x] **Step 3: Add browser behavior test**
 
 In `tests/e2e/test_preview_static_read_path.py`, add `test_render_fixture_graph_detail_shows_public_section_jumps`. The test opens `_raya/graph/index.html?page=authoring-matrix`, waits for the selected detail panel, asserts:
 
@@ -56,7 +56,7 @@ In `tests/e2e/test_preview_static_read_path.py`, add `test_render_fixture_graph_
 - `localStorage` and `sessionStorage` keys are empty;
 - the rendered detail HTML does not contain `_official`, `_reviewed`, `_assets`, `source_path`, `artifact`, `mjx-container`, `\\begin`, `progress`, `recommend`, or `mastery`.
 
-- [ ] **Step 4: Verify RED**
+- [x] **Step 4: Verify RED**
 
 Run:
 
@@ -72,8 +72,9 @@ Expected: fail because graph nodes do not yet include `sections` and the graph d
 
 **Files:**
 - Modify: `packages/static/src/raya_static/builder.py`
+- Modify: `packages/static/src/raya_static/rendering.py`
 
-- [ ] **Step 1: Add graph detail markup**
+- [x] **Step 1: Add graph detail markup**
 
 In `_render_graph_surface`, add this hidden block after the selected-page metadata and before `Study objects`:
 
@@ -84,11 +85,11 @@ In `_render_graph_surface`, add this hidden block after the selected-page metada
 </section>
 ```
 
-- [ ] **Step 2: Copy public sections into graph nodes**
+- [x] **Step 2: Copy public sections into graph nodes**
 
 In `_browser_graph_payload`, for each current graph page node, read `search_records[page.id]["sections"]`, and copy each section into a new `sections` list containing exactly `id`, `anchor`, `kind`, `title`, and `url`. Build `url` by combining the graph node rendered page URL with `#` plus the section anchor. Preserve page order.
 
-- [ ] **Step 3: Verify contract still fails only on JavaScript/browser behavior**
+- [x] **Step 3: Keep RED active until client rendering**
 
 Run:
 
@@ -97,14 +98,15 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
   tests/contracts/test_static_builder.py::test_build_writes_local_visual_graph_surface
 ```
 
-Expected: fail until `graph.js` renders the section links.
+Expected: the original RED pair remains the implementation target until
+`graph.js` renders the section links.
 
 ### Task 3: Graph Client Rendering
 
 **Files:**
 - Modify: `packages/static/src/raya_static/graph.py`
 
-- [ ] **Step 1: Select the section detail nodes**
+- [x] **Step 1: Select the section detail nodes**
 
 Add constants for:
 
@@ -113,7 +115,7 @@ const detailSections = document.querySelector("[data-raya-graph-detail-sections]
 const detailSectionList = document.querySelector("[data-raya-graph-detail-section-list]");
 ```
 
-- [ ] **Step 2: Render public section links**
+- [x] **Step 2: Render public section links**
 
 Add `renderDetailSections(node)` that:
 
@@ -125,11 +127,11 @@ Add `renderDetailSections(node)` that:
 - sets text to `section.title || section.anchor || "Page section"`;
 - appends a small kind label only for `heading`, `numbered-object`, or `proof`.
 
-- [ ] **Step 3: Integrate with selected detail rendering**
+- [x] **Step 3: Integrate with selected detail rendering**
 
 Call `renderDetailSections(node)` inside `renderDetail()` next to `renderDetailStudyObjects(node)` and `renderDetailKeyObjects(node)`. Ensure empty selections hide the section block.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run:
 
@@ -146,7 +148,7 @@ Expected: pass.
 **Files:**
 - Inspect only unless failures require fixes.
 
-- [ ] **Step 1: Run focused graph and search regression tests**
+- [x] **Step 1: Run focused graph and search regression tests**
 
 Run:
 
@@ -160,7 +162,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: pass.
 
-- [ ] **Step 2: Run render-debug gate**
+- [x] **Step 2: Run render-debug gate**
 
 Run:
 
@@ -175,15 +177,15 @@ Expected: pass with no external renderer requests, no raw TeX leakage, no privat
 **Files:**
 - Inspect diff and review output.
 
-- [ ] **Step 1: Request independent review**
+- [x] **Step 1: Request independent review**
 
 Ask a fresh reviewer to inspect the diff for private data leakage, overbroad graph payload fields, URL/static parity regressions, storage/fetch violations, and missing tests.
 
-- [ ] **Step 2: Fix confirmed issues with TDD**
+- [x] **Step 2: Fix confirmed issues with TDD**
 
 For each confirmed issue, add or update a failing test first, verify RED, implement the smallest fix, and rerun focused verification.
 
-- [ ] **Step 3: Final local checks**
+- [x] **Step 3: Final local checks**
 
 Run:
 
@@ -194,7 +196,7 @@ git status --short --branch
 
 Expected: no whitespace errors and only intentional tracked changes.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 Run:
 
@@ -203,6 +205,7 @@ git add docs/superpowers/specs/2026-06-27-graph-page-sections-design.md \
   docs/superpowers/plans/2026-06-27-graph-page-sections.md \
   packages/static/src/raya_static/builder.py \
   packages/static/src/raya_static/graph.py \
+  packages/static/src/raya_static/rendering.py \
   tests/contracts/test_static_builder.py \
   tests/e2e/test_preview_static_read_path.py
 git commit -m "Add graph detail section jumps"

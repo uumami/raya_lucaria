@@ -5283,6 +5283,13 @@ def _render_graph_surface(
                 "data-raya-graph-detail-study-counts></p>"
             ),
             (
+                '<section class="raya-graph-detail-sections" '
+                "data-raya-graph-detail-sections hidden>"
+                "<h3>Page sections</h3>"
+                "<ol data-raya-graph-detail-section-list></ol>"
+                "</section>"
+            ),
+            (
                 '<section class="raya-graph-detail-study-objects" '
                 "data-raya-graph-detail-study-objects hidden>"
                 "<h3>Study objects</h3>"
@@ -5604,6 +5611,10 @@ def _browser_graph_payload(
                     search_records.get(page.id, {}),
                     page_url=str(discovery_payload.get("url", "")),
                 ),
+                "sections": _browser_graph_sections(
+                    search_records.get(page.id, {}),
+                    page_url=str(discovery_payload.get("url", "")),
+                ),
                 "study_objects": _browser_graph_study_objects(page, page_objects),
                 "tasks_url": (
                     _href_with_query(
@@ -5675,6 +5686,61 @@ def _browser_graph_key_objects(
             }
         )
     return key_objects
+
+
+def _browser_graph_sections(
+    public_record: dict[str, Any],
+    *,
+    page_url: str,
+    limit: int = 16,
+) -> list[dict[str, str]]:
+    sections: list[dict[str, str]] = []
+    for section in public_record.get("sections", []):
+        anchor = str(section.get("anchor", "")).strip()
+        title = _sanitize_public_search_text(str(section.get("title", "")))
+        section_id = str(section.get("id", "")).strip()
+        kind = _sanitize_public_search_text(str(section.get("kind", "")))
+        if not (anchor and title and section_id):
+            continue
+        if not (
+            _is_public_graph_section_fragment(anchor)
+            and _is_public_graph_section_fragment(section_id, allow_colon=True)
+        ):
+            continue
+        if kind not in {"heading", "numbered-object", "proof"}:
+            kind = ""
+        sections.append(
+            {
+                "id": section_id,
+                "anchor": anchor,
+                "kind": kind,
+                "title": title,
+                "url": f"{page_url}#{quote(anchor)}",
+            }
+        )
+        if len(sections) >= limit:
+            break
+    return sections
+
+
+def _is_public_graph_section_fragment(value: str, *, allow_colon: bool = False) -> bool:
+    allowed = r"A-Za-z0-9_.:-" if allow_colon else r"A-Za-z0-9_.-"
+    if not re.fullmatch(rf"[{allowed}]+", value):
+        return False
+    lowered = value.lower()
+    if ".." in value or lowered.startswith("_"):
+        return False
+    private_tokens = (
+        "_assets",
+        "_official",
+        "_reviewed",
+        "_drafts",
+        "_partials",
+        "artifact",
+        "cache_key",
+        "source_path",
+    )
+    return not any(token in lowered for token in private_tokens)
 
 
 def _write_search_surface(

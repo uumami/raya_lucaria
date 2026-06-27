@@ -2718,9 +2718,38 @@ img {
 .raya-graph-detail-meta,
 .raya-graph-detail-summary,
 .raya-graph-detail-study-counts,
+.raya-graph-detail-section-kind,
 .raya-graph-detail-edge-kind {
   color: var(--raya-color-muted);
   font-size: 0.875rem;
+}
+.raya-graph-detail-sections {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.375rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem;
+}
+.raya-graph-detail-sections h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.45rem;
+}
+.raya-graph-detail-sections ol {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.25rem;
+}
+.raya-graph-detail-sections li {
+  min-width: 0;
+}
+.raya-graph-detail-sections a {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding-block: 0.12rem;
+}
+.raya-graph-detail-section-kind {
+  display: block;
 }
 .raya-graph-detail-study-objects {
   border: 1px solid var(--raya-color-border);

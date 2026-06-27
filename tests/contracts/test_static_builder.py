@@ -1389,6 +1389,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-title" in graph_html
     assert "data-raya-graph-detail-summary" in graph_html
     assert "data-raya-graph-detail-study-counts" in graph_html
+    assert "data-raya-graph-detail-sections" in graph_html
+    assert "data-raya-graph-detail-section-list" in graph_html
+    assert "<h3>Page sections</h3>" in graph_html
     assert "data-raya-graph-detail-study-objects" in graph_html
     assert "data-raya-graph-detail-key-objects" in graph_html
     assert "data-raya-graph-detail-key-object-list" in graph_html
@@ -1498,6 +1501,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         "previous_url",
         "schedule_url",
         "search_url",
+        "sections",
         "stable_id",
         "status",
         "study_counts",
@@ -1515,6 +1519,28 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         assert not node["url"].startswith("../../data/")
         assert node["search_url"].startswith("../search/index.html?page=")
         assert node["id"] in node["search_url"]
+        assert isinstance(node["sections"], list)
+        assert len(node["sections"]) <= 16
+        for section in node["sections"]:
+            assert set(section) == {"anchor", "id", "kind", "title", "url"}
+            assert section["id"].startswith(f"{node['id']}:")
+            assert section["url"].startswith(node["url"] + "#")
+            assert section["anchor"]
+            assert section["title"]
+            serialized_section = json.dumps(section)
+            for forbidden_section_token in (
+                "search_text",
+                "search_snippet",
+                "source_path",
+                "_official",
+                "_reviewed",
+                "_assets",
+                "artifact",
+                "cache_key",
+                "mjx-container",
+                "\\\\begin",
+            ):
+                assert forbidden_section_token not in serialized_section
     assert root_node["study_counts"] == {
         "assignment": 2,
         "card": 1,
@@ -1528,6 +1554,16 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert static_path_node["practice_url"] == ""
     assert static_path_node["tasks_url"] == ""
     assert static_path_node["schedule_url"] == ""
+    authoring_sections_by_title = {
+        section["title"]: section for section in authoring_node["sections"]
+    }
+    assert authoring_sections_by_title["Matrix norm fixture"] == {
+        "id": "authoring-matrix:raya-object-authoring-theorem",
+        "anchor": "raya-object-authoring-theorem",
+        "kind": "numbered-object",
+        "title": "Matrix norm fixture",
+        "url": "../../authoring-matrix/index.html#raya-object-authoring-theorem",
+    }
     assert reader_node["study_counts"] == {"assignment": 1, "card": 1, "quiz": 1}
     assert reader_node["practice_url"] == "../practice/index.html?page=reader-ux"
     assert reader_node["search_url"] == "../search/index.html?page=reader-ux"
@@ -1564,6 +1600,16 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert authoring_node["schedule_url"] == (
         "../schedule/index.html?page=authoring-matrix"
     )
+    authoring_sections_by_title = {
+        section["title"]: section for section in authoring_node["sections"]
+    }
+    assert authoring_sections_by_title["Matrix norm fixture"] == {
+        "id": "authoring-matrix:raya-object-authoring-theorem",
+        "anchor": "raya-object-authoring-theorem",
+        "kind": "numbered-object",
+        "title": "Matrix norm fixture",
+        "url": "../../authoring-matrix/index.html#raya-object-authoring-theorem",
+    }
     study_objects = authoring_node["study_objects"]
     assert [item["id"] for item in study_objects] == [
         "matrix-assignment",
@@ -1637,6 +1683,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert 'params.get("page")' in graph_script
     assert "window.location.href" in graph_script
     assert "function openGraphNode" in graph_script
+    assert "renderDetailSections" in graph_script
     assert "renderInspectionPreview" in graph_script
     assert "inspectionPreviewTextFor" in graph_script
     assert "data-raya-graph-preview-bubble" in graph_script
@@ -1889,6 +1936,32 @@ def test_browser_graph_payload_skips_stale_graph_nodes() -> None:
     )
 
     assert [node["id"] for node in payload["nodes"]] == ["known-page"]
+
+
+def test_browser_graph_sections_preserve_public_structural_anchors() -> None:
+    sections = static_builder._browser_graph_sections(
+        {
+            "sections": [
+                {
+                    "id": "lesson:progress-checkpoint",
+                    "anchor": "progress-checkpoint",
+                    "kind": "heading",
+                    "title": "Progress checkpoint",
+                }
+            ]
+        },
+        page_url="../../lesson/index.html",
+    )
+
+    assert sections == [
+        {
+            "id": "lesson:progress-checkpoint",
+            "anchor": "progress-checkpoint",
+            "kind": "heading",
+            "title": "checkpoint",
+            "url": "../../lesson/index.html#progress-checkpoint",
+        }
+    ]
 
 
 def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
