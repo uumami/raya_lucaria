@@ -321,6 +321,32 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
         handle.close()
 
 
+def test_preview_reader_official_quiz_renders_page_local_controls(
+    tmp_path: Path,
+) -> None:
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        html_text = _fetch_text(f"{handle.base_url}/unit/topic/index.html")
+
+        assert 'data-raya-official-quiz-state="ready"' in html_text
+        assert "data-raya-official-quiz-option" in html_text
+        assert 'data-raya-official-quiz-correct="true"' in html_text
+        assert "data-raya-official-quiz-feedback" in html_text
+        assert "data-raya-official-quiz-reset" in html_text
+        assert "<summary>Reveal correct option</summary>" in html_text
+    finally:
+        handle.close()
+
+
 def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

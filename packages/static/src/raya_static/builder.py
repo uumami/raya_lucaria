@@ -3768,7 +3768,10 @@ def _render_official_quiz(content: dict[str, Any]) -> str:
         if not prompt and not isinstance(options, list):
             continue
         parts = [
-            f'<section class="raya-official-question" aria-label="Question {index}">'
+            (
+                f'<section class="raya-official-question" aria-label="Question {index}" '
+                'data-raya-official-quiz-question data-raya-official-quiz-state="ready">'
+            )
         ]
         if prompt:
             parts.append(f'<p class="raya-official-prompt">{prompt}</p>')
@@ -3781,14 +3784,32 @@ def _render_official_quiz(content: dict[str, Any]) -> str:
                 label = _official_text(option.get("label"))
                 if not label:
                     continue
-                option_items.append(f"<li>{label}</li>")
-                if option.get("correct") is True:
+                correct = option.get("correct") is True
+                option_items.append(
+                    "<li>"
+                    '<button type="button" class="raya-official-option" '
+                    "data-raya-official-quiz-option "
+                    f'data-raya-official-quiz-correct="{str(correct).lower()}">'
+                    f"{label}"
+                    "</button>"
+                    "</li>"
+                )
+                if correct:
                     correct_labels.append(label)
             if option_items:
                 parts.append(
                     '<ol class="raya-official-options">'
                     + "".join(option_items)
                     + "</ol>"
+                )
+                parts.append(
+                    '<p class="raya-official-quiz-feedback" '
+                    'data-raya-official-quiz-feedback aria-live="polite">'
+                    "Choose an option.</p>"
+                )
+                parts.append(
+                    '<button type="button" class="raya-official-quiz-reset" '
+                    "data-raya-official-quiz-reset hidden>Try again</button>"
                 )
             if correct_labels:
                 parts.append(
