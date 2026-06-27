@@ -300,11 +300,12 @@ def test_build_renders_reader_page_brief_from_public_metadata(
     brief = _tag_html(html, "section", "raya-page-brief")
     visible = _visible_text(brief).lower()
     assert html.index('<nav class="raya-breadcrumbs"') < html.index(
-        '<section class="raya-page-brief"'
-    )
-    assert html.index('<section class="raya-page-brief"') < html.index(
         '<h1 id="first-topic">First Topic</h1>'
     )
+    assert html.index('<h1 id="first-topic">First Topic</h1>') < html.index(
+        '<section class="raya-page-brief"'
+    )
+    assert html.count("<h1") == 1
     assert 'aria-labelledby="raya-page-brief-title"' in brief
     assert '<p class="raya-page-brief-kicker">Page brief</p>' in brief
     assert '<h2 id="raya-page-brief-title">At a glance</h2>' in brief
@@ -339,6 +340,35 @@ def test_build_renders_reader_page_brief_from_public_metadata(
     assert "localStorage" not in brief
     assert "sessionStorage" not in brief
     assert "<script" not in brief
+
+
+def test_page_brief_keeps_fallback_order_when_article_has_no_leading_h1(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    topic = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic.write_text(
+        "---\n"
+        "id: first-topic\n"
+        "title: First Topic\n"
+        "summary: Fixture topic without a leading authored heading.\n"
+        "status: ready\n"
+        "---\n"
+        "Students start directly with prose on this fixture page.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<section class="raya-page-brief"' in html
+    assert "<h1" not in html
+    assert html.index('<section class="raya-page-brief"') < html.index(
+        "<p>Students start directly with prose on this fixture page.</p>"
+    )
 
 
 def test_build_renders_computed_read_time_when_estimated_time_is_not_authored(

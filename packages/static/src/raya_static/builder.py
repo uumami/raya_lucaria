@@ -1003,6 +1003,7 @@ def _render_page(
         page_graph_context,
         estimated_reading_time,
     )
+    leading_heading_html, article_body_html = _split_leading_h1(article_html)
 
     rendered_page = "\n".join(
         [
@@ -1056,8 +1057,9 @@ def _render_page(
             '<article id="raya-article" class="raya-main-article" tabindex="-1">',
             _render_article_sequence_nav(page, content_model),
             breadcrumbs,
+            leading_heading_html,
             page_brief_html,
-            article_html,
+            article_body_html,
             article_connections_html,
             official_practice_html,
             _render_article_sequence_cards(page, content_model),
@@ -1073,6 +1075,13 @@ def _render_page(
         ]
     )
     return rendered_page, search_record
+
+
+def _split_leading_h1(article_html: str) -> tuple[str, str]:
+    match = re.match(r"(?s)^(\s*<h1\b[^>]*>.*?</h1>)(.*)$", article_html)
+    if match is None:
+        return "", article_html
+    return match.group(1), match.group(2)
 
 
 def _render_top_command_bar(

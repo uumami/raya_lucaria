@@ -14114,7 +14114,10 @@ def test_preview_reader_page_brief_is_visible_static_and_responsive(
                         ).get_attribute("href")
                         assert practice_href == "#raya-official-practice"
                         box = brief.bounding_box()
+                        title_box = page.locator("h1").bounding_box()
                         assert box is not None
+                        assert title_box is not None
+                        assert title_box["y"] < box["y"]
                         assert box["width"] <= viewport["width"]
                         if viewport["width"] <= 480:
                             assert box["y"] < viewport["height"]
