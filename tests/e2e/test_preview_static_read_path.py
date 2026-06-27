@@ -10633,9 +10633,26 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 assert label_box["height"] > 10
                                 assert label_box["clipped"] is False
                         elif viewport["width"] >= 1280:
-                            assert state["commandLabelBoxes"]["raya-command-font"][
-                                "clipped"
-                            ] is True
+                            for command_name in (
+                                "raya-command-graph",
+                                "raya-command-practice",
+                                "raya-command-tasks",
+                                "raya-command-schedule",
+                                "raya-command-map",
+                                "raya-command-focus",
+                                "raya-command-context",
+                                "raya-command-skin",
+                            ):
+                                assert state["commandLabelBoxes"][command_name][
+                                    "clipped"
+                                ] is True
+                            for command_name in (
+                                "raya-command-size",
+                                "raya-command-font",
+                            ):
+                                assert state["commandLabelBoxes"][command_name][
+                                    "clipped"
+                                ] is False
                         if viewport["width"] >= 1024:
                             assert state["topBarHeight"] <= 96
                             assert state["commandTopSpread"] <= 4
@@ -10672,7 +10689,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
                         assert "Raya Lucaria Render Fixture" in state["contextText"]
-                        assert "Page 1 of 6" in state["contextText"]
+                        if viewport["width"] >= 520:
+                            assert "Page 1 of 6" in state["contextText"]
+                        else:
+                            assert "Page 1 of 6" not in state["contextText"]
                         assert state["contextWidth"] > 0
                         assert state["sectionHref"] == "#rich-static-baseline"
                         assert state["sectionText"].startswith("Now")
@@ -10680,7 +10700,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["sectionLabelVisible"] == (
                             viewport["width"] >= 520
                         )
-                        assert state["sectionWidth"] >= 40
+                        if viewport["width"] >= 520:
+                            assert state["sectionWidth"] >= 40
+                        else:
+                            assert state["sectionWidth"] == 0
                         assert state["prevHref"] == ""
                         assert state["nextHref"] == "static-path/index.html"
 

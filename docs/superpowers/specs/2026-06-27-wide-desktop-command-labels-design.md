@@ -14,7 +14,7 @@ The reader command bar exposes important navigation and comfort controls, but at
 
 ## Design
 
-Keep the compact icon-first command bar for mobile, tablet, and normal desktop widths. At wide desktop viewports, reveal command labels inside the existing command buttons:
+Keep the compact icon-first command bar for mobile, tablet, and normal desktop widths. This does not undo the earlier reader-comfort-labels decision: `Text size` and `OpenDyslexic` remain visibly named at normal desktop widths, while navigation, layout, and skin labels stay compact until wide desktop. At wide desktop viewports, reveal command labels inside the existing command buttons:
 
 - show labels only when the viewport is wide enough for a single-row toolbar;
 - keep the existing icons, groups, search form, links, buttons, and JavaScript behavior;
@@ -28,7 +28,7 @@ This slice changes only presentation. It does not alter graph/search/practice/ta
 Add browser e2e coverage against the render fixture:
 
 - at `1800px` and wider, visible command labels are not clipped and the toolbar remains one row without horizontal overflow;
-- at `1440px`, the command bar remains compact so normal desktop density does not regress;
+- at `1440px`, navigation, layout, and skin command labels remain compact so normal desktop density does not regress, while the accepted comfort labels remain visible;
 - navigation, layout, and comfort command labels are discoverable on wide desktop.
 
 Run the focused command-bar and shell tests, then the render-debug gate.

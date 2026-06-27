@@ -4899,16 +4899,6 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     width: 1px;
   }
 }
-@media (min-width: 1280px) and (max-width: 1500px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort .raya-command-label {
-    clip: rect(0 0 0 0);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
-  }
-}
 @media (min-width: 1280px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-top-command-bar-inner {
     align-items: center;
@@ -4969,6 +4959,16 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     position: absolute;
     white-space: nowrap;
     width: 1px;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-size .raya-command-label,
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-font .raya-command-label {
+    clip: auto;
+    clip-path: none;
+    height: auto;
+    overflow: visible;
+    position: static;
+    white-space: nowrap;
+    width: auto;
   }
 }
 @media (min-width: 1800px) {
