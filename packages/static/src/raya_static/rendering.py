@@ -5916,6 +5916,22 @@ mjx-container[display="true"] {
     padding: 0.15rem;
     width: 100%;
   }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+    flex: 0 1 10.75rem;
+    min-width: 0;
+    width: auto;
+  }
+  .raya-main-article {
+    padding-top: 0.75rem;
+  }
+  .raya-main-article > .raya-article-sequence {
+    gap: 0.45rem;
+    margin-bottom: 0.55rem;
+    padding-bottom: 0.45rem;
+  }
+  .raya-main-article > .raya-breadcrumbs {
+    margin-bottom: 0.45rem;
+  }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-layout,
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort {
     flex: 1 1 auto;

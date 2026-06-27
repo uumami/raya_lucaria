@@ -13834,7 +13834,9 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     )
                     _assert_no_horizontal_overflow(page)
                     topbar = _bounding_box(page, ".raya-top-command-bar")
-                    assert topbar["height"] <= 220
+                    first_heading = _bounding_box(page, "#raya-article h1")
+                    assert topbar["height"] <= 180
+                    assert first_heading["y"] <= 360
                     assert page.locator(
                         "[data-raya-learning-rail-toggle]"
                     ).first.is_hidden()
