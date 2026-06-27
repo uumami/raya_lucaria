@@ -15000,6 +15000,18 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
                           const secondary = path?.querySelector(
                             '.raya-graph-detail-secondary-actions'
                           );
+                          const keyObjects = document.querySelector(
+                            '[data-raya-graph-detail-key-objects]'
+                          );
+                          const keyObjectLinks = Array.from(
+                            keyObjects?.querySelectorAll(
+                              '[data-raya-graph-detail-key-object-list] a'
+                            ) || []
+                          ).map((link) => ({
+                            text: link.textContent.trim(),
+                            href: link.getAttribute('href'),
+                            width: link.getBoundingClientRect().width,
+                          }));
                           const box = (node) => {
                             const rect = node?.getBoundingClientRect();
                             return rect
@@ -15022,6 +15034,9 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
                             currentText: current?.textContent.trim() || '',
                             nextText: next?.textContent.trim() || '',
                             secondaryText: secondary?.textContent || '',
+                            keyObjects: box(keyObjects),
+                            keyObjectsText: keyObjects?.innerText || '',
+                            keyObjectLinks,
                             text: path?.innerText || '',
                             storage: [
                               Object.keys(localStorage),
@@ -15058,6 +15073,9 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
                           const sequence = path?.querySelector(
                             '.raya-graph-detail-sequence'
                           );
+                          const keyObjects = document.querySelector(
+                            '[data-raya-graph-detail-key-objects]'
+                          );
                           const box = (node) => {
                             const rect = node?.getBoundingClientRect();
                             return rect
@@ -15073,6 +15091,8 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
                             path: box(path),
                             primary: box(primary),
                             sequence: box(sequence),
+                            keyObjects: box(keyObjects),
+                            keyObjectsText: keyObjects?.innerText || '',
                             text: path?.innerText || '',
                             overflow: Math.ceil(
                               document.documentElement.scrollWidth - window.innerWidth
@@ -15105,6 +15125,18 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
     assert "Authoring Matrix Fixture" in desktop_state["nextText"]
     assert "Find in search" in desktop_state["secondaryText"]
     assert "Focus neighborhood" in desktop_state["secondaryText"]
+    assert desktop_state["keyObjects"] is not None
+    assert "Key objects" in desktop_state["keyObjectsText"]
+    assert any(
+        link["text"].startswith("Definition 4.1")
+        for link in desktop_state["keyObjectLinks"]
+    )
+    assert any("Proof" in link["text"] for link in desktop_state["keyObjectLinks"])
+    assert all(
+        link["href"].startswith("../../reader-ux/index.html#")
+        for link in desktop_state["keyObjectLinks"]
+    )
+    assert all(link["width"] <= 360 for link in desktop_state["keyObjectLinks"])
     assert "recommend" not in desktop_state["text"].lower()
     assert "progress" not in desktop_state["text"].lower()
     assert "mastery" not in desktop_state["text"].lower()
@@ -15114,9 +15146,12 @@ def test_graph_page_focus_exposes_return_to_reading_path(tmp_path: Path) -> None
     assert mobile_state["path"] is not None
     assert mobile_state["primary"] is not None
     assert mobile_state["sequence"] is not None
+    assert mobile_state["keyObjects"] is not None
     assert "Reading path" in mobile_state["text"]
+    assert "Key objects" in mobile_state["keyObjectsText"]
     assert mobile_state["primary"]["width"] <= 390
     assert mobile_state["sequence"]["width"] <= 390
+    assert mobile_state["keyObjects"]["width"] <= 390
     assert mobile_state["overflow"] <= 1
 
 

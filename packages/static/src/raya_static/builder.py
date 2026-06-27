@@ -523,6 +523,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         graph_index=graph_index,
         official_counts=official_counts,
         official_by_page=official_by_page,
+        search_records=search_records_by_page,
         skin_context=skin_context,
         report=report,
     )
@@ -4754,6 +4755,7 @@ def _write_graph_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
+    search_records: dict[str, dict[str, Any]],
     skin_context: SkinContext,
     report: ValidationReport,
 ) -> None:
@@ -4768,6 +4770,7 @@ def _write_graph_surface(
             graph_index=graph_index,
             official_counts=official_counts,
             official_by_page=official_by_page,
+            search_records=search_records,
             skin_context=skin_context,
         ),
         encoding="utf-8",
@@ -4783,6 +4786,7 @@ def _render_graph_surface(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]],
+    search_records: dict[str, dict[str, Any]],
     skin_context: SkinContext,
 ) -> str:
     stylesheet_href = _relative_href(
@@ -4812,6 +4816,7 @@ def _render_graph_surface(
         graph_index,
         official_counts,
         official_by_page,
+        search_records,
     )
     graph_payload = _json_script_text(browser_graph)
     group_buttons = _graph_group_filter_buttons(graph_index["groups"])
@@ -5266,6 +5271,13 @@ def _render_graph_surface(
                 "</section>"
             ),
             (
+                '<section class="raya-graph-detail-key-objects" '
+                "data-raya-graph-detail-key-objects hidden>"
+                "<h3>Key objects</h3>"
+                "<ol data-raya-graph-detail-key-object-list></ol>"
+                "</section>"
+            ),
+            (
                 '<p class="raya-graph-detail-neighborhood" '
                 "data-raya-graph-detail-neighborhood></p>"
             ),
@@ -5539,8 +5551,10 @@ def _browser_graph_payload(
     graph_index: dict[str, Any],
     official_counts: dict[str, dict[str, int]],
     official_by_page: dict[str, list[dict[str, Any]]] | None = None,
+    search_records: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     official_by_page = official_by_page or {}
+    search_records = search_records or {}
     nodes: list[dict[str, Any]] = []
     for node in graph_index["nodes"]:
         page = content_model.pages_by_id.get(str(node["id"]))
@@ -5567,6 +5581,10 @@ def _browser_graph_payload(
             {
                 **node,
                 **discovery_payload,
+                "key_objects": _browser_graph_key_objects(
+                    search_records.get(page.id, {}),
+                    page_url=str(discovery_payload.get("url", "")),
+                ),
                 "study_objects": _browser_graph_study_objects(page, page_objects),
                 "tasks_url": (
                     _href_with_query(
@@ -5606,6 +5624,38 @@ def _browser_graph_payload(
             for page_id, backlinks in graph_index["backlinks"].items()
         },
     }
+
+
+def _browser_graph_key_objects(
+    public_record: dict[str, Any],
+    *,
+    page_url: str,
+) -> list[dict[str, str]]:
+    key_objects: list[dict[str, str]] = []
+    for section in public_record.get("sections", []):
+        kind = _sanitize_public_search_text(str(section.get("kind", "")))
+        if kind not in {"numbered-object", "proof"}:
+            continue
+        anchor = _sanitize_public_search_text(str(section.get("anchor", "")))
+        title = _sanitize_public_search_text(str(section.get("title", "")))
+        reference = _sanitize_public_search_text(str(section.get("reference", "")))
+        section_id = _sanitize_public_search_text(str(section.get("id", "")))
+        if not (anchor and title and section_id):
+            continue
+        label = title
+        if reference and title != reference:
+            label = f"{reference} {title}"
+        key_objects.append(
+            {
+                "id": section_id,
+                "anchor": anchor,
+                "kind": kind,
+                "reference": reference,
+                "title": label,
+                "url": f"{page_url}#{quote(anchor)}",
+            }
+        )
+    return key_objects
 
 
 def _write_search_surface(

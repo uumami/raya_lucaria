@@ -95,6 +95,10 @@ _GRAPH_JAVASCRIPT = r"""
   const detailStudyObjectList = document.querySelector(
     "[data-raya-graph-detail-study-object-list]"
   );
+  const detailKeyObjects = document.querySelector("[data-raya-graph-detail-key-objects]");
+  const detailKeyObjectList = document.querySelector(
+    "[data-raya-graph-detail-key-object-list]"
+  );
   const detailNeighborhood = document.querySelector("[data-raya-graph-detail-neighborhood]");
   const detailRelationshipOverview = document.querySelector(
     "[data-raya-graph-detail-relationship-overview]"
@@ -2691,6 +2695,30 @@ _GRAPH_JAVASCRIPT = r"""
     detailStudyObjects.hidden = false;
   }
 
+  function renderDetailKeyObjects(node) {
+    if (!detailKeyObjects || !detailKeyObjectList) return;
+    detailKeyObjectList.replaceChildren();
+    const objects = Array.isArray(node && node.key_objects) ? node.key_objects : [];
+    if (!objects.length) {
+      detailKeyObjects.hidden = true;
+      return;
+    }
+    objects.forEach((item) => {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = item.url || node.url || "#";
+      const title = item.title || "";
+      const reference = item.reference || "";
+      const label = reference && title && !title.startsWith(reference)
+        ? `${reference} ${title}`
+        : title;
+      link.textContent = label || item.title || item.reference || item.id || "Key object";
+      li.appendChild(link);
+      detailKeyObjectList.appendChild(li);
+    });
+    detailKeyObjects.hidden = false;
+  }
+
   function renderRelationshipChips(nodeId) {
     if (!detailRelationshipChips || !detailRelationshipChipList) return;
     detailRelationshipChipList.replaceChildren();
@@ -2912,6 +2940,7 @@ _GRAPH_JAVASCRIPT = r"""
       if (detailSummary) detailSummary.textContent = "";
       if (detailStudyCounts) detailStudyCounts.textContent = "";
       renderDetailStudyObjects(null);
+      renderDetailKeyObjects(null);
       renderRelationshipOverview("");
       renderRelationshipChips("");
       if (detailNeighborhood) detailNeighborhood.textContent = "";
@@ -2947,6 +2976,7 @@ _GRAPH_JAVASCRIPT = r"""
       detailStudyCounts.textContent = countsText ? `Official objects: ${countsText}` : "";
     }
     renderDetailStudyObjects(node);
+    renderDetailKeyObjects(node);
     renderRelationshipOverview(node.id);
     renderRelationshipChips(node.id);
     renderRelationshipWalkthrough(node.id);

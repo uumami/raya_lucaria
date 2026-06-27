@@ -1359,6 +1359,9 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-detail-summary" in graph_html
     assert "data-raya-graph-detail-study-counts" in graph_html
     assert "data-raya-graph-detail-study-objects" in graph_html
+    assert "data-raya-graph-detail-key-objects" in graph_html
+    assert "data-raya-graph-detail-key-object-list" in graph_html
+    assert "Key objects" in graph_html
     assert "data-raya-graph-detail-link" in graph_html
     assert "data-raya-graph-detail-search-link" in graph_html
     assert "data-raya-graph-detail-practice-link" in graph_html
@@ -1455,6 +1458,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         "group",
         "hierarchy_label",
         "id",
+        "key_objects",
         "link_counts",
         "nav_title",
         "next_url",
@@ -1498,6 +1502,26 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert reader_node["search_url"] == "../search/index.html?page=reader-ux"
     assert reader_node["tasks_url"] == "../tasks/index.html?page=reader-ux"
     assert reader_node["schedule_url"] == ""
+    key_objects = reader_node["key_objects"]
+    assert key_objects
+    assert any(
+        item["title"].startswith("Definition 4.1") for item in key_objects
+    )
+    assert any(item["title"].startswith("Equation 4.1") for item in key_objects)
+    assert any(item["kind"] == "proof" for item in key_objects)
+    assert all(
+        item["url"].startswith("../../reader-ux/index.html#")
+        for item in key_objects
+    )
+    assert all("source_path" not in item for item in key_objects)
+    assert {key for item in key_objects for key in item} == {
+        "anchor",
+        "id",
+        "kind",
+        "reference",
+        "title",
+        "url",
+    }
     assert authoring_node["study_counts"] == {"assignment": 1, "prompt": 2}
     assert authoring_node["practice_url"] == (
         "../practice/index.html?page=authoring-matrix"
