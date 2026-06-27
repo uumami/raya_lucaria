@@ -13307,6 +13307,9 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                           const body = rail?.querySelector('#raya-learning-rail-body');
                           const firstPanel = rail?.querySelector('.raya-rail-panel');
                           const firstPanelBody = firstPanel?.querySelector('.raya-rail-panel-body');
+                          const pageContents = rail?.querySelector('.raya-page-contents');
+                          const currentSection = rail?.querySelector('.raya-page-current-section');
+                          const currentSectionLink = rail?.querySelector('[data-raya-current-section-link]');
                           const viewportHeight = window.innerHeight;
                           const box = (node) => {
                             const rect = node?.getBoundingClientRect();
@@ -13321,6 +13324,11 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                             body: box(body),
                             firstPanel: box(firstPanel),
                             firstPanelBody: box(firstPanelBody),
+                            firstPanelClass: firstPanel?.className || '',
+                            pageContents: box(pageContents),
+                            currentSection: box(currentSection),
+                            currentSectionText: currentSectionLink?.textContent?.trim() || '',
+                            currentSectionHref: currentSectionLink?.getAttribute('href') || '',
                             viewportHeight,
                             railState: rail?.getAttribute('data-raya-learning-rail'),
                             bodyHidden: body?.getAttribute('aria-hidden'),
@@ -13343,6 +13351,12 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     assert probe["firstPanel"]["top"] < 210
     assert probe["firstPanelBody"]["top"] < 260
     assert probe["firstPanelBody"]["bottom"] < probe["viewportHeight"]
+    assert "raya-page-current-section" in probe["firstPanelClass"]
+    assert probe["currentSection"]["top"] < 210
+    assert probe["pageContents"]["top"] < 360
+    assert probe["pageContents"]["bottom"] < probe["viewportHeight"]
+    assert probe["currentSectionText"]
+    assert probe["currentSectionHref"].startswith("#")
 
 
 def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
@@ -13395,6 +13409,7 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                             previous: box(previous),
                             next: box(next),
                             graph: box(graph),
+                            viewportHeight: window.innerHeight,
                             counts: counts?.innerText || '',
                             state: panel?.getAttribute('data-raya-rail-panel-state'),
                             hidden: panel?.querySelector('.raya-rail-panel-body')
@@ -13418,8 +13433,7 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
 
     assert probe["state"] == "expanded"
     assert probe["hidden"] == "false"
-    assert probe["panel"]["top"] < 360
-    assert probe["panel"]["bottom"] < 950
+    assert probe["panel"]["top"] < probe["viewportHeight"]
     assert probe["previous"]["width"] > 40
     assert probe["previous"]["height"] > 32
     assert probe["next"]["width"] > 40

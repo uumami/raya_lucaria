@@ -1939,6 +1939,8 @@ def _render_learning_rail(
         graph_href,
     )
     panels = [
+        _render_current_section_rail(toc_html),
+        _render_page_contents_rail(toc_html),
         reading_flow,
         _render_page_summary_rail(page),
         _render_page_status_rail(page),
@@ -1946,8 +1948,6 @@ def _render_learning_rail(
         _render_tags_rail(page),
         _render_prerequisites_rail(page, content_model),
         "" if reading_flow else _render_linked_pages_rail(page, page_graph_context),
-        _render_current_section_rail(toc_html),
-        _render_page_contents_rail(toc_html),
         "" if reading_flow else _render_sequence_rail(page, content_model),
         support_panels,
     ]

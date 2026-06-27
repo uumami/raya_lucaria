@@ -5008,6 +5008,84 @@ def test_render_fixture_learning_rail_exposes_reading_flow_panel(
     assert "fetch(" not in reading_flow
 
 
+def test_render_fixture_learning_rail_prioritizes_section_navigation(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    current_section_index = html.index(
+        '<section class="raya-rail-panel raya-page-current-section"'
+    )
+    page_contents_index = html.index(
+        '<section class="raya-rail-panel raya-page-contents"'
+    )
+    reading_flow_index = html.index(
+        '<section class="raya-rail-panel raya-page-reading-flow"'
+    )
+    summary_index = html.index('<section class="raya-rail-panel raya-page-summary"')
+
+    assert current_section_index < page_contents_index
+    assert page_contents_index < reading_flow_index
+    assert reading_flow_index < summary_index
+    assert 'aria-expanded="true">Current section</button>' in _section_html(
+        html, "raya-page-current-section"
+    )
+    assert 'aria-expanded="true">Page contents</button>' in _section_html(
+        html, "raya-page-contents"
+    )
+
+
+def test_learning_rail_without_toc_keeps_reading_flow_first(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+    reader_page = course / "course" / "4_reader_ux" / "0_index.md"
+    reader_page.write_text(
+        "\n".join(
+            [
+                "---",
+                "id: reader-ux",
+                "title: Projection Residuals",
+                "summary: A compact lesson without enough headings for a page TOC.",
+                "status: ready",
+                "estimated_time: 4 minutes",
+                "tags:",
+                "  - reading",
+                "  - navigation",
+                "prerequisites:",
+                "  - render-root",
+                "---",
+                "",
+                "# Projection Residuals",
+                "",
+                "This temporary fixture page has a single title and no generated table of contents.",
+                "",
+                "It still keeps reading-flow context before general page metadata.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<section class="raya-rail-panel raya-page-current-section"' not in html
+    assert '<section class="raya-rail-panel raya-page-contents"' not in html
+    assert html.index(
+        '<section class="raya-rail-panel raya-page-reading-flow"'
+    ) < html.index('<section class="raya-rail-panel raya-page-summary"')
+
+
 def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
     math_page = course / "course" / "2_math_authoring" / "0_index.md"
