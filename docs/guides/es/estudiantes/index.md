@@ -253,7 +253,12 @@ campos oficiales se muestran como apoyo estatico de lectura en la pagina que los
 posee. Los controles de revelar son controles locales del browser; abrir uno no
 envia trabajo, no guarda respuestas, no crea attempts, no actualiza progreso, no
 cambia dominio, no contacta un backend, no hace fetch de mas datos y no pide al
-browser renderizar MathJax.
+browser renderizar MathJax. Los quizzes oficiales tambien pueden mostrar
+botones de respuesta en la pagina. Elegir una opcion puede marcar esa respuesta
+localmente y mostrar un control Try again, mientras el disclosure de respuesta
+correcta sigue disponible. Eso ayuda a revisar memoria en el browser, pero no
+se envia, no se califica, no se puntua, no se guarda como attempt ni se usa como
+progreso o dominio.
 
 Algunos cursos tambien pueden incluir un workspace Official Practice bajo
 `_raya/practice/`. Usalo para encontrar cards, prompts, quizzes, tasks y otros

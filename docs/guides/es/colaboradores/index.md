@@ -93,13 +93,16 @@ fuente y artifact existente: `_official/` sigue siendo fuente de verdad, mientra
 `data/official.json` y `manifest.json` siguen siendo superficies machine-readable.
 La verificacion debe cubrir cards, prompts, quizzes, campos genericos de objetos
 oficiales, texto escapado, controles nativos `details` cuando correspondan,
-orden determinista y limites de privacidad/rutas de fuente. No agregues scoring,
-grading, submissions, attempts, progreso, dominio, recomendaciones, llamadas a
-backend, `fetch` en runtime, localStorage/sessionStorage, requests externos/CDN
-del renderer ni MathJax en el browser. Los cambios en esta superficie deben
-incluir cobertura static-read-path, asserts enfocados de escaping/privacidad,
-checks no-storage/no-fetch e impacto de docs de rol para estudiantes,
-profesores, colaboradores y agentes.
+orden determinista y limites de privacidad/rutas de fuente. Los controles de
+quizzes multiple-choice deben ser botones nativos locales a la pagina sobre
+datos de opciones aceptados, conservar el reveal fallback y resetear sin
+storage. No agregues scoring, grading, submissions, attempts, progreso, dominio,
+recomendaciones, llamadas a backend, `fetch` en runtime,
+localStorage/sessionStorage, requests externos/CDN del renderer ni MathJax en
+el browser. Los cambios en esta superficie deben incluir cobertura
+static-read-path, asserts enfocados de escaping/privacidad, checks
+no-storage/no-fetch e impacto de docs de rol para estudiantes, profesores,
+colaboradores y agentes.
 
 El workspace Official Tasks tambien es comportamiento actual del renderer
 estatico. Revisalo como superficie generada de planeacion sobre objetos

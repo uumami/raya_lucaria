@@ -338,10 +338,14 @@ def test_preview_reader_official_quiz_renders_page_local_controls(
         html_text = _fetch_text(f"{handle.base_url}/unit/topic/index.html")
 
         assert 'data-raya-official-quiz-state="ready"' in html_text
+        assert '<button type="button" class="raya-official-option"' in html_text
         assert "data-raya-official-quiz-option" in html_text
         assert 'data-raya-official-quiz-correct="true"' in html_text
         assert "data-raya-official-quiz-feedback" in html_text
-        assert "data-raya-official-quiz-reset" in html_text
+        assert (
+            '<button type="button" class="raya-official-quiz-reset" '
+            "data-raya-official-quiz-reset hidden>"
+        ) in html_text
         assert "<summary>Reveal correct option</summary>" in html_text
     finally:
         handle.close()
@@ -443,6 +447,15 @@ def test_preview_reader_official_quiz_checks_and_resets_locally(
                         == "correct"
                     )
                     assert "Correct." in feedback.inner_text()
+                    reset.click()
+                    assert (
+                        question.get_attribute("data-raya-official-quiz-state")
+                        == "ready"
+                    )
+                    assert (
+                        correct.get_attribute("data-raya-official-quiz-result")
+                        is None
+                    )
                     assert requested_urls == []
                     assert page.evaluate("() => localStorage.length") == 0
                     assert page.evaluate("() => sessionStorage.length") == 0

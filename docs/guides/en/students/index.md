@@ -218,6 +218,12 @@ Rendered proof headings name the object being proved, and math inside the proof 
 Proofs, solutions, hints, and answers should appear as static course content.
 Proofs stay open when they are part of the explanation. Hints, solutions, and
 answers may start collapsed so you can reveal them only when you want support.
+
+Official quiz objects may also show answer buttons on the page. Selecting an
+option can mark the local answer and show a Try again control, while the
+correct-answer disclosure remains available. This helps you check recall in the
+browser, but it is not submitted, graded, scored, saved as an attempt, or used
+as progress or mastery state.
 Opening one does not submit an answer, save progress, contact a backend, or
 ask your browser to render MathJax. When a block names a theorem, problem,
 activity, homework, figure, table, or equation, that heading should already be

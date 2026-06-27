@@ -84,11 +84,15 @@ the generated `data/official.json` entry, the owning rendered page, and
 `manifest.json` instead of treating normal HTML as authority. Verify that cards,
 prompts, quizzes, and generic fields render only on the owning page as escaped
 text, with native `details` reveal controls where appropriate and no private
-source paths. Confirm the page does not add scoring, grading, submissions,
-attempts, progress, mastery, recommendations, backend calls, runtime `fetch`,
-localStorage/sessionStorage, external/CDN renderer requests, or browser-side
-MathJax. When this surface changes, include static-read-path checks,
-escaping/privacy checks, no-storage/no-fetch inspection, and role-doc impact.
+source paths. For multiple-choice quizzes, verify native page-local option
+buttons expose `data-raya-official-quiz-*` attributes, mark correct/incorrect
+answers transiently, reset without persistence, and preserve the native answer
+reveal for no-JavaScript reading. Confirm the page does not add scoring,
+grading, submissions, attempts, progress, mastery, recommendations, backend
+calls, runtime `fetch`, localStorage/sessionStorage, external/CDN renderer
+requests, or browser-side MathJax. When this surface changes, include
+static-read-path checks, escaping/privacy checks, no-storage/no-fetch
+inspection, and role-doc impact.
 
 For the Official Practice workspace, inspect the same source
 `_official/` objects, `data/official.json`, `manifest.json`,

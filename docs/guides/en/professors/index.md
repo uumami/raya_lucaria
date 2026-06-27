@@ -217,6 +217,12 @@ grading, submissions, attempts, progress, mastery, recommendations, backend
 calls, browser-side fetching, storage, external renderers, or browser-side
 MathJax.
 
+Multiple-choice quiz objects can render page-local answer buttons from their
+authored `options` and `correct` fields. Use them for lightweight retrieval
+checks only: students can choose, see local feedback, reset, and still reveal
+the correct option. Do not treat those buttons as attempts, grades, submitted
+answers, stored progress, or adaptive practice.
+
 The Official Practice workspace is generated from the same accepted
 official objects. Author objects once under the owning page's `_official/`
 directory; Glintstone can render both the page section and a static

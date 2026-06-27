@@ -221,6 +221,12 @@ para herramientas. No disenes estos objetos alrededor de scoring, grading,
 submissions, attempts, progreso, dominio, recomendaciones, llamadas a backend,
 fetching en el browser, storage, renderers externos ni MathJax en el browser.
 
+Los quizzes multiple-choice pueden renderizar botones de respuesta locales a la
+pagina desde sus campos `options` y `correct`. Usalos solo para retrieval
+ligero: estudiantes pueden elegir, ver feedback local, resetear y todavia
+revelar la opcion correcta. No trates esos botones como attempts, notas,
+respuestas enviadas, progreso guardado ni practica adaptativa.
+
 El workspace Official Practice se genera desde los mismos objetos
 oficiales aceptados. Escribe cada objeto una vez bajo `_official/` junto a la
 pagina que lo posee; Glintstone puede renderizar la seccion de pagina y una

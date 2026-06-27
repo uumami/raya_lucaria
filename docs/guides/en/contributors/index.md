@@ -90,8 +90,10 @@ artifact authority: `_official/` remains source truth, while `data/official.json
 and `manifest.json` remain machine surfaces. Verification should cover cards,
 prompts, quizzes, generic official object fields, escaped text, native
 `details` reveal controls where appropriate, deterministic ordering, and
-source-path/privacy boundaries. Do not add scoring, grading, submissions,
-attempts, progress, mastery, recommendations, backend calls, runtime `fetch`,
+source-path/privacy boundaries. Multiple-choice quiz controls should be native
+page-local buttons over accepted option data, preserve the reveal fallback, and
+reset without storage. Do not add scoring, grading, submissions, attempts,
+progress, mastery, recommendations, backend calls, runtime `fetch`,
 localStorage/sessionStorage, external/CDN renderer requests, or browser-side
 MathJax. Changes to this surface should include static-read-path coverage,
 focused escaping/privacy assertions, no-storage/no-fetch checks, and role-doc
