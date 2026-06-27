@@ -4510,6 +4510,28 @@ def test_render_fixture_builds_rich_static_pages(
     assert "raya-numbered-object-badge" in reader_ux_html
     assert "mjx-container" in reader_ux_html
     assert "\\begin{bmatrix}" not in reader_ux_visible
+    assert 'class="raya-page-toc-objects"' in reader_ux_html
+    assert "Key objects" in reader_ux_visible
+    for expected_anchor in (
+        'href="#raya-object-orthogonal-definition"',
+        'href="#raya-object-orthogonal-proposition"',
+        'href="#raya-proof-proof-orthogonal-proposition"',
+        'href="#raya-object-orthogonal-equation"',
+        'href="#raya-object-orthogonal-figure"',
+        'href="#raya-object-orthogonal-table"',
+        'href="#raya-object-orthogonal-problem"',
+        'href="#raya-object-reader-map-practice"',
+        'href="#raya-object-orthogonal-activity"',
+    ):
+        assert expected_anchor in reader_ux_html
+    assert "Definition 4.1 Orthogonal residual" in reader_ux_visible
+    assert "Proposition 4.2 Projection residual is orthogonal" in reader_ux_visible
+    assert "Equation 4.1" in reader_ux_visible
+    assert "Figure 4.1 Projection triangle" in reader_ux_visible
+    assert "Table 4.1 Projection checklist" in reader_ux_visible
+    assert "Problem 4.1" in reader_ux_visible
+    assert "Problem 4.2 Reader map practice" in reader_ux_visible
+    assert "Activity 4.1 Check the residual" in reader_ux_visible
 
     for expected_text in (
         "Authoring Matrix Fixture",
@@ -5061,6 +5083,48 @@ def test_render_fixture_learning_rail_prioritizes_section_navigation(
     assert 'aria-expanded="true">Page contents</button>' in _section_html(
         html, "raya-page-contents"
     )
+
+
+def test_learning_rail_key_objects_ignore_heading_slug_prefixes(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+    reader_page = course / "course" / "4_reader_ux" / "0_index.md"
+    reader_page.write_text(
+        reader_page.read_text(encoding="utf-8").replace(
+            "## Worked Example\n",
+            "## Raya Object Model\n\n"
+            "This ordinary heading slug starts like a generated object anchor.\n\n"
+            "## Worked Example\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    page_contents = _section_html(html, "raya-page-contents")
+    key_objects_match = re.search(
+        r'<div class="raya-page-toc-objects".*?</div>',
+        page_contents,
+        flags=re.DOTALL,
+    )
+
+    assert key_objects_match is not None
+    key_objects = key_objects_match.group(0)
+    assert 'href="#raya-object-model"' in page_contents
+    assert "Raya Object Model" in page_contents
+    assert 'href="#raya-object-model"' not in key_objects
+    assert "Raya Object Model" not in key_objects
+    assert "Hint for Activity 4.1" not in key_objects
+    assert "Solution of Activity 4.1" not in key_objects
+    assert "Answer to Activity 4.1" not in key_objects
+    assert 'href="#raya-object-orthogonal-definition"' in key_objects
+    assert 'href="#raya-proof-proof-orthogonal-proposition"' in key_objects
 
 
 def test_learning_rail_without_toc_keeps_reading_flow_first(

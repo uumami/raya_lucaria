@@ -998,6 +998,7 @@ def _render_page(
     learning_rail = _render_learning_rail(
         page,
         toc_html,
+        public_sections,
         content_model,
         support_panels,
         page_graph_context,
@@ -1923,6 +1924,7 @@ def _render_course_map(
 def _render_learning_rail(
     page: ContentPage,
     toc_html: str,
+    public_sections: list[dict[str, str]],
     content_model: ContentModel,
     support_panels: str,
     page_graph_context: dict[str, list[dict[str, str]]],
@@ -1940,7 +1942,7 @@ def _render_learning_rail(
     )
     panels = [
         _render_current_section_rail(toc_html),
-        _render_page_contents_rail(toc_html),
+        _render_page_contents_rail(toc_html, public_sections),
         reading_flow,
         _render_page_summary_rail(page),
         _render_page_status_rail(page),
@@ -2229,10 +2231,13 @@ class _PublicArticleSectionParser(HTMLParser):
             and self._skip_depth == 0
             and bool(classes & {"raya-numbered-object", "raya-proof"})
         ):
+            kind = "proof" if "raya-proof" in classes else "numbered-object"
             self._finalize_current()
             self._current = {
                 "anchor": anchor,
+                "kind": kind,
                 "level": 2,
+                "reference": "",
                 "title": "",
                 "parts": [],
             }
@@ -2257,14 +2262,16 @@ class _PublicArticleSectionParser(HTMLParser):
         if skip:
             self._skip_depth += 1
             return
-        title_classes = classes & {
-            "raya-numbered-object-title",
-            "raya-proof-title",
-        }
-        reference_classes = classes & {
-            "raya-numbered-object-reference",
-            "raya-proof-reference",
-        }
+        title_classes: set[str] = set()
+        reference_classes: set[str] = set()
+        if self._current is not None:
+            current_anchor = str(self._current.get("anchor", ""))
+            if current_anchor.startswith("raya-object-"):
+                title_classes = classes & {"raya-numbered-object-title"}
+                reference_classes = classes & {"raya-numbered-object-reference"}
+            elif current_anchor.startswith("raya-proof-"):
+                title_classes = classes & {"raya-proof-title"}
+                reference_classes = classes & {"raya-proof-reference"}
         if self._current is not None and tag == "span" and (title_classes or reference_classes):
             self._title_capture = []
             self._title_capture_kind = "title" if title_classes else "reference"
@@ -2282,7 +2289,9 @@ class _PublicArticleSectionParser(HTMLParser):
             if title:
                 self._current = {
                     "anchor": str(self._heading_capture["anchor"]),
+                    "kind": "heading",
                     "level": int(self._heading_capture["level"]),
+                    "reference": "",
                     "title": title,
                     "parts": [title, " "],
                 }
@@ -2296,8 +2305,10 @@ class _PublicArticleSectionParser(HTMLParser):
                 existing_title = str(self._current.get("title", ""))
                 if self._title_capture_kind == "title":
                     self._current["title"] = title
-                elif not existing_title:
-                    self._current["title"] = title
+                else:
+                    self._current["reference"] = title
+                    if not existing_title:
+                        self._current["title"] = title
             self._title_capture = None
             self._title_capture_kind = ""
         if self._current is not None and tag in _PublicArticleTextParser._BLOCK_TAGS:
@@ -2326,18 +2337,21 @@ class _PublicArticleSectionParser(HTMLParser):
             _compact_public_text(" ".join(str(part) for part in self._current["parts"]))
         )
         title = _sanitize_public_search_text(str(self._current["title"]))
+        reference = _sanitize_public_search_text(str(self._current.get("reference", "")))
         if not title:
             title = _public_search_snippet(search_text, limit=80)
         if search_text:
-            self.sections.append(
-                {
-                    "id": f"{self._page_id}:{anchor}",
-                    "anchor": anchor,
-                    "title": title,
-                    "search_text": search_text,
-                    "search_snippet": _public_search_snippet(search_text, limit=160),
-                }
-            )
+            section = {
+                "id": f"{self._page_id}:{anchor}",
+                "anchor": anchor,
+                "kind": str(self._current.get("kind", "")),
+                "title": title,
+                "search_text": search_text,
+                "search_snippet": _public_search_snippet(search_text, limit=160),
+            }
+            if reference:
+                section["reference"] = reference
+            self.sections.append(section)
         self._current = None
 
     @staticmethod
@@ -2412,11 +2426,48 @@ def _public_search_snippet(text: str, *, limit: int = 240) -> str:
     return compact[: limit - 1].rstrip() + "..."
 
 
-def _render_page_contents_rail(toc_html: str) -> str:
-    if not toc_html:
+def _render_page_contents_rail(
+    toc_html: str, public_sections: list[dict[str, str]]
+) -> str:
+    object_links = _render_page_contents_object_links(public_sections)
+    body = "\n".join(part for part in (toc_html, object_links) if part)
+    if not body:
         return ""
     return _render_rail_panel(
-        "raya-page-contents", "Page contents", toc_html, expanded=True
+        "raya-page-contents", "Page contents", body, expanded=True
+    )
+
+
+def _render_page_contents_object_links(public_sections: list[dict[str, str]]) -> str:
+    items: list[str] = []
+    for section in public_sections:
+        if section.get("kind") not in {"numbered-object", "proof"}:
+            continue
+        anchor = section.get("anchor", "")
+        title = section.get("title", "").strip()
+        reference = section.get("reference", "").strip()
+        label_parts = [reference]
+        if title != reference:
+            label_parts.append(title)
+        label = " ".join(part for part in label_parts if part)
+        if not anchor or not label:
+            continue
+        items.append(
+            '<li class="raya-page-toc-object-item">'
+            f'<a href="#{html.escape(anchor, quote=True)}">'
+            f"{html.escape(label)}</a></li>"
+        )
+    if not items:
+        return ""
+    return "\n".join(
+        [
+            '<div class="raya-page-toc-objects" aria-label="Key objects">',
+            '<p class="raya-page-toc-objects-title">Key objects</p>',
+            '<ol class="raya-page-toc-object-list">',
+            "\n".join(items),
+            "</ol>",
+            "</div>",
+        ]
     )
 
 

@@ -5194,6 +5194,30 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   color: var(--raya-color-success);
   font-weight: 700;
 }
+.raya-page-toc-objects {
+  border-top: 1px solid var(--raya-color-border);
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+}
+.raya-page-toc-objects-title {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin: 0 0 0.45rem;
+}
+.raya-page-toc-object-list {
+  display: grid;
+  gap: 0.32rem;
+  margin: 0;
+  max-height: 11.5rem;
+  overflow: auto;
+  padding-left: 1.1rem;
+}
+.raya-page-toc-object-item a {
+  display: inline-block;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .raya-code-block {
   margin: 1rem 0;
 }

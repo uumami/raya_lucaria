@@ -13515,6 +13515,22 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                         wait_until="networkidle",
                     )
                     _assert_no_horizontal_overflow(page)
+                    storage_calls = page.evaluate(
+                        """() => {
+                          const calls = [];
+                          const originalLocalSet = window.localStorage.setItem;
+                          const originalSessionSet = window.sessionStorage.setItem;
+                          window.localStorage.setItem = function(key, value) {
+                            calls.push(`local:${key}`);
+                            return originalLocalSet.call(this, key, value);
+                          };
+                          window.sessionStorage.setItem = function(key, value) {
+                            calls.push(`session:${key}`);
+                            return originalSessionSet.call(this, key, value);
+                          };
+                          return calls;
+                        }"""
+                    )
                     probe = page.evaluate(
                         """() => {
                           const rail = document.querySelector('#raya-learning-rail');
@@ -13523,6 +13539,7 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                           const firstPanel = rail?.querySelector('.raya-rail-panel');
                           const firstPanelBody = firstPanel?.querySelector('.raya-rail-panel-body');
                           const pageContents = rail?.querySelector('.raya-page-contents');
+                          const keyObjects = rail?.querySelector('.raya-page-toc-objects');
                           const currentSection = rail?.querySelector('.raya-page-current-section');
                           const currentSectionLink = rail?.querySelector('[data-raya-current-section-link]');
                           const viewportHeight = window.innerHeight;
@@ -13541,6 +13558,11 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                             firstPanelBody: box(firstPanelBody),
                             firstPanelClass: firstPanel?.className || '',
                             pageContents: box(pageContents),
+                            keyObjects: box(keyObjects),
+                            keyObjectText: keyObjects?.innerText || '',
+                            keyObjectHrefs: Array.from(
+                              keyObjects?.querySelectorAll('a') || []
+                            ).map((link) => link.getAttribute('href')),
                             currentSection: box(currentSection),
                             currentSectionText: currentSectionLink?.textContent?.trim() || '',
                             currentSectionHref: currentSectionLink?.getAttribute('href') || '',
@@ -13557,6 +13579,7 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     finally:
         handle.close()
 
+    assert storage_calls == []
     assert "Learning context" in probe["railText"]
     assert "Summary" in probe["railText"]
     assert probe["railState"] == "expanded"
@@ -13572,6 +13595,28 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     assert probe["pageContents"]["bottom"] < probe["viewportHeight"]
     assert probe["currentSectionText"]
     assert probe["currentSectionHref"].startswith("#")
+    assert "Key objects" in probe["keyObjectText"]
+    assert "Definition 4.1 Orthogonal residual" in probe["keyObjectText"]
+    assert "Proposition 4.2 Projection residual is orthogonal" in probe["keyObjectText"]
+    assert "Equation 4.1" in probe["keyObjectText"]
+    assert "Figure 4.1 Projection triangle" in probe["keyObjectText"]
+    assert "Table 4.1 Projection checklist" in probe["keyObjectText"]
+    assert "Problem 4.2 Reader map practice" in probe["keyObjectText"]
+    assert "Activity 4.1 Check the residual" in probe["keyObjectText"]
+    assert "recommend" not in probe["keyObjectText"].lower()
+    assert "progress" not in probe["keyObjectText"].lower()
+    assert "mastery" not in probe["keyObjectText"].lower()
+    for expected_href in (
+        "#raya-object-orthogonal-definition",
+        "#raya-object-orthogonal-proposition",
+        "#raya-proof-proof-orthogonal-proposition",
+        "#raya-object-orthogonal-equation",
+        "#raya-object-orthogonal-figure",
+        "#raya-object-orthogonal-table",
+        "#raya-object-reader-map-practice",
+        "#raya-object-orthogonal-activity",
+    ):
+        assert expected_href in probe["keyObjectHrefs"]
 
 
 def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
