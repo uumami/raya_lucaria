@@ -4313,6 +4313,130 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
         handle.close()
 
 
+def test_render_fixture_graph_focus_mode_refits_selected_context(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_selector(
+                        '#raya-graph-canvas [data-raya-graph-node="reader-ux"] '
+                        ".raya-graph-node.is-selected"
+                    )
+                    before = page.locator("#raya-graph-canvas").bounding_box()
+                    assert before is not None
+                    page.click("#graph-expand")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-graph-page]')
+                          ?.getAttribute('data-raya-graph-expanded') === 'true'"""
+                    )
+                    page.wait_for_function(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          if (!canvas) return false;
+                          const rect = canvas.getBoundingClientRect();
+                          return rect.height >= window.innerHeight * 0.8;
+                        }"""
+                    )
+                    probe = page.evaluate(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                          );
+                          const edges = Array.from(
+                            document.querySelectorAll('#raya-graph-canvas .raya-graph-edge')
+                          );
+                          const box = (node) => {
+                            const rect = node.getBoundingClientRect();
+                            return {
+                              x: rect.x,
+                              y: rect.y,
+                              width: rect.width,
+                              height: rect.height,
+                            };
+                          };
+                          return {
+                            canvas: box(canvas),
+                            selected: selected ? box(selected) : null,
+                            connectedEdges: edges
+                              .filter((edge) => {
+                                const from = edge.getAttribute('data-raya-graph-from') || '';
+                                const to = edge.getAttribute('data-raya-graph-to') || '';
+                                return from === 'reader-ux' || to === 'reader-ux';
+                              })
+                              .map(box),
+                            viewport: {
+                              x: 0,
+                              y: 0,
+                              width: window.innerWidth,
+                              height: window.innerHeight,
+                            },
+                            rootExpanded: document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-expanded'),
+                            listState: document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-list-state'),
+                            inspectorState: document
+                              .querySelector('[data-raya-graph-page]')
+                              ?.getAttribute('data-raya-graph-inspector-state'),
+                            storage: [
+                              Object.keys(localStorage),
+                              Object.keys(sessionStorage),
+                            ],
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                          };
+                        }"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    visible_canvas = _intersection_box(probe["canvas"], probe["viewport"])
+    assert probe["rootExpanded"] == "true"
+    assert probe["listState"] == "collapsed"
+    assert probe["inspectorState"] == "collapsed"
+    assert probe["canvas"]["height"] >= probe["viewport"]["height"] * 0.8
+    assert visible_canvas["height"] > probe["viewport"]["height"] * 0.45
+    assert probe["selected"] is not None
+    assert _boxes_intersect(visible_canvas, probe["selected"])
+    assert any(
+        _boxes_intersect(visible_canvas, edge) for edge in probe["connectedEdges"]
+    )
+    assert probe["storage"] == [[], []]
+    assert probe["overflow"] <= 1
+
+
 def test_render_fixture_graph_search_matches_key_object_text(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

@@ -1484,6 +1484,22 @@ _GRAPH_JAVASCRIPT = r"""
     canvas.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
+  function scrollGraphFocusIntoView() {
+    canvas.scrollIntoView({ block: "start", inline: "nearest" });
+  }
+
+  function refitGraphFocusContext() {
+    if (!selectedId || root.dataset.rayaGraphExpanded !== "true") return;
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (!selectedId || root.dataset.rayaGraphExpanded !== "true") return;
+        fitSelectedGraphContext();
+        scrollGraphFocusIntoView();
+        render();
+      });
+    });
+  }
+
   function fitInitialPageFocus() {
     if (!pendingInitialPageFit) return;
     pendingInitialPageFit = false;
@@ -3621,6 +3637,9 @@ _GRAPH_JAVASCRIPT = r"""
       setGraphExpanded(nextExpanded);
       if (!nextExpanded) setGraphPanelsToResponsiveDefault();
       render();
+      if (nextExpanded) {
+        refitGraphFocusContext();
+      }
     });
   }
   panelToggles.forEach((button) => {

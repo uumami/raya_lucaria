@@ -3135,7 +3135,7 @@ img {
   outline-offset: 3px;
 }
 [data-raya-graph-expanded="true"] .raya-graph-canvas {
-  height: clamp(34rem, 72vh, 48rem);
+  height: clamp(42rem, 84vh, 64rem);
 }
 .raya-graph-canvas[hidden] {
   display: none;
