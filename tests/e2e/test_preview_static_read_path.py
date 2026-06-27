@@ -13619,6 +13619,81 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
         assert expected_href in probe["keyObjectHrefs"]
 
 
+def test_render_fixture_key_object_links_track_visible_object(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    initial_url = page.evaluate("() => window.location.href")
+                    _assert_no_horizontal_overflow(page)
+                    page.locator(
+                        "#raya-object-orthogonal-definition"
+                    ).scroll_into_view_if_needed()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-toc-objects a[data-raya-key-object-link="raya-object-orthogonal-definition"]')
+                          ?.getAttribute('aria-current') === 'location'"""
+                    )
+                    state = page.evaluate(
+                        """() => ({
+                          currentUrl: window.location.href,
+                          activeObjectHref: document
+                            .querySelector('.raya-page-toc-objects a[aria-current="location"]')
+                            ?.getAttribute('href') || '',
+                          activeObjectText: document
+                            .querySelector('.raya-page-toc-objects a[aria-current="location"]')
+                            ?.textContent.trim() || '',
+                          currentSectionHref: document
+                            .querySelector('.raya-current-section-link')
+                            ?.getAttribute('href') || '',
+                          storage: [
+                            Object.keys(localStorage),
+                            Object.keys(sessionStorage),
+                          ],
+                          overflow: Math.ceil(
+                            document.documentElement.scrollWidth - window.innerWidth
+                          ),
+                        })"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert state["activeObjectHref"] == "#raya-object-orthogonal-definition"
+    assert state["activeObjectText"].startswith("Definition 4.1")
+    assert state["currentSectionHref"] != "#raya-object-orthogonal-definition"
+    assert state["currentUrl"] == initial_url
+    assert state["storage"] == [[], []]
+    assert state["overflow"] <= 1
+
+
 def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
     tmp_path: Path,
 ) -> None:

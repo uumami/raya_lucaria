@@ -2453,9 +2453,11 @@ def _render_page_contents_object_links(public_sections: list[dict[str, str]]) ->
         label = " ".join(part for part in label_parts if part)
         if not anchor or not label:
             continue
+        escaped_anchor = html.escape(anchor, quote=True)
         items.append(
             '<li class="raya-page-toc-object-item">'
-            f'<a href="#{html.escape(anchor, quote=True)}">'
+            f'<a href="#{escaped_anchor}" '
+            f'data-raya-key-object-link="{escaped_anchor}">'
             f"{html.escape(label)}</a></li>"
         )
     if not items:

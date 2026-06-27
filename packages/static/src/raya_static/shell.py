@@ -48,6 +48,15 @@ _SHELL_JAVASCRIPT = r"""
   const currentSectionLinks = Array.from(
     document.querySelectorAll("[data-raya-current-section-link]")
   );
+  const keyObjectLinks = Array.from(
+    document.querySelectorAll(".raya-page-toc-objects a[data-raya-key-object-link]")
+  );
+  const keyObjectTargets = keyObjectLinks
+    .map((link) => {
+      const id = link.getAttribute("data-raya-key-object-link") || "";
+      return id ? document.getElementById(id) : null;
+    })
+    .filter(Boolean);
   const headings = tocLinks
     .map((link) => {
       const href = link.getAttribute("href");
@@ -1486,10 +1495,36 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
+  function setActiveKeyObject(id) {
+    keyObjectLinks.forEach((link) => {
+      const isActive = Boolean(id) && link.getAttribute("data-raya-key-object-link") === id;
+      if (isActive) {
+        link.setAttribute("aria-current", "location");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+  }
+
   if (headings.length > 0) {
     updateActiveHeading();
     window.addEventListener("scroll", updateActiveHeading, { passive: true });
     window.addEventListener("resize", updateActiveHeading);
+  }
+  if (keyObjectLinks.length > 0 && keyObjectTargets.length > 0 && "IntersectionObserver" in window) {
+    const activeObjects = new Set();
+    const objectObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeObjects.add(entry.target.id);
+        } else {
+          activeObjects.delete(entry.target.id);
+        }
+      });
+      const activeTarget = keyObjectTargets.find((target) => activeObjects.has(target.id));
+      setActiveKeyObject(activeTarget ? activeTarget.id : "");
+    }, { rootMargin: "-20% 0px -55% 0px", threshold: 0 });
+    keyObjectTargets.forEach((target) => objectObserver.observe(target));
   }
 
   setExpanded(true);

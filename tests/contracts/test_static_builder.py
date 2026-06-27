@@ -4548,6 +4548,17 @@ def test_render_fixture_builds_rich_static_pages(
         'href="#raya-object-orthogonal-activity"',
     ):
         assert expected_anchor in reader_ux_html
+    assert (
+        'data-raya-key-object-link="raya-object-orthogonal-definition"'
+        in reader_ux_html
+    )
+    assert (
+        'data-raya-key-object-link="raya-proof-proof-orthogonal-proposition"'
+        in reader_ux_html
+    )
+    assert (
+        '.raya-page-toc-object-item a[aria-current="location"]' in rich_css
+    )
     assert "Definition 4.1 Orthogonal residual" in reader_ux_visible
     assert "Proposition 4.2 Projection residual is orthogonal" in reader_ux_visible
     assert "Equation 4.1" in reader_ux_visible

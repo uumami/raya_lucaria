@@ -5243,6 +5243,14 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
+.raya-page-toc-object-item a[aria-current="location"] {
+  background: color-mix(in srgb, var(--raya-color-accent) 12%, transparent);
+  border: 1px solid var(--raya-color-accent);
+  border-radius: 0.25rem;
+  color: var(--raya-color-text);
+  margin-left: -0.2rem;
+  padding: 0.08rem 0.2rem;
+}
 .raya-code-block {
   margin: 1rem 0;
 }
