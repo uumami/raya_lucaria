@@ -4544,6 +4544,29 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     width: 1px;
   }
 }
+@media (min-width: 1800px) {
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+    clip: auto;
+    clip-path: none;
+    height: auto;
+    overflow: visible;
+    position: static;
+    white-space: nowrap;
+    width: auto;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+    gap: 0.38rem;
+    min-width: 0;
+    padding-inline: 0.55rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+    gap: 0.3rem;
+  }
+  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+    flex-basis: 10rem;
+    min-width: 10rem;
+  }
+}
 @media (max-width: 1279px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-focus,
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {

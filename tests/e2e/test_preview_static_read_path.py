@@ -9214,6 +9214,8 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
             try:
                 states = []
                 for viewport in (
+                    {"width": 1920, "height": 900},
+                    {"width": 1800, "height": 900},
                     {"width": 1440, "height": 900},
                     {"width": 640, "height": 900},
                     {"width": 521, "height": 900},
@@ -9233,7 +9235,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               );
                               const topBar = document.querySelector('.raya-top-command-bar');
                               const commandTops = visibleCommands.map(
-                                (item) => Math.round(item.getBoundingClientRect().top)
+                                (item) => item.getBoundingClientRect().top
                               );
                               const groups = Array.from(
                                 document.querySelectorAll('[data-raya-command-group]')
@@ -9264,7 +9266,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                   (item) => item.getBoundingClientRect().height
                                 ),
                                 topBarHeight: topBar.getBoundingClientRect().height,
-                                commandRows: new Set(commandTops).size,
+                                commandTopSpread: commandTops.length
+                                  ? Math.max(...commandTops) - Math.min(...commandTops)
+                                  : 0,
                                 topBarWidth: topBar.scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
                                 formBox: (() => {
@@ -9304,12 +9308,31 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 submitWhiteSpace: getComputedStyle(
                                   document.querySelector('.raya-command-search-submit')
                                 ).whiteSpace,
-                                submitLabelWhiteSpace: getComputedStyle(
-                                  document.querySelector('.raya-command-search-submit span')
-                                ).whiteSpace,
-                                searchHref: document
-                                  .querySelector('.raya-command-search')
-                                  ?.getAttribute('href'),
+                            submitLabelWhiteSpace: getComputedStyle(
+                              document.querySelector('.raya-command-search-submit span')
+                            ).whiteSpace,
+                            commandLabelBoxes: Object.fromEntries(
+                              Array.from(document.querySelectorAll('.raya-command')).map((command) => {
+                                const marker = Array.from(command.classList)
+                                  .find((name) => name.startsWith('raya-command-')
+                                    && name !== 'raya-command-icon'
+                                    && name !== 'raya-command-label');
+                                const label = command.querySelector('.raya-command-label');
+                                const box = label?.getBoundingClientRect();
+                                return [marker, {
+                                  text: label?.textContent?.trim() || '',
+                                  width: box ? box.width : 0,
+                                  height: box ? box.height : 0,
+                                  clipped: label
+                                    ? getComputedStyle(label).clip !== 'auto'
+                                      || getComputedStyle(label).clipPath !== 'none'
+                                    : true,
+                                }];
+                              })
+                            ),
+                            searchHref: document
+                              .querySelector('.raya-command-search')
+                              ?.getAttribute('href'),
                                 graphHref: document
                                   .querySelector('.raya-command-graph')
                                   ?.getAttribute('href'),
@@ -9440,9 +9463,31 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["submitLabelWhiteSpace"] == "nowrap"
                         assert state["submitBox"]["width"] >= 48
                         assert state["submitLabelBox"]["height"] < 24
+                        if viewport["width"] >= 1800:
+                            for command_name in (
+                                "raya-command-graph",
+                                "raya-command-practice",
+                                "raya-command-tasks",
+                                "raya-command-schedule",
+                                "raya-command-map",
+                                "raya-command-focus",
+                                "raya-command-context",
+                                "raya-command-size",
+                                "raya-command-font",
+                                "raya-command-skin",
+                            ):
+                                label_box = state["commandLabelBoxes"][command_name]
+                                assert label_box["text"]
+                                assert label_box["width"] > 12
+                                assert label_box["height"] > 10
+                                assert label_box["clipped"] is False
+                        elif viewport["width"] >= 1280:
+                            assert state["commandLabelBoxes"]["raya-command-font"][
+                                "clipped"
+                            ] is True
                         if viewport["width"] >= 1024:
                             assert state["topBarHeight"] <= 96
-                            assert state["commandRows"] == 1
+                            assert state["commandTopSpread"] <= 4
                         else:
                             assert state["topBarHeight"] <= 220
                         assert state["searchHref"] == (
@@ -9556,7 +9601,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
     finally:
         handle.close()
 
-    assert len(states) == 4
+    assert len(states) == 6
 
 
 def test_render_fixture_learning_shell_layout_and_accessibility(
