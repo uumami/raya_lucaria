@@ -3935,6 +3935,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
             diagnostic.format() for diagnostic in handle.report.diagnostics
         ]
         assert handle.base_url is not None
+        base_url = handle.base_url
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
                 executable_path=str(browser_executable),
@@ -4170,7 +4171,7 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     )
 
                     page.goto(
-                        f"{handle.base_url}/_raya/graph/index.html",
+                        f"{base_url}/_raya/graph/index.html",
                         wait_until="networkidle",
                     )
                     page.fill("#graph-search", "projection")
@@ -4310,6 +4311,89 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                 browser.close()
     finally:
         handle.close()
+
+
+def test_render_fixture_graph_search_matches_key_object_text(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        base_url = handle.base_url
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.fill("#graph-search", "projection triangle")
+                    page.wait_for_function(
+                        "() => new URL(window.location.href).searchParams.get('page') === 'reader-ux'"
+                    )
+                    state = page.evaluate(
+                        """() => ({
+                          selected: document
+                            .querySelector('[data-raya-graph-state-selected]')
+                            ?.textContent.trim() || '',
+                          title: document
+                            .querySelector('[data-raya-graph-detail-title]')
+                            ?.textContent.trim() || '',
+                          keyObjects: Array.from(
+                            document.querySelectorAll('[data-raya-graph-detail-key-objects] a')
+                          ).map((link) => ({
+                            text: link.textContent.trim(),
+                            href: link.getAttribute('href') || '',
+                          })),
+                          activeListText: document
+                            .querySelector('#raya-graph-list [data-raya-graph-node="reader-ux"]')
+                            ?.textContent.trim() || '',
+                          storage: [
+                            Object.keys(localStorage),
+                            Object.keys(sessionStorage),
+                          ],
+                          overflow: Math.ceil(
+                            document.documentElement.scrollWidth - window.innerWidth
+                          ),
+                        })"""
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert "reader-ux" in state["selected"]
+    assert state["title"] == "Projection Residuals"
+    assert "Projection Residuals" in state["activeListText"]
+    assert any(
+        item["text"].startswith("Figure 4.1 Projection triangle")
+        and item["href"].endswith(
+            "/reader-ux/index.html#raya-object-orthogonal-figure"
+        )
+        for item in state["keyObjects"]
+    )
+    assert state["storage"] == [[], []]
+    assert state["overflow"] <= 1
+    assert requested_urls
+    assert all(url.startswith(f"{base_url}/") for url in requested_urls)
 
 
 def test_render_fixture_graph_relationship_edges_are_inspectable(

@@ -295,6 +295,14 @@ _GRAPH_JAVASCRIPT = r"""
           item.available,
         ].join(" ")).join(" ")
         : "",
+      Array.isArray(node.key_objects)
+        ? node.key_objects.map((item) => [
+          item.reference,
+          item.kind,
+          item.title,
+          item.anchor,
+        ].join(" ")).join(" ")
+        : "",
       Array.isArray(node.tags) ? node.tags.join(" ") : "",
     ].join(" ");
   }
