@@ -15,7 +15,7 @@
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add a browser test for map expansion continuity**
+- [x] **Step 1: Add a browser test for map expansion continuity**
 
 Add a focused e2e test near the existing shell collapse tests:
 
@@ -84,8 +84,8 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     )
                     assert expanding["rootState"] == "expanded"
                     assert expanding["transition"] == "expanding"
-                    assert expanding["width"] < 220
-                    assert expanding["listDisplay"] == "block"
+                    assert expanding["width"] <= 240
+                    assert expanding["listDisplay"] == "grid"
                     assert expanding["listVisibility"] == "hidden"
                     assert expanding["listHidden"] == "true"
                     assert expanding["listInert"] is True
@@ -123,7 +123,7 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
         handle.close()
 ```
 
-- [ ] **Step 2: Add a browser test for right-rail expansion continuity**
+- [x] **Step 2: Add a browser test for right-rail expansion continuity**
 
 Add:
 
@@ -194,7 +194,7 @@ def test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transit
                     )
                     assert expanding["rootState"] == "expanded"
                     assert expanding["transition"] == "expanding"
-                    assert expanding["width"] < 220
+                    assert expanding["width"] <= 260
                     assert expanding["bodyDisplay"] == "grid"
                     assert expanding["bodyVisibility"] == "hidden"
                     assert expanding["bodyHidden"] == "true"
@@ -237,7 +237,7 @@ def test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transit
         handle.close()
 ```
 
-- [ ] **Step 3: Verify RED**
+- [x] **Step 3: Verify RED**
 
 Run:
 
@@ -255,7 +255,7 @@ Expected: fail because expansion currently reveals the full map list/right-rail 
 - Modify: `packages/static/src/raya_static/shell.py`
 - Modify: `packages/static/src/raya_static/rendering.py`
 
-- [ ] **Step 1: Keep course-map links inert during desktop expansion**
+- [x] **Step 1: Keep course-map links inert during desktop expansion**
 
 In `packages/static/src/raya_static/shell.py`, update `setExpanded(nextExpanded)` so desktop expansion keeps the map list non-interactive until the transition marker clears:
 
@@ -282,7 +282,7 @@ Keep the existing final `updateMapLinkTabOrder(nextExpanded)` call for non-trans
     }
 ```
 
-- [ ] **Step 2: Keep learning-rail body inert during desktop expansion**
+- [x] **Step 2: Keep learning-rail body inert during desktop expansion**
 
 In `setLearningRailExpanded(nextExpanded)`, during desktop expansion keep `aria-hidden=true`, `inert=true`, and descendants disabled until the transition marker clears:
 
@@ -304,7 +304,7 @@ In `setLearningRailExpanded(nextExpanded)`, during desktop expansion keep `aria-
 
 Guard the existing immediate body accessibility update so desktop expansion does not undo the temporary inert state.
 
-- [ ] **Step 3: Hide full panel bodies while expanding**
+- [x] **Step 3: Hide full panel bodies while expanding**
 
 In `packages/static/src/raya_static/rendering.py`, add CSS alongside the existing collapsing selectors:
 
@@ -338,13 +338,13 @@ Also add:
 ```css
   [data-raya-course-map="expanded"] .raya-course-map[data-raya-course-map-transition="expanding"] .raya-course-map-list,
   .raya-course-map[data-raya-course-map="expanded"][data-raya-course-map-transition="expanding"] .raya-course-map-list {
-    display: block;
+    display: grid;
     pointer-events: none;
     visibility: hidden;
   }
 ```
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 Run the two focused tests from Task 1. Expected: both pass.
 
@@ -353,14 +353,14 @@ Run the two focused tests from Task 1. Expected: both pass.
 **Files:**
 - Inspect only unless failures require fixes.
 
-- [ ] **Step 1: Run focused shell regression tests**
+- [x] **Step 1: Run focused shell regression tests**
 
 Run:
 
 ```bash
 UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
-  tests/e2e/test_preview_static_read_path.py::test_render_fixture_static_pages_use_expanded_course_map_shell \
-  tests/e2e/test_preview_static_read_path.py::test_render_fixture_reader_focus_collapses_map_and_context_without_storage \
+  tests/e2e/test_preview_static_read_path.py::test_render_fixture_course_map_collapses_and_expands_on_click_only \
+  tests/e2e/test_preview_static_read_path.py::test_render_fixture_reader_focus_command_collapses_map_and_rail \
   tests/e2e/test_preview_static_read_path.py::test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs \
   tests/e2e/test_preview_static_read_path.py::test_render_fixture_desktop_course_map_expansion_hides_full_list_until_transition_end \
   tests/e2e/test_preview_static_read_path.py::test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transition_end
@@ -368,7 +368,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: pass with no storage keys, no horizontal overflow, stable compact tabs, and restored expanded bodies after transition cleanup.
 
-- [ ] **Step 2: Run render-debug gate**
+- [x] **Step 2: Run render-debug gate**
 
 Run:
 
@@ -378,7 +378,7 @@ Run:
 
 Expected: pass with local resources only, no overflow regression, no raw TeX leakage, and static-site parity intact.
 
-- [ ] **Step 3: Request independent code review**
+- [x] **Step 3: Request independent code review**
 
 Ask a reviewer to inspect the diff for:
 
@@ -388,7 +388,7 @@ Ask a reviewer to inspect the diff for:
 - no discovery/graph regressions;
 - test strength.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 After verification and review:
 

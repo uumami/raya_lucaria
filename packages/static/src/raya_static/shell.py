@@ -93,6 +93,7 @@ _SHELL_JAVASCRIPT = r"""
     if (mapList) {
       mapList.setAttribute("aria-hidden", "false");
       mapList.inert = false;
+      setFocusableDescendantsEnabled(mapList, true);
     }
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
@@ -299,17 +300,25 @@ _SHELL_JAVASCRIPT = r"""
 
   function setExpanded(nextExpanded) {
     const previousExpanded = root.dataset.rayaCourseMap !== "collapsed";
+    const desktopTransition = isDesktopShell() && previousExpanded !== nextExpanded;
+    const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
       clearCourseMapFilter();
       setCourseMapScanMode(false);
     } else {
       hideCourseMapCompactPreview();
     }
-    if (isDesktopShell() && previousExpanded !== nextExpanded) {
+    if (desktopTransition) {
       window.clearTimeout(courseMapTransitionTimer);
       map.dataset.rayaCourseMapTransition = nextExpanded ? "expanding" : "collapsing";
+      if (desktopExpanding) {
+        updateMapLinkTabOrder(false);
+      }
       courseMapTransitionTimer = window.setTimeout(() => {
         delete map.dataset.rayaCourseMapTransition;
+        if (desktopExpanding && root.dataset.rayaCourseMap === "expanded") {
+          updateMapLinkTabOrder(true);
+        }
       }, SHELL_TRANSITION_MS);
     } else {
       window.clearTimeout(courseMapTransitionTimer);
@@ -328,8 +337,18 @@ _SHELL_JAVASCRIPT = r"""
         button.textContent = nextExpanded ? "Collapse map" : "Expand map";
       }
     });
-    updateMapLinkTabOrder(nextExpanded);
+    if (!desktopExpanding) {
+      updateMapLinkTabOrder(nextExpanded);
+    }
     syncCourseMapDrawerState();
+    if (desktopExpanding) {
+      const mapList = map.querySelector("#raya-course-map-list");
+      if (mapList) {
+        mapList.setAttribute("aria-hidden", "true");
+        mapList.inert = true;
+        setFocusableDescendantsEnabled(mapList, false);
+      }
+    }
   }
 
   function normalizeMapQuery(value) {
@@ -849,13 +868,25 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     const previousExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    if (isDesktopShell() && previousExpanded !== nextExpanded) {
+    const desktopTransition = isDesktopShell() && previousExpanded !== nextExpanded;
+    const desktopExpanding = desktopTransition && nextExpanded;
+    if (desktopTransition) {
       window.clearTimeout(learningRailTransitionTimer);
       learningRail.dataset.rayaLearningRailTransition = nextExpanded
         ? "expanding"
         : "collapsing";
+      if (desktopExpanding) {
+        learningRailBody.setAttribute("aria-hidden", "true");
+        setElementInert(learningRailBody, true);
+        setFocusableDescendantsEnabled(learningRailBody, false);
+      }
       learningRailTransitionTimer = window.setTimeout(() => {
         delete learningRail.dataset.rayaLearningRailTransition;
+        if (desktopExpanding && root.dataset.rayaLearningRail === "expanded") {
+          learningRailBody.setAttribute("aria-hidden", "false");
+          setElementInert(learningRailBody, false);
+          setFocusableDescendantsEnabled(learningRailBody, true);
+        }
       }, SHELL_TRANSITION_MS);
     } else {
       window.clearTimeout(learningRailTransitionTimer);
@@ -865,9 +896,11 @@ _SHELL_JAVASCRIPT = r"""
     shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     syncLearningRailToggleButtons(nextExpanded);
-    learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-    setElementInert(learningRailBody, !nextExpanded);
-    setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
+    if (!desktopExpanding) {
+      learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
+      setElementInert(learningRailBody, !nextExpanded);
+      setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
+    }
     if (nextExpanded) {
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
@@ -880,6 +913,11 @@ _SHELL_JAVASCRIPT = r"""
       learningRailExpand.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     }
     syncLearningRailDrawerState();
+    if (desktopExpanding) {
+      learningRailBody.setAttribute("aria-hidden", "true");
+      setElementInert(learningRailBody, true);
+      setFocusableDescendantsEnabled(learningRailBody, false);
+    }
   }
 
   function openLearningRailDrawer(opener = null) {

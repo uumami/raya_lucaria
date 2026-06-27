@@ -12321,6 +12321,12 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           .querySelector('#raya-course-map')
                           ?.getBoundingClientRect().width >= 220"""
                     )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
                     expanded = page.evaluate(
                         """() => ({
                           state: document.documentElement.dataset.rayaCourseMap,
@@ -14281,6 +14287,221 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
                     assert both_collapsed["railBodyHidden"] == "true"
                     assert both_collapsed["railBodyInert"] is True
                     _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_transition_end(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        "() => !document.querySelector('#raya-course-map')?.dataset.rayaCourseMapTransition"
+                    )
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    expanding = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                          const map = document.querySelector('#raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const firstLink = list?.querySelector('a[href]');
+                          return {
+                            rootState: document.documentElement.dataset.rayaCourseMap,
+                            transition: map?.dataset.rayaCourseMapTransition,
+                            width: map?.getBoundingClientRect().width,
+                            listDisplay: list ? getComputedStyle(list).display : null,
+                            listVisibility: list ? getComputedStyle(list).visibility : null,
+                            listHidden: list?.getAttribute('aria-hidden'),
+                            listInert: list?.inert,
+                            firstLinkTabIndex: firstLink?.getAttribute('tabindex'),
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                            storage: {
+                              local: Object.keys(localStorage),
+                              session: Object.keys(sessionStorage),
+                            },
+                          };
+                        }"""
+                    )
+                    assert expanding["rootState"] == "expanded"
+                    assert expanding["transition"] == "expanding"
+                    assert expanding["width"] <= 240
+                    assert expanding["listDisplay"] == "grid"
+                    assert expanding["listVisibility"] == "hidden"
+                    assert expanding["listHidden"] == "true"
+                    assert expanding["listInert"] is True
+                    assert expanding["firstLinkTabIndex"] == "-1"
+                    assert expanding["overflow"] <= 1
+                    assert expanding["storage"] == {"local": [], "session": []}
+
+                    page.wait_for_function(
+                        "() => !document.querySelector('#raya-course-map')?.dataset.rayaCourseMapTransition"
+                    )
+                    expanded = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const firstLink = list?.querySelector('a[href]');
+                          const firstToggle = list?.querySelector('.raya-course-map-node-toggle');
+                          return {
+                            width: map?.getBoundingClientRect().width,
+                            listVisibility: list ? getComputedStyle(list).visibility : null,
+                            listHidden: list?.getAttribute('aria-hidden'),
+                            listInert: list?.inert,
+                            firstLinkTabIndex: firstLink?.getAttribute('tabindex'),
+                            firstToggleTabIndex: firstToggle?.getAttribute('tabindex'),
+                          };
+                        }"""
+                    )
+                    assert expanded["width"] >= 220
+                    assert expanded["listVisibility"] == "visible"
+                    assert expanded["listHidden"] == "false"
+                    assert expanded["listInert"] is False
+                    assert expanded["firstLinkTabIndex"] is None
+                    assert expanded["firstToggleTabIndex"] is None
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transition_end(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click("[data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        "() => !document.querySelector('#raya-learning-rail')?.dataset.rayaLearningRailTransition"
+                    )
+                    page.click("[data-raya-learning-rail-expand]")
+                    expanding = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
+                          return {
+                            rootState: document.documentElement.dataset.rayaLearningRail,
+                            transition: rail?.dataset.rayaLearningRailTransition,
+                            width: rail?.getBoundingClientRect().width,
+                            bodyDisplay: body ? getComputedStyle(body).display : null,
+                            bodyVisibility: body ? getComputedStyle(body).visibility : null,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            expandVisible: !!expand?.getClientRects().length,
+                            collapseVisible: !!collapse?.getClientRects().length,
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                            storage: {
+                              local: Object.keys(localStorage),
+                              session: Object.keys(sessionStorage),
+                            },
+                          };
+                        }"""
+                    )
+                    assert expanding["rootState"] == "expanded"
+                    assert expanding["transition"] == "expanding"
+                    assert expanding["width"] <= 260
+                    assert expanding["bodyDisplay"] == "grid"
+                    assert expanding["bodyVisibility"] == "hidden"
+                    assert expanding["bodyHidden"] == "true"
+                    assert expanding["bodyInert"] is True
+                    assert expanding["expandVisible"] is True
+                    assert expanding["collapseVisible"] is False
+                    assert expanding["overflow"] <= 1
+                    assert expanding["storage"] == {"local": [], "session": []}
+
+                    page.wait_for_function(
+                        "() => !document.querySelector('#raya-learning-rail')?.dataset.rayaLearningRailTransition"
+                    )
+                    expanded = page.evaluate(
+                        """() => {
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
+                          return {
+                            width: rail?.getBoundingClientRect().width,
+                            bodyVisibility: body ? getComputedStyle(body).visibility : null,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                            expandVisible: !!expand?.getClientRects().length,
+                            collapseVisible: !!collapse?.getClientRects().length,
+                          };
+                        }"""
+                    )
+                    assert expanded["width"] >= 220
+                    assert expanded["bodyVisibility"] == "visible"
+                    assert expanded["bodyHidden"] == "false"
+                    assert expanded["bodyInert"] is False
+                    assert expanded["expandVisible"] is False
+                    assert expanded["collapseVisible"] is True
                 finally:
                     page.close()
             finally:
