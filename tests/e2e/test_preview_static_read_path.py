@@ -353,6 +353,108 @@ def test_graph_workspace_renders_selected_detail_navigator(
         handle.close()
 
 
+def test_graph_detail_navigator_jumps_without_state_or_storage(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        graph_js = _fetch_text(f"{handle.base_url}/_raya/render/graph.js")
+        assert "fetch(" not in graph_js
+        assert "XMLHttpRequest" not in graph_js
+        assert "localStorage" not in graph_js
+        assert "sessionStorage" not in graph_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requests: list[str] = []
+                page.on("request", lambda request: requests.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html?page=reader-ux",
+                        wait_until="networkidle",
+                    )
+                    requests.clear()
+                    detail_panel = page.locator("[data-raya-graph-detail-panel]")
+                    page.wait_for_selector("[data-raya-graph-detail-panel]:not([hidden])")
+                    nav = page.locator("[data-raya-graph-detail-nav]")
+                    assert nav.is_visible()
+                    buttons = nav.locator("[data-raya-graph-detail-nav-target]")
+                    assert buttons.evaluate_all(
+                        "nodes => nodes.map((node) => node.textContent.trim())"
+                    ) == ["Summary", "Relationships", "Study", "Sequence", "Links"]
+                    for target in (
+                        "summary",
+                        "relationships",
+                        "study",
+                        "sequence",
+                        "links",
+                    ):
+                        assert nav.locator(
+                            f'[data-raya-graph-detail-nav-target="{target}"]'
+                        ).is_enabled()
+
+                    before_url = page.url
+                    nav.locator(
+                        '[data-raya-graph-detail-nav-target="relationships"]'
+                    ).click()
+                    page.wait_for_function(
+                        "() => document.activeElement?.matches("
+                        "'[data-raya-graph-detail-jump-target=\"relationships\"]')"
+                    )
+                    assert page.url == before_url
+                    assert page.locator(
+                        '[data-raya-graph-detail-jump-target="relationships"]'
+                    ).is_visible()
+                    assert page.evaluate("() => localStorage.length") == 0
+                    assert page.evaluate("() => sessionStorage.length") == 0
+                    assert requests == []
+
+                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    assert (
+                        page.locator("[data-raya-graph-page]").get_attribute(
+                            "data-raya-graph-inspector-state"
+                        )
+                        == "collapsed"
+                    )
+                    assert (
+                        nav.locator(
+                            '[data-raya-graph-detail-nav-target="relationships"]'
+                        ).get_attribute("tabindex")
+                        == "-1"
+                    )
+                    page.click('[data-raya-graph-toggle-panel="inspector"]')
+                    assert (
+                        nav.locator(
+                            '[data-raya-graph-detail-nav-target="relationships"]'
+                        ).get_attribute("tabindex")
+                        is None
+                    )
+                    assert detail_panel.is_visible()
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_preview_reader_official_quiz_renders_page_local_controls(
     tmp_path: Path,
 ) -> None:

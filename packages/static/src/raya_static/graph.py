@@ -148,6 +148,10 @@ _GRAPH_JAVASCRIPT = r"""
   const detailOutgoing = document.querySelector("[data-raya-graph-detail-outgoing]");
   const detailIncoming = document.querySelector("[data-raya-graph-detail-incoming]");
   const detailClear = document.querySelector("[data-raya-graph-detail-clear]");
+  const detailNav = document.querySelector("[data-raya-graph-detail-nav]");
+  const detailNavButtons = Array.from(
+    document.querySelectorAll("[data-raya-graph-detail-nav-target]")
+  );
   const stateSelected = document.querySelector("[data-raya-graph-state-selected]");
   const stateQuery = document.querySelector("[data-raya-graph-state-query]");
   const stateLayout = document.querySelector("[data-raya-graph-state-layout]");
@@ -2766,6 +2770,57 @@ _GRAPH_JAVASCRIPT = r"""
     });
   }
 
+  function visibleDetailTarget(selector) {
+    const element = document.querySelector(selector);
+    if (!element || element.hidden) return null;
+    return element;
+  }
+
+  function detailJumpTarget(target) {
+    if (target === "relationships") {
+      return visibleDetailTarget("[data-raya-graph-detail-relationship-overview]") ||
+        visibleDetailTarget("[data-raya-graph-detail-relationship-chips]") ||
+        visibleDetailTarget("[data-raya-graph-relationship-walkthrough]") ||
+        visibleDetailTarget("[data-raya-graph-detail-neighborhood]");
+    }
+    if (target === "study") {
+      return visibleDetailTarget("[data-raya-graph-detail-sections]") ||
+        visibleDetailTarget("[data-raya-graph-detail-study-objects]") ||
+        visibleDetailTarget("[data-raya-graph-detail-key-objects]");
+    }
+    if (target === "sequence") {
+      return visibleDetailTarget("[data-raya-graph-detail-reading-path]");
+    }
+    if (target === "links") {
+      return visibleDetailTarget(".raya-graph-detail-links");
+    }
+    return detailPanel && !detailPanel.hidden ? detailPanel : null;
+  }
+
+  function syncDetailNavigator() {
+    if (!detailNav) return;
+    const hasSelection = Boolean(selectedId && detailPanel && !detailPanel.hidden);
+    detailNav.hidden = !hasSelection;
+    detailNavButtons.forEach((button) => {
+      const target = button.getAttribute("data-raya-graph-detail-nav-target") || "";
+      const enabled = hasSelection && Boolean(detailJumpTarget(target));
+      button.disabled = !enabled;
+      button.setAttribute("aria-disabled", enabled ? "false" : "true");
+    });
+  }
+
+  function jumpToDetailTarget(target) {
+    const destination = detailJumpTarget(target);
+    if (!destination) return;
+    destination.setAttribute("data-raya-graph-detail-jump-target", target);
+    if (!destination.hasAttribute("tabindex")) {
+      destination.setAttribute("tabindex", "-1");
+      destination.setAttribute("data-raya-graph-nav-temp-tabindex", "true");
+    }
+    destination.scrollIntoView({ block: "nearest", inline: "nearest" });
+    destination.focus({ preventScroll: true });
+  }
+
   function titleForUrl(url) {
     if (!url) return "";
     const target = nodes.find((candidate) => candidate.url === url);
@@ -3135,6 +3190,7 @@ _GRAPH_JAVASCRIPT = r"""
       }
       if (detailReadingPathSummary) detailReadingPathSummary.textContent = "";
       setOptionalDetailLink(detailNextLink, "", "Next");
+      syncDetailNavigator();
       return;
     }
     const group = groupsById.get(node.group || "");
@@ -3215,6 +3271,7 @@ _GRAPH_JAVASCRIPT = r"""
     renderDetailList(detailOutgoing, outgoing, "No outgoing links.");
     renderDetailList(detailIncoming, incoming, "No incoming links.");
     syncRelationshipFocusDom();
+    syncDetailNavigator();
   }
 
   function focusSelectedDetail() {
@@ -3839,6 +3896,14 @@ _GRAPH_JAVASCRIPT = r"""
   if (detailClear) {
     detailClear.addEventListener("click", clearGraphSelection);
   }
+  detailNavButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.disabled) return;
+      jumpToDetailTarget(
+        button.getAttribute("data-raya-graph-detail-nav-target") || "summary"
+      );
+    });
+  });
   if (orientationClear) {
     orientationClear.addEventListener("click", clearGraphSelection);
   }

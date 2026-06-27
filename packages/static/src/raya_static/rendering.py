@@ -2862,6 +2862,30 @@ img {
   font-size: 1rem;
   margin: 0;
 }
+.raya-graph-detail-nav {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0.8rem;
+}
+.raya-graph-detail-nav-button {
+  border-radius: 999px !important;
+  font-size: 0.82rem !important;
+  font-weight: 800;
+  min-height: 1.9rem !important;
+  padding: 0.25rem 0.6rem !important;
+}
+.raya-graph-detail-nav-button:disabled {
+  color: var(--raya-color-muted);
+  cursor: default;
+  opacity: 0.56;
+}
+.raya-graph-detail-nav-button:focus-visible,
+[data-raya-graph-detail-jump-target]:focus-visible {
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: 3px;
+}
 .raya-graph-detail button {
   background: var(--raya-color-surface);
   border: 1px solid var(--raya-color-border);
