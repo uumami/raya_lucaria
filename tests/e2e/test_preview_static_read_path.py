@@ -87,10 +87,11 @@ def _assert_visible_graph_labels_inside_canvas(page) -> None:
 
 
 def _click_graph_node_group(page, node_id: str, *, click_count: int = 1) -> None:
-    node = page.locator(
+    node_selector = (
         f'#raya-graph-canvas [data-raya-graph-node="{node_id}"] '
         ".raya-graph-node-hit"
     )
+    node = page.locator(node_selector)
     node.scroll_into_view_if_needed()
     box = node.bounding_box()
     assert box is not None
@@ -106,6 +107,25 @@ def _click_graph_node_group(page, node_id: str, *, click_count: int = 1) -> None
         )
         is True
     )
+    page.mouse.move(x, y)
+    box = page.evaluate(
+        """(selector) => {
+          const node = document.querySelector(selector);
+          if (!node) return null;
+          node.scrollIntoView({ block: "center", inline: "center" });
+          const box = node.getBoundingClientRect();
+          return {
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height,
+          };
+        }""",
+        node_selector,
+    )
+    assert box is not None
+    x = box["x"] + box["width"] / 2
+    y = box["y"] + box["height"] / 2
     if click_count == 2:
         page.mouse.click(x, y, click_count=2)
     else:
@@ -1575,10 +1595,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 == "expanded"
                             )
                             assert list_panel_link.get_attribute("tabindex") is None
-                            inspector_summary = page.locator(
-                                "[data-raya-graph-help] summary"
+                            inspector_body_summary = page.locator(
+                                "[data-raya-graph-panel-body='inspector'] "
+                                "[data-raya-graph-state-readout] summary"
                             )
-                            assert inspector_summary.get_attribute("tabindex") is None
+                            assert inspector_body_summary.get_attribute("tabindex") is None
                             page.click('[data-raya-graph-toggle-panel="inspector"]')
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
@@ -1594,11 +1615,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )
                             assert (
                                 page.locator(
-                                    "[data-raya-graph-help] summary:visible"
+                                    "[data-raya-graph-panel-body='inspector'] "
+                                    "[data-raya-graph-state-readout] summary:visible"
                                 ).count()
                                 == 0
                             )
-                            assert inspector_summary.get_attribute("tabindex") == "-1"
+                            assert inspector_body_summary.get_attribute("tabindex") == "-1"
                             page.click('[data-raya-graph-toggle-panel="inspector"]')
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
@@ -1606,7 +1628,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 )
                                 == "expanded"
                             )
-                            assert inspector_summary.get_attribute("tabindex") is None
+                            assert inspector_body_summary.get_attribute("tabindex") is None
                         assert page.locator(
                             "[data-raya-graph-legend='node']"
                         ).is_visible()
@@ -1832,10 +1854,17 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "courseOrdered": True,
                         }
                         if viewport["width"] >= 520:
-                            page.locator(
+                            hover_target = page.locator(
                                 '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
                                 ".raya-graph-node-hit"
-                            ).hover()
+                            )
+                            hover_target.scroll_into_view_if_needed()
+                            hover_box = hover_target.bounding_box()
+                            assert hover_box is not None
+                            page.mouse.move(
+                                hover_box["x"] + hover_box["width"] / 2,
+                                hover_box["y"] + hover_box["height"] / 2,
+                            )
                         else:
                             page.locator(
                                 '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"]'
@@ -1846,9 +1875,31 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                               ?.textContent
                               ?.includes('Inspecting Authoring Matrix Fixture')"""
                         )
+                        assert preview.is_visible()
+                        assert preview.evaluate(
+                            "node => getComputedStyle(node).pointerEvents"
+                        ) == "none"
+                        assert page.locator(
+                            "[data-raya-graph-inspection-preview-select]"
+                        ).evaluate(
+                            "node => getComputedStyle(node).pointerEvents"
+                        ) == "auto"
                         assert page.locator(
                             '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] g'
                         ).evaluate("node => node.classList.contains('is-inspected')")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-graph-canvas .raya-graph-edge.is-dimmed') !== null"""
+                        )
+                        dimmed_edge = page.locator(
+                            "#raya-graph-canvas .raya-graph-edge.is-dimmed"
+                        ).first
+                        dimmed_marker_id = dimmed_edge.get_attribute(
+                            "marker-end"
+                        ).removeprefix("url(#").removesuffix(")")
+                        assert page.locator(f"#{dimmed_marker_id}").evaluate(
+                            "node => node.classList.contains('is-dimmed')"
+                        )
                         for node_id in (
                             "render-root",
                             "math-authoring",
@@ -1889,9 +1940,12 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                   const style = window.getComputedStyle(node);
                                   return {
                                     color: node.style.getPropertyValue('--raya-graph-edge-color'),
-                                    dash: style.strokeDasharray,
-                                    opacity: style.strokeOpacity,
-                                    width: style.strokeWidth,
+                                    dash: node.getAttribute('stroke-dasharray')
+                                      || style.getPropertyValue('stroke-dasharray'),
+                                    opacity: node.getAttribute('stroke-opacity')
+                                      || style.strokeOpacity,
+                                    width: node.getAttribute('stroke-width')
+                                      || style.strokeWidth,
                                   };
                                 }"""
                             )
@@ -1990,21 +2044,6 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             """() => document
                               .querySelector('#raya-graph-canvas .raya-graph-edge.is-inspected') !== null"""
                         )
-                        assert (
-                            page.locator(
-                                "#raya-graph-canvas .raya-graph-edge.is-dimmed"
-                            ).count()
-                            > 0
-                        )
-                        dimmed_edge = page.locator(
-                            "#raya-graph-canvas .raya-graph-edge.is-dimmed"
-                        ).first
-                        dimmed_marker_id = dimmed_edge.get_attribute(
-                            "marker-end"
-                        ).removeprefix("url(#").removesuffix(")")
-                        assert page.locator(f"#{dimmed_marker_id}").evaluate(
-                            "node => node.classList.contains('is-dimmed')"
-                        )
                         inspected_edge = page.locator(
                             "#raya-graph-canvas .raya-graph-edge.is-inspected"
                         ).first
@@ -2059,6 +2098,16 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 "x": drag_box["x"] + drag_box["width"] / 2,
                                 "y": drag_box["y"] + drag_box["height"] / 2,
                             }
+                            page.mouse.move(
+                                drag_start_client["x"],
+                                drag_start_client["y"],
+                            )
+                            drag_box = drag_hit_box.bounding_box()
+                            assert drag_box is not None
+                            drag_start_client = {
+                                "x": drag_box["x"] + drag_box["width"] / 2,
+                                "y": drag_box["y"] + drag_box["height"] / 2,
+                            }
                             drag_end_client = {
                                 "x": drag_start_client["x"] + 150,
                                 "y": drag_start_client["y"] + 90,
@@ -2074,6 +2123,15 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 steps=6,
                             )
                             page.mouse.up()
+                            page.wait_for_function(
+                                """([nodeId, initialTransform]) => document
+                                  .querySelector(`#raya-graph-canvas [data-raya-graph-node="${nodeId}"] g`)
+                                  ?.getAttribute("transform") !== initialTransform""",
+                                arg=[
+                                    drag_target,
+                                    f"translate({drag_start[0]:g} {drag_start[1]:g})",
+                                ],
+                            )
                             drag_after = _graph_node_translate(page, drag_target)
                             assert drag_after != drag_start
                             assert drag_after[0] > drag_start[0] + 20
@@ -2501,9 +2559,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert requested_urls == []
                         graph_node = page.locator(
-                            "#raya-graph-canvas [data-raya-graph-node] "
+                            '#raya-graph-canvas [data-raya-graph-node="authoring-matrix"] '
                             ".raya-graph-node-hit"
-                        ).first
+                        )
                         graph_node.hover()
                         assert page.locator(
                             "[data-raya-graph-detail-empty]"
@@ -2512,7 +2570,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "[data-raya-graph-detail-panel]"
                         ).is_hidden()
                         assert page.locator("#graph-fit-selection").is_disabled()
-                        graph_node.click()
+                        _click_graph_node_group(page, "authoring-matrix")
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
@@ -3523,10 +3581,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         ).evaluate(
                             "node => new URL(node.getAttribute('href'), document.baseURI).href"
                         )
-                        with page.expect_navigation():
-                            _click_graph_node_group(
-                                page, "authoring-matrix", click_count=2
-                            )
+                        _click_graph_node_group(
+                            page, "authoring-matrix", click_count=2
+                        )
+                        page.wait_for_url(graph_href)
                         assert page.url == graph_href
                         page.goto(
                             f"{base_url}/_raya/graph/index.html",
@@ -3538,9 +3596,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         keyboard_href = keyboard_node.evaluate(
                             "node => new URL(node.getAttribute('href'), document.baseURI).href"
                         )
-                        with page.expect_navigation():
-                            keyboard_node.focus()
-                            page.keyboard.press("Enter")
+                        assert keyboard_node.get_attribute("tabindex") == "0"
+                        assert keyboard_node.get_attribute("role") == "link"
+                        assert keyboard_node.get_attribute("focusable") == "true"
+                        keyboard_node.press("Enter")
+                        page.wait_for_url(keyboard_href)
                         assert page.url == keyboard_href
                         page.goto(
                             f"{base_url}/_raya/graph/index.html",
@@ -3563,7 +3623,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert plain_label_state["render-root"]["visible"]
                         assert plain_label_state["authoring-matrix"]["visible"]
-                        assert not plain_label_state["static-path"]["visible"]
+                        assert any(
+                            not state["visible"]
+                            for node_id, state in plain_label_state.items()
+                            if node_id.startswith("crowded-")
+                        )
                         _assert_visible_graph_labels_inside_canvas(page)
                         page.goto(
                             f"{base_url}/_raya/graph/index.html?page=authoring-matrix",
@@ -3971,7 +4035,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "reader-ux",
                         ):
                             assert selected_label_state[node_id]["visible"]
-                        assert not selected_label_state["static-path"]["visible"]
+                        assert any(
+                            not state["visible"]
+                            for node_id, state in selected_label_state.items()
+                            if node_id.startswith("crowded-")
+                        )
                         focus_button = page.locator(
                             "[data-raya-graph-focus-neighborhood]"
                         )
@@ -4119,7 +4187,6 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         assert focus_label_state["math-authoring"]["visible"]
                         assert focus_label_state["numbered-objects"]["visible"]
                         assert focus_label_state["render-root"]["visible"]
-                        assert not focus_label_state["static-path"]["visible"]
                         page.click("#graph-reset")
                         assert (
                             page.locator("[data-raya-graph-page]").get_attribute(

@@ -219,13 +219,13 @@ _GRAPH_JAVASCRIPT = r"""
   let graphListPrioritized = false;
   let pendingSelectTimer = 0;
   let suppressHoverInspectionUntil = 0;
+  let inspectionPreviewHover = false;
   let fullViewBox = null;
   let graphViewBox = null;
   let graphPanStart = null;
   let graphNodeDrag = null;
   let recentTouchNodePointerUntil = 0;
   let suppressedNodeClick = { id: "", until: 0 };
-  let graphNodeClickSequence = { id: "", time: 0 };
   let lastActiveNodes = [];
   let lastActiveEdges = [];
   let latestRenderedPositions = new Map();
@@ -909,6 +909,19 @@ _GRAPH_JAVASCRIPT = r"""
 
   function edgeKindClass(edge) {
     return `raya-graph-edge-kind-${edgeKind(edge)}`;
+  }
+
+  function edgeDashArray(edge) {
+    switch (edgeKind(edge)) {
+      case "content":
+        return "7 5";
+      case "prerequisite":
+        return "13 6";
+      case "parent":
+        return "2 5";
+      default:
+        return "";
+    }
   }
 
   function edgeOffsetFor(edge) {
@@ -1633,7 +1646,6 @@ _GRAPH_JAVASCRIPT = r"""
     hiddenEdgeKinds.clear();
     manualNodePositions.clear();
     suppressedNodeClick = { id: "", until: 0 };
-    graphNodeClickSequence = { id: "", time: 0 };
     clearRelationshipFocus();
     updateEdgeKindFilters();
     selectedId = "";
@@ -2053,14 +2065,8 @@ _GRAPH_JAVASCRIPT = r"""
       moved: false,
       captured: false,
     };
-    if (event.pointerId !== undefined && canvas.setPointerCapture) {
-      canvas.setPointerCapture(event.pointerId);
-      graphNodeDrag.captured = true;
-    }
     canvas.classList.add("is-dragging-node");
     if (hoverStatus) hoverStatus.textContent = `Repositioning ${nodesById.get(nodeId)?.title || nodeId}.`;
-    event.preventDefault();
-    event.stopPropagation();
   }
 
   function moveGraphNodeDrag(event) {
@@ -2077,6 +2083,14 @@ _GRAPH_JAVASCRIPT = r"""
       Math.abs(event.clientY - graphNodeDrag.startClientY) > 4
     ) {
       graphNodeDrag.moved = true;
+      if (
+        !graphNodeDrag.captured &&
+        event.pointerId !== undefined &&
+        canvas.setPointerCapture
+      ) {
+        canvas.setPointerCapture(event.pointerId);
+        graphNodeDrag.captured = true;
+      }
     }
     updateVisibleNodePosition(graphNodeDrag.nodeId, {
       x: graphNodeDrag.startNodePoint.x + dx,
@@ -2112,19 +2126,7 @@ _GRAPH_JAVASCRIPT = r"""
       }
     }
     if (!moved) {
-      const now = Date.now();
-      const opensNode = graphNodeClickSequence.id === nodeId &&
-        now - graphNodeClickSequence.time <= 360;
-      graphNodeClickSequence = { id: nodeId, time: now };
-      window.clearTimeout(pendingSelectTimer);
-      if (opensNode) {
-        graphNodeClickSequence = { id: "", time: 0 };
-        openGraphNode(nodeId);
-      } else {
-        pendingSelectTimer = window.setTimeout(() => {
-          selectGraphNode(nodeId);
-        }, 180);
-      }
+      return false;
     }
     event.preventDefault();
     event.stopPropagation();
@@ -2537,6 +2539,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function clearGraphInspection(nodeId) {
     const applyClear = () => {
+      if (inspectionPreviewHover) return;
       const focusedNodeId = focusedInspectionNodeId();
       if (isActiveGraphNodeId(focusedNodeId)) {
         inspectGraphNode(focusedNodeId);
@@ -3561,6 +3564,16 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("data-raya-graph-edge-key", edgeKey);
       line.setAttribute("marker-end", graphArrowMarkerUrl(edge, edgeIndex));
       line.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
+      const dashArray = edgeDashArray(edge);
+      if (dashArray) {
+        line.setAttribute("stroke-dasharray", dashArray);
+      }
+      if (edgeKind(edge) === "prerequisite") {
+        line.setAttribute("stroke-width", "2.4");
+      }
+      if (edgeKind(edge) === "parent") {
+        line.setAttribute("stroke-opacity", "0.44");
+      }
       line.setAttribute(
         "class",
         [
@@ -3606,6 +3619,9 @@ _GRAPH_JAVASCRIPT = r"""
       const link = document.createElementNS("http://www.w3.org/2000/svg", "a");
       link.setAttribute("href", node.url);
       link.setAttribute("class", "raya-graph-node-link");
+      link.setAttribute("tabindex", "0");
+      link.setAttribute("role", "link");
+      link.setAttribute("focusable", "true");
       link.setAttribute("aria-label", inspectionTextFor(node.id));
       link.dataset.rayaGraphNode = node.id;
       const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -3925,6 +3941,15 @@ _GRAPH_JAVASCRIPT = r"""
     inspectionPreviewSelect.addEventListener("click", () => {
       const nodeId = inspectionPreviewSelect.dataset.rayaGraphNode || "";
       if (nodeId) selectGraphNode(nodeId);
+    });
+  }
+  if (inspectionPreview) {
+    inspectionPreview.addEventListener("mouseenter", () => {
+      inspectionPreviewHover = true;
+    });
+    inspectionPreview.addEventListener("mouseleave", () => {
+      inspectionPreviewHover = false;
+      clearGraphInspection(inspectedId);
     });
   }
   if (focusNeighborhood) {

@@ -1017,6 +1017,7 @@ img {
 }
 .raya-graph-status {
   margin: 0 0 0.45rem;
+  pointer-events: none;
 }
 .raya-graph-arrangement-status {
   background: color-mix(in srgb, var(--raya-color-warning-soft) 70%, var(--raya-color-surface));
@@ -2626,9 +2627,20 @@ img {
   background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
   border: 1px solid var(--raya-color-border);
   border-radius: 0.5rem;
-  margin: 0.65rem 0;
+  bottom: 1rem;
+  box-shadow: 0 0.85rem 1.65rem color-mix(in srgb, var(--raya-color-text) 14%, transparent);
+  inline-size: min(32rem, calc(100% - 2rem));
+  left: auto;
+  margin: 0;
   padding: 0.8rem 0.9rem;
   pointer-events: none;
+  position: absolute;
+  right: 1rem;
+  top: auto;
+  z-index: 5;
+}
+.raya-graph-inspection-preview[hidden] {
+  display: none;
 }
 .raya-graph-inspection-preview-header {
   align-items: baseline;
@@ -3640,13 +3652,15 @@ img {
   stroke-width: 4;
 }
 .raya-graph-node-hit {
-  fill: transparent;
+  fill: #000;
+  fill-opacity: 0.001;
   pointer-events: all;
   stroke: transparent;
   stroke-width: 0;
 }
 .raya-graph-node-mark {
   fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 24%, var(--raya-color-surface));
+  pointer-events: none;
   stroke: var(--raya-graph-node-color, var(--raya-color-accent));
   stroke-width: 2;
   transition:
