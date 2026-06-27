@@ -59,6 +59,28 @@ _GRAPH_JAVASCRIPT = r"""
   const graphPreviewTitle = document.querySelector("[data-raya-graph-preview-title]");
   const graphPreviewSummary = document.querySelector("[data-raya-graph-preview-summary]");
   const graphPreviewCounts = document.querySelector("[data-raya-graph-preview-counts]");
+  const relationshipPreview = document.querySelector("[data-raya-graph-relationship-preview]");
+  const relationshipPreviewKind = document.querySelector(
+    "[data-raya-graph-relationship-preview-kind]"
+  );
+  const relationshipPreviewSource = document.querySelector(
+    "[data-raya-graph-relationship-preview-source]"
+  );
+  const relationshipPreviewTarget = document.querySelector(
+    "[data-raya-graph-relationship-preview-target]"
+  );
+  const relationshipPreviewDirection = document.querySelector(
+    "[data-raya-graph-relationship-preview-direction]"
+  );
+  const relationshipPreviewSourceAction = document.querySelector(
+    "[data-raya-graph-relationship-preview-source-action]"
+  );
+  const relationshipPreviewTargetAction = document.querySelector(
+    "[data-raya-graph-relationship-preview-target-action]"
+  );
+  const relationshipPreviewKindAction = document.querySelector(
+    "[data-raya-graph-relationship-preview-kind-action]"
+  );
   const groupFilters = Array.from(document.querySelectorAll("[data-raya-graph-group-filter]"));
   const edgeKindFilters = Array.from(
     document.querySelectorAll("[data-raya-graph-edge-kind-filter]")
@@ -173,6 +195,7 @@ _GRAPH_JAVASCRIPT = r"""
   let query = "";
   let selectedId = "";
   let inspectedId = "";
+  let inspectedEdgeKey = "";
   let activeResultId = "";
   let pageFocusId = "";
   let activeRelationshipFocus = "";
@@ -649,6 +672,24 @@ _GRAPH_JAVASCRIPT = r"""
       .replace(/[^a-z0-9-]+/g, "-")
       .replace(/^-+|-+$/g, "");
     return kind || "link";
+  }
+
+  function graphEdgeKey(edge) {
+    if (!edge) return "";
+    return `${edge.from || ""}→${edge.to || ""}:${edgeKind(edge)}`;
+  }
+
+  function edgeMatchesKey(edge, key) {
+    return Boolean(key && graphEdgeKey(edge) === key);
+  }
+
+  function nodeTitleFor(nodeId) {
+    const node = nodesById.get(nodeId);
+    return node ? (node.title || node.nav_title || node.id) : nodeId;
+  }
+
+  function relationshipPreviewTextFor(edge) {
+    return `${edgeKindLabel(edgeKind(edge))}: ${nodeTitleFor(edge.from)} source to target ${nodeTitleFor(edge.to)}`;
   }
 
   function relationshipChipLabel(kind, direction) {
@@ -2051,8 +2092,13 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function updateInspectionDom() {
+    renderRelationshipPreview();
     renderInspectionPreview(inspectedId);
     const inspectedConnectedIds = inspectedId ? connectedNodeIds(inspectedId) : new Set();
+    const inspectedEdge = activeGraphEdgeByKey(inspectedEdgeKey);
+    const inspectedEdgeEndpointIds = inspectedEdge
+      ? new Set([inspectedEdge.from, inspectedEdge.to])
+      : new Set();
     const inspectedSpotlightIds = inspectedId
       ? new Set([inspectedId, ...inspectedConnectedIds])
       : new Set();
@@ -2066,9 +2112,11 @@ _GRAPH_JAVASCRIPT = r"""
       nodeGroup.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
       nodeGroup.classList.toggle("is-focus-origin", id === inspectedId);
       nodeGroup.classList.toggle("is-focus-endpoint", inspectedConnectedIds.has(id));
+      nodeGroup.classList.toggle("is-edge-endpoint", inspectedEdgeEndpointIds.has(id));
       nodeGroup.classList.toggle(
         "is-label-visible",
-        shouldShowGraphLabel(id, selectedConnectedIds, inspectedConnectedIds, searchContext)
+        shouldShowGraphLabel(id, selectedConnectedIds, inspectedConnectedIds, searchContext) ||
+          inspectedEdgeEndpointIds.has(id)
       );
       nodeGroup.classList.toggle(
         "is-search-context",
@@ -2086,10 +2134,15 @@ _GRAPH_JAVASCRIPT = r"""
     canvas.querySelectorAll(".raya-graph-edge, .raya-graph-arrow-marker").forEach((edgeMark) => {
       const from = edgeMark.getAttribute("data-raya-graph-from") || "";
       const to = edgeMark.getAttribute("data-raya-graph-to") || "";
-      const edge = { from, to };
+      const kind = edgeMark.getAttribute("data-raya-graph-kind") || "";
+      const edge = { from, to, kind };
       edgeMark.classList.toggle(
         "is-inspected",
         edgeTouchesNode(edge, inspectedId)
+      );
+      edgeMark.classList.toggle(
+        "is-edge-inspected",
+        edgeMatchesKey(edge, inspectedEdgeKey)
       );
       edgeMark.classList.toggle(
         "is-focus-route",
@@ -2120,6 +2173,71 @@ _GRAPH_JAVASCRIPT = r"""
       item.classList.toggle("is-inspected", id === inspectedId);
       item.classList.toggle("is-inspected-neighbor", inspectedConnectedIds.has(id));
     });
+  }
+
+  function activeGraphEdgeByKey(key) {
+    if (!key) return null;
+    return lastActiveEdges.find((edge) => edgeMatchesKey(edge, key)) || null;
+  }
+
+  function renderRelationshipPreview() {
+    if (!relationshipPreview) return;
+    const edge = activeGraphEdgeByKey(inspectedEdgeKey);
+    if (!edge) {
+      relationshipPreview.hidden = true;
+      relationshipPreview.setAttribute("aria-hidden", "true");
+      return;
+    }
+    const kind = edgeKind(edge);
+    if (relationshipPreviewKind) {
+      relationshipPreviewKind.textContent = `${edgeKindLabel(kind)} relationship`;
+    }
+    if (relationshipPreviewSource) {
+      relationshipPreviewSource.textContent = nodeTitleFor(edge.from);
+    }
+    if (relationshipPreviewTarget) {
+      relationshipPreviewTarget.textContent = nodeTitleFor(edge.to);
+    }
+    if (relationshipPreviewDirection) {
+      relationshipPreviewDirection.textContent = "source to target";
+    }
+    if (relationshipPreviewSourceAction) {
+      relationshipPreviewSourceAction.disabled = !nodesById.has(edge.from);
+    }
+    if (relationshipPreviewTargetAction) {
+      relationshipPreviewTargetAction.disabled = !nodesById.has(edge.to);
+    }
+    if (relationshipPreviewKindAction) {
+      relationshipPreviewKindAction.disabled = hiddenEdgeKinds.has(kind);
+      relationshipPreviewKindAction.textContent = `Focus ${edgeKindLabel(kind)}`;
+    }
+    relationshipPreview.hidden = false;
+    relationshipPreview.setAttribute("aria-hidden", "false");
+  }
+
+  function inspectGraphEdge(edge) {
+    if (!edge) return;
+    inspectedEdgeKey = graphEdgeKey(edge);
+    if (hoverStatus) hoverStatus.textContent = relationshipPreviewTextFor(edge);
+    hideGraphPreviewBubble();
+    updateInspectionDom();
+  }
+
+  function clearGraphEdgeInspection(edge) {
+    window.setTimeout(() => {
+      const active = document.activeElement;
+      if (active && typeof active.closest === "function") {
+        const focusedEdge = active.closest("[data-raya-graph-edge-hit]");
+        if (focusedEdge) return;
+      }
+      if (relationshipPreview && active && relationshipPreview.contains(active)) {
+        return;
+      }
+      if (edge && !edgeMatchesKey(edge, inspectedEdgeKey)) return;
+      inspectedEdgeKey = "";
+      if (!inspectedId && hoverStatus) hoverStatus.textContent = "";
+      updateInspectionDom();
+    }, 0);
   }
 
   function inspectGraphNode(nodeId, options = {}) {
@@ -2337,6 +2455,7 @@ _GRAPH_JAVASCRIPT = r"""
     return [
       edgeTouchesNode(edge, selectedId) ? "is-active" : "",
       edgeTouchesNode(edge, inspectedId) ? "is-inspected" : "",
+      edgeMatchesKey(edge, inspectedEdgeKey) ? "is-edge-inspected" : "",
       edgeTouchesNode(edge, inspectedId) ? "is-focus-route" : "",
       inspectedId && !edgeTouchesNode(edge, inspectedId) ? "is-dimmed" : "",
       isSelectionMutedEdge(edge) ? "is-selection-muted" : "",
@@ -2898,6 +3017,7 @@ _GRAPH_JAVASCRIPT = r"""
 
   function selectGraphNode(nodeId) {
     clearRelationshipFocus();
+    inspectedEdgeKey = "";
     neighborhoodFocus = false;
     pageFocusId = "";
     pendingInitialPageFit = false;
@@ -2918,6 +3038,7 @@ _GRAPH_JAVASCRIPT = r"""
     clearRelationshipFocus();
     selectedId = "";
     inspectedId = "";
+    inspectedEdgeKey = "";
     activeResultId = "";
     pageFocusId = "";
     pendingInitialPageFit = false;
@@ -3152,6 +3273,7 @@ _GRAPH_JAVASCRIPT = r"""
       const to = latestRenderedPositions.get(edge.to);
       if (!from || !to) return;
       const linePoints = edgeLinePoints(edge, from, to);
+      const edgeKey = graphEdgeKey(edge);
       const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute("x1", String(linePoints.x1));
       line.setAttribute("y1", String(linePoints.y1));
@@ -3161,6 +3283,7 @@ _GRAPH_JAVASCRIPT = r"""
       line.setAttribute("data-raya-graph-from", edge.from);
       line.setAttribute("data-raya-graph-to", edge.to);
       line.setAttribute("data-raya-graph-kind", edgeKind(edge));
+      line.setAttribute("data-raya-graph-edge-key", edgeKey);
       line.setAttribute("marker-end", graphArrowMarkerUrl(edge, edgeIndex));
       line.style.setProperty("--raya-graph-edge-color", edgeColorFor(edge));
       line.setAttribute(
@@ -3172,7 +3295,34 @@ _GRAPH_JAVASCRIPT = r"""
           ...relationshipEdgeStateClassNames(edge),
         ].filter(Boolean).join(" ")
       );
-      canvas.appendChild(line);
+      const hitLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      hitLine.setAttribute("x1", String(linePoints.x1));
+      hitLine.setAttribute("y1", String(linePoints.y1));
+      hitLine.setAttribute("x2", String(linePoints.x2));
+      hitLine.setAttribute("y2", String(linePoints.y2));
+      hitLine.setAttribute("class", "raya-graph-edge-hit");
+      hitLine.setAttribute("data-raya-graph-edge-hit", "");
+      hitLine.setAttribute("data-raya-graph-from", edge.from);
+      hitLine.setAttribute("data-raya-graph-to", edge.to);
+      hitLine.setAttribute("data-raya-graph-kind", edgeKind(edge));
+      hitLine.setAttribute("data-raya-graph-edge-key", edgeKey);
+      hitLine.setAttribute("tabindex", "0");
+      hitLine.setAttribute("role", "button");
+      hitLine.setAttribute("aria-label", relationshipPreviewTextFor(edge));
+      hitLine.addEventListener("mouseenter", () => inspectGraphEdge(edge));
+      hitLine.addEventListener("mouseleave", () => clearGraphEdgeInspection(edge));
+      hitLine.addEventListener("focus", () => inspectGraphEdge(edge));
+      hitLine.addEventListener("blur", () => clearGraphEdgeInspection(edge));
+      hitLine.addEventListener("click", (event) => {
+        event.preventDefault();
+        inspectGraphEdge(edge);
+      });
+      hitLine.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        inspectGraphEdge(edge);
+      });
+      canvas.append(line, hitLine);
     });
 
     activeNodes.forEach((node) => {
@@ -3268,6 +3418,33 @@ _GRAPH_JAVASCRIPT = r"""
     if (activeResultId) setActiveResult(activeResultId, { scroll: false });
     updateInspectionDom();
     setFitSelectionEnabled();
+  }
+
+  if (relationshipPreviewSourceAction) {
+    relationshipPreviewSourceAction.addEventListener("click", () => {
+      const edge = activeGraphEdgeByKey(inspectedEdgeKey);
+      if (!edge || !nodesById.has(edge.from)) return;
+      selectGraphNode(edge.from);
+    });
+  }
+  if (relationshipPreviewTargetAction) {
+    relationshipPreviewTargetAction.addEventListener("click", () => {
+      const edge = activeGraphEdgeByKey(inspectedEdgeKey);
+      if (!edge || !nodesById.has(edge.to)) return;
+      selectGraphNode(edge.to);
+    });
+  }
+  if (relationshipPreviewKindAction) {
+    relationshipPreviewKindAction.addEventListener("click", () => {
+      const edge = activeGraphEdgeByKey(inspectedEdgeKey);
+      if (!edge || !nodesById.has(edge.from)) return;
+      clearRelationshipFocus();
+      selectedId = edge.from;
+      inspectedId = edge.from;
+      activeRelationshipFocus = relationshipFocusKey(edgeKind(edge), "out");
+      renderDetail();
+      render();
+    });
   }
 
   if (search) {

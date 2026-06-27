@@ -4312,6 +4312,163 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
         handle.close()
 
 
+def test_render_fixture_graph_relationship_edges_are_inspectable(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/_raya/graph/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    edge_info = page.evaluate(
+                        """() => {
+                          const hit = document.querySelector('[data-raya-graph-edge-hit]');
+                          const payload = JSON.parse(
+                            document.getElementById('raya-graph-data').textContent
+                          );
+                          const from = hit?.getAttribute('data-raya-graph-from') || '';
+                          const to = hit?.getAttribute('data-raya-graph-to') || '';
+                          const kind = hit?.getAttribute('data-raya-graph-kind') || '';
+                          const nodeById = new Map(payload.nodes.map((node) => [node.id, node]));
+                          return {
+                            from,
+                            to,
+                            kind,
+                            kindLabel: hit?.getAttribute('aria-label')?.split(':')[0] || kind,
+                            fromTitle: nodeById.get(from)?.title || from,
+                            toTitle: nodeById.get(to)?.title || to,
+                          };
+                        }"""
+                    )
+                    assert edge_info["from"]
+                    assert edge_info["to"]
+                    edge = page.locator("[data-raya-graph-edge-hit]").first
+                    edge.focus()
+                    preview = page.locator("[data-raya-graph-relationship-preview]")
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('[data-raya-graph-relationship-preview]')
+                          ?.hasAttribute('hidden')"""
+                    )
+                    assert preview.is_visible()
+                    preview_text = preview.inner_text()
+                    assert edge_info["fromTitle"] in preview_text
+                    assert edge_info["toTitle"] in preview_text
+                    assert edge_info["kind"] in preview_text.lower()
+                    assert "source to target" in preview_text.lower()
+                    assert page.locator(
+                        "#raya-graph-canvas [data-raya-graph-edge].is-edge-inspected"
+                    ).count() == 1
+                    assert page.locator(
+                        "#raya-graph-canvas .raya-graph-node.is-edge-endpoint"
+                    ).count() >= 2
+
+                    page.locator(
+                        "[data-raya-graph-relationship-preview-source-action]"
+                    ).click()
+                    page.wait_for_function(
+                        """title => document
+                          .querySelector('[data-raya-graph-orientation-selected]')
+                          ?.textContent.includes(title)""",
+                        arg=edge_info["fromTitle"],
+                    )
+                    assert edge_info["from"] in page.url
+
+                    edge.focus()
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('[data-raya-graph-relationship-preview]')
+                          ?.hasAttribute('hidden')"""
+                    )
+                    target_info = page.evaluate(
+                        """() => {
+                          const hit = document.activeElement?.matches('[data-raya-graph-edge-hit]')
+                            ? document.activeElement
+                            : document.querySelector('[data-raya-graph-edge-hit]');
+                          const payload = JSON.parse(
+                            document.getElementById('raya-graph-data').textContent
+                          );
+                          const to = hit?.getAttribute('data-raya-graph-to') || '';
+                          const nodeById = new Map(payload.nodes.map((node) => [node.id, node]));
+                          return {
+                            to,
+                            toTitle: nodeById.get(to)?.title || to,
+                          };
+                        }"""
+                    )
+                    page.locator(
+                        "[data-raya-graph-relationship-preview-target-action]"
+                    ).click()
+                    page.wait_for_function(
+                        """title => document
+                          .querySelector('[data-raya-graph-orientation-selected]')
+                          ?.textContent.includes(title)""",
+                        arg=target_info["toTitle"],
+                    )
+                    assert target_info["to"] in page.url
+                    edge.focus()
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('[data-raya-graph-relationship-preview]')
+                          ?.hasAttribute('hidden')"""
+                    )
+                    page.locator(
+                        "[data-raya-graph-relationship-preview-kind-action]"
+                    ).click()
+                    focus_summary = page.locator(
+                        "[data-raya-graph-relationship-focus-summary]"
+                    )
+                    page.wait_for_function(
+                        """kindLabel => document
+                          .querySelector('[data-raya-graph-relationship-focus-summary]')
+                          ?.textContent.includes(`Showing ${kindLabel} out relationships.`)""",
+                        arg=edge_info["kindLabel"],
+                    )
+                    assert page.locator(
+                        "[data-raya-graph-relationship-focus-reset]"
+                    ).is_visible()
+                    assert (
+                        f"Showing {edge_info['kindLabel']} out relationships."
+                        in focus_summary.inner_text()
+                    )
+                    assert edge_info["from"] in page.url
+                    assert requested_urls
+                    assert all(
+                        url.startswith(f"{handle.base_url}/")
+                        for url in requested_urls
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_graph_guide_uses_viewport_specific_movement_guidance(
     tmp_path: Path,
 ) -> None:

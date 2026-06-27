@@ -5089,6 +5089,30 @@ def _render_graph_surface(
                 "</section>"
             ),
             (
+                '<section class="raya-graph-relationship-preview" '
+                "data-raya-graph-relationship-preview hidden "
+                'aria-hidden="true" aria-label="Graph relationship preview">'
+                '<p class="raya-graph-relationship-preview-kicker" '
+                "data-raya-graph-relationship-preview-kind></p>"
+                "<h2>Relationship</h2>"
+                '<p><strong data-raya-graph-relationship-preview-source></strong> '
+                '<span data-raya-graph-relationship-preview-direction>'
+                "source to target</span> "
+                '<strong data-raya-graph-relationship-preview-target></strong></p>'
+                '<p class="raya-graph-relationship-preview-actions">'
+                '<button type="button" '
+                "data-raya-graph-relationship-preview-source-action>"
+                "Select source</button>"
+                '<button type="button" '
+                "data-raya-graph-relationship-preview-target-action>"
+                "Select target</button>"
+                '<button type="button" '
+                "data-raya-graph-relationship-preview-kind-action>"
+                "Focus this kind</button>"
+                "</p>"
+                "</section>"
+            ),
+            (
                 '<section class="raya-graph-inspection-preview" '
                 "data-raya-graph-inspection-preview hidden "
                 'aria-label="Graph page preview" aria-live="polite">'

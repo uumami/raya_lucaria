@@ -103,6 +103,11 @@ with Enter-to-open active result behavior, transient hover/focus spotlight
 dimming, hover/focus inspection text, keyboard inspection parity,
 an optional bounded graph preview bubble for SVG graph node hover/focus using
 only already loaded public page metadata,
+transient SVG relationship inspection through keyboard-focusable and
+pointer-inspectable edge hit targets that name source page, target page,
+relationship kind, and source-to-target direction using already loaded graph
+data, with actions to select either endpoint or focus that relationship kind
+through the existing graph detail relationship controls,
 single-click selection/inspection for SVG graph page links, double-click
 page opening for SVG graph page links, keyboard Enter-to-open behavior on
 focused SVG graph page links,

@@ -1288,6 +1288,18 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "data-raya-graph-preview-title" in graph_html
     assert "data-raya-graph-preview-summary" in graph_html
     assert "data-raya-graph-preview-counts" in graph_html
+    assert "raya-graph-relationship-preview" in graph_html
+    assert "data-raya-graph-relationship-preview" in graph_html
+    assert "data-raya-graph-relationship-preview-kind" in graph_html
+    assert "data-raya-graph-relationship-preview-source" in graph_html
+    assert "data-raya-graph-relationship-preview-target" in graph_html
+    assert "data-raya-graph-relationship-preview-direction" in graph_html
+    assert "data-raya-graph-relationship-preview-source-action" in graph_html
+    assert "data-raya-graph-relationship-preview-target-action" in graph_html
+    assert "data-raya-graph-relationship-preview-kind-action" in graph_html
+    assert "data-raya-graph-edge-hit" in graph_script
+    assert "inspectGraphEdge" in graph_script
+    assert "clearGraphEdgeInspection" in graph_script
     assert 'class="raya-graph-legend"' in graph_html
     assert 'data-raya-graph-legend="node"' in graph_html
     assert 'data-raya-graph-legend="match"' in graph_html
@@ -1654,6 +1666,10 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert ".raya-graph-list li.is-active-result a" in stylesheet
     assert ".raya-graph-inspection-preview" in stylesheet
     assert ".raya-graph-preview-bubble" in stylesheet
+    assert ".raya-graph-relationship-preview" in stylesheet
+    assert ".raya-graph-edge-hit" in stylesheet
+    assert ".raya-graph-edge.is-edge-inspected" in stylesheet
+    assert ".raya-graph-node.is-edge-endpoint .raya-graph-node-mark" in stylesheet
     assert "linear-gradient(" in stylesheet
     assert "90deg," in stylesheet
     assert "raya-graph-node-mark" in graph_script

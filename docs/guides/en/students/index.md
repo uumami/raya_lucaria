@@ -125,6 +125,12 @@ On wider screens, hovering or focusing a graph node may show a small preview
 near the node with the page title, static context, summary, and explicit link
 counts. Treat it as a quick reading aid; the inspector panel and normal page
 links remain the stable way to inspect or open the page.
+You can also hover or keyboard-focus a visible graph relationship to inspect
+the line itself. The preview names the source page, target page, relationship
+kind, and source-to-target direction, and can select either endpoint or focus
+that relationship kind in the selected-page detail panel for deeper inspection.
+This is temporary graph-reading context, not a ranking, recommendation, progress
+signal, or saved study state.
 Graph state and share URL details may be under a `Graph state` disclosure so
 the main graph stays focused on search, the canvas, and selected-page context.
 Some pages may also end with a Page connections block inside the article. It

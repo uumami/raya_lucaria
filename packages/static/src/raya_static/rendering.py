@@ -2429,6 +2429,38 @@ img {
   gap: 0.5rem;
   pointer-events: auto;
 }
+.raya-graph-relationship-preview {
+  background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-accent);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.75rem 1.4rem color-mix(in srgb, var(--raya-color-text) 12%, transparent);
+  margin: 0.65rem 0;
+  padding: 0.8rem 0.9rem;
+}
+.raya-graph-relationship-preview[hidden] {
+  display: none;
+}
+.raya-graph-relationship-preview h2,
+.raya-graph-relationship-preview p {
+  margin: 0;
+}
+.raya-graph-relationship-preview h2 {
+  font-size: 1rem;
+  margin-block-end: 0.35rem;
+}
+.raya-graph-relationship-preview-kicker {
+  color: var(--raya-color-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.raya-graph-relationship-preview-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.65rem;
+}
 .raya-graph-legend {
   align-items: center;
   background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
@@ -3124,6 +3156,18 @@ img {
   stroke-width: 2;
   transition: stroke 140ms ease;
 }
+.raya-graph-edge-hit {
+  cursor: help;
+  fill: none;
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-width: 16;
+}
+.raya-graph-edge-hit:focus-visible {
+  outline: none;
+  stroke: color-mix(in srgb, var(--raya-color-accent) 34%, transparent);
+}
 .raya-graph-arrow-marker path {
   fill: var(--raya-graph-edge-color, var(--raya-color-border));
   opacity: 0.68;
@@ -3191,6 +3235,11 @@ img {
   stroke-opacity: 0.94;
   stroke-width: 3;
 }
+.raya-graph-edge.is-edge-inspected {
+  stroke: var(--raya-color-accent);
+  stroke-opacity: 1;
+  stroke-width: 4;
+}
 .raya-graph-edge.is-focus-route {
   stroke: var(--raya-color-accent);
   stroke-opacity: 0.94;
@@ -3251,6 +3300,11 @@ img {
 .raya-graph-node.is-focus-endpoint .raya-graph-node-mark {
   stroke: var(--raya-color-accent);
   stroke-width: 3.4;
+}
+.raya-graph-node.is-edge-endpoint .raya-graph-node-mark {
+  fill: color-mix(in srgb, var(--raya-graph-node-color, var(--raya-color-accent)) 48%, var(--raya-color-surface));
+  stroke: var(--raya-color-accent);
+  stroke-width: 3.6;
 }
 .raya-graph-node.is-selected .raya-graph-node-mark {
   fill: var(--raya-color-success);

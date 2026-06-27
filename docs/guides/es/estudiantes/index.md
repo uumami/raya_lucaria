@@ -140,6 +140,13 @@ mostrar una vista previa pequena cerca del nodo con titulo de pagina, contexto
 estatico, resumen y conteos de enlaces explicitos. Usala como ayuda rapida de
 lectura; el panel inspector y los enlaces normales de pagina siguen siendo la
 forma estable de inspeccionar o abrir la pagina.
+Tambien puedes pasar el puntero sobre una relacion visible del grafo o
+enfocarla con teclado para inspeccionar la linea misma. La vista previa nombra
+la pagina origen, la pagina destino, el tipo de relacion y la direccion de
+origen a destino, y puede seleccionar cualquiera de los extremos o enfocar ese
+tipo de relacion en el panel de detalle de la pagina seleccionada para
+inspeccion mas profunda. Es contexto temporal para leer el grafo, no ranking,
+recomendacion, senal de progreso ni estado de estudio guardado.
 Algunas paginas tambien pueden terminar con un bloque Page connections dentro
 del articulo. Usa los mismos datos estaticos de relaciones para mostrar paginas
 enlazadas desde la leccion, paginas que enlazan de vuelta a ella, y un enlace
