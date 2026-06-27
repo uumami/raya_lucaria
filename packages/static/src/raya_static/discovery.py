@@ -120,6 +120,85 @@ _DISCOVERY_JAVASCRIPT = r"""
   }
 
   roots.forEach((root) => {
+    const railBody = root.querySelector("[data-raya-discovery-course-rail-body]");
+    const railToggle = root.querySelector("[data-raya-discovery-toggle-rail]");
+    const railPageLinks = Array.from(
+      root.querySelectorAll("[data-raya-discovery-course-page]")
+    );
+    const railPageFocus = root.querySelector("[data-raya-discovery-rail-page-focus]");
+    const railPageFocusTitle = root.querySelector(
+      "[data-raya-discovery-rail-page-focus-title]"
+    );
+    const railPageHandoffs = Array.from(
+      root.querySelectorAll("[data-raya-discovery-rail-page-handoff]")
+    );
+    const desktopRailQuery = window.matchMedia
+      ? window.matchMedia("(min-width: 1280px)")
+      : null;
+    let activeRailPage = "";
+    function setRailExpanded(expanded) {
+      root.setAttribute(
+        "data-raya-discovery-rail-state",
+        expanded ? "expanded" : "collapsed"
+      );
+      if (railBody) {
+        railBody.setAttribute("aria-hidden", expanded ? "false" : "true");
+        setPanelFocusable(railBody, expanded);
+      }
+      if (railToggle) {
+        railToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+        railToggle.setAttribute(
+          "aria-label",
+          expanded ? "Collapse course workspace" : "Expand course workspace"
+        );
+      }
+    }
+    function syncRailViewport() {
+      if (desktopRailQuery && !desktopRailQuery.matches) {
+        setRailExpanded(true);
+      }
+    }
+    if (railBody && railToggle) {
+      setRailExpanded(true);
+      railToggle.addEventListener("click", () => {
+        setRailExpanded(
+          root.getAttribute("data-raya-discovery-rail-state") === "collapsed"
+        );
+      });
+      syncRailViewport();
+      if (desktopRailQuery) {
+        if (typeof desktopRailQuery.addEventListener === "function") {
+          desktopRailQuery.addEventListener("change", syncRailViewport);
+        } else if (typeof desktopRailQuery.addListener === "function") {
+          desktopRailQuery.addListener(syncRailViewport);
+        }
+      }
+    }
+    try {
+      activeRailPage = new URLSearchParams(window.location.search || "").get("page") || "";
+    } catch {
+      activeRailPage = "";
+    }
+    if (activeRailPage && railPageLinks.length > 0) {
+      const focused = railPageLinks.find(
+        (link) => link.getAttribute("data-raya-discovery-course-page") === activeRailPage
+      );
+      if (focused) {
+        focused.setAttribute("data-raya-rail-page-focus", "true");
+        const title = focused.querySelector("strong")?.textContent?.trim() || activeRailPage;
+        if (railPageFocusTitle) {
+          railPageFocusTitle.textContent = title;
+        }
+        if (railPageFocus) {
+          railPageFocus.hidden = false;
+        }
+        railPageHandoffs.forEach((link) => {
+          const base = link.getAttribute("data-raya-handoff-base") || "";
+          if (!base) return;
+          link.setAttribute("href", `${base}?page=${encodeURIComponent(activeRailPage)}`);
+        });
+      }
+    }
     ["controls", "context"].forEach((panelName) => {
       const body = root.querySelector(`[data-raya-discovery-panel-body="${panelName}"]`);
       updatePanelRailSummary(root, panelName);

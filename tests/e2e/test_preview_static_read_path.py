@@ -16646,6 +16646,207 @@ def test_discovery_command_bar_marks_current_workspace_without_overflow(
         handle.close()
 
 
+def test_discovery_workspaces_render_static_course_rail_without_storage(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1366, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request",
+                        lambda request: requested_urls.append(request.url),
+                    )
+                    try:
+                        for workspace_path, kind, label in (
+                            ("_raya/search/index.html", "search", "Search"),
+                            ("_raya/graph/index.html", "graph", "Graph"),
+                            ("_raya/practice/index.html", "practice", "Practice"),
+                            ("_raya/tasks/index.html", "tasks", "Tasks"),
+                            ("_raya/schedule/index.html", "schedule", "Schedule"),
+                        ):
+                            requested_urls.clear()
+                            page.goto(
+                                f"{base_url}/{workspace_path}",
+                                wait_until="networkidle",
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            assert not any(
+                                (
+                                    url.startswith("http://")
+                                    or url.startswith("https://")
+                                )
+                                and not url.startswith(base_url)
+                                for url in requested_urls
+                            )
+                            rail = page.locator("[data-raya-discovery-course-rail]")
+                            assert rail.is_visible()
+                            current = rail.locator('[aria-current="page"]')
+                            assert current.count() == 1
+                            assert (
+                                current.get_attribute("data-raya-workspace-link")
+                                == kind
+                            )
+                            assert label in current.inner_text()
+                            badge_text = " ".join(
+                                rail.locator(
+                                    ".raya-discovery-workspace-link em"
+                                ).all_inner_texts()
+                            ).lower()
+                            for expected_badge in (
+                                "pages",
+                                "links",
+                                "official",
+                                "tasks",
+                                "dated",
+                            ):
+                                assert expected_badge in badge_text
+                            assert (
+                                rail.locator(".raya-discovery-course-page-link").count()
+                                >= 5
+                            )
+                            hrefs = rail.locator("a[href]").evaluate_all(
+                                "links => links.map(link => link.getAttribute('href'))"
+                            )
+                            assert all(
+                                href and not href.startswith("/") for href in hrefs
+                            )
+                            assert all("_official/" not in href for href in hrefs)
+                            assert all("_drafts/" not in href for href in hrefs)
+                            assert all("_partials/" not in href for href in hrefs)
+                            assert page.evaluate("() => localStorage.length") == 0
+                            assert page.evaluate("() => sessionStorage.length") == 0
+                            if viewport["width"] >= 1000:
+                                toggle = page.locator(
+                                    "[data-raya-discovery-toggle-rail]"
+                                )
+                                assert toggle.is_visible()
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'expanded'"""
+                                )
+                                toggle.click()
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'collapsed'"""
+                                )
+                                assert (
+                                    rail.locator(
+                                        "[data-raya-discovery-course-rail-body]"
+                                    ).get_attribute("aria-hidden")
+                                    == "true"
+                                )
+                                assert rail.locator(
+                                    ".raya-discovery-course-tab"
+                                ).is_visible()
+                                assert page.evaluate("() => localStorage.length") == 0
+                                assert page.evaluate("() => sessionStorage.length") == 0
+                                page.set_viewport_size({"width": 390, "height": 844})
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'expanded'"""
+                                )
+                                assert (
+                                    rail.locator(
+                                        "[data-raya-discovery-course-rail-body]"
+                                    ).get_attribute("aria-hidden")
+                                    == "false"
+                                )
+                                assert (
+                                    rail.locator(
+                                        ".raya-discovery-course-page-link"
+                                    ).first.get_attribute("tabindex")
+                                    != "-1"
+                                )
+                                assert toggle.is_visible() is False
+                                page.set_viewport_size(viewport)
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'expanded'"""
+                                )
+                                toggle.click()
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'collapsed'"""
+                                )
+                                toggle.click()
+                                page.wait_for_function(
+                                    """() => document.querySelector('[data-raya-discovery-page]')
+                                      ?.getAttribute('data-raya-discovery-rail-state') === 'expanded'"""
+                                )
+                                assert (
+                                    rail.locator(
+                                        "[data-raya-discovery-course-rail-body]"
+                                    ).get_attribute("aria-hidden")
+                                    == "false"
+                                )
+                            else:
+                                assert (
+                                    page.locator(
+                                        "[data-raya-discovery-toggle-rail]"
+                                    ).is_visible()
+                                    is False
+                                )
+                        page.goto(
+                            f"{base_url}/_raya/search/index.html?page=reader-ux",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document.querySelector('[data-raya-discovery-page]')
+                              ?.getAttribute('data-raya-discovery-rail-state') === 'expanded'"""
+                        )
+                        focused = page.locator(
+                            '[data-raya-discovery-course-page="reader-ux"]'
+                        )
+                        assert focused.get_attribute("data-raya-rail-page-focus") == "true"
+                        focus_notice = page.locator(
+                            "[data-raya-discovery-rail-page-focus]"
+                        )
+                        assert focus_notice.is_visible()
+                        assert "Projection Residuals" in focus_notice.inner_text()
+                        handoffs = page.locator(
+                            "[data-raya-discovery-rail-page-handoffs] a"
+                        )
+                        assert handoffs.count() == 5
+                        assert all(
+                            "page=reader-ux"
+                            in href
+                            for href in handoffs.evaluate_all(
+                                "links => links.map(link => link.getAttribute('href'))"
+                            )
+                        )
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_math_renders_in_browser_without_external_requests(
     tmp_path: Path,
 ) -> None:

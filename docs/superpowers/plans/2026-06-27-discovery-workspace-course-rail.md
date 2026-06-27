@@ -23,7 +23,7 @@
 **Files:**
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add a test near existing discovery workspace tests:
 
@@ -128,7 +128,7 @@ def test_discovery_workspaces_render_static_course_rail_without_storage(
         handle.close()
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -143,7 +143,7 @@ Expected: FAIL because `[data-raya-discovery-course-rail]` does not exist.
 **Files:**
 - Modify: `packages/static/src/raya_static/builder.py`
 
-- [ ] **Step 1: Add helper functions in `builder.py`**
+- [x] **Step 1: Add helper functions in `builder.py`**
 
 Add helpers near `_render_discovery_command_bar`:
 
@@ -217,7 +217,7 @@ def _render_discovery_course_rail(
     )
 ```
 
-- [ ] **Step 2: Insert the rail into every discovery workspace**
+- [x] **Step 2: Insert the rail into every discovery workspace**
 
 Wrap existing workspace sections with a shell:
 
@@ -238,7 +238,7 @@ _render_discovery_course_rail(
 Repeat with `current_workspace` and `from_path` for Graph, Practice, Tasks, and
 Schedule.
 
-- [ ] **Step 3: Run the focused test**
+- [x] **Step 3: Run the focused test**
 
 Run:
 
@@ -253,7 +253,7 @@ Expected: still FAIL until CSS/JS collapse behavior exists.
 **Files:**
 - Modify: `packages/static/src/raya_static/rendering.py`
 
-- [ ] **Step 1: Add styles near discovery workspace CSS**
+- [x] **Step 1: Add styles near discovery workspace CSS**
 
 Add CSS for:
 
@@ -302,7 +302,7 @@ Add CSS for:
 Include final polished rules for workspace links, page links, active states,
 focus-visible outlines, no overflow, and compact mobile spacing.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run:
 
@@ -317,7 +317,7 @@ Expected: FAIL only on collapse/accessibility behavior until JS is added.
 **Files:**
 - Modify: `packages/static/src/raya_static/discovery.py`
 
-- [ ] **Step 1: Extend `discovery.js`**
+- [x] **Step 1: Extend `discovery.js`**
 
 Inside the existing `roots.forEach`, add local rail setup:
 
@@ -349,7 +349,7 @@ if (railBody && railToggle) {
 Do not add `localStorage`, `sessionStorage`, URL mutation, fetch, XHR, or
 external scripts.
 
-- [ ] **Step 2: Run the focused test**
+- [x] **Step 2: Run the focused test**
 
 Run:
 
@@ -364,7 +364,7 @@ Expected: PASS.
 **Files:**
 - Modify: `docs/superpowers/plans/2026-06-27-discovery-workspace-course-rail.md`
 
-- [ ] **Step 1: Run focused discovery tests**
+- [x] **Step 1: Run focused discovery tests**
 
 Run:
 
@@ -377,7 +377,9 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q \
 
 Expected: all selected tests pass.
 
-- [ ] **Step 2: Run render debug gate**
+Fresh evidence: `3 passed in 36.53s`.
+
+- [x] **Step 2: Run render debug gate**
 
 Run:
 
@@ -387,7 +389,9 @@ Run:
 
 Expected: `check-render-debug: passed`.
 
-- [ ] **Step 3: Run diff hygiene**
+Fresh evidence: `render-debug-report: passed (129 check(s), report=/tmp/raya-render-debug.kpwAVy/index.html)` and `check-render-debug: passed`.
+
+- [x] **Step 3: Run diff hygiene**
 
 Run:
 
@@ -397,7 +401,9 @@ git diff --check
 
 Expected: no output, exit code 0.
 
-- [ ] **Step 4: Commit**
+Fresh evidence: no output, exit code 0.
+
+- [x] **Step 4: Commit**
 
 Run:
 
@@ -408,7 +414,13 @@ git commit -m "Add discovery workspace course rail"
 
 Expected: commit succeeds.
 
-- [ ] **Step 5: Request review**
+Fresh evidence: commit `3b21bd8` created with subject `Add discovery workspace course rail`.
+
+- [x] **Step 5: Request review**
 
 Use `superpowers:requesting-code-review` with the design and plan as
 requirements. Fix Critical and Important findings before pushing.
+
+Fresh evidence: independent review found a viewport accessibility regression
+and missing page-focus handoffs. The implementation now forces expanded,
+focusable rail content below desktop widths and adds page-scoped handoff links.
