@@ -321,6 +321,38 @@ def test_minimal_fixture_official_practice_is_static_and_revealable(
         handle.close()
 
 
+def test_graph_workspace_renders_selected_detail_navigator(
+    tmp_path: Path,
+) -> None:
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        graph_html = _fetch_text(f"{handle.base_url}/_raya/graph/index.html")
+
+        assert "data-raya-graph-detail-nav" in graph_html
+        for target, label in (
+            ("summary", "Summary"),
+            ("relationships", "Relationships"),
+            ("study", "Study"),
+            ("sequence", "Sequence"),
+            ("links", "Links"),
+        ):
+            assert (
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                f'data-raya-graph-detail-nav-target="{target}">{label}</button>'
+            ) in graph_html
+    finally:
+        handle.close()
+
+
 def test_preview_reader_official_quiz_renders_page_local_controls(
     tmp_path: Path,
 ) -> None:

@@ -5476,6 +5476,21 @@ def _render_graph_surface(
             "Selected page</h2>",
             '<button type="button" data-raya-graph-detail-clear>Clear</button>',
             "</div>",
+            (
+                '<nav class="raya-graph-detail-nav" data-raya-graph-detail-nav '
+                'aria-label="Selected page detail sections" hidden>'
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                'data-raya-graph-detail-nav-target="summary">Summary</button>'
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                'data-raya-graph-detail-nav-target="relationships">Relationships</button>'
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                'data-raya-graph-detail-nav-target="study">Study</button>'
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                'data-raya-graph-detail-nav-target="sequence">Sequence</button>'
+                '<button type="button" class="raya-graph-detail-nav-button" '
+                'data-raya-graph-detail-nav-target="links">Links</button>'
+                "</nav>"
+            ),
             '<p class="raya-graph-detail-summary" data-raya-graph-detail-summary></p>',
             '<p class="raya-graph-detail-meta" data-raya-graph-detail-meta></p>',
             (
