@@ -264,7 +264,7 @@ Expected: commit succeeds.
 - Modify: `packages/static/src/raya_static/rendering.py`
 - Test: `tests/e2e/test_preview_static_read_path.py`
 
-- [ ] **Step 1: Add CSS hierarchy for navigation spine**
+- [x] **Step 1: Add CSS hierarchy for navigation spine**
 
 In `packages/static/src/raya_static/rendering.py`, refine existing rules for these selectors:
 
@@ -282,7 +282,7 @@ In `packages/static/src/raya_static/rendering.py`, refine existing rules for the
 
 Use current CSS variables only. Keep card radius at `0.375rem` or less. Ensure desktop cards use available width and mobile stacks without horizontal overflow.
 
-- [ ] **Step 2: Add CSS for connection action row**
+- [x] **Step 2: Add CSS for connection action row**
 
 Add this shape, adapting colors to nearby existing patterns:
 
@@ -307,7 +307,7 @@ Add this shape, adapting colors to nearby existing patterns:
 }
 ```
 
-- [ ] **Step 3: Add browser visual assertions**
+- [x] **Step 3: Add browser visual assertions**
 
 Extend `test_render_fixture_reader_navigation_spine_is_coherent` with:
 
@@ -335,7 +335,7 @@ assert layout["actionHeight"] >= 20
 assert layout["scrollWidth"] <= layout["clientWidth"]
 ```
 
-- [ ] **Step 4: Run focused visual tests**
+- [x] **Step 4: Run focused visual tests**
 
 Run:
 
@@ -345,7 +345,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit visual polish**
+- [x] **Step 5: Commit visual polish**
 
 Run:
 

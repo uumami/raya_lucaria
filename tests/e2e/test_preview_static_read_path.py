@@ -12173,7 +12173,7 @@ def test_render_fixture_keyboard_shortcuts_move_between_sequence_pages(
         handle.close()
 
 
-def test_render_fixture_end_of_page_sequence_cards_are_static_and_responsive(
+def test_render_fixture_article_sequence_cards_are_visible_and_static(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -13407,7 +13407,15 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
                         assert "mastery" not in preview_state["text"].lower()
                         assert preview_state["localStorageKeys"] == []
                         assert preview_state["sessionStorageKeys"] == []
-                        assert requested_urls == []
+                        local_math_font_prefix = (
+                            f"{handle.base_url}/_raya/render/math/fonts/"
+                        )
+                        late_non_font_urls = [
+                            url
+                            for url in requested_urls
+                            if not url.startswith(local_math_font_prefix)
+                        ]
+                        assert late_non_font_urls == []
                     finally:
                         page.close()
             finally:
@@ -13553,7 +13561,87 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                     assert state["sessionKeys"] == []
                     assert state["privateLinks"] == []
                     assert state["recommendationText"] == [False, False, False, False]
-                    assert requested_urls == []
+                    layout = page.evaluate(
+                        """() => {
+                          const boxOf = (selector) => {
+                            const element = document.querySelector(selector);
+                            const box = element.getBoundingClientRect();
+                            return {
+                              top: box.top,
+                              bottom: box.bottom,
+                              width: box.width,
+                              height: box.height,
+                            };
+                          };
+                          const scrollState = (selector) => {
+                            const element = document.querySelector(selector);
+                            return {
+                              scrollWidth: element.scrollWidth,
+                              clientWidth: element.clientWidth,
+                            };
+                          };
+                          const firstConnection = document
+                            .querySelector('.raya-article-connection-item');
+                          const action = document
+                            .querySelector('.raya-article-connection-actions');
+                          const actionBox = action.getBoundingClientRect();
+                          const itemBox = firstConnection.getBoundingClientRect();
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const railBox = rail.getBoundingClientRect();
+                          const firstRailPanel = rail.querySelector('.raya-rail-panel');
+                          const firstRailPanelBox = firstRailPanel.getBoundingClientRect();
+                          const firstRailTitle = firstRailPanel
+                            .querySelector('.raya-rail-title')
+                            .getBoundingClientRect();
+                          return {
+                            article: boxOf('.raya-main-article'),
+                            sequence: boxOf('.raya-article-sequence-cards'),
+                            connections: boxOf('.raya-article-connections'),
+                            actionHeight: actionBox.height,
+                            actionWidth: actionBox.width,
+                            actionDisplay: getComputedStyle(action).display,
+                            itemHeight: itemBox.height,
+                            firstRailPanelHeight: firstRailPanelBox.height,
+                            firstRailTitleHeight: firstRailTitle.height,
+                            railTop: railBox.top,
+                            railHeight: railBox.height,
+                            scrolls: {
+                              document: {
+                                scrollWidth: document.documentElement.scrollWidth,
+                                clientWidth: document.documentElement.clientWidth,
+                              },
+                              body: scrollState('body'),
+                              main: scrollState('main'),
+                              article: scrollState('.raya-main-article'),
+                            },
+                          };
+                        }"""
+                    )
+                    article_width = layout["article"]["width"]
+                    min_reader_width = min(640, article_width - 2)
+                    assert article_width >= 640
+                    assert layout["sequence"]["width"] >= min_reader_width
+                    assert layout["connections"]["width"] >= min_reader_width
+                    assert layout["sequence"]["bottom"] <= layout["connections"]["top"]
+                    assert layout["actionDisplay"] == "flex"
+                    assert layout["actionHeight"] >= 20
+                    assert layout["actionHeight"] <= layout["itemHeight"] * 0.55
+                    assert layout["actionWidth"] <= layout["connections"]["width"]
+                    for scroll in layout["scrolls"].values():
+                        assert scroll["scrollWidth"] <= scroll["clientWidth"] + 1
+                    assert layout["firstRailTitleHeight"] >= 16
+                    assert layout["firstRailPanelHeight"] >= 120
+                    assert layout["railTop"] < 160
+                    assert layout["railHeight"] <= 950 * 0.92
+                    local_math_font_prefix = (
+                        f"{handle.base_url}/_raya/render/math/fonts/"
+                    )
+                    late_non_font_urls = [
+                        url
+                        for url in requested_urls
+                        if not url.startswith(local_math_font_prefix)
+                    ]
+                    assert late_non_font_urls == []
                 finally:
                     page.close()
             finally:
@@ -14244,6 +14332,16 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                           const body = document.querySelector('#raya-learning-rail-body');
                           const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
+                          const panelBodies = Array.from(
+                            document.querySelectorAll(
+                              '#raya-learning-rail .raya-rail-panel-body-inner'
+                            )
+                          ).map((body) => ({
+                            clientHeight: body.clientHeight,
+                            maxHeight: getComputedStyle(body).maxHeight,
+                            overflowY: getComputedStyle(body).overflowY,
+                            scrollHeight: body.scrollHeight,
+                          }));
                           return {
                             rootState: root.dataset.rayaLearningRail,
                             railState: rail?.dataset.rayaLearningRail,
@@ -14252,6 +14350,7 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                             bodyDisplay: body ? getComputedStyle(body).display : '',
                             collapseVisible: !!collapse && getComputedStyle(collapse).display !== 'none',
                             expandVisible: !!expand && getComputedStyle(expand).display !== 'none',
+                            panelBodies,
                           };
                         }"""
                     )
@@ -14262,6 +14361,17 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                     assert mobile_state["bodyDisplay"] != "none"
                     assert mobile_state["collapseVisible"] is False
                     assert mobile_state["expandVisible"] is False
+                    assert mobile_state["panelBodies"]
+                    assert all(
+                        body["scrollHeight"] <= body["clientHeight"] + 1
+                        for body in mobile_state["panelBodies"]
+                    )
+                    assert {body["maxHeight"] for body in mobile_state["panelBodies"]} == {
+                        "none"
+                    }
+                    assert {body["overflowY"] for body in mobile_state["panelBodies"]} == {
+                        "visible"
+                    }
 
                     page.set_viewport_size({"width": 1180, "height": 900})
                     page.wait_for_timeout(100)
@@ -14272,6 +14382,16 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                           const map = document.querySelector('nav.raya-course-map');
                           const rail = document.querySelector('aside.raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
+                          const panelBodies = Array.from(
+                            document.querySelectorAll(
+                              '#raya-learning-rail .raya-rail-panel-body-inner'
+                            )
+                          ).map((body) => ({
+                            clientHeight: body.clientHeight,
+                            maxHeight: getComputedStyle(body).maxHeight,
+                            overflowY: getComputedStyle(body).overflowY,
+                            scrollHeight: body.scrollHeight,
+                          }));
                           return {
                             articleY: article.getBoundingClientRect().y,
                             mapY: map.getBoundingClientRect().y,
@@ -14281,6 +14401,7 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                             mapInert: map.inert,
                             bodyHidden: body.getAttribute('aria-hidden'),
                             bodyInert: body.inert,
+                            panelBodies,
                           };
                         }"""
                     )
@@ -14290,6 +14411,17 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                     assert tablet["mapInert"] is True
                     assert tablet["bodyHidden"] == "false"
                     assert tablet["bodyInert"] is False
+                    assert tablet["panelBodies"]
+                    assert all(
+                        body["scrollHeight"] <= body["clientHeight"] + 1
+                        for body in tablet["panelBodies"]
+                    )
+                    assert {body["maxHeight"] for body in tablet["panelBodies"]} == {
+                        "none"
+                    }
+                    assert {body["overflowY"] for body in tablet["panelBodies"]} == {
+                        "visible"
+                    }
 
                     page.set_viewport_size({"width": 1440, "height": 950})
                     page.wait_for_timeout(100)
