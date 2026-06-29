@@ -13401,6 +13401,150 @@ def test_render_fixture_article_page_connections_are_visible_and_static(
         handle.close()
 
 
+def test_render_fixture_reader_navigation_spine_is_coherent(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    requested_urls.clear()
+                    _assert_no_horizontal_overflow(page)
+                    assert (
+                        page.locator(".raya-article-sequence-cards").count() == 1
+                    )
+                    assert page.locator(".raya-article-connections").count() == 1
+                    assert page.locator(".raya-article-sequence-cards").is_visible()
+                    assert page.locator(".raya-article-connections").is_visible()
+                    state = page.evaluate(
+                        """() => {
+                          const textOf = (selector) =>
+                            document.querySelector(selector)?.innerText || "";
+                          const articleSequence = document
+                            .querySelector('.raya-article-sequence-cards');
+                          const connections = document
+                            .querySelector('.raya-article-connections');
+                          const railPanels = Array.from(
+                            document.querySelectorAll(
+                              '#raya-learning-rail .raya-rail-panel'
+                            )
+                          ).map((panel) => ({
+                            className: panel.className,
+                            title: panel
+                              .querySelector('.raya-rail-toggle')
+                              ?.textContent
+                              ?.trim(),
+                            expanded: panel
+                              .querySelector('.raya-rail-toggle')
+                              ?.getAttribute('aria-expanded'),
+                            hidden: panel
+                              .querySelector('.raya-rail-panel-body')
+                              ?.getAttribute('aria-hidden'),
+                          }));
+                          const sequenceBox = articleSequence.getBoundingClientRect();
+                          const connectionBox = connections.getBoundingClientRect();
+                          return {
+                            articleSequenceText: articleSequence.innerText,
+                            sequenceLabel: articleSequence.getAttribute('aria-label'),
+                            sequenceTop: sequenceBox.top,
+                            connectionTop: connectionBox.top,
+                            connectionText: connections.innerText,
+                            connectionCountText: textOf('.raya-article-connections-summary'),
+                            connectionRows: Array.from(
+                              connections.querySelectorAll('.raya-article-connection-item')
+                            ).map((item) => item.innerText),
+                            graphLinks: Array.from(
+                              connections.querySelectorAll('a[href*="_raya/graph/index.html"]')
+                            ).map((link) => link.getAttribute('href')),
+                            railPanels,
+                            railText: textOf('#raya-learning-rail'),
+                            localKeys: Object.keys(window.localStorage),
+                            sessionKeys: Object.keys(window.sessionStorage),
+                            privateLinks: Array.from(document.querySelectorAll('a[href]'))
+                              .map((link) => link.getAttribute('href') || '')
+                              .filter((href) =>
+                                href.includes('_official/')
+                                || href.includes('_drafts/')
+                                || href.includes('_partials/')
+                              ),
+                            recommendationText: [
+                              document.body.innerText.includes('recommended'),
+                              document.body.innerText.includes('Recommended'),
+                              document.body.innerText.includes('progress'),
+                              document.body.innerText.includes('mastery'),
+                            ],
+                          };
+                        }"""
+                    )
+                    assert state["sequenceLabel"] == "Previous and next pages"
+                    assert "Previous page" in state["articleSequenceText"]
+                    assert "Next page" in state["articleSequenceText"]
+                    assert state["sequenceTop"] < state["connectionTop"]
+                    assert "Page connections" in state["connectionText"]
+                    assert "from this page" in state["connectionCountText"]
+                    assert "links here" in state["connectionCountText"]
+                    assert state["connectionRows"]
+                    assert all(
+                        "Graph" in row or "graph" in row
+                        for row in state["connectionRows"]
+                    )
+                    assert state["graphLinks"]
+                    assert all(
+                        href.startswith("../_raya/graph/index.html")
+                        for href in state["graphLinks"]
+                    )
+                    assert [panel["title"] for panel in state["railPanels"]] == [
+                        "On this page",
+                        "Reading flow",
+                        "Page context",
+                        "Connections",
+                    ]
+                    assert all(
+                        panel["expanded"] == "true" for panel in state["railPanels"]
+                    )
+                    assert all(
+                        panel["hidden"] == "false" for panel in state["railPanels"]
+                    )
+                    assert "Page 5 of 6" in state["railText"]
+                    assert "Previous" in state["railText"]
+                    assert "Next" in state["railText"]
+                    assert state["localKeys"] == []
+                    assert state["sessionKeys"] == []
+                    assert state["privateLinks"] == []
+                    assert state["recommendationText"] == [False, False, False, False]
+                    assert requested_urls == []
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_course_map_works_without_storage(
     tmp_path: Path,
 ) -> None:
