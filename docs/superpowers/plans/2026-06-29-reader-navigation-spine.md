@@ -364,7 +364,7 @@ Expected: commit succeeds.
 - Modify: `tests/e2e/test_preview_static_read_path.py`
 - Modify only if needed: `packages/static/src/raya_static/shell.py`
 
-- [ ] **Step 1: Add collapse/mobile assertions**
+- [x] **Step 1: Add collapse/mobile assertions**
 
 Extend existing learning-rail collapse tests or add a focused test:
 
@@ -472,7 +472,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
         handle.close()
 ```
 
-- [ ] **Step 2: Run collapse test**
+- [x] **Step 2: Run collapse test**
 
 Run:
 
@@ -482,7 +482,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: PASS. If it fails because current shell behavior violates the design, make the smallest `shell.py` fix and rerun.
 
-- [ ] **Step 3: Run focused rail tests**
+- [x] **Step 3: Run focused rail tests**
 
 Run:
 
@@ -492,7 +492,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: PASS. If a named existing test is absent, locate the current rail tests with `rg -n "learning_rail|raya-learning-rail" tests/e2e/test_preview_static_read_path.py` and run the closest current equivalents.
 
-- [ ] **Step 4: Commit collapse verification**
+- [x] **Step 4: Commit collapse verification**
 
 Run:
 
