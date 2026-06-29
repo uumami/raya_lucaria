@@ -396,12 +396,13 @@ def test_build_renders_computed_read_time_when_estimated_time_is_not_authored(
         encoding="utf-8"
     )
     brief = _tag_html(html, "section", "raya-page-brief")
-    estimated_panel = _section_html(html, "raya-page-estimated-time")
+    page_context = _section_html(html, "raya-page-context")
     visible = _visible_text(brief).lower()
     assert "Estimated read time" in brief
     assert "2 min read" in brief
-    assert 'aria-expanded="false">Estimated read time</button>' in estimated_panel
-    assert "2 min read" in estimated_panel
+    assert 'aria-expanded="true">Page context</button>' in page_context
+    assert "<h3>Estimated read time</h3>" in page_context
+    assert "2 min read" in page_context
     assert "recommend" not in visible
     assert "progress" not in visible
     assert "mastery" not in visible
@@ -432,12 +433,13 @@ def test_build_renders_computed_read_time_for_section_pages(
         encoding="utf-8"
     )
     brief = _tag_html(html, "section", "raya-page-brief")
-    estimated_panel = _section_html(html, "raya-page-estimated-time")
+    page_context = _section_html(html, "raya-page-context")
     visible = _visible_text(brief).lower()
     assert "Estimated read time" in brief
     assert "2 min read" in brief
-    assert 'aria-expanded="false">Estimated read time</button>' in estimated_panel
-    assert "2 min read" in estimated_panel
+    assert 'aria-expanded="true">Page context</button>' in page_context
+    assert "<h3>Estimated read time</h3>" in page_context
+    assert "2 min read" in page_context
     assert "recommend" not in visible
     assert "progress" not in visible
     assert "mastery" not in visible
@@ -4971,13 +4973,14 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-learning-rail-context-chip-title">Projection Residuals</span>' in html
     assert 'class="raya-learning-rail-context-chip-status">ready</span>' in html
     assert 'aria-controls="raya-learning-rail-body"' in html
-    assert '<section class="raya-rail-panel raya-page-summary"' in html
-    assert '<section class="raya-rail-panel raya-page-status"' in html
-    assert '<section class="raya-rail-panel raya-page-prerequisites"' in html
+    assert '<section class="raya-rail-panel raya-page-context"' in html
+    assert '<div class="raya-page-context-summary">' in html
+    assert '<div class="raya-page-context-status">' in html
+    assert '<div class="raya-page-context-prerequisites">' in html
     assert (
         '<button class="raya-rail-toggle" type="button" data-raya-rail-toggle' in html
     )
-    assert 'aria-expanded="false">Status</button>' in html
+    assert 'aria-expanded="true">Page context</button>' in html
     assert html.index('<nav id="raya-course-map"') < html.index(
         '<article id="raya-article"'
     )
@@ -4987,11 +4990,12 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "Prerequisites" in html
     assert "Raya Lucaria Render Fixture" in html
     assert 'href="../index.html"' in html
-    prereq_panel = _section_html(html, "raya-page-prerequisites")
-    assert 'class="raya-rail-context-link"' in prereq_panel
-    assert 'href="../_raya/graph/index.html?page=render-root"' in prereq_panel
+    page_context = _section_html(html, "raya-page-context")
+    assert 'class="raya-rail-context-link"' in page_context
+    assert 'href="../_raya/graph/index.html?page=render-root"' in page_context
     assert (
-        'aria-label="View Raya Lucaria Render Fixture in course graph"' in prereq_panel
+        'aria-label="View Raya Lucaria Render Fixture in course graph"'
+        in page_context
     )
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
@@ -5030,20 +5034,27 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     reading_flow_panel = _section_html(last_html, "raya-page-reading-flow")
     assert 'aria-expanded="true">Reading flow</button>' in reading_flow_panel
-    assert '<p class="raya-reading-flow-counts">' in reading_flow_panel
-    assert "<strong>3</strong> from this page" in reading_flow_panel
-    assert "<strong>1</strong> link here" in reading_flow_panel
-    assert "From this page" in reading_flow_panel
-    assert "Links here" in reading_flow_panel
-    assert 'href="../math-authoring/index.html"' in reading_flow_panel
-    assert 'href="../reader-ux/index.html"' in reading_flow_panel
-    assert 'href="../_raya/graph/index.html?page=authoring-matrix"' in reading_flow_panel
-    assert "Projection Residuals" in reading_flow_panel
-    assert "Math Authoring Fixture" in reading_flow_panel
-    assert '<section class="raya-rail-panel raya-page-linked-pages"' not in last_html
+    assert '<p class="raya-reading-flow-counts">' not in reading_flow_panel
+    assert "from this page" not in reading_flow_panel
+    assert "links here" not in reading_flow_panel
+    connections_panel = _section_html(last_html, "raya-page-linked-pages")
+    assert 'data-raya-rail-panel-state="expanded"' in connections_panel
+    assert 'aria-expanded="true">Connections</button>' in connections_panel
+    assert "<strong>3</strong> from this page" in connections_panel
+    assert "<strong>1</strong> link here" in connections_panel
+    assert "From this page" in connections_panel
+    assert "Links here" in connections_panel
+    assert 'href="../math-authoring/index.html"' in connections_panel
+    assert 'href="../reader-ux/index.html"' in connections_panel
+    assert 'href="../_raya/graph/index.html?page=math-authoring"' in connections_panel
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in connections_panel
+    assert "Projection Residuals" in connections_panel
+    assert "Math Authoring Fixture" in connections_panel
     assert '<section class="raya-rail-panel raya-page-sequence"' not in last_html
     assert "recommend" not in reading_flow_panel.lower()
     assert "progress" not in reading_flow_panel.lower()
+    assert "recommend" not in connections_panel.lower()
+    assert "progress" not in connections_panel.lower()
     article_connections = _article_connections_html(last_html)
     assert '<section class="raya-article-connections"' in article_connections
     assert (
@@ -5118,9 +5129,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         '<section class="raya-article-connections"'
     )
     last_sequence_cards = _article_sequence_cards_html(last_html)
-    assert last_html.index(
+    assert last_html.index('<nav class="raya-article-sequence-cards"') < last_html.index(
         '<section class="raya-article-connections"'
-    ) < last_html.index('<nav class="raya-article-sequence-cards"')
+    )
     assert (
         'class="raya-sequence-card raya-sequence-card-next"' not in last_sequence_cards
     )
@@ -5174,24 +5185,26 @@ def test_render_fixture_learning_rail_exposes_reading_flow_panel(
     assert 'aria-hidden="false"' in reading_flow
     assert "data-raya-prev-page" in reading_flow
     assert "data-raya-next-page" in reading_flow
-    assert "from this page" in reading_flow
-    assert "links here" in reading_flow
-    assert 'class="raya-reading-flow-connection-kind">Content</span>' in reading_flow
-    assert 'data-raya-reading-flow-kind="content"' in reading_flow
-    assert (
-        '<span class="raya-reading-flow-connection-direction">Links here</span>'
-        in reading_flow
-    )
-    assert "Open in course graph" in reading_flow
-    assert 'href="../_raya/graph/index.html?page=reader-ux"' in reading_flow
-    assert '<section class="raya-rail-panel raya-page-linked-pages"' not in html
+    assert '<span class="raya-reading-context-position">Page 5 of 6</span>' in reading_flow
+    assert "from this page" not in reading_flow
+    assert "links here" not in reading_flow
+    assert "Open in course graph" not in reading_flow
+    connections = _section_html(html, "raya-page-linked-pages")
+    assert 'data-raya-rail-panel-state="expanded"' in connections
+    assert 'aria-expanded="true">Connections</button>' in connections
+    assert 'aria-hidden="false"' in connections
+    assert "from this page" in connections
+    assert "links here" in connections
+    assert 'class="raya-connection-preview raya-connection-preview-rail"' in connections
+    assert 'class="raya-connection-preview-graph"' in connections
+    assert 'href="../_raya/graph/index.html?page=render-root"' in connections
     assert '<section class="raya-rail-panel raya-page-sequence"' not in html
     assert "progress" not in visible_text
     assert "mastery" not in visible_text
     assert "recommend" not in visible_text
-    assert "localStorage" not in reading_flow
-    assert "sessionStorage" not in reading_flow
-    assert "fetch(" not in reading_flow
+    assert "localStorage" not in reading_flow + connections
+    assert "sessionStorage" not in reading_flow + connections
+    assert "fetch(" not in reading_flow + connections
 
 
 def test_render_fixture_learning_rail_prioritizes_section_navigation(
@@ -5205,26 +5218,24 @@ def test_render_fixture_learning_rail_prioritizes_section_navigation(
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
-    current_section_index = html.index(
-        '<section class="raya-rail-panel raya-page-current-section"'
-    )
-    page_contents_index = html.index(
-        '<section class="raya-rail-panel raya-page-contents"'
+    on_this_page_index = html.index(
+        '<section class="raya-rail-panel raya-page-contents raya-page-current-section"'
     )
     reading_flow_index = html.index(
         '<section class="raya-rail-panel raya-page-reading-flow"'
     )
-    summary_index = html.index('<section class="raya-rail-panel raya-page-summary"')
+    page_context_index = html.index('<section class="raya-rail-panel raya-page-context"')
+    connections_index = html.index('<section class="raya-rail-panel raya-page-linked-pages"')
 
-    assert current_section_index < page_contents_index
-    assert page_contents_index < reading_flow_index
-    assert reading_flow_index < summary_index
-    assert 'aria-expanded="true">Current section</button>' in _section_html(
-        html, "raya-page-current-section"
+    assert on_this_page_index < reading_flow_index
+    assert reading_flow_index < page_context_index
+    assert page_context_index < connections_index
+    on_this_page = _section_html(
+        html, "raya-page-contents raya-page-current-section"
     )
-    assert 'aria-expanded="true">Page contents</button>' in _section_html(
-        html, "raya-page-contents"
-    )
+    assert 'aria-expanded="true">On this page</button>' in on_this_page
+    assert "Current section" in on_this_page
+    assert '<nav class="raya-page-toc" aria-label="Page contents">' in on_this_page
 
 
 def test_learning_rail_key_objects_ignore_heading_slug_prefixes(
@@ -5249,7 +5260,9 @@ def test_learning_rail_key_objects_ignore_heading_slug_prefixes(
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
-    page_contents = _section_html(html, "raya-page-contents")
+    page_contents = _section_html(
+        html, "raya-page-contents raya-page-current-section"
+    )
     key_objects_match = re.search(
         r'<div class="raya-page-toc-objects".*?</div>',
         page_contents,
@@ -5311,7 +5324,10 @@ def test_learning_rail_without_toc_keeps_reading_flow_first(
     assert '<section class="raya-rail-panel raya-page-contents"' not in html
     assert html.index(
         '<section class="raya-rail-panel raya-page-reading-flow"'
-    ) < html.index('<section class="raya-rail-panel raya-page-summary"')
+    ) < html.index('<section class="raya-rail-panel raya-page-context"')
+    page_context = _section_html(html, "raya-page-context")
+    assert 'aria-expanded="true">Page context</button>' in page_context
+    assert "A compact lesson without enough headings for a page TOC." in page_context
 
 
 def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None:
@@ -5461,7 +5477,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     )
     root_sequence_cards = _article_sequence_cards_html(html)
     assert (
-        '<nav class="raya-article-sequence-cards" aria-label="End-of-page navigation">'
+        '<nav class="raya-article-sequence-cards" aria-label="Previous and next pages">'
     ) in root_sequence_cards
     assert (
         'class="raya-sequence-card raya-sequence-card-prev"' not in root_sequence_cards
@@ -5594,16 +5610,22 @@ def test_render_fixture_reader_page_exercises_learning_rail_metadata(
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
-    estimated_panel = _section_html(html, "raya-page-estimated-time")
-    assert 'aria-expanded="false">Estimated time</button>' in estimated_panel
-    assert 'aria-hidden="true" inert' in estimated_panel
-    assert "15 minutes" in estimated_panel
-    tags_panel = _section_html(html, "raya-page-tags")
-    assert 'aria-expanded="false">Tags</button>' in tags_panel
-    assert 'aria-hidden="true" inert' in tags_panel
-    assert "<li>reading</li>" in tags_panel
-    assert "<li>navigation</li>" in tags_panel
-    assert "<li>projection</li>" in tags_panel
+    page_context = _section_html(html, "raya-page-context")
+    assert 'data-raya-rail-panel-state="expanded"' in page_context
+    assert 'aria-expanded="true">Page context</button>' in page_context
+    assert 'aria-hidden="false"' in page_context
+    assert '<div class="raya-page-context-summary">' in page_context
+    assert '<div class="raya-page-context-status">' in page_context
+    assert '<div class="raya-page-context-estimated-time">' in page_context
+    assert '<div class="raya-page-context-tags">' in page_context
+    assert '<div class="raya-page-context-prerequisites">' in page_context
+    assert "<h3>Estimated time</h3>" in page_context
+    assert "15 minutes" in page_context
+    assert "<li>reading</li>" in page_context
+    assert "<li>navigation</li>" in page_context
+    assert "<li>projection</li>" in page_context
+    assert "Raya Lucaria Render Fixture" in page_context
+    assert 'href="../index.html"' in page_context
 
 
 def test_render_fixture_authoring_page_shows_explicit_graph_context(
@@ -5621,8 +5643,9 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     visible = _visible_text(panel).lower()
 
     assert '<section class="raya-rail-panel raya-page-linked-pages"' in panel
-    assert 'aria-expanded="false">Connections</button>' in panel
-    assert 'aria-hidden="true" inert' in panel
+    assert 'data-raya-rail-panel-state="expanded"' in panel
+    assert 'aria-expanded="true">Connections</button>' in panel
+    assert 'aria-hidden="false"' in panel
     assert '<p class="raya-rail-connection-summary">' in panel
     assert "<strong>3</strong> from this page" in panel
     assert "<strong>1</strong> link here" in panel
@@ -5737,7 +5760,7 @@ def test_learning_rail_omits_unresolved_prerequisites_without_browser_warning() 
         }
     )
 
-    html = static_builder._render_prerequisites_rail(page, content_model)
+    html = static_builder._render_prerequisites_body(page, content_model)
 
     assert "Raya Lucaria Render Fixture" in html
     assert 'href="../index.html"' in html

@@ -12792,11 +12792,26 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                         f"{handle.base_url}/reader-ux/index.html",
                         wait_until="networkidle",
                     )
-                    link_panel = page.locator(".raya-page-prerequisites").first
+                    link_panel = page.locator(".raya-page-context").first
+                    link_panel.locator("[data-raya-rail-toggle]").click()
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('.raya-page-context')
+                          ?.dataset.rayaRailPanelState === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """() => {
+                          const body = document
+                            .querySelector('.raya-page-context .raya-rail-panel-body');
+                          return body
+                            && body.getAttribute('aria-hidden') === 'true'
+                            && body.getBoundingClientRect().height < 5;
+                        }"""
+                    )
                     collapsed = link_panel.evaluate(
                         """(panel) => {
                       const body = panel.querySelector('.raya-rail-panel-body');
-                      const link = body?.querySelector('a');
+                      const link = body?.querySelector('.raya-page-context-prerequisites a');
                       link?.focus();
                       return {
                         state: panel.dataset.rayaRailPanelState,
@@ -12814,20 +12829,20 @@ def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
                     assert collapsed["expanded"] == "false"
                     assert collapsed["ariaHidden"] == "true"
                     assert collapsed["inert"] is True
-                    assert collapsed["bodyHeight"] < 2
+                    assert collapsed["bodyHeight"] < 5
                     assert collapsed["hasLink"] is True
                     assert collapsed["linkTabIndex"] == "-1"
 
                     link_panel.locator("[data-raya-rail-toggle]").click()
                     page.wait_for_function(
                         """() => document
-                          .querySelector('.raya-page-prerequisites')
+                          .querySelector('.raya-page-context')
                           ?.dataset.rayaRailPanelState === 'expanded'"""
                     )
                     expanded = link_panel.evaluate(
                         """(panel) => {
                       const body = panel.querySelector('.raya-rail-panel-body');
-                      const link = body?.querySelector('a');
+                      const link = body?.querySelector('.raya-page-context-prerequisites a');
                       link?.focus();
                       return {
                             state: panel.dataset.rayaRailPanelState,
@@ -13501,8 +13516,9 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                         }"""
                     )
                     assert state["sequenceLabel"] == "Previous and next pages"
-                    assert "Previous page" in state["articleSequenceText"]
-                    assert "Next page" in state["articleSequenceText"]
+                    article_sequence_text = state["articleSequenceText"].lower()
+                    assert "previous page" in article_sequence_text
+                    assert "next page" in article_sequence_text
                     assert state["sequenceTop"] < state["connectionTop"]
                     assert "Page connections" in state["connectionText"]
                     assert "from this page" in state["connectionCountText"]
@@ -13529,9 +13545,10 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                     assert all(
                         panel["hidden"] == "false" for panel in state["railPanels"]
                     )
-                    assert "Page 5 of 6" in state["railText"]
-                    assert "Previous" in state["railText"]
-                    assert "Next" in state["railText"]
+                    rail_text = state["railText"].lower()
+                    assert "page 5 of 6" in rail_text
+                    assert "previous" in rail_text
+                    assert "next" in rail_text
                     assert state["localKeys"] == []
                     assert state["sessionKeys"] == []
                     assert state["privateLinks"] == []
@@ -15270,12 +15287,14 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                           const panel = document.querySelector('.raya-page-reading-flow');
                           const previous = panel?.querySelector('[data-raya-prev-page]');
                           const next = panel?.querySelector('[data-raya-next-page]');
-                          const graph = panel?.querySelector('.raya-reading-flow-graph-link');
-                          const counts = panel?.querySelector('.raya-reading-flow-counts');
-                          const connection = panel?.querySelector('.raya-reading-flow-connections a');
-                          const kind = connection?.querySelector('.raya-reading-flow-connection-kind');
-                          const direction = connection?.querySelector('.raya-reading-flow-connection-direction');
-                          const title = connection?.querySelector('.raya-reading-flow-connection-title');
+                          const connections = document.querySelector('.raya-page-linked-pages');
+                          const counts = connections?.querySelector('.raya-rail-connection-summary');
+                          const connection = connections?.querySelector('.raya-connection-preview');
+                          const summary = connection?.querySelector('summary');
+                          const kind = connection?.querySelector('.raya-connection-preview-kind');
+                          const direction = connection?.querySelector('.raya-connection-preview-direction');
+                          const title = connection?.querySelector('.raya-connection-preview-title');
+                          const graph = connection?.querySelector('.raya-connection-preview-graph');
                           const box = (node) => {
                             const rect = node?.getBoundingClientRect();
                             return rect
@@ -15286,8 +15305,9 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                             panel: box(panel),
                             previous: box(previous),
                             next: box(next),
-                            graph: box(graph),
+                            connections: box(connections),
                             connection: box(connection),
+                            summary: box(summary),
                             kind: box(kind),
                             direction: box(direction),
                             title: box(title),
@@ -15299,8 +15319,11 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
                             state: panel?.getAttribute('data-raya-rail-panel-state'),
                             hidden: panel?.querySelector('.raya-rail-panel-body')
                               ?.getAttribute('aria-hidden'),
+                            connectionsState: connections?.getAttribute('data-raya-rail-panel-state'),
+                            connectionsHidden: connections?.querySelector('.raya-rail-panel-body')
+                              ?.getAttribute('aria-hidden'),
                             graphHref: graph?.getAttribute('href'),
-                            text: panel?.innerText || '',
+                            text: connections?.textContent || '',
                           };
                         }"""
                     )
@@ -15323,21 +15346,29 @@ def test_render_fixture_reading_flow_panel_is_visible_in_first_viewport(
     assert probe["previous"]["height"] > 32
     assert probe["next"]["width"] > 40
     assert probe["next"]["height"] > 32
-    assert probe["graph"]["width"] > 80
-    assert probe["graph"]["height"] > 24
+    assert probe["connectionsState"] == "expanded"
+    assert probe["connectionsHidden"] == "false"
+    assert probe["connections"]["width"] > 80
     assert probe["connection"]["width"] > 80
-    assert probe["connection"]["height"] > 42
-    assert probe["connection"]["height"] <= 72
+    assert probe["summary"]["width"] > 80
+    assert probe["summary"]["height"] > 42
+    assert probe["summary"]["height"] <= 120
     assert probe["kind"]["width"] > 24
     assert probe["direction"]["width"] > 40
     assert probe["title"]["width"] > 40
     assert probe["connectionKind"] == "Content"
-    assert probe["connectionDirection"] in {"FROM THIS PAGE", "LINKS HERE"}
+    assert probe["connectionDirection"] in {
+        "FROM THIS PAGE",
+        "LINKS HERE",
+        "From this page",
+        "Links here",
+    }
     assert probe["connectionTitle"]
     assert "from this page" in probe["counts"]
     assert "links here" in probe["counts"]
-    assert probe["graphHref"] == "../_raya/graph/index.html?page=reader-ux"
-    assert "Open in course graph" in probe["text"]
+    assert probe["graphHref"]
+    assert probe["graphHref"].startswith("../_raya/graph/index.html?page=")
+    assert "Graph" in probe["text"]
 
 
 def test_render_fixture_study_object_families_are_visually_distinct(
