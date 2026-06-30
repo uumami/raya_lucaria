@@ -17497,6 +17497,7 @@ def test_discovery_command_bar_marks_current_workspace_without_overflow(
             try:
                 for viewport in (
                     {"width": 1366, "height": 900},
+                    {"width": 900, "height": 720},
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
@@ -17528,6 +17529,48 @@ def test_discovery_command_bar_marks_current_workspace_without_overflow(
                             assert box["width"] > 0
                             assert box["x"] >= 0
                             assert box["x"] + box["width"] <= viewport["width"] + 1
+                            if viewport["width"] >= 700:
+                                command_layout = page.evaluate(
+                                    """() => Array
+                                      .from(document.querySelectorAll(
+                                        '.raya-discovery-command-bar .raya-command'
+                                      ))
+                                      .map((command) => {
+                                        const label = command
+                                          .querySelector('.raya-command-label');
+                                        const commandBox = command.getBoundingClientRect();
+                                        const labelBox = label?.getBoundingClientRect();
+                                        const labelStyle = label
+                                          ? getComputedStyle(label)
+                                          : null;
+                                        return {
+                                          label: label?.innerText || '',
+                                          commandHeight: commandBox.height,
+                                          labelHeight: labelBox?.height || 0,
+                                          labelWidth: labelBox?.width || 0,
+                                          labelWhiteSpace: labelStyle?.whiteSpace || '',
+                                          labelOverflowWrap: labelStyle?.overflowWrap || '',
+                                        };
+                                      })"""
+                                )
+                                assert command_layout
+                                assert all(
+                                    item["commandHeight"] <= 72
+                                    for item in command_layout
+                                )
+                                assert all(
+                                    item["labelWhiteSpace"] == "nowrap"
+                                    for item in command_layout
+                                )
+                                assert all(
+                                    item["labelOverflowWrap"] != "anywhere"
+                                    for item in command_layout
+                                )
+                                assert all(
+                                    item["labelHeight"] <= 32
+                                    for item in command_layout
+                                    if item["label"]
+                                )
                             contrast = current.evaluate(
                                 """element => {
                                     const parseRgb = value => {

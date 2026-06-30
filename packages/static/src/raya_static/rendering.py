@@ -681,6 +681,29 @@ img {
 .raya-discovery-command-bar .raya-command[aria-current="page"] .raya-command-icon {
   color: inherit;
 }
+.raya-discovery-command-bar .raya-course-tools {
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.raya-discovery-command-bar .raya-command {
+  flex: 0 0 auto;
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+.raya-discovery-command-bar .raya-command-label {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .raya-discovery-command-bar .raya-command-label {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+  }
+}
 .raya-top-command-bar-inner,
 .raya-learning-shell,
 .raya-page-footer,
