@@ -54,6 +54,7 @@ render-debug/
 # Local caches
 .cache/
 .superpowers/
+.worktrees/
 .uv-cache/
 .parcel-cache/
 .turbo/
