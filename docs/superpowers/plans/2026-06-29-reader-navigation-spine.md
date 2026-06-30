@@ -510,7 +510,7 @@ Expected: commit succeeds. If `shell.py` was not modified, omit it from `git add
 **Files:**
 - Verify all modified files.
 
-- [ ] **Step 1: Run focused e2e suite**
+- [x] **Step 1: Run focused e2e suite**
 
 Run:
 
@@ -520,7 +520,7 @@ UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_preview_static_r
 
 Expected: PASS.
 
-- [ ] **Step 2: Run syntax and diff hygiene**
+- [x] **Step 2: Run syntax and diff hygiene**
 
 Run:
 
@@ -531,7 +531,7 @@ git diff --check
 
 Expected: both commands exit 0.
 
-- [ ] **Step 3: Run render-debug gate**
+- [x] **Step 3: Run render-debug gate**
 
 Run:
 
@@ -541,7 +541,7 @@ Run:
 
 Expected: PASS with no raw TeX leakage, no external renderer requests, no overflow, and static-site parity.
 
-- [ ] **Step 4: Request code review**
+- [x] **Step 4: Request code review**
 
 Use `superpowers:requesting-code-review`. Ask one reviewer to check:
 
