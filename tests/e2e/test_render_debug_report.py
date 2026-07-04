@@ -275,16 +275,18 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <header class="raya-top-command-bar" aria-label="Course tools"></header>
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <button class="raya-course-map-toggle" type="button"
-                  data-raya-course-map-toggle aria-expanded="false">
-                  Course map
-                </button>
+                <div class="raya-course-map-tools" data-raya-course-map-tools>
+                  <button class="raya-course-map-toggle" type="button"
+                    data-raya-course-map-toggle aria-expanded="false">
+                    Course map
+                  </button>
+                </div>
               </nav>
               <article id="raya-article" class="raya-main-article"></article>
-              <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+              <aside id="raya-learning-rail" class="raya-learning-rail"
+                aria-label="Learning context"></aside>
             </main>
           </body>
         </html>
@@ -295,6 +297,9 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
     report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
 
     checks = {check["id"]: check for check in report["checks"]}
+    assert "raya-top-command-bar" not in (site_dir / "index.html").read_text(
+        encoding="utf-8"
+    )
     assert checks["site:learning-shell:index"]["status"] == "pass"
 
 
@@ -307,12 +312,13 @@ def test_render_debug_report_requires_collapsible_shell_controls(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <header class="raya-top-command-bar" aria-label="Course tools"></header>
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
+                <div class="raya-course-map-tools" data-raya-course-map-tools></div>
               </nav>
               <article id="raya-article" class="raya-main-article"></article>
-              <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+              <aside id="raya-learning-rail" class="raya-learning-rail"
+                aria-label="Learning context"></aside>
             </main>
           </body>
         </html>
@@ -343,9 +349,15 @@ def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <header class="raya-top-command-bar" aria-label="Course tools"></header>
             <main class="raya-learning-shell">
-              <nav class="raya-course-map" aria-label="Course map"></nav>
+              <nav class="raya-course-map" aria-label="Course map">
+                <div class="raya-course-map-tools" data-raya-course-map-tools>
+                  <button class="raya-course-map-toggle" type="button"
+                    data-raya-course-map-toggle aria-expanded="false">
+                    Course map
+                  </button>
+                </div>
+              </nav>
               <aside class="raya-learning-rail" aria-label="Learning context"></aside>
               <article class="raya-main-article"></article>
             </main>
@@ -378,7 +390,6 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <div class="raya-top-command-bar" aria-label="Course tools"></div>
             <section id="raya-content" class="raya-learning-shell">
               <div class="raya-course-map" aria-label="Course map"></div>
               <div id="raya-article" class="raya-main-article"></div>
@@ -396,14 +407,15 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
     shell_check = checks["site:learning-shell:index"]
     assert shell_check["status"] == "fail"
     assert shell_check["details"]["missing_selectors"] == [
-        "header.raya-top-command-bar",
         "main#raya-content.raya-learning-shell",
         "nav#raya-course-map.raya-course-map",
         "nav.raya-course-map",
+        ".raya-course-map-tools",
+        "[data-raya-course-map-tools]",
         "button.raya-course-map-toggle",
         "[data-raya-course-map-toggle]",
         "article#raya-article.raya-main-article",
-        "aside.raya-learning-rail",
+        "aside#raya-learning-rail.raya-learning-rail",
     ]
 
 
@@ -416,7 +428,7 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <!-- raya-top-command-bar raya-learning-shell raya-course-map -->
+            <!-- raya-learning-shell raya-course-map raya-course-map-tools -->
             <main>
               <article>
                 <p>raya-main-article raya-learning-rail appear only in prose.</p>
@@ -436,12 +448,38 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     shell_check = checks["site:learning-shell:index"]
     assert shell_check["status"] == "fail"
     assert set(shell_check["details"]["missing_classes"]) == {
-        "raya-top-command-bar",
         "raya-learning-shell",
         "raya-course-map",
+        "raya-course-map-tools",
         "raya-main-article",
         "raya-learning-rail",
     }
+
+
+def test_render_debug_report_rejects_top_command_bar_on_reader_pages(
+    tmp_path: Path,
+) -> None:
+    html = _learning_shell_html("<p>Reader page with forbidden top bar.</p>").replace(
+        '<main id="raya-content" class="raya-learning-shell">',
+        (
+            '<header class="raya-top-command-bar" aria-label="Course tools"></header>'
+            '<main id="raya-content" class="raya-learning-shell">'
+        ),
+    )
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        html,
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index"]
+    assert shell_check["status"] == "fail"
+    assert "reader page must not render .raya-top-command-bar" in shell_check[
+        "details"
+    ]["missing_selectors"]
 
 
 def test_render_debug_report_fails_when_copied_site_shell_regions_are_missing(
@@ -1328,18 +1366,20 @@ def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
     <!doctype html>
     <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
       <body data-raya-skin="{skin}">
-        <header class="raya-top-command-bar" aria-label="Course tools"></header>
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <button class="raya-course-map-toggle" type="button"
-              data-raya-course-map-toggle aria-expanded="false">
-              Course map
-            </button>
+            <div class="raya-course-map-tools" data-raya-course-map-tools>
+              <button class="raya-course-map-toggle" type="button"
+                data-raya-course-map-toggle aria-expanded="false">
+                Course map
+              </button>
+            </div>
           </nav>
           <article id="raya-article" class="raya-main-article">
             {content}
           </article>
-          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+          <aside id="raya-learning-rail" class="raya-learning-rail"
+            aria-label="Learning context"></aside>
         </main>
       </body>
     </html>

@@ -466,18 +466,20 @@ def _learning_shell_html(content: str) -> str:
     <!doctype html>
     <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
       <body data-raya-skin="warm-academic">
-        <header class="raya-top-command-bar" aria-label="Course tools"></header>
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <button class="raya-course-map-toggle" type="button"
-              data-raya-course-map-toggle aria-expanded="false">
-              Course map
-            </button>
+            <div class="raya-course-map-tools" data-raya-course-map-tools>
+              <button class="raya-course-map-toggle" type="button"
+                data-raya-course-map-toggle aria-expanded="false">
+                Course map
+              </button>
+            </div>
           </nav>
           <article id="raya-article" class="raya-main-article">
             {content}
           </article>
-          <aside class="raya-learning-rail" aria-label="Learning context"></aside>
+          <aside id="raya-learning-rail" class="raya-learning-rail"
+            aria-label="Learning context"></aside>
         </main>
       </body>
     </html>

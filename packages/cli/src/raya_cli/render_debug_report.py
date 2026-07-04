@@ -64,9 +64,9 @@ READER_UX_STATIC_ENVIRONMENTS = {
     },
 }
 LEARNING_SHELL_REGIONS = (
-    "raya-top-command-bar",
     "raya-learning-shell",
     "raya-course-map",
+    "raya-course-map-tools",
     "raya-main-article",
     "raya-learning-rail",
 )
@@ -75,14 +75,15 @@ LEARNING_SHELL_IDS = (
     "raya-article",
 )
 LEARNING_SHELL_SELECTORS = (
-    "header.raya-top-command-bar",
     "main#raya-content.raya-learning-shell",
     "nav#raya-course-map.raya-course-map",
     "nav.raya-course-map",
+    ".raya-course-map-tools",
+    "[data-raya-course-map-tools]",
     "button.raya-course-map-toggle",
     "[data-raya-course-map-toggle]",
     "article#raya-article.raya-main-article",
-    "aside.raya-learning-rail",
+    "aside#raya-learning-rail.raya-learning-rail",
 )
 
 
@@ -822,6 +823,10 @@ def _inspect_learning_shell(
             for selector in LEARNING_SHELL_SELECTORS
             if selector not in elements["selectors"]
         ]
+        if "raya-top-command-bar" in text:
+            missing_selectors.append(
+                "reader page must not render .raya-top-command-bar"
+            )
         missing = missing_classes + missing_ids + missing_selectors
         _add_check(
             report,
@@ -892,6 +897,7 @@ class _ElementMarkerParser(HTMLParser):
             self.ids.add(element_id)
         tag_lower = tag.lower()
         for class_token in class_tokens:
+            self.selectors.add(f".{class_token}")
             self.selectors.add(f"{tag_lower}.{class_token}")
         if element_id:
             self.selectors.add(f"{tag_lower}#{element_id}")
