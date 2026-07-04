@@ -2393,6 +2393,22 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in search_script
 
 
+def test_discovery_workspaces_keep_command_bars(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    for workspace in ("search", "graph", "practice", "tasks", "schedule"):
+        html = (site / "_raya" / workspace / "index.html").read_text(
+            encoding="utf-8"
+        )
+        assert "raya-discovery-command-bar" in html
+        assert "raya-top-command-bar" in html
+        assert "shell.js" not in html
+
+
 def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -4744,7 +4760,12 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "sessionStorage" not in script_text
     assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
+    assert 'window.matchMedia("(min-width: 768px)")' not in script_text
     assert 'window.matchMedia("(min-width: 901px)")' not in script_text
+    assert 'setAttribute("role", "dialog")' in script_text
+    assert "aria-modal" in script_text
+    assert "syncCourseMapModalBackground" in script_text
+    assert "trapCourseMapDrawerFocus" in script_text
     assert "data-raya-prev-page" in script_text
     assert "data-raya-next-page" in script_text
     assert "ArrowLeft" in script_text
@@ -4813,9 +4834,11 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     )
     assert "box-shadow: 0 1rem 2.5rem rgba(31, 35, 40, 0.08);" not in css_text
     assert (
-        ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;\n  max-height: calc(100vh - 6rem);\n  overflow: auto;"
+        ".raya-course-map {\n  align-self: start;\n  grid-area: course-map;"
         in css_text
     )
+    assert "max-height: calc(100vh -" in css_text
+    assert "overflow: auto;" in css_text
 
 
 def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
@@ -4871,6 +4894,10 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert 'id="raya-learning-rail"' in html
+    assert 'class="raya-discovery-command-bar"' not in html
+    assert 'role="dialog"' not in html
+    assert 'aria-modal="true"' not in html
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
     assert '<a class="raya-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html

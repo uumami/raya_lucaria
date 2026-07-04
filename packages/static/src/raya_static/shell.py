@@ -21,6 +21,8 @@ _SHELL_JAVASCRIPT = r"""
   const root = document.documentElement;
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
+  const article = document.querySelector("#raya-article");
+  const mobileMapOpener = document.querySelector(".raya-mobile-course-map-open");
   const toggleButtons = Array.from(document.querySelectorAll("[data-raya-course-map-toggle]"));
   const learningRail = document.querySelector("#raya-learning-rail");
   const learningRailBody = document.querySelector("#raya-learning-rail-body");
@@ -140,6 +142,26 @@ _SHELL_JAVASCRIPT = r"""
     element.inert = inert;
   }
 
+  function setAssistiveHidden(element, hidden) {
+    if (!element) {
+      return;
+    }
+    if (hidden) {
+      element.setAttribute("aria-hidden", "true");
+    } else {
+      element.removeAttribute("aria-hidden");
+    }
+    setElementInert(element, hidden);
+    setFocusableDescendantsEnabled(element, !hidden);
+  }
+
+  function syncCourseMapModalBackground(drawerOpen) {
+    const hidden = drawerOpen && !isDesktopShell();
+    [article, learningRail, mobileMapOpener].forEach((element) => {
+      setAssistiveHidden(element, hidden);
+    });
+  }
+
   function focusableElementsWithin(container) {
     return Array.from(
       container.querySelectorAll(
@@ -256,11 +278,13 @@ _SHELL_JAVASCRIPT = r"""
 
   function syncCourseMapDrawerState() {
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
+    const desktopShell = isDesktopShell();
+    const mobileDrawerOpen = drawerOpen && !desktopShell;
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
-    const commandExpanded = !isDesktopShell() ? drawerOpen : structuralExpanded;
+    const commandExpanded = !desktopShell ? drawerOpen : structuralExpanded;
     root.setAttribute(
       "data-raya-course-map-scroll-lock",
-      drawerOpen && !isDesktopShell() ? "true" : "false"
+      mobileDrawerOpen ? "true" : "false"
     );
     toggleButtons
       .filter((button) => button.classList.contains("raya-command-map"))
@@ -268,7 +292,7 @@ _SHELL_JAVASCRIPT = r"""
         button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
         button.setAttribute(
           "aria-label",
-          !isDesktopShell()
+          !desktopShell
             ? commandExpanded
               ? "Close course map"
               : "Open course map"
@@ -278,14 +302,34 @@ _SHELL_JAVASCRIPT = r"""
         );
       });
     if (mapDrawerBackdrop) {
-      mapDrawerBackdrop.hidden = !drawerOpen;
+      mapDrawerBackdrop.hidden = !mobileDrawerOpen;
     }
-    if (!isDesktopShell()) {
+    if (!desktopShell) {
+      if (mobileDrawerOpen) {
+        const drawerTitle = map.querySelector(".raya-course-map-drawer-title");
+        if (drawerTitle && !drawerTitle.id) {
+          drawerTitle.id = "raya-course-map-drawer-title";
+        }
+        map.setAttribute("role", "dialog");
+        map.setAttribute("aria-modal", "true");
+        if (drawerTitle && drawerTitle.id) {
+          map.setAttribute("aria-labelledby", drawerTitle.id);
+        }
+      } else {
+        map.removeAttribute("role");
+        map.removeAttribute("aria-modal");
+        map.removeAttribute("aria-labelledby");
+      }
+      syncCourseMapModalBackground(drawerOpen);
       setElementInert(map, !drawerOpen);
       setFocusableDescendantsEnabled(map, drawerOpen);
       map.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
       return;
     }
+    syncCourseMapModalBackground(false);
+    map.removeAttribute("role");
+    map.removeAttribute("aria-modal");
+    map.removeAttribute("aria-labelledby");
     setElementInert(map, false);
     setFocusableDescendantsEnabled(map, true);
     map.setAttribute("aria-hidden", "false");
