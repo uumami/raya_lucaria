@@ -10,8 +10,6 @@ from raya_schema import ValidationReport
 
 
 SKIN_STYLESHEET_PATH = "_raya/render/skin.css"
-SKIN_PREPAINT_JS_NAME = "skin-prepaint.js"
-SKIN_TOGGLE_JS_NAME = "skin-toggle.js"
 DEFAULT_SKIN_ID = "raya-default"
 REQUIRED_COLOR_TOKENS = (
     "page",
@@ -678,9 +676,7 @@ def render_skin_css(context: SkinContext) -> str:
         profile = context.profiles[skin_id]
         selector = _css_escape_identifier(skin_id)
         lines = [
-            f'[data-raya-skin="{selector}"],',
-            f':root[data-raya-skin-override="{selector}"],',
-            f':root[data-raya-skin-override="{selector}"] body {{',
+            f'[data-raya-skin="{selector}"] {{',
         ]
         for key in REQUIRED_COLOR_TOKENS:
             lines.append(f"  --raya-color-{key.replace('_', '-')}: {profile.colors[key]};")
@@ -700,102 +696,6 @@ def render_skin_css(context: SkinContext) -> str:
         lines.append("}")
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks) + "\n"
-
-
-def skin_cycle_entries(context: SkinContext) -> tuple[tuple[str, str], ...]:
-    return tuple(
-        (skin_id, context.profiles[skin_id].name)
-        for skin_id in sorted(context.profiles)
-    )
-
-
-def skin_prepaint_script() -> str:
-    return '''(() => {
-  try {
-    const override = localStorage.getItem("raya:skin-override") || "";
-    if (override) {
-      document.documentElement.setAttribute("data-raya-skin-override", override);
-    } else {
-      document.documentElement.removeAttribute("data-raya-skin-override");
-    }
-  } catch {
-    document.documentElement.removeAttribute("data-raya-skin-override");
-  }
-})();'''
-
-
-def skin_toggle_script() -> str:
-    return '''(() => {
-  const storageKey = "raya:skin-override";
-  const authoredValue = "";
-
-  function parseJsonAttribute(button, name, fallback) {
-    try {
-      return JSON.parse(button.getAttribute(name) || "");
-    } catch {
-      return fallback;
-    }
-  }
-
-  function currentOverride() {
-    return document.documentElement.getAttribute("data-raya-skin-override") || "";
-  }
-
-  function storeOverride(value) {
-    try {
-      if (value) {
-        localStorage.setItem(storageKey, value);
-      } else {
-        localStorage.removeItem(storageKey);
-      }
-    } catch {
-      return;
-    }
-  }
-
-  function applyOverride(value, labels) {
-    if (value) {
-      document.documentElement.setAttribute("data-raya-skin-override", value);
-    } else {
-      document.documentElement.removeAttribute("data-raya-skin-override");
-    }
-    const label = labels[value] || labels[authoredValue] || "authored";
-    document.querySelectorAll(".raya-skin-toggle").forEach((button) => {
-      button.setAttribute("aria-label", `Skin: ${label}`);
-      button.setAttribute("aria-pressed", value ? "true" : "false");
-      button.dataset.rayaSkinActive = value || "authored";
-    });
-  }
-
-  function firstSkinButton() {
-    return document.querySelector(".raya-skin-toggle");
-  }
-
-  const firstButton = firstSkinButton();
-  if (!firstButton) return;
-  const cycle = parseJsonAttribute(firstButton, "data-raya-skin-cycle", [authoredValue]);
-  const labels = parseJsonAttribute(firstButton, "data-raya-skin-labels", {
-    [authoredValue]: "authored",
-  });
-  let initial = currentOverride();
-  if (!cycle.includes(initial)) {
-    initial = authoredValue;
-    storeOverride(authoredValue);
-  }
-  applyOverride(initial, labels);
-
-  document.addEventListener("click", (event) => {
-    const button = event.target.closest(".raya-skin-toggle");
-    if (!button) return;
-    const localCycle = parseJsonAttribute(button, "data-raya-skin-cycle", cycle);
-    const localLabels = parseJsonAttribute(button, "data-raya-skin-labels", labels);
-    const current = currentOverride();
-    const index = localCycle.indexOf(current);
-    const next = localCycle[(index + 1) % localCycle.length] || authoredValue;
-    storeOverride(next);
-    applyOverride(next, localLabels);
-  });
-})();'''
 
 
 def _css_escape_identifier(value: str) -> str:
