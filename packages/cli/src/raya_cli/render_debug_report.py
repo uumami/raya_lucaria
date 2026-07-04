@@ -85,6 +85,11 @@ LEARNING_SHELL_SELECTORS = (
     "article#raya-article.raya-main-article",
     "aside#raya-learning-rail.raya-learning-rail",
 )
+DISCOVERY_COMMAND_BAR_CLASS = "raya-discovery-command-bar"
+FORBIDDEN_READER_TOP_BAR_CLASS = "raya-top-command-bar"
+FORBIDDEN_READER_TOP_BAR_DIAGNOSTIC = (
+    "reader page must not render .raya-top-command-bar"
+)
 
 
 def inspect_render_debug(
@@ -810,6 +815,14 @@ def _inspect_learning_shell(
     for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8")
         elements = _element_markers_from_html(text)
+        has_reader_shell_marker = _has_reader_shell_marker(elements)
+        if (
+            DISCOVERY_COMMAND_BAR_CLASS in elements["classes"]
+            and not has_reader_shell_marker
+        ):
+            continue
+        if not has_reader_shell_marker:
+            continue
         missing_classes = [
             region
             for region in LEARNING_SHELL_REGIONS
@@ -823,10 +836,8 @@ def _inspect_learning_shell(
             for selector in LEARNING_SHELL_SELECTORS
             if selector not in elements["selectors"]
         ]
-        if "raya-top-command-bar" in text:
-            missing_selectors.append(
-                "reader page must not render .raya-top-command-bar"
-            )
+        if FORBIDDEN_READER_TOP_BAR_CLASS in elements["classes"]:
+            missing_selectors.append(FORBIDDEN_READER_TOP_BAR_DIAGNOSTIC)
         missing = missing_classes + missing_ids + missing_selectors
         _add_check(
             report,
@@ -853,6 +864,15 @@ def _inspect_learning_shell(
                 "missing_selectors": missing_selectors,
             },
         )
+
+
+def _has_reader_shell_marker(elements: dict[str, set[str]]) -> bool:
+    reader_classes = set(LEARNING_SHELL_REGIONS) | {FORBIDDEN_READER_TOP_BAR_CLASS}
+    return bool(
+        reader_classes & elements["classes"]
+        or set(LEARNING_SHELL_IDS) & elements["ids"]
+        or set(LEARNING_SHELL_SELECTORS) & elements["selectors"]
+    )
 
 
 def _learning_shell_page_id(site_dir: Path, html_path: Path) -> str:
