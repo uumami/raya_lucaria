@@ -22,6 +22,7 @@ _SHELL_JAVASCRIPT = r"""
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
   const article = document.querySelector("#raya-article");
+  const skipLink = document.querySelector('.raya-skip-link[href="#raya-article"]');
   const mobileMapOpener = document.querySelector(".raya-mobile-course-map-open");
   const toggleButtons = Array.from(document.querySelectorAll("[data-raya-course-map-toggle]"));
   const learningRail = document.querySelector("#raya-learning-rail");
@@ -157,7 +158,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function syncCourseMapModalBackground(drawerOpen) {
     const hidden = drawerOpen && !isDesktopShell();
-    [article, learningRail, mobileMapOpener].forEach((element) => {
+    [skipLink, article, learningRail, mobileMapOpener].forEach((element) => {
       setAssistiveHidden(element, hidden);
     });
   }

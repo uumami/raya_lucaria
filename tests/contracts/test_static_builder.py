@@ -4766,6 +4766,8 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "aria-modal" in script_text
     assert "syncCourseMapModalBackground" in script_text
     assert "trapCourseMapDrawerFocus" in script_text
+    assert "skipLink" in script_text
+    assert '.raya-skip-link[href="#raya-article"]' in script_text
     assert "data-raya-prev-page" in script_text
     assert "data-raya-next-page" in script_text
     assert "ArrowLeft" in script_text
