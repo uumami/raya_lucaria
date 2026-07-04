@@ -32,12 +32,11 @@ trabajo que el curso te pide completar. Si dos secciones se ven diferentes, usa
 el titulo de pagina, enlaces y etiquetas como significado del curso; la skin solo
 es enfasis visual.
 
-Las paginas renderizadas pueden incluir botones `Text size` y `OpenDyslexic` en
-la parte superior. Son preferencias de lectura locales que guarda tu navegador
-para ese sitio estatico; cambian la escala del texto o la fuente para facilitar
-lectura. Cada preferencia de lectura no cambia contenido, evaluacion, enlaces,
-identidad de skin ni
-etiquetas de autoridad.
+Las paginas lectoras renderizadas pueden incluir botones `Text size` y
+`OpenDyslexic` en el riel izquierdo del curso. Son preferencias de lectura
+locales que guarda tu navegador para ese sitio estatico; cambian la escala del
+texto o la fuente para facilitar lectura. Cada preferencia de lectura no cambia
+contenido, evaluacion, enlaces, identidad de skin ni etiquetas de autoridad.
 
 Puedes imprimir una pagina generada o guardarla como PDF cuando quieras un
 handout para leer o anotar sin conexion. El modo print quita la chrome del
@@ -45,19 +44,22 @@ curso y mantiene legibles el contenido, la math, el codigo, las tablas, la
 practica oficial y las notas de soporte. No envia trabajo, no guarda progreso,
 no estima dominio ni contacta servicios externos.
 
-La estructura actual del curso es una ayuda de lectura estatica. En escritorio,
-el mapa del curso expandido se renderiza como un mapa jerarquico del curso
-expandido y puede mostrar numeros estructurales de secuencia del orden del
-curso. Da orientacion por defecto, la barra superior mantiene visibles el
-titulo del curso, el titulo de la pagina actual y la posicion estructural de la
-pagina, el articulo principal sigue siendo la leccion, y el riel de aprendizaje
-ofrece contenidos de pagina y contexto cercano. Puedes colapsar el mapa a un
-riel compacto operable cuando quieras mas espacio de lectura; esa eleccion es
-no persistente y no guarda ni muestra progreso personal. En desktop, los rieles
-colapsados de mapa y contexto aparecen como pestanas compactas para que puedas
-restaurarlos sin perder el articulo. Los controles Map, Focus reading y Context
-son herramientas de comodidad de lectura. Pueden ampliar el articulo o restaurar
-el contexto alrededor sin guardar un estado personal de avance.
+La estructura actual del curso es una ayuda de lectura estatica. Las paginas
+lectoras no tienen una franja de comandos lectora sobre el articulo; los
+comandos lectores viven en el riel izquierdo del curso. En escritorio, el mapa
+del curso expandido se renderiza como un mapa jerarquico del curso expandido y
+puede mostrar numeros estructurales de secuencia del orden del curso. Da
+orientacion por defecto, el articulo principal sigue siendo la leccion, y el
+riel de aprendizaje ofrece contenidos de pagina y contexto cercano. Puedes
+colapsar el mapa a un riel compacto operable cuando quieras mas espacio de
+lectura; esa eleccion es no persistente y no guarda ni muestra progreso
+personal. En desktop, los rieles colapsados de mapa y contexto aparecen como
+pestanas compactas para que puedas restaurarlos sin perder el articulo. Los
+controles Map, Focus reading, Context, Text size, OpenDyslexic, Search, Graph,
+Practice, Tasks y Schedule son herramientas de comodidad y navegacion en el
+riel izquierdo del curso. Pueden ampliar el articulo, restaurar el contexto
+alrededor o pasar a workspaces generados sin guardar un estado personal de
+avance.
 Cuando una pagina tiene tabla de contenidos, el riel de aprendizaje tambien
 puede mostrar la seccion actual del articulo mientras haces scroll. Esa etiqueta
 solo orienta por encabezados de la pagina; no es porcentaje leido, marca de
@@ -66,11 +68,11 @@ Cuando un mapa largo se abre, la pagina puede mover el enlace de la pagina
 actual a la parte visible del mapa. Esa orientacion es contexto temporal de
 lectura, no estado guardado.
 
-La barra superior tambien puede incluir un campo pequeno de busqueda del curso.
-Escribir ahi abre el workspace generado Course Search con tu consulta; la pagina
-de lectura no crea un segundo indice, no hace fetch de resultados ni guarda el
-texto como estado de estudio. Usalo como salto rapido cuando recuerdes una
-frase, teorema, titulo de pagina o stable ID mientras lees.
+El riel izquierdo del curso puede incluir un handoff estatico de Search al
+workspace generado Course Search. La pagina de lectura no crea un segundo
+indice, no hace fetch de resultados ni guarda texto de busqueda como estado de
+estudio. Usalo como salto rapido cuando recuerdes una frase, teorema, titulo de
+pagina o stable ID mientras lees.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
 necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
@@ -82,12 +84,12 @@ map abre un drawer temporal con titulo propio, posicion de pagina, filtro,
 atajos de workspace y boton de cierre. Mientras el drawer esta abierto, la
 pagina de fondo pausa el scroll para que el mapa sea mas facil de usar; cierralo
 con el boton de cierre, el backdrop o Escape para volver el foco a la lectura.
-Usa el filtro del mapa para limitar etiquetas de paginas
-visibles dentro de la jerarquia estatica actual. Usa Anterior y Siguiente en el
-articulo, en el contexto superior de lectura o en las cards al final de pagina
-para moverte por el material ordenado, y usa Text size u OpenDyslexic cuando
-esos ajustes sean mas comodos. Las cards al final de pagina son enlaces del
-orden del curso; no son recomendaciones ni marcadores de progreso.
+Usa el filtro del mapa para limitar etiquetas de paginas visibles dentro de la
+jerarquia estatica actual. Usa Anterior y Siguiente en el articulo o en las
+cards al final de pagina para moverte por el material ordenado, y usa Text size
+u OpenDyslexic cuando esos ajustes sean mas comodos. Las cards al final de
+pagina son enlaces del orden del curso; no son recomendaciones ni marcadores de
+progreso.
 El mapa expandido del curso tambien puede mostrar enlaces estaticos a Course
 Search, Course Graph, Official Practice, Official Tasks y Official Schedule. Son atajos a
 workspaces generados, no progreso, ranking ni guia personalizada. Algunas cards
@@ -160,13 +162,7 @@ enlazada cuando el curso tiene esos metadatos. Tambien pueden etiquetar tipo y
 direccion de relacion, como `Content` y `From this page`, usando solo contexto
 explicito generado del grafo. Usalos como mapa de lectura despues de terminar
 la pagina; no son un registro de avance, ranking ni motor de recomendaciones.
-Las paginas Search, Graph, Practice, Tasks y Schedule usan la misma barra estatica de
-descubrimiento para volver al curso, cambiar entre esos workspaces y mantener
-disponibles Text size u OpenDyslexic para la pagina actual. Search, Practice y
-Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de contexto en
-pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los
-workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros
-de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
+Las paginas Search, Graph, Practice, Tasks y Schedule usan la misma barra de comandos de descubrimiento para volver al curso, cambiar entre esos workspaces y ajustar comodidad de pagina sin cambiar el estado de la shell lectora. Search, Practice, Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de contexto en pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
 Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
 coincidencia es comportamiento local de la pagina, no ranking, personalizacion
@@ -212,10 +208,8 @@ ocultas de fuente, rutas privadas de soporte, internos de MathJax, respuestas
 ni tu estado personal. Los resultados pueden mostrar coincidencias de seccion
 que saltan a anchors publicos generados de la pagina, incluidos objetos
 numerados como theorem, figure, table, homework o assignment cuando el curso los
-renderizo. Abrirlo desde una pagina del curso puede precargar el
-titulo de esa pagina como consulta temporal, y el campo de busqueda de la barra
-superior puede abrirlo con el texto que escribiste. Un resultado tambien puede ofrecer
-`View in graph`, que abre Course Graph enfocado en esa misma pagina para
+renderizo. Abrirlo desde una pagina del curso puede enfocar Search alrededor de
+esa pagina publica. Un resultado tambien puede ofrecer `View in graph`, que abre Course Graph enfocado en esa misma pagina para
 inspeccionar su posicion en el curso y sus enlaces explicitos. El panel de
 contexto de Search resume contexto publico del resultado que inspeccionas; no
 es un ranking ni una recomendacion. Cuando un resultado tiene practica oficial

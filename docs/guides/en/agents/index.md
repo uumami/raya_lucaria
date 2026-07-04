@@ -50,14 +50,14 @@ request as a regression; the toggle may use a local script, but it must not
 introduce browser-side MathJax or an external renderer.
 
 For the `Text size` reader toggle, verify the same local accessibility resource
-path, `data-raya-text-size` on the document root, command-bar labels, computed
-article text size, and reload persistence. Treat it as a local comfort
+path, `data-raya-text-size` on the document root, labels in the left course
+rail, computed article text size, and reload persistence. Treat it as a local comfort
 preference only; it must not change `data-raya-skin`, source content, graph
 data, progress, answers, mastery, or recommendations.
 
 For print/PDF handout changes, emulate print media in a browser test. Verify
-that command bars, course maps, learning rails, workspace controls, inspectors,
-filters, and graph canvases hide only in print, while article content, Page
+that left course rail commands, course maps, learning rails, workspace controls,
+inspectors, filters, and graph canvases hide only in print, while article content, Page
 briefs, MathJax, code, tables, official practice, numbered objects, and support
 disclosures remain readable. Temporary disclosure opening for print must restore
 after screen media returns and must not use storage, fetch, external assets, or
@@ -135,19 +135,22 @@ runtime fetch, no external requests, no browser storage, and no calendar sync,
 reminder, grading, submission, progress, mastery, recommendation, or
 learner-state language.
 
-When changing the shell, verify the expanded course map default, including the
-expanded hierarchical course map structure, generated structural map numbers,
-current-page map orientation, map filter behavior, sticky reading context,
-reader breadcrumbs, compact previous/next links, article-end Previous/Next
-sequence cards, compact rail metadata, render-debug output, mobile no-overflow
-behavior, and no external requests. Breadcrumbs should show course home,
+When changing the shell, verify reader pages render no `.raya-top-command-bar`,
+reader commands render under `[data-raya-course-map-tools]` in the left course
+rail, and discovery workspaces still render `.raya-discovery-command-bar` as a
+discovery command bar.
+Also verify the expanded course map default, including the expanded hierarchical
+course map structure, generated structural map numbers, current-page map
+orientation, map filter behavior, reader breadcrumbs, compact previous/next
+links, article-end Previous/Next sequence cards, compact rail metadata,
+render-debug output, mobile no-overflow behavior, and no external requests.
+Breadcrumbs should show course home,
 ancestor pages, and the current page with accessible navigation markup,
 deployment-neutral static links, current-page marking, no source paths, and no
 private support paths. The course map state, filter text, and reading context are
 non-persistent UI state; current-page map orientation must also remain
-non-persistent and must not restore legacy navigation storage. Treat page
-position in the top bar and sequence cards as structural course orientation, not
-learner progress.
+non-persistent and must not restore legacy navigation storage. Treat structural
+page position and sequence cards as course orientation, not learner progress.
 If the shell exposes current-section context, verify it is generated from the
 page contents and heading anchors, updates with the active heading in browser
 tests, remains a normal local anchor link, writes no browser storage, and does
@@ -161,8 +164,8 @@ When authored `estimated_time` exists, it takes precedence as `Estimated time`.
 If the shell exposes `Focus reading`, verify it is keyboard reachable, collapses
 the desktop course map and right learning rail together, toggles back to the
 expanded layout, does not change URL state, and writes no browser storage.
-If the shell exposes a top-bar `Context` command, verify it toggles only the
-right learning rail on desktop, keeps the course map available, mirrors
+If the shell exposes a left course rail `Context` command, verify it toggles
+only the right learning rail on desktop, keeps the course map available, mirrors
 `aria-expanded` and labels with the rail controls, remains hidden on tablet and
 mobile, and writes no browser storage or progress/recommendation state.
 For responsive shell changes, check desktop, tablet, and mobile viewports

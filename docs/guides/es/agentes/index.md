@@ -52,16 +52,16 @@ script local, pero no debe introducir MathJax en el browser ni un renderer
 externo.
 
 Para el toggle lector `Text size`, verifica la misma ruta local de recursos de
-accesibilidad, `data-raya-text-size` en la raiz del documento, labels de la barra
-de comandos, tamano de texto computado del articulo y persistencia tras recargar.
+accesibilidad, `data-raya-text-size` en la raiz del documento, labels en el
+riel izquierdo del curso, tamano de texto computado del articulo y persistencia tras recargar.
 Tratalo solo como preferencia local de comodidad; no debe cambiar
 `data-raya-skin`, contenido fuente, datos del grafo, progreso, respuestas,
 dominio ni recomendaciones.
 
 Para cambios de handout Print/PDF, emula media print en un test de browser.
-Verifica que barras de comandos, mapas del curso, rieles de contexto, controles
-de workspace, inspectores, filtros y canvas del grafo se oculten solo en print,
-mientras contenido del articulo, Page brief, MathJax, codigo, tablas, practica
+Verifica que los comandos del riel izquierdo del curso, mapas del curso, rieles
+de contexto, controles de workspace, inspectores, filtros y canvas del grafo se
+oculten solo en print, mientras contenido del articulo, Page brief, MathJax, codigo, tablas, practica
 oficial, objetos numerados y disclosures de soporte sigan legibles. La apertura
 temporal de disclosures para print debe restaurarse al volver a media screen y
 no debe usar storage, fetch, assets externos ni conversion MathJax en el
@@ -145,23 +145,26 @@ sin browser storage, y sin sincronizacion de calendario, recordatorios,
 grading, entregas, progreso, dominio, recomendacion o lenguaje de estado del
 estudiante.
 
-Al cambiar la shell, verifica el mapa del curso expandido por defecto, incluida
-la estructura de mapa jerarquico del curso expandido, los numeros estructurales
-generados del mapa,
-la orientacion de pagina actual dentro del mapa, el comportamiento del filtro
-del mapa, el contexto superior de lectura, los links compactos
-anterior/siguiente, las breadcrumbs lectoras, las cards Previous/Next al final
-del articulo, la metadata del riel compacto operable, la salida de render-debug,
-el comportamiento movil sin overflow y sin solicitudes externas. Las
+Al cambiar la shell, verifica que las paginas lectoras no rendericen
+`.raya-top-command-bar`, que los comandos lectores rendericen bajo
+`[data-raya-course-map-tools]` en el riel izquierdo del curso, y que los
+workspaces de descubrimiento sigan renderizando `.raya-discovery-command-bar`
+como barra de comandos de descubrimiento. Tambien verifica el mapa del curso
+expandido por defecto, incluida la estructura de mapa jerarquico del curso
+expandido, los numeros estructurales generados del mapa, la orientacion de
+pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links
+compactos anterior/siguiente, las breadcrumbs lectoras, las cards Previous/Next
+al final del articulo, la metadata del riel compacto operable, la salida de
+render-debug, el comportamiento movil sin overflow y sin solicitudes externas. Las
 breadcrumbs deben mostrar home del curso, paginas ancestro y pagina actual con
 markup de navegacion accesible, links estaticos neutrales al despliegue, marca
 de pagina actual, sin rutas de fuente y sin rutas privadas de soporte. El estado
 del mapa del curso, el texto
 del filtro y el contexto de lectura son UI no persistente; la orientacion de
 pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
-storage de navegacion legacy. Trata la posicion de pagina en la barra superior y
-en las cards de secuencia como orientacion estructural del curso, no como
-progreso del estudiante.
+storage de navegacion legacy. Trata la posicion estructural de pagina y las
+cards de secuencia como orientacion estructural del curso, no como progreso del
+estudiante.
 Si la shell expone contexto de seccion actual, verifica que se genere desde los
 contenidos de pagina y anchors de heading, que se actualice con el heading activo
 en tests de browser, que siga siendo un enlace local normal, que no escriba
@@ -176,10 +179,11 @@ precedencia como `Estimated time`.
 Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
 colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
 layout expandido, no cambie el estado de URL y no escriba storage del browser.
-Si la shell expone un comando superior `Context`, verifica que alterne solo el
-riel derecho en desktop, mantenga disponible el mapa del curso, sincronice
-`aria-expanded` y labels con los controles del riel, permanezca oculto en tablet
-y movil, y no escriba storage del browser ni estado de progreso o recomendacion.
+Si la shell expone un comando `Context` en el riel izquierdo del curso, verifica
+que alterne solo el riel derecho en desktop, mantenga disponible el mapa del
+curso, sincronice `aria-expanded` y labels con los controles del riel,
+permanezca oculto en tablet y movil, y no escriba storage del browser ni estado
+de progreso o recomendacion.
 Para cambios responsivos de la shell, revisa juntos los viewports desktop,
 tablet y movil. En desktop el riel derecho de aprendizaje puede colapsar a una
 pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe

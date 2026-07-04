@@ -4818,6 +4818,50 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     )
 
 
+def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
+    foundation = (
+        ROOT / "docs" / "foundation" / "20_learning_renderer_contract.md"
+    ).read_text(encoding="utf-8")
+    english_student = (
+        ROOT / "docs" / "guides" / "en" / "students" / "index.md"
+    ).read_text(encoding="utf-8")
+    spanish_student = (
+        ROOT / "docs" / "guides" / "es" / "estudiantes" / "index.md"
+    ).read_text(encoding="utf-8")
+    english_agent = (
+        ROOT / "docs" / "guides" / "en" / "agents" / "index.md"
+    ).read_text(encoding="utf-8")
+    spanish_agent = (
+        ROOT / "docs" / "guides" / "es" / "agentes" / "index.md"
+    ).read_text(encoding="utf-8")
+
+    for required in (
+        "reader pages have no reader top bar",
+        "reader commands live in the left course rail",
+        "discovery workspaces may keep command bars",
+    ):
+        assert required in foundation
+    for forbidden in (
+        "compact command-bar search form",
+        "sticky command bar may show",
+        "command-bar map control",
+        "top-bar Context",
+    ):
+        assert forbidden not in foundation
+
+    for text in (english_student, english_agent):
+        assert "left course rail" in text
+        assert "discovery command bar" in text
+        assert "top bar" not in text.lower()
+        assert "top-bar" not in text.lower()
+
+    for text in (spanish_student, spanish_agent):
+        assert "riel izquierdo del curso" in text
+        assert "barra de comandos de descubrimiento" in text
+        assert "barra superior" not in text.lower()
+        assert "comando superior" not in text.lower()
+
+
 def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

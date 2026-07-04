@@ -32,10 +32,10 @@ the course asks you to complete. If two sections look different, use the page
 title, links, and labels as the source of course meaning; the skin is only
 visual emphasis.
 
-Rendered pages may include `Text size` and `OpenDyslexic` buttons in the top
-chrome. They are local reading preferences stored by your browser for that
-static site; they change text scale or page font for easier reading but do not
-change course content, grading, links, skin identity, or authority labels.
+Rendered reader pages may include `Text size` and `OpenDyslexic` buttons in the
+left course rail. They are local reading preferences stored by your browser for
+that static site; they change text scale or page font for easier reading but do
+not change course content, grading, links, skin identity, or authority labels.
 
 You can print a generated page or save it as a PDF when you want a handout for
 offline reading or annotation. Print mode removes the course chrome and keeps
@@ -43,17 +43,20 @@ the page content, math, code, tables, official practice, and support notes
 readable. It does not submit work, save progress, estimate mastery, or contact
 an external service.
 
-The current course shell is a static reading aid. On desktop, the expanded course map
-is rendered as an expanded hierarchical course map and may show structural
-sequence numbers from the course order. It gives orientation by default, the top bar keeps the current course/page title and
-structural page position visible, the main article remains the lesson, and the
-learning rail provides page contents and nearby course context. You can collapse
-the map to an operable compact map rail when you want more reading space; that
-choice is non-persistent and does not store or show personal progress. On
-desktop, collapsed map and context rails appear as compact tabs so you can
-restore them without losing the article. The Map, Focus reading, and Context
-controls are reading-comfort tools. They can widen the article or restore
-surrounding context without saving a personal progress state.
+The current course shell is a static reading aid. Reader pages do not have a
+reader command strip above the article; reader commands live in the left course
+rail. On desktop, the expanded course map is rendered as an expanded
+hierarchical course map and may show structural sequence numbers from the course
+order. It gives orientation by default, the main article remains the lesson, and
+the learning rail provides page contents and nearby course context. You can
+collapse the map to an operable compact map rail when you want more reading
+space; that choice is non-persistent and does not store or show personal
+progress. On desktop, collapsed map and context rails appear as compact tabs so
+you can restore them without losing the article. The Map, Focus reading,
+Context, Text size, OpenDyslexic, Search, Graph, Practice, Tasks, and Schedule
+controls are reading-comfort and navigation tools in the left course rail. They
+can widen the article, restore surrounding context, or hand off to generated
+workspaces without saving a personal progress state.
 When a page has a table of contents, the learning rail may also show the
 current article section as you scroll. That label is just section orientation
 from the page headings, not a reading percentage, completion marker, or progress
@@ -61,11 +64,10 @@ record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
-The top bar may also include a small course search field. Typing there opens
-the generated Course Search workspace with your query; the reader page does not
-build a second search index, fetch results, or save the text as study state.
-Use it as a quick jump when a phrase, theorem, page title, or stable ID comes
-to mind while reading.
+The left course rail may include a static Search handoff to the generated Course
+Search workspace. The reader page does not build a second search index, fetch
+results, or save search text as study state. Use it as a quick jump when a
+phrase, theorem, page title, or stable ID comes to mind while reading.
 
 Use the Course map button to collapse or expand navigation when you need a
 different focus. On desktop, `Focus reading` can collapse the map and right
@@ -78,10 +80,10 @@ page position, filter, workspace shortcuts, and close button. While the drawer
 is open, the page behind it pauses scrolling so the map is easier to use; close
 it with the close button, the backdrop, or Escape to return focus to reading.
 Use the map filter to narrow visible page labels inside the
-current static hierarchy. Use Previous and Next in the article, top reading
-context, or end-of-page cards to move through the ordered material, and use Text
-size or OpenDyslexic when those settings are more comfortable. End-of-page cards
-are course-order links; they are not recommendations or progress markers.
+current static hierarchy. Use Previous and Next in the article or end-of-page
+cards to move through the ordered material, and use Text size or OpenDyslexic
+when those settings are more comfortable. End-of-page cards are course-order
+links; they are not recommendations or progress markers.
 The expanded course map may also show static links to Course Search, Course
 Graph, Official Practice, Official Tasks, and Official Schedule. They are
 shortcuts to generated workspaces, not progress, ranking, or personalized guidance. Some shortcut
@@ -143,10 +145,10 @@ counts when the course has that metadata. They may also label relationship kind
 and direction, such as `Content` and `From this page`, using explicit generated
 graph context only. Use them as a reading map after finishing the page; they are
 not a progress tracker, ranking, or recommendation engine.
-Search, Graph, Practice, Tasks, and Schedule pages use the same static discovery bar so
-you can return to the course, switch between those workspaces, and keep Text
-size or OpenDyslexic available for the current page. Search, Practice, and
-Tasks, and Schedule may also show controls, results, and a context panel on wider screens.
+Search, Graph, Practice, Tasks, and Schedule pages use the same static discovery command bar so
+you can return to the course, switch between those workspaces, and adjust page
+comfort without changing reader shell state. Search, Practice, Tasks, and
+Schedule may also show controls, results, and a context panel on wider screens.
 Those controls are for reading and scanning comfort; the workspaces do not
 store your query, selected node, graph layout, practice filters, or task
 filters as study state.
@@ -190,9 +192,7 @@ keyboard, hover, and focus inspection of visible results, and does not search
 hidden source paths, private support paths, MathJax internals, answers, or your
 personal state. Results may show section matches that jump to generated public
 page anchors, including numbered objects such as theorems, figures, tables,
-homework, or assignments when the course rendered them. Opening it from a course page may preload that page title as a
-temporary query, and the top-bar search field may open it with the text you
-typed. A result can also offer `View in graph`, which opens the Course
+homework, or assignments when the course rendered them. Opening it from a course page may focus the search around that public page. A result can also offer `View in graph`, which opens the Course
 Graph focused on that same page so you can inspect its course position and
 explicit links. The Search context panel summarizes public context for the
 result you are inspecting; it is not a ranking or recommendation. When a result
