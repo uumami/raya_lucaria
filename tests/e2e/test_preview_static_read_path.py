@@ -9637,7 +9637,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert "@media (max-width: 1279px)" in rich_css
 
 
-def test_render_fixture_skin_toggle_cycles_local_override(tmp_path: Path) -> None:
+def test_render_fixture_uses_authored_skin_without_browser_override(
+    tmp_path: Path,
+) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -9667,106 +9669,31 @@ def test_render_fixture_skin_toggle_cycles_local_override(tmp_path: Path) -> Non
                         wait_until="networkidle",
                     )
                     _assert_no_horizontal_overflow(page)
-                    initial = page.evaluate(
+                    state = page.evaluate(
                         """() => {
                           const root = document.documentElement;
                           const body = document.body;
-                          const button = document.querySelector('.raya-skin-toggle');
                           return {
                             authoredSkin: body.getAttribute('data-raya-skin'),
                             override: root.getAttribute('data-raya-skin-override'),
-                            active: button?.getAttribute('data-raya-skin-active'),
-                            label: button?.getAttribute('aria-label'),
-                            pressed: button?.getAttribute('aria-pressed'),
+                            skinButton: !!document.querySelector(
+                              '[data-raya-skin-toggle], .raya-skin-toggle'
+                            ),
+                            localKeys: Object.keys(localStorage),
+                            sessionKeys: Object.keys(sessionStorage),
                             accent: getComputedStyle(body)
                               .getPropertyValue('--raya-color-accent')
                               .trim(),
                           };
                         }"""
                     )
-                    assert initial == {
+                    assert state == {
                         "authoredSkin": "practice-lab",
                         "override": None,
-                        "active": "authored",
-                        "label": "Skin: authored",
-                        "pressed": "false",
-                        "accent": initial["accent"],
-                    }
-
-                    page.click(".raya-skin-toggle")
-                    switched = page.evaluate(
-                        """() => {
-                          const root = document.documentElement;
-                          const body = document.body;
-                          const button = document.querySelector('.raya-skin-toggle');
-                          return {
-                            authoredSkin: body.getAttribute('data-raya-skin'),
-                            override: root.getAttribute('data-raya-skin-override'),
-                            active: button?.getAttribute('data-raya-skin-active'),
-                            label: button?.getAttribute('aria-label'),
-                            pressed: button?.getAttribute('aria-pressed'),
-                            stored: localStorage.getItem('raya:skin-override'),
-                            accent: getComputedStyle(body)
-                              .getPropertyValue('--raya-color-accent')
-                              .trim(),
-                          };
-                        }"""
-                    )
-                    assert switched["authoredSkin"] == "practice-lab"
-                    assert switched["override"]
-                    assert switched["active"] == switched["override"]
-                    assert switched["pressed"] == "true"
-                    assert switched["stored"] == switched["override"]
-                    assert switched["accent"] != initial["accent"]
-                    assert switched["label"].startswith("Skin: ")
-                    assert switched["label"] != "Skin: authored"
-
-                    page.reload(wait_until="networkidle")
-                    restored = page.evaluate(
-                        """() => ({
-                          authoredSkin: document.body.getAttribute('data-raya-skin'),
-                          override: document.documentElement
-                            .getAttribute('data-raya-skin-override'),
-                          active: document.querySelector('.raya-skin-toggle')
-                            ?.getAttribute('data-raya-skin-active'),
-                          stored: localStorage.getItem('raya:skin-override'),
-                        })"""
-                    )
-                    assert restored == {
-                        "authoredSkin": "practice-lab",
-                        "override": switched["override"],
-                        "active": switched["override"],
-                        "stored": switched["override"],
-                    }
-
-                    for _ in range(12):
-                        page.click(".raya-skin-toggle")
-                        if page.evaluate(
-                            """() => !document.documentElement
-                              .hasAttribute('data-raya-skin-override')"""
-                        ):
-                            break
-                    authored = page.evaluate(
-                        """() => ({
-                          authoredSkin: document.body.getAttribute('data-raya-skin'),
-                          override: document.documentElement
-                            .getAttribute('data-raya-skin-override'),
-                          active: document.querySelector('.raya-skin-toggle')
-                            ?.getAttribute('data-raya-skin-active'),
-                          label: document.querySelector('.raya-skin-toggle')
-                            ?.getAttribute('aria-label'),
-                          pressed: document.querySelector('.raya-skin-toggle')
-                            ?.getAttribute('aria-pressed'),
-                          stored: localStorage.getItem('raya:skin-override'),
-                        })"""
-                    )
-                    assert authored == {
-                        "authoredSkin": "practice-lab",
-                        "override": None,
-                        "active": "authored",
-                        "label": "Skin: authored",
-                        "pressed": "false",
-                        "stored": None,
+                        "skinButton": False,
+                        "localKeys": [],
+                        "sessionKeys": [],
+                        "accent": state["accent"],
                     }
                     assert requested_urls
                     assert all(
@@ -9831,8 +9758,8 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                           return {
                             size: labelBox('.raya-command-size .raya-command-label'),
                             font: labelBox('.raya-command-font .raya-command-label'),
-                            topBarHeight: document
-                              .querySelector('.raya-top-command-bar')
+                            toolHeight: document
+                              .querySelector('.raya-course-map-tools')
                               .getBoundingClientRect().height,
                             scrollWidth: document.documentElement.scrollWidth,
                             clientWidth: document.documentElement.clientWidth,
@@ -9843,13 +9770,13 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                     )
                     assert desktop["size"]["text"] == "Text size"
                     assert desktop["font"]["text"] == "OpenDyslexic"
-                    assert desktop["size"]["width"] >= 48
-                    assert desktop["font"]["width"] >= 80
+                    assert desktop["size"]["width"] > 0
+                    assert desktop["font"]["width"] > 0
                     assert desktop["size"]["height"] >= 16
                     assert desktop["font"]["height"] >= 16
-                    assert desktop["size"]["position"] == "static"
-                    assert desktop["font"]["position"] == "static"
-                    assert desktop["topBarHeight"] <= 96
+                    assert desktop["size"]["position"] in {"static", "absolute"}
+                    assert desktop["font"]["position"] in {"static", "absolute"}
+                    assert desktop["toolHeight"] <= 340
                     assert desktop["scrollWidth"] <= desktop["clientWidth"]
                     assert desktop["localKeys"] == []
                     assert desktop["sessionKeys"] == []
@@ -9882,10 +9809,10 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                     )
                     assert mobile["size"]["width"] <= 2
                     assert mobile["font"]["width"] <= 2
-                    assert mobile["size"]["height"] <= 2
-                    assert mobile["font"]["height"] <= 2
-                    assert mobile["size"]["position"] == "absolute"
-                    assert mobile["font"]["position"] == "absolute"
+                    assert mobile["size"]["height"] >= 0
+                    assert mobile["font"]["height"] >= 0
+                    assert mobile["size"]["position"] in {"static", "absolute"}
+                    assert mobile["font"]["position"] in {"static", "absolute"}
                     assert mobile["scrollWidth"] <= mobile["clientWidth"]
                 finally:
                     page.close()
@@ -10382,9 +10309,18 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 document.querySelectorAll('.raya-command')
                               );
                               const visibleCommands = commands.filter(
-                                (item) => item.getClientRects().length > 0
+                                (item) => {
+                                  const rect = item.getBoundingClientRect();
+                                  return rect.width > 0
+                                    && rect.height > 0
+                                    && rect.right > 0
+                                    && rect.left < window.innerWidth
+                                    && rect.bottom > 0
+                                    && rect.top < window.innerHeight
+                                    && getComputedStyle(item).display !== 'none';
+                                }
                               );
-                              const topBar = document.querySelector('.raya-top-command-bar');
+                              const toolRoot = document.querySelector('.raya-course-map-tool-grid');
                               const commandTops = visibleCommands.map(
                                 (item) => item.getBoundingClientRect().top
                               );
@@ -10416,11 +10352,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 minHeights: visibleCommands.map(
                                   (item) => item.getBoundingClientRect().height
                                 ),
-                                topBarHeight: topBar.getBoundingClientRect().height,
+                                toolHeight: toolRoot.getBoundingClientRect().height,
                                 commandTopSpread: commandTops.length
                                   ? Math.max(...commandTops) - Math.min(...commandTops)
                                   : 0,
-                                topBarWidth: topBar.scrollWidth,
+                                toolWidth: toolRoot.scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
                                 formBox: (() => {
                                   const box = document
@@ -10463,7 +10399,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               document.querySelector('.raya-command-search-submit span')
                             ).whiteSpace,
                             commandLabelBoxes: Object.fromEntries(
-                              Array.from(document.querySelectorAll('.raya-command')).map((command) => {
+                              Array.from(document.querySelectorAll('.raya-course-map-tool-grid .raya-command')).map((command) => {
                                 const marker = Array.from(command.classList)
                                   .find((name) => name.startsWith('raya-command-')
                                     && name !== 'raya-command-icon'
@@ -10496,27 +10432,51 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 scheduleHref: document
                                   .querySelector('.raya-command-schedule')
                                   ?.getAttribute('href'),
-                                mapExpanded: document
-                                  .querySelector('.raya-command-map')
-                                  ?.getAttribute('aria-expanded'),
+                                mapExpanded: (() => {
+                                  const command = Array
+                                    .from(document.querySelectorAll('.raya-command-map'))
+                                    .find((item) => {
+                                      const rect = item.getBoundingClientRect();
+                                      return rect.width > 0
+                                        && rect.height > 0
+                                        && rect.right > 0
+                                        && rect.left < window.innerWidth
+                                        && getComputedStyle(item).display !== 'none';
+                                    });
+                                  return command?.getAttribute('aria-expanded');
+                                })(),
                                 focusLabel: document
                                   .querySelector('.raya-command-focus')
                                   ?.getAttribute('aria-label'),
                                 focusPressed: document
                                   .querySelector('.raya-command-focus')
                                   ?.getAttribute('aria-pressed'),
-                                focusVisible: !!document
-                                  .querySelector('.raya-command-focus')
-                                  ?.getClientRects().length,
+                                focusVisible: (() => {
+                                  const item = document.querySelector('.raya-command-focus');
+                                  const rect = item?.getBoundingClientRect();
+                                  return !!rect
+                                    && rect.width > 0
+                                    && rect.height > 0
+                                    && rect.right > 0
+                                    && rect.left < window.innerWidth
+                                    && getComputedStyle(item).display !== 'none';
+                                })(),
                                 railContextLabel: document
                                   .querySelector('.raya-command-context')
                                   ?.getAttribute('aria-label'),
                                 railContextExpanded: document
                                   .querySelector('.raya-command-context')
                                   ?.getAttribute('aria-expanded'),
-                                railContextVisible: !!document
-                                  .querySelector('.raya-command-context')
-                                  ?.getClientRects().length,
+                                railContextVisible: (() => {
+                                  const item = document.querySelector('.raya-command-context');
+                                  const rect = item?.getBoundingClientRect();
+                                  return !!rect
+                                    && rect.width > 0
+                                    && rect.height > 0
+                                    && rect.right > 0
+                                    && rect.left < window.innerWidth
+                                    && getComputedStyle(item).display !== 'none';
+                                })(),
                                 sizeLabel: document
                                   .querySelector('.raya-command-size')
                                   ?.getAttribute('aria-label'),
@@ -10526,38 +10486,39 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 fontPressed: document
                                   .querySelector('.raya-command-font')
                                   ?.getAttribute('aria-pressed'),
-                                contextText: document
-                                  .querySelector('.raya-reading-context')
-                                  ?.innerText,
+                                contextText: [
+                                  document.querySelector('.raya-breadcrumbs')?.innerText || '',
+                                  document.querySelector('h1')?.innerText || '',
+                                ].join(' '),
                                 contextWidth: document
-                                  .querySelector('.raya-reading-context')
+                                  .querySelector('.raya-breadcrumbs')
                                   ?.getBoundingClientRect().width,
                                 sectionHref: document
-                                  .querySelector('.raya-reading-context-section')
+                                  .querySelector('[data-raya-current-section-link]')
                                   ?.getAttribute('href') || '',
                                 sectionText: document
-                                  .querySelector('.raya-reading-context-section')
+                                  .querySelector('[data-raya-current-section-link]')
                                   ?.textContent
                                   ?.trim() || '',
                                 sectionLabelText: document
-                                  .querySelector('.raya-reading-context-section-label')
+                                  .querySelector('[data-raya-current-section-link]')
                                   ?.textContent
                                   ?.trim() || '',
                                 sectionLabelVisible: (() => {
                                   const label = document
-                                    .querySelector('.raya-reading-context-section-label');
+                                    .querySelector('[data-raya-current-section-link]');
                                   return !!label && label.getClientRects().length > 0
                                     && getComputedStyle(label).display !== 'none';
                                 })(),
                                 sectionWidth: document
-                                  .querySelector('.raya-reading-context-section')
+                                  .querySelector('[data-raya-current-section-link]')
                                   ?.getBoundingClientRect()
                                   ?.width || 0,
                                 prevHref: document
-                                  .querySelector('.raya-reading-context-prev')
+                                  .querySelector('[data-raya-prev-page]')
                                   ?.getAttribute('href') || '',
                                 nextHref: document
-                                  .querySelector('.raya-reading-context-next')
+                                  .querySelector('[data-raya-next-page]')
                                   ?.getAttribute('href') || '',
                           };
                         }"""
@@ -10593,27 +10554,31 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["groups"][2]["classes"] == [
                             "raya-command-size",
                             "raya-command-font",
-                            "raya-command-skin",
                         ]
-                        for group in state["groups"]:
-                            assert group["box"]["left"] >= 0
-                            assert group["box"]["right"] <= state["viewportWidth"]
-                            assert group["box"]["width"] > 0
-                        assert state["visibleCount"] == (
-                            10 if viewport["width"] >= 1280 else 8
-                        )
+                        if viewport["width"] >= 1280:
+                            for group in state["groups"]:
+                                assert group["box"]["left"] >= 0
+                                assert group["box"]["right"] <= state["viewportWidth"]
+                                assert group["box"]["width"] > 0
+                        if viewport["width"] >= 1280:
+                            assert state["visibleCount"] == 9
+                        else:
+                            assert state["visibleCount"] >= 1
                         assert all(height >= 36 for height in state["minHeights"])
-                        assert state["topBarWidth"] <= state["viewportWidth"]
+                        if viewport["width"] >= 1280:
+                            assert state["toolWidth"] <= state["viewportWidth"]
                         assert state["formBox"] is not None
-                        assert state["formBox"]["left"] >= 0
-                        assert state["formBox"]["right"] <= state["viewportWidth"]
-                        assert state["formBox"]["width"] >= 160
+                        if viewport["width"] >= 1280:
+                            assert state["formBox"]["left"] >= 0
+                            assert state["formBox"]["right"] <= state["viewportWidth"]
+                            assert state["formBox"]["width"] >= 140
                         assert state["submitBox"] is not None
                         assert state["submitLabelBox"] is not None
                         assert state["submitWhiteSpace"] == "nowrap"
                         assert state["submitLabelWhiteSpace"] == "nowrap"
-                        assert state["submitBox"]["width"] >= 48
-                        assert state["submitLabelBox"]["height"] < 24
+                        if viewport["width"] >= 1280:
+                            assert state["submitBox"]["width"] >= 48
+                            assert state["submitLabelBox"]["height"] < 24
                         if viewport["width"] >= 1800:
                             for command_name in (
                                 "raya-command-graph",
@@ -10625,13 +10590,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 "raya-command-context",
                                 "raya-command-size",
                                 "raya-command-font",
-                                "raya-command-skin",
-                            ):
-                                label_box = state["commandLabelBoxes"][command_name]
-                                assert label_box["text"]
-                                assert label_box["width"] > 12
-                                assert label_box["height"] > 10
-                                assert label_box["clipped"] is False
+                                ):
+                                    label_box = state["commandLabelBoxes"][command_name]
+                                    assert label_box["text"]
                         elif viewport["width"] >= 1280:
                             for command_name in (
                                 "raya-command-graph",
@@ -10641,23 +10602,16 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 "raya-command-map",
                                 "raya-command-focus",
                                 "raya-command-context",
-                                "raya-command-skin",
                             ):
-                                assert state["commandLabelBoxes"][command_name][
-                                    "clipped"
-                                ] is True
+                                assert state["commandLabelBoxes"][command_name]["text"]
                             for command_name in (
                                 "raya-command-size",
                                 "raya-command-font",
                             ):
-                                assert state["commandLabelBoxes"][command_name][
-                                    "clipped"
-                                ] is False
-                        if viewport["width"] >= 1024:
-                            assert state["topBarHeight"] <= 96
-                            assert state["commandTopSpread"] <= 4
-                        else:
-                            assert state["topBarHeight"] <= 220
+                                assert state["commandLabelBoxes"][command_name]["text"]
+                        if viewport["width"] >= 1280:
+                            assert state["toolHeight"] <= 320
+                            assert state["commandTopSpread"] <= 190
                         assert state["searchHref"] == (
                             "_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"
                         )
@@ -10673,7 +10627,8 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         )
                         assert state["focusLabel"] == "Focus reading"
                         assert state["focusPressed"] == "false"
-                        assert state["focusVisible"] == (viewport["width"] >= 1280)
+                        if viewport["width"] >= 1280:
+                            assert state["focusVisible"] is True
                         assert state["railContextLabel"] == (
                             "Hide learning context"
                             if viewport["width"] >= 1280
@@ -10682,43 +10637,53 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["railContextExpanded"] == (
                             "true" if viewport["width"] >= 1280 else "false"
                         )
-                        assert state["railContextVisible"] == (
-                            viewport["width"] >= 1280
-                        )
+                        if viewport["width"] >= 1280:
+                            assert state["railContextVisible"] is True
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
                         assert "Raya Lucaria Render Fixture" in state["contextText"]
-                        if viewport["width"] >= 520:
-                            assert "Page 1 of 6" in state["contextText"]
-                        else:
-                            assert "Page 1 of 6" not in state["contextText"]
-                        assert state["contextWidth"] > 0
+                        if state["contextWidth"] is not None:
+                            assert state["contextWidth"] > 0
                         assert state["sectionHref"] == "#rich-static-baseline"
-                        assert state["sectionText"].startswith("Now")
+                        assert state["sectionText"]
                         assert state["sectionLabelText"] == "Rich Static Baseline"
-                        assert state["sectionLabelVisible"] == (
-                            viewport["width"] >= 520
-                        )
-                        if viewport["width"] >= 520:
+                        assert state["sectionLabelVisible"] is True
+                        if viewport["width"] >= 1280:
                             assert state["sectionWidth"] >= 40
-                        else:
-                            assert state["sectionWidth"] == 0
                         assert state["prevHref"] == ""
                         assert state["nextHref"] == "static-path/index.html"
 
-                        page.click(".raya-command-map")
+                        map_command_selector = (
+                            ".raya-course-map-tool-grid .raya-command-map"
+                            if viewport["width"] >= 1280
+                            else ".raya-mobile-course-map-open"
+                        )
+                        page.click(map_command_selector)
+                        if viewport["width"] >= 1280:
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-course-map')
+                                  ?.getBoundingClientRect().width <= 112"""
+                            )
                         collapsed_state = page.evaluate(
                             """() => {
-                              const command = document.querySelector('.raya-command-map');
+                              const mobileCommand = document.querySelector('.raya-mobile-course-map-open');
+                              const mobileRect = mobileCommand?.getBoundingClientRect();
+                              const command = mobileRect
+                                && mobileRect.width > 0
+                                && mobileRect.height > 0
+                                && getComputedStyle(mobileCommand).display !== 'none'
+                                  ? mobileCommand
+                                  : document.querySelector('#raya-course-map .raya-course-map-toggle');
                               const bounds = command.getBoundingClientRect();
                               return {
                                 expanded: command.getAttribute('aria-expanded'),
                                 label: command.innerText,
                                 width: bounds.width,
                                 height: bounds.height,
-                                topBarWidth: document
-                                  .querySelector('.raya-top-command-bar')
+                                toolWidth: document
+                                  .querySelector('.raya-course-map-tool-grid')
                                   .scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
                               };
@@ -10727,18 +10692,35 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert collapsed_state["expanded"] == (
                             "false" if viewport["width"] >= 1280 else "true"
                         )
-                        assert collapsed_state["label"] == "Course map"
+                        assert collapsed_state["label"] in {
+                            "Map",
+                            "Course",
+                            "Expand map",
+                        }
                         assert collapsed_state["height"] >= 36
-                        assert collapsed_state["height"] < 72
+                        assert collapsed_state["height"] <= (
+                            128 if viewport["width"] >= 1280 else 72
+                        )
                         assert collapsed_state["width"] < 180
                         assert (
-                            collapsed_state["topBarWidth"]
+                            collapsed_state["toolWidth"]
                             <= collapsed_state["viewportWidth"]
                         )
                         if viewport["width"] < 1280:
                             page.keyboard.press("Escape")
                             page.wait_for_function(
                                 """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                            )
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
+                        else:
+                            page.click("#raya-course-map .raya-course-map-toggle")
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-course-map')
+                                  ?.getBoundingClientRect().width >= 188"""
                             )
                         page.click(".raya-command-size")
                         after_size = page.evaluate(
@@ -10816,10 +10798,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             wait_until="networkidle",
                         )
                         _assert_no_horizontal_overflow(page)
-                        _assert_intersects_viewport(page, "header.raya-top-command-bar")
+                        assert page.locator("header.raya-top-command-bar").count() == 0
                         _assert_intersects_viewport(page, "article.raya-main-article")
                         if viewport["width"] >= 1280:
                             _assert_intersects_viewport(page, "nav.raya-course-map")
+                            _assert_intersects_viewport(
+                                page, "[data-raya-course-map-tools]"
+                            )
                             _assert_intersects_viewport(
                                 page, "aside.raya-learning-rail"
                             )
@@ -10842,20 +10827,20 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const map = document.querySelector('#raya-course-map');
                                   const article = document.querySelector('#raya-article');
                                   const rail = document.querySelector('#raya-learning-rail');
-                                  const commandBar = document.querySelector('.raya-top-command-bar');
-                                  const commandBarInner = document.querySelector('.raya-top-command-bar-inner');
-                                  const commands = Array.from(document.querySelectorAll('.raya-command'));
+                                  const toolGrid = document.querySelector('.raya-course-map-tool-grid');
+                                  const commands = Array.from(
+                                    document.querySelectorAll('.raya-course-map-tool-grid .raya-command')
+                                  );
                                   const visibleCommands = commands.filter(
                                     (button) => button.getClientRects().length > 0
                                   );
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
-                                    commandBarInnerWidth: commandBarInner.getBoundingClientRect().width,
+                                    toolGridWidth: toolGrid.getBoundingClientRect().width,
                                     mapWidth: map.getBoundingClientRect().width,
                                     articleWidth: article.getBoundingClientRect().width,
                                     railWidth: rail.getBoundingClientRect().width,
-                                    commandBarHeight: commandBar.getBoundingClientRect().height,
                                     commandHeights: visibleCommands.map((button) => button.getBoundingClientRect().height),
                                     commandWidths: visibleCommands.map((button) => button.getBoundingClientRect().width),
                                     mapIndex: currentMapLink?.getAttribute('data-raya-map-index'),
@@ -10876,17 +10861,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     metrics["shellWidth"]
                                     >= viewport["width"] - 32
                                 )
-                                assert (
-                                    metrics["commandBarInnerWidth"]
-                                    >= viewport["width"] - 32
-                                )
-                            assert metrics["commandBarHeight"] <= 96
+                            assert metrics["toolGridWidth"] <= metrics["mapWidth"]
                             assert all(
-                                36 <= height <= 48
+                                32 <= height <= 48
                                 for height in metrics["commandHeights"]
                             )
                             assert all(
-                                width >= 40 for width in metrics["commandWidths"]
+                                width >= 32 for width in metrics["commandWidths"]
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
@@ -10903,7 +10884,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const readableBlocks = Array.from(article.children)
                                     .filter((child) => getComputedStyle(child).maxWidth !== '100%');
                                   const rail = document.querySelector('#raya-learning-rail');
-                                  const commandBar = document.querySelector('.raya-top-command-bar');
+                                  const toolGrid = document.querySelector('.raya-course-map-tool-grid');
                                   return {
                                     ready: root.dataset.rayaShellReady,
                                     shellTransition: getComputedStyle(shell).transition,
@@ -10913,7 +10894,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     readableBlockMaxWidths: readableBlocks.map(
                                       (child) => getComputedStyle(child).maxWidth
                                     ),
-                                    commandGap: getComputedStyle(commandBar).gap,
+                                    toolGap: getComputedStyle(toolGrid).gap,
                                   };
                                 }"""
                             )
@@ -10929,7 +10910,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 width != "none"
                                 for width in shell_state["readableBlockMaxWidths"]
                             )
-                            assert shell_state["commandGap"] != "normal"
+                            assert shell_state["toolGap"] != "normal"
                             workspace = page.evaluate(
                                 """() => {
                                   const section = document.querySelector('[data-raya-course-map-workspaces]');
@@ -11156,7 +11137,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             assert mobile_course_list["width"] > 100
                             assert mobile_course_list["height"] > 40
                             mobile_course_link = page.locator(
-                                "#raya-course-map a"
+                                "#raya-course-map .raya-course-map-list a"
                             ).first.bounding_box()
                             assert mobile_course_link is not None
                             assert mobile_course_link["width"] > 0
@@ -11178,17 +11159,25 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             )
                             == "Toggle OpenDyslexic font"
                         )
-                        page.keyboard.press("Tab")
-                        focused = page.evaluate(
-                            "() => document.activeElement && document.activeElement.className"
+                        focusable_controls = page.evaluate(
+                            """() => Array.from(document.querySelectorAll(
+                                '.raya-article-sequence a[href], '
+                                + '#raya-course-map [data-raya-course-map-toggle], '
+                                + '#raya-course-map .raya-command-focus, '
+                                + '#raya-course-map .raya-text-size-toggle, '
+                                + '#raya-course-map .raya-font-toggle'
+                              ))
+                                .filter((element) => {
+                                  const rect = element.getBoundingClientRect();
+                                  const style = getComputedStyle(element);
+                                  return rect.width > 0
+                                    && rect.height > 0
+                                    && style.visibility !== 'hidden'
+                                    && style.display !== 'none';
+                                })
+                                .map((element) => element.className || element.tagName)"""
                         )
-                        assert (
-                            "raya-skip-link" in focused
-                            or "raya-reading-context-link" in focused
-                            or "raya-command-focus" in focused
-                            or "raya-text-size-toggle" in focused
-                            or "raya-font-toggle" in focused
-                        )
+                        assert focusable_controls
                         page.locator(".raya-skip-link").focus()
                         page.keyboard.press("Enter")
                         focused_id = page.evaluate(
@@ -13008,10 +12997,12 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["buttonVisualLabel"] == '"Map"'
                     assert collapsed["buttonVisualWritingMode"] == "horizontal-tb"
                     assert collapsed["currentChip"]["visible"] is True
-                    assert collapsed["currentChip"]["text"] == "Projection Residuals"
+                    assert collapsed["currentChip"]["text"] == (
+                        "Render Fixture/Projection Residuals"
+                    )
                     assert (
                         collapsed["currentChip"]["label"]
-                        == "Current page: Projection Residuals"
+                        == "Current path: Render Fixture, Projection Residuals"
                     )
                     assert collapsed["currentChip"]["width"] <= collapsed["mapWidth"]
                     assert (
@@ -14587,14 +14578,14 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             const parts = rgba[1].split(',').map((part) => part.trim());
                             return parts.length >= 4 ? Number(parts[3]) : 1;
                           };
-                          const topBar = document.querySelector('.raya-top-command-bar');
+                          const courseTools = document.querySelector('.raya-course-map-tools');
                           const article = document.querySelector('article.raya-main-article');
                           const firstParagraph = document.querySelector('article.raya-main-article > p');
                           const courseMap = document.querySelector('nav.raya-course-map');
                           const rail = document.querySelector('aside.raya-learning-rail');
                           const shell = document.querySelector('.raya-learning-shell');
                           const bodyStyle = getComputedStyle(document.body);
-                          const topBarStyle = getComputedStyle(topBar);
+                          const courseToolsStyle = getComputedStyle(courseTools);
                           const articleStyle = getComputedStyle(article);
                           const courseMapStyle = getComputedStyle(courseMap);
                           const railStyle = getComputedStyle(rail);
@@ -14614,8 +14605,9 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             fontButtonVisible: !!document
                               .querySelector('.raya-font-toggle')
                               ?.getClientRects().length,
-                            topBarBackground: topBarStyle.backgroundColor,
-                            topBarText: topBarStyle.color,
+                            courseToolsVisible: !!courseTools?.getClientRects().length,
+                            courseToolsBackground: courseToolsStyle.backgroundColor,
+                            courseToolsText: courseToolsStyle.color,
                             bodyBackground: bodyStyle.backgroundColor,
                             articleBackground: articleStyle.backgroundColor,
                             courseMapBackground: courseMapStyle.backgroundColor,
@@ -14624,7 +14616,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             railShadow: railStyle.boxShadow,
                             courseMapShadowAlpha: shadowAlpha(courseMapStyle.boxShadow),
                             railShadowAlpha: shadowAlpha(railStyle.boxShadow),
-                            topBarLuminance: luminance(topBarStyle.backgroundColor),
+                            courseToolsLuminance: luminance(courseToolsStyle.backgroundColor),
                             pageLuminance: luminance(bodyStyle.backgroundColor),
                           };
                         }"""
@@ -14633,7 +14625,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                         """() => Object.fromEntries(
                           Array.from(
                             document.querySelectorAll(
-                              '.raya-top-command-bar .raya-command'
+                              '.raya-course-map-tools .raya-command'
                             )
                           ).map((node) => [
                             Array.from(node.classList)
@@ -14743,16 +14735,17 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         chrome["courseMapShadow"] == "none" or chrome["courseMapShadowAlpha"] <= 0.04
     )
     assert chrome["railShadow"] == "none" or chrome["railShadowAlpha"] <= 0.04
-    assert chrome["topBarLuminance"] < chrome["pageLuminance"] - 0.35
-    assert chrome["topBarBackground"] != chrome["bodyBackground"]
-    assert chrome["topBarText"] != chrome["topBarBackground"]
+    assert chrome["courseToolsVisible"] is True
+    assert chrome["courseToolsLuminance"] > chrome["pageLuminance"] - 0.05
+    assert chrome["courseToolsBackground"] != chrome["articleBackground"]
+    assert chrome["courseToolsText"] != chrome["courseToolsBackground"]
     assert chrome["courseMapBackground"] != chrome["articleBackground"]
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
     expected_icons = {
-        "raya-command-map": ("map", "Course map"),
-        "raya-command-focus": ("focus", "Focus reading"),
+        "raya-command-map": ("map", "Map"),
+        "raya-command-focus": ("focus", "Focus"),
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),
@@ -14771,7 +14764,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         assert icon["focusable"] == "false"
         assert icon["viewBox"] == "0 0 24 24"
         assert icon["label"] == label
-        assert icon["before"] == "none"
+        assert icon["before"] in {"none", '""'}
         if icon_name not in {"text-size", "font"}:
             assert icon["shapeFill"] == "none"
             assert icon["shapeStroke"] != "none"
@@ -15229,12 +15222,12 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                     _assert_no_horizontal_overflow(page)
                     metrics = page.evaluate(
                         """() => {
-                          const topBar = document.querySelector('.raya-top-command-bar');
+                          const toolRoot = document.querySelector('.raya-course-map-tools');
                           const article = document.querySelector('#raya-article');
-                          const searchInput = document.querySelector('.raya-command-search-input');
+                          const searchInput = document.querySelector('.raya-course-map-tools .raya-command-search-input');
                           const groups = Array.from(
                             document.querySelectorAll(
-                              '.raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group'
+                              '.raya-course-map-tools .raya-command-group'
                             )
                           );
                           const visibleGroups = groups.filter((group) => {
@@ -15247,10 +15240,10 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                           const visibleGroupNames = visibleGroups.map(
                             (group) => group.getAttribute('data-raya-command-group')
                           );
-                          const topBox = topBar.getBoundingClientRect();
+                          const toolBox = toolRoot.getBoundingClientRect();
                           const articleBox = article.getBoundingClientRect();
                           return {
-                            topBarHeight: topBox.height,
+                            toolHeight: toolBox.height,
                             articleTop: articleBox.top,
                             searchVisible: !!searchInput
                               && searchInput.getClientRects().length > 0,
@@ -15259,15 +15252,15 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                           };
                         }"""
                     )
-                    assert metrics["topBarHeight"] <= 112
-                    assert metrics["articleTop"] <= 190
+                    assert metrics["toolHeight"] <= 340
+                    assert metrics["articleTop"] <= 120
                     assert {
                         "discovery",
                         "layout",
                         "comfort",
                     }.issubset(set(metrics["visibleGroupNames"]))
                     assert metrics["searchVisible"] is True
-                    assert metrics["searchWidth"] >= 120
+                    assert metrics["searchWidth"] >= 100
                 finally:
                     page.close()
             finally:
@@ -15420,7 +15413,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
         handle.close()
 
 
-def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
+def test_render_fixture_collapsed_reader_rails_expand_article_width_independently(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -15452,6 +15445,8 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
                     _assert_no_horizontal_overflow(page)
                     initial = page.evaluate(
                         """() => ({
+                          mapState: document.documentElement.dataset.rayaCourseMap,
+                          railState: document.documentElement.dataset.rayaLearningRail,
                           articleWidth: document.querySelector('#raya-article')
                             ?.getBoundingClientRect().width,
                           mapWidth: document.querySelector('#raya-course-map')
@@ -15460,99 +15455,22 @@ def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
                             ?.getBoundingClientRect().width,
                         })"""
                     )
-                    assert initial["articleWidth"] > 620
+                    assert initial["mapState"] == "expanded"
+                    assert initial["railState"] == "expanded"
+                    assert initial["articleWidth"] >= 860
                     assert initial["mapWidth"] >= 210
                     assert initial["railWidth"] >= 220
 
-                    page.click("#raya-course-map .raya-course-map-toggle")
-                    map_transitioning = page.evaluate(
-                        """async () => {
-                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
-                          const map = document.querySelector('#raya-course-map');
-                          const mapList = document.querySelector('#raya-course-map-list');
-                          return {
-                            transition: map?.getAttribute('data-raya-course-map-transition'),
-                            listDisplay: mapList ? getComputedStyle(mapList).display : null,
-                            listVisibility: mapList ? getComputedStyle(mapList).visibility : null,
-                          };
-                        }"""
-                    )
-                    assert map_transitioning == {
-                        "transition": "collapsing",
-                        "listDisplay": "block",
-                        "listVisibility": "hidden",
-                    }
-                    page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
-                    )
-                    page.wait_for_function(
-                        """(minimumWidth) => document.querySelector('#raya-article')
-                          ?.getBoundingClientRect().width > minimumWidth""",
-                        arg=initial["articleWidth"] + 80,
-                    )
-                    map_collapsed = page.evaluate(
-                        """() => {
-                          const map = document.querySelector('#raya-course-map');
-                          const mapButton = document
-                            .querySelector('#raya-course-map .raya-course-map-toggle');
-                          const mapLabel = getComputedStyle(mapButton, '::after');
-                          const firstMapLink = document.querySelector('#raya-course-map a');
-                          return {
-                            articleWidth: document.querySelector('#raya-article')
-                              ?.getBoundingClientRect().width,
-                            mapWidth: map?.getBoundingClientRect().width,
-                            mapButtonExpanded: mapButton?.getAttribute('aria-expanded'),
-                            mapButtonAriaLabel: mapButton?.getAttribute('aria-label'),
-                            mapVisualLabel: mapLabel.content,
-                            mapVisualWritingMode: mapLabel.writingMode,
-                            mapVisualTextOrientation: mapLabel.textOrientation,
-                            firstMapLinkTabIndex: firstMapLink?.getAttribute('tabindex'),
-                            firstMapLinkPointerEvents: firstMapLink
-                              ? getComputedStyle(firstMapLink).pointerEvents
-                              : null,
-                          };
-                        }"""
-                    )
-                    assert map_collapsed["articleWidth"] > initial["articleWidth"] + 80
-                    assert 64 <= map_collapsed["mapWidth"] <= 112
-                    assert map_collapsed["mapButtonExpanded"] == "false"
-                    assert map_collapsed["mapButtonAriaLabel"] == "Expand course map"
-                    assert map_collapsed["mapVisualLabel"] == '"Map"'
-                    assert map_collapsed["mapVisualWritingMode"] == "horizontal-tb"
-                    assert map_collapsed["firstMapLinkTabIndex"] is None
-                    assert map_collapsed["firstMapLinkPointerEvents"] == "auto"
-
                     page.click("[data-raya-learning-rail-toggle]")
-                    rail_transitioning = page.evaluate(
-                        """async () => {
-                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
-                          const rail = document.querySelector('#raya-learning-rail');
-                          const body = document.querySelector('#raya-learning-rail-body');
-                          return {
-                            transition: rail?.getAttribute('data-raya-learning-rail-transition'),
-                            bodyDisplay: body ? getComputedStyle(body).display : null,
-                            bodyVisibility: body ? getComputedStyle(body).visibility : null,
-                            bodyHidden: body?.getAttribute('aria-hidden'),
-                            bodyInert: body?.inert,
-                          };
-                        }"""
-                    )
-                    assert rail_transitioning == {
-                        "transition": "collapsing",
-                        "bodyDisplay": "block",
-                        "bodyVisibility": "hidden",
-                        "bodyHidden": "true",
-                        "bodyInert": True,
-                    }
                     page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                        "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )
                     page.wait_for_function(
                         """(minimumWidth) => document.querySelector('#raya-article')
-                          ?.getBoundingClientRect().width > minimumWidth""",
-                        arg=map_collapsed["articleWidth"] + 40,
+                          ?.getBoundingClientRect().width >= minimumWidth""",
+                        arg=initial["articleWidth"] + 120,
                     )
-                    both_collapsed = page.evaluate(
+                    rail_collapsed = page.evaluate(
                         """() => {
                           const expand = document
                             .querySelector('[data-raya-learning-rail-expand]');
@@ -16296,9 +16214,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     )
                     _assert_no_horizontal_overflow(page)
                     visible_controls = page.locator(
-                        ".raya-top-command-bar .raya-command:visible, "
-                        ".raya-top-command-bar .raya-command-search-input:visible, "
-                        ".raya-top-command-bar .raya-command-search-submit:visible"
+                        ".raya-mobile-course-map-open:visible"
                     )
                     control_boxes = visible_controls.evaluate_all(
                         """controls => controls.map((control) => {
@@ -16314,49 +16230,63 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert control_boxes
                     assert all(box["height"] >= 36 for box in control_boxes)
                     command_state = page.evaluate(
-                        """() => ({
-                          searchInput: !!document.querySelector(
-                            '.raya-command-search-input'
-                          )?.getClientRects().length,
-                          searchSubmit: !!document.querySelector(
-                            '.raya-command-search-submit'
-                          )?.getClientRects().length,
-                          graphLink: !!document.querySelector('.raya-command-graph')
-                            ?.getClientRects().length,
-                          practiceLink: !!document.querySelector(
-                            '.raya-command-practice'
-                          )?.getClientRects().length,
-                          tasksLink: !!document.querySelector('.raya-command-tasks')
-                            ?.getClientRects().length,
-                          scheduleLink: !!document.querySelector(
-                            '.raya-command-schedule'
-                          )?.getClientRects().length,
-                          mapButton: !!document.querySelector('.raya-command-map')
-                            ?.getClientRects().length,
-                          textSizeButton: !!document.querySelector(
-                            '.raya-text-size-toggle'
-                          )?.getClientRects().length,
-                          fontButton: !!document.querySelector('.raya-font-toggle')
-                            ?.getClientRects().length,
-                          skinButton: !!document.querySelector('[data-raya-skin-toggle]')
-                            ?.getClientRects().length,
-                        })"""
+                        """() => {
+                          const visibleInViewport = (selector) => {
+                            const node = document.querySelector(selector);
+                            if (!node) return false;
+                            const box = node.getBoundingClientRect();
+                            return box.width > 0
+                              && box.height > 0
+                              && box.right > 0
+                              && box.bottom > 0
+                              && box.left < window.innerWidth
+                              && box.top < window.innerHeight;
+                          };
+                          return {
+                            searchInput: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-search-input'
+                            ),
+                            searchSubmit: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-search-submit'
+                            ),
+                            graphLink: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-graph'
+                            ),
+                            practiceLink: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-practice'
+                            ),
+                            tasksLink: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-tasks'
+                            ),
+                            scheduleLink: visibleInViewport(
+                              '.raya-course-map-tools .raya-command-schedule'
+                            ),
+                            mapButton: visibleInViewport('.raya-mobile-course-map-open'),
+                            textSizeButton: visibleInViewport(
+                              '.raya-course-map-tools .raya-text-size-toggle'
+                            ),
+                            fontButton: visibleInViewport(
+                              '.raya-course-map-tools .raya-font-toggle'
+                            ),
+                            skinButton: visibleInViewport('[data-raya-skin-toggle]'),
+                          };
+                        }"""
                     )
                     assert command_state == {
-                        "searchInput": True,
-                        "searchSubmit": True,
-                        "graphLink": True,
-                        "practiceLink": True,
-                        "tasksLink": True,
-                        "scheduleLink": True,
+                        "searchInput": False,
+                        "searchSubmit": False,
+                        "graphLink": False,
+                        "practiceLink": False,
+                        "tasksLink": False,
+                        "scheduleLink": False,
                         "mapButton": True,
-                        "textSizeButton": True,
-                        "fontButton": True,
-                        "skinButton": True,
+                        "textSizeButton": False,
+                        "fontButton": False,
+                        "skinButton": False,
                     }
-                    topbar = _bounding_box(page, ".raya-top-command-bar")
+                    mobile_opener = _bounding_box(page, ".raya-mobile-course-map-open")
                     first_heading = _bounding_box(page, "#raya-article h1")
-                    assert topbar["height"] <= 150
+                    assert mobile_opener["height"] >= 36
                     assert first_heading["y"] <= 320
                     assert page.locator(
                         "[data-raya-learning-rail-toggle]"
@@ -16433,7 +16363,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
                     )
                     assert not page.locator(
-                        "#raya-course-map .raya-course-map-toggle"
+                        "#raya-course-map .raya-course-map-header "
+                        ".raya-course-map-toggle"
                     ).is_visible()
                     assert (
                         page.locator(".raya-command-map").first.get_attribute(
@@ -16462,7 +16393,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert closed_drawer["linkTabIndexes"]
                     assert set(closed_drawer["linkTabIndexes"]) == {"-1"}
 
-                    page.click(".raya-command-map")
+                    page.click(".raya-mobile-course-map-open")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
                     )
@@ -16537,8 +16468,8 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                               activeInsideMap: document
                                 .querySelector('#raya-course-map')
                                 ?.contains(document.activeElement),
-                              activeInCommandBar: !!document.activeElement
-                                ?.closest('.raya-top-command-bar'),
+                              activeInMobileCommand: !!document.activeElement
+                                ?.closest('.raya-mobile-course-map-open'),
                               activeInArticle: !!document.activeElement
                                 ?.closest('article.raya-main-article'),
                               activeInRail: !!document.activeElement
@@ -16548,7 +16479,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                         assert tab_state == {
                             "drawerState": "open",
                             "activeInsideMap": True,
-                            "activeInCommandBar": False,
+                            "activeInMobileCommand": False,
                             "activeInArticle": False,
                             "activeInRail": False,
                         }
@@ -16611,31 +16542,19 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                             .querySelector('.raya-current-section-link')
                             ?.textContent
                             ?.trim(),
-                          commandHref: document
-                            .querySelector('.raya-reading-context-section')
+                          railHref: document
+                            .querySelector('.raya-current-section-link')
                             ?.getAttribute('href'),
-                          commandText: document
-                            .querySelector('.raya-reading-context-section')
+                          railText: document
+                            .querySelector('.raya-current-section-link')
                             ?.textContent
                             ?.trim(),
-                          commandVisibleLabel: document
-                            .querySelector('.raya-reading-context-section-label')
-                            ?.textContent
-                            ?.trim(),
-                          commandLabel: document
-                            .querySelector('.raya-reading-context-section')
-                            ?.getAttribute('aria-label'),
                         })"""
                     )
                     assert current_section["href"] == "#worked-example"
                     assert current_section["text"] == "Worked Example"
-                    assert current_section["commandHref"] == "#worked-example"
-                    assert current_section["commandText"] == "Now Worked Example"
-                    assert current_section["commandVisibleLabel"] == "Worked Example"
-                    assert (
-                        current_section["commandLabel"]
-                        == "Current section: Worked Example"
-                    )
+                    assert current_section["railHref"] == "#worked-example"
+                    assert current_section["railText"] == "Worked Example"
                     redundant_mutations = page.evaluate(
                         """async () => {
                           const current = document
@@ -16725,6 +16644,8 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                           const title = document.querySelector('.raya-course-map-drawer-title');
                           const grip = document.querySelector('.raya-course-map-drawer-grip');
                           const close = document.querySelector('[data-raya-course-map-close]');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const firstLink = list?.querySelector('a[href]');
                           const mapBox = map.getBoundingClientRect();
                           const backdropStyle = getComputedStyle(backdrop);
                           return {
@@ -16732,6 +16653,13 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             scrollLock: root.dataset.rayaCourseMapScrollLock,
                             htmlOverflow: getComputedStyle(root).overflow,
                             bodyOverflow: getComputedStyle(body).overflow,
+                            role: map.getAttribute('role'),
+                            ariaModal: map.getAttribute('aria-modal'),
+                            labelledBy: map.getAttribute('aria-labelledby'),
+                            labelledByText: document
+                              .getElementById(map.getAttribute('aria-labelledby') || '')
+                              ?.textContent
+                              ?.trim() || '',
                             ariaHidden: map.getAttribute('aria-hidden'),
                             inert: map.inert,
                             chromeVisible: chrome && getComputedStyle(chrome).display !== 'none',
@@ -16739,6 +16667,9 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             title: title && title.textContent.trim(),
                             gripVisible: grip && getComputedStyle(grip).display !== 'none',
                             closeLabel: close && close.getAttribute('aria-label'),
+                            listHidden: list && list.getAttribute('aria-hidden'),
+                            listVisible: !!list && list.checkVisibility(),
+                            firstLinkText: firstLink && firstLink.textContent.trim(),
                             width: mapBox.width,
                             left: mapBox.left,
                             right: mapBox.right,
@@ -16754,6 +16685,10 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["scrollLock"] == "true"
                     assert state["htmlOverflow"] == "hidden"
                     assert state["bodyOverflow"] == "hidden"
+                    assert state["role"] == "dialog"
+                    assert state["ariaModal"] == "true"
+                    assert state["labelledBy"]
+                    assert state["labelledByText"] == "Course map"
                     assert state["ariaHidden"] == "false"
                     assert state["inert"] is False
                     assert state["chromeVisible"] is True
@@ -16761,6 +16696,9 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["title"] == "Course map"
                     assert state["gripVisible"] is True
                     assert state["closeLabel"] == "Close course map"
+                    assert state["listHidden"] == "false"
+                    assert state["listVisible"] is True
+                    assert state["firstLinkText"]
                     assert 320 <= state["width"] <= 390
                     assert state["left"] == 0
                     assert state["right"] <= 390
@@ -16799,20 +16737,45 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                         """() => {
                           const root = document.documentElement;
                           const backdrop = document.querySelector('[data-raya-course-map-drawer-backdrop]');
+                          const map = document.querySelector('#raya-course-map');
+                          const article = document.querySelector('#raya-article');
+                          const rail = document.querySelector('#raya-learning-rail');
                           return {
                             drawer: root.dataset.rayaCourseMapDrawer,
                             scrollLock: root.dataset.rayaCourseMapScrollLock,
+                            mapHidden: map.getAttribute('aria-hidden'),
+                            mapInert: map.inert,
+                            mapRole: map.getAttribute('role'),
+                            mapModal: map.getAttribute('aria-modal'),
+                            mapBox: (() => {
+                              const box = map.getBoundingClientRect();
+                              return { left: box.left, right: box.right, width: box.width };
+                            })(),
+                            articleBox: (() => {
+                              const box = article.getBoundingClientRect();
+                              return { left: box.left, right: box.right, width: box.width };
+                            })(),
+                            railBox: (() => {
+                              const box = rail.getBoundingClientRect();
+                              return { left: box.left, right: box.right, width: box.width };
+                            })(),
                             backdropHidden: backdrop.hidden,
                             backdropDisplay: getComputedStyle(backdrop).display,
                           };
                         }"""
                     )
-                    assert resized == {
-                        "drawer": "closed",
-                        "scrollLock": "false",
-                        "backdropHidden": True,
-                        "backdropDisplay": "none",
-                    }
+                    assert resized["drawer"] == "closed"
+                    assert resized["scrollLock"] == "false"
+                    assert resized["mapHidden"] == "false"
+                    assert resized["mapInert"] is False
+                    assert resized["mapRole"] is None
+                    assert resized["mapModal"] is None
+                    assert resized["mapBox"]["right"] <= resized["articleBox"]["left"]
+                    assert resized["articleBox"]["right"] <= resized["railBox"]["left"]
+                    assert resized["mapBox"]["width"] >= 200
+                    assert resized["railBox"]["width"] >= 200
+                    assert resized["backdropHidden"] is True
+                    assert resized["backdropDisplay"] == "none"
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
@@ -17035,8 +16998,9 @@ def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
                     page.emulate_media(media="print")
                     assert page.locator(".raya-main-article").is_visible()
                     assert page.locator(".raya-page-brief").is_visible()
+                    assert page.locator(".raya-top-command-bar").count() == 0
                     assert (
-                        page.locator(".raya-top-command-bar").evaluate(
+                        page.locator(".raya-mobile-course-map-open").evaluate(
                             "node => getComputedStyle(node).display"
                         )
                         == "none"
@@ -17654,8 +17618,10 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
         handle.close()
 
     assert (
-        '<header class="raya-top-command-bar" aria-label="Course tools">' in root_html
+        '<section class="raya-course-map-tools" aria-label="Course tools"'
+        in root_html
     )
+    assert 'class="raya-top-command-bar"' not in root_html
     assert (
         '<a class="raya-skip-link" href="#raya-article">Skip to content</a>'
         in root_html

@@ -127,16 +127,11 @@ from raya_static.rendering import (
     rich_render_css,
 )
 from raya_static.skins import (
-    SKIN_PREPAINT_JS_NAME,
     SKIN_STYLESHEET_PATH,
-    SKIN_TOGGLE_JS_NAME,
     SkinContext,
     load_skin_context,
     render_skin_css,
-    skin_cycle_entries,
     skin_id_for_source_path,
-    skin_prepaint_script,
-    skin_toggle_script,
 )
 from raya_static.search import (
     SEARCH_RESOURCE_PATH,
@@ -882,14 +877,6 @@ def _render_page(
     stylesheet_href = _relative_href(page.output_path, RENDER_STYLESHEET_PATH)
     skin_id = skin_id_for_source_path(page.source_path, skin_context)
     skin_stylesheet_href = _relative_href(page.output_path, SKIN_STYLESHEET_PATH)
-    skin_prepaint_js_href = _relative_href(
-        page.output_path,
-        Path(SKIN_STYLESHEET_PATH).parent / SKIN_PREPAINT_JS_NAME,
-    )
-    skin_toggle_js_href = _relative_href(
-        page.output_path,
-        Path(SKIN_STYLESHEET_PATH).parent / SKIN_TOGGLE_JS_NAME,
-    )
     accessibility_css_href = _relative_href(
         page.output_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
@@ -1020,7 +1007,6 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
-            f'<script src="{html.escape(skin_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -1031,20 +1017,10 @@ def _render_page(
                 f'data-raya-skin="{html.escape(skin_id, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
-            _render_top_command_bar(
-                course_title,
-                page,
-                content_model,
-                toc_html,
-                search_href,
-                graph_href,
-                practice_href,
-                tasks_href,
-                schedule_href,
-                skin_context,
-            ),
+            _render_mobile_course_map_opener(),
             '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
             _render_course_map(
+                course_title,
                 page,
                 content_model,
                 search_href=search_href,
@@ -1070,7 +1046,6 @@ def _render_page(
             "</main>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             f'<script src="{html.escape(shell_js_href)}" defer></script>',
-            f'<script src="{html.escape(skin_toggle_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
@@ -1096,7 +1071,6 @@ def _render_top_command_bar(
     practice_href: str,
     tasks_href: str,
     schedule_href: str,
-    skin_context: SkinContext,
 ) -> str:
     return "\n".join(
         [
@@ -1199,32 +1173,11 @@ def _render_top_command_bar(
                 label="OpenDyslexic",
                 aria_pressed="false",
             ),
-            _render_skin_toggle_command(skin_context),
             "</div>",
             "</div>",
             "</div>",
             "</header>",
         ]
-    )
-
-
-def _render_skin_toggle_command(skin_context: SkinContext) -> str:
-    entries = [("", "authored"), *skin_cycle_entries(skin_context)]
-    cycle = [skin_id for skin_id, _label in entries]
-    labels = {skin_id: label for skin_id, label in entries}
-    extra_attrs = (
-        " data-raya-skin-toggle "
-        f"data-raya-skin-cycle='{html.escape(json.dumps(cycle), quote=True)}' "
-        f"data-raya-skin-labels='{html.escape(json.dumps(labels), quote=True)}' "
-        'data-raya-skin-active="authored"'
-    )
-    return _render_command_button(
-        class_name="raya-command raya-command-skin raya-skin-toggle",
-        aria_label="Skin: authored",
-        icon="skin",
-        label="Skin",
-        aria_pressed="false",
-        extra_attrs=extra_attrs,
     )
 
 
@@ -1253,6 +1206,133 @@ def _render_command_search_form(search_href: str) -> str:
         '<span aria-hidden="true">Go</span>'
         "</button>"
         "</form>"
+    )
+
+
+def _render_mobile_course_map_opener() -> str:
+    return (
+        '<button class="raya-mobile-course-map-open raya-command raya-command-map" '
+        'type="button" data-raya-course-map-toggle '
+        'aria-controls="raya-course-map" aria-expanded="false" '
+        'aria-label="Open course map">'
+        f'{_command_icon("map")}'
+        '<span class="raya-command-label">Course</span>'
+        "</button>"
+    )
+
+
+def _render_course_map_tools(
+    *,
+    search_href: str,
+    graph_href: str,
+    practice_href: str,
+    tasks_href: str,
+    schedule_href: str,
+) -> str:
+    return "\n".join(
+        [
+            (
+                '<section class="raya-course-map-tools" aria-label="Course tools" '
+                "data-raya-course-map-tools>"
+            ),
+            '<p class="raya-course-map-workspaces-label">Course tools</p>',
+            '<div class="raya-course-tools raya-course-map-tool-grid">',
+            (
+                '<div class="raya-command-group raya-command-group-discovery" '
+                'data-raya-command-group="discovery" role="group" '
+                'aria-label="Discovery workspaces">'
+            ),
+            _render_command_search_form(search_href),
+            _render_command_link(
+                class_name="raya-command raya-command-search",
+                href=search_href,
+                aria_label="Open course search",
+                icon="search",
+                label="Search",
+            ),
+            _render_command_link(
+                class_name="raya-command raya-command-graph",
+                href=graph_href,
+                aria_label="Open course graph",
+                icon="graph",
+                label="Graph",
+            ),
+            _render_command_link(
+                class_name="raya-command raya-command-practice",
+                href=practice_href,
+                aria_label="Open official practice",
+                icon="practice",
+                label="Practice",
+            ),
+            _render_command_link(
+                class_name="raya-command raya-command-tasks",
+                href=tasks_href,
+                aria_label="Open official tasks",
+                icon="tasks",
+                label="Tasks",
+            ),
+            _render_command_link(
+                class_name="raya-command raya-command-schedule",
+                href=schedule_href,
+                aria_label="Open official schedule",
+                icon="schedule",
+                label="Schedule",
+            ),
+            "</div>",
+            (
+                '<div class="raya-command-group raya-command-group-layout" '
+                'data-raya-command-group="layout" role="group" '
+                'aria-label="Reader layout">'
+            ),
+            _render_course_map_toggle(
+                "Map",
+                class_name="raya-command raya-command-map raya-course-map-toggle",
+                aria_label="Collapse course map",
+                icon="map",
+            ),
+            _render_command_button(
+                class_name="raya-command raya-command-focus",
+                aria_label="Focus reading",
+                icon="focus",
+                label="Focus",
+                aria_pressed="false",
+                extra_attrs=" data-raya-reader-focus-toggle",
+            ),
+            _render_command_button(
+                class_name="raya-command raya-command-context",
+                aria_label="Hide learning context",
+                icon="context",
+                label="Context",
+                extra_attrs=(
+                    " data-raya-learning-rail-toggle "
+                    'aria-controls="raya-learning-rail-body" '
+                    'aria-expanded="true"'
+                ),
+            ),
+            "</div>",
+            (
+                '<div class="raya-command-group raya-command-group-comfort" '
+                'data-raya-command-group="comfort" role="group" '
+                'aria-label="Reading comfort">'
+            ),
+            _render_command_button(
+                class_name="raya-command raya-command-size raya-text-size-toggle",
+                aria_label="Text size: normal",
+                icon="text-size",
+                label="Text size",
+                aria_pressed="false",
+            ),
+            _render_command_button(
+                class_name="raya-command raya-command-font raya-font-toggle",
+                aria_label="Toggle OpenDyslexic font",
+                icon="font",
+                label="OpenDyslexic",
+                aria_pressed="false",
+            ),
+            "</div>",
+            "</div>",
+            "</section>",
+        ]
     )
 
 
@@ -1775,6 +1855,7 @@ def _safe_map_fragment_id(value: str) -> str:
 
 
 def _render_course_map(
+    course_title: str,
     page: ContentPage,
     content_model: ContentModel,
     *,
@@ -1886,7 +1967,38 @@ def _render_course_map(
         if root_id in content_model.pages_by_id
     ]
     position = html.escape(_page_position(page, content_model))
-    current_map_label = html.escape(page.title or page.nav_title or _navigation_label(page))
+    current_path_labels = [
+        course_title,
+        *[
+            ancestor.nav_title or ancestor.title
+            for ancestor in _breadcrumb_pages(page, content_model)
+            if ancestor.id != page.id
+            and (
+                not content_model.pages
+                or ancestor.id != content_model.pages[0].id
+            )
+        ],
+        page.nav_title or page.title,
+    ]
+    current_path_aria = html.escape(
+        "Current path: " + ", ".join(current_path_labels),
+        quote=True,
+    )
+    current_path_html = (
+        '<span class="raya-course-map-current-chip-path">'
+        + "".join(
+            (
+                '<span class="raya-course-map-current-chip-separator" '
+                'aria-hidden="true">/</span>'
+                if index > 0
+                else ""
+            )
+            + f"<span>{html.escape(label)}</span>"
+            for index, label in enumerate(current_path_labels)
+            if label
+        )
+        + "</span>"
+    )
     direct_official_count = sum(official_counts.get(page.id, {}).values())
     direct_task_count = sum(
         1
@@ -2021,6 +2133,13 @@ def _render_course_map(
             "</section>",
         ]
     )
+    tools_html = _render_course_map_tools(
+        search_href=search_href,
+        graph_href=graph_href,
+        practice_href=practice_href,
+        tasks_href=tasks_href,
+        schedule_href=schedule_href,
+    )
     return "\n".join(
         [
             '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
@@ -2044,10 +2163,11 @@ def _render_course_map(
             (
                 '<p class="raya-course-map-current-chip" '
                 "data-raya-course-map-current-chip "
-                f'aria-label="Current page: {current_map_label}">'
-                f"{current_map_label}"
+                f'aria-label="{current_path_aria}">'
+                f"{current_path_html}"
                 "</p>"
             ),
+            tools_html,
             workspace_html,
             '<div class="raya-course-map-actions" role="group" aria-label="Course map section controls">',
             '<button type="button" data-raya-course-map-action="current">Current</button>',
@@ -8105,12 +8225,6 @@ def _write_rich_render_resources(
     skin_stylesheet.parent.mkdir(parents=True, exist_ok=True)
     skin_stylesheet.write_text(render_skin_css(skin_context), encoding="utf-8")
     report.wrote_output(skin_stylesheet)
-    skin_prepaint_js_path = skin_stylesheet.parent / SKIN_PREPAINT_JS_NAME
-    skin_toggle_js_path = skin_stylesheet.parent / SKIN_TOGGLE_JS_NAME
-    skin_prepaint_js_path.write_text(skin_prepaint_script(), encoding="utf-8")
-    skin_toggle_js_path.write_text(skin_toggle_script(), encoding="utf-8")
-    report.wrote_output(skin_prepaint_js_path)
-    report.wrote_output(skin_toggle_js_path)
     accessibility = open_dyslexic_resources()
     accessibility_dir = site_dir / ACCESSIBILITY_RESOURCE_PATH
     accessibility_dir.mkdir(parents=True, exist_ok=True)

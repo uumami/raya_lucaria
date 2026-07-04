@@ -4310,12 +4310,12 @@ def test_render_fixture_builds_rich_static_pages(
     assert accessibility_css.is_file()
     assert accessibility_prepaint_js.is_file()
     assert accessibility_js.is_file()
-    assert skin_prepaint_js.is_file()
-    assert skin_toggle_js.is_file()
+    assert not skin_prepaint_js.exists()
+    assert not skin_toggle_js.exists()
     assert accessibility_font.is_file()
     assert accessibility_prepaint_js in report.outputs_written
-    assert skin_prepaint_js in report.outputs_written
-    assert skin_toggle_js in report.outputs_written
+    assert skin_prepaint_js not in report.outputs_written
+    assert skin_toggle_js not in report.outputs_written
     assert 'class="raya-generated-index raya-section-landing"' in html
     assert 'class="raya-section-card-list"' in html
     assert 'class="raya-section-card"' in html
@@ -4348,15 +4348,11 @@ def test_render_fixture_builds_rich_static_pages(
     assert "localStorage" in accessibility_js_text
     assert "raya:text-size" in accessibility_js_text
     assert "fetch(" not in accessibility_js_text
-    skin_prepaint_js_text = skin_prepaint_js.read_text(encoding="utf-8")
-    skin_toggle_js_text = skin_toggle_js.read_text(encoding="utf-8")
-    assert "raya:skin-override" in skin_prepaint_js_text
-    assert "raya:skin-override" in skin_toggle_js_text
-    assert "fetch(" not in skin_toggle_js_text
-    assert 'src="_raya/render/skin-prepaint.js"' in html
-    assert 'src="_raya/render/skin-toggle.js"' in html
-    assert 'localStorage.getItem("raya:skin-override")' not in html
-    assert 'class="raya-command raya-command-skin raya-skin-toggle"' in html
+    assert "raya:skin-override" not in rich_css
+    assert 'src="_raya/render/skin-prepaint.js"' not in html
+    assert 'src="_raya/render/skin-toggle.js"' not in html
+    assert 'data-raya-skin-toggle' not in html
+    assert 'class="raya-command raya-command-skin raya-skin-toggle"' not in html
     numbered_objects_html_path = (
         course / "artifact" / "site" / "numbered-objects" / "index.html"
     )
@@ -4902,6 +4898,11 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-discovery-command-bar"' not in html
     assert 'role="dialog"' not in html
     assert 'aria-modal="true"' not in html
+    assert (
+        '<section class="raya-course-map-tools" aria-label="Course tools" '
+        'data-raya-course-map-tools>'
+    ) in html
+    assert 'class="raya-course-tools raya-course-map-tool-grid"' in html
     assert '<a class="raya-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html
     assert '<a class="raya-command raya-command-graph"' in html
@@ -4932,33 +4933,16 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
     assert (
-        '<div class="raya-reading-context" aria-label="Current reading position">'
-        in html
-    )
-    assert '<span class="raya-reading-context-course">Render Fixture</span>' in html
-    assert '<span class="raya-reading-context-page">Projection Residuals</span>' in html
-    assert '<span class="raya-reading-context-position">Page 5 of 6</span>' in html
-    assert html.count('<span class="raya-reading-context-separator">/</span>') >= 3
-    assert (
-        '<span class="raya-reading-context-course">Render Fixture</span>'
-        '<span class="raya-reading-context-separator">/</span>'
-        '<span class="raya-reading-context-page">Projection Residuals</span>' in html
-    )
-    assert (
-        '<nav class="raya-reading-context-sequence" '
-        'aria-label="Compact previous and next pages">'
+        '<nav class="raya-article-sequence raya-article-sequence-top" '
+        'aria-label="Previous and next pages">'
     ) in html
     assert (
-        '<a class="raya-reading-context-link raya-reading-context-prev" '
-        'href="../numbered-objects/index.html" '
-        'aria-keyshortcuts="ArrowLeft" '
-        'aria-label="Previous page: Numbered Objects">Previous</a>'
+        '<a rel="prev" data-raya-prev-page aria-keyshortcuts="ArrowLeft" '
+        'href="../numbered-objects/index.html">Previous: Numbered Objects</a>'
     ) in html
     assert (
-        '<a class="raya-reading-context-link raya-reading-context-next" '
-        'href="../authoring-matrix/index.html" '
-        'aria-keyshortcuts="ArrowRight" '
-        'aria-label="Next page: Authoring Matrix Fixture">Next</a>'
+        '<a rel="next" data-raya-next-page aria-keyshortcuts="ArrowRight" '
+        'href="../authoring-matrix/index.html">Next: Authoring Matrix Fixture</a>'
     ) in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
@@ -4974,7 +4958,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'class="raya-course-map-drawer-title">Course map</p>' in html
     assert 'class="raya-course-map-current-chip"' in html
     assert "data-raya-course-map-current-chip" in html
-    assert 'aria-label="Current page: Projection Residuals"' in html
+    assert 'aria-label="Current path: Render Fixture, Projection Residuals"' in html
+    assert '<span class="raya-course-map-current-chip-path">' in html
     assert 'class="raya-course-map-actions"' in html
     assert 'role="group" aria-label="Course map section controls"' in html
     assert 'data-raya-course-map-action="current"' in html
@@ -5020,7 +5005,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "data-raya-course-map-workspace-link" in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
-    assert 'href="../_raya/practice/index.html"' in html
+    assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
     assert 'href="../_raya/tasks/index.html"' in html
     assert 'href="../_raya/tasks/index.html?page=reader-ux"' not in html
     assert 'href="../_raya/schedule/index.html?page=reader-ux"' not in html
@@ -5752,7 +5737,8 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     for selector in (
-        ".raya-top-command-bar",
+        ".raya-course-map-tools",
+        ".raya-mobile-course-map-open",
         ".raya-command",
         ".raya-command-icon",
         ".raya-command-icon-text",
