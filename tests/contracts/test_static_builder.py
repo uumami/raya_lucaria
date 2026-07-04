@@ -4895,10 +4895,11 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     assert 'id="raya-learning-rail"' in html
+    assert '<header class="raya-top-command-bar" aria-label="Course tools">' not in html
+    assert 'class="raya-top-command-bar"' not in html
     assert 'class="raya-discovery-command-bar"' not in html
     assert 'role="dialog"' not in html
     assert 'aria-modal="true"' not in html
-    assert '<header class="raya-top-command-bar" aria-label="Course tools">' in html
     assert '<a class="raya-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html
     assert '<a class="raya-command raya-command-graph"' in html
