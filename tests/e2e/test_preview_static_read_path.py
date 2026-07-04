@@ -11203,6 +11203,449 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
         handle.close()
 
 
+def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (1280, 1366, 1440, 1920):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-top-command-bar").count() == 0
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
+
+                        initial = page.evaluate(
+                            """() => {
+                              const box = (selector) => {
+                                const rect = document
+                                  .querySelector(selector)
+                                  .getBoundingClientRect();
+                                return {
+                                  left: rect.left,
+                                  right: rect.right,
+                                  width: rect.width,
+                                };
+                              };
+                              return {
+                                mapState: document.documentElement.dataset.rayaCourseMap,
+                                map: box('#raya-course-map'),
+                                article: box('#raya-article'),
+                                rail: box('#raya-learning-rail'),
+                                overflow: Math.ceil(
+                                  document.documentElement.scrollWidth -
+                                  window.innerWidth
+                                ),
+                              };
+                            }"""
+                        )
+                        assert initial["map"]["right"] <= initial["article"]["left"]
+                        assert initial["article"]["right"] <= initial["rail"]["left"] + 1
+                        assert initial["mapState"] == "expanded"
+                        assert initial["overflow"] <= 1
+
+                        page.click("#raya-course-map [data-raya-course-map-toggle]")
+                        page.wait_for_function(
+                            """() => document.documentElement.dataset.rayaCourseMap
+                              === 'collapsed'"""
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-course-map')
+                              ?.getBoundingClientRect().width <= 112"""
+                        )
+                        collapsed = page.evaluate(
+                            """() => {
+                              const box = (selector) => {
+                                const rect = document
+                                  .querySelector(selector)
+                                  .getBoundingClientRect();
+                                return {
+                                  left: rect.left,
+                                  right: rect.right,
+                                  width: rect.width,
+                                };
+                              };
+                              return {
+                                rootMapState: document.documentElement
+                                  .dataset
+                                  .rayaCourseMap,
+                                map: box('#raya-course-map'),
+                                article: box('#raya-article'),
+                                rail: box('#raya-learning-rail'),
+                                overflow: Math.ceil(
+                                  document.documentElement.scrollWidth -
+                                  window.innerWidth
+                                ),
+                              };
+                            }"""
+                        )
+                        assert collapsed["rootMapState"] == "collapsed"
+                        assert (
+                            collapsed["article"]["width"]
+                            >= initial["article"]["width"] + 80
+                        )
+                        assert collapsed["map"]["right"] <= collapsed["article"]["left"]
+                        assert (
+                            collapsed["article"]["right"]
+                            <= collapsed["rail"]["left"] + 1
+                        )
+                        assert collapsed["overflow"] <= 1
+                        _assert_no_horizontal_overflow(page)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 1366, "height": 900})
+                try:
+                    page = context.new_page()
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.click("#raya-course-map .raya-text-size-toggle")
+                        page.click("#raya-course-map .raya-text-size-toggle")
+                        page.click("#raya-course-map .raya-font-toggle")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .getAttribute('data-raya-text-size') === 'x-large'
+                              && document.documentElement
+                                .getAttribute('data-raya-open-dyslexic') === 'true'"""
+                        )
+
+                        state = page.evaluate(
+                            """() => {
+                              const box = (selector) => {
+                                const rect = document
+                                  .querySelector(selector)
+                                  .getBoundingClientRect();
+                                return {
+                                  left: rect.left,
+                                  right: rect.right,
+                                  width: rect.width,
+                                };
+                              };
+                              return {
+                                textSize: document.documentElement
+                                  .getAttribute('data-raya-text-size'),
+                                openDyslexic: document.documentElement
+                                  .getAttribute('data-raya-open-dyslexic'),
+                                localKeys: Object.keys(localStorage).sort(),
+                                sessionKeys: Object.keys(sessionStorage).sort(),
+                                map: box('#raya-course-map'),
+                                article: box('#raya-article'),
+                                rail: box('#raya-learning-rail'),
+                                overflow: Math.ceil(
+                                  document.documentElement.scrollWidth -
+                                  window.innerWidth
+                                ),
+                              };
+                            }"""
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-top-command-bar").count() == 0
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
+                        assert state["textSize"] == "x-large"
+                        assert state["openDyslexic"] == "true"
+                        assert state["localKeys"] == [
+                            "raya:open-dyslexic",
+                            "raya:text-size",
+                        ]
+                        assert state["sessionKeys"] == []
+                        assert state["map"]["right"] <= state["article"]["left"]
+                        assert state["article"]["right"] <= state["rail"]["left"] + 1
+                        assert state["overflow"] <= 1
+                    finally:
+                        page.close()
+                finally:
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_mobile_course_map_drawer_is_modal_and_volatile(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 390, "height": 844})
+                try:
+                    page = context.new_page()
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        closed_initial = page.evaluate(
+                            """() => {
+                              const map = document.querySelector('#raya-course-map');
+                              return {
+                                drawer: document.documentElement
+                                  .dataset
+                                  .rayaCourseMapDrawer,
+                                mapHidden: map.getAttribute('aria-hidden'),
+                                mapInert: map.inert,
+                                mapRole: map.getAttribute('role'),
+                                localKeys: Object.keys(localStorage),
+                                sessionKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                        assert closed_initial == {
+                            "drawer": "closed",
+                            "mapHidden": "true",
+                            "mapInert": True,
+                            "mapRole": None,
+                            "localKeys": [],
+                            "sessionKeys": [],
+                        }
+                        assert page.locator(".raya-top-command-bar").count() == 0
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
+
+                        page.click(".raya-mobile-course-map-open")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset
+                              .rayaCourseMapDrawer === 'open'"""
+                        )
+                        opened = page.evaluate(
+                            """() => {
+                              const stateFor = (selector) => {
+                                const element = document.querySelector(selector);
+                                return {
+                                  ariaHidden: element?.getAttribute('aria-hidden'),
+                                  inert: element?.inert,
+                                };
+                              };
+                              const map = document.querySelector('#raya-course-map');
+                              return {
+                                drawer: document.documentElement
+                                  .dataset
+                                  .rayaCourseMapDrawer,
+                                role: map.getAttribute('role'),
+                                ariaModal: map.getAttribute('aria-modal'),
+                                labelledBy: map.getAttribute('aria-labelledby'),
+                                mapHidden: map.getAttribute('aria-hidden'),
+                                mapInert: map.inert,
+                                mapVisible: map.checkVisibility(),
+                                article: stateFor('#raya-article'),
+                                rail: stateFor('#raya-learning-rail'),
+                                opener: stateFor('.raya-mobile-course-map-open'),
+                                skipLink: stateFor('.raya-skip-link'),
+                                activeInsideMap: map.contains(document.activeElement),
+                                localKeys: Object.keys(localStorage),
+                                sessionKeys: Object.keys(sessionStorage),
+                              };
+                            }"""
+                        )
+                        assert opened == {
+                            "drawer": "open",
+                            "role": "dialog",
+                            "ariaModal": "true",
+                            "labelledBy": "raya-course-map-drawer-title",
+                            "mapHidden": "false",
+                            "mapInert": False,
+                            "mapVisible": True,
+                            "article": {"ariaHidden": "true", "inert": True},
+                            "rail": {"ariaHidden": "true", "inert": True},
+                            "opener": {"ariaHidden": "true", "inert": True},
+                            "skipLink": {"ariaHidden": "true", "inert": True},
+                            "activeInsideMap": True,
+                            "localKeys": [],
+                            "sessionKeys": [],
+                        }
+
+                        page.keyboard.press("Escape")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset
+                              .rayaCourseMapDrawer === 'closed'"""
+                        )
+                        closed = page.evaluate(
+                            """() => {
+                              const stateFor = (selector) => {
+                                const element = document.querySelector(selector);
+                                return {
+                                  ariaHidden: element?.getAttribute('aria-hidden'),
+                                  inert: element?.inert,
+                                };
+                              };
+                              const map = document.querySelector('#raya-course-map');
+                              return {
+                                mapHidden: map.getAttribute('aria-hidden'),
+                                mapInert: map.inert,
+                                article: stateFor('#raya-article'),
+                                rail: stateFor('#raya-learning-rail'),
+                                opener: stateFor('.raya-mobile-course-map-open'),
+                                skipLink: stateFor('.raya-skip-link'),
+                                openerFocused: document.activeElement
+                                  ?.matches('.raya-mobile-course-map-open'),
+                              };
+                            }"""
+                        )
+                        assert closed == {
+                            "mapHidden": "true",
+                            "mapInert": True,
+                            "article": {"ariaHidden": None, "inert": False},
+                            "rail": {"ariaHidden": None, "inert": False},
+                            "opener": {"ariaHidden": None, "inert": False},
+                            "skipLink": {"ariaHidden": None, "inert": False},
+                            "openerFocused": True,
+                        }
+
+                        page.click(".raya-mobile-course-map-open")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset
+                              .rayaCourseMapDrawer === 'open'"""
+                        )
+                        page.set_viewport_size({"width": 1366, "height": 900})
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset
+                              .rayaCourseMapDrawer === 'closed'"""
+                        )
+                        resized = page.evaluate(
+                            """() => {
+                              const stateFor = (selector) => {
+                                const element = document.querySelector(selector);
+                                return {
+                                  ariaHidden: element?.getAttribute('aria-hidden'),
+                                  inert: element?.inert,
+                                };
+                              };
+                              const map = document.querySelector('#raya-course-map');
+                              return {
+                                scrollLock: document.documentElement
+                                  .dataset
+                                  .rayaCourseMapScrollLock,
+                                htmlOverflow: getComputedStyle(
+                                  document.documentElement
+                                ).overflow,
+                                bodyOverflow: getComputedStyle(document.body).overflow,
+                                mapHidden: map.getAttribute('aria-hidden'),
+                                mapInert: map.inert,
+                                mapRole: map.getAttribute('role'),
+                                mapModal: map.getAttribute('aria-modal'),
+                                labelledBy: map.getAttribute('aria-labelledby'),
+                                article: stateFor('#raya-article'),
+                                rail: stateFor('#raya-learning-rail'),
+                                opener: stateFor('.raya-mobile-course-map-open'),
+                                skipLink: stateFor('.raya-skip-link'),
+                                overflow: Math.ceil(
+                                  document.documentElement.scrollWidth -
+                                  window.innerWidth
+                                ),
+                              };
+                            }"""
+                        )
+                        assert resized["scrollLock"] == "false"
+                        assert resized["htmlOverflow"] != "hidden"
+                        assert resized["bodyOverflow"] != "hidden"
+                        assert resized["mapHidden"] == "false"
+                        assert resized["mapInert"] is False
+                        assert resized["mapRole"] is None
+                        assert resized["mapModal"] is None
+                        assert resized["labelledBy"] is None
+                        assert resized["article"] == {
+                            "ariaHidden": None,
+                            "inert": False,
+                        }
+                        assert resized["rail"] == {
+                            "ariaHidden": "false",
+                            "inert": False,
+                        }
+                        assert resized["opener"] == {
+                            "ariaHidden": None,
+                            "inert": False,
+                        }
+                        assert resized["skipLink"] == {
+                            "ariaHidden": None,
+                            "inert": False,
+                        }
+                        assert resized["overflow"] <= 1
+                        _assert_no_horizontal_overflow(page)
+                    finally:
+                        page.close()
+                finally:
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
