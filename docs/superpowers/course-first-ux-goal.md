@@ -145,16 +145,11 @@ visual direction, test it on desktop and mobile, and update any stale docs.
 
 ### Browser Skin Override
 
-The foundation treats skins as source-selected course/section profiles. The
-current static code also contains a `localStorage` path named
-`raya:skin-override`. Under current foundation and role docs, browser storage
-must not store skin authority. Treat this as a contract violation unless and
-until a later foundation decision changes the rule. Future skin or shell loops
-must not expand this behavior. A dedicated cleanup or contract-hardening loop
-must remove it or first update the foundation and role docs through an accepted
-workflow. Any loop touching shell, skin, storage, or reader JavaScript must fail
-its completion review while browser skin authority remains in default rendered
-student pages.
+Resolved in the **Reference skin and card density** loop. The foundation treats
+skins as source-selected course/section profiles, and default rendered student
+pages no longer include browser skin override selectors, scripts, toolbar
+commands, or `raya:skin-override` storage. Future skin or shell loops must
+preserve that contract unless a later foundation decision changes the rule.
 
 ### Guidance Drift
 
@@ -176,6 +171,41 @@ recommendation signals.
 Static quiz feedback must remain local, transient, and non-tracking. Do not
 salvage legacy quiz behavior that implies attempts, scoring, submissions,
 analytics, grades, progress, or mastery.
+
+## Autonomous Run Directive
+
+The user has approved fully autonomous execution for this goal. Future agents
+working on this goal must not stop to ask for confirmation, design approval,
+spec approval, plan approval, review approval, or permission to continue within
+the current repository and tool permissions. Treat this directive as explicit
+approval to proceed through Superpowers brainstorming, design, spec writing,
+planning, implementation, verification, adversarial review, documentation
+updates, fixture updates, local preview, Chromium/browser probes, and goal
+ledger updates for the active UX/UI effort.
+
+When a Superpowers skill requests user approval, interpret this directive as the
+standing user approval for the next conservative, evidence-backed option that
+best satisfies this charter and the foundation docs. Record the chosen option
+and rationale in the relevant design, plan, or goal ledger instead of waiting
+for a reply. Continue from one loop to the next in the suggested order unless
+current evidence shows a different loop is necessary to preserve contracts,
+verification, or user trust.
+
+Autonomous execution is not permission to weaken quality gates. Keep TDD,
+verification-before-completion, adversarial review, render-debug, host/Docker
+checks, role-doc impact review, and visible UX browser probes where the loop
+requires them. If a gate cannot run, document the skipped-gate rationale with
+cause, scope, replacement evidence, owner or resolution condition, and date, and
+continue with the strongest safe evidence available when that is technically
+possible.
+
+Only stop without completing a loop when a true blocker prevents meaningful
+progress: missing credentials or unavailable external state that cannot be
+reasonably substituted, repeated tool/environment failure after practical
+retries, a required destructive action outside the current repository that is
+not explicitly allowed, or a conflict with higher-priority system/developer
+safety instructions. Prefer local evidence, conservative implementation,
+non-destructive edits, and reversible commits over asking the user.
 
 ## Iteration Rules
 
@@ -276,31 +306,30 @@ and Schedule.
 
 ## Suggested Next Loops
 
-The likely next loops, in order, are:
+The suggested loops for this goal were completed and audited on 2026-06-30:
 
-1. **Guidance cleanup for current graph/search reality.** Align stale guidance
+1. **Guidance cleanup for current graph/search reality.** Aligned stale guidance
    that still describes graph UI or backlinks as out of scope before or inside
    the first affected UX implementation loop.
-2. **Course-first shell hierarchy.** Reorder and relabel the reader and
+2. **Course-first shell hierarchy.** Reordered and relabeled the reader and
    discovery chrome so `Course path`, `Article`, `Page support`,
    `Course tools`, course-owned references, and `Inspection` are explicit
    without making repository role docs part of normal student course chrome.
-3. **Collapsed rail polish.** Resolve `Map`/`Context` collapsed-tab direction,
-   improve independent and combined collapse behavior, and verify article width
-   gain. Right learning-rail collapse remains desktop-only; tablet and mobile
-   must keep the rail body visible and accessible when collapse controls are
+3. **Collapsed rail polish.** Resolved `Map`/`Context` collapsed-tab direction,
+   improved independent and combined collapse behavior, and verified article
+   width gain. Right learning-rail collapse remains desktop-only; tablet and
+   mobile keep the rail body visible and accessible when collapse controls are
    hidden.
-4. **Workspace course integration.** Make Search, Graph, Practice, Tasks, and
+4. **Workspace course integration.** Made Search, Graph, Practice, Tasks, and
    Schedule feel like ordered course tools with clear return paths and current
    page handoffs.
-5. **Reference skin and card density.** Use EVA Unit 02 as one reference skin
+5. **Reference skin and card density.** Used EVA Unit 02 as one reference skin
    direction while preserving calm article reading, high contrast, source
    selected skins, and semantic skin tokens.
 
-Each loop should produce its own focused Superpowers design and plan. This
-charter sets the target and guardrails; it is not an implementation plan. UX
-loops that change learner, professor, contributor, or agent behavior should
-carry a tutorial or role-guide update beside the code and fixture changes.
+Each completed loop produced its own focused Superpowers design and plan. Future
+course-first renderer work should start from a new goal charter unless it is a
+small follow-up to the audited behavior recorded here.
 
 ## Goal Iteration Rule
 
@@ -322,18 +351,57 @@ surface that a fresh agent can read to continue the work safely.
 
 ## Goal Iteration Ledger
 
-- **Current active target:** Guidance cleanup for current graph/search reality,
-  followed by course-first shell hierarchy.
-- **Latest completed loop:** Course-first UX goal charter created and hardened
-  through adversarial review.
-- **Latest verification evidence:** `git diff --check` passed for the
-  charter-only change before the current charter commit.
-- **Latest adversarial outcome:** Three independent review agents reported no
-  blocking findings after the second re-check.
-- **Latest local preview / Chromium probe outcome:** Not applicable for the
-  charter-only change; required after visible renderer features.
-- **Next handoff action:** In the next session, read this document, run
-  Superpowers brainstorming, then update this ledger when the next loop finishes.
+- **Current active target:** Completion audit complete; no further conservative
+  loop selected for this goal.
+- **Latest completed loop:** Reference skin and card density. The prior loops,
+  guidance cleanup for current graph/search reality, course-first shell
+  hierarchy, collapsed rail polish, and workspace course integration remain
+  accepted context.
+- **Latest verification evidence:** The first compact-density browser
+  regression failed before implementation on fixed card padding. A later
+  adversarial-review follow-up expanded the same test to Search and control
+  sizing; it failed on fixed `2.5rem` controls before the CSS fix. After
+  implementation, focused coverage passed for compact Search/Practice/Tasks/
+  Schedule cards, action links, and controls; authored skin without browser
+  override; discovery current-workspace chrome; page-focus strip; reader page
+  brief; and mobile article priority. Role-doc impact updates landed in all
+  English and Spanish student, professor, contributor, and agent role pages.
+  Final gates passed sequentially: `git diff --check`,
+  `./scripts/check-hygiene.sh`, `./scripts/check-render-debug.sh`,
+  `./scripts/check.sh`, and `./scripts/check-docker.sh`. Host pytest reported
+  `555 passed in 1049.20s (0:17:29)`; Docker pytest reported
+  `555 passed in 1135.87s (0:18:55)`. Render-debug reported `129 check(s)`
+  passed in explicit host runs and inside the host and Docker gates.
+- **Latest adversarial outcome:** Review found that the first implementation
+  covered repeated cards and action links but missed fixed Search, Practice,
+  Tasks, and Schedule control sizing. The loop strengthened the test to measure
+  Search plus control min-height, padding, and control-group gaps, then made
+  workspace controls consume density variables. The same review confirmed that
+  density remained profile-driven with no schema package change, browser skin
+  override behavior appeared removed, and English/Spanish role docs were
+  aligned.
+- **Latest local preview / Chromium probe outcome:** Explicit render-debug runs
+  generated local evidence at `/tmp/raya-render-debug.hXEuxA/index.html` and
+  `/tmp/raya-render-debug.UmUYkz/index.html`; the host gate generated
+  additional evidence under `/tmp/raya-render-debug.UmUYkz/index.html`, and the
+  Docker gate generated evidence under `/tmp/raya-render-debug.s1v6Iz`. Focused
+  Chromium e2e coverage interacted with Search, Practice, Tasks, and Schedule
+  at `1280x900` and `390x844`, verifying compact source-selected EVA Unit 02
+  card/control density, readable body text, no horizontal overflow, no browser
+  storage, no external requests, and no progress/mastery/recommendation/scoring
+  language. Additional browser coverage verified default student pages keep the
+  authored skin without `skin-prepaint.js`, `skin-toggle.js`,
+  `raya:skin-override`, `data-raya-skin-override`, or a Skin toolbar command.
+- **Latest completion audit:** `docs/superpowers/specs/2026-06-30-course-first-ux-completion-audit.md`
+  checked the goal against foundation authority, the active charter, current
+  renderer behavior, English and Spanish role docs, browser e2e coverage,
+  render-debug evidence, and host/Docker gates. The audit found no additional
+  conservative UX loop required before handing the work back.
+- **Next handoff action:** Preserve source-selected skin authority,
+  density-driven workspace controls, the completed workspace strip, canonical
+  `_raya/` handoff paths, graph first-viewport constraints, collapsed rail
+  behavior, and role-doc evidence above. Start a new goal charter for future
+  course-first renderer work rather than extending this one by default.
 
 ## Verification Expectations
 
@@ -390,16 +458,16 @@ Start by reading:
    behavior.
 
 Use the Superpowers workflow, not OpenSpec, unless the user explicitly switches
-back. Treat this document as the persistent goal artifact: read it at the start,
-use it to pick the next loop, and update its **Goal Iteration Ledger** before
-ending a completed loop or handing off to another conversation. The next loop
-should start with Superpowers brainstorming. If the user has not redirected the
-work, begin with **Guidance cleanup for current graph/search reality**, then
-move to **Course-first shell hierarchy**. Before implementation, the loop must
-name one surface, one fixture or page, one measurable UX assertion, and one
-verification command. For visible UX work, locally deploy the fixture, share the
-URL, and send Chromium-driven subagent/browser probes to interact with it as a
-reader after each feature addition or meaningful part.
+back. Treat this document as the completed persistent goal artifact: read it at
+the start to preserve the audited behavior and to decide whether a new goal
+charter is needed. Do not restart the completed loop sequence by default. If the
+user asks for future course-first renderer work, begin from the completion audit
+and write a fresh Superpowers goal, design, and plan for the new concrete gap.
+Before implementation, the new loop must name one surface, one fixture or page,
+one measurable UX assertion, and one verification command. For visible UX work,
+locally deploy the fixture, share the URL, and send Chromium-driven
+subagent/browser probes to interact with it as a reader after each feature
+addition or meaningful part.
 
 The new session must preserve what already works: build-time MathJax, local
 static resources, source-selected skins, local Search/Graph/Practice/Tasks/
@@ -418,3 +486,22 @@ render-fixture/tutorial examples, or an explicit path-by-path no-impact note.
 inventory. This document is the goal-level charter. If they conflict, prefer
 this charter for future UX loop selection and prefer foundation docs for
 architecture authority.
+
+## 2026-07-04 Reader Shell Parity Review
+
+Adversarial subagent review checked the no-reader-top-bar render path,
+reader/discovery command-bar separation, mobile course-map modal inertness,
+accepted comfort storage, render-debug selectors, and focused browser tests.
+Initial review found committed top-bar and browser skin-override gaps; follow-up
+commits removed the reader top-bar render path and removed browser skin override
+resources. Final adversarial re-review reported no Critical or Important
+findings.
+
+Focused verification before final gates:
+
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q ...` affected reader
+  top-bar/storage tests: 12 passed in 59.23s.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q ...` reader shell
+  focused regression bundle: 52 passed in 65.70s.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q ...` skin override
+  focused checks: 4 passed in 13.55s.
