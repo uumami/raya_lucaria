@@ -815,13 +815,7 @@ def _inspect_learning_shell(
     for html_path in html_paths:
         text = html_path.read_text(encoding="utf-8")
         elements = _element_markers_from_html(text)
-        has_reader_shell_marker = _has_reader_shell_marker(elements)
-        if (
-            DISCOVERY_COMMAND_BAR_CLASS in elements["classes"]
-            and not has_reader_shell_marker
-        ):
-            continue
-        if not has_reader_shell_marker:
+        if DISCOVERY_COMMAND_BAR_CLASS in elements["classes"]:
             continue
         missing_classes = [
             region
@@ -864,15 +858,6 @@ def _inspect_learning_shell(
                 "missing_selectors": missing_selectors,
             },
         )
-
-
-def _has_reader_shell_marker(elements: dict[str, set[str]]) -> bool:
-    reader_classes = set(LEARNING_SHELL_REGIONS) | {FORBIDDEN_READER_TOP_BAR_CLASS}
-    return bool(
-        reader_classes & elements["classes"]
-        or set(LEARNING_SHELL_IDS) & elements["ids"]
-        or set(LEARNING_SHELL_SELECTORS) & elements["selectors"]
-    )
 
 
 def _learning_shell_page_id(site_dir: Path, html_path: Path) -> str:

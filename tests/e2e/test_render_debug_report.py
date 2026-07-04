@@ -251,9 +251,7 @@ def test_render_debug_report_fails_when_learning_shell_regions_are_missing(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <main class="raya-learning-shell">
-              <article>Missing learning shell regions.</article>
-            </main>
+            <main><article>Missing learning shell.</article></main>
           </body>
         </html>
         """,
@@ -321,10 +319,11 @@ def test_render_debug_report_skips_discovery_command_bar_pages(
         <!doctype html>
         <html><head><link rel="stylesheet" href="../_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <main>
-              <nav class="raya-discovery-command-bar" aria-label="Discovery tools">
+            <header class="raya-top-command-bar raya-discovery-command-bar"
+              aria-label="Discovery tools">
                 <button type="button">Search</button>
-              </nav>
+            </header>
+            <main>
               <article>Discovery command surface.</article>
             </main>
           </body>
