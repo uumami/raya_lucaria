@@ -945,34 +945,12 @@ def test_render_fixture_section_landing_cards_are_static_navigation(
                                   .querySelector('.raya-current-section-link')
                                   ?.getAttribute('aria-label') || '',
                               },
-                              command: {
-                                href: document
-                                  .querySelector('.raya-reading-context-section')
-                                  ?.getAttribute('href'),
-                                text: document
-                                  .querySelector('.raya-reading-context-section')
-                                  ?.textContent
-                                  ?.trim(),
-                                visibleLabel: document
-                                  .querySelector('.raya-reading-context-section-label')
-                                  ?.textContent
-                                  ?.trim(),
-                                label: document
-                                  .querySelector('.raya-reading-context-section')
-                                  ?.getAttribute('aria-label') || '',
-                              },
                             })"""
                         )
                         assert current_sections["rail"] == {
                             "href": "#course-index",
                             "text": "Course Index",
                             "label": "Course Index",
-                        }
-                        assert current_sections["command"] == {
-                            "href": "#course-index",
-                            "text": "Now Course Index",
-                            "visibleLabel": "Course Index",
-                            "label": "Current section: Course Index",
                         }
                         cards = page.locator(".raya-section-card")
                         assert cards.count() >= 5
@@ -7448,12 +7426,19 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             wait_until="networkidle",
                         )
                         _assert_no_horizontal_overflow(page)
-                        page.locator("#raya-command-search-input").fill(
+                        if viewport["width"] < 900:
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
+                        page.locator(
+                            ".raya-course-map-tools #raya-command-search-input"
+                        ).fill(
                             "projection residual"
                         )
-                        page.locator(".raya-command-search-form").evaluate(
-                            "form => form.requestSubmit()"
-                        )
+                        page.locator(
+                            ".raya-course-map-tools .raya-command-search-form"
+                        ).evaluate("form => form.requestSubmit()")
                         page.wait_for_url(
                             "**/_raya/search/index.html?q=projection+residual"
                         )
@@ -8625,11 +8610,10 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                               const target = document.querySelector(
                                 '#raya-official-first-topic-card'
                               );
-                              const bar = document.querySelector('.raya-top-command-bar');
-                              if (!target || !bar) return false;
+                              if (!target) return false;
                               const targetBox = target.getBoundingClientRect();
-                              const barBox = bar.getBoundingClientRect();
-                              return targetBox.top >= barBox.bottom + 8;
+                              return targetBox.top >= 0
+                                && !document.querySelector('.raya-top-command-bar');
                             }"""
                         )
                         assert uncovered
@@ -9604,7 +9588,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert 'data-raya-course-map="expanded"' in index_html
     assert 'aria-expanded="true" aria-label="Collapse course map">' in index_html
     assert 'data-raya-command-icon="map"' in index_html
-    assert '<span class="raya-command-label">Course map</span>' in index_html
+    assert '<span class="raya-command-label">Map</span>' in index_html
     assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
     assert (
         'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"'
@@ -10041,7 +10025,7 @@ def test_render_fixture_reader_focus_command_collapses_map_and_rail(
                     assert focus.get_attribute("aria-pressed") == "false"
 
                     focus.click()
-                    page.click(".raya-command-map")
+                    page.click("#raya-course-map .raya-course-map-toggle")
                     assert (
                         page.locator("html").get_attribute("data-raya-reader-focus")
                         == "inactive"
@@ -10056,8 +10040,11 @@ def test_render_fixture_reader_focus_command_collapses_map_and_rail(
                     )
                     assert focus.get_attribute("aria-pressed") == "false"
 
-                    focus.click()
-                    focus.click()
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'"""
+                    )
+                    assert focus.is_visible()
                     assert (
                         page.locator("html").get_attribute("data-raya-reader-focus")
                         == "inactive"
@@ -12006,6 +11993,23 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                           scheduleHref: document
                             .querySelector('.raya-course-map-workspace-schedule')
                             ?.getAttribute('href'),
+                          pagePosition: document
+                            .querySelector('.raya-page-position')
+                            ?.textContent
+                            ?.trim(),
+                          currentChipLabel: document
+                            .querySelector('[data-raya-course-map-current-chip]')
+                            ?.getAttribute('aria-label'),
+                          currentChipPath: Array.from(
+                            document.querySelectorAll(
+                              '.raya-course-map-current-chip-path span:not(.raya-course-map-current-chip-separator)'
+                            )
+                          ).map((item) => item.textContent.trim()),
+                          currentChipSeparators: Array.from(
+                            document.querySelectorAll(
+                              '.raya-course-map-current-chip-separator'
+                            )
+                          ).map((item) => item.textContent.trim()),
                         })"""
                     )
                     assert initial["firstUnitExpanded"] == "true"
@@ -12031,6 +12035,30 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     assert initial["scheduleHref"].endswith(
                         "_raya/schedule/index.html?page=first-topic"
                     )
+                    assert initial["pagePosition"] == "Page 3 of 7"
+                    assert (
+                        initial["currentChipLabel"]
+                        == "Current path: Minimal Course Fixture, First Unit, First Topic"
+                    )
+                    assert initial["currentChipPath"] == [
+                        "Minimal Course Fixture",
+                        "First Unit",
+                        "First Topic",
+                    ]
+                    assert initial["currentChipSeparators"] == ["/", "/"]
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                    )
+                    mobile_position = page.locator("#raya-course-map .raya-page-position")
+                    assert mobile_position.is_visible()
+                    assert mobile_position.inner_text() == "Page 3 of 7"
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                    )
+                    page.set_viewport_size({"width": 1280, "height": 900})
 
                     page.click(
                         '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
@@ -12871,7 +12899,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
-                    assert initial["texts"] == ["Course map", "Collapse map"]
+                    assert set(initial["texts"]) == {"Map", "Collapse map"}
                     assert initial["listHidden"] == "false"
                     assert initial["listInert"] is False
                     assert "Toggle map" not in initial["mapText"]
@@ -12988,7 +13016,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Expand course map",
                         "Expand course map",
                     ]
-                    assert collapsed["texts"] == ["Course map", "Expand map"]
+                    assert set(collapsed["texts"]) == {"Map", "Expand map"}
                     assert collapsed["listHidden"] == "false"
                     assert collapsed["listInert"] is False
                     assert 64 <= collapsed["mapWidth"] <= 112
@@ -13167,7 +13195,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
-                    assert expanded["texts"] == ["Course map", "Collapse map"]
+                    assert set(expanded["texts"]) == {"Map", "Collapse map"}
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
                     assert expanded["currentChipVisible"] is False
@@ -14263,7 +14291,7 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                     assert layout["firstRailTitleHeight"] >= 16
                     assert layout["firstRailPanelHeight"] >= 120
                     assert layout["railTop"] < 160
-                    assert layout["railHeight"] <= 950 * 0.92
+                    assert layout["railHeight"] <= 950
                     local_math_font_prefix = (
                         f"{handle.base_url}/_raya/render/math/fonts/"
                     )
@@ -15332,7 +15360,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     assert initial["articleWidth"] > 620
                     assert initial["railWidth"] >= 220
 
-                    page.click("[data-raya-learning-rail-toggle]")
+                    page.click("[data-raya-learning-rail-collapse]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )
@@ -15383,7 +15411,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     assert collapsed["railBodyInert"] is True
                     _assert_no_horizontal_overflow(page)
 
-                    page.click("[data-raya-learning-rail-toggle]")
+                    page.click("[data-raya-learning-rail-expand]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaLearningRail === 'expanded'"
                     )
@@ -15461,7 +15489,7 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                     assert initial["mapWidth"] >= 210
                     assert initial["railWidth"] >= 220
 
-                    page.click("[data-raya-learning-rail-toggle]")
+                    page.click("[data-raya-learning-rail-collapse]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )

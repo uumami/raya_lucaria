@@ -2426,7 +2426,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert practice_page.exists()
     assert practice_js.exists()
     assert 'href="_raya/practice/index.html"' in index_html
-    assert 'href="../../_raya/practice/index.html"' in topic_html
+    assert 'href="../../_raya/practice/index.html?page=first-topic"' in topic_html
     assert 'data-raya-surface="practice"' in practice_html
     assert "raya-discovery-command-bar" in practice_html
     assert "Official practice workspace" in practice_html
@@ -5438,6 +5438,9 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     site = course / "artifact" / "site"
     html = (site / "index.html").read_text(encoding="utf-8")
     middle_html = (site / "unit" / "index.html").read_text(encoding="utf-8")
+    topic_html = (site / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
     render_course = _copy_render_fixture(tmp_path)
     render_report = build_course(render_course)
     assert render_report.ok, [
@@ -5464,7 +5467,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'aria-controls="raya-course-map"' in html
     assert 'aria-expanded="true" aria-label="Collapse course map">' in html
     assert 'data-raya-command-icon="map"' in html
-    assert '<span class="raya-command-label">Course map</span>' in html
+    assert '<span class="raya-command-label">Map</span>' in html
     assert 'aria-expanded="true">Collapse map</button>' in html
     assert 'class="raya-course-map-workspaces"' in html
     assert 'aria-label="Course workspaces"' in html
@@ -5520,6 +5523,21 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
     assert 'tabindex="-1"' not in course_map_html
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
+    assert '<span class="raya-reading-context-position">Page 3 of 3</span>' in topic_html
+    assert (
+        'aria-label="Current path: Minimal Course Fixture, First Unit, First Topic"'
+        in topic_html
+    )
+    assert (
+        '<span class="raya-course-map-current-chip-path">'
+        '<span>Minimal Course Fixture</span>'
+        '<span class="raya-course-map-current-chip-separator" aria-hidden="true">/</span>'
+        '<span>First Unit</span>'
+        '<span class="raya-course-map-current-chip-separator" aria-hidden="true">/</span>'
+        '<span>First Topic</span>'
+        "</span>"
+        in topic_html
+    )
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
     assert (

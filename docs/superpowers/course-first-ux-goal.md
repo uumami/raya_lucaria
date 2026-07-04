@@ -505,3 +505,27 @@ Focused verification before final gates:
   focused regression bundle: 52 passed in 65.70s.
 - `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q ...` skin override
   focused checks: 4 passed in 13.55s.
+
+Final gate evidence after stale no-top-bar expectation fixes:
+
+- `git diff --check`: passed.
+- `./scripts/check-hygiene.sh`: passed.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q ...` original 11
+  full-suite failures: 11 passed in 59.59s.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
+  tests/e2e/test_preview_static_read_path.py::test_preview_serves_local_course_search_surface
+  tests/e2e/test_preview_static_read_path.py::test_minimal_course_map_current_path_is_expanded_and_collapsible`:
+  2 passed in 27.52s.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
+  tests/e2e/test_preview_static_read_path.py::test_render_fixture_reader_focus_command_collapses_map_and_rail
+  tests/e2e/test_preview_static_read_path.py::test_render_fixture_learning_rail_collapses_to_compact_context_tab`:
+  2 passed in 15.00s.
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q
+  tests/e2e/test_preview_static_read_path.py::test_render_fixture_top_context_command_toggles_right_rail_only`:
+  1 passed in 7.86s.
+- `./scripts/check.sh`: passed; full pytest reported 563 passed in 907.45s,
+  render-debug reported 129 passed checks, and the host gate ended with
+  `check: passed`.
+- `./scripts/check-docker.sh`: passed; Docker full pytest reported 563 passed
+  in 975.79s, render-debug reported 129 passed checks, and the Docker gate
+  ended with `check-docker: passed`.

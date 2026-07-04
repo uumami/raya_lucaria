@@ -90,7 +90,7 @@ cards al final de pagina para moverte por el material ordenado, y usa Text size
 u OpenDyslexic cuando esos ajustes sean mas comodos. Las cards al final de
 pagina son enlaces del orden del curso; no son recomendaciones ni marcadores de
 progreso.
-El mapa expandido del curso tambien puede mostrar enlaces estaticos a Course
+El mapa del curso expandido tambien puede mostrar enlaces estaticos a Course
 Search, Course Graph, Official Practice, Official Tasks y Official Schedule. Son atajos a
 workspaces generados, no progreso, ranking ni guia personalizada. Algunas cards
 de atajo incluyen badges estructurales pequenos como alcance de curso, conteos
