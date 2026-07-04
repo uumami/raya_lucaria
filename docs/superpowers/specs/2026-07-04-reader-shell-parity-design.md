@@ -51,7 +51,10 @@ continuous reading pages.
 - No new Graph, Search, Practice, Tasks, or Schedule capabilities.
 - No runtime skin switching or browser-side skin authority.
 - No legacy `main` architecture or old source-layout restoration.
-- No persisted shell, rail, drawer, search, filter, focus, or navigation state.
+- No persisted reader-shell, rail, drawer, search, filter, focus, or navigation
+  state. This does not ban accepted reader comfort persistence for
+  `raya:open-dyslexic` and `raya:text-size`, and it does not ban existing
+  discovery workspace URL state such as `?page=<page-id>`.
 
 ## Accepted Reader Model
 
@@ -92,9 +95,11 @@ must not persist scroll, section expansion, or shell state.
 
 ## Mobile Drawer Behavior
 
-On mobile and below the desktop shell breakpoint, the course map opens as an
-intentional modal drawer. The implementation should port only the accessibility
-parts from the `main-like-reader-shell` bridge branch:
+On mobile and below the current reset desktop shell breakpoint, `1280px`, the
+course map opens as an intentional modal drawer. The implementation should port
+only the accessibility parts from the `main-like-reader-shell` bridge branch and
+must not copy the bridge branch's different breakpoint behavior unless a later
+foundation and test change explicitly accepts that:
 
 - the open drawer has dialog-like semantics, including `role="dialog"`,
   `aria-modal`, and an accessible label or labelled-by target;
@@ -109,8 +114,11 @@ parts from the `main-like-reader-shell` bridge branch:
   scroll lock, and focus.
 
 The implementation must not port any bridge `sessionStorage` or `localStorage`
-shell-state restore/write behavior. Storage remains allowed only for documented
-reader comfort preferences such as text size and OpenDyslexic.
+shell-state restore/write behavior. On reader pages, storage remains allowed
+only for documented comfort preferences such as `raya:open-dyslexic` and
+`raya:text-size`. Generated discovery workspaces must keep their comfort
+controls volatile and no-storage while preserving existing URL-only structural
+state such as valid page handoffs.
 
 ## Foundation And Documentation Updates
 
@@ -119,22 +127,26 @@ The foundation must be updated before lower surfaces are treated as accepted.
 pages have no reader top bar, reader commands live in the left course rail, and
 discovery workspaces may keep command bars.
 
-Role docs in English and Spanish must be updated where they describe top-bar
-reader behavior. Student-facing docs should describe the left course rail, the
-article-first reading surface, the right learning rail, and the mobile course
-map drawer. Agent/contributor docs should state that reader pages do not render
-top bars and that discovery command bars are separate generated workspace
-chrome.
+Root guidance and role docs must be updated where they describe top-bar reader
+behavior or shell verification. Per repository guidance, check `README.md`,
+`AGENTS.md`, affected English and Spanish role docs, and `openspec/config.yaml`
+together so reader-shell rules do not drift across guidance surfaces.
+Student-facing docs should describe the left course rail, the article-first
+reading surface, the right learning rail, and the mobile course map drawer.
+Agent/contributor docs should state that reader pages do not render top bars and
+that discovery command bars are separate generated workspace chrome.
 
 ## Render-Debug Contract
 
 Render-debug should validate the accepted reader shell, not the stale top-bar
-model. Reader shell checks should require the course map, article, right
-learning rail, and left-rail course tools. They should not require
+model. Reader shell checks should require concrete reader selectors such as
+`#raya-course-map`, `#raya-article`, `#raya-learning-rail`,
+`.raya-course-map-tools`, and `[data-raya-course-map-tools]`. They should
+negative-check reader `.raya-top-command-bar` and must not require
 `header.raya-top-command-bar` on reader pages.
 
-Render-debug tests should still verify discovery command bars on generated
-Search, Graph, Practice, Tasks, and Schedule pages where appropriate.
+Render-debug tests should still verify `.raya-discovery-command-bar` on
+generated Search, Graph, Practice, Tasks, and Schedule pages where appropriate.
 
 ## Testing
 
@@ -150,12 +162,21 @@ Focused tests should be written against behavior:
   selectors.
 - Desktop Playwright tests verify left rail, article, and right rail are ordered
   without overlap, rail collapse expands article width, and no horizontal
-  overflow appears.
+  overflow appears at representative `1280`, `1366`, `1440`, and `1920` pixel
+  viewport widths.
+- Desktop Playwright tests also verify the same shell invariants with large text
+  size and OpenDyslexic enabled, because projection/readability controls must
+  not break the no-top-bar layout.
 - Mobile Playwright tests verify closed drawer inertness, open drawer modal
   behavior, focus containment, Escape/backdrop/close behavior, focus
   restoration, and breakpoint cleanup.
-- Storage guard tests verify no forbidden shell state is written to
-  `localStorage`, `sessionStorage`, IndexedDB, cookies, or URL state.
+- Storage guard tests verify no forbidden reader-shell state is written to
+  `localStorage`, `sessionStorage`, IndexedDB, cookies, or URL state. The tests
+  must explicitly allow reader comfort keys `raya:open-dyslexic` and
+  `raya:text-size`, and they must preserve existing discovery URL state such as
+  valid `?page=<page-id>` handoffs.
+- Discovery workspace tests verify their comfort controls remain volatile and
+  do not write `raya:open-dyslexic`, `raya:text-size`, or shell state.
 
 ## Verification
 
@@ -196,6 +217,10 @@ The reviewer should specifically check:
 - mobile drawer behavior is actually modal/inert, not merely styled that way;
 - collapsed rail hidden controls are not tabbable;
 - no forbidden storage is added;
+- accepted reader comfort storage and existing discovery URL state are not
+  broken by overbroad storage guards;
+- the implementation preserves the current `1280px` reset shell breakpoint
+  unless a foundation/test change explicitly accepts a different breakpoint;
 - render-debug validates real reader shell selectors;
 - tests prove behavior rather than CSS trivia.
 
@@ -207,6 +232,9 @@ The reviewer should specifically check:
 - Mobile drawer behavior is accessible and volatile.
 - Collapsed desktop course rail gives article width back and does not expose
   hidden controls in the tab order.
+- Reader comfort persistence still works for accepted keys, discovery workspace
+  comfort controls remain volatile, and existing discovery URL state remains
+  structural URL state rather than browser storage.
 - No forbidden storage or legacy architecture is introduced.
 - Focused tests, render-debug, host check, and Docker check pass after
   implementation.
@@ -221,4 +249,6 @@ The reviewer should specifically check:
   and skin switching remain out of scope.
 - Ambiguity check: collapsed desktop map behavior is explicitly compact support
   chrome, not a full keyboard-heavy miniature map, and bridge storage behavior
-  is explicitly rejected.
+  is explicitly rejected. The spec now names the current `1280px` breakpoint,
+  accepted reader comfort keys, volatile discovery controls, concrete
+  render-debug selectors, and root guidance surfaces.
