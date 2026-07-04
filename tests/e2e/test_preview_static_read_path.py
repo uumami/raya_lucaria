@@ -11362,6 +11362,9 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                               && document.documentElement
                                 .getAttribute('data-raya-open-dyslexic') === 'true'"""
                         )
+                        page.evaluate(
+                            "() => document.fonts ? document.fonts.ready.then(() => true) : true"
+                        )
 
                         state = page.evaluate(
                             """() => {
@@ -11478,6 +11481,11 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                             """() => document.documentElement
                               .dataset
                               .rayaCourseMapDrawer === 'open'"""
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-course-map')
+                              ?.contains(document.activeElement)"""
                         )
                         opened = page.evaluate(
                             """() => {
