@@ -186,6 +186,7 @@ def test_check_python_holds_dependency_lock_through_pytest(tmp_path: Path) -> No
 
     env = _lock_env(tmp_path)
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
+    env.pop("RAYA_INSTALL_PLAYWRIGHT_CHROMIUM", None)
 
     result = subprocess.run(
         ["scripts/check-python.sh"],

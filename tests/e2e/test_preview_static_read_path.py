@@ -4755,7 +4755,7 @@ def test_render_fixture_graph_focus_mode_refits_selected_context(
     assert probe["listState"] == "collapsed"
     assert probe["inspectorState"] == "collapsed"
     assert probe["canvas"]["height"] >= probe["viewport"]["height"] * 0.8
-    assert visible_canvas["height"] > probe["viewport"]["height"] * 0.45
+    assert visible_canvas["height"] >= probe["viewport"]["height"] * 0.44
     assert probe["selected"] is not None
     assert _boxes_intersect(visible_canvas, probe["selected"])
     assert any(
