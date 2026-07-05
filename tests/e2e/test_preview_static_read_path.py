@@ -4690,6 +4690,50 @@ def test_render_fixture_graph_focus_mode_refits_selected_context(
                           return rect.height >= window.innerHeight * 0.8;
                         }"""
                     )
+                    page.wait_for_function(
+                        """() => {
+                          const canvas = document.querySelector('#raya-graph-canvas');
+                          const selected = document.querySelector(
+                            '#raya-graph-canvas [data-raya-graph-node="reader-ux"] g'
+                          );
+                          if (!canvas || !selected) return false;
+                          const viewport = {
+                            x: 0,
+                            y: 0,
+                            right: window.innerWidth,
+                            bottom: window.innerHeight,
+                          };
+                          const canvasBox = canvas.getBoundingClientRect();
+                          const visibleCanvas = {
+                            x: Math.max(canvasBox.x, viewport.x),
+                            y: Math.max(canvasBox.y, viewport.y),
+                            right: Math.min(canvasBox.right, viewport.right),
+                            bottom: Math.min(canvasBox.bottom, viewport.bottom),
+                          };
+                          const intersects = (box) => (
+                            visibleCanvas.x < visibleCanvas.right &&
+                            visibleCanvas.y < visibleCanvas.bottom &&
+                            visibleCanvas.x < box.right &&
+                            visibleCanvas.right > box.x &&
+                            visibleCanvas.y < box.bottom &&
+                            visibleCanvas.bottom > box.y
+                          );
+                          const selectedVisible = intersects(
+                            selected.getBoundingClientRect()
+                          );
+                          const connectedEdgeVisible = Array.from(
+                            document.querySelectorAll('#raya-graph-canvas .raya-graph-edge')
+                          ).some((edge) => {
+                            const from = edge.getAttribute('data-raya-graph-from') || '';
+                            const to = edge.getAttribute('data-raya-graph-to') || '';
+                            return (
+                              (from === 'reader-ux' || to === 'reader-ux') &&
+                              intersects(edge.getBoundingClientRect())
+                            );
+                          });
+                          return selectedVisible && connectedEdgeVisible;
+                        }"""
+                    )
                     probe = page.evaluate(
                         """() => {
                           const canvas = document.querySelector('#raya-graph-canvas');
