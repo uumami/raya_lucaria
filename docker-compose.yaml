@@ -4,6 +4,9 @@ services:
       context: .
     working_dir: /workspace
     user: "${RAYA_DOCKER_USER:-1000:1000}"
+    shm_size: "2gb"
+    security_opt:
+      - seccomp=unconfined
     environment:
       HOME: /tmp
       UV_CACHE_DIR: /tmp/uv-cache
