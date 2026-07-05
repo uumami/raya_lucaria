@@ -31,6 +31,9 @@ authority, labels, links, official/generated status, assignments, or what work
 the course asks you to complete. If two sections look different, use the page
 title, links, and labels as the source of course meaning; the skin is only
 visual emphasis.
+Some skins make generated workspaces use denser or more spacious cards and
+controls, but they do not change the article text you are reading or add a
+browser skin switcher.
 
 Rendered reader pages may include `Text size` and `OpenDyslexic` buttons in the
 left course rail. They are local reading preferences stored by your browser for
@@ -155,11 +158,14 @@ filters as study state.
 Text filters may tolerate small spelling mistakes when matching public titles,
 tags, summaries, labels, and visible object text. That matching is local page
 behavior, not ranking, personalization, or recommendation.
-When one of those workspaces opens focused on a page, it may show a small notice
-naming that page and the number of visible results. Clear or Escape removes the
-focus and returns to the full static workspace, even when keyboard focus is on a
-visible result or context action instead of the search field. The notice is not
-saved progress or a recommendation.
+When one of those workspaces opens focused on a page, it shows a focused course
+page strip near the top with `Open page`, same-page links to Search, Graph,
+Practice, Tasks, and Schedule, and `Clear focus`. Search, Practice, Tasks, and
+Schedule may also show a compact notice naming that page and the number of
+visible results. Clear or Escape removes the focus and returns to the full
+static workspace, even when keyboard focus is on a visible result or context
+action instead of the search field. The strip and notice are not saved progress
+or recommendations.
 Context panels may also show direct static links for the active result, object,
 task, or schedule item, such as Open page, View graph, or another workspace
 focused on the same page. These are navigation shortcuts over public generated

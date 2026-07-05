@@ -37,6 +37,10 @@ la fuente es un problema de selector, un problema de tokens de perfil, output
 CSS generado o activacion de pagina renderizada. No infieras estado de skin solo
 desde screenshots; compara el selector fuente, perfil cargado, diagnosticos,
 `skin.css`, `data-raya-skin` y reporte render-debug.
+`tokens.density` de una skin puede compactar cards, chips, controles y enlaces
+de accion de workspaces generados despues de reconstruir. No debe reducir el
+texto del articulo ni crear selector de skin en el browser, `localStorage`,
+`sessionStorage` o `data-raya-skin-override`.
 Para problemas de paleta del grafo, inspecciona los `tokens.graph.group_1`
 hasta `group_8` opcionales en la skin seleccionada, las variables generadas
 `--raya-graph-group-*` en `skin.css`, las variables inline de chips de grupo,
@@ -358,12 +362,14 @@ ni lenguaje de estado del estudiante.
 Al cambiar Tasks o Schedule, verifica handoffs solo por URL
 `?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
 inicialmente los objetos publicos de la familia task a la pagina solicitada,
-mostrar un aviso compacto con el titulo publico de la pagina y el conteo
-visible, pero Clear y Escape deben ocultar ese aviso y restaurar el workspace
-estatico completo sin escribir storage del navegador ni cambiar la autoridad de
-fuente. Escape debe funcionar desde links de resultados o acciones de contexto
-enfocados, no solo desde el input de busqueda. Trata el query de pagina como
-contexto transitorio de navegacion, no como progreso,
+mostrar una franja de pagina de curso enfocada con link de vuelta a la pagina,
+links a Search, Graph, Practice, Tasks y Schedule enfocados en la misma pagina,
+y `Clear focus`; tambien puede mostrar un aviso compacto con el titulo publico
+de la pagina y el conteo visible. Clear y Escape deben ocultar ese aviso y
+restaurar el workspace estatico completo sin escribir storage del navegador ni
+cambiar la autoridad de fuente. Escape debe funcionar desde links de resultados
+o acciones de contexto enfocados, no solo desde el input de busqueda. Trata el
+query de pagina como contexto transitorio de navegacion, no como progreso,
 recomendacion, dominio, calificacion ni estado personal de fechas.
 
 Al cambiar cards de descubrimiento de Search o Graph, verifica que los payloads

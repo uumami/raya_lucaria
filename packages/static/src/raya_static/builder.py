@@ -1496,6 +1496,55 @@ def _discovery_workspace_entries(
     ]
 
 
+def _render_discovery_focus_strip(
+    *,
+    current_workspace: str,
+    from_path: str,
+) -> str:
+    def handoff(kind: str, label: str, target: str) -> str:
+        attrs = (
+            ' data-raya-current-workspace-focus="true" aria-current="page"'
+            if current_workspace == kind
+            else ""
+        )
+        return (
+            '<a class="raya-discovery-focus-handoff" '
+            f'data-raya-discovery-focus-handoff="{html.escape(kind, quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, target), quote=True)}" '
+            f'href="#"{attrs}>{html.escape(label)}</a>'
+        )
+
+    return "\n".join(
+        [
+            (
+                '<section class="raya-discovery-focus-strip" '
+                'data-raya-discovery-focus-strip hidden aria-live="polite" '
+                'aria-label="Focused course page">'
+            ),
+            '<div class="raya-discovery-focus-copy">',
+            '<p class="raya-discovery-focus-kicker">Focused course page</p>',
+            "<h2 data-raya-discovery-focus-title></h2>",
+            "</div>",
+            '<nav class="raya-discovery-focus-actions" aria-label="Focused page actions">',
+            (
+                '<a class="raya-discovery-focus-page-link" '
+                'data-raya-discovery-focus-page-link href="#">Open page</a>'
+            ),
+            handoff("search", "Search", STATIC_SEARCH_PATH.as_posix()),
+            handoff("graph", "Graph", STATIC_GRAPH_PATH.as_posix()),
+            handoff("practice", "Practice", STATIC_PRACTICE_PATH.as_posix()),
+            handoff("tasks", "Tasks", STATIC_TASKS_PATH.as_posix()),
+            handoff("schedule", "Schedule", STATIC_SCHEDULE_PATH.as_posix()),
+            (
+                '<a class="raya-discovery-focus-clear" '
+                'data-raya-discovery-focus-clear href="index.html">Clear focus</a>'
+            ),
+            "</nav>",
+            "</section>",
+        ]
+    )
+
+
 def _render_discovery_course_rail(
     *,
     content_model: ContentModel,
@@ -1522,27 +1571,27 @@ def _render_discovery_course_rail(
         [
             (
             '<a data-raya-discovery-rail-page-handoff="search" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, "../search/index.html"), quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_SEARCH_PATH.as_posix()), quote=True)}" '
             'href="#">Search</a>'
             ),
             (
             '<a data-raya-discovery-rail-page-handoff="graph" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, "../graph/index.html"), quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_GRAPH_PATH.as_posix()), quote=True)}" '
             'href="#">Graph</a>'
             ),
             (
             '<a data-raya-discovery-rail-page-handoff="practice" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, "../practice/index.html"), quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_PRACTICE_PATH.as_posix()), quote=True)}" '
             'href="#">Practice</a>'
             ),
             (
             '<a data-raya-discovery-rail-page-handoff="tasks" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, "../tasks/index.html"), quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_TASKS_PATH.as_posix()), quote=True)}" '
             'href="#">Tasks</a>'
             ),
             (
             '<a data-raya-discovery-rail-page-handoff="schedule" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, "../schedule/index.html"), quote=True)}" '
+            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_SCHEDULE_PATH.as_posix()), quote=True)}" '
             'href="#">Schedule</a>'
             ),
         ]
@@ -1565,7 +1614,11 @@ def _render_discovery_course_rail(
             '<a class="raya-discovery-workspace-link" '
             f'data-raya-workspace-link="{html.escape(entry["kind"], quote=True)}" '
             f'href="{html.escape(_relative_href(from_path, entry["href"]), quote=True)}"'
-            + (' aria-current="page"' if current_workspace == entry["kind"] else "")
+            + (
+                ' aria-current="page" data-raya-current-workspace-link="true"'
+                if current_workspace == entry["kind"]
+                else ""
+            )
             + ">"
             f"<span>{html.escape(entry['label'])}</span>"
             f"<em>{html.escape(entry['badge'])}</em>"
@@ -1722,6 +1775,7 @@ def _render_reading_context(
 ) -> str:
     position = _page_position(page, content_model)
     sequence = _reading_context_sequence_links(page, content_model)
+    ancestors = _reading_context_ancestor_links(page, content_model)
     section = _reading_context_section_link(toc_html)
     sequence_html = (
         '<nav class="raya-reading-context-sequence" '
@@ -1733,10 +1787,17 @@ def _render_reading_context(
         '<div class="raya-reading-context" aria-label="Current reading position">'
         f'<span class="raya-reading-context-course">{html.escape(course_title)}</span>',
         '<span class="raya-reading-context-separator">/</span>',
-        f'<span class="raya-reading-context-page">{html.escape(page.nav_title or page.title)}</span>',
-        '<span class="raya-reading-context-separator">/</span>',
-        f'<span class="raya-reading-context-position">{html.escape(position)}</span>',
     ]
+    if ancestors:
+        parts.append(ancestors)
+        parts.append('<span class="raya-reading-context-separator">/</span>')
+    parts.extend(
+        [
+            f'<span class="raya-reading-context-page">{html.escape(page.nav_title or page.title)}</span>',
+            '<span class="raya-reading-context-separator">/</span>',
+            f'<span class="raya-reading-context-position">{html.escape(position)}</span>',
+        ]
+    )
     if section:
         section_href, section_label = section
         parts.extend(
@@ -1760,6 +1821,36 @@ def _render_reading_context(
         parts.append(sequence_html)
     parts.append("</div>")
     return "".join(parts)
+
+
+def _reading_context_ancestor_links(
+    page: ContentPage,
+    content_model: ContentModel,
+) -> str:
+    ancestors = _breadcrumb_pages(page, content_model)
+    if not ancestors:
+        return ""
+    home_page = content_model.pages[0] if content_model.pages else None
+    links: list[str] = []
+    for ancestor in ancestors:
+        if home_page is not None and ancestor.id == home_page.id:
+            continue
+        label = ancestor.nav_title or ancestor.title
+        href = _relative_href(page.output_path, ancestor.output_path)
+        links.append(
+            '<a class="raya-reading-context-link raya-reading-context-ancestor" '
+            f'href="{html.escape(href)}" '
+            f'aria-label="Ancestor page: {html.escape(label, quote=True)}">'
+            '<span class="raya-reading-context-ancestor-label">'
+            f"{html.escape(label)}</span></a>"
+        )
+    if not links:
+        return ""
+    return (
+        '<span class="raya-reading-context-ancestors">'
+        + '<span class="raya-reading-context-separator">/</span>'.join(links)
+        + "</span>"
+    )
 
 
 def _reading_context_section_link(toc_html: str) -> tuple[str, str] | None:
@@ -5285,6 +5376,10 @@ def _render_graph_surface(
                 "When a graph page has keyboard focus, press Enter to open it."
                 "</p>"
             ),
+            _render_discovery_focus_strip(
+                current_workspace="graph",
+                from_path=STATIC_GRAPH_PATH.as_posix(),
+            ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
             _render_discovery_course_rail(
                 content_model=content_model,
@@ -6251,6 +6346,10 @@ def _render_search_surface(
             "<h1>Course Search</h1>",
             "<p>Search public page metadata and public article text.</p>",
             "</header>",
+            _render_discovery_focus_strip(
+                current_workspace="search",
+                from_path=STATIC_SEARCH_PATH.as_posix(),
+            ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
             _render_discovery_course_rail(
                 content_model=content_model,
@@ -6705,6 +6804,10 @@ def _render_practice_surface(
                 "Open the owning page when you are ready to work with the full context.</p>"
             ),
             "</header>",
+            _render_discovery_focus_strip(
+                current_workspace="practice",
+                from_path=STATIC_PRACTICE_PATH.as_posix(),
+            ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
             _render_discovery_course_rail(
                 content_model=content_model,
@@ -7123,6 +7226,10 @@ def _render_tasks_surface(
                 "Open the owning page when you need the full course context.</p>"
             ),
             "</header>",
+            _render_discovery_focus_strip(
+                current_workspace="tasks",
+                from_path=STATIC_TASKS_PATH.as_posix(),
+            ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
             _render_discovery_course_rail(
                 content_model=content_model,
@@ -7508,6 +7615,10 @@ def _render_schedule_surface(
                 "Dates are authored course metadata from accepted official objects.</p>"
             ),
             "</header>",
+            _render_discovery_focus_strip(
+                current_workspace="schedule",
+                from_path=STATIC_SCHEDULE_PATH.as_posix(),
+            ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
             _render_discovery_course_rail(
                 content_model=content_model,

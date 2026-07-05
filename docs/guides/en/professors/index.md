@@ -175,6 +175,9 @@ contrast high, avoid external fonts, and do not use skins to change course
 content, links, graph data, progress, ranking, recommendations, or numbered
 object identity. The source fields are `render.skin`, `skins/`, and
 `_raya/skin.yaml`; there are no external fonts in the accepted static contract.
+The `tokens.density` value can make generated discovery workspaces use more
+compact or more spacious cards and controls, but it should not reduce article
+reading text or create a browser skin switcher.
 The render fixture uses `eva-unit-02` as its readable default skin example;
 copy its pattern when you want a stronger visual identity without reducing
 contrast or changing course meaning.
@@ -262,8 +265,9 @@ content:
 
 The tasks workspace helps students scan work by type, text, and due date, then
 return to the owning page anchor. Search or Graph may open it focused on one
-page with a visible notice and Clear/Escape reset to all visible tasks. It is
-not a submission system, gradebook,
+page with a focused course page strip, a visible notice, same-page workspace
+handoffs, and Clear/Escape reset to all visible tasks. It is not a submission
+system, gradebook,
 personal calendar sync, progress tracker, recommendation engine, or hidden
 answer surface.
 
@@ -271,9 +275,10 @@ The Official Schedule workspace at `_raya/schedule/index.html` is generated
 from the same accepted task-family objects when they include `content.due` or
 `content.available`. It helps students scan dated official work and return to
 the owning page anchor. Search or Graph may open it focused on one page with a
-visible notice and Clear/Escape reset to all visible dated items. It is not a separate calendar source, personal
-calendar sync, reminder system, submission system, gradebook, progress tracker,
-or recommendation engine.
+focused course page strip, a visible notice, same-page workspace handoffs, and
+Clear/Escape reset to all visible dated items. It is not a separate calendar
+source, personal calendar sync, reminder system, submission system, gradebook,
+progress tracker, or recommendation engine.
 
 Rendered pages now use an expanded course map, rendered as an expanded
 hierarchical course map by default, and let

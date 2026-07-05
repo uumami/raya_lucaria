@@ -46,6 +46,7 @@ _SHELL_JAVASCRIPT = r"""
   const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
   const assetInspectButtons = Array.from(document.querySelectorAll("[data-raya-asset-inspect]"));
   const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
+  const structuralRailQuery = window.matchMedia("(min-width: 768px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const currentSectionLinks = Array.from(
@@ -112,6 +113,14 @@ _SHELL_JAVASCRIPT = r"""
     return desktopMapQuery.matches;
   }
 
+  function isStructuralRailShell() {
+    return structuralRailQuery.matches;
+  }
+
+  function isPhoneDrawerShell() {
+    return !isStructuralRailShell() && !printQuery.matches;
+  }
+
   function setFocusableDescendantsEnabled(container, enabled) {
     container
       .querySelectorAll("a[href], button, input, select, textarea, summary, [tabindex]")
@@ -157,10 +166,13 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function syncCourseMapModalBackground(drawerOpen) {
-    const hidden = drawerOpen && !isDesktopShell();
+    const hidden = drawerOpen;
     [skipLink, article, learningRail, mobileMapOpener].forEach((element) => {
       setAssistiveHidden(element, hidden);
     });
+    if (!hidden && learningRail) {
+      learningRail.setAttribute("aria-hidden", "false");
+    }
   }
 
   function focusableElementsWithin(container) {
@@ -185,7 +197,7 @@ _SHELL_JAVASCRIPT = r"""
     if (
       event.key !== "Tab" ||
       root.dataset.rayaCourseMapDrawer !== "open" ||
-      isDesktopShell()
+      !isPhoneDrawerShell()
     ) {
       return false;
     }
@@ -279,13 +291,13 @@ _SHELL_JAVASCRIPT = r"""
 
   function syncCourseMapDrawerState() {
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
-    const desktopShell = isDesktopShell();
-    const mobileDrawerOpen = drawerOpen && !desktopShell;
+    const structuralShell = isStructuralRailShell();
+    const modalDrawerOpen = drawerOpen && !structuralShell && isPhoneDrawerShell();
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
-    const commandExpanded = !desktopShell ? drawerOpen : structuralExpanded;
+    const commandExpanded = !structuralShell ? drawerOpen : structuralExpanded;
     root.setAttribute(
       "data-raya-course-map-scroll-lock",
-      mobileDrawerOpen ? "true" : "false"
+      modalDrawerOpen ? "true" : "false"
     );
     toggleButtons
       .filter((button) => button.classList.contains("raya-command-map"))
@@ -293,7 +305,7 @@ _SHELL_JAVASCRIPT = r"""
         button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
         button.setAttribute(
           "aria-label",
-          !desktopShell
+          !structuralShell
             ? commandExpanded
               ? "Close course map"
               : "Open course map"
@@ -301,12 +313,12 @@ _SHELL_JAVASCRIPT = r"""
               ? "Collapse course map"
               : "Expand course map"
         );
-      });
+    });
     if (mapDrawerBackdrop) {
-      mapDrawerBackdrop.hidden = !mobileDrawerOpen;
+      mapDrawerBackdrop.hidden = !modalDrawerOpen;
     }
-    if (!desktopShell) {
-      if (mobileDrawerOpen) {
+    if (!structuralShell) {
+      if (modalDrawerOpen) {
         const drawerTitle = map.querySelector(".raya-course-map-drawer-title");
         if (drawerTitle && !drawerTitle.id) {
           drawerTitle.id = "raya-course-map-drawer-title";
@@ -321,7 +333,7 @@ _SHELL_JAVASCRIPT = r"""
         map.removeAttribute("aria-modal");
         map.removeAttribute("aria-labelledby");
       }
-      syncCourseMapModalBackground(drawerOpen);
+      syncCourseMapModalBackground(modalDrawerOpen);
       setElementInert(map, !drawerOpen);
       setFocusableDescendantsEnabled(map, drawerOpen);
       map.setAttribute("aria-hidden", drawerOpen ? "false" : "true");
@@ -345,7 +357,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function setExpanded(nextExpanded) {
     const previousExpanded = root.dataset.rayaCourseMap !== "collapsed";
-    const desktopTransition = isDesktopShell() && previousExpanded !== nextExpanded;
+    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
       clearCourseMapFilter();
@@ -845,12 +857,13 @@ _SHELL_JAVASCRIPT = r"""
 
   function syncLearningRailToggleButtons(nextExpanded) {
     const drawerOpen = root.dataset.rayaLearningRailDrawer === "open";
-    const commandExpanded = !isDesktopShell() ? drawerOpen : nextExpanded;
+    const structuralShell = isStructuralRailShell();
+    const commandExpanded = !structuralShell ? drawerOpen : nextExpanded;
     learningRailToggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
       button.setAttribute(
         "aria-label",
-        !isDesktopShell()
+        !structuralShell
           ? commandExpanded
             ? "Close learning context"
             : "Open learning context"
@@ -865,15 +878,19 @@ _SHELL_JAVASCRIPT = r"""
     if (!learningRail || !learningRailBody) {
       return;
     }
+    const structuralShell = isStructuralRailShell();
+    if (!structuralShell && root.dataset.rayaLearningRailDrawer !== "closed") {
+      root.dataset.rayaLearningRailDrawer = "closed";
+    }
     const drawerOpen = root.dataset.rayaLearningRailDrawer === "open";
     root.setAttribute(
       "data-raya-learning-rail-scroll-lock",
-      drawerOpen && !isDesktopShell() ? "true" : "false"
+      drawerOpen && !structuralShell ? "true" : "false"
     );
     if (learningRailDrawerBackdrop) {
       learningRailDrawerBackdrop.hidden = !drawerOpen;
     }
-    if (!isDesktopShell()) {
+    if (!structuralShell) {
       learningRail.setAttribute("aria-hidden", "false");
       setElementInert(learningRail, false);
       setFocusableDescendantsEnabled(learningRail, true);
@@ -913,25 +930,15 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     const previousExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    const desktopTransition = isDesktopShell() && previousExpanded !== nextExpanded;
+    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (desktopTransition) {
       window.clearTimeout(learningRailTransitionTimer);
       learningRail.dataset.rayaLearningRailTransition = nextExpanded
         ? "expanding"
         : "collapsing";
-      if (desktopExpanding) {
-        learningRailBody.setAttribute("aria-hidden", "true");
-        setElementInert(learningRailBody, true);
-        setFocusableDescendantsEnabled(learningRailBody, false);
-      }
       learningRailTransitionTimer = window.setTimeout(() => {
         delete learningRail.dataset.rayaLearningRailTransition;
-        if (desktopExpanding && root.dataset.rayaLearningRail === "expanded") {
-          learningRailBody.setAttribute("aria-hidden", "false");
-          setElementInert(learningRailBody, false);
-          setFocusableDescendantsEnabled(learningRailBody, true);
-        }
       }, SHELL_TRANSITION_MS);
     } else {
       window.clearTimeout(learningRailTransitionTimer);
@@ -941,11 +948,9 @@ _SHELL_JAVASCRIPT = r"""
     shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     syncLearningRailToggleButtons(nextExpanded);
-    if (!desktopExpanding) {
-      learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-      setElementInert(learningRailBody, !nextExpanded);
-      setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
-    }
+    learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
+    setElementInert(learningRailBody, !nextExpanded);
+    setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
     if (nextExpanded) {
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
@@ -958,11 +963,6 @@ _SHELL_JAVASCRIPT = r"""
       learningRailExpand.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     }
     syncLearningRailDrawerState();
-    if (desktopExpanding) {
-      learningRailBody.setAttribute("aria-hidden", "true");
-      setElementInert(learningRailBody, true);
-      setFocusableDescendantsEnabled(learningRailBody, false);
-    }
   }
 
   function openLearningRailDrawer(opener = null) {
@@ -1302,6 +1302,33 @@ _SHELL_JAVASCRIPT = r"""
     syncCourseMapDrawerState();
     syncLearningRailDrawerState();
   });
+  if (structuralRailQuery.addEventListener) {
+    structuralRailQuery.addEventListener("change", () => {
+      if (!structuralRailQuery.matches) {
+        setExpanded(true);
+        setLearningRailExpanded(true);
+        syncReaderFocusToggle(false);
+      } else {
+        closeCourseMapDrawer();
+        closeLearningRailDrawer();
+      }
+      syncCourseMapDrawerState();
+      syncLearningRailDrawerState();
+    });
+  } else if (structuralRailQuery.addListener) {
+    structuralRailQuery.addListener(() => {
+      if (!structuralRailQuery.matches) {
+        setExpanded(true);
+        setLearningRailExpanded(true);
+        syncReaderFocusToggle(false);
+      } else {
+        closeCourseMapDrawer();
+        closeLearningRailDrawer();
+      }
+      syncCourseMapDrawerState();
+      syncLearningRailDrawerState();
+    });
+  }
   if (printQuery.addEventListener) {
     printQuery.addEventListener("change", syncPrintDisclosureState);
   } else if (printQuery.addListener) {
@@ -1312,7 +1339,7 @@ _SHELL_JAVASCRIPT = r"""
 
   toggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      if (!isDesktopShell()) {
+      if (!isStructuralRailShell()) {
         if (root.dataset.rayaCourseMapDrawer === "open") {
           closeCourseMapDrawer({ restoreFocus: true });
         } else {
@@ -1426,7 +1453,7 @@ _SHELL_JAVASCRIPT = r"""
 
   if (learningRailCollapse) {
     learningRailCollapse.addEventListener("click", () => {
-      if (!isDesktopShell()) {
+      if (!isStructuralRailShell()) {
         closeLearningRailDrawer({ restoreFocus: true });
         return;
       }
@@ -1456,11 +1483,9 @@ _SHELL_JAVASCRIPT = r"""
 
   learningRailToggleButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      if (!isDesktopShell()) {
-        if (root.dataset.rayaLearningRailDrawer === "open") {
-          closeLearningRailDrawer({ restoreFocus: true });
-        } else {
-          openLearningRailDrawer(button);
+      if (!isStructuralRailShell()) {
+        if (root.dataset.rayaCourseMapDrawer === "open") {
+          closeCourseMapDrawer({ restoreFocus: false });
         }
         return;
       }
@@ -1513,7 +1538,7 @@ _SHELL_JAVASCRIPT = r"""
     }
     if (
       event.key === "Escape" &&
-      isDesktopShell() &&
+      isStructuralRailShell() &&
       root.dataset.rayaLearningRail === "expanded"
     ) {
       const activeElement = document.activeElement;

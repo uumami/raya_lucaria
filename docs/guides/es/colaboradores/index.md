@@ -56,6 +56,10 @@ duplicados, desajustes entre nombre de archivo e `id`, campos de token no
 soportados, colores malformados, colores de grafo malformados, contraste bajo,
 densidad invalida, fuentes no seguras, `skin.css` generado, variables CSS de
 paleta de grafo e herencia de la seccion mas cercana.
+Los tokens de densidad pueden cambiar el espaciado de cards y controles de
+workspaces generados mediante variables CSS del renderer. No deben convertirse
+en controles de tipografia del articulo ni en logica de override de skin en el
+browser.
 
 Usa `examples/courses/render-fixture/course/2_math_authoring/0_index.md` cuando cambies rendering de math o guia de autoria. Es el fixture target para ejemplos validos actuales: `\begin{bmatrix}`, macros de vectores, `\newcommand`, `\renewcommand`, notacion de conjuntos y logica, normas, productos internos, derivaciones alineadas, notacion de optimizacion y Markdown de objetos numerados. Mantiene ejemplos invalidos de math en tests para que docs de profesores y estudiantes sigan siendo copiables.
 
@@ -183,11 +187,14 @@ enlaces graph-focus de resultados de busqueda deben generarse solo desde stable
 IDs y URLs locales del grafo; conserva lenguaje estructural como `View in
 graph`. Los workspaces de descubrimiento Search y Practice pueden usar regiones
 de controles, resultados y contexto en desktop. Search, Practice, Tasks y
-Schedule pueden mostrar un aviso compacto de
-foco de pagina para un handoff valido `?page=<page-id>`, pero el aviso debe
-ocultarse cuando el foco falta o no es valido y despues de que Clear/Escape
-restaura el workspace completo. Esas regiones deben quedarse publicas, ser
-responsivas y no guardar estado de descubrimiento.
+Schedule pueden mostrar una franja compartida de pagina de curso enfocada para
+un handoff valido `?page=<page-id>`, con links a Search, Graph, Practice, Tasks
+y Schedule enfocados en la misma pagina. Search, Practice, Tasks y Schedule
+tambien pueden mostrar avisos compactos de foco de pagina en sus regiones de
+control. La franja y los avisos deben ocultarse cuando el foco falta o no es
+valido y despues de que Clear/Escape restaura el workspace completo. Esas
+regiones deben quedarse publicas, ser responsivas y no guardar estado de
+descubrimiento.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}

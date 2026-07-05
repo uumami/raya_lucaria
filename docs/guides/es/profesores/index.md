@@ -175,6 +175,9 @@ de reconstruir. Mantiene alto el contraste, evita fuentes externas, y no uses
 skins para cambiar contenido del curso, enlaces, datos del grafo, progreso,
 ranking, recomendaciones ni identidad de objetos numerados. Los campos de
 fuente son `render.skin`, `skins/` y `_raya/skin.yaml`.
+El valor `tokens.density` puede hacer que workspaces generados usen cards y
+controles mas compactos o mas espaciosos, pero no debe reducir el texto de
+lectura del articulo ni crear un selector de skin en el browser.
 El render fixture usa `eva-unit-02` como ejemplo de skin predeterminada legible;
 copia ese patron cuando quieras una identidad visual mas fuerte sin bajar
 contraste ni cambiar el significado del curso.
@@ -268,17 +271,19 @@ content:
 
 El workspace de tasks ayuda a estudiantes a escanear trabajo por tipo, texto y
 fecha de entrega, y despues volver al anchor de la pagina propietaria. Search o
-Graph pueden abrirlo enfocado en una pagina con un aviso visible y reset por
-Clear/Escape a todos los tasks visibles. No es
-sistema de entregas, gradebook, sincronizacion de calendario personal, registro
-de progreso, motor de recomendaciones ni superficie de respuestas ocultas.
+Graph pueden abrirlo enfocado en una pagina con una franja de pagina de curso
+enfocada, un aviso visible, handoffs a workspaces enfocados en la misma pagina y
+reset por Clear/Escape a todos los tasks visibles. No es sistema de entregas,
+gradebook, sincronizacion de calendario personal, registro de progreso, motor
+de recomendaciones ni superficie de respuestas ocultas.
 
 El workspace Official Schedule en `_raya/schedule/index.html` se genera desde
 los mismos objetos aceptados de familia task cuando incluyen `content.due` o
 `content.available`. Ayuda a estudiantes a escanear trabajo oficial fechado y
 volver al anchor de la pagina propietaria. Search o Graph pueden abrirlo
-enfocado en una pagina con un aviso visible y reset por Clear/Escape a todos los
-items fechados visibles. No es una fuente de calendario
+enfocado en una pagina con una franja de pagina de curso enfocada, un aviso
+visible, handoffs a workspaces enfocados en la misma pagina y reset por
+Clear/Escape a todos los items fechados visibles. No es una fuente de calendario
 separada, sincronizacion de calendario personal, sistema de recordatorios,
 sistema de entregas, gradebook, registro de progreso ni motor de
 recomendaciones.

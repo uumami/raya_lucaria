@@ -55,6 +55,9 @@ unknown selectors, duplicate IDs, filename/id mismatches, unsupported token
 fields, malformed colors, malformed graph colors, low contrast, invalid
 density, unsafe fonts, generated `skin.css`, graph palette CSS variables, and
 nearest-section inheritance.
+Density tokens may change generated workspace card and control spacing through
+renderer-owned CSS variables. They must not become article typography controls
+or browser-side skin override logic.
 
 Use `examples/courses/render-fixture/course/2_math_authoring/0_index.md` when changing math rendering or authoring guidance. It is the fixture target for current valid examples: `\begin{bmatrix}`, vector macros, `\newcommand`, `\renewcommand`, set and logic notation, norms, inner products, aligned derivations, optimization notation, and numbered object Markdown. Keep invalid math examples in tests so professor and student docs remain copyable.
 
@@ -171,11 +174,13 @@ than recommendations or alternate authority. Search
 result graph-focus links must be generated from stable page IDs and local graph
 URLs only; keep their wording structural, such as `View in graph`. Search and
 Practice discovery workspaces may use control, results, and context regions on
-desktop. Search,
-Practice, Tasks, and Schedule may show a compact page-focus notice for a valid
-`?page=<page-id>` handoff, but the notice must hide for missing or invalid page
-focus and after Clear/Escape restores the full workspace. Those regions must
-stay public, responsive, and free of stored discovery state.
+desktop. Search, Practice, Tasks, and Schedule may show a shared focused course
+page strip for a valid `?page=<page-id>` handoff, with same-page links across
+Search, Graph, Practice, Tasks, and Schedule. Search, Practice, Tasks, and
+Schedule may also show compact page-focus notices in their control regions. The
+strip and notices must hide for missing or invalid page focus and after
+Clear/Escape restores the full workspace. Those regions must stay public,
+responsive, and free of stored discovery state.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}

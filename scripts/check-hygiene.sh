@@ -170,6 +170,19 @@ check_stale_renderer_guidance() {
     packages
 }
 
+check_stale_graph_search_guidance() {
+  reject_matches \
+    "stale graph/search current-status guidance" \
+    'graph UI, backlinks, wikilinks, and expanded external link policy remain out of scope until later proposals|Renderer, TypeScript/web UI, backend, identity, dynamic study state, graph UI, backlinks, wikilinks, heading-anchor validation, and external link policy remain out of scope until later proposals|Search, themes, graphs, offline support, slides, and interactive components are future capabilities, not initial requirements|Full-text search indexes|prose-derived search' \
+    README.md \
+    AGENTS.md \
+    docs/foundation \
+    docs/guides \
+    openspec/config.yaml \
+    openspec/specs \
+    packages
+}
+
 check_incomplete_markers() {
   reject_matches \
     "current spec/doc incomplete markers" \
@@ -304,6 +317,7 @@ check_gallery_fixture_label() {
 echo "hygiene: root $ROOT"
 run_check "stale code/notebook folder requirement" check_stale_code_notebook_guidance
 run_check "stale renderer stack guidance" check_stale_renderer_guidance
+run_check "stale graph/search current-status guidance" check_stale_graph_search_guidance
 run_check "current spec/doc incomplete markers" check_incomplete_markers
 run_check "tracked generated outputs" check_tracked_generated_outputs
 run_check "untracked generated outputs" check_untracked_generated_outputs

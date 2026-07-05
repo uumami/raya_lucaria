@@ -73,7 +73,12 @@ CDN, configured host, backend, Python, Node, or browser-side MathJax conversion.
 
 `raya preview <course>` is the local review workflow for this static site. It serves the generated `artifact/site/` read path and exposes the inspection URL for reviewers, but it does not make rendered HTML the authority surface and does not execute course code.
 
-Search, themes, graphs, offline support, slides, and interactive components are future capabilities, not initial requirements.
+The initial artifact floor did not require Search, themes, graphs, offline
+support, slides, or interactive components. Current local static Search and
+Graph discovery surfaces are now defined by
+`20_learning_renderer_contract.md`; offline support, slides, broader
+interactive components, external search services, dynamic graph/search state,
+and cross-course graph capabilities remain future work.
 
 ## Rendered Surface Discipline
 

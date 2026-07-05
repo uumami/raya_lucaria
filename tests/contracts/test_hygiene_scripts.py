@@ -132,6 +132,60 @@ def test_check_hygiene_rejects_stale_required_code_notebook_guidance(
     assert "README.md" in result.stdout
 
 
+def test_check_hygiene_rejects_stale_graph_search_guidance(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    (fixture / "README.md").write_text(
+        "# Fixture\n\n"
+        "Renderer, TypeScript/web UI, backend, identity, dynamic study state, "
+        "graph UI, backlinks, wikilinks, heading-anchor validation, and external "
+        "link policy remain out of scope until later proposals.\n",
+        encoding="utf-8",
+    )
+    init_git_repo(fixture)
+    commit_all(fixture, "Track stale graph search guidance")
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode != 0
+    assert "stale graph/search current-status guidance" in result.stdout
+    assert "README.md" in result.stdout
+
+
+def test_check_hygiene_allows_historical_graph_search_guidance(
+    tmp_path: Path,
+) -> None:
+    fixture = tmp_path / "repo"
+    fixture.mkdir()
+    write_minimal_hygiene_root(fixture)
+    historical_doc = fixture / "docs" / "superpowers" / "specs" / "historical.md"
+    historical_doc.parent.mkdir(parents=True)
+    historical_doc.write_text(
+        "# Historical fixture\n\n"
+        "Graph UI, backlinks, wikilinks, heading-anchor validation, and external "
+        "link policy remain out of scope until later proposals.\n",
+        encoding="utf-8",
+    )
+    archived_doc = (
+        fixture / "openspec" / "changes" / "archive" / "old-change" / "notes.md"
+    )
+    archived_doc.parent.mkdir(parents=True)
+    archived_doc.write_text(
+        "# Archived fixture\n\n"
+        "Full-text search indexes and prose-derived search used to be deferred.\n",
+        encoding="utf-8",
+    )
+    init_git_repo(fixture)
+    commit_all(fixture, "Track historical stale guidance")
+
+    result = run_script("scripts/check-hygiene.sh", "--root", str(fixture))
+
+    assert result.returncode == 0, result.stdout
+
+
 def test_check_hygiene_rejects_incomplete_markers_in_domain_language(
     tmp_path: Path,
 ) -> None:

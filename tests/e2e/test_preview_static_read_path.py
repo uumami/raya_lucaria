@@ -820,8 +820,6 @@ def test_render_fixture_local_images_open_static_asset_inspector(
                         wait_until="networkidle",
                     )
                     _assert_no_horizontal_overflow(mobile)
-                    mobile.click('[data-raya-graph-toggle-panel="list"]')
-                    mobile.click('[data-raya-graph-toggle-panel="inspector"]')
                     mobile.wait_for_function(
                         """() => {
                           const root = document.querySelector('[data-raya-graph-page]');
@@ -4309,15 +4307,13 @@ def test_render_fixture_graph_url_state_and_debug_readout(tmp_path: Path) -> Non
                     canvas_box = page.locator("#raya-graph-canvas").bounding_box()
                     assert orientation_box is not None
                     assert canvas_box is not None
-                    assert orientation_box["y"] < canvas_box["y"]
-                    assert orientation_box["y"] < 900
+                    assert orientation_box["y"] > canvas_box["y"]
                     assert orientation_box["height"] <= 140
                     guide = page.locator("[data-raya-graph-guide]")
                     assert guide.is_visible()
                     guide_box = guide.bounding_box()
                     assert guide_box is not None
-                    assert guide_box["y"] > orientation_box["y"]
-                    assert guide_box["y"] > canvas_box["y"]
+                    assert guide_box["y"] < canvas_box["y"]
                     assert guide_box["height"] <= 220
                     guide.locator("summary").click()
                     guide_text = guide.inner_text()
@@ -5494,27 +5490,36 @@ def test_render_fixture_graph_relationship_edges_are_inspectable(
                     )
                     assert edge_info["from"] in page.url
 
-                    edge.focus()
-                    page.wait_for_function(
-                        """() => !document
-                          .querySelector('[data-raya-graph-relationship-preview]')
-                          ?.hasAttribute('hidden')"""
-                    )
                     target_info = page.evaluate(
                         """() => {
-                          const hit = document.activeElement?.matches('[data-raya-graph-edge-hit]')
-                            ? document.activeElement
-                            : document.querySelector('[data-raya-graph-edge-hit]');
                           const payload = JSON.parse(
                             document.getElementById('raya-graph-data').textContent
                           );
-                          const to = hit?.getAttribute('data-raya-graph-to') || '';
                           const nodeById = new Map(payload.nodes.map((node) => [node.id, node]));
+                          const edge = Array.from(
+                            document.querySelectorAll('[data-raya-graph-edge-hit]')
+                          ).find((candidate) => {
+                            const rect = candidate.getBoundingClientRect();
+                            return (
+                              (rect.width > 0 || rect.height > 0) &&
+                              rect.right > 0 &&
+                              rect.bottom > 0 &&
+                              rect.left < window.innerWidth &&
+                              rect.top < window.innerHeight
+                            );
+                          });
+                          edge?.focus();
+                          const to = edge?.getAttribute('data-raya-graph-to') || '';
                           return {
                             to,
                             toTitle: nodeById.get(to)?.title || to,
                           };
                         }"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('[data-raya-graph-relationship-preview]')
+                          ?.hasAttribute('hidden')"""
                     )
                     page.locator(
                         "[data-raya-graph-relationship-preview-target-action]"
@@ -5706,17 +5711,21 @@ def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
                     arg=zoomed_viewbox,
                 )
 
-                page.click('[data-raya-graph-group-filter="reader-ux"]')
-                assert (
-                    page.locator('[data-raya-graph-group-filter="reader-ux"]')
-                    .get_attribute("aria-pressed")
-                    == "false"
+                reader_group_filter = page.locator(
+                    'section[aria-label="Graph groups"] '
+                    '[data-raya-graph-group-filter="reader-ux"]'
                 )
-                page.click('[data-raya-graph-edge-kind-filter="content"]')
+                content_edge_filter = page.locator(
+                    '.raya-graph-toolbar-group[aria-label="Relationship filters"] '
+                    '[data-raya-graph-edge-kind-filter="content"]'
+                )
+                reader_group_filter.click()
                 assert (
-                    page.locator('[data-raya-graph-edge-kind-filter="content"]')
-                    .get_attribute("aria-pressed")
-                    == "false"
+                    reader_group_filter.get_attribute("aria-pressed") == "false"
+                )
+                content_edge_filter.click()
+                assert (
+                    content_edge_filter.get_attribute("aria-pressed") == "false"
                 )
                 _click_graph_node_group(page, "authoring-matrix")
                 page.wait_for_function(
@@ -5737,14 +5746,10 @@ def test_render_fixture_graph_keyboard_shortcuts_control_workspace(
                     == "connections"
                 )
                 assert (
-                    page.locator('[data-raya-graph-group-filter="reader-ux"]')
-                    .get_attribute("aria-pressed")
-                    == "true"
+                    reader_group_filter.get_attribute("aria-pressed") == "true"
                 )
                 assert (
-                    page.locator('[data-raya-graph-edge-kind-filter="content"]')
-                    .get_attribute("aria-pressed")
-                    == "true"
+                    content_edge_filter.get_attribute("aria-pressed") == "true"
                 )
                 assert (
                     page.locator(
@@ -6146,6 +6151,9 @@ def test_render_fixture_graph_visual_depth_styles_are_rendered(
                               selectedCircleStyle.strokeWidth || '0'
                             ),
                             selectedHitFill: selectedHitStyle.fill,
+                            selectedHitFillOpacity: Number.parseFloat(
+                              selectedHitStyle.fillOpacity || '0'
+                            ),
                             selectedHitFilter: selectedHitStyle.filter,
                             selectedHitStrokeWidth: Number.parseFloat(
                               selectedHitStyle.strokeWidth || '0'
@@ -6171,7 +6179,7 @@ def test_render_fixture_graph_visual_depth_styles_are_rendered(
     assert visual_state["selectedFilter"] != "none"
     assert visual_state["selectedFilter"] != visual_state["baseFilter"]
     assert visual_state["selectedStrokeWidth"] >= 4
-    assert visual_state["selectedHitFill"] in {"rgba(0, 0, 0, 0)", "transparent"}
+    assert visual_state["selectedHitFillOpacity"] <= 0.01
     assert visual_state["selectedHitFilter"] == "none"
     assert visual_state["selectedHitStrokeWidth"] == 0
     assert visual_state["labelPaintOrder"] == "stroke"
@@ -6261,6 +6269,11 @@ def test_preview_graph_node_preview_bubble_tracks_hover_and_focus(
                     node.evaluate("node => node.focus()")
                     expect(bubble).to_be_visible()
                     _assert_no_horizontal_overflow(page)
+                    page.locator("#graph-search").focus()
+                    expect(bubble).to_be_hidden()
+                    expect(
+                        page.locator("[data-raya-graph-inspection-preview]")
+                    ).to_be_hidden()
                 finally:
                     page.close()
             finally:
@@ -8044,6 +8057,15 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         page.wait_for_url(
                             "**/_raya/graph/index.html?page=authoring-matrix"
                         )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('[data-raya-graph-state-selected]')
+                              ?.textContent === 'authoring-matrix'"""
+                        )
+                        if viewport["width"] < 1280:
+                            page.locator(
+                                '[data-raya-graph-toggle-panel="inspector"]'
+                            ).click()
                         page.wait_for_selector(
                             "[data-raya-graph-detail-panel]:not([hidden])"
                         )
@@ -9600,11 +9622,11 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert 'data-raya-map-label="1 Static Path">1 Static Path</a>' in index_html
     assert "data-raya-rail-toggle" in reader_html
-    assert 'data-raya-rail-panel-state="collapsed"' in reader_html
-    assert 'aria-hidden="true" inert' in reader_html
+    assert 'data-raya-rail-panel-state="expanded"' in reader_html
+    assert 'aria-hidden="false"' in reader_html
     assert "background: var(--raya-color-page)" in rich_css
     assert "background: var(--raya-color-surface)" in rich_css
-    assert "max-width: 116rem" in rich_css
+    assert "max-width: 128rem" in rich_css
     assert (
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem)"
         in rich_css
@@ -11087,59 +11109,89 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             _assert_no_horizontal_overflow(page)
                             page.locator(".raya-skip-link").focus()
                         else:
-                            if viewport["width"] >= 900:
-                                assert article["width"] >= 700
-                            assert article["y"] < learning_rail["y"]
-                            drawer_state = page.evaluate(
-                                """() => {
-                                  const root = document.documentElement;
-                                  const map = document.querySelector('#raya-course-map');
-                                  const command = document.querySelector('.raya-command-map');
-                                  return {
-                                    drawer: root.dataset.rayaCourseMapDrawer,
-                                    mapHidden: map.getAttribute('aria-hidden'),
-                                    mapInert: map.inert,
-                                    commandExpanded: command.getAttribute('aria-expanded'),
-                                  };
-                                }"""
-                            )
-                            assert drawer_state == {
-                                "drawer": "closed",
-                                "mapHidden": "true",
-                                "mapInert": True,
-                                "commandExpanded": "false",
-                            }
-                            _assert_bounded_scroll_region(
-                                page, "aside.raya-learning-rail"
-                            )
-                            page.click(".raya-command-map")
-                            page.wait_for_function(
-                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
-                            )
-                            _assert_bounded_scroll_region(page, "nav.raya-course-map")
-                            mobile_course_list = page.locator(
-                                "#raya-course-map .raya-course-map-list"
-                            ).bounding_box()
-                            assert mobile_course_list is not None
-                            assert mobile_course_list["width"] > 100
-                            assert mobile_course_list["height"] > 40
-                            mobile_course_link = page.locator(
-                                "#raya-course-map .raya-course-map-list a"
-                            ).first.bounding_box()
-                            assert mobile_course_link is not None
-                            assert mobile_course_link["width"] > 0
-                            assert mobile_course_link["height"] > 0
-                            page.keyboard.press("Escape")
-                            page.wait_for_function(
-                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
-                            )
-                            _assert_no_horizontal_overflow(page)
-                            mobile_grid_columns = page.evaluate(
-                                """() => getComputedStyle(
-                                  document.querySelector('.raya-learning-shell')
-                                ).gridTemplateColumns"""
-                            )
-                            assert len(mobile_grid_columns.split()) == 1
+                            if viewport["width"] >= 768:
+                                assert course_map["x"] < article["x"] < learning_rail["x"]
+                                assert article["width"] >= 360
+                                drawer_state = page.evaluate(
+                                    """() => {
+                                      const root = document.documentElement;
+                                      const map = document.querySelector('#raya-course-map');
+                                      const command = document.querySelector('.raya-command-map');
+                                      return {
+                                        drawer: root.dataset.rayaCourseMapDrawer,
+                                        mapHidden: map.getAttribute('aria-hidden'),
+                                        mapInert: map.inert,
+                                        commandExpanded: command.getAttribute('aria-expanded'),
+                                      };
+                                    }"""
+                                )
+                                assert drawer_state == {
+                                    "drawer": "closed",
+                                    "mapHidden": "false",
+                                    "mapInert": False,
+                                    "commandExpanded": "true",
+                                }
+                                _assert_bounded_scroll_region(
+                                    page, "aside.raya-learning-rail"
+                                )
+                                mobile_grid_columns = page.evaluate(
+                                    """() => getComputedStyle(
+                                      document.querySelector('.raya-learning-shell')
+                                    ).gridTemplateColumns"""
+                                )
+                                assert len(mobile_grid_columns.split()) == 3
+                            else:
+                                assert article["y"] < learning_rail["y"]
+                                drawer_state = page.evaluate(
+                                    """() => {
+                                      const root = document.documentElement;
+                                      const map = document.querySelector('#raya-course-map');
+                                      const command = document.querySelector('.raya-command-map');
+                                      return {
+                                        drawer: root.dataset.rayaCourseMapDrawer,
+                                        mapHidden: map.getAttribute('aria-hidden'),
+                                        mapInert: map.inert,
+                                        commandExpanded: command.getAttribute('aria-expanded'),
+                                      };
+                                    }"""
+                                )
+                                assert drawer_state == {
+                                    "drawer": "closed",
+                                    "mapHidden": "true",
+                                    "mapInert": True,
+                                    "commandExpanded": "false",
+                                }
+                                _assert_bounded_scroll_region(
+                                    page, "aside.raya-learning-rail"
+                                )
+                                page.click(".raya-command-map")
+                                page.wait_for_function(
+                                    """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                                )
+                                _assert_bounded_scroll_region(page, "nav.raya-course-map")
+                                mobile_course_list = page.locator(
+                                    "#raya-course-map .raya-course-map-list"
+                                ).bounding_box()
+                                assert mobile_course_list is not None
+                                assert mobile_course_list["width"] > 100
+                                assert mobile_course_list["height"] > 40
+                                mobile_course_link = page.locator(
+                                    "#raya-course-map .raya-course-map-list a"
+                                ).first.bounding_box()
+                                assert mobile_course_link is not None
+                                assert mobile_course_link["width"] > 0
+                                assert mobile_course_link["height"] > 0
+                                page.keyboard.press("Escape")
+                                page.wait_for_function(
+                                    """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                                )
+                                _assert_no_horizontal_overflow(page)
+                                mobile_grid_columns = page.evaluate(
+                                    """() => getComputedStyle(
+                                      document.querySelector('.raya-learning-shell')
+                                    ).gridTemplateColumns"""
+                                )
+                                assert len(mobile_grid_columns.split()) == 1
                         assert (
                             page.locator("button.raya-font-toggle").get_attribute(
                                 "aria-label"
@@ -11542,7 +11594,7 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                             "mapHidden": "true",
                             "mapInert": True,
                             "article": {"ariaHidden": None, "inert": False},
-                            "rail": {"ariaHidden": None, "inert": False},
+                            "rail": {"ariaHidden": "false", "inert": False},
                             "opener": {"ariaHidden": None, "inert": False},
                             "skipLink": {"ariaHidden": None, "inert": False},
                             "openerFocused": True,
@@ -15057,6 +15109,9 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                             articleY: article.getBoundingClientRect().y,
                             mapY: map.getBoundingClientRect().y,
                             railY: rail.getBoundingClientRect().y,
+                            articleX: article.getBoundingClientRect().x,
+                            mapX: map.getBoundingClientRect().x,
+                            railX: rail.getBoundingClientRect().x,
                             drawerState: document.documentElement.dataset.rayaCourseMapDrawer,
                             mapHidden: map.getAttribute('aria-hidden'),
                             mapInert: map.inert,
@@ -15066,10 +15121,10 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                           };
                         }"""
                     )
-                    assert tablet["articleY"] < tablet["railY"]
+                    assert tablet["mapX"] < tablet["articleX"] < tablet["railX"]
                     assert tablet["drawerState"] == "closed"
-                    assert tablet["mapHidden"] == "true"
-                    assert tablet["mapInert"] is True
+                    assert tablet["mapHidden"] == "false"
+                    assert tablet["mapInert"] is False
                     assert tablet["bodyHidden"] == "false"
                     assert tablet["bodyInert"] is False
                     assert tablet["panelBodies"]
@@ -15343,6 +15398,17 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                           commandVisible: document
                             .querySelector('[data-raya-learning-rail-toggle]')
                             ?.getClientRects().length > 0,
+                          commandInCourseMap: document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.closest('#raya-course-map') !== null,
+                          contextToggleCount: document
+                            .querySelectorAll('[data-raya-learning-rail-toggle]').length,
+                          contextTogglesOutsideCourseMap: Array
+                            .from(document.querySelectorAll('[data-raya-learning-rail-toggle]'))
+                            .filter((button) => !button.closest('#raya-course-map'))
+                            .length,
+                          readerTopBarPresent: document
+                            .querySelector('.raya-top-command-bar:not(.raya-discovery-command-bar)') !== null,
                           articleWidth: document
                             .querySelector('#raya-article')
                             ?.getBoundingClientRect().width,
@@ -15355,12 +15421,16 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     assert initial["mapState"] == "expanded"
                     assert initial["railState"] == "expanded"
                     assert initial["contextExpanded"] == "true"
+                    assert initial["commandInCourseMap"] is True
+                    assert initial["contextToggleCount"] == 1
+                    assert initial["contextTogglesOutsideCourseMap"] == 0
+                    assert initial["readerTopBarPresent"] is False
                     assert initial["collapseExpanded"] == "true"
                     assert initial["expandExpanded"] == "true"
                     assert initial["articleWidth"] > 620
                     assert initial["railWidth"] >= 220
 
-                    page.click("[data-raya-learning-rail-collapse]")
+                    page.click("#raya-course-map [data-raya-learning-rail-toggle]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )
@@ -15433,6 +15503,46 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                         "contextLabel": "Hide learning context",
                         "railBodyHidden": "false",
                     }
+
+                    page.click("#raya-course-map [data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
+                    )
+                    page.set_viewport_size({"width": 912, "height": 768})
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail-body')
+                          ?.getAttribute('aria-hidden') === 'false'"""
+                    )
+                    tablet_after_collapse = page.evaluate(
+                        """() => ({
+                          drawerState: document.documentElement.dataset
+                            .rayaLearningRailDrawer,
+                          railState: document.documentElement.dataset.rayaLearningRail,
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                          collapseVisible: !!document
+                            .querySelector('[data-raya-learning-rail-collapse]')
+                            ?.getClientRects().length,
+                          contextVisible: !!document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getClientRects().length,
+                        })"""
+                    )
+                    assert tablet_after_collapse == {
+                        "drawerState": "closed",
+                        "railState": "expanded",
+                        "railHidden": "false",
+                        "railInert": False,
+                        "bodyHidden": "false",
+                        "bodyInert": False,
+                        "collapseVisible": True,
+                        "contextVisible": True,
+                    }
                 finally:
                     page.close()
             finally:
@@ -15499,6 +15609,256 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         arg=initial["articleWidth"] + 120,
                     )
                     rail_collapsed = page.evaluate(
+                        """() => {
+                          const expand = document
+                            .querySelector('[data-raya-learning-rail-expand]');
+                          const expandLabel = getComputedStyle(expand, '::after');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            articleWidth: document.querySelector('#raya-article')
+                              ?.getBoundingClientRect().width,
+                            railWidth: document.querySelector('#raya-learning-rail')
+                              ?.getBoundingClientRect().width,
+                            contextButtonExpanded: document
+                              .querySelector('[data-raya-learning-rail-toggle]')
+                              ?.getAttribute('aria-expanded'),
+                            railExpandLabel: expand?.getAttribute('aria-label'),
+                            railVisualLabel: expandLabel.content,
+                            railVisualWritingMode: expandLabel.writingMode,
+                            railBodyHidden: body?.getAttribute('aria-hidden'),
+                            railBodyInert: body?.inert,
+                          };
+                        }"""
+                    )
+                    assert rail_collapsed["mapState"] == "expanded"
+                    assert rail_collapsed["railState"] == "collapsed"
+                    assert (
+                        rail_collapsed["articleWidth"]
+                        >= initial["articleWidth"] + 120
+                    )
+                    assert 64 <= rail_collapsed["railWidth"] <= 112
+                    assert rail_collapsed["contextButtonExpanded"] == "false"
+                    assert rail_collapsed["railExpandLabel"] == "Show learning context"
+                    assert rail_collapsed["railVisualLabel"] == '"Context"'
+                    assert rail_collapsed["railVisualWritingMode"] == "horizontal-tb"
+                    assert rail_collapsed["railBodyHidden"] == "true"
+                    assert rail_collapsed["railBodyInert"] is True
+
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document.querySelector('#raya-article')
+                          ?.getBoundingClientRect().width >= minimumWidth""",
+                        arg=rail_collapsed["articleWidth"] + 120,
+                    )
+                    both_collapsed = page.evaluate(
+                        """() => {
+                          const mapButton = document
+                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                          const mapLabel = getComputedStyle(mapButton, '::after');
+                          const railExpand = document
+                            .querySelector('[data-raya-learning-rail-expand]');
+                          const railLabel = getComputedStyle(railExpand, '::after');
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            articleWidth: document.querySelector('#raya-article')
+                              ?.getBoundingClientRect().width,
+                            mapWidth: document.querySelector('#raya-course-map')
+                              ?.getBoundingClientRect().width,
+                            railWidth: document.querySelector('#raya-learning-rail')
+                              ?.getBoundingClientRect().width,
+                            mapVisualLabel: mapLabel.content,
+                            mapVisualWritingMode: mapLabel.writingMode,
+                            railVisualLabel: railLabel.content,
+                            railVisualWritingMode: railLabel.writingMode,
+                          };
+                        }"""
+                    )
+                    assert both_collapsed["mapState"] == "collapsed"
+                    assert both_collapsed["railState"] == "collapsed"
+                    assert (
+                        both_collapsed["articleWidth"]
+                        >= rail_collapsed["articleWidth"] + 120
+                    )
+                    assert 64 <= both_collapsed["mapWidth"] <= 112
+                    assert 64 <= both_collapsed["railWidth"] <= 112
+                    assert both_collapsed["mapVisualLabel"] == '"Map"'
+                    assert both_collapsed["mapVisualWritingMode"] == "horizontal-tb"
+                    assert both_collapsed["railVisualLabel"] == '"Context"'
+                    assert both_collapsed["railVisualWritingMode"] == "horizontal-tb"
+                    _assert_no_horizontal_overflow(page)
+
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
+                    )
+                    mobile = page.evaluate(
+                        """() => ({
+                          commandVisible: !!document
+                            .querySelector('[data-raya-learning-rail-toggle]')
+                            ?.getClientRects().length,
+                          railHidden: document.querySelector('#raya-learning-rail')
+                            ?.getAttribute('aria-hidden'),
+                          railInert: document.querySelector('#raya-learning-rail')?.inert,
+                          bodyHidden: document.querySelector('#raya-learning-rail-body')
+                            ?.getAttribute('aria-hidden'),
+                          bodyInert: document.querySelector('#raya-learning-rail-body')?.inert,
+                        })"""
+                    )
+                    assert mobile == {
+                        "commandVisible": False,
+                        "railHidden": "false",
+                        "railInert": False,
+                        "bodyHidden": "false",
+                        "bodyInert": False,
+                    }
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_collapsed_reader_rails_use_compact_horizontal_tabs(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    initial = page.evaluate(
+                        """() => ({
+                          articleWidth: document.querySelector('#raya-article')
+                            ?.getBoundingClientRect().width,
+                          mapWidth: document.querySelector('#raya-course-map')
+                            ?.getBoundingClientRect().width,
+                          railWidth: document.querySelector('#raya-learning-rail')
+                            ?.getBoundingClientRect().width,
+                        })"""
+                    )
+                    assert initial["articleWidth"] > 620
+                    assert initial["mapWidth"] >= 210
+                    assert initial["railWidth"] >= 220
+
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    map_transitioning = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                          const map = document.querySelector('#raya-course-map');
+                          const mapList = document.querySelector('#raya-course-map-list');
+                          return {
+                            transition: map?.getAttribute('data-raya-course-map-transition'),
+                            listDisplay: mapList ? getComputedStyle(mapList).display : null,
+                            listVisibility: mapList ? getComputedStyle(mapList).visibility : null,
+                          };
+                        }"""
+                    )
+                    assert map_transitioning == {
+                        "transition": "collapsing",
+                        "listDisplay": "block",
+                        "listVisibility": "hidden",
+                    }
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document.querySelector('#raya-article')
+                          ?.getBoundingClientRect().width > minimumWidth""",
+                        arg=initial["articleWidth"] + 80,
+                    )
+                    map_collapsed = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const mapButton = document
+                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                          const mapLabel = getComputedStyle(mapButton, '::after');
+                          const firstMapLink = document.querySelector('#raya-course-map a');
+                          return {
+                            articleWidth: document.querySelector('#raya-article')
+                              ?.getBoundingClientRect().width,
+                            mapWidth: map?.getBoundingClientRect().width,
+                            mapButtonExpanded: mapButton?.getAttribute('aria-expanded'),
+                            mapButtonAriaLabel: mapButton?.getAttribute('aria-label'),
+                            mapVisualLabel: mapLabel.content,
+                            mapVisualWritingMode: mapLabel.writingMode,
+                            mapVisualTextOrientation: mapLabel.textOrientation,
+                            firstMapLinkTabIndex: firstMapLink?.getAttribute('tabindex'),
+                            firstMapLinkPointerEvents: firstMapLink
+                              ? getComputedStyle(firstMapLink).pointerEvents
+                              : null,
+                          };
+                        }"""
+                    )
+                    assert map_collapsed["articleWidth"] > initial["articleWidth"] + 80
+                    assert 64 <= map_collapsed["mapWidth"] <= 112
+                    assert map_collapsed["mapButtonExpanded"] == "false"
+                    assert map_collapsed["mapButtonAriaLabel"] == "Expand course map"
+                    assert map_collapsed["mapVisualLabel"] == '"Map"'
+                    assert map_collapsed["mapVisualWritingMode"] == "horizontal-tb"
+                    assert map_collapsed["firstMapLinkTabIndex"] is None
+                    assert map_collapsed["firstMapLinkPointerEvents"] == "auto"
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    rail_transitioning = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => window.requestAnimationFrame(resolve));
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            transition: rail?.getAttribute('data-raya-learning-rail-transition'),
+                            bodyDisplay: body ? getComputedStyle(body).display : null,
+                            bodyVisibility: body ? getComputedStyle(body).visibility : null,
+                            bodyHidden: body?.getAttribute('aria-hidden'),
+                            bodyInert: body?.inert,
+                          };
+                        }"""
+                    )
+                    assert rail_transitioning == {
+                        "transition": "collapsing",
+                        "bodyDisplay": "block",
+                        "bodyVisibility": "hidden",
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                    }
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """(minimumWidth) => document.querySelector('#raya-article')
+                          ?.getBoundingClientRect().width > minimumWidth""",
+                        arg=map_collapsed["articleWidth"] + 40,
+                    )
+                    both_collapsed = page.evaluate(
                         """() => {
                           const expand = document
                             .querySelector('[data-raya-learning-rail-expand]');
@@ -15650,7 +16010,7 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
         handle.close()
 
 
-def test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transition_end(
+def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_during_transition(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -15719,8 +16079,8 @@ def test_render_fixture_desktop_learning_rail_expansion_hides_body_until_transit
                     assert expanding["width"] <= 260
                     assert expanding["bodyDisplay"] == "grid"
                     assert expanding["bodyVisibility"] == "hidden"
-                    assert expanding["bodyHidden"] == "true"
-                    assert expanding["bodyInert"] is True
+                    assert expanding["bodyHidden"] == "false"
+                    assert expanding["bodyInert"] is False
                     assert expanding["expandVisible"] is True
                     assert expanding["collapseVisible"] is False
                     assert expanding["overflow"] <= 1
@@ -16628,6 +16988,411 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
         handle.close()
 
 
+def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 912, "height": 768})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    _assert_no_horizontal_overflow(page)
+                    state = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const map = document.querySelector('#raya-course-map');
+                          const article = document.querySelector('#raya-article');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const railBody = document.querySelector('#raya-learning-rail-body');
+                          const backdrop = document.querySelector('[data-raya-course-map-drawer-backdrop]');
+                          const backdropStyle = backdrop ? getComputedStyle(backdrop) : null;
+                          const mapStyle = getComputedStyle(map);
+                          const shellStyle = getComputedStyle(document.querySelector('.raya-learning-shell'));
+                          const mapBox = map.getBoundingClientRect();
+                          const articleBox = article.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
+                          const opener = document.querySelector('.raya-mobile-course-map-open');
+                          const contextCommand = document
+                            .querySelector('#raya-course-map [data-raya-learning-rail-toggle]');
+                          return {
+                            drawer: root.dataset.rayaCourseMapDrawer,
+                            scrollLock: root.dataset.rayaCourseMapScrollLock,
+                            shellAreas: shellStyle.gridTemplateAreas,
+                            shellColumns: shellStyle.gridTemplateColumns,
+                            mapRole: map.getAttribute('role'),
+                            mapModal: map.getAttribute('aria-modal'),
+                            mapHidden: map.getAttribute('aria-hidden'),
+                            mapInert: map.inert,
+                            mapPosition: mapStyle.position,
+                            mapLeft: Math.round(mapBox.left),
+                            mapRight: Math.round(mapBox.right),
+                            mapTop: Math.round(mapBox.top),
+                            articleBottom: Math.round(articleBox.bottom),
+                            railTop: Math.round(railBox.top),
+                            articleLeft: Math.round(articleBox.left),
+                            articleRight: Math.round(articleBox.right),
+                            articleWidth: Math.round(articleBox.width),
+                            railLeft: Math.round(railBox.left),
+                            mapWidth: Math.round(mapBox.width),
+                            railWidth: Math.round(railBox.width),
+                            articleHidden: article.getAttribute('aria-hidden'),
+                            articleInert: article.inert,
+                            railHidden: rail.getAttribute('aria-hidden'),
+                            railInert: rail.inert,
+                            railBodyHidden: railBody.getAttribute('aria-hidden'),
+                            railBodyInert: railBody.inert,
+                            backdropHidden: backdrop?.hidden,
+                            backdropDisplay: backdropStyle?.display,
+                            backdropFilter: backdropStyle
+                              ? backdropStyle.backdropFilter || backdropStyle.webkitBackdropFilter
+                              : null,
+                            mobileOpenerVisible: !!opener?.getClientRects().length,
+                            contextVisible: !!contextCommand?.getClientRects().length,
+                          };
+                        }"""
+                    )
+                    geometry = {
+                        "mapLeft": state.pop("mapLeft"),
+                        "mapRight": state.pop("mapRight"),
+                        "mapTop": state.pop("mapTop"),
+                        "articleBottom": state.pop("articleBottom"),
+                        "railTop": state.pop("railTop"),
+                        "articleLeft": state.pop("articleLeft"),
+                        "articleRight": state.pop("articleRight"),
+                        "articleWidth": state.pop("articleWidth"),
+                        "railLeft": state.pop("railLeft"),
+                        "mapWidth": state.pop("mapWidth"),
+                        "railWidth": state.pop("railWidth"),
+                        "shellColumns": state.pop("shellColumns"),
+                    }
+                    assert state == {
+                        "drawer": "closed",
+                        "scrollLock": "false",
+                        "shellAreas": '"course-map main-article learning-rail"',
+                        "mapRole": None,
+                        "mapModal": None,
+                        "mapHidden": "false",
+                        "mapInert": False,
+                        "mapPosition": "sticky",
+                        "articleHidden": None,
+                        "articleInert": False,
+                        "railHidden": "false",
+                        "railInert": False,
+                        "railBodyHidden": "false",
+                        "railBodyInert": False,
+                        "backdropHidden": True,
+                        "backdropDisplay": "none",
+                        "backdropFilter": "none",
+                        "mobileOpenerVisible": False,
+                        "contextVisible": True,
+                    }
+                    assert geometry["mapLeft"] >= 0
+                    assert geometry["mapRight"] <= geometry["articleLeft"]
+                    assert geometry["articleRight"] <= geometry["railLeft"]
+                    assert geometry["articleLeft"] < geometry["articleRight"]
+                    assert geometry["articleWidth"] >= 360
+                    assert geometry["mapWidth"] >= 160
+                    assert geometry["railWidth"] >= 160
+                    assert len(geometry["shellColumns"].split()) == 3
+
+                    tools = page.evaluate(
+                        """() => {
+                          const visibleCommands = Array.from(
+                            document.querySelectorAll(
+                              '.raya-course-map-tool-grid .raya-command'
+                            )
+                          ).filter((button) => button.checkVisibility());
+                          const labels = visibleCommands.map((button) => {
+                            const label = button.querySelector('.raya-command-label');
+                            const buttonBox = button.getBoundingClientRect();
+                            return {
+                              text: label?.textContent?.trim() || button.textContent.trim(),
+                              width: Math.round(buttonBox.width),
+                              height: Math.round(buttonBox.height),
+                              labelClientWidth: label?.clientWidth || 0,
+                              labelScrollWidth: label?.scrollWidth || 0,
+                            };
+                          });
+                          return {
+                            visibleCount: visibleCommands.length,
+                            minWidth: Math.min(...labels.map((item) => item.width)),
+                            labelsWithoutTextRoom: labels.filter(
+                              (item) => item.labelClientWidth < 20
+                            ),
+                          };
+                        }"""
+                    )
+                    assert tools["visibleCount"] >= 6
+                    assert tools["minWidth"] >= 70
+                    assert tools["labelsWithoutTextRoom"] == []
+
+                    page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width < 80"""
+                    )
+                    collapsed = page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const shell = document.querySelector('.raya-learning-shell');
+                          const map = document.querySelector('#raya-course-map');
+                          const article = document.querySelector('#raya-article');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const toggle = document
+                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                          const shellStyle = getComputedStyle(shell);
+                          const mapStyle = getComputedStyle(map);
+                          const toggleStyle = getComputedStyle(toggle);
+                          const mapBox = map.getBoundingClientRect();
+                          const articleBox = article.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
+                          const toggleBox = toggle.getBoundingClientRect();
+                          return {
+                            mapState: root.dataset.rayaCourseMap,
+                            shellAreas: shellStyle.gridTemplateAreas,
+                            shellColumns: shellStyle.gridTemplateColumns,
+                            mapHidden: map.getAttribute('aria-hidden'),
+                            mapInert: map.inert,
+                            mapPosition: mapStyle.position,
+                            mapDisplay: mapStyle.display,
+                            mapWidth: Math.round(mapBox.width),
+                            mapLeft: Math.round(mapBox.left),
+                            mapRight: Math.round(mapBox.right),
+                            articleLeft: Math.round(articleBox.left),
+                            articleWidth: Math.round(articleBox.width),
+                            railLeft: Math.round(railBox.left),
+                            railWidth: Math.round(railBox.width),
+                            toggleWidth: Math.round(toggleBox.width),
+                            toggleHeight: Math.round(toggleBox.height),
+                            toggleOpacity: toggleStyle.opacity,
+                            togglePosition: toggleStyle.position,
+                            toggleBackground: toggleStyle.backgroundColor,
+                            toggleVisible: toggle.checkVisibility(),
+                            togglePointerEvents: toggleStyle.pointerEvents,
+                            commandExpanded: Array.from(
+                              document.querySelectorAll('[data-raya-course-map-toggle]')
+                            ).map((button) => button.getAttribute('aria-expanded')),
+                          };
+                        }"""
+                    )
+                    collapsed_columns = collapsed.pop("shellColumns").split()
+                    collapsed_background = collapsed.pop("toggleBackground")
+                    assert collapsed == {
+                        "mapState": "collapsed",
+                        "shellAreas": '"course-map main-article learning-rail"',
+                        "mapHidden": "false",
+                        "mapInert": False,
+                        "mapPosition": "sticky",
+                        "mapDisplay": "grid",
+                        "mapWidth": 48,
+                        "mapLeft": 16,
+                        "mapRight": 64,
+                        "articleLeft": 76,
+                        "articleWidth": 584,
+                        "railLeft": 672,
+                        "railWidth": 224,
+                        "toggleWidth": 40,
+                        "toggleHeight": 40,
+                        "toggleOpacity": "1",
+                        "togglePosition": "relative",
+                        "toggleVisible": True,
+                        "togglePointerEvents": "auto",
+                        "commandExpanded": ["false", "false", "false"],
+                    }
+                    assert collapsed_background not in {"rgba(0, 0, 0, 0)", "transparent"}
+                    assert len(collapsed_columns) == 3
+                    assert collapsed_columns[0] == "48px"
+                    assert collapsed_columns[2] == "224px"
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
+                          ?.getBoundingClientRect().width < 80"""
+                    )
+                    both_collapsed = page.evaluate(
+                        """() => {
+                          const shell = document.querySelector('.raya-learning-shell');
+                          const map = document.querySelector('#raya-course-map');
+                          const article = document.querySelector('#raya-article');
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const railBody = document.querySelector('#raya-learning-rail-body');
+                          const mapToggle = document
+                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                          const railExpand = document
+                            .querySelector('[data-raya-learning-rail-expand]');
+                          const shellStyle = getComputedStyle(shell);
+                          const mapBox = map.getBoundingClientRect();
+                          const articleBox = article.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
+                          const mapToggleStyle = getComputedStyle(mapToggle);
+                          const railExpandStyle = getComputedStyle(railExpand);
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            shellAreas: shellStyle.gridTemplateAreas,
+                            shellColumns: shellStyle.gridTemplateColumns,
+                            mapWidth: Math.round(mapBox.width),
+                            articleWidth: Math.round(articleBox.width),
+                            railWidth: Math.round(railBox.width),
+                            railHidden: rail.getAttribute('aria-hidden'),
+                            railInert: rail.inert,
+                            railBodyHidden: railBody.getAttribute('aria-hidden'),
+                            railBodyInert: railBody.inert,
+                            mapToggleVisible: mapToggle.checkVisibility(),
+                            mapToggleOpacity: mapToggleStyle.opacity,
+                            railExpandVisible: railExpand.checkVisibility(),
+                            railExpandOpacity: railExpandStyle.opacity,
+                            railExpandPointerEvents: railExpandStyle.pointerEvents,
+                            railExpandedValues: Array.from(
+                              document.querySelectorAll('[data-raya-learning-rail-toggle]')
+                            ).map((button) => button.getAttribute('aria-expanded')),
+                          };
+                        }"""
+                    )
+                    both_columns = both_collapsed.pop("shellColumns").split()
+                    both_article_width = both_collapsed.pop("articleWidth")
+                    assert both_collapsed == {
+                        "mapState": "collapsed",
+                        "railState": "collapsed",
+                        "shellAreas": '"course-map main-article learning-rail"',
+                        "mapWidth": 48,
+                        "railWidth": 48,
+                        "railHidden": "false",
+                        "railInert": False,
+                        "railBodyHidden": "true",
+                        "railBodyInert": True,
+                        "mapToggleVisible": True,
+                        "mapToggleOpacity": "1",
+                        "railExpandVisible": True,
+                        "railExpandOpacity": "1",
+                        "railExpandPointerEvents": "auto",
+                        "railExpandedValues": ["false"],
+                    }
+                    assert both_article_width >= 720
+                    assert len(both_columns) == 3
+                    assert both_columns[0] == "48px"
+                    assert both_columns[2] == "48px"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                cases = (
+                    (767, True),
+                    (768, False),
+                )
+                for width, modal in cases:
+                    page = browser.new_page(viewport={"width": width, "height": 760})
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        _assert_no_horizontal_overflow(page)
+                        if modal:
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                            )
+                        state = page.evaluate(
+                            """() => {
+                              const root = document.documentElement;
+                              const map = document.querySelector('#raya-course-map');
+                              const article = document.querySelector('#raya-article');
+                              const rail = document.querySelector('#raya-learning-rail');
+                              const backdrop = document
+                                .querySelector('[data-raya-course-map-drawer-backdrop]');
+                              const opener = document.querySelector('.raya-mobile-course-map-open');
+                              return {
+                                drawer: root.dataset.rayaCourseMapDrawer,
+                                scrollLock: root.dataset.rayaCourseMapScrollLock,
+                                role: map.getAttribute('role'),
+                                modal: map.getAttribute('aria-modal'),
+                                position: getComputedStyle(map).position,
+                                backdropHidden: backdrop.hidden,
+                                backdropDisplay: getComputedStyle(backdrop).display,
+                                openerVisible: !!opener?.getClientRects().length,
+                                mapHidden: map.getAttribute('aria-hidden'),
+                                mapInert: map.inert,
+                                articleInert: article.inert,
+                                railInert: rail.inert,
+                              };
+                            }"""
+                        )
+                        assert state == {
+                            "drawer": "open" if modal else "closed",
+                            "scrollLock": "true" if modal else "false",
+                            "role": "dialog" if modal else None,
+                            "modal": "true" if modal else None,
+                            "position": "fixed" if modal else "sticky",
+                            "backdropHidden": not modal,
+                            "backdropDisplay": "block" if modal else "none",
+                            "openerVisible": modal,
+                            "mapHidden": "false" if not modal else "false",
+                            "mapInert": False,
+                            "articleInert": modal,
+                            "railInert": modal,
+                        }
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
     tmp_path: Path,
 ) -> None:
@@ -16733,7 +17498,7 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["backdropHidden"] is False
                     assert state["backdropDisplay"] == "block"
                     assert "rgba" in state["backdropBackground"]
-                    assert state["backdropFilter"] != "none"
+                    assert state["backdropFilter"] == "none"
                     assert state["openerExpanded"] == "true"
 
                     page.keyboard.press("Escape")
@@ -16991,6 +17756,163 @@ def test_render_fixture_page_brief_exposes_learning_path_actions(
                 browser.close()
     finally:
         handle.close()
+
+
+def test_compact_skin_makes_discovery_cards_dense_without_shrinking_article_text(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    _select_compact_eva_skin(course)
+    _add_render_fixture_density_task(course)
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    external_requests: list[str] = []
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                probes = []
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    page.on(
+                        "request",
+                        lambda request: record_external_request(
+                            request.url,
+                            base_url,
+                            external_requests,
+                        ),
+                    )
+                    try:
+                        for (
+                            path,
+                            card_selector,
+                            action_selector,
+                            control_selector,
+                            control_group_selector,
+                        ) in (
+                            (
+                                "_raya/search/index.html",
+                                ".raya-search-results li",
+                                ".raya-search-result-open",
+                                ".raya-search-controls input",
+                                ".raya-search-control-panel .raya-search-controls",
+                            ),
+                            (
+                                "_raya/practice/index.html",
+                                ".raya-practice-object",
+                                ".raya-practice-open",
+                                ".raya-practice-controls input",
+                                ".raya-practice-control-panel .raya-practice-controls",
+                            ),
+                            (
+                                "_raya/tasks/index.html",
+                                ".raya-task-object",
+                                ".raya-task-open",
+                                ".raya-task-chip",
+                                ".raya-tasks-controls",
+                            ),
+                            (
+                                "_raya/schedule/index.html",
+                                ".raya-schedule-item",
+                                ".raya-schedule-open",
+                                ".raya-schedule-chip",
+                                ".raya-schedule-controls",
+                            ),
+                        ):
+                            page.goto(f"{base_url}/{path}", wait_until="networkidle")
+                            _assert_no_horizontal_overflow(page)
+                            page.wait_for_selector(card_selector)
+                            probe = page.evaluate(
+                                """({
+                                  cardSelector,
+                                  actionSelector,
+                                  controlSelector,
+                                  controlGroupSelector,
+                                }) => {
+                                  const card = document.querySelector(cardSelector);
+                                  const action = document.querySelector(actionSelector);
+                                  const control = document.querySelector(controlSelector);
+                                  const controlGroup = document.querySelector(
+                                    controlGroupSelector
+                                  );
+                                  const style = getComputedStyle(card);
+                                  const actionStyle = getComputedStyle(action);
+                                  const controlStyle = getComputedStyle(control);
+                                  const controlGroupStyle = getComputedStyle(controlGroup);
+                                  const bodyStyle = getComputedStyle(document.body);
+                                  return {
+                                    path: location.pathname,
+                                    skin: document.body.dataset.rayaSkin || "",
+                                    cardPaddingTop: Number.parseFloat(style.paddingTop || "0"),
+                                    cardPaddingInline: Number.parseFloat(style.paddingLeft || "0"),
+                                    actionMinHeight: Number.parseFloat(actionStyle.minHeight || "0"),
+                                    controlMinHeight: Number.parseFloat(controlStyle.minHeight || "0"),
+                                    controlPaddingTop: Number.parseFloat(controlStyle.paddingTop || "0"),
+                                    controlPaddingInline: Number.parseFloat(controlStyle.paddingLeft || "0"),
+                                    controlGroupGap: Number.parseFloat(controlGroupStyle.gap || "0"),
+                                    bodyFontSize: Number.parseFloat(bodyStyle.fontSize || "0"),
+                                    text: document.body.innerText,
+                                    localKeys: Object.keys(localStorage),
+                                    sessionKeys: Object.keys(sessionStorage),
+                                  };
+                                }""",
+                                {
+                                    "cardSelector": card_selector,
+                                    "actionSelector": action_selector,
+                                    "controlSelector": control_selector,
+                                    "controlGroupSelector": control_group_selector,
+                                },
+                            )
+                            probes.append(probe)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+    assert probes
+    for probe in probes:
+        assert probe["skin"] == "eva-unit-02-compact"
+        assert probe["cardPaddingTop"] <= 14
+        assert probe["cardPaddingInline"] <= 14
+        assert probe["actionMinHeight"] <= 34
+        assert probe["controlMinHeight"] <= 34
+        assert probe["controlPaddingTop"] <= 4
+        assert probe["controlPaddingInline"] <= 12
+        assert probe["controlGroupGap"] <= 9
+        assert probe["bodyFontSize"] >= 16
+        assert probe["localKeys"] == []
+        assert probe["sessionKeys"] == []
+        for forbidden in (
+            "progress",
+            "mastery",
+            "recommend",
+            "personal",
+            "ranking",
+            "score",
+            "grade",
+            "submit",
+        ):
+            assert forbidden not in probe["text"].lower()
+    assert external_requests == []
 
 
 def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
@@ -18059,6 +18981,237 @@ def test_discovery_command_bar_marks_current_workspace_without_overflow(
         handle.close()
 
 
+def test_discovery_workspaces_show_shared_page_focus_strip(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1366, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    requested_urls: list[str] = []
+                    page.on(
+                        "request",
+                        lambda request: requested_urls.append(request.url),
+                    )
+                    try:
+                        for workspace_path, kind in (
+                            ("_raya/search/index.html", "search"),
+                            ("_raya/graph/index.html", "graph"),
+                            ("_raya/practice/index.html", "practice"),
+                            ("_raya/tasks/index.html", "tasks"),
+                            ("_raya/schedule/index.html", "schedule"),
+                        ):
+                            requested_urls.clear()
+                            page.goto(
+                                f"{base_url}/{workspace_path}?page=reader-ux",
+                                wait_until="networkidle",
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            assert not any(
+                                (
+                                    url.startswith("http://")
+                                    or url.startswith("https://")
+                                )
+                                and not url.startswith(base_url)
+                                for url in requested_urls
+                            )
+                            strip = page.locator("[data-raya-discovery-focus-strip]")
+                            assert strip.count() == 1
+                            assert strip.is_visible()
+                            strip_box = strip.bounding_box()
+                            header_box = page.locator(
+                                ".raya-discovery-header"
+                            ).bounding_box()
+                            workspace_box = page.locator(
+                                ".raya-discovery-workspace-shell"
+                            ).bounding_box()
+                            assert strip_box is not None
+                            assert header_box is not None
+                            assert workspace_box is not None
+                            assert header_box["y"] < strip_box["y"] < workspace_box["y"]
+                            assert strip_box["x"] >= 0
+                            assert (
+                                strip_box["x"] + strip_box["width"]
+                                <= viewport["width"] + 1
+                            )
+                            assert strip_box["y"] < viewport["height"]
+                            state = strip.evaluate(
+                                """(strip) => {
+                                  const links = Array.from(
+                                    strip.querySelectorAll("a[href]")
+                                  ).map((link) => ({
+                                    label: link.textContent.trim(),
+                                    href: link.getAttribute("href"),
+                                    current: link.getAttribute("aria-current"),
+                                  }));
+                                  return {
+                                    hidden: strip.hidden,
+                                    text: strip.innerText,
+                                    title: strip
+                                      .querySelector("[data-raya-discovery-focus-title]")
+                                      ?.textContent?.trim(),
+                                    openHref: strip
+                                      .querySelector(
+                                        "[data-raya-discovery-focus-page-link]"
+                                      )
+                                      ?.getAttribute("href"),
+                                    clearHref: strip
+                                      .querySelector("[data-raya-discovery-focus-clear]")
+                                      ?.getAttribute("href"),
+                                    links,
+                                    localKeys: Object.keys(window.localStorage),
+                                    sessionKeys: Object.keys(window.sessionStorage),
+                                  };
+                                }"""
+                            )
+                            assert state["hidden"] is False
+                            assert state["title"] == "Projection Residuals"
+                            assert "Focused course page" in state["text"]
+                            assert "Projection Residuals" in state["text"]
+                            assert state["openHref"] == "../../reader-ux/index.html"
+                            assert state["clearHref"] == "index.html"
+                            labels_to_hrefs = {
+                                item["label"]: item["href"] for item in state["links"]
+                            }
+                            labels_to_paths = page.evaluate(
+                                """() => Object.fromEntries(
+                                  Array.from(
+                                    document.querySelectorAll(
+                                      '[data-raya-discovery-focus-strip] a[href]'
+                                    )
+                                  ).map((link) => [
+                                    link.textContent.trim(),
+                                    new URL(link.getAttribute('href'), document.baseURI)
+                                      .pathname + new URL(
+                                        link.getAttribute('href'),
+                                        document.baseURI
+                                      ).search,
+                                  ])
+                                )"""
+                            )
+                            assert (
+                                labels_to_hrefs["Open page"]
+                                == "../../reader-ux/index.html"
+                            )
+                            assert labels_to_paths["Search"] == (
+                                "/_raya/search/index.html?page=reader-ux"
+                            )
+                            assert labels_to_paths["Graph"] == (
+                                "/_raya/graph/index.html?page=reader-ux"
+                            )
+                            assert labels_to_paths["Practice"] == (
+                                "/_raya/practice/index.html?page=reader-ux"
+                            )
+                            assert labels_to_paths["Tasks"] == (
+                                "/_raya/tasks/index.html?page=reader-ux"
+                            )
+                            assert labels_to_paths["Schedule"] == (
+                                "/_raya/schedule/index.html?page=reader-ux"
+                            )
+                            assert labels_to_paths["Open page"] == (
+                                "/reader-ux/index.html"
+                            )
+                            assert labels_to_paths["Clear focus"] == (
+                                f"/_raya/{kind}/index.html"
+                            )
+                            assert labels_to_hrefs["Clear focus"] == "index.html"
+                            assert all(
+                                href and not href.startswith("/")
+                                for href in labels_to_hrefs.values()
+                            )
+                            assert all(
+                                "_official/" not in href
+                                and "_drafts/" not in href
+                                and "_partials/" not in href
+                                for href in labels_to_hrefs.values()
+                            )
+                            active = [
+                                item
+                                for item in state["links"]
+                                if item["current"] == "page"
+                            ]
+                            assert len(active) == 1
+                            assert active[0]["label"].lower() == kind
+                            for forbidden in (
+                                "progress",
+                                "mastery",
+                                "recommend",
+                                "personal",
+                                "ranking",
+                                "score",
+                                "grade",
+                                "submit",
+                            ):
+                                assert forbidden not in state["text"].lower()
+                            assert state["localKeys"] == []
+                            assert state["sessionKeys"] == []
+
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('[data-raya-discovery-focus-strip]')
+                                  ?.hidden === true"""
+                            )
+                            assert page.evaluate("() => localStorage.length") == 0
+                            assert page.evaluate("() => sessionStorage.length") == 0
+
+                        for workspace_path in (
+                            "_raya/search/index.html",
+                            "_raya/graph/index.html",
+                            "_raya/practice/index.html",
+                            "_raya/tasks/index.html",
+                            "_raya/schedule/index.html",
+                        ):
+                            page.goto(
+                                f"{base_url}/{workspace_path}?page=missing-page",
+                                wait_until="networkidle",
+                            )
+                            _assert_no_horizontal_overflow(page)
+                            hidden_state = page.locator(
+                                "[data-raya-discovery-focus-strip]"
+                            ).evaluate(
+                                """(strip) => ({
+                                  hidden: strip.hidden,
+                                  visible: !!strip.getClientRects().length,
+                                  text: strip.innerText,
+                                  localKeys: Object.keys(window.localStorage),
+                                  sessionKeys: Object.keys(window.sessionStorage),
+                                })"""
+                            )
+                            assert hidden_state["hidden"] is True
+                            assert hidden_state["visible"] is False
+                            assert "Projection Residuals" not in hidden_state["text"]
+                            assert hidden_state["localKeys"] == []
+                            assert hidden_state["sessionKeys"] == []
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_discovery_workspaces_render_static_course_rail_without_storage(
     tmp_path: Path,
 ) -> None:
@@ -18118,7 +19271,10 @@ def test_discovery_workspaces_render_static_course_rail_without_storage(
                             )
                             rail = page.locator("[data-raya-discovery-course-rail]")
                             assert rail.is_visible()
-                            current = rail.locator('[aria-current="page"]')
+                            current = rail.locator(
+                                '[aria-current="page"]'
+                                '[data-raya-current-workspace-link="true"]'
+                            )
                             assert current.count() == 1
                             assert (
                                 current.get_attribute("data-raya-workspace-link")
@@ -19213,6 +20369,56 @@ def _add_official_task_objects(course: Path) -> None:
                 "  tags:",
                 "    - public",
                 "    - hidden: SHOULD_NOT_LEAK_TASK_TAG",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _select_compact_eva_skin(course: Path) -> None:
+    source_skin = course / "skins" / "eva-unit-02.yaml"
+    compact_skin = course / "skins" / "eva-unit-02-compact.yaml"
+    compact_skin.write_text(
+        source_skin.read_text(encoding="utf-8")
+        .replace("id: eva-unit-02", "id: eva-unit-02-compact")
+        .replace("name: Eva Unit 02", "name: Eva Unit 02 Compact")
+        .replace("  density: comfortable", "  density: compact"),
+        encoding="utf-8",
+    )
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace(
+            "  skin: eva-unit-02",
+            "  skin: eva-unit-02-compact",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _add_render_fixture_density_task(course: Path) -> None:
+    assignment_dir = (
+        course / "course" / "4_reader_ux" / "_official" / "assignments"
+    )
+    assignment_dir.mkdir(parents=True, exist_ok=True)
+    (assignment_dir / "1_density_assignment.yaml").write_text(
+        "\n".join(
+            [
+                "id: density-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: reader-ux",
+                "content:",
+                "  title: Projection checkpoint",
+                "  instructions: Rework the projection residual example and compare the residual direction.",
+                "  due: '2026-09-15'",
+                "  points: 10 pts",
+                "  status: published",
+                "  tags:",
+                "    - projection",
+                "    - retrieval",
                 "",
             ]
         ),

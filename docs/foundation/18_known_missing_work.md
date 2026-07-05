@@ -18,8 +18,8 @@ This document names intentional gaps so they do not become tribal knowledge or a
 
 - Graph scopes, cross-course graph, graph editing, inferred related pages, and
   dynamic graph/state services.
-- Full-text search indexes, prose-derived search, external search services, and
-  dynamic search state.
+- External full-text search services, dynamic search state, and search behavior
+  beyond the accepted local static Search workspace.
 
 ## Deferred Dynamic Domains
 

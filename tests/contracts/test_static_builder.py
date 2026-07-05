@@ -145,7 +145,6 @@ def _assert_discovery_quick_guide(
 def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
     for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
         assert f'<span class="raya-command-label">{label}</span>' in html
-    assert html.count('aria-current="page"') == 1
     assert f'data-raya-current-workspace="{current}"' in html
     command_bar_match = re.search(
         r'<header class="[^"]*\braya-discovery-command-bar\b[^"]*"[^>]*>'
@@ -155,6 +154,7 @@ def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
     )
     assert command_bar_match is not None
     command_bar_html = command_bar_match.group(1)
+    assert command_bar_html.count('aria-current="page"') == 1
     assert "https://" not in command_bar_html
     assert "http://" not in command_bar_html
     current_link_match = re.search(
@@ -166,6 +166,23 @@ def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
         command_bar_html,
     )
     assert current_link_match is not None
+
+
+def _assert_discovery_focus_strip_shell(html: str, *, current: str) -> None:
+    assert "data-raya-discovery-focus-strip hidden aria-live=\"polite\"" in html
+    assert "data-raya-discovery-focus-title" in html
+    assert "data-raya-discovery-focus-page-link href=\"#\"" in html
+    assert "data-raya-discovery-focus-clear href=\"index.html\"" in html
+    for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
+        kind = label.lower()
+        assert f'data-raya-discovery-focus-handoff="{kind}"' in html
+        assert f">{label}</a>" in html
+    assert re.search(
+        rf'data-raya-discovery-focus-handoff="{re.escape(current)}"[^>]+'
+        r'data-raya-current-workspace-focus="true"[^>]+'
+        r'aria-current="page"',
+        html,
+    )
 
 
 def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
@@ -1120,6 +1137,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert "raya-discovery-command-bar" in graph_html
     assert "Graph workspace" in graph_html
     _assert_discovery_workspace_switcher(graph_html, current="graph")
+    _assert_discovery_focus_strip_shell(graph_html, current="graph")
     assert 'href="../search/index.html"' in graph_html
     assert 'href="../tasks/index.html"' in graph_html
     assert '<span class="raya-command-label">Search</span>' in graph_html
@@ -1875,6 +1893,7 @@ def test_build_writes_static_handout_print_css(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     assert "@media print" in rich_css
     assert ".raya-top-command-bar" in rich_css
+    assert ".raya-mobile-course-map-open" in rich_css
     assert ".raya-course-map" in rich_css
     assert ".raya-learning-rail" in rich_css
     assert ".raya-main-article" in rich_css
@@ -2061,6 +2080,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert (
         '<main id="raya-search-main" class="raya-search-page" '
         'data-raya-search-page data-raya-discovery-page '
+        'data-raya-discovery-rail-state="expanded" '
         'data-raya-discovery-controls-state="expanded" '
         'data-raya-discovery-context-state="expanded" tabindex="-1">'
     ) in search_html
@@ -2112,6 +2132,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     )
     assert "data-raya-current-workspace" in search_html
     _assert_discovery_workspace_switcher(search_html, current="search")
+    _assert_discovery_focus_strip_shell(search_html, current="search")
     _assert_discovery_quick_guide(
         search_html,
         kind="search",
@@ -2480,6 +2501,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert 'data-raya-discovery-overview="practice"' in practice_html
     assert "raya-discovery-overview-meta" in practice_html
     _assert_discovery_workspace_switcher(practice_html, current="practice")
+    _assert_discovery_focus_strip_shell(practice_html, current="practice")
     _assert_discovery_quick_guide(
         practice_html,
         kind="practice",
@@ -2670,6 +2692,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert 'data-raya-discovery-overview="tasks"' in tasks_html
     assert "raya-discovery-overview-meta" in tasks_html
     _assert_discovery_workspace_switcher(tasks_html, current="tasks")
+    _assert_discovery_focus_strip_shell(tasks_html, current="tasks")
     _assert_discovery_results_jump(
         tasks_html,
         workspace_class="raya-tasks-results-panel",
@@ -2848,6 +2871,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert 'data-raya-discovery-overview="schedule"' in schedule_html
     assert "raya-discovery-overview-meta" in schedule_html
     _assert_discovery_workspace_switcher(schedule_html, current="schedule")
+    _assert_discovery_focus_strip_shell(schedule_html, current="schedule")
     _assert_discovery_results_jump(
         schedule_html,
         workspace_class="raya-schedule-results-panel",
@@ -4756,7 +4780,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "sessionStorage" not in script_text
     assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
-    assert 'window.matchMedia("(min-width: 768px)")' not in script_text
+    assert 'window.matchMedia("(min-width: 768px)")' in script_text
     assert 'window.matchMedia("(min-width: 901px)")' not in script_text
     assert 'setAttribute("role", "dialog")' in script_text
     assert "aria-modal" in script_text
@@ -5780,8 +5804,8 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         assert selector in css
     assert "min-width: 2.75rem" in css
     assert ".raya-graph-workspace {\n  align-items: start;" in css
-    assert "height: clamp(28rem, 56vh, 40rem);" in css
-    assert "height: clamp(34rem, 72vh, 48rem);" in css
+    assert "height: clamp(24rem, 50vh, 36rem);" in css
+    assert "height: clamp(42rem, 84vh, 64rem);" in css
     assert (
         "grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);"
         in css
@@ -5806,9 +5830,16 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         'grid-template-areas:\n      "main-article"\n      "course-map"\n      "learning-rail";'
         in css
     )
+    assert 'grid-template-areas: "course-map main-article learning-rail";' in css
+    assert (
+        "grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 14rem);"
+        in css
+    )
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "border-left: 0;" in css
     assert "backdrop-filter: blur(18px);" in css
+    assert "backdrop-filter: blur(0.55rem);" not in css
+    assert "-webkit-backdrop-filter: blur(0.55rem);" not in css
     assert (
         "transition: grid-template-rows 220ms ease, opacity 180ms ease, margin-top 220ms ease;"
         in css

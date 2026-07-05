@@ -220,6 +220,9 @@ _GRAPH_JAVASCRIPT = r"""
   let pendingSelectTimer = 0;
   let suppressHoverInspectionUntil = 0;
   let inspectionPreviewHover = false;
+  let inspectionPreviewPinned = false;
+  let inspectionPreviewActionableUntil = 0;
+  let relationshipPreviewEngaged = false;
   let fullViewBox = null;
   let graphViewBox = null;
   let graphPanStart = null;
@@ -2387,6 +2390,7 @@ _GRAPH_JAVASCRIPT = r"""
         const focusedEdge = active.closest("[data-raya-graph-edge-hit]");
         if (focusedEdge) return;
       }
+      if (relationshipPreviewEngaged) return;
       if (relationshipPreview && active && relationshipPreview.contains(active)) {
         return;
       }
@@ -2405,6 +2409,8 @@ _GRAPH_JAVASCRIPT = r"""
       return;
     }
     inspectedId = nodesById.has(nodeId) ? nodeId : "";
+    inspectionPreviewPinned = Boolean(inspectedId && options.pin);
+    inspectionPreviewActionableUntil = inspectionPreviewPinned ? Date.now() + 700 : 0;
     if (hoverStatus) hoverStatus.textContent = inspectedId ? inspectionTextFor(inspectedId) : "";
     renderInspectionPreview(inspectedId);
     if (inspectedId && options.bubble) {
@@ -2537,10 +2543,38 @@ _GRAPH_JAVASCRIPT = r"""
     setActiveResult(visibleIds[nextIndex]);
   }
 
-  function clearGraphInspection(nodeId) {
+  function clearGraphInspection(nodeId, options = {}) {
     const applyClear = () => {
       if (inspectionPreviewHover) return;
+      const active = document.activeElement;
+      const relatedTarget = options.relatedTarget || null;
+      if (
+        inspectionPreview &&
+        (
+          (active && inspectionPreview.contains(active)) ||
+          (relatedTarget && inspectionPreview.contains(relatedTarget))
+        )
+      ) {
+        return;
+      }
       const focusedNodeId = focusedInspectionNodeId();
+      if (inspectionPreviewPinned && nodeId && inspectedId === nodeId) {
+        if (focusedNodeId === nodeId) return;
+        inspectionPreviewPinned = false;
+        if (!relatedTarget) return;
+      }
+      if (
+        nodeId &&
+        inspectedId === nodeId &&
+        inspectionPreviewActionableUntil &&
+        Date.now() < inspectionPreviewActionableUntil &&
+        !relatedTarget
+      ) {
+        window.setTimeout(() => {
+          if (inspectedId === nodeId) clearGraphInspection(nodeId);
+        }, Math.max(0, inspectionPreviewActionableUntil - Date.now()));
+        return;
+      }
       if (isActiveGraphNodeId(focusedNodeId)) {
         inspectGraphNode(focusedNodeId);
         return;
@@ -2555,6 +2589,8 @@ _GRAPH_JAVASCRIPT = r"""
         return;
       }
       inspectedId = "";
+      inspectionPreviewPinned = false;
+      inspectionPreviewActionableUntil = 0;
       if (hoverStatus) hoverStatus.textContent = "";
       renderInspectionPreview("");
       hideGraphPreviewBubble();
@@ -3288,6 +3324,9 @@ _GRAPH_JAVASCRIPT = r"""
   }
 
   function selectGraphNode(nodeId) {
+    inspectionPreviewPinned = false;
+    inspectionPreviewActionableUntil = 0;
+    relationshipPreviewEngaged = false;
     clearRelationshipFocus();
     inspectedEdgeKey = "";
     neighborhoodFocus = false;
@@ -3313,6 +3352,8 @@ _GRAPH_JAVASCRIPT = r"""
     clearRelationshipFocus();
     selectedId = "";
     inspectedId = "";
+    inspectionPreviewPinned = false;
+    inspectionPreviewActionableUntil = 0;
     inspectedEdgeKey = "";
     activeResultId = "";
     pageFocusId = "";
@@ -3698,8 +3739,10 @@ _GRAPH_JAVASCRIPT = r"""
         inspectGraphNode(node.id, { bubble: true });
       });
       link.addEventListener("mouseleave", () => clearGraphInspection(node.id));
-      link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true, bubble: true }));
-      link.addEventListener("blur", () => clearGraphInspection(node.id));
+      link.addEventListener("focus", () => inspectGraphNode(node.id, { force: true, bubble: true, pin: true }));
+      link.addEventListener("blur", (event) => {
+        clearGraphInspection(node.id, { relatedTarget: event.relatedTarget });
+      });
       link.addEventListener("pointerdown", (event) => startGraphNodeDrag(event, node.id));
       link.addEventListener("mousedown", (event) => startGraphNodeDrag(event, node.id));
       canvas.appendChild(link);
@@ -3736,6 +3779,25 @@ _GRAPH_JAVASCRIPT = r"""
       activeRelationshipFocus = relationshipFocusKey(edgeKind(edge), "out");
       renderDetail();
       render();
+    });
+  }
+  if (relationshipPreview) {
+    relationshipPreview.addEventListener("pointerdown", () => {
+      relationshipPreviewEngaged = true;
+    });
+    relationshipPreview.addEventListener("focusin", () => {
+      relationshipPreviewEngaged = true;
+    });
+    relationshipPreview.addEventListener("focusout", () => {
+      relationshipPreviewEngaged = false;
+      clearGraphEdgeInspection(activeGraphEdgeByKey(inspectedEdgeKey));
+    });
+    relationshipPreview.addEventListener("mouseenter", () => {
+      relationshipPreviewEngaged = true;
+    });
+    relationshipPreview.addEventListener("mouseleave", () => {
+      relationshipPreviewEngaged = false;
+      clearGraphEdgeInspection(activeGraphEdgeByKey(inspectedEdgeKey));
     });
   }
 

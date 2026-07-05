@@ -132,10 +132,31 @@ _DISCOVERY_JAVASCRIPT = r"""
     const railPageHandoffs = Array.from(
       root.querySelectorAll("[data-raya-discovery-rail-page-handoff]")
     );
+    const focusStrip = root.querySelector("[data-raya-discovery-focus-strip]");
+    const focusTitle = root.querySelector("[data-raya-discovery-focus-title]");
+    const focusPageLink = root.querySelector("[data-raya-discovery-focus-page-link]");
+    const focusHandoffs = Array.from(
+      root.querySelectorAll("[data-raya-discovery-focus-handoff]")
+    );
     const desktopRailQuery = window.matchMedia
       ? window.matchMedia("(min-width: 1280px)")
       : null;
     let activeRailPage = "";
+    function hideFocusStrip() {
+      if (!focusStrip) {
+        return;
+      }
+      focusStrip.hidden = true;
+      if (focusTitle) {
+        focusTitle.textContent = "";
+      }
+      if (focusPageLink) {
+        focusPageLink.setAttribute("href", "#");
+      }
+      focusHandoffs.forEach((link) => {
+        link.setAttribute("href", "#");
+      });
+    }
     function setRailExpanded(expanded) {
       root.setAttribute(
         "data-raya-discovery-rail-state",
@@ -197,6 +218,21 @@ _DISCOVERY_JAVASCRIPT = r"""
           if (!base) return;
           link.setAttribute("href", `${base}?page=${encodeURIComponent(activeRailPage)}`);
         });
+        const pageHref = focused.getAttribute("href") || "#";
+        if (focusTitle) {
+          focusTitle.textContent = title;
+        }
+        if (focusPageLink) {
+          focusPageLink.setAttribute("href", pageHref);
+        }
+        focusHandoffs.forEach((link) => {
+          const base = link.getAttribute("data-raya-handoff-base") || "";
+          if (!base) return;
+          link.setAttribute("href", `${base}?page=${encodeURIComponent(activeRailPage)}`);
+        });
+        if (focusStrip) {
+          focusStrip.hidden = false;
+        }
       }
     }
     ["controls", "context"].forEach((panelName) => {
@@ -223,6 +259,11 @@ _DISCOVERY_JAVASCRIPT = r"""
         const expanded = root.getAttribute(stateAttribute(panelName)) !== "collapsed";
         setPanelState(root, panelName, !expanded);
       });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideFocusStrip();
+      }
     });
   });
 })();

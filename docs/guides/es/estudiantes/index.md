@@ -31,6 +31,9 @@ autoridad de fuente, etiquetas, enlaces, estado oficial/generado, tareas ni el
 trabajo que el curso te pide completar. Si dos secciones se ven diferentes, usa
 el titulo de pagina, enlaces y etiquetas como significado del curso; la skin solo
 es enfasis visual.
+Algunas skins hacen que los workspaces generados usen cards y controles mas
+densos o mas espaciosos, pero no cambian el texto del articulo que lees ni
+agregan un selector de skin en el browser.
 
 Las paginas lectoras renderizadas pueden incluir botones `Text size` y
 `OpenDyslexic` en el riel izquierdo del curso. Son preferencias de lectura
@@ -167,11 +170,14 @@ Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
 coincidencia es comportamiento local de la pagina, no ranking, personalizacion
 ni recomendacion.
-Cuando uno de esos workspaces abre enfocado en una pagina, puede mostrar un
-aviso pequeno con el nombre de esa pagina y el numero de resultados visibles.
-Clear o Escape quitan ese foco y vuelven al workspace estatico completo,
-incluso cuando el foco de teclado esta en un resultado visible o una accion de
-contexto en vez del campo de busqueda. El aviso no es progreso guardado ni una
+Cuando uno de esos workspaces abre enfocado en una pagina, muestra una franja
+de pagina de curso enfocada cerca de arriba con `Open page`, links a Search,
+Graph, Practice, Tasks y Schedule enfocados en la misma pagina, y `Clear focus`.
+Search, Practice, Tasks y Schedule tambien pueden mostrar un aviso compacto con
+el nombre de esa pagina y el numero de resultados visibles. Clear o Escape
+quitan ese foco y vuelven al workspace estatico completo, incluso cuando el foco
+de teclado esta en un resultado visible o una accion de contexto en vez del
+campo de busqueda. La franja y el aviso no son progreso guardado ni una
 recomendacion.
 Los paneles de contexto tambien pueden mostrar links estaticos directos para el
 resultado, objeto, task o item de Schedule activo, como Open page, View graph u

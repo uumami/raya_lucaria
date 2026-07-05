@@ -37,6 +37,10 @@ profile-token problem, generated CSS output, or a rendered-page activation
 problem. Do not infer skin state from screenshots alone; compare the source
 selector, loaded profile, diagnostics, `skin.css`, `data-raya-skin`, and
 render-debug report.
+Skin `tokens.density` may compact generated workspace cards, chips, controls,
+and action links after rebuild. It must not shrink authored article text or
+create browser-side skin switching, `localStorage`, `sessionStorage`, or
+`data-raya-skin-override`.
 For graph palette issues, inspect optional `tokens.graph.group_1` through
 `group_8` in the selected skin, generated `--raya-graph-group-*` variables in
 `skin.css`, graph group chip inline variables, SVG node and edge custom
@@ -359,12 +363,15 @@ disclosures by default; they must not require storage, fetch, scoring, external
 assets, or browser-side MathJax.
 
 For discovery workspace page-focus failures, open Search, Practice, Tasks, and
-Schedule with a valid `?page=<page-id>` handoff and verify the control region
-shows a compact page-focus notice with the public page title and visible count.
+Schedule with a valid `?page=<page-id>` handoff and verify the first-viewport
+focused course page strip names the public page, links back to the page, links
+to the same page focus across Search, Graph, Practice, Tasks, and Schedule, and
+offers `Clear focus`. Also verify the control region shows a compact page-focus
+notice with the public page title and visible count where that workspace has one.
 Then verify Clear and Escape hide the notice and restore all visible results or
-objects. Missing or invalid page focus must keep the notice hidden. Do not add
-storage, fetch, external resources, learner-state wording, or recommendation
-language to make the notice work.
+objects. Missing or invalid page focus must keep the strip and notice hidden.
+Do not add storage, fetch, external resources, learner-state wording, or
+recommendation language to make page focus work.
 
 ```markdown
 ::: theorem {#main-theorem title="Fixture theorem"}
