@@ -54,6 +54,7 @@ Run Python/Raya verification:
   - npm ci --ignore-scripts --no-audit --no-fund
   - npm run raya-render-math -- --self-test
   - uv sync --python 3.10 --all-packages --dev
+  - optional Playwright managed Chromium install when requested
   - uv run pytest -q
   - representative fixture validate/build/inspect
   - render-debug parity gate for the render fixture
@@ -90,10 +91,37 @@ run() {
   "$@"
 }
 
+configure_playwright_chromium() {
+  if [[ "${RAYA_INSTALL_PLAYWRIGHT_CHROMIUM:-}" != "1" ]]; then
+    return 0
+  fi
+
+  run uv run python -m playwright install chromium
+
+  local browser
+  browser="$(
+    uv run python - <<'PY'
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as playwright:
+    print(playwright.chromium.executable_path)
+PY
+  )"
+
+  if [[ ! -x "$browser" ]]; then
+    echo "FAILED: Playwright Chromium executable was not found: $browser" >&2
+    exit 1
+  fi
+
+  export RAYA_TEST_BROWSER="$browser"
+  echo "check-python: RAYA_TEST_BROWSER=$RAYA_TEST_BROWSER"
+}
+
 acquire_dependency_lock
 run npm ci --ignore-scripts --no-audit --no-fund
 run npm run raya-render-math -- --self-test
 run uv sync --python 3.10 --all-packages --dev
+configure_playwright_chromium
 
 run uv run pytest -q
 

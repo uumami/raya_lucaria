@@ -377,7 +377,7 @@ def test_check_docker_defaults_to_caller_user_for_compose_run(tmp_path: Path) ->
         f"RAYA_DOCKER_USER={expected_user}\n"
         "ARGS=compose run --rm dev npx --version\n"
         f"RAYA_DOCKER_USER={expected_user}\n"
-        "ARGS=compose run --rm dev ./scripts/check-python.sh\n"
+        "ARGS=compose run --rm --env RAYA_INSTALL_PLAYWRIGHT_CHROMIUM=1 dev ./scripts/check-python.sh\n"
     )
 
 
@@ -404,5 +404,5 @@ def test_check_docker_preserves_user_override_for_compose_run(tmp_path: Path) ->
         "RAYA_DOCKER_USER=123:456\n"
         "ARGS=compose run --rm dev npx --version\n"
         "RAYA_DOCKER_USER=123:456\n"
-        "ARGS=compose run --rm dev ./scripts/check-python.sh\n"
+        "ARGS=compose run --rm --env RAYA_INSTALL_PLAYWRIGHT_CHROMIUM=1 dev ./scripts/check-python.sh\n"
     )
