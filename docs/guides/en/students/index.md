@@ -52,10 +52,12 @@ rail. On desktop, the expanded course map is rendered as an expanded
 hierarchical course map and may show structural sequence numbers from the course
 order. It gives orientation by default, the main article remains the lesson, and
 the learning rail provides page contents and nearby course context. You can
-collapse the map to an operable compact map rail when you want more reading
+collapse the map to a minimal floating Map edge opener when you want more reading
 space; that choice is non-persistent and does not store or show personal
-progress. On desktop, collapsed map and context rails appear as compact tabs so
-you can restore them without losing the article. The Map, Focus reading,
+progress. On desktop, collapsed map and context rails stop reserving reading
+columns and leave small translucent edge controls so you can restore them without
+losing the article. On medium-width screens, expanded map and context panels
+open as overlays so the article remains the shell's core column. The Map,
 Context, Text size, OpenDyslexic, Search, Graph, Practice, Tasks, and Schedule
 controls are reading-comfort and navigation tools in the left course rail. They
 can widen the article, restore surrounding context, or hand off to generated
@@ -67,18 +69,18 @@ record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
+Reader pages use the left course rail as a single Course Tools area plus the course map. The map supports collapsible course-map branches for nested structure, and the same tab may remember which branches are collapsed after refresh or page navigation. That memory is orientation only, not progress or personalization.
+
 The left course rail may include a static Search handoff to the generated Course
 Search workspace. The reader page does not build a second search index, fetch
 results, or save search text as study state. Use it as a quick jump when a
 phrase, theorem, page title, or stable ID comes to mind while reading.
 
 Use the Course map button to collapse or expand navigation when you need a
-different focus. On desktop, `Focus reading` can collapse the map and right
-learning rail together so the article gets more space; it is temporary display
-state and does not store progress. On desktop, `Context` can hide or restore
-only the right learning rail while leaving the course map available; that is
-also temporary layout state, not progress or personalization. On tablet and
-mobile, the Course map button opens a temporary drawer with its own title,
+different focus. On desktop and medium-width screens, `Context` can hide or
+restore only the right learning rail while leaving the course map available;
+that is temporary layout state, not progress or personalization. On phone-sized
+screens, the Course map button opens a temporary drawer with its own title,
 page position, filter, workspace shortcuts, and close button. While the drawer
 is open, the page behind it pauses scrolling so the map is easier to use; close
 it with the close button, the backdrop, or Escape to return focus to reading.

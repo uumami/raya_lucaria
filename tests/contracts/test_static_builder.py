@@ -2931,8 +2931,8 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "2026-10-01" in schedule_html
     assert "2026-10-15" in schedule_html
     topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
-    assert 'aria-label="Tasks workspace, 4 tasks"' in topic_html
-    assert 'aria-label="Schedule workspace, 3 dated"' in topic_html
+    assert 'aria-label="Open official tasks, 4 tasks"' in topic_html
+    assert 'aria-label="Open official schedule, 3 dated"' in topic_html
     assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in schedule_html
     assert 'href="../graph/index.html?page=first-topic"' in schedule_html
 
@@ -4777,10 +4777,14 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert '<script src="_raya/render/shell.js" defer></script>' in index_html
     assert "raya.courseMapExpanded" not in script_text
     assert "localStorage" not in script_text
-    assert "sessionStorage" not in script_text
+    assert "sessionStorage" in script_text
+    assert "courseMapBranchStorageKey" in script_text
+    assert "loadStoredCollapsedMapBranches" in script_text
+    assert "saveCollapsedMapBranches" in script_text
     assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
-    assert 'window.matchMedia("(min-width: 768px)")' in script_text
+    assert 'window.matchMedia("(min-width: 640px)")' in script_text
+    assert '"(min-width: 640px) and (max-width: 767px)"' in script_text
     assert 'window.matchMedia("(min-width: 901px)")' not in script_text
     assert 'setAttribute("role", "dialog")' in script_text
     assert "aria-modal" in script_text
@@ -4805,10 +4809,10 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "function openCourseMapDrawer" in script_text
     assert "function closeCourseMapDrawer" in script_text
     assert "function expandCurrentCourseMapPath" in script_text
-    assert "function expandAllCourseMapNodes" in script_text
-    assert "function collapseCourseMapToCurrentPath" in script_text
-    assert "rayaCourseMapScan" in script_text
-    assert "collapseExpandedSiblingMapNodes" in script_text
+    assert "function expandAllCourseMapNodes" not in script_text
+    assert "function collapseCourseMapToCurrentPath" not in script_text
+    assert "rayaCourseMapScan" not in script_text
+    assert "collapseExpandedSiblingMapNodes" not in script_text
     assert "function visibleCourseMapLinks" in script_text
     assert "function handleCourseMapKeyboardNavigation" in script_text
     assert (
@@ -4826,7 +4830,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "glintstone-nav-expanded" not in script_text
     assert "data-raya-course-map-filter" in script_text
     assert "data-raya-map-node-toggle" in script_text
-    assert "data-raya-course-map-action" in script_text
+    assert "data-raya-course-map-action" not in script_text
     assert "data-raya-course-map-close" in script_text
     assert "data-raya-course-map-drawer-backdrop" in script_text
     assert "data-raya-course-map-scroll-lock" in script_text
@@ -4837,10 +4841,12 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert 'html[data-raya-course-map-scroll-lock="true"]' in css_text
     assert ".raya-local-asset-inspect" in css_text
     assert ".raya-asset-inspector" in css_text
-    assert '.raya-course-map-actions button[aria-pressed="true"]' in css_text
+    assert ".raya-course-map-actions" not in css_text
+    assert ".raya-course-map-workspaces" not in css_text
     assert ".raya-course-map-drawer-chrome" in css_text
-    assert ".raya-course-map-current-chip" in css_text
-    assert '[data-raya-course-map="collapsed"] .raya-course-map-current-chip' in css_text
+    assert ".raya-course-map-current-chip" not in css_text
+    assert ".raya-course-map-list {\n  min-height: 0;" in css_text
+    assert "data-raya-map-depth" in index_html
     assert ".raya-learning-rail-context-chip" in css_text
     assert (
         '[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip'
@@ -4884,6 +4890,12 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
         "reader pages have no reader top bar",
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
+        "minimal floating Map edge opener",
+        "collapsed desktop course-map content is removed from keyboard and assistive navigation",
+        "one compact Course Tools surface",
+        "no separate Course Workspaces section",
+        "no visible Current, All, Scan, or Less map action buttons",
+        "course-scoped sessionStorage may restore collapsed course-map branches",
     ):
         assert required in foundation
     for forbidden in (
@@ -4891,20 +4903,38 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
         "sticky command bar may show",
         "command-bar map control",
         "top-bar Context",
+        "may include static workspace shortcut cards",
+        "may include volatile section controls",
+        "section expansion, and filter text are non-persistent UI state",
+        "volatile desktop reader focus",
     ):
         assert forbidden not in foundation
 
     for text in (english_student, english_agent):
         assert "left course rail" in text
         assert "discovery command bar" in text
+        assert "single Course Tools area" in text
+        assert "collapsible course-map branches" in text
         assert "top bar" not in text.lower()
         assert "top-bar" not in text.lower()
+    assert "tablet/mobile Course map drawer" not in english_agent
+    assert "drawer Course map en tablet/movil" not in spanish_agent
 
     for text in (spanish_student, spanish_agent):
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
+        assert "una sola area de Course Tools" in text
+        assert "ramas plegables del mapa del curso" in text
         assert "barra superior" not in text.lower()
         assert "comando superior" not in text.lower()
+
+    for text in (english_student, english_agent):
+        assert "Focus reading" not in text
+        assert "collapse the map and right learning rail together" not in text
+
+    for text in (spanish_student, spanish_agent):
+        assert "Focus reading" not in text
+        assert "colapsar juntos el mapa" not in text
 
 
 def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
@@ -4930,7 +4960,6 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html
     assert '<a class="raya-command raya-command-graph"' in html
-    assert 'aria-label="Open course graph"' in html
     assert (
         '<button class="raya-command raya-command-map raya-course-map-toggle"' in html
     )
@@ -4973,60 +5002,27 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<a class="raya-skip-link" href="#raya-article">Skip to content</a>' in html
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
-    assert 'class="raya-course-map-workspaces"' in html
-    assert 'aria-label="Course workspaces"' in html
-    assert "data-raya-course-map-workspaces" in html
+    assert 'class="raya-course-map-workspaces"' not in html
+    assert 'aria-label="Course workspaces"' not in html
+    assert "data-raya-course-map-workspaces" not in html
     assert 'class="raya-course-map-drawer-chrome"' in html
     assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
     assert 'class="raya-course-map-drawer-grip"' in html
     assert 'class="raya-course-map-drawer-title">Course map</p>' in html
-    assert 'class="raya-course-map-current-chip"' in html
-    assert "data-raya-course-map-current-chip" in html
-    assert 'aria-label="Current path: Render Fixture, Projection Residuals"' in html
-    assert '<span class="raya-course-map-current-chip-path">' in html
-    assert 'class="raya-course-map-actions"' in html
-    assert 'role="group" aria-label="Course map section controls"' in html
-    assert 'data-raya-course-map-action="current"' in html
-    assert 'data-raya-course-map-action="expand-all"' in html
-    assert 'data-raya-course-map-action="scan"' in html
-    assert (
-        'data-raya-course-map-action="scan" aria-pressed="false" '
-        'aria-label="Scan course map branches">Scan</button>'
-    ) in html
-    assert 'data-raya-course-map-action="less"' in html
+    assert 'class="raya-course-map-current-chip"' not in html
+    assert 'class="raya-course-map-actions"' not in html
+    assert 'data-raya-course-map-action="current"' not in html
+    assert 'data-raya-course-map-action="expand-all"' not in html
+    assert 'data-raya-course-map-action="scan"' not in html
+    assert 'data-raya-course-map-action="less"' not in html
+    assert 'data-raya-course-map-storage-key=' in html
+    assert 'data-raya-course-map-root=' in html
+    assert 'data-raya-command-tooltip=' in html
+    assert 'aria-label="Open course graph, 2 links, 0 from this page, 2 links here"' in html
+    assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
+    assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
-    assert (
-        'class="raya-course-map-workspace-link raya-course-map-workspace-search"'
-        in html
-    )
-    assert (
-        'class="raya-course-map-workspace-link raya-course-map-workspace-graph"'
-        in html
-    )
-    assert (
-        'aria-label="Graph workspace, 2 links, 0 from this page, 2 links here"'
-        in html
-    )
-    assert (
-        '<span class="raya-course-map-workspace-detail" '
-        'data-raya-course-map-workspace-detail>0 from this page</span>'
-        in html
-    )
-    assert (
-        '<span class="raya-course-map-workspace-detail" '
-        'data-raya-course-map-workspace-detail>2 links here</span>'
-        in html
-    )
-    assert (
-        'class="raya-course-map-workspace-link raya-course-map-workspace-practice"'
-        in html
-    )
-    assert (
-        'class="raya-course-map-workspace-link raya-course-map-workspace-tasks"'
-        in html
-    )
-    assert "data-raya-course-map-workspace-link" in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
@@ -5083,20 +5079,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert '<a class="raya-command raya-command-graph"' in root_html
     assert (
-        'aria-label="Graph workspace, 6 links, 5 from this page, 1 link here"'
+        'aria-label="Open course graph, 6 links, 5 from this page, 1 link here"'
         in root_html
     )
-    assert (
-        '<span class="raya-course-map-workspace-detail" '
-        'data-raya-course-map-workspace-detail>5 from this page</span>'
-        in root_html
-    )
-    assert (
-        '<span class="raya-course-map-workspace-detail" '
-        'data-raya-course-map-workspace-detail>1 link here</span>'
-        in root_html
-    )
+    assert 'href="_raya/graph/index.html?page=render-root"' in root_html
+    assert "raya-course-map-workspace-detail" not in root_html
     assert (
         'class="raya-reading-context-link raya-reading-context-prev"' not in root_html
     )
@@ -5115,6 +5104,13 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'href="../reader-ux/index.html"' in last_html
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
+    course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    assert course_map_html.index('class="raya-course-map-tools"') < (
+        course_map_html.index('id="raya-course-map-filter"')
+    )
+    assert course_map_html.index('id="raya-course-map-filter"') < (
+        course_map_html.index('class="raya-course-map-list"')
+    )
     reading_flow_panel = _section_html(last_html, "raya-page-reading-flow")
     assert 'aria-expanded="true">Reading flow</button>' in reading_flow_panel
     assert '<p class="raya-reading-flow-counts">' not in reading_flow_panel
@@ -5482,10 +5478,11 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html
     )
-    assert (
-        '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">'
-        in html
-    )
+    assert '<nav id="raya-course-map" class="raya-course-map"' in html
+    assert 'aria-label="Course map"' in html
+    assert 'data-raya-course-map="expanded"' in html
+    assert 'data-raya-course-map-root=' in html
+    assert 'data-raya-course-map-storage-key=' in html
     assert '<button class="raya-course-map-toggle"' in html
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
@@ -5493,17 +5490,18 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-command-icon="map"' in html
     assert '<span class="raya-command-label">Map</span>' in html
     assert 'aria-expanded="true">Collapse map</button>' in html
-    assert 'class="raya-course-map-workspaces"' in html
-    assert 'aria-label="Course workspaces"' in html
-    assert "data-raya-course-map-workspaces" in html
-    assert "data-raya-course-map-workspace-link" in html
-    assert 'class="raya-course-map-actions"' in html
-    assert 'data-raya-course-map-action="current"' in html
-    assert 'data-raya-course-map-action="expand-all"' in html
-    assert 'data-raya-course-map-action="scan"' in html
-    assert 'data-raya-course-map-action="less"' in html
+    assert 'class="raya-course-map-workspaces"' not in html
+    assert 'aria-label="Course workspaces"' not in html
+    assert "data-raya-course-map-workspaces" not in html
+    assert "data-raya-course-map-workspace-link" not in html
+    assert 'class="raya-course-map-actions"' not in html
+    assert 'data-raya-course-map-action="current"' not in html
+    assert 'data-raya-course-map-action="expand-all"' not in html
+    assert 'data-raya-course-map-action="scan"' not in html
+    assert 'data-raya-course-map-action="less"' not in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
+    assert "Course Tools" in html
     assert "_raya/search/index.html?q=" in html
     assert "_raya/graph/index.html?page=" in html
     assert "_raya/practice/index.html" in html
@@ -5548,20 +5546,8 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'tabindex="-1"' not in course_map_html
     assert '<p class="raya-page-position">Page 1 of 3</p>' in html
     assert '<span class="raya-reading-context-position">Page 3 of 3</span>' in topic_html
-    assert (
-        'aria-label="Current path: Minimal Course Fixture, First Unit, First Topic"'
-        in topic_html
-    )
-    assert (
-        '<span class="raya-course-map-current-chip-path">'
-        '<span>Minimal Course Fixture</span>'
-        '<span class="raya-course-map-current-chip-separator" aria-hidden="true">/</span>'
-        '<span>First Unit</span>'
-        '<span class="raya-course-map-current-chip-separator" aria-hidden="true">/</span>'
-        '<span>First Topic</span>'
-        "</span>"
-        in topic_html
-    )
+    assert 'class="raya-course-map-current-chip-path"' not in topic_html
+    assert 'class="raya-course-map-current-chip-separator"' not in topic_html
     assert '<nav class="raya-article-sequence raya-article-sequence-top"' in html
     assert 'aria-label="Previous and next pages"' in html
     assert (
@@ -5819,7 +5805,13 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
+        'grid-template-areas: "main-article learning-rail";' in css
+    )
+    assert (
+        'grid-template-areas: "course-map main-article";' in css
+    )
+    assert (
+        'grid-template-areas: "main-article";' in css
     )
     assert 'grid-template-areas: "course-map main-article learning-rail";' in css
     assert (
@@ -5831,10 +5823,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert 'grid-template-areas: "course-map main-article learning-rail";' in css
-    assert (
-        "grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) minmax(0, 14rem);"
-        in css
-    )
+    assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "border-left: 0;" in css
     assert "backdrop-filter: blur(18px);" in css
@@ -5846,9 +5835,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     )
     assert "@media (max-width: 1500px)" in css
     assert "@media (min-width: 1280px)" in css
-    assert (
-        "grid-template-columns: 5.5rem minmax(48rem, 1fr) minmax(15rem, 15rem);" in css
-    )
+    assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "outline: 3px solid var(--raya-color-accent);" in css
     assert "@media (max-width: 1279px)" in css
     assert "max-width: 68rem;" in css

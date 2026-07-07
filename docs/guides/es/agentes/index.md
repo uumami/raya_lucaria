@@ -162,27 +162,29 @@ al final del articulo, la metadata del riel compacto operable, la salida de
 render-debug, el comportamiento movil sin overflow y sin solicitudes externas. Las
 breadcrumbs deben mostrar home del curso, paginas ancestro y pagina actual con
 markup de navegacion accesible, links estaticos neutrales al despliegue, marca
-de pagina actual, sin rutas de fuente y sin rutas privadas de soporte. El estado
-del mapa del curso, el texto
-del filtro y el contexto de lectura son UI no persistente; la orientacion de
-pagina actual en el mapa tambien debe seguir no persistente y no debe restaurar
-storage de navegacion legacy. Trata la posicion estructural de pagina y las
-cards de secuencia como orientacion estructural del curso, no como progreso del
-estudiante.
+de pagina actual, sin rutas de fuente y sin rutas privadas de soporte. El
+colapso de shell del mapa del curso, el texto del filtro, la orientacion de la
+pagina actual en el mapa, el estado del drawer y el contexto del riel derecho
+son UI no persistente. El colapso de ramas del mapa del curso es la unica
+excepcion de storage en la misma pestana: puede guardar identificadores de ramas
+plegadas con scope de curso en `sessionStorage` entre refresh y navegacion en la
+misma pestana, y no debe volverse estado durable, cross-tab, de progreso, de
+recomendacion ni de personalizacion. La orientacion de pagina actual en el mapa
+tambien debe seguir no persistente y no debe restaurar storage de navegacion
+legacy. Trata la posicion estructural de pagina y las cards de secuencia como
+orientacion estructural del curso, no como progreso del estudiante.
 Si la shell expone contexto de seccion actual, verifica que se genere desde los
 contenidos de pagina y anchors de heading, que se actualice con el heading activo
 en tests de browser, que siga siendo un enlace local normal, que no escriba
 storage del browser y que no use lenguaje de porcentaje leido, finalizacion,
 dominio, recomendacion o progreso.
+Las paginas de lectura usan el riel izquierdo del curso como una sola area de Course Tools junto con el mapa del curso. El mapa admite ramas plegables del mapa del curso para estructuras anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de actualizar o navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
 Si una pagina no tiene `estimated_time` escrito, verifica que cualquier
 `Estimated read time` mostrado en el Page brief o riel derecho se calcule
 durante build desde texto publico del articulo, no use storage del browser ni
 fetch runtime, y siga siendo orientacion aproximada, no progreso, dominio,
 recomendacion ni personalizacion. Cuando exista `estimated_time`, debe tener
 precedencia como `Estimated time`.
-Si la shell expone `Focus reading`, verifica que sea accesible por teclado,
-colapse juntos en desktop el mapa del curso y el riel derecho, pueda volver al
-layout expandido, no cambie el estado de URL y no escriba storage del browser.
 Si la shell expone un comando `Context` en el riel izquierdo del curso, verifica
 que alterne solo el riel derecho en desktop, mantenga disponible el mapa del
 curso, sincronice `aria-expanded` y labels con los controles del riel,
@@ -194,10 +196,13 @@ pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe
 seguir visible y alcanzable por tecnologias asistivas cuando los controles de
 colapso estan ocultos. Presionar Escape dentro del riel en movil no debe dejar
 `aria-hidden`, `inert` ni contenido enfocable oculto. El estado de colapso u
-orientacion de la shell no debe escribir `localStorage` ni `sessionStorage`;
-solo preferencias explicitas de comodidad como tamano de texto u
-`OpenDyslexic` pueden persistir.
-Cuando cambie el drawer Course map en tablet/movil, verifica chrome visible del
+orientacion de la shell no debe escribir `localStorage`. Solo identificadores de
+ramas plegadas del mapa del curso, con scope de curso y en la misma pestana,
+pueden usar `sessionStorage`; el estado del drawer, el contexto del riel derecho,
+el progreso, las recomendaciones y la personalizacion no deben guardarse. Solo
+preferencias explicitas de comodidad como tamano de texto u `OpenDyslexic`
+pueden persistir de forma durable.
+Cuando cambie el drawer Course map en layouts moviles de telefono, verifica chrome visible del
 drawer, posicion estructural de pagina cuando exista, boton de cierre, cierre
 por backdrop, cierre por Escape, restauracion de foco al opener, contencion de
 foco mientras esta abierto, estado cerrado con `aria-hidden`/`inert`, scroll

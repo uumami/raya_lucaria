@@ -290,10 +290,8 @@ recomendaciones.
 
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
-y permiten filtrar etiquetas visibles de paginas o colapsarlo a un riel compacto
-operable para dar mas espacio de lectura. En desktop, `Focus reading` puede
-colapsar juntos el mapa y el riel derecho como estado visual temporal. El estado
-del mapa, el foco lector y el texto del filtro son UI no persistente. La shell puede mostrar estructura como `Page N of M`;
+y permiten filtrar etiquetas visibles de paginas o colapsarlo a un opener minimo flotante Map para dar mas espacio de lectura. El estado del mapa, el contexto y
+el texto del filtro son UI no persistente. La shell puede mostrar estructura como `Page N of M`;
 eso es posicion dentro del curso y no es progreso personal ni finalizacion.
 Las paginas tambien pueden terminar con cards Previous/Next generadas desde el
 orden autorado del curso. No las escribas por separado; manten claro el orden y

@@ -1,9 +1,6 @@
 name: Deploy Docs to GitHub Pages
 
 on:
-  push:
-    branches:
-      - new_rayalucaria
   workflow_dispatch:
 
 permissions:

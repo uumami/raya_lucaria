@@ -54,11 +54,14 @@ del curso expandido se renderiza como un mapa jerarquico del curso expandido y
 puede mostrar numeros estructurales de secuencia del orden del curso. Da
 orientacion por defecto, el articulo principal sigue siendo la leccion, y el
 riel de aprendizaje ofrece contenidos de pagina y contexto cercano. Puedes
-colapsar el mapa a un riel compacto operable cuando quieras mas espacio de
-lectura; esa eleccion es no persistente y no guarda ni muestra progreso
-personal. En desktop, los rieles colapsados de mapa y contexto aparecen como
-pestanas compactas para que puedas restaurarlos sin perder el articulo. Los
-controles Map, Focus reading, Context, Text size, OpenDyslexic, Search, Graph,
+colapsar el mapa a un opener minimo flotante Map cuando quieras mas
+espacio de lectura; esa eleccion es no persistente y no guarda ni muestra
+progreso personal. En desktop, los rieles colapsados de mapa y contexto dejan
+de reservar columnas de lectura y muestran controles pequenos y translucidos de
+borde para que puedas restaurarlos sin perder el articulo. En pantallas de
+ancho medio, el mapa y el contexto expandidos se abren como overlays para que
+el articulo siga siendo la columna central del shell. Los
+controles Map, Context, Text size, OpenDyslexic, Search, Graph,
 Practice, Tasks y Schedule son herramientas de comodidad y navegacion en el
 riel izquierdo del curso. Pueden ampliar el articulo, restaurar el contexto
 alrededor o pasar a workspaces generados sin guardar un estado personal de
@@ -71,6 +74,8 @@ Cuando un mapa largo se abre, la pagina puede mover el enlace de la pagina
 actual a la parte visible del mapa. Esa orientacion es contexto temporal de
 lectura, no estado guardado.
 
+Las paginas de lectura usan el riel izquierdo del curso como una sola area de Course Tools junto con el mapa del curso. El mapa admite ramas plegables del mapa del curso para estructuras anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de actualizar o navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
+
 El riel izquierdo del curso puede incluir un handoff estatico de Search al
 workspace generado Course Search. La pagina de lectura no crea un segundo
 indice, no hace fetch de resultados ni guarda texto de busqueda como estado de
@@ -78,12 +83,10 @@ estudio. Usalo como salto rapido cuando recuerdes una frase, teorema, titulo de
 pagina o stable ID mientras lees.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
-necesites otro foco. En desktop, `Focus reading` puede colapsar juntos el mapa y
-el riel derecho para dar mas espacio al articulo; es estado visual temporal y no
-guarda progreso. En desktop, `Context` puede ocultar o restaurar solo el riel
-derecho mientras deja disponible el mapa del curso; tambien es estado temporal
-de layout, no progreso ni personalizacion. En tablet y movil, el boton Course
-map abre un drawer temporal con titulo propio, posicion de pagina, filtro,
+necesites otro foco. En desktop, `Context` puede ocultar o restaurar solo el
+riel derecho mientras deja disponible el mapa del curso; tambien es estado
+temporal de layout, no progreso ni personalizacion. En layouts de tamano movil,
+el boton Course map abre un drawer temporal con titulo propio, posicion de pagina, filtro,
 atajos de workspace y boton de cierre. Mientras el drawer esta abierto, la
 pagina de fondo pausa el scroll para que el mapa sea mas facil de usar; cierralo
 con el boton de cierre, el backdrop o Escape para volver el foco a la lectura.

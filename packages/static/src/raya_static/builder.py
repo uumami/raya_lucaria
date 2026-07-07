@@ -1134,14 +1134,6 @@ def _render_top_command_bar(
                 icon="map",
             ),
             _render_command_button(
-                class_name="raya-command raya-command-focus",
-                aria_label="Focus reading",
-                icon="focus",
-                label="Focus reading",
-                aria_pressed="false",
-                extra_attrs=" data-raya-reader-focus-toggle",
-            ),
-            _render_command_button(
                 class_name="raya-command raya-command-context",
                 aria_label="Hide learning context",
                 icon="context",
@@ -1228,6 +1220,10 @@ def _render_course_map_tools(
     practice_href: str,
     tasks_href: str,
     schedule_href: str,
+    graph_label: str,
+    practice_label: str,
+    tasks_label: str,
+    schedule_label: str,
 ) -> str:
     return "\n".join(
         [
@@ -1235,7 +1231,7 @@ def _render_course_map_tools(
                 '<section class="raya-course-map-tools" aria-label="Course tools" '
                 "data-raya-course-map-tools>"
             ),
-            '<p class="raya-course-map-workspaces-label">Course tools</p>',
+            '<p class="raya-course-map-tools-label">Course Tools</p>',
             '<div class="raya-course-tools raya-course-map-tool-grid">',
             (
                 '<div class="raya-command-group raya-command-group-discovery" '
@@ -1243,40 +1239,45 @@ def _render_course_map_tools(
                 'aria-label="Discovery workspaces">'
             ),
             _render_command_search_form(search_href),
-            _render_command_link(
+            _render_compact_command_link(
                 class_name="raya-command raya-command-search",
                 href=search_href,
                 aria_label="Open course search",
                 icon="search",
                 label="Search",
+                tooltip="Open course search",
             ),
-            _render_command_link(
+            _render_compact_command_link(
                 class_name="raya-command raya-command-graph",
                 href=graph_href,
-                aria_label="Open course graph",
+                aria_label=graph_label,
                 icon="graph",
                 label="Graph",
+                tooltip=graph_label,
             ),
-            _render_command_link(
+            _render_compact_command_link(
                 class_name="raya-command raya-command-practice",
                 href=practice_href,
-                aria_label="Open official practice",
+                aria_label=practice_label,
                 icon="practice",
                 label="Practice",
+                tooltip=practice_label,
             ),
-            _render_command_link(
+            _render_compact_command_link(
                 class_name="raya-command raya-command-tasks",
                 href=tasks_href,
-                aria_label="Open official tasks",
+                aria_label=tasks_label,
                 icon="tasks",
                 label="Tasks",
+                tooltip=tasks_label,
             ),
-            _render_command_link(
+            _render_compact_command_link(
                 class_name="raya-command raya-command-schedule",
                 href=schedule_href,
-                aria_label="Open official schedule",
+                aria_label=schedule_label,
                 icon="schedule",
                 label="Schedule",
+                tooltip=schedule_label,
             ),
             "</div>",
             (
@@ -1289,14 +1290,6 @@ def _render_course_map_tools(
                 class_name="raya-command raya-command-map raya-course-map-toggle",
                 aria_label="Collapse course map",
                 icon="map",
-            ),
-            _render_command_button(
-                class_name="raya-command raya-command-focus",
-                aria_label="Focus reading",
-                icon="focus",
-                label="Focus",
-                aria_pressed="false",
-                extra_attrs=" data-raya-reader-focus-toggle",
             ),
             _render_command_button(
                 class_name="raya-command raya-command-context",
@@ -1964,6 +1957,8 @@ def _render_course_map(
     sequence_index = {
         target.id: index for index, target in enumerate(content_model.pages, start=1)
     }
+    root_identity = content_model.root_id or course_title
+    storage_key = "raya:course-map:" + _safe_map_fragment_id(root_identity)
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -2058,38 +2053,6 @@ def _render_course_map(
         if root_id in content_model.pages_by_id
     ]
     position = html.escape(_page_position(page, content_model))
-    current_path_labels = [
-        course_title,
-        *[
-            ancestor.nav_title or ancestor.title
-            for ancestor in _breadcrumb_pages(page, content_model)
-            if ancestor.id != page.id
-            and (
-                not content_model.pages
-                or ancestor.id != content_model.pages[0].id
-            )
-        ],
-        page.nav_title or page.title,
-    ]
-    current_path_aria = html.escape(
-        "Current path: " + ", ".join(current_path_labels),
-        quote=True,
-    )
-    current_path_html = (
-        '<span class="raya-course-map-current-chip-path">'
-        + "".join(
-            (
-                '<span class="raya-course-map-current-chip-separator" '
-                'aria-hidden="true">/</span>'
-                if index > 0
-                else ""
-            )
-            + f"<span>{html.escape(label)}</span>"
-            for index, label in enumerate(current_path_labels)
-            if label
-        )
-        + "</span>"
-    )
     direct_official_count = sum(official_counts.get(page.id, {}).values())
     direct_task_count = sum(
         1
@@ -2127,113 +2090,44 @@ def _render_course_map(
             course_map_schedule_href,
             {"page": page.id},
         )
-    workspace_links = [
-        ("search", "Search", search_href, "Course", []),
-        (
-            "graph",
-            "Graph",
-            graph_href,
-            _count_label(direct_link_count, "link"),
-            graph_detail_badges,
-        ),
-        (
-            "practice",
-            "Practice",
-            practice_href,
-            f"{direct_official_count} official"
-            if direct_official_count
-            else "Course",
-            [],
-        ),
-        (
-            "tasks",
-            "Tasks",
-            course_map_tasks_href,
-            _count_label(direct_task_count, "task") if direct_task_count else "Course",
-            [],
-        ),
-        (
-            "schedule",
-            "Schedule",
-            course_map_schedule_href,
-            f"{direct_dated_task_count} dated" if direct_dated_task_count else "Course",
-            [],
-        ),
-    ]
-
-    def render_workspace_link(
-        kind: str,
-        label: str,
-        href: str,
-        badge: str,
-        details: list[str],
-    ) -> str:
-        detail_html = ""
-        if details:
-            detail_html = (
-                '<span class="raya-course-map-workspace-details">'
-                + "".join(
-                    (
-                        '<span class="raya-course-map-workspace-detail" '
-                        "data-raya-course-map-workspace-detail>"
-                        f"{html.escape(detail)}"
-                        "</span>"
-                    )
-                    for detail in details
-                )
-                + "</span>"
-            )
-        aria_detail = html.escape(", ".join([badge, *details]), quote=True)
-        return "\n".join(
-            [
-                (
-                    f'<a class="raya-course-map-workspace-link '
-                    f'raya-course-map-workspace-{html.escape(kind, quote=True)}" '
-                    "data-raya-course-map-workspace-link "
-                    f'href="{html.escape(href)}" '
-                    f'aria-label="{html.escape(label, quote=True)} workspace, {aria_detail}">'
-                ),
-                '<span class="raya-course-map-workspace-label">'
-                f"{html.escape(label)}"
-                "</span>",
-                '<span class="raya-course-map-workspace-badge">'
-                f"{html.escape(badge)}"
-                "</span>",
-                detail_html,
-                "</a>",
-            ]
-        )
-
-    workspace_html = "\n".join(
-        [
-            '<section class="raya-course-map-workspaces" '
-            'aria-label="Course workspaces" data-raya-course-map-workspaces>',
-            '<p class="raya-course-map-workspaces-label">Course workspaces</p>',
-            '<div class="raya-course-map-workspace-links">',
-            "\n".join(
-                render_workspace_link(
-                    kind,
-                    label,
-                    href,
-                    badge,
-                    details,
-                )
-                for kind, label, href, badge, details in workspace_links
-            ),
-            "</div>",
-            "</section>",
-        ]
+    graph_aria = (
+        "Open course graph, "
+        + ", ".join([_count_label(direct_link_count, "link"), *graph_detail_badges])
+    )
+    practice_aria = (
+        f"Open official practice, {direct_official_count} official"
+        if direct_official_count
+        else "Open official practice"
+    )
+    tasks_aria = (
+        f"Open official tasks, {_count_label(direct_task_count, 'task')}"
+        if direct_task_count
+        else "Open official tasks"
+    )
+    schedule_aria = (
+        f"Open official schedule, {direct_dated_task_count} dated"
+        if direct_dated_task_count
+        else "Open official schedule"
     )
     tools_html = _render_course_map_tools(
         search_href=search_href,
         graph_href=graph_href,
         practice_href=practice_href,
-        tasks_href=tasks_href,
-        schedule_href=schedule_href,
+        tasks_href=course_map_tasks_href,
+        schedule_href=course_map_schedule_href,
+        graph_label=graph_aria,
+        practice_label=practice_aria,
+        tasks_label=tasks_aria,
+        schedule_label=schedule_aria,
     )
     return "\n".join(
         [
-            '<nav id="raya-course-map" class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded">',
+            (
+                '<nav id="raya-course-map" class="raya-course-map" '
+                'aria-label="Course map" data-raya-course-map="expanded" '
+                f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
+                f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">'
+            ),
             '<div class="raya-course-map-header">',
             '<div class="raya-course-map-drawer-chrome">',
             '<span class="raya-course-map-drawer-grip" aria-hidden="true"></span>',
@@ -2251,25 +2145,7 @@ def _render_course_map(
             ),
             _render_course_map_toggle("Collapse map"),
             "</div>",
-            (
-                '<p class="raya-course-map-current-chip" '
-                "data-raya-course-map-current-chip "
-                f'aria-label="{current_path_aria}">'
-                f"{current_path_html}"
-                "</p>"
-            ),
             tools_html,
-            workspace_html,
-            '<div class="raya-course-map-actions" role="group" aria-label="Course map section controls">',
-            '<button type="button" data-raya-course-map-action="current">Current</button>',
-            '<button type="button" data-raya-course-map-action="expand-all">All</button>',
-            (
-                '<button type="button" data-raya-course-map-action="scan" '
-                'aria-pressed="false" aria-label="Scan course map branches">'
-                "Scan</button>"
-            ),
-            '<button type="button" data-raya-course-map-action="less">Less</button>',
-            "</div>",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -3386,6 +3262,28 @@ def _render_command_link(
         f"{_command_icon(icon)}"
         f'<span class="raya-command-label">{html.escape(label)}</span>'
         "</a>"
+    )
+
+
+def _render_compact_command_link(
+    *,
+    class_name: str,
+    href: str,
+    aria_label: str,
+    icon: str,
+    label: str,
+    tooltip: str,
+) -> str:
+    return _render_command_link(
+        class_name=class_name,
+        href=href,
+        aria_label=aria_label,
+        icon=icon,
+        label=label,
+    ).replace(
+        ">",
+        f' data-raya-command-tooltip="{html.escape(tooltip, quote=True)}">',
+        1,
     )
 
 

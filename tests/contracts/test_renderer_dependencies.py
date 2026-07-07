@@ -343,22 +343,22 @@ def test_docs_cover_collapsible_learning_shell() -> None:
     required = {
         "docs/foundation/20_learning_renderer_contract.md": [
             "expanded course map",
-            "compact map rail",
+            "minimal floating Map edge opener",
             "non-persistent",
-            "not hover-triggered",
+            "does not collapse on hover",
             "Page N of M",
             "no personal progress",
         ],
         "docs/guides/en/professors/index.md": [
             "expanded course map",
-            "compact map rail",
+            "minimal floating Map edge opener",
             "non-persistent",
             "Page N of M",
             "not personal progress",
         ],
         "docs/guides/en/contributors/index.md": [
             "expanded course map",
-            "compact map rail",
+            "minimal floating Map edge opener",
             "non-persistent",
             "explicit-click",
             "aria-expanded",
@@ -366,7 +366,7 @@ def test_docs_cover_collapsible_learning_shell() -> None:
         ],
         "docs/guides/en/students/index.md": [
             "expanded course map",
-            "compact map rail",
+            "minimal floating Map edge opener",
             "non-persistent",
             "Previous",
             "Next",
@@ -380,14 +380,14 @@ def test_docs_cover_collapsible_learning_shell() -> None:
         ],
         "docs/guides/es/profesores/index.md": [
             "mapa del curso expandido",
-            "riel compacto",
+            "opener minimo flotante Map",
             "no persistente",
             "Page N of M",
             "no es progreso personal",
         ],
         "docs/guides/es/colaboradores/index.md": [
             "mapa del curso expandido",
-            "riel compacto",
+            "opener minimo flotante Map",
             "no persistente",
             "click explicito",
             "aria-expanded",
@@ -395,7 +395,7 @@ def test_docs_cover_collapsible_learning_shell() -> None:
         ],
         "docs/guides/es/estudiantes/index.md": [
             "mapa del curso expandido",
-            "riel compacto",
+            "opener minimo flotante Map",
             "no persistente",
             "Anterior",
             "Siguiente",
