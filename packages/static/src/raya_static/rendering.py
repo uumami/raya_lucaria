@@ -4120,8 +4120,8 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   scrollbar-gutter: stable;
 }
 .raya-course-map-tools {
-  background: color-mix(in srgb, var(--raya-color-surface) 72%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--raya-color-border) 72%, transparent);
+  background: transparent;
+  border-top: 1px solid color-mix(in srgb, var(--raya-color-border) 74%, var(--raya-color-surface));
   display: grid;
   gap: 0.15rem;
   margin-top: 0.35rem;
@@ -4174,6 +4174,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   border: 0;
   border-radius: 0.25rem;
   box-shadow: none;
+  color: var(--raya-color-text-muted);
   font-size: 0.64rem;
   gap: 0;
   height: 1.75rem;
@@ -4184,13 +4185,29 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   overflow: hidden;
   padding: 0;
   position: relative;
+  text-decoration: none;
   width: 1.75rem;
 }
+.raya-course-map-tool-grid .raya-command[aria-current="page"] {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--raya-color-text-muted);
+}
+.raya-course-map-tool-grid .raya-command *,
+.raya-course-map-tool-grid .raya-command:hover,
+.raya-course-map-tool-grid .raya-command:focus-visible {
+  text-decoration: none;
+}
 .raya-course-map-tool-grid .raya-command:hover {
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 62%, transparent);
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 46%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--raya-color-accent) 18%, transparent);
+  color: var(--raya-color-text);
 }
 .raya-course-map-tool-grid .raya-command:focus-visible {
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 78%, transparent);
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 58%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--raya-color-accent) 34%, transparent);
+  color: var(--raya-color-text);
 }
 .raya-course-map-tool-grid .raya-command-label {
   clip: rect(0 0 0 0);
@@ -6699,11 +6716,13 @@ mjx-container[display="true"] {
   .raya-course-map {
     clip: auto;
     clip-path: none;
+    display: flex;
+    flex-direction: column;
     grid-area: auto;
-    height: auto;
+    height: calc(100vh - 1.5rem);
     left: 0.75rem;
     margin: 0;
-    max-height: calc(100vh - 1.5rem);
+    max-height: none;
     overflow: auto;
     padding: var(--raya-space-panel);
     position: fixed;
@@ -6721,7 +6740,7 @@ mjx-container[display="true"] {
     position: fixed;
     right: 0.75rem;
     top: 0.75rem;
-    width: min(20rem, calc(100vw - 3rem));
+    width: min(18rem, calc(100vw - 3rem));
     z-index: 42;
   }
   .raya-course-map-close,
@@ -6734,8 +6753,7 @@ mjx-container[display="true"] {
     -webkit-backdrop-filter: none;
   }
   .raya-course-map .raya-course-map-toggle,
-  .raya-learning-rail-collapse,
-  .raya-course-map-tools .raya-command-context {
+  .raya-learning-rail-collapse {
     display: inline-flex;
   }
   html[data-raya-course-map-drawer="closed"] .raya-course-map-tools,
@@ -6743,9 +6761,10 @@ mjx-container[display="true"] {
     display: grid;
   }
   .raya-course-map-tools {
+    border-top: 0;
     gap: 0.08rem;
     margin-top: 0.28rem;
-    padding-top: 0.25rem;
+    padding-top: 0;
   }
   .raya-course-map-filter-label,
   .raya-course-map-filter,
@@ -6753,7 +6772,8 @@ mjx-container[display="true"] {
     display: none;
   }
   .raya-course-map-list {
-    max-height: min(15rem, calc(100vh - 10rem));
+    flex: 1 1 auto;
+    max-height: none;
   }
   .raya-course-map-tools .raya-command-search-form,
   .raya-course-map-tools .raya-command-group-layout {
@@ -6790,7 +6810,7 @@ mjx-container[display="true"] {
   }
   html[data-raya-learning-rail="expanded"] .raya-learning-shell,
   .raya-learning-shell[data-raya-learning-rail="expanded"] {
-    padding-right: calc(min(20rem, calc(100vw - 3rem)) + 1rem);
+    padding-right: calc(min(18rem, calc(100vw - 3rem)) + 1rem);
   }
   html[data-raya-course-map="collapsed"] .raya-learning-shell,
   .raya-learning-shell[data-raya-course-map="collapsed"] {

@@ -10800,11 +10800,17 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             else ".raya-mobile-course-map-open"
                         )
                         page.click(map_command_selector)
-                        if viewport["width"] >= 640:
+                        if viewport["width"] >= 1280:
                             page.wait_for_function(
                                 """() => document
                                   .querySelector('#raya-course-map')
                                   ?.getBoundingClientRect().width <= 112"""
+                            )
+                        elif viewport["width"] >= 640:
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-course-map')
+                                  ?.getBoundingClientRect().width >= 244"""
                             )
                         collapsed_state = page.evaluate(
                             """() => {
@@ -16191,6 +16197,9 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                             articleLeft: Math.round(articleBox.left),
                             mapPosition: getComputedStyle(map).position,
                             mapWidth: Math.round(mapBox.width),
+                            mapHeight: Math.round(mapBox.height),
+                            mapBottom: Math.round(mapBox.bottom),
+                            viewportHeight: window.innerHeight,
                             mapLeft: Math.round(mapBox.left),
                             mapRight: Math.round(mapBox.right),
                             linkWidth: Math.round(firstLinkBox.width),
@@ -16207,12 +16216,59 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert expanded["mapPosition"] == "fixed"
                     assert expanded["mapLeft"] <= 16
                     assert 244 <= expanded["mapWidth"] <= 264
+                    assert expanded["mapHeight"] >= 900
+                    assert expanded["mapBottom"] >= 925
+                    assert expanded["mapBottom"] <= expanded["viewportHeight"]
                     assert expanded["linkWidth"] >= 140
                     assert expanded["linkFontSize"] == "15px"
                     assert expanded["toolsTop"] > expanded["listTop"]
                     assert expanded["mapH1Overlap"] == 0
                     assert expanded["mapBriefOverlap"] == 0
                     _assert_no_horizontal_overflow(page)
+
+                    page.click("[data-raya-learning-rail-expand]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaLearningRail === 'expanded'"
+                    )
+                    page.wait_for_function(
+                        """() => {
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const width = rail?.getBoundingClientRect().width || 0;
+                          return width >= 284 && width <= 292
+                            && !rail?.dataset.rayaLearningRailTransition;
+                        }"""
+                    )
+                    rail_expanded = page.evaluate(
+                        """() => {
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const h1 = document.querySelector('#raya-article h1');
+                          const brief = document.querySelector('.raya-page-brief');
+                          const railBox = rail.getBoundingClientRect();
+                          const overlapArea = (first, second) => {
+                            const a = first.getBoundingClientRect();
+                            const b = second.getBoundingClientRect();
+                            const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+                            const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+                            return Math.round(width * height);
+                          };
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railWidth: Math.round(railBox.width),
+                            railHeight: Math.round(railBox.height),
+                            railBottom: Math.round(railBox.bottom),
+                            viewportHeight: window.innerHeight,
+                            railH1Overlap: overlapArea(rail, h1),
+                            railBriefOverlap: overlapArea(rail, brief),
+                          };
+                        }"""
+                    )
+                    assert rail_expanded["mapState"] == "collapsed"
+                    assert 284 <= rail_expanded["railWidth"] <= 292
+                    assert rail_expanded["railHeight"] >= 900
+                    assert rail_expanded["railBottom"] >= 925
+                    assert rail_expanded["railBottom"] <= rail_expanded["viewportHeight"]
+                    assert rail_expanded["railH1Overlap"] == 0
+                    assert rail_expanded["railBriefOverlap"] == 0
                 finally:
                     page.close()
             finally:
@@ -16256,7 +16312,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                           .querySelector('[data-raya-map-filter-empty]')
                           ?.checkVisibility()"""
                     )
-                    page.set_viewport_size({"width": 768, "height": 918})
+                    page.set_viewport_size({"width": 640, "height": 918})
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
@@ -16284,6 +16340,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                           const filter = document.querySelector('#raya-course-map-filter');
                           const mapBox = map.getBoundingClientRect();
                           const toolsBox = tools.getBoundingClientRect();
+                          const toolsStyle = getComputedStyle(tools);
                           const visibleCommands = Array.from(
                             document.querySelectorAll('.raya-course-map-tools .raya-command')
                           ).filter((command) => {
@@ -16313,6 +16370,10 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               ),
                               iconBackground: iconStyle?.backgroundColor || '',
                               iconBorderTopWidth: iconStyle?.borderTopWidth || '',
+                              background: getComputedStyle(command).backgroundColor,
+                              borderTopWidth: getComputedStyle(command).borderTopWidth,
+                              boxShadow: getComputedStyle(command).boxShadow,
+                              textDecorationLine: getComputedStyle(command).textDecorationLine,
                               shapeCount: icon
                                 ? icon.querySelectorAll(
                                     'path, circle, rect, line, polyline, polygon'
@@ -16344,11 +16405,14 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             drawer: document.documentElement.dataset.rayaCourseMapDrawer,
                             mapWidth: Math.round(mapBox.width),
                             mapHeight: Math.round(mapBox.height),
+                            mapBottom: Math.round(mapBox.bottom),
                             mapLeft: Math.round(mapBox.left),
+                            viewportHeight: window.innerHeight,
                             unusedMapBottomSpace: Math.round(
                               mapBox.bottom - toolsBox.bottom
                             ),
                             toolsHeight: Math.round(toolsBox.height),
+                            toolsBorderTopWidth: toolsStyle.borderTopWidth,
                             searchFormVisible: !!searchForm
                               && searchForm.getClientRects().length > 0
                               && getComputedStyle(searchForm).display !== 'none',
@@ -16367,9 +16431,11 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     assert state["drawer"] == "closed"
                     assert state["mapLeft"] <= 16
                     assert 244 <= state["mapWidth"] <= 264
-                    assert state["mapHeight"] <= 430
-                    assert state["unusedMapBottomSpace"] <= 96
+                    assert state["mapHeight"] >= 890
+                    assert state["mapBottom"] <= state["viewportHeight"]
+                    assert 0 <= state["unusedMapBottomSpace"] <= 32
                     assert state["toolsHeight"] <= 44
+                    assert state["toolsBorderTopWidth"] == "0px"
                     assert state["searchFormVisible"] is False
                     assert state["filterVisible"] is False
                     assert state["filterValue"] == ""
@@ -16396,6 +16462,10 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                         and command["iconCenterDeltaY"] <= 1
                         and command["iconBackground"] == "rgba(0, 0, 0, 0)"
                         and command["iconBorderTopWidth"] == "0px"
+                        and command["background"] == "rgba(0, 0, 0, 0)"
+                        and command["borderTopWidth"] == "0px"
+                        and command["boxShadow"] == "none"
+                        and command["textDecorationLine"] == "none"
                         for command in state["visibleCommands"]
                     )
                     assert [group["kind"] for group in state["visibleGroups"]] == [
@@ -17555,6 +17625,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                             articleWidth: Math.round(articleBox.width),
                             railLeft: Math.round(railBox.left),
                             mapWidth: Math.round(mapBox.width),
+                            mapHeight: Math.round(mapBox.height),
+                            mapBottom: Math.round(mapBox.bottom),
                             railWidth: Math.round(railBox.width),
                             articleHidden: article.getAttribute('aria-hidden'),
                             articleInert: article.inert,
@@ -17583,6 +17655,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "articleWidth": state.pop("articleWidth"),
                         "railLeft": state.pop("railLeft"),
                         "mapWidth": state.pop("mapWidth"),
+                        "mapHeight": state.pop("mapHeight"),
+                        "mapBottom": state.pop("mapBottom"),
                         "railWidth": state.pop("railWidth"),
                         "shellColumns": state.pop("shellColumns"),
                     }
@@ -17644,6 +17718,14 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                           return {
                             visibleCount: visibleCommands.length,
                             minWidth: Math.min(...labels.map((item) => item.width)),
+                            mapHeight: Math.round(
+                              document.querySelector('#raya-course-map')
+                                .getBoundingClientRect().height
+                            ),
+                            mapBottom: Math.round(
+                              document.querySelector('#raya-course-map')
+                                .getBoundingClientRect().bottom
+                            ),
                             labelsWithoutTextRoom: labels.filter(
                               (item) => item.labelClientWidth < 20
                             ),
@@ -17652,6 +17734,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     )
                     assert tools["visibleCount"] >= 7
                     assert tools["minWidth"] >= 28
+                    assert tools["mapHeight"] >= 736
+                    assert tools["mapBottom"] >= 756
                     assert len(tools["labelsWithoutTextRoom"]) == tools["visibleCount"]
 
                     page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
