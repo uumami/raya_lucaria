@@ -2143,7 +2143,15 @@ def _render_course_map(
                 'data-raya-course-map-close aria-label="Close course map">'
                 "Close</button>"
             ),
-            _render_course_map_toggle("Collapse map"),
+            _render_course_map_toggle(
+                "Map",
+                class_name=(
+                    "raya-course-map-toggle raya-course-map-header-toggle "
+                    "raya-command-map"
+                ),
+                aria_label="Collapse course map",
+                icon="map",
+            ),
             "</div>",
             tools_html,
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
@@ -3211,12 +3219,13 @@ _COMMAND_ICON_BODIES = {
         '<path d="M7.5 9h4M7.5 12h4M7.5 15h4"/>'
     ),
     "text-size": (
-        '<text class="raya-command-icon-text" x="11.7" y="14.8" '
-        'text-anchor="middle">A+</text>'
+        '<path d="M5 7h9M5 11h14M5 15h10M5 19h6"/>'
+        '<path d="M18 7v10M15.7 9.3 18 7l2.3 2.3"/>'
     ),
     "font": (
-        '<text class="raya-command-icon-text" x="11.8" y="14.8" '
-        'text-anchor="middle">Aa</text>'
+        '<path d="M5.5 7.2h13v10.2h-13z"/>'
+        '<path d="M8 10h8M8 13h6"/>'
+        '<path d="M7 5.4 5.5 7.2M17 5.4l1.5 1.8"/>'
     ),
     "skin": (
         '<path d="M5.5 8.2c1.8-2.2 4-3.3 6.5-3.3 4.2 0 7.5 3.2 7.5 7.1 0 3.5-2.7 6.5-6.3 6.5h-1.4c-.9 0-1.4-.8-1-1.5.5-.9-.1-1.8-1.2-1.8H8.4c-2.2 0-3.9-1.5-3.9-3.7 0-1.2.3-2.3 1-3.3Z"/>'

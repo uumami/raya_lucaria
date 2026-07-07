@@ -5483,13 +5483,16 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-course-map="expanded"' in html
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-course-map-storage-key=' in html
-    assert '<button class="raya-course-map-toggle"' in html
+    assert (
+        '<button class="raya-course-map-toggle raya-course-map-header-toggle raya-command-map"'
+        in html
+    )
     assert "data-raya-course-map-toggle" in html
     assert 'aria-controls="raya-course-map"' in html
     assert 'aria-expanded="true" aria-label="Collapse course map">' in html
     assert 'data-raya-command-icon="map"' in html
     assert '<span class="raya-command-label">Map</span>' in html
-    assert 'aria-expanded="true">Collapse map</button>' in html
+    assert 'aria-expanded="true">Collapse map</button>' not in html
     assert 'class="raya-course-map-workspaces"' not in html
     assert 'aria-label="Course workspaces"' not in html
     assert "data-raya-course-map-workspaces" not in html

@@ -13064,11 +13064,11 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
-                    assert set(initial["texts"]) == {"Map", "Collapse map"}
+                    assert set(initial["texts"]) == {"Map"}
                     assert initial["listHidden"] == "false"
                     assert initial["listInert"] is False
                     assert "Toggle map" not in initial["mapText"]
-                    assert "Collapse map" in initial["mapText"]
+                    assert "Collapse map" not in initial["mapText"]
                     assert initial["oldChipCount"] == 0
                     assert 220 <= initial["mapWidth"] <= 280
                     assert initial["articleWidth"] > 620
@@ -13165,12 +13165,12 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Expand course map",
                         "Expand course map",
                     ]
-                    assert set(collapsed["texts"]) == {"Map", "Expand map"}
+                    assert set(collapsed["texts"]) == {"Map"}
                     assert collapsed["listHidden"] == "true"
                     assert collapsed["listInert"] is True
                     assert 40 <= collapsed["mapWidth"] <= 56
                     assert collapsed["articleWidth"] > 760
-                    assert collapsed["texts"][1] in {"Expand map", "Map"}
+                    assert set(collapsed["texts"]) == {"Map"}
                     assert collapsed["buttonVisualLabel"] in {'"Map"', '">"'}
                     assert collapsed["buttonVisualWritingMode"] == "horizontal-tb"
                     assert collapsed["oldChipCount"] == 0
@@ -13219,7 +13219,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "Collapse course map",
                         "Collapse course map",
                     ]
-                    assert set(expanded["texts"]) == {"Map", "Collapse map"}
+                    assert set(expanded["texts"]) == {"Map"}
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
                     assert expanded["oldChipCount"] == 0
@@ -13244,7 +13244,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         "raya-course-map-toggle"
                         in escape_collapsed["activeElementClass"]
                     )
-                    assert escape_collapsed["activeElementText"] == "Expand map"
+                    assert escape_collapsed["activeElementText"] == "Map"
                     assert escape_collapsed["listHidden"] == "true"
                     assert escape_collapsed["listInert"] is True
                     assert set(escape_collapsed["linkTabIndexes"]) <= {None, "-1"}
@@ -14680,6 +14680,12 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                                 ariaHidden: icon?.getAttribute('aria-hidden'),
                                 focusable: icon?.getAttribute('focusable'),
                                 viewBox: icon?.getAttribute('viewBox'),
+                                textContent: icon?.textContent?.trim() || '',
+                                drawnShapeCount: icon
+                                  ? icon.querySelectorAll(
+                                      'path, circle, rect, line, polyline, polygon'
+                                    ).length
+                                  : 0,
                                 label: labelNode?.textContent?.trim(),
                                 before: getComputedStyle(node, '::before').content,
                                 shapeFill: shape ? getComputedStyle(shape).fill : null,
@@ -14688,6 +14694,26 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             })()
                           ])
                         )"""
+                    )
+                    header_toggle = page.evaluate(
+                        """() => {
+                          const toggle = document.querySelector(
+                            '.raya-course-map-header > .raya-course-map-toggle'
+                          );
+                          const label = toggle?.querySelector('.raya-command-label');
+                          const icon = toggle?.querySelector('.raya-command-icon');
+                          const box = toggle?.getBoundingClientRect();
+                          const labelBox = label?.getBoundingClientRect();
+                          return {
+                            width: Math.round(box?.width || 0),
+                            height: Math.round(box?.height || 0),
+                            labelWidth: Math.round(labelBox?.width || 0),
+                            labelHeight: Math.round(labelBox?.height || 0),
+                            icon: icon?.getAttribute('data-raya-command-icon') || null,
+                            ariaLabel: toggle?.getAttribute('aria-label') || null,
+                            text: toggle?.textContent?.trim() || '',
+                          };
+                        }"""
                     )
                     page.click(".raya-course-map-toggle")
                     page.click("[data-raya-learning-rail-collapse]")
@@ -14776,6 +14802,13 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
+    assert header_toggle["width"] <= 48
+    assert header_toggle["height"] <= 48
+    assert header_toggle["labelWidth"] <= 1
+    assert header_toggle["labelHeight"] <= 1
+    assert header_toggle["icon"] == "map"
+    assert header_toggle["ariaLabel"] == "Collapse course map"
+    assert header_toggle["text"] == "Map"
     expected_icons = {
         "raya-command-map": ("map", "Map"),
         "raya-command-search": ("search", "Search"),
@@ -14797,9 +14830,10 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         assert icon["viewBox"] == "0 0 24 24"
         assert icon["label"] == label
         assert icon["before"] in {"none", '""'}
-        if icon_name not in {"text-size", "font"}:
-            assert icon["shapeFill"] == "none"
-            assert icon["shapeStroke"] != "none"
+        assert icon["textContent"] == ""
+        assert icon["drawnShapeCount"] > 0
+        assert icon["shapeFill"] == "none"
+        assert icon["shapeStroke"] != "none"
     assert collapsed["mapWidth"] <= 112
     assert collapsed["railWidth"] <= 112
     assert collapsed["mapLabel"] in {'"Map"', '">"'}
