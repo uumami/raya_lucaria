@@ -4146,13 +4146,20 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
 }
 .raya-course-map-tool-grid .raya-command-group {
   align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   gap: 0.12rem;
+  min-width: 0;
   padding: 0;
 }
 .raya-course-map-tool-grid .raya-command-group-discovery {
   display: flex;
+  flex: 0 0 auto;
 }
 .raya-course-map-tool-grid .raya-command-search-form {
   flex: 1 0 100%;
@@ -4174,7 +4181,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   line-height: 1;
   min-height: 1.75rem;
   min-width: 1.75rem;
+  overflow: hidden;
   padding: 0;
+  position: relative;
   width: 1.75rem;
 }
 .raya-course-map-tool-grid .raya-command:hover {
@@ -4197,11 +4206,14 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   border: 0;
   border-radius: 0;
   box-sizing: content-box;
-  flex-basis: 1.05rem;
   height: 1.05rem;
-  min-width: 1rem;
+  left: 50%;
+  min-width: 0;
   padding: 0;
+  position: absolute;
   stroke-width: 2;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: 1.05rem;
 }
 .raya-course-map-tool-grid .raya-command-search-input,
@@ -6449,7 +6461,6 @@ mjx-container[display="true"] {
     background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-page));
     border: 1px solid color-mix(in srgb, var(--raya-color-border) 62%, var(--raya-color-page));
     border-radius: 0 0.875rem 0.875rem 0;
-    bottom: 0;
     box-sizing: border-box;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
     color: var(--raya-color-text);
@@ -6534,14 +6545,25 @@ mjx-container[display="true"] {
     margin-top: 0.28rem;
     padding-top: 0.25rem;
   }
+  html[data-raya-course-map-drawer="open"] .raya-course-map-filter-label,
+  html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
+  html[data-raya-course-map-drawer="open"] .raya-map-filter-empty {
+    display: none;
+  }
+  html[data-raya-course-map-drawer="open"] .raya-course-map-list {
+    max-height: min(18rem, calc(100vh - 8rem));
+  }
   html[data-raya-course-map-drawer="open"] .raya-course-map-tools .raya-command-search-form {
     display: none;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-tool-grid {
     align-items: center;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.08rem;
+  }
+  html[data-raya-course-map-drawer="open"] .raya-course-map-tool-grid .raya-command-group {
+    flex-wrap: nowrap;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-tool-grid .raya-command-search-form + .raya-command-search {
     display: inline-flex;
@@ -6676,16 +6698,16 @@ mjx-container[display="true"] {
     clip: auto;
     clip-path: none;
     grid-area: auto;
-    height: calc(100vh - 1.5rem);
+    height: auto;
     left: 0.75rem;
     margin: 0;
-    max-height: none;
+    max-height: calc(100vh - 1.5rem);
     overflow: auto;
     padding: var(--raya-space-panel);
     position: fixed;
     top: 0.75rem;
     white-space: normal;
-    width: min(22rem, calc(100vw - 3rem));
+    width: min(15.75rem, calc(100vw - 3rem));
     z-index: 44;
   }
   .raya-learning-rail {
@@ -6717,6 +6739,38 @@ mjx-container[display="true"] {
   html[data-raya-course-map-drawer="closed"] .raya-course-map-tools,
   .raya-course-map-tools {
     display: grid;
+  }
+  .raya-course-map-tools {
+    gap: 0.08rem;
+    margin-top: 0.28rem;
+    padding-top: 0.25rem;
+  }
+  .raya-course-map-filter-label,
+  .raya-course-map-filter,
+  .raya-map-filter-empty {
+    display: none;
+  }
+  .raya-course-map-list {
+    max-height: min(15rem, calc(100vh - 10rem));
+  }
+  .raya-course-map-tools .raya-command-search-form,
+  .raya-course-map-tools .raya-command-group-layout {
+    display: none;
+  }
+  .raya-course-map-tool-grid {
+    align-items: center;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.08rem;
+  }
+  .raya-course-map-tool-grid .raya-command-group {
+    flex-wrap: nowrap;
+  }
+  .raya-course-map-tool-grid .raya-command-search-form + .raya-command-search {
+    display: inline-flex;
+  }
+  .raya-course-map-tool-grid .raya-command-group {
+    gap: 0.08rem;
   }
   .raya-learning-rail-header {
     align-items: flex-start;

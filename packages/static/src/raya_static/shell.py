@@ -691,7 +691,7 @@ _SHELL_JAVASCRIPT = r"""
     const currentLink = mapList
       ? mapList.querySelector('a[aria-current="page"]')
       : null;
-    const scrollContainer = map;
+    const scrollContainer = mapList;
     if (!mapList || !currentLink || !scrollContainer) {
       return false;
     }
@@ -705,33 +705,41 @@ _SHELL_JAVASCRIPT = r"""
     ) {
       return false;
     }
-    const containerRect = scrollContainer.getBoundingClientRect();
-    const linkRect = currentLink.getBoundingClientRect();
-    const isVisible =
-      linkRect.top >= containerRect.top && linkRect.bottom <= containerRect.bottom;
-    if (!isVisible) {
+    const orientWithin = (container) => {
+      const containerRect = container.getBoundingClientRect();
+      const linkRect = currentLink.getBoundingClientRect();
+      const isVisible =
+        linkRect.top >= containerRect.top && linkRect.bottom <= containerRect.bottom;
+      if (isVisible) {
+        return;
+      }
       const offset =
-        scrollContainer.scrollTop +
+        container.scrollTop +
         linkRect.top -
         containerRect.top -
-        scrollContainer.clientHeight / 2 +
+        container.clientHeight / 2 +
         currentLink.offsetHeight / 2;
-      scrollContainer.scrollTop = Math.max(0, offset);
-      const adjustedContainerRect = scrollContainer.getBoundingClientRect();
+      container.scrollTop = Math.max(0, offset);
+      const adjustedContainerRect = container.getBoundingClientRect();
       const adjustedLinkRect = currentLink.getBoundingClientRect();
       if (adjustedLinkRect.top < adjustedContainerRect.top) {
-        scrollContainer.scrollTop = Math.max(
+        container.scrollTop = Math.max(
           0,
-          scrollContainer.scrollTop + adjustedLinkRect.top - adjustedContainerRect.top
+          container.scrollTop + adjustedLinkRect.top - adjustedContainerRect.top
         );
       } else if (adjustedLinkRect.bottom > adjustedContainerRect.bottom) {
-        scrollContainer.scrollTop = Math.max(
+        container.scrollTop = Math.max(
           0,
-          scrollContainer.scrollTop + adjustedLinkRect.bottom - adjustedContainerRect.bottom
+          container.scrollTop + adjustedLinkRect.bottom - adjustedContainerRect.bottom
         );
       }
+    };
+    orientWithin(scrollContainer);
+    if (map !== scrollContainer) {
+      orientWithin(map);
     }
     scrollContainer.dataset.rayaCourseMapOriented = "true";
+    map.dataset.rayaCourseMapOriented = "true";
     return true;
   }
 
@@ -843,7 +851,9 @@ _SHELL_JAVASCRIPT = r"""
     setExpanded(true);
     syncCourseMapDrawerState();
     window.requestAnimationFrame(() => {
-      const focusTarget = mapFilter || map.querySelector("a, button");
+      const focusTarget =
+        map.querySelector("[data-raya-course-map-close]") ||
+        map.querySelector("a, button");
       if (focusTarget) {
         focusTarget.focus();
       }
