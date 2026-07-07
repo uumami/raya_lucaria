@@ -4891,7 +4891,7 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
         "minimal floating Map edge opener",
-        "collapsed desktop course-map content is removed from keyboard and assistive navigation",
+        "collapsed course-map content is removed from keyboard and assistive navigation",
         "one compact Course Tools surface",
         "no separate Course Workspaces section",
         "no visible Current, All, Scan, or Less map action buttons",

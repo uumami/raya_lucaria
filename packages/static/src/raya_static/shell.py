@@ -157,6 +157,18 @@ _SHELL_JAVASCRIPT = r"""
     return !isStructuralRailShell() && !printQuery.matches;
   }
 
+  function isMediumStructuralShell() {
+    return isStructuralRailShell() && !isDesktopShell();
+  }
+
+  function defaultCourseMapExpanded() {
+    return !isStructuralRailShell() || isDesktopShell();
+  }
+
+  function defaultLearningRailExpanded() {
+    return !isStructuralRailShell() || isDesktopShell();
+  }
+
   function setFocusableDescendantsEnabled(container, enabled) {
     container
       .querySelectorAll("a[href], button, input, select, textarea, summary, [tabindex]")
@@ -1286,10 +1298,12 @@ _SHELL_JAVASCRIPT = r"""
 
   desktopMapQuery.addEventListener("change", () => {
     hideCourseMapCompactPreview();
+    setExpanded(defaultCourseMapExpanded());
     updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
     if (!desktopMapQuery.matches) {
-      setLearningRailExpanded(!isCompactStructuralRailShell());
+      setLearningRailExpanded(defaultLearningRailExpanded());
     } else {
+      setLearningRailExpanded(true);
       closeLearningRailDrawer();
     }
     syncCourseMapDrawerState();
@@ -1303,7 +1317,8 @@ _SHELL_JAVASCRIPT = r"""
       } else {
         closeCourseMapDrawer();
         closeLearningRailDrawer();
-        setLearningRailExpanded(!isCompactStructuralRailShell());
+        setExpanded(defaultCourseMapExpanded());
+        setLearningRailExpanded(defaultLearningRailExpanded());
       }
       syncCourseMapDrawerState();
       syncLearningRailDrawerState();
@@ -1316,7 +1331,8 @@ _SHELL_JAVASCRIPT = r"""
       } else {
         closeCourseMapDrawer();
         closeLearningRailDrawer();
-        setLearningRailExpanded(!isCompactStructuralRailShell());
+        setExpanded(defaultCourseMapExpanded());
+        setLearningRailExpanded(defaultLearningRailExpanded());
       }
       syncCourseMapDrawerState();
       syncLearningRailDrawerState();
@@ -1328,7 +1344,8 @@ _SHELL_JAVASCRIPT = r"""
     }
     closeCourseMapDrawer();
     closeLearningRailDrawer();
-    setLearningRailExpanded(!isCompactStructuralRailShell());
+    setExpanded(defaultCourseMapExpanded());
+    setLearningRailExpanded(defaultLearningRailExpanded());
     syncCourseMapDrawerState();
     syncLearningRailDrawerState();
   };
@@ -1355,7 +1372,11 @@ _SHELL_JAVASCRIPT = r"""
         }
         return;
       }
-      setExpanded(root.dataset.rayaCourseMap !== "expanded");
+      const nextExpanded = root.dataset.rayaCourseMap !== "expanded";
+      if (nextExpanded && isMediumStructuralShell()) {
+        setLearningRailExpanded(false);
+      }
+      setExpanded(nextExpanded);
       if (root.dataset.rayaCourseMap !== "collapsed") {
         hideCourseMapCompactPreview();
       }
@@ -1468,6 +1489,9 @@ _SHELL_JAVASCRIPT = r"""
 
   if (learningRailExpand) {
     learningRailExpand.addEventListener("click", () => {
+      if (isMediumStructuralShell()) {
+        setExpanded(false);
+      }
       setLearningRailExpanded(true);
       if (learningRailCollapse) {
         learningRailCollapse.focus();
@@ -1483,7 +1507,11 @@ _SHELL_JAVASCRIPT = r"""
         }
         return;
       }
-      setLearningRailExpanded(root.dataset.rayaLearningRail !== "expanded");
+      const nextExpanded = root.dataset.rayaLearningRail !== "expanded";
+      if (nextExpanded && isMediumStructuralShell()) {
+        setExpanded(false);
+      }
+      setLearningRailExpanded(nextExpanded);
     });
   });
 
@@ -1689,8 +1717,8 @@ _SHELL_JAVASCRIPT = r"""
     keyObjectTargets.forEach((target) => objectObserver.observe(target));
   }
 
-  setExpanded(true);
-  setLearningRailExpanded(!isCompactStructuralRailShell());
+  setExpanded(defaultCourseMapExpanded());
+  setLearningRailExpanded(defaultLearningRailExpanded());
   root.dataset.rayaLearningRailDrawer = "closed";
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
