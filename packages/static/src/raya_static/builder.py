@@ -1285,12 +1285,6 @@ def _render_course_map_tools(
                 'data-raya-command-group="layout" role="group" '
                 'aria-label="Reader layout">'
             ),
-            _render_course_map_toggle(
-                "Map",
-                class_name="raya-command raya-command-map raya-course-map-toggle",
-                aria_label="Collapse course map",
-                icon="map",
-            ),
             _render_command_button(
                 class_name="raya-command raya-command-context",
                 aria_label="Hide learning context",
@@ -2153,7 +2147,6 @@ def _render_course_map(
                 icon="map",
             ),
             "</div>",
-            tools_html,
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -2166,6 +2159,7 @@ def _render_course_map(
             "\n".join(nav_items),
             "</ol>",
             "</div>",
+            tools_html,
             (
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'

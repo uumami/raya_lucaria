@@ -7512,17 +7512,22 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             page.wait_for_function(
                                 """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
                             )
-                        page.locator(
-                            ".raya-course-map-tools #raya-command-search-input"
-                        ).fill(
-                            "projection residual"
-                        )
-                        page.locator(
-                            ".raya-course-map-tools .raya-command-search-form"
-                        ).evaluate("form => form.requestSubmit()")
-                        page.wait_for_url(
-                            "**/_raya/search/index.html?q=projection+residual"
-                        )
+                            page.click(".raya-course-map-tools .raya-command-search")
+                            page.wait_for_url(
+                                "**/_raya/search/index.html?q=Projection%20Residuals"
+                            )
+                        else:
+                            page.locator(
+                                ".raya-course-map-tools #raya-command-search-input"
+                            ).fill(
+                                "projection residual"
+                            )
+                            page.locator(
+                                ".raya-course-map-tools .raya-command-search-form"
+                            ).evaluate("form => form.requestSubmit()")
+                            page.wait_for_url(
+                                "**/_raya/search/index.html?q=projection+residual"
+                            )
                         assert page.locator(
                             "[data-raya-search-result='reader-ux']"
                         ).is_visible()
@@ -9844,13 +9849,13 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                     )
                     assert desktop["size"]["text"] == "Text size"
                     assert desktop["font"]["text"] == "OpenDyslexic"
-                    assert desktop["size"]["width"] > 0
-                    assert desktop["font"]["width"] > 0
-                    assert desktop["size"]["height"] >= 10
-                    assert desktop["font"]["height"] >= 10
-                    assert desktop["size"]["position"] in {"static", "absolute"}
-                    assert desktop["font"]["position"] in {"static", "absolute"}
-                    assert desktop["toolHeight"] <= 340
+                    assert desktop["size"]["width"] <= 2
+                    assert desktop["font"]["width"] <= 2
+                    assert desktop["size"]["height"] <= 2
+                    assert desktop["font"]["height"] <= 2
+                    assert desktop["size"]["position"] == "absolute"
+                    assert desktop["font"]["position"] == "absolute"
+                    assert desktop["toolHeight"] <= 180
                     assert desktop["scrollWidth"] <= desktop["clientWidth"]
                     assert desktop["localKeys"] == []
                     assert desktop["sessionKeys"] == []
@@ -10603,7 +10608,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                           };
                         }"""
                         )
-                        assert state["count"] == 10
+                        assert state["count"] == 9
                         assert [group["kind"] for group in state["groups"]] == [
                             "discovery",
                             "layout",
@@ -10627,7 +10632,6 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             "raya-command-schedule",
                         ]
                         assert state["groups"][1]["classes"] == [
-                            "raya-command-map",
                             "raya-command-context",
                         ]
                         assert state["groups"][2]["classes"] == [
@@ -10664,16 +10668,15 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 "raya-command-practice",
                                 "raya-command-tasks",
                                 "raya-command-schedule",
-                                "raya-command-map",
                                 "raya-command-context",
                             ):
                                 label_box = state["commandLabelBoxes"][command_name]
                                 if label_box["commandWidth"] == 0:
                                     continue
                                 assert label_box["text"]
-                                assert label_box["clipped"] is False
-                                assert label_box["width"] >= 18
-                                assert label_box["height"] <= 34
+                                assert label_box["clipped"] is True
+                                assert label_box["width"] <= 1
+                                assert label_box["height"] <= 1
                                 assert 14 <= label_box["iconWidth"] <= 20
                                 assert 14 <= label_box["iconHeight"] <= 20
                                 assert label_box["commandHeight"] <= 34
@@ -10974,7 +10977,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 for height in metrics["commandHeights"]
                             )
                             assert all(
-                                width >= 32 for width in metrics["commandWidths"]
+                                width >= 28 for width in metrics["commandWidths"]
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
@@ -12186,7 +12189,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
                     )
-                    mobile_position = page.locator("#raya-course-map .raya-page-position")
+                    mobile_position = page.locator(
+                        "#raya-course-map .raya-course-map-drawer-position"
+                    )
                     assert mobile_position.is_visible()
                     assert mobile_position.inner_text() == "Page 3 of 7"
                     page.keyboard.press("Escape")
@@ -13059,11 +13064,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert initial["state"] == "expanded"
                     assert initial["shellState"] == "expanded"
                     assert initial["mapState"] == "expanded"
-                    assert initial["expanded"] == ["true", "true"]
-                    assert initial["labels"] == [
-                        "Collapse course map",
-                        "Collapse course map",
-                    ]
+                    assert initial["expanded"] == ["true"]
+                    assert initial["labels"] == ["Collapse course map"]
                     assert set(initial["texts"]) == {"Map"}
                     assert initial["listHidden"] == "false"
                     assert initial["listInert"] is False
@@ -13160,11 +13162,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["shellState"] == "collapsed"
                     assert collapsed["mapState"] == "collapsed"
-                    assert collapsed["expanded"] == ["false", "false"]
-                    assert collapsed["labels"] == [
-                        "Expand course map",
-                        "Expand course map",
-                    ]
+                    assert collapsed["expanded"] == ["false"]
+                    assert collapsed["labels"] == ["Expand course map"]
                     assert set(collapsed["texts"]) == {"Map"}
                     assert collapsed["listHidden"] == "true"
                     assert collapsed["listInert"] is True
@@ -13214,11 +13213,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert expanded["state"] == "expanded"
                     assert expanded["shellState"] == "expanded"
                     assert expanded["mapState"] == "expanded"
-                    assert expanded["expanded"] == ["true", "true"]
-                    assert expanded["labels"] == [
-                        "Collapse course map",
-                        "Collapse course map",
-                    ]
+                    assert expanded["expanded"] == ["true"]
+                    assert expanded["labels"] == ["Collapse course map"]
                     assert set(expanded["texts"]) == {"Map"}
                     assert expanded["listHidden"] == "false"
                     assert expanded["listInert"] is False
@@ -14810,7 +14806,6 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert header_toggle["ariaLabel"] == "Collapse course map"
     assert header_toggle["text"] == "Map"
     expected_icons = {
-        "raya-command-map": ("map", "Map"),
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),
@@ -16083,7 +16078,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert expanded["mapWidth"] >= 304
                     assert expanded["linkWidth"] >= 240
                     assert expanded["linkFontSize"] == "15px"
-                    assert expanded["toolsTop"] < expanded["listTop"]
+                    assert expanded["toolsTop"] > expanded["listTop"]
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
@@ -17000,7 +16995,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert opened_drawer["mapHidden"] == "false"
                     assert opened_drawer["mapInert"] is False
                     assert opened_drawer["mapBox"]["x"] == 0
-                    assert opened_drawer["mapBox"]["width"] >= 300
+                    assert 264 <= opened_drawer["mapBox"]["width"] <= 288
                     assert opened_drawer["mapBox"]["height"] >= 600
                     assert set(opened_drawer["linkTabIndexes"]) == {None}
 
@@ -17318,8 +17313,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         }"""
                     )
                     assert tools["visibleCount"] >= 7
-                    assert tools["minWidth"] >= 32
-                    assert tools["labelsWithoutTextRoom"] == []
+                    assert tools["minWidth"] >= 28
+                    assert len(tools["labelsWithoutTextRoom"]) == tools["visibleCount"]
 
                     page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
                     page.wait_for_function(
@@ -17402,8 +17397,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "togglePosition": "relative",
                         "toggleVisible": True,
                         "togglePointerEvents": "auto",
-                        "commandExpanded": ["false", "false", "false"],
-                    }
+                            "commandExpanded": ["false", "false"],
+                        }
                     assert collapsed_background in {
                         "rgba(255, 255, 255, 0.44)",
                         "rgba(255, 255, 255, 0.72)",
@@ -17726,7 +17721,62 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                           const close = document.querySelector('[data-raya-course-map-close]');
                           const list = document.querySelector('#raya-course-map-list');
                           const firstLink = list?.querySelector('a[href]');
+                          const regionTitle = document.querySelector(
+                            '#raya-course-map > .raya-course-map-header > .raya-region-title'
+                          );
+                          const position = document.querySelector(
+                            '#raya-course-map > .raya-course-map-header > .raya-page-position'
+                          );
+                          const tools = document.querySelector('.raya-course-map-tools');
+                          const searchForm = document.querySelector(
+                            '.raya-course-map-tools .raya-command-search-form'
+                          );
+                          const layoutGroup = document.querySelector(
+                            '.raya-course-map-tools .raya-command-group-layout'
+                          );
+                          const visibleToolCommands = Array
+                            .from(document.querySelectorAll(
+                              '.raya-course-map-tools .raya-command'
+                            ))
+                            .filter((node) => {
+                              const box = node.getBoundingClientRect();
+                              const style = getComputedStyle(node);
+                              return box.width > 0 && box.height > 0
+                                && style.display !== 'none'
+                                && style.visibility !== 'hidden';
+                            })
+                            .map((node) => {
+                              const box = node.getBoundingClientRect();
+                              const style = getComputedStyle(node);
+                              const label = node.querySelector('.raya-command-label');
+                              const labelBox = label?.getBoundingClientRect();
+                              const icon = node.querySelector('.raya-command-icon');
+                              const iconBox = icon?.getBoundingClientRect();
+                              const iconStyle = icon ? getComputedStyle(icon) : null;
+                              return {
+                                text: node.textContent.trim(),
+                                aria: node.getAttribute('aria-label'),
+                                width: Math.round(box.width),
+                                height: Math.round(box.height),
+                                background: style.backgroundColor,
+                                borderTopWidth: style.borderTopWidth,
+                                borderTopColor: style.borderTopColor,
+                                labelWidth: Math.round(labelBox?.width || 0),
+                                labelHeight: Math.round(labelBox?.height || 0),
+                                iconWidth: Math.round(iconBox?.width || 0),
+                                iconHeight: Math.round(iconBox?.height || 0),
+                                iconBackground: iconStyle?.backgroundColor || '',
+                                iconBorderTopWidth: iconStyle?.borderTopWidth || '',
+                                iconText: icon?.textContent.trim() || '',
+                                drawnShapeCount: icon
+                                  ? icon.querySelectorAll(
+                                      'path, circle, rect, line, polyline, polygon'
+                                    ).length
+                                  : 0,
+                              };
+                            });
                           const mapBox = map.getBoundingClientRect();
+                          const toolsBox = tools?.getBoundingClientRect();
                           const backdropStyle = getComputedStyle(backdrop);
                           return {
                             drawer: root.dataset.rayaCourseMapDrawer,
@@ -17747,6 +17797,23 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             title: title && title.textContent.trim(),
                             gripVisible: grip && getComputedStyle(grip).display !== 'none',
                             closeLabel: close && close.getAttribute('aria-label'),
+                            regionTitleVisible: !!regionTitle
+                              && regionTitle.getClientRects().length > 0
+                              && getComputedStyle(regionTitle).display !== 'none',
+                            positionVisible: !!position
+                              && position.getClientRects().length > 0
+                              && getComputedStyle(position).display !== 'none',
+                            toolsHeight: Math.round(toolsBox?.height || 0),
+                            searchFormVisible: !!searchForm
+                              && searchForm.getClientRects().length > 0
+                              && getComputedStyle(searchForm).display !== 'none',
+                            layoutGroupVisible: !!layoutGroup
+                              && layoutGroup.getClientRects().length > 0
+                              && getComputedStyle(layoutGroup).display !== 'none',
+                            visibleToolCommands,
+                            visibleMapToolCount: visibleToolCommands.filter(
+                              (command) => command.text === 'Map'
+                            ).length,
                             listHidden: list && list.getAttribute('aria-hidden'),
                             listVisible: !!list && list.checkVisibility(),
                             firstLinkText: firstLink && firstLink.textContent.trim(),
@@ -17776,10 +17843,52 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["title"] == "Course map"
                     assert state["gripVisible"] is True
                     assert state["closeLabel"] == "Close course map"
+                    assert state["regionTitleVisible"] is False
+                    assert state["positionVisible"] is False
+                    assert state["toolsHeight"] <= 44
+                    assert state["searchFormVisible"] is False
+                    assert state["layoutGroupVisible"] is False
+                    assert state["visibleMapToolCount"] == 0
+                    assert state["visibleToolCommands"]
+                    assert all(
+                        28 <= command["width"] <= 44
+                        for command in state["visibleToolCommands"]
+                        if command["text"] != "Go"
+                    )
+                    assert all(
+                        28 <= command["height"] <= 44
+                        for command in state["visibleToolCommands"]
+                    )
+                    assert all(
+                        command["labelWidth"] <= 1
+                        and command["labelHeight"] <= 1
+                        for command in state["visibleToolCommands"]
+                        if command["text"] != "Go"
+                    )
+                    assert all(
+                        command["iconText"] == ""
+                        and command["drawnShapeCount"] > 0
+                        and 14 <= command["iconWidth"] <= 22
+                        and 14 <= command["iconHeight"] <= 22
+                        for command in state["visibleToolCommands"]
+                        if command["text"] != "Go"
+                    )
+                    assert all(
+                        command["iconBackground"] == "rgba(0, 0, 0, 0)"
+                        and command["iconBorderTopWidth"] == "0px"
+                        for command in state["visibleToolCommands"]
+                        if command["text"] != "Go"
+                    )
+                    assert all(
+                        command["background"] == "rgba(0, 0, 0, 0)"
+                        and command["borderTopWidth"] == "0px"
+                        for command in state["visibleToolCommands"]
+                        if command["text"] != "Go"
+                    )
                     assert state["listHidden"] == "false"
                     assert state["listVisible"] is True
                     assert state["firstLinkText"]
-                    assert 320 <= state["width"] <= 390
+                    assert 264 <= state["width"] <= 288
                     assert state["left"] == 0
                     assert state["right"] <= 390
                     assert state["backdropHidden"] is False
