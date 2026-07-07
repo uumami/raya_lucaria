@@ -11601,6 +11601,17 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                         }
                         assert page.locator(".raya-top-command-bar").count() == 0
                         assert page.locator(".raya-discovery-command-bar").count() == 0
+                        page.evaluate(
+                            """() => {
+                              const filter = document.querySelector('#raya-course-map-filter');
+                              if (!filter) {
+                                throw new Error('missing course map filter');
+                              }
+                              filter.value = 'zz-no-match';
+                              filter.dispatchEvent(new Event('input', { bubbles: true }));
+                            }"""
+                        )
+                        assert page.locator("[data-raya-map-filter-empty]").is_hidden()
 
                         page.click(".raya-mobile-course-map-open")
                         page.wait_for_function(
@@ -11623,6 +11634,10 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                                 };
                               };
                               const map = document.querySelector('#raya-course-map');
+                              const filter = document.querySelector('#raya-course-map-filter');
+                              const currentLink = map.querySelector(
+                                '#raya-course-map-list a[aria-current="page"]'
+                              );
                               return {
                                 drawer: document.documentElement
                                   .dataset
@@ -11638,6 +11653,11 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                                 opener: stateFor('.raya-mobile-course-map-open'),
                                 skipLink: stateFor('.raya-skip-link'),
                                 activeInsideMap: map.contains(document.activeElement),
+                                activeIsClose: document.activeElement?.matches(
+                                  '[data-raya-course-map-close]'
+                                ),
+                                filterValue: filter?.value || '',
+                                currentVisible: !!currentLink && currentLink.checkVisibility(),
                                 localKeys: Object.keys(localStorage),
                                 sessionKeys: Object.keys(sessionStorage),
                               };
@@ -11656,6 +11676,9 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                             "opener": {"ariaHidden": "true", "inert": True},
                             "skipLink": {"ariaHidden": "true", "inert": True},
                             "activeInsideMap": True,
+                            "activeIsClose": True,
+                            "filterValue": "",
+                            "currentVisible": True,
                             "localKeys": [],
                             "sessionKeys": [],
                         }
@@ -16112,11 +16135,27 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 768, "height": 918})
+                page = browser.new_page(viewport={"width": 1280, "height": 918})
                 try:
                     page.goto(
                         f"{handle.base_url}/index.html",
                         wait_until="networkidle",
+                    )
+                    page.fill("#raya-course-map-filter", "zz-no-match")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('[data-raya-map-filter-empty]')
+                          ?.checkVisibility()"""
+                    )
+                    page.set_viewport_size({"width": 768, "height": 918})
+                    page.wait_for_function(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const filter = document.querySelector('#raya-course-map-filter');
+                          const width = map?.getBoundingClientRect().width || 0;
+                          return width >= 244 && width <= 264
+                            && filter?.value === '';
+                        }"""
                     )
                     _assert_no_horizontal_overflow(page)
                     state = page.evaluate(
@@ -16203,6 +16242,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             filterVisible: !!filter
                               && filter.getClientRects().length > 0
                               && getComputedStyle(filter).display !== 'none',
+                            filterValue: filter?.value || '',
                             layoutGroupVisible: !!layoutGroup
                               && layoutGroup.getClientRects().length > 0
                               && getComputedStyle(layoutGroup).display !== 'none',
@@ -16219,6 +16259,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     assert state["toolsHeight"] <= 44
                     assert state["searchFormVisible"] is False
                     assert state["filterVisible"] is False
+                    assert state["filterValue"] == ""
                     assert state["layoutGroupVisible"] is False
                     assert [command["text"] for command in state["visibleCommands"]] == [
                         "Search",

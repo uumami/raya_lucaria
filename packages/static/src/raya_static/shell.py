@@ -311,6 +311,11 @@ _SHELL_JAVASCRIPT = r"""
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
     const structuralShell = isStructuralRailShell();
     const modalDrawerOpen = drawerOpen && !structuralShell && isPhoneDrawerShell();
+    const hidesCourseMapFilter =
+      (!structuralShell && drawerOpen) || (structuralShell && !desktopMapQuery.matches);
+    if (hidesCourseMapFilter) {
+      clearCourseMapFilter();
+    }
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
     const commandExpanded = !structuralShell ? drawerOpen : structuralExpanded;
     root.setAttribute(
