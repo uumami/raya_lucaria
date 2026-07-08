@@ -4956,6 +4956,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
         '<section class="raya-course-rail-tools" aria-label="Course tools"'
         in html
     )
+    assert 'data-raya-course-map-tools' in html
     assert (
         '<form class="raya-course-rail-search raya-command-search-form"' in html
     )

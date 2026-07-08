@@ -10,3 +10,7 @@ Fix review findings:
 - Verification:
   - RED `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "reader_shell or course_map"` -> `1 failed, 3 passed`
   - GREEN `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "reader_shell or course_map"` -> `4 passed, 105 deselected in 5.51s`
+
+Appendix:
+- Added a contract assertion that the reader-shell course tools section carries the stable `data-raya-course-map-tools` hook alongside `class="raya-course-rail-tools"`.
+- Verification: `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "reader_shell or course_map"` -> `4 passed, 105 deselected in 7.08s`
