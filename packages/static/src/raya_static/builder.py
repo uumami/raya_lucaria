@@ -1227,20 +1227,13 @@ def _render_course_map_tools(
 ) -> str:
     return "\n".join(
         [
-            (
-                '<section class="raya-course-map-tools" aria-label="Course tools" '
-                "data-raya-course-map-tools>"
-            ),
-            '<p class="raya-course-map-tools-label">Course Tools</p>',
-            '<div class="raya-course-tools raya-course-map-tool-grid">',
-            (
-                '<div class="raya-command-group raya-command-group-discovery" '
-                'data-raya-command-group="discovery" role="group" '
-                'aria-label="Discovery workspaces">'
-            ),
+            '<section class="raya-course-rail-tools" aria-label="Course tools" data-raya-course-map-tools>',
+            '<div class="raya-course-rail-search">',
             _render_command_search_form(search_href),
+            "</div>",
+            '<div class="raya-course-rail-command-list" role="group" aria-label="Course workspaces">',
             _render_compact_command_link(
-                class_name="raya-command raya-command-search",
+                class_name="raya-course-rail-command raya-command-search",
                 href=search_href,
                 aria_label="Open course search",
                 icon="search",
@@ -1248,7 +1241,7 @@ def _render_course_map_tools(
                 tooltip="Open course search",
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-graph",
+                class_name="raya-course-rail-command raya-command-graph",
                 href=graph_href,
                 aria_label=graph_label,
                 icon="graph",
@@ -1256,7 +1249,7 @@ def _render_course_map_tools(
                 tooltip=graph_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-practice",
+                class_name="raya-course-rail-command raya-command-practice",
                 href=practice_href,
                 aria_label=practice_label,
                 icon="practice",
@@ -1264,7 +1257,7 @@ def _render_course_map_tools(
                 tooltip=practice_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-tasks",
+                class_name="raya-course-rail-command raya-command-tasks",
                 href=tasks_href,
                 aria_label=tasks_label,
                 icon="tasks",
@@ -1272,45 +1265,29 @@ def _render_course_map_tools(
                 tooltip=tasks_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-schedule",
+                class_name="raya-course-rail-command raya-command-schedule",
                 href=schedule_href,
                 aria_label=schedule_label,
                 icon="schedule",
                 label="Schedule",
                 tooltip=schedule_label,
             ),
-            "</div>",
-            (
-                '<div class="raya-command-group raya-command-group-layout" '
-                'data-raya-command-group="layout" role="group" '
-                'aria-label="Reader layout">'
-            ),
             _render_command_button(
-                class_name="raya-command raya-command-context",
+                class_name="raya-course-rail-command raya-command-context",
                 aria_label="Hide learning context",
                 icon="context",
                 label="Context",
-                extra_attrs=(
-                    " data-raya-learning-rail-toggle "
-                    'aria-controls="raya-learning-rail-body" '
-                    'aria-expanded="true"'
-                ),
-            ),
-            "</div>",
-            (
-                '<div class="raya-command-group raya-command-group-comfort" '
-                'data-raya-command-group="comfort" role="group" '
-                'aria-label="Reading comfort">'
+                extra_attrs=' data-raya-learning-rail-toggle aria-controls="raya-learning-rail-body" aria-expanded="true"',
             ),
             _render_command_button(
-                class_name="raya-command raya-command-size raya-text-size-toggle",
+                class_name="raya-course-rail-command raya-text-size-toggle",
                 aria_label="Text size: normal",
                 icon="text-size",
                 label="Text size",
                 aria_pressed="false",
             ),
             _render_command_button(
-                class_name="raya-command raya-command-font raya-font-toggle",
+                class_name="raya-course-rail-command raya-font-toggle",
                 aria_label="Toggle OpenDyslexic font",
                 icon="font",
                 label="OpenDyslexic",

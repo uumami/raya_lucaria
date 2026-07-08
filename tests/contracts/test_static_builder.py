@@ -4937,7 +4937,7 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
         assert "colapsar juntos el mapa" not in text
 
 
-def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
+def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
     report = build_course(course)
@@ -4953,19 +4953,28 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'role="dialog"' not in html
     assert 'aria-modal="true"' not in html
     assert (
-        '<section class="raya-course-map-tools" aria-label="Course tools" '
-        'data-raya-course-map-tools>'
-    ) in html
-    assert 'class="raya-course-tools raya-course-map-tool-grid"' in html
-    assert '<a class="raya-command raya-command-search"' in html
+        '<section class="raya-course-rail-tools" aria-label="Course tools"'
+        in html
+    )
+    assert 'class="raya-course-rail-search"' in html
+    assert 'class="raya-course-rail-command raya-command-graph"' in html
+    assert 'class="raya-course-rail-command raya-command-practice"' in html
+    assert 'class="raya-course-rail-command raya-command-tasks"' in html
+    assert 'class="raya-course-rail-command raya-command-schedule"' in html
+    assert 'class="raya-course-rail-command raya-text-size-toggle"' in html
+    assert 'class="raya-course-rail-command raya-font-toggle"' in html
+    assert 'class="raya-course-rail-command raya-command-context"' in html
+    assert 'class="raya-course-map-tool-grid"' not in html
+    assert '<p class="raya-course-map-tools-label">Course Tools</p>' not in html
+    assert '<a class="raya-course-rail-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html
-    assert '<a class="raya-command raya-command-graph"' in html
+    assert '<a class="raya-course-rail-command raya-command-graph"' in html
     assert (
         '<button class="raya-command raya-command-map raya-course-map-toggle"'
         not in html
     )
     assert 'aria-label="Collapse course map"' in html
-    assert '<button class="raya-command raya-command-context"' in html
+    assert '<button class="raya-course-rail-command raya-command-context"' in html
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
     assert 'aria-label="Hide learning context"' in html
@@ -4980,11 +4989,11 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'aria-label="Open search results">'
     ) in html
     assert (
-        '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
+        '<button class="raya-course-rail-command raya-text-size-toggle"' in html
     )
     assert 'aria-label="Text size: normal"' in html
     assert '<span class="raya-command-label">Text size</span>' in html
-    assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
+    assert '<button class="raya-course-rail-command raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
     assert (
         '<nav class="raya-article-sequence raya-article-sequence-top" '
@@ -5004,7 +5013,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert 'class="raya-course-map-workspaces"' not in html
-    assert 'aria-label="Course workspaces"' not in html
+    assert 'class="raya-course-rail-command-list"' in html
+    assert 'aria-label="Course workspaces"' in html
     assert "data-raya-course-map-workspaces" not in html
     assert 'class="raya-course-map-drawer-chrome"' in html
     assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
@@ -5080,7 +5090,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert '<a class="raya-command raya-command-graph"' in root_html
+    assert '<a class="raya-course-rail-command raya-command-graph"' in root_html
     assert (
         'aria-label="Open course graph, 6 links, 5 from this page, 1 link here"'
         in root_html
@@ -5106,11 +5116,14 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    assert course_map_html.index('class="raya-course-rail-tools"') < (
+        course_map_html.index('class="raya-page-position"')
+    )
+    assert course_map_html.index('class="raya-page-position"') < (
+        course_map_html.index('id="raya-course-map-filter"')
+    )
     assert course_map_html.index('id="raya-course-map-filter"') < (
         course_map_html.index('class="raya-course-map-list"')
-    )
-    assert course_map_html.index('class="raya-course-map-list"') < (
-        course_map_html.index('class="raya-course-map-tools"')
     )
     reading_flow_panel = _section_html(last_html, "raya-page-reading-flow")
     assert 'aria-expanded="true">Reading flow</button>' in reading_flow_panel
