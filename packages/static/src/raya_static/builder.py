@@ -1228,9 +1228,10 @@ def _render_course_map_tools(
     return "\n".join(
         [
             '<section class="raya-course-rail-tools" aria-label="Course tools" data-raya-course-map-tools>',
-            '<div class="raya-course-rail-search">',
-            _render_command_search_form(search_href),
-            "</div>",
+            _render_command_search_form(search_href).replace(
+                'class="raya-command-search-form"',
+                'class="raya-course-rail-search raya-command-search-form"',
+            ),
             '<div class="raya-course-rail-command-list" role="group" aria-label="Course workspaces">',
             _render_compact_command_link(
                 class_name="raya-course-rail-command raya-command-search",
@@ -1293,7 +1294,6 @@ def _render_course_map_tools(
                 label="OpenDyslexic",
                 aria_pressed="false",
             ),
-            "</div>",
             "</div>",
             "</section>",
         ]

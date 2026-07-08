@@ -4956,7 +4956,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
         '<section class="raya-course-rail-tools" aria-label="Course tools"'
         in html
     )
-    assert 'class="raya-course-rail-search"' in html
+    assert (
+        '<form class="raya-course-rail-search raya-command-search-form"' in html
+    )
     assert 'class="raya-course-rail-command raya-command-graph"' in html
     assert 'class="raya-course-rail-command raya-command-practice"' in html
     assert 'class="raya-course-rail-command raya-command-tasks"' in html
@@ -4978,7 +4980,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
     assert 'aria-label="Hide learning context"' in html
-    assert '<form class="raya-command-search-form"' in html
+    assert '<div class="raya-course-rail-search">' not in html
     assert 'action="../_raya/search/index.html"' in html
     assert 'method="get"' in html
     assert 'name="q"' in html
