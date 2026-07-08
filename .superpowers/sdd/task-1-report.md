@@ -14,3 +14,7 @@ Fix review findings:
 Appendix:
 - Added a contract assertion that the reader-shell course tools section carries the stable `data-raya-course-map-tools` hook alongside `class="raya-course-rail-tools"`.
 - Verification: `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "reader_shell or course_map"` -> `4 passed, 105 deselected in 7.08s`
+
+Appendix update:
+- Tightened the reader-shell contract to assert `data-raya-course-map-tools` on the extracted `section.raya-course-rail-tools` tag, keeping the class and hook on the same element.
+- Verification: `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "reader_shell or course_map"` -> `4 passed, 105 deselected in 7.27s`
