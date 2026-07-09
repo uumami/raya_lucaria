@@ -48,16 +48,18 @@ an external service.
 
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
-rail. On desktop, the expanded course map is rendered as an expanded
-hierarchical course map and may show structural sequence numbers from the course
-order. It gives orientation by default, the main article remains the lesson, and
-the learning rail provides page contents and nearby course context. You can
-collapse the map to a minimal floating Map edge opener when you want more reading
-space; that choice is non-persistent and does not store or show personal
-progress. On desktop, collapsed map and context rails stop reserving reading
-columns and leave small translucent edge controls so you can restore them without
-losing the article. On medium-width screens, expanded map and context panels
-open as overlays so the article remains the shell's core column. The Map,
+rail. The rail starts with course search, then compact icon-labeled command
+tiles arranged two per row, then the scrollable course map. When the approved
+`894px+` reader geometry is active, the expanded course map is shown by default
+and may show structural sequence numbers from the course order. It gives
+orientation by default, the main article remains the lesson, and the learning
+rail provides page contents and nearby course context. You can collapse the map
+to a minimal floating Map edge opener when you want more reading space; that
+choice is non-persistent and does not store or show personal progress. In
+collapsed desktop states, hidden map and context content stops reserving reading
+columns, becomes inert, and is removed from keyboard and assistive navigation
+until restored. Below that breakpoint, expanded map and context panels open as
+overlays or drawers so the article remains the shell's core column. The Map,
 Context, Text size, OpenDyslexic, Search, Graph, Practice, Tasks, and Schedule
 controls are reading-comfort and navigation tools in the left course rail. They
 can widen the article, restore surrounding context, or hand off to generated
@@ -69,7 +71,11 @@ record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
-Reader pages use the left course rail as a single Course Tools area plus the course map. The map supports collapsible course-map branches for nested structure, and the same tab may remember which branches are collapsed after refresh or page navigation. That memory is orientation only, not progress or personalization.
+Reader pages use the left course rail for course search, compact two-per-row
+command tiles, and the course map. The map supports collapsible course-map
+branches for nested structure, and the same tab may remember which branches are
+collapsed after refresh or page navigation. That memory is orientation only,
+not progress or personalization.
 
 The left course rail may include a static Search handoff to the generated Course
 Search workspace. The reader page does not build a second search index, fetch
