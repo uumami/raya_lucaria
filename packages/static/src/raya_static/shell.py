@@ -386,6 +386,7 @@ _SHELL_JAVASCRIPT = r"""
     setElementInert(map, false);
     setFocusableDescendantsEnabled(map, true);
     map.setAttribute("aria-hidden", "false");
+    updateMapLinkTabOrder(root.dataset.rayaCourseMap !== "collapsed");
     if (root.dataset.rayaCourseMapDrawer !== "closed") {
       root.dataset.rayaCourseMapDrawer = "closed";
     }

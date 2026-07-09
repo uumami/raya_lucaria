@@ -11693,6 +11693,82 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
         handle.close()
 
 
+def test_reader_shell_collapse_sets_inert_hidden_state_without_tabbable_links(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 894, "height": 670})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.set_viewport_size({"width": 894, "height": 670})
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width <= 56"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
+                    state = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const toggle = document.querySelector(
+                            '#raya-course-map .raya-course-map-toggle'
+                          );
+                          return {
+                            mapWidth: map.getBoundingClientRect().width,
+                            listHidden: list.getAttribute('aria-hidden'),
+                            listInert: list.inert,
+                            toggleVisible: getComputedStyle(toggle).display !== 'none',
+                            activeHiddenLinks: Array.from(map.querySelectorAll('a'))
+                              .filter((link) => link.tabIndex >= 0)
+                              .length,
+                          };
+                        }"""
+                    )
+                    assert state["mapWidth"] <= 56
+                    assert state["listHidden"] == "true"
+                    assert state["listInert"] is True
+                    assert state["toggleVisible"] is True
+                    assert state["activeHiddenLinks"] == 0
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
     tmp_path: Path,
 ) -> None:
