@@ -23,3 +23,19 @@ Validation:
 
 Concerns:
 - `packages/static/src/raya_static/rendering.py` already contained unrelated user changes before this task; this work was patched around them and did not revert them.
+
+## Review follow-up: Task 2 findings
+
+Scope:
+- Updated `packages/static/src/raya_static/shell.py` so collapsed map accessibility/tab-order handling targets `.raya-course-rail-tools` instead of the retired `.raya-course-map-tools` selector.
+- Tightened `tests/contracts/test_static_builder.py` so the CSS contract requires the exact `.raya-course-rail-command {` selector block and added a shell resource regression assertion for the rebuilt rail tools selector.
+
+TDD record:
+1. Added the shell selector regression assertion and tightened the CSS selector assertion in `tests/contracts/test_static_builder.py`.
+2. Ran `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "rich_css or reader_shell or course_map"`.
+3. Captured the red result: `test_reader_shell_uses_static_learning_shell` failed because `shell_resources().javascript` did not include `.raya-course-rail-tools`.
+4. Updated `packages/static/src/raya_static/shell.py` to query `.raya-course-rail-tools` in `updateMapLinkTabOrder()`.
+5. Re-ran the same focused command and got green.
+
+Validation:
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/contracts/test_static_builder.py -k "rich_css or reader_shell or course_map"` -> `5 passed, 104 deselected`

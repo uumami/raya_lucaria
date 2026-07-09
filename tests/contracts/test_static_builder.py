@@ -28,6 +28,7 @@ from raya_static import build_course
 from raya_static import builder as static_builder
 from raya_static.math_renderer import MathRenderResult
 from raya_static.rendering import render_markdown_body
+from raya_static.shell import shell_resources
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -5031,6 +5032,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'data-raya-course-map-action="expand-all"' not in html
     assert 'data-raya-course-map-action="scan"' not in html
     assert 'data-raya-course-map-action="less"' not in html
+    shell_js = shell_resources().javascript
+    assert '".raya-course-rail-tools"' in shell_js
+    assert '".raya-course-map-tools"' not in shell_js
     assert 'data-raya-course-map-storage-key=' in html
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-command-tooltip=' in html
@@ -5815,7 +5819,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         assert selector in css
     assert ".raya-course-rail-tools" in css
     assert ".raya-course-rail-command-list" in css
-    assert ".raya-course-rail-command" in css
+    assert ".raya-course-rail-command {" in css
     assert ".raya-course-map-tool-grid" not in css
     assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in css
     assert "grid-template-columns: repeat(3" not in css

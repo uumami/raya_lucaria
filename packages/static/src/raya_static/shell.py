@@ -116,7 +116,7 @@ _SHELL_JAVASCRIPT = r"""
     map
       .querySelectorAll(
         [
-          ".raya-course-map-tools",
+          ".raya-course-rail-tools",
           ".raya-course-map-filter-label",
           ".raya-course-map-filter",
           ".raya-map-filter-empty",
