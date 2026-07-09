@@ -165,7 +165,11 @@ page contents and heading anchors, updates with the active heading in browser
 tests, remains a normal local anchor link, writes no browser storage, and does
 not use reading percentage, completion, mastery, recommendation, or progress
 language.
-Reader pages use the left course rail as a single Course Tools area plus the course map. The map supports collapsible course-map branches for nested structure, and the same tab may remember which branches are collapsed after refresh or page navigation. That memory is orientation only, not progress or personalization.
+Reader pages use the left course rail for course search, compact two-per-row
+command tiles, and then the scrollable course map. The map supports collapsible
+course-map branches for nested structure, and the same tab may remember which
+branches are collapsed after refresh or page navigation. That memory is
+orientation only, not progress or personalization.
 If a page lacks authored `estimated_time`, verify any `Estimated read time`
 shown in the Page brief or right rail is computed during build from public
 article text, uses no browser storage or runtime fetch, and remains approximate

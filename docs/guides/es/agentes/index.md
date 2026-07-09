@@ -178,7 +178,12 @@ contenidos de pagina y anchors de heading, que se actualice con el heading activ
 en tests de browser, que siga siendo un enlace local normal, que no escriba
 storage del browser y que no use lenguaje de porcentaje leido, finalizacion,
 dominio, recomendacion o progreso.
-Las paginas de lectura usan el riel izquierdo del curso como una sola area de Course Tools junto con el mapa del curso. El mapa admite ramas plegables del mapa del curso para estructuras anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de actualizar o navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
+Las paginas de lectura usan el riel izquierdo del curso para course search,
+mosaicos compactos de comandos dos por fila, y despues el mapa del curso con
+scroll. El mapa admite ramas plegables del mapa del curso para estructuras
+anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de
+actualizar o navegar. Esa memoria es solo orientacion, no progreso ni
+personalizacion.
 Si una pagina no tiene `estimated_time` escrito, verifica que cualquier
 `Estimated read time` mostrado en el Page brief o riel derecho se calcule
 durante build desde texto publico del articulo, no use storage del browser ni
@@ -213,9 +218,11 @@ disponibilidad del articulo y riel derecho despues de cerrar.
 Cuando cambien los rieles lectores colapsados, verifica que las pestanas
 desktop Map y Context usen labels visuales horizontales estables, sigan siendo
 operables por teclado mediante sus controles existentes, aumenten el ancho del
-articulo, permanezcan ocultas en tablet/movil cuando sus controles desktop
-esten ocultos, y no agreguen storage, fetch, progreso, recomendacion ni estado
-del estudiante. Cuando cambien controles de comodidad del shell, verifica que
+articulo, permanezcan ocultas cuando sus controles no estan visibles, y no
+agreguen storage, fetch, progreso, recomendacion ni estado del estudiante. En
+layouts de telefono, el riel derecho debe seguir disponible
+cuando el control `Context` esta oculto. Cuando cambien controles de comodidad
+del shell, verifica que
 reduced-motion desactive transiciones no esenciales y que las regiones
 colapsadas de escritorio salgan de la navegacion por teclado y asistiva como se
 especifica.
