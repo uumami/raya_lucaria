@@ -56,3 +56,18 @@ E assert 188 <= 44
 ```text
 2 passed, 108 deselected in 12.44s
 ```
+
+## Re-review Fixes
+
+- Removed the stale Task 3 `@media (min-width: 894px) and (max-width: 1279px)` renderer override from `packages/static/src/raya_static/rendering.py`.
+- Re-ran the focused reader-shell browser subset after removing that block and confirmed the approved `894x670` geometry regressed (`map.width == 44`).
+- Replaced the stale hunk with a smaller `894px-1279px` cleanup adjustment that only re-expands the collapsed side rails and shell padding needed for the approved viewport band.
+- Kept the strengthened browser assertions unchanged; no additional test edits were required for this cleanup pass.
+
+## Re-review Validation
+
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_static_read_path.py -k "reader_shell"`
+
+```text
+2 passed, 108 deselected in 10.09s
+```
