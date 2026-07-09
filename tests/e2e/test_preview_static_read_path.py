@@ -11475,6 +11475,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                               };
                               return {
                                 mapState: document.documentElement.dataset.rayaCourseMap,
+                                railState: document.documentElement.dataset.rayaLearningRail,
                                 map: box('#raya-course-map'),
                                 article: box('#raya-article'),
                                 rail: box('#raya-learning-rail'),
@@ -11486,6 +11487,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                             }"""
                         )
                         assert initial["mapState"] == "expanded"
+                        assert initial["railState"] == "expanded"
                         assert initial["map"]["left"] < initial["article"]["left"]
                         assert initial["article"]["right"] <= initial["rail"]["left"] + 1
                         assert 188 <= initial["map"]["width"] <= 290

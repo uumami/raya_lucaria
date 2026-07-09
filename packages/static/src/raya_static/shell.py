@@ -1359,6 +1359,22 @@ _SHELL_JAVASCRIPT = r"""
   } else if (compactStructuralRailQuery.addListener) {
     compactStructuralRailQuery.addListener(handleCompactStructuralRailChange);
   }
+  const handleApprovedRailGeometryChange = () => {
+    if (!isStructuralRailShell()) {
+      return;
+    }
+    closeCourseMapDrawer();
+    closeLearningRailDrawer();
+    setExpanded(defaultCourseMapExpanded());
+    setLearningRailExpanded(defaultLearningRailExpanded());
+    syncCourseMapDrawerState();
+    syncLearningRailDrawerState();
+  };
+  if (approvedRailGeometryQuery.addEventListener) {
+    approvedRailGeometryQuery.addEventListener("change", handleApprovedRailGeometryChange);
+  } else if (approvedRailGeometryQuery.addListener) {
+    approvedRailGeometryQuery.addListener(handleApprovedRailGeometryChange);
+  }
   if (printQuery.addEventListener) {
     printQuery.addEventListener("change", syncPrintDisclosureState);
   } else if (printQuery.addListener) {

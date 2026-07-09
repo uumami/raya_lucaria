@@ -77,3 +77,8 @@ E assert 188 <= 44
 - Removed the remaining `894px-1279px` collapsed-state CSS mask from `packages/static/src/raya_static/rendering.py` so the renderer no longer re-expands rails while the root state still says `collapsed`.
 - Corrected the root default-state path in `packages/static/src/raya_static/shell.py` by treating widths at or above the approved `894px` geometry breakpoint as expanded defaults for both the course map and learning rail.
 - Updated the focused reader-shell e2e coverage so both approved viewports, including `894x670`, assert the initial course-map state is truthfully `expanded` while preserving the compact two-per-row rail-command check.
+
+## Final Note
+
+- The accepted end state for Task 3 does not depend on a renderer-side `894px-1279px` override. The remaining fix is in `packages/static/src/raya_static/shell.py`, where an `approvedRailGeometryQuery` change listener now reapplies the truthful expanded defaults when resizing across the `894px` breakpoint and re-syncs both drawer states.
+- The focused reader-shell browser test now covers both truthful approved-viewport root state (`data-raya-course-map="expanded"` and `data-raya-learning-rail="expanded"`) and the `893px -> 894px` resize transition that previously left the shell stuck in the collapsed state.
