@@ -5787,7 +5787,10 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     for selector in (
-        ".raya-course-map-tools",
+        ".raya-course-rail-tools",
+        ".raya-course-rail-search",
+        ".raya-course-rail-command-list",
+        ".raya-course-rail-command",
         ".raya-mobile-course-map-open",
         ".raya-command",
         ".raya-command-icon",
@@ -5810,6 +5813,14 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
+    assert ".raya-course-rail-tools" in css
+    assert ".raya-course-rail-command-list" in css
+    assert ".raya-course-rail-command" in css
+    assert ".raya-course-map-tool-grid" not in css
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in css
+    assert "grid-template-columns: repeat(3" not in css
+    assert "height: calc(100vh - 1.5rem)" in css
+    assert ".raya-learning-rail" in css
     assert "min-width: 2.75rem" in css
     assert ".raya-graph-workspace {\n  align-items: start;" in css
     assert "height: clamp(24rem, 50vh, 36rem);" in css
