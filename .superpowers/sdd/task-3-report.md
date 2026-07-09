@@ -42,3 +42,17 @@ E assert 188 <= 44
 
 - `tests/e2e/test_preview_static_read_path.py` already had unrelated unstaged edits before this task. I kept them intact and only intend to stage the Task 3 hunk plus the report.
 - I only ran the focused browser subset requested by the task, not the full host or Docker check stack.
+
+## Review Findings Follow-up
+
+- Restored the prior reader-shell collapse regression coverage at `1440x900` while keeping the Task 3 approved-viewport inline geometry checks for `1440x900` and `894x670`.
+- Added a concrete `894x670` browser assertion that the first four `.raya-course-rail-command` controls render as a compact two-per-row grid.
+- No `rendering.py` change was required; the approved layout already satisfied the strengthened browser assertions.
+
+## Follow-up Validation
+
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_static_read_path.py -k "reader_shell"`
+
+```text
+2 passed, 108 deselected in 12.44s
+```
