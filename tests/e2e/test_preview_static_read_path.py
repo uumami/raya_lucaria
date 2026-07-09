@@ -11485,6 +11485,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                               };
                             }"""
                         )
+                        assert initial["mapState"] == "expanded"
                         assert initial["map"]["left"] < initial["article"]["left"]
                         assert initial["article"]["right"] <= initial["rail"]["left"] + 1
                         assert 188 <= initial["map"]["width"] <= 290
@@ -11526,7 +11527,6 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                 command_boxes[2]["top"] > command_boxes[0]["bottom"] - 1
                             )
                         else:
-                            assert initial["mapState"] == "expanded"
                             page.click("#raya-course-map [data-raya-course-map-toggle]")
                             page.wait_for_function(
                                 """() => document.documentElement.dataset.rayaCourseMap

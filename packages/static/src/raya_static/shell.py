@@ -48,6 +48,7 @@ _SHELL_JAVASCRIPT = r"""
   const compactStructuralRailQuery = window.matchMedia(
     "(min-width: 640px) and (max-width: 767px)"
   );
+  const approvedRailGeometryQuery = window.matchMedia("(min-width: 894px)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const currentSectionLinks = Array.from(
@@ -162,11 +163,15 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function defaultCourseMapExpanded() {
-    return !isStructuralRailShell() || isDesktopShell();
+    return (
+      !isStructuralRailShell() || isDesktopShell() || approvedRailGeometryQuery.matches
+    );
   }
 
   function defaultLearningRailExpanded() {
-    return !isStructuralRailShell() || isDesktopShell();
+    return (
+      !isStructuralRailShell() || isDesktopShell() || approvedRailGeometryQuery.matches
+    );
   }
 
   function setFocusableDescendantsEnabled(container, enabled) {

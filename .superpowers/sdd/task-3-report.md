@@ -71,3 +71,9 @@ E assert 188 <= 44
 ```text
 2 passed, 108 deselected in 10.09s
 ```
+
+## Final Root Cause Fix
+
+- Removed the remaining `894px-1279px` collapsed-state CSS mask from `packages/static/src/raya_static/rendering.py` so the renderer no longer re-expands rails while the root state still says `collapsed`.
+- Corrected the root default-state path in `packages/static/src/raya_static/shell.py` by treating widths at or above the approved `894px` geometry breakpoint as expanded defaults for both the course map and learning rail.
+- Updated the focused reader-shell e2e coverage so both approved viewports, including `894x670`, assert the initial course-map state is truthfully `expanded` while preserving the compact two-per-row rail-command check.
