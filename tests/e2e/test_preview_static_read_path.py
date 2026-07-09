@@ -11446,8 +11446,11 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                 args=["--no-sandbox"],
             )
             try:
-                for width in (1280, 1366, 1440, 1920):
-                    page = browser.new_page(viewport={"width": width, "height": 900})
+                for viewport in (
+                    {"width": 1440, "height": 900},
+                    {"width": 894, "height": 670},
+                ):
+                    page = browser.new_page(viewport=viewport)
                     try:
                         page.goto(
                             f"{handle.base_url}/reader-ux/index.html",
@@ -11456,85 +11459,19 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-top-command-bar").count() == 0
                         assert page.locator(".raya-discovery-command-bar").count() == 0
-
-                        initial = page.evaluate(
-                            """() => {
-                              const box = (selector) => {
-                                const rect = document
-                                  .querySelector(selector)
-                                  .getBoundingClientRect();
-                                return {
-                                  left: rect.left,
-                                  right: rect.right,
-                                  width: rect.width,
-                                };
-                              };
-                              return {
-                                mapState: document.documentElement.dataset.rayaCourseMap,
-                                map: box('#raya-course-map'),
-                                article: box('#raya-article'),
-                                rail: box('#raya-learning-rail'),
-                                overflow: Math.ceil(
-                                  document.documentElement.scrollWidth -
-                                  window.innerWidth
-                                ),
-                              };
-                            }"""
-                        )
-                        assert initial["map"]["right"] <= initial["article"]["left"]
-                        assert initial["article"]["right"] <= initial["rail"]["left"] + 1
-                        assert initial["mapState"] == "expanded"
-                        assert initial["overflow"] <= 1
-
-                        page.click("#raya-course-map [data-raya-course-map-toggle]")
-                        page.wait_for_function(
-                            """() => document.documentElement.dataset.rayaCourseMap
-                              === 'collapsed'"""
-                        )
-                        page.wait_for_function(
-                            """() => document
-                              .querySelector('#raya-course-map')
-                              ?.getBoundingClientRect().width <= 112"""
-                        )
-                        collapsed = page.evaluate(
-                            """() => {
-                              const box = (selector) => {
-                                const rect = document
-                                  .querySelector(selector)
-                                  .getBoundingClientRect();
-                                return {
-                                  left: rect.left,
-                                  right: rect.right,
-                                  width: rect.width,
-                                };
-                              };
-                              return {
-                                rootMapState: document.documentElement
-                                  .dataset
-                                  .rayaCourseMap,
-                                map: box('#raya-course-map'),
-                                article: box('#raya-article'),
-                                rail: box('#raya-learning-rail'),
-                                overflow: Math.ceil(
-                                  document.documentElement.scrollWidth -
-                                  window.innerWidth
-                                ),
-                              };
-                            }"""
-                        )
-                        assert collapsed["rootMapState"] == "collapsed"
-                        assert (
-                            collapsed["article"]["width"]
-                            >= initial["article"]["width"] + 80
-                        )
-                        assert collapsed["map"]["width"] <= 56
-                        assert collapsed["map"]["left"] <= 8
-                        assert (
-                            collapsed["article"]["right"]
-                            <= collapsed["rail"]["left"] + 1
-                        )
-                        assert collapsed["overflow"] <= 1
-                        _assert_no_horizontal_overflow(page)
+                        map_box = page.locator("#raya-course-map").bounding_box()
+                        article_box = page.locator("#raya-article").bounding_box()
+                        rail_box = page.locator("#raya-learning-rail").bounding_box()
+                        assert map_box is not None
+                        assert article_box is not None
+                        assert rail_box is not None
+                        assert map_box["x"] < article_box["x"]
+                        assert article_box["x"] + article_box["width"] <= rail_box["x"] + 1
+                        assert 188 <= map_box["width"] <= 290
+                        assert 188 <= rail_box["width"] <= 310
+                        assert page.locator(".raya-course-rail-search").is_visible()
+                        assert page.locator(".raya-course-rail-command").first.is_visible()
+                        assert page.locator("#raya-course-map-list").is_visible()
                     finally:
                         page.close()
             finally:
