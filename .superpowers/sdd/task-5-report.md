@@ -15,6 +15,7 @@ Concerns:
 Review fix:
 - Updated the `Course map and reading context` row to match the approved `894px+` expanded geometry and the narrower explicit-collapse behavior.
 - Updated the `Reader controls` row to reflect desktop and medium-width `Context` behavior instead of desktop-only visibility wording.
+- Corrected the Spanish student guide sentence so `Context` applies on desktop and medium-width layouts, matching the English/foundation behavior.
 
 Verification:
 - `rg -n "reader top bar|top command bar|raya-course-map-tool-grid|Course Workspaces" docs/foundation docs/guides README.md AGENTS.md openspec/config.yaml`

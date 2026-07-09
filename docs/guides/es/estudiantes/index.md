@@ -88,9 +88,10 @@ estudio. Usalo como salto rapido cuando recuerdes una frase, teorema, titulo de
 pagina o stable ID mientras lees.
 
 Usa el boton del mapa del curso para colapsar o expandir la navegacion cuando
-necesites otro foco. En desktop, `Context` puede ocultar o restaurar solo el
-riel derecho mientras deja disponible el mapa del curso; tambien es estado
-temporal de layout, no progreso ni personalizacion. En layouts de tamano movil,
+necesites otro foco. `Context` puede ocultar o restaurar solo el riel derecho
+en desktop y en layouts de ancho medio, mientras deja disponible el mapa del
+curso; tambien es estado temporal de layout, no progreso ni personalizacion.
+En layouts de tamano movil,
 el boton Course map abre un drawer temporal con titulo propio, posicion de pagina, filtro,
 atajos de workspace y boton de cierre. Mientras el drawer esta abierto, la
 pagina de fondo pausa el scroll para que el mapa sea mas facil de usar; cierralo
