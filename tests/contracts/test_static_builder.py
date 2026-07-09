@@ -4870,7 +4870,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "overflow: auto;" in css_text
 
 
-def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
+def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     foundation = (
         ROOT / "docs" / "foundation" / "20_learning_renderer_contract.md"
     ).read_text(encoding="utf-8")
@@ -4886,19 +4886,22 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
     spanish_agent = (
         ROOT / "docs" / "guides" / "es" / "agentes" / "index.md"
     ).read_text(encoding="utf-8")
+    foundation_lower = foundation.lower()
+    english_guides = tuple(" ".join(text.split()) for text in (english_student, english_agent))
+    spanish_guides = tuple(" ".join(text.split()) for text in (spanish_student, spanish_agent))
 
     for required in (
-        "reader pages have no reader top bar",
+        "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
+        "course search, then compact icon-labeled command tiles rendered two per row",
         "minimal floating Map edge opener",
-        "collapsed course-map content is removed from keyboard and assistive navigation",
-        "one compact Course Tools surface",
-        "no separate Course Workspaces section",
+        "collapsed course-map content is inert, removed from keyboard navigation",
+        "no separate workspace section",
         "no visible Current, All, Scan, or Less map action buttons",
         "course-scoped sessionStorage may restore collapsed course-map branches",
     ):
-        assert required in foundation
+        assert required.lower() in foundation_lower
     for forbidden in (
         "compact command-bar search form",
         "sticky command bar may show",
@@ -4911,20 +4914,22 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
     ):
         assert forbidden not in foundation
 
-    for text in (english_student, english_agent):
+    for text in english_guides:
         assert "left course rail" in text
         assert "discovery command bar" in text
-        assert "single Course Tools area" in text
+        assert "course search" in text
+        assert "two" in text and "command" in text and "scrollable course map" in text
         assert "collapsible course-map branches" in text
         assert "top bar" not in text.lower()
         assert "top-bar" not in text.lower()
     assert "tablet/mobile Course map drawer" not in english_agent
     assert "drawer Course map en tablet/movil" not in spanish_agent
 
-    for text in (spanish_student, spanish_agent):
+    for text in spanish_guides:
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
-        assert "una sola area de Course Tools" in text
+        assert "course search" in text
+        assert "dos" in text and "comandos" in text and "mapa del curso" in text
         assert "ramas plegables del mapa del curso" in text
         assert "barra superior" not in text.lower()
         assert "comando superior" not in text.lower()
@@ -5020,7 +5025,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert 'class="raya-course-map-workspaces"' not in html
     assert 'class="raya-course-rail-command-list"' in html
-    assert 'aria-label="Course workspaces"' in html
+    assert 'aria-label="Course commands"' in html
     assert "data-raya-course-map-workspaces" not in html
     assert 'class="raya-course-map-drawer-chrome"' in html
     assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
@@ -5527,7 +5532,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-course-map-action="less"' not in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
-    assert "Course Tools" in html
+    assert 'aria-label="Course tools"' in html
     assert "_raya/search/index.html?q=" in html
     assert "_raya/graph/index.html?page=" in html
     assert "_raya/practice/index.html" in html

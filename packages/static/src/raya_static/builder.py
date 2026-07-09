@@ -1232,7 +1232,7 @@ def _render_course_map_tools(
                 'class="raya-command-search-form"',
                 'class="raya-course-rail-search raya-command-search-form"',
             ),
-            '<div class="raya-course-rail-command-list" role="group" aria-label="Course workspaces">',
+            '<div class="raya-course-rail-command-list" role="group" aria-label="Course commands">',
             _render_compact_command_link(
                 class_name="raya-course-rail-command raya-command-search",
                 href=search_href,
@@ -2108,7 +2108,6 @@ def _render_course_map(
             else "",
             "</div>",
             '<p class="raya-region-title">Course map</p>',
-            f'<p class="raya-page-position">{position}</p>' if position else "",
             (
                 '<button class="raya-course-map-close" type="button" '
                 'data-raya-course-map-close aria-label="Close course map">'
@@ -2124,6 +2123,8 @@ def _render_course_map(
                 icon="map",
             ),
             "</div>",
+            tools_html,
+            f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -2136,7 +2137,6 @@ def _render_course_map(
             "\n".join(nav_items),
             "</ol>",
             "</div>",
-            tools_html,
             (
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'

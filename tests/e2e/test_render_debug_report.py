@@ -277,7 +277,7 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
           <body data-raya-skin="warm-academic">
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-map-tools" aria-label="Course tools"
+                <section class="raya-course-rail-tools" aria-label="Course tools"
                   data-raya-course-map-tools>
                   <button class="raya-course-map-toggle" type="button"
                     data-raya-course-map-toggle aria-expanded="false">
@@ -373,7 +373,7 @@ def test_render_debug_report_requires_collapsible_shell_controls(
           <body data-raya-skin="warm-academic">
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-map-tools" aria-label="Course tools"
+                <section class="raya-course-rail-tools" aria-label="Course tools"
                   data-raya-course-map-tools></section>
               </nav>
               <article id="raya-article" class="raya-main-article"></article>
@@ -411,7 +411,7 @@ def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
           <body data-raya-skin="warm-academic">
             <main class="raya-learning-shell">
               <nav class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-map-tools" aria-label="Course tools"
+                <section class="raya-course-rail-tools" aria-label="Course tools"
                   data-raya-course-map-tools>
                   <button class="raya-course-map-toggle" type="button"
                     data-raya-course-map-toggle aria-expanded="false">
@@ -471,7 +471,7 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
         "main#raya-content.raya-learning-shell",
         "nav#raya-course-map.raya-course-map",
         "nav.raya-course-map",
-        ".raya-course-map-tools",
+        ".raya-course-rail-tools",
         "[data-raya-course-map-tools]",
         "button.raya-course-map-toggle",
         "[data-raya-course-map-toggle]",
@@ -489,7 +489,7 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <!-- raya-learning-shell raya-course-map raya-course-map-tools -->
+            <!-- raya-learning-shell raya-course-map raya-course-rail-tools -->
             <main class="raya-learning-shell">
               <article>
                 <p>raya-main-article raya-learning-rail appear only in prose.</p>
@@ -510,7 +510,7 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     assert shell_check["status"] == "fail"
     assert set(shell_check["details"]["missing_classes"]) == {
         "raya-course-map",
-        "raya-course-map-tools",
+        "raya-course-rail-tools",
         "raya-main-article",
         "raya-learning-rail",
     }
@@ -1430,7 +1430,7 @@ def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
       <body data-raya-skin="{skin}">
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <section class="raya-course-map-tools" aria-label="Course tools"
+            <section class="raya-course-rail-tools" aria-label="Course tools"
               data-raya-course-map-tools>
               <button class="raya-course-map-toggle" type="button"
                 data-raya-course-map-toggle aria-expanded="false">

@@ -66,7 +66,7 @@ READER_UX_STATIC_ENVIRONMENTS = {
 LEARNING_SHELL_REGIONS = (
     "raya-learning-shell",
     "raya-course-map",
-    "raya-course-map-tools",
+    "raya-course-rail-tools",
     "raya-main-article",
     "raya-learning-rail",
 )
@@ -78,7 +78,7 @@ LEARNING_SHELL_SELECTORS = (
     "main#raya-content.raya-learning-shell",
     "nav#raya-course-map.raya-course-map",
     "nav.raya-course-map",
-    ".raya-course-map-tools",
+    ".raya-course-rail-tools",
     "[data-raya-course-map-tools]",
     "button.raya-course-map-toggle",
     "[data-raya-course-map-toggle]",
