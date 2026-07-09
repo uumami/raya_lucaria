@@ -11580,6 +11580,113 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                             _assert_no_horizontal_overflow(page)
                     finally:
                         page.close()
+                page = browser.new_page(viewport={"width": 893, "height": 670})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail
+                            === 'collapsed'"""
+                    )
+                    page.set_viewport_size({"width": 894, "height": 670})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail
+                            === 'expanded'
+                          && document.documentElement.dataset.rayaCourseMapDrawer
+                            === 'closed'
+                          && document.documentElement.dataset.rayaLearningRailDrawer
+                            === 'closed'"""
+                    )
+                    page.wait_for_function(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map')
+                            .getBoundingClientRect();
+                          const article = document.querySelector('#raya-article')
+                            .getBoundingClientRect();
+                          const rail = document.querySelector('#raya-learning-rail')
+                            .getBoundingClientRect();
+                          return (
+                            188 <= map.width && map.width <= 290
+                            && 188 <= rail.width && rail.width <= 310
+                            && map.left < article.left
+                            && article.right <= rail.left + 1
+                          );
+                        }"""
+                    )
+                    resized = page.evaluate(
+                        """() => {
+                          const box = (selector) => {
+                            const rect = document.querySelector(selector)
+                              .getBoundingClientRect();
+                            return {
+                              left: rect.left,
+                              right: rect.right,
+                              top: rect.top,
+                              width: rect.width,
+                              height: rect.height,
+                            };
+                          };
+                          const commandBoxes = Array.from(
+                            document.querySelectorAll('.raya-course-rail-command')
+                          )
+                            .slice(0, 4)
+                            .map((command) => {
+                              const rect = command.getBoundingClientRect();
+                              return {
+                                left: rect.left,
+                                top: rect.top,
+                                right: rect.right,
+                                bottom: rect.bottom,
+                              };
+                            });
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            mapDrawer: document.documentElement.dataset.rayaCourseMapDrawer,
+                            railDrawer: document.documentElement.dataset.rayaLearningRailDrawer,
+                            map: box('#raya-course-map'),
+                            article: box('#raya-article'),
+                            rail: box('#raya-learning-rail'),
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                            commandBoxes,
+                          };
+                        }"""
+                    )
+                    assert resized["mapState"] == "expanded"
+                    assert resized["railState"] == "expanded"
+                    assert resized["mapDrawer"] == "closed"
+                    assert resized["railDrawer"] == "closed"
+                    assert 188 <= resized["map"]["width"] <= 290
+                    assert 188 <= resized["rail"]["width"] <= 310
+                    assert resized["map"]["left"] < resized["article"]["left"]
+                    assert resized["article"]["right"] <= resized["rail"]["left"] + 1
+                    assert resized["overflow"] <= 1
+                    assert page.locator(".raya-course-rail-search").is_visible()
+                    assert page.locator(".raya-course-rail-command").first.is_visible()
+                    assert page.locator("#raya-course-map-list").is_visible()
+                    assert len(resized["commandBoxes"]) == 4
+                    row_tolerance = 4
+                    assert (
+                        abs(resized["commandBoxes"][0]["top"] - resized["commandBoxes"][1]["top"])
+                        <= row_tolerance
+                    )
+                    assert (
+                        abs(resized["commandBoxes"][2]["top"] - resized["commandBoxes"][3]["top"])
+                        <= row_tolerance
+                    )
+                    assert resized["commandBoxes"][1]["left"] > resized["commandBoxes"][0]["right"] - 1
+                    assert resized["commandBoxes"][2]["top"] > resized["commandBoxes"][0]["bottom"] - 1
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
             finally:
                 browser.close()
     finally:

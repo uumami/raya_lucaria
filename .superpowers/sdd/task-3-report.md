@@ -82,3 +82,11 @@ E assert 188 <= 44
 
 - The accepted end state for Task 3 does not depend on a renderer-side `894px-1279px` override. The remaining fix is in `packages/static/src/raya_static/shell.py`, where an `approvedRailGeometryQuery` change listener now reapplies the truthful expanded defaults when resizing across the `894px` breakpoint and re-syncs both drawer states.
 - The focused reader-shell browser test now covers both truthful approved-viewport root state (`data-raya-course-map="expanded"` and `data-raya-learning-rail="expanded"`) and the `893px -> 894px` resize transition that previously left the shell stuck in the collapsed state.
+
+## Review Fix
+
+- Strengthened the `893px -> 894px` resize-path assertions in `tests/e2e/test_preview_static_read_path.py` so the test now rechecks the actual post-resize geometry at `894x670`, including map width, rail width, article placement between the rails, no horizontal overflow, visible course map list/search/commands, and the compact two-per-row rail-command layout.
+
+## Review Fix Validation
+
+- `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest -q tests/e2e/test_preview_static_read_path.py -k "reader_shell"`
