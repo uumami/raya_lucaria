@@ -186,15 +186,16 @@ fetch runtime, y siga siendo orientacion aproximada, no progreso, dominio,
 recomendacion ni personalizacion. Cuando exista `estimated_time`, debe tener
 precedencia como `Estimated time`.
 Si la shell expone un comando `Context` en el riel izquierdo del curso, verifica
-que alterne solo el riel derecho en desktop, mantenga disponible el mapa del
-curso, sincronice `aria-expanded` y labels con los controles del riel,
-permanezca oculto en tablet y movil, y no escriba storage del browser ni estado
-de progreso o recomendacion.
+que alterne solo el riel derecho cuando el control de contexto sea visible,
+mantenga disponible el mapa del curso, sincronice `aria-expanded` y labels con
+los controles del riel, y no escriba storage del browser ni estado de progreso o
+recomendacion.
 Para cambios responsivos de la shell, revisa juntos los viewports desktop,
-tablet y movil. En desktop el riel derecho de aprendizaje puede colapsar a una
-pestana compacta de contexto, pero en tablet y movil el cuerpo del riel debe
-seguir visible y alcanzable por tecnologias asistivas cuando los controles de
-colapso estan ocultos. Presionar Escape dentro del riel en movil no debe dejar
+tablet y movil. En desktop y anchos medios, el riel derecho de aprendizaje puede
+colapsar a una pestana compacta de contexto cuando el control esta visible, pero
+en layouts de telefono el cuerpo del riel debe seguir visible y alcanzable por
+tecnologias asistivas cuando los controles de colapso estan ocultos. Presionar
+Escape dentro del riel en movil no debe dejar
 `aria-hidden`, `inert` ni contenido enfocable oculto. El estado de colapso u
 orientacion de la shell no debe escribir `localStorage`. Solo identificadores de
 ramas plegadas del mapa del curso, con scope de curso y en la misma pestana,

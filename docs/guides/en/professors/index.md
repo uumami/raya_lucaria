@@ -281,11 +281,12 @@ source, personal calendar sync, reminder system, submission system, gradebook,
 progress tracker, or recommendation engine.
 
 Rendered pages now use an expanded course map, rendered as an expanded
-hierarchical course map by default, and let
-students filter visible page labels or collapse the map to a minimal floating Map edge opener for more reading space. Below the inline desktop breakpoint,
-expanded map and context panels are overlays so the article remains
-the core reading column. Course-map shell collapse, context state, and filter text are
-non-persistent UI state. The shell may show structure such as `Page N of M`;
+hierarchical course map by default, and let students filter visible page labels or
+collapse the map to a minimal floating Map edge opener for more reading space.
+Phone-sized layouts may open the course map as a temporary drawer, while the
+right learning rail remains readable when collapse controls are hidden.
+Course-map shell collapse, context state, and filter text are non-persistent UI
+state. The shell may show structure such as `Page N of M`;
 treat that as course position, not personal progress or completion.
 Pages may also end with larger Previous/Next cards generated from the authored
 course order. You do not author these cards separately; keep the page order and

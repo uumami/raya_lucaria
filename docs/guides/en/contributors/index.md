@@ -124,10 +124,10 @@ mastery, or recommendation language.
 
 Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
-on desktop, can filter the rendered
-map labels locally, can collapse by explicit click to a minimal floating Map edge opener,
-uses article-first overlay panels below the inline desktop breakpoint, and keeps
-that shell state non-persistent. The course-map behavior is
+on desktop, can filter the rendered map labels locally, can collapse by explicit
+click to a minimal floating Map edge opener, may open the course map as a
+temporary drawer on phone-sized layouts, and keeps that shell state
+non-persistent. The course-map behavior is
 explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
 served from local renderer resources rather than external scripts or styles.
 Article-end Previous/Next cards are generated from the same course order as the

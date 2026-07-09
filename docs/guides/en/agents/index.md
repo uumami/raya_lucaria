@@ -178,9 +178,10 @@ uses small floating edge openers without reserving shell columns, and writes no
 browser storage or progress/recommendation state.
 For responsive shell changes, check desktop, tablet, and mobile viewports
 together. Inline desktop may use three shell columns, medium-width reader pages
-should keep the article as the only shell grid column and use overlay panels,
-and phone-sized layouts must keep the rail body visible and reachable by
-assistive technology when collapse controls are hidden. Pressing Escape inside
+should keep the article as the primary shell column with explicit collapse
+controls, and phone-sized layouts may open only the course map as a drawer while
+keeping the right rail body visible and reachable by assistive technology when
+collapse controls are hidden. Pressing Escape inside
 the rail on mobile must not leave `aria-hidden`, `inert`, or hidden focusable
 content behind. Shell collapse/orientation state must not write localStorage.
 Only course-scoped collapsed course-map branch identifiers may use same-tab

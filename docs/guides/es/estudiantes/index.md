@@ -58,11 +58,12 @@ Da orientacion por defecto, el articulo principal sigue siendo la leccion, y el
 riel de aprendizaje ofrece contenidos de pagina y contexto cercano. Puedes
 colapsar el mapa a un opener minimo flotante Map cuando quieras mas espacio de
 lectura; esa eleccion es no persistente y no guarda ni muestra progreso
-personal. En estados colapsados de desktop, el mapa y el contexto ocultos dejan
-de reservar columnas de lectura, quedan inertes, y salen de la navegacion de
-teclado y de asistencia hasta que los restaures. Debajo de ese breakpoint, el
-mapa y el contexto expandidos se abren como overlays o drawers para que el
-articulo siga siendo la columna central del shell. Los controles Map, Context,
+personal. En estados colapsados de desktop y ancho medio, el mapa y el contexto
+ocultos dejan de reservar columnas de lectura, quedan inertes, y salen de la
+navegacion de teclado y de asistencia hasta que los restaures. En layouts de
+telefono, el mapa del curso puede abrirse como un drawer temporal mientras el
+riel de aprendizaje sigue legible y alcanzable por tecnologias asistivas. Los
+controles Map, Context,
 Text size, OpenDyslexic, Search, Graph, Practice, Tasks y Schedule son
 herramientas de comodidad y navegacion en el riel izquierdo del curso. Pueden
 ampliar el articulo, restaurar el contexto alrededor o pasar a workspaces

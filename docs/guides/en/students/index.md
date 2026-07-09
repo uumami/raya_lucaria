@@ -56,10 +56,11 @@ orientation by default, the main article remains the lesson, and the learning
 rail provides page contents and nearby course context. You can collapse the map
 to a minimal floating Map edge opener when you want more reading space; that
 choice is non-persistent and does not store or show personal progress. In
-collapsed desktop states, hidden map and context content stops reserving reading
-columns, becomes inert, and is removed from keyboard and assistive navigation
-until restored. Below that breakpoint, expanded map and context panels open as
-overlays or drawers so the article remains the shell's core column. The Map,
+collapsed desktop and medium-width states, hidden map and context content stops
+reserving reading columns, becomes inert, and is removed from keyboard and
+assistive navigation until restored. On phone-sized layouts, the course map may
+open as a temporary drawer while the learning rail remains readable and
+assistive-technology reachable. The Map,
 Context, Text size, OpenDyslexic, Search, Graph, Practice, Tasks, and Schedule
 controls are reading-comfort and navigation tools in the left course rail. They
 can widen the article, restore surrounding context, or hand off to generated
