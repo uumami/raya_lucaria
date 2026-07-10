@@ -14741,10 +14741,19 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                 args=["--no-sandbox"],
             )
             try:
+                def stored_record_script(value: object) -> str:
+                    return (
+                        "sessionStorage.setItem("
+                        "'raya:reader-shell:v1:render-fixture', "
+                        f"{json.dumps(json.dumps(value))});"
+                    )
+
                 cases = (
                     (
                         {"width": 1440, "height": 950},
-                        {"courseMap": "expanded", "learningRail": "collapsed"},
+                        stored_record_script(
+                            {"courseMap": "expanded", "learningRail": "collapsed"}
+                        ),
                         {
                             "prepaint": "valid",
                             "ready": None,
@@ -14752,13 +14761,16 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "rail": "collapsed",
                             "mapPreference": "expanded",
                             "railPreference": "collapsed",
+                            "drawer": "closed",
                             "mapVisible": True,
                             "railVisible": False,
                         },
                     ),
                     (
                         {"width": 800, "height": 900},
-                        {"courseMap": "expanded", "learningRail": "expanded"},
+                        stored_record_script(
+                            {"courseMap": "expanded", "learningRail": "expanded"}
+                        ),
                         {
                             "prepaint": "valid",
                             "ready": None,
@@ -14766,18 +14778,87 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "rail": "collapsed",
                             "mapPreference": "expanded",
                             "railPreference": "expanded",
+                            "drawer": "closed",
                             "mapVisible": False,
                             "railVisible": False,
                         },
                     ),
+                    (
+                        {"width": 800, "height": 900},
+                        None,
+                        {
+                            "prepaint": "missing",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 1440, "height": 950},
+                        (
+                            "sessionStorage.setItem("
+                            "'raya:reader-shell:v1:render-fixture', "
+                            f"{json.dumps('{not-json')});"
+                        ),
+                        {
+                            "prepaint": "invalid",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": True,
+                            "railVisible": True,
+                        },
+                    ),
+                    (
+                        {"width": 800, "height": 900},
+                        """Object.defineProperty(window, 'sessionStorage', {
+                          configurable: true,
+                          get() {
+                            throw new Error('storage unavailable');
+                          },
+                        });""",
+                        {
+                            "prepaint": "unavailable",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 390, "height": 844},
+                        None,
+                        {
+                            "prepaint": "missing",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": True,
+                            "railVisible": True,
+                        },
+                    ),
                 )
-                for viewport, stored, expected in cases:
+                for viewport, init_script, expected in cases:
                     page = browser.new_page(viewport=viewport)
-                    page.add_init_script(
-                        "sessionStorage.setItem("
-                        "'raya:reader-shell:v1:render-fixture', "
-                        f"{json.dumps(json.dumps(stored))});"
-                    )
+                    page_errors: list[str] = []
+                    page.on("pageerror", lambda error: page_errors.append(str(error)))
+                    if init_script is not None:
+                        page.add_init_script(init_script)
                     page.route("**/shell.js", lambda route: route.abort())
                     try:
                         page.goto(
@@ -14790,13 +14871,15 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                               ready: document.documentElement.dataset.rayaShellReady || null,
                               map: document.documentElement.dataset.rayaCourseMap,
                               rail: document.documentElement.dataset.rayaLearningRail,
-                              mapPreference: document.documentElement.dataset.rayaCourseMapPreference,
-                              railPreference: document.documentElement.dataset.rayaLearningRailPreference,
+                              mapPreference: document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference: document.documentElement.dataset.rayaLearningRailPreference || null,
+                              drawer: document.documentElement.dataset.rayaCourseMapDrawer,
                               mapVisible: document.querySelector('#raya-course-map-list').checkVisibility(),
                               railVisible: document.querySelector('#raya-learning-rail-body').checkVisibility(),
                             })"""
                         )
                         assert state == expected
+                        assert page_errors == []
                     finally:
                         page.close()
             finally:

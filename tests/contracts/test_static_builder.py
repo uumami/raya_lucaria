@@ -5553,10 +5553,13 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         encoding="utf-8"
     )
 
-    assert (
-        '<html lang="en" data-raya-course-map="expanded" '
-        'data-raya-course-map-drawer="closed">'
-    ) in html
+    root_tag = html.splitlines()[1]
+    assert root_tag.startswith('<html lang="en" ')
+    assert 'data-raya-course-id="minimal-course"' in root_tag
+    assert 'data-raya-shell-prepaint="pending"' in root_tag
+    assert 'data-raya-course-map="expanded"' in root_tag
+    assert 'data-raya-learning-rail="expanded"' in root_tag
+    assert 'data-raya-course-map-drawer="closed"' in root_tag
     assert (
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html
