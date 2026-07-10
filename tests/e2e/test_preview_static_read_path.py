@@ -12591,7 +12591,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                         "branchBExpanded": "true",
                         "branchBChildrenHidden": False,
                         "localStorageKeys": [],
-                        "sessionStorageKeys": ["raya:course-map:course-root"],
+                        "sessionStorageKeys": [
+                            "raya:course-map-branches:v1:minimal-course"
+                        ],
                     }
 
                     page.focus(
@@ -13289,20 +13291,14 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                           childHidden: document
                             .querySelector('[data-raya-map-node="render-root"] > [data-raya-map-children]')
                             ?.hidden,
-                          storage: Object.fromEntries(
-                            Object.keys(sessionStorage)
-                              .filter((key) => key.startsWith('raya:course-map:'))
-                              .map((key) => [key, sessionStorage.getItem(key)])
+                          storage: sessionStorage.getItem(
+                            'raya:course-map-branches:v1:render-fixture'
                           ),
                         })"""
                     )
                     assert collapsed["expanded"] == "false"
                     assert collapsed["childHidden"] is True
-                    assert collapsed["storage"]
-                    assert any(
-                        "render-root" in value
-                        for value in collapsed["storage"].values()
-                    )
+                    assert collapsed["storage"] == '["render-root"]'
 
                     page.reload(wait_until="networkidle")
                     page.wait_for_function(
@@ -13327,6 +13323,166 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                 browser.close()
     finally:
         handle.close()
+
+
+def test_course_map_branch_state_uses_course_id_and_validates_payload(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    served_parent = tmp_path / "served"
+    course_a = served_parent / "course-a"
+    course_b = served_parent / "course-b"
+    for course, course_id in (
+        (course_a, "branch-course-a"),
+        (course_b, "branch-course-b"),
+    ):
+        shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+        config_path = course / "raya.yaml"
+        config_path.write_text(
+            config_path.read_text(encoding="utf-8").replace(
+                "course_id: minimal-course", f"course_id: {course_id}"
+            ),
+            encoding="utf-8",
+        )
+        unit_path = course / "course" / "1_unit" / "0_index.md"
+        unit_path.write_text(
+            unit_path.read_text(encoding="utf-8").replace(
+                "id: first-unit", "id: unit-node"
+            ),
+            encoding="utf-8",
+        )
+        topic_path = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+        topic_path.write_text(
+            topic_path.read_text(encoding="utf-8").replace(
+                "  - first-unit", "  - unit-node"
+            ),
+            encoding="utf-8",
+        )
+        report = build_course(course)
+        assert report.ok, [
+            diagnostic.format() for diagnostic in report.diagnostics
+        ]
+
+    cases = (
+        (None, "generated-defaults"),
+        ("[]", "all-expanded"),
+        ('["unit-node","unit-node","missing-node"]', "known-deduplicated"),
+        ('{"bad":true}', "generated-defaults"),
+        ('["unit-node",7]', "generated-defaults"),
+        ('[""]', "generated-defaults"),
+    )
+    expected_states = {
+        "generated-defaults": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "false"},
+        ],
+        "all-expanded": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "true"},
+        ],
+        "known-deduplicated": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "false"},
+        ],
+    }
+    key_a = "raya:course-map-branches:v1:branch-course-a"
+    key_b = "raya:course-map-branches:v1:branch-course-b"
+    browser_executable = _browser_executable()
+
+    with _serve(served_parent) as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    course_a_url = f"{base_url}/course-a/artifact/site/index.html"
+                    page.goto(course_a_url, wait_until="networkidle")
+                    assert page.locator("#raya-course-map").get_attribute(
+                        "data-raya-course-map-storage-key"
+                    ) == key_a
+
+                    for raw, expected in cases:
+                        page.evaluate(
+                            """([key, raw]) => {
+                              if (raw === null) sessionStorage.removeItem(key);
+                              else sessionStorage.setItem(key, raw);
+                            }""",
+                            [key_a, raw],
+                        )
+                        page.reload(wait_until="networkidle")
+                        state = page.evaluate(
+                            """() => Array.from(
+                              document.querySelectorAll('[data-raya-map-node-toggle]')
+                            ).map((toggle) => ({
+                              id: toggle.closest('[data-raya-map-node]')
+                                ?.getAttribute('data-raya-map-node'),
+                              expanded: toggle.getAttribute('aria-expanded'),
+                            }))"""
+                        )
+                        assert state == expected_states[expected]
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", key_a
+                        ) == raw
+
+                        if expected == "known-deduplicated":
+                            page.click(
+                                '[data-raya-map-node="course-root"] '
+                                "> .raya-course-map-node-row "
+                                "[data-raya-map-node-toggle]"
+                            )
+                            assert page.evaluate(
+                                "key => sessionStorage.getItem(key)", key_a
+                            ) == '["course-root","unit-node"]'
+
+                    page.evaluate(
+                        """([keyA, keyB]) => {
+                          sessionStorage.setItem(keyA, '["course-root"]');
+                          sessionStorage.setItem(keyB, '[]');
+                        }""",
+                        [key_a, key_b],
+                    )
+                    page.reload(wait_until="networkidle")
+                    assert page.locator(
+                        '[data-raya-map-node="course-root"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    ).get_attribute("aria-expanded") == "false"
+                    assert page.locator(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    ).get_attribute("aria-expanded") == "true"
+
+                    page.goto(
+                        f"{base_url}/course-b/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert page.locator("#raya-course-map").get_attribute(
+                        "data-raya-course-map-storage-key"
+                    ) == key_b
+                    assert page.locator(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    ).get_attribute("aria-expanded") == "true"
+                    page.click(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    )
+                    assert page.evaluate(
+                        """([keyA, keyB]) => ({
+                          courseA: sessionStorage.getItem(keyA),
+                          courseB: sessionStorage.getItem(keyB),
+                        })""",
+                        [key_a, key_b],
+                    ) == {
+                        "courseA": '["course-root"]',
+                        "courseB": '["unit-node"]',
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
 
 
 def test_render_fixture_course_map_collapses_and_expands_on_click_only(

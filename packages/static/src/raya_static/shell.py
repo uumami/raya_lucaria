@@ -514,19 +514,44 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function courseMapBranchStorageKey() {
-    const explicitKey = map.getAttribute("data-raya-course-map-storage-key") || "";
-    return explicitKey || "raya:course-map:" + window.location.pathname.split("/").slice(0, -1).join("/");
+    const courseId = validCourseId();
+    const expected = courseId ? `raya:course-map-branches:v1:${courseId}` : "";
+    return map.getAttribute("data-raya-course-map-storage-key") === expected
+      ? expected
+      : "";
   }
 
-  function loadStoredCollapsedMapBranches() {
+  function loadCollapsedMapNodeIds() {
+    const key = courseMapBranchStorageKey();
+    if (!key) {
+      return null;
+    }
+    let raw;
     try {
-      const raw = window.sessionStorage.getItem(courseMapBranchStorageKey());
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed)
-        ? new Set(parsed.filter((value) => typeof value === "string" && value))
-        : new Set();
+      raw = window.sessionStorage.getItem(key);
     } catch (_error) {
-      return new Set();
+      return null;
+    }
+    if (raw === null) {
+      return null;
+    }
+    try {
+      const value = JSON.parse(raw);
+      if (
+        !Array.isArray(value) ||
+        value.some((item) => typeof item !== "string" || !item)
+      ) {
+        return null;
+      }
+      const currentIds = new Set(
+        mapNodeToggles
+          .map((toggle) => toggle.closest("[data-raya-map-node]"))
+          .map((node) => mapNodeId(node))
+          .filter(Boolean)
+      );
+      return new Set(value.filter((item) => currentIds.has(item)));
+    } catch (_error) {
+      return null;
     }
   }
 
@@ -535,6 +560,10 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function saveCollapsedMapBranches() {
+    const key = courseMapBranchStorageKey();
+    if (!key) {
+      return;
+    }
     const collapsed = mapNodeToggles
       .map((button) => button.closest("[data-raya-map-node]"))
       .filter((node) => node && node.dataset.rayaMapExpanded !== "true")
@@ -542,7 +571,7 @@ _SHELL_JAVASCRIPT = r"""
       .filter(Boolean);
     try {
       window.sessionStorage.setItem(
-        courseMapBranchStorageKey(),
+        key,
         JSON.stringify(collapsed)
       );
     } catch (_error) {
@@ -1484,8 +1513,8 @@ _SHELL_JAVASCRIPT = r"""
     });
   }
 
-  const storedCollapsedMapBranches = loadStoredCollapsedMapBranches();
-  const hasStoredMapBranchState = storedCollapsedMapBranches.size > 0;
+  const storedCollapsedMapBranches = loadCollapsedMapNodeIds();
+  const hasStoredMapBranchState = storedCollapsedMapBranches !== null;
   mapNodeToggles.forEach((button) => {
     const node = button.closest("[data-raya-map-node]");
     if (!node) {
