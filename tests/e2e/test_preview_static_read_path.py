@@ -748,7 +748,13 @@ def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) ->
                             wait_until="networkidle",
                         )
                         if viewport["width"] >= 1280:
-                            page.click("#raya-course-map .raya-course-map-toggle")
+                            if (
+                                page.locator("html").get_attribute(
+                                    "data-raya-course-map"
+                                )
+                                != "collapsed"
+                            ):
+                                page.click("#raya-course-map .raya-course-map-toggle")
                             page.wait_for_function(
                                 "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                             )
@@ -10930,6 +10936,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
+                    page.add_init_script("window.sessionStorage.clear();")
                     try:
                         page.goto(
                             f"{handle.base_url}/reader-ux/index.html",
@@ -11220,10 +11227,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   };
                                 }"""
                             )
-                            assert resized["display"] == "grid"
-                            assert resized["height"] > 0
-                            assert resized["ariaHidden"] == "false"
-                            assert resized["inert"] is False
+                            assert resized["display"] == "none"
+                            assert resized["height"] == 0
+                            assert resized["ariaHidden"] == "true"
+                            assert resized["inert"] is True
                             _assert_no_horizontal_overflow(page)
                             page.locator(".raya-skip-link").focus()
                         else:
@@ -13872,6 +13879,13 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-learning-rail')
+                          ?.dataset
+                          ?.rayaLearningRail === 'collapsed'"""
+                    )
+                    page.click("[data-raya-learning-rail-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
                           ?.getBoundingClientRect()
                           ?.width >= 220"""
                     )
@@ -15037,6 +15051,208 @@ def test_reader_rail_pair_survives_reload_and_same_tab_navigation(
         handle.close()
 
 
+def test_reader_shell_medium_actions_store_coordinated_pair(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1000, "height": 760})
+                page.add_init_script(
+                    """window.__readerShellWrites = [];
+                    const originalSetItem = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {
+                      if (this === window.sessionStorage) {
+                        window.__readerShellWrites.push([key, value]);
+                      }
+                      return originalSetItem.call(this, key, value);
+                    };"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"expanded","learningRail":"expanded"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.set_viewport_size({"width": 800, "height": 760})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.click("#raya-course-map [data-raya-course-map-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ]
+                    ]
+
+                    page.click("#raya-course-map [data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    expected_writes = [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ],
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        ],
+                    ]
+                    assert (
+                        page.evaluate("window.__readerShellWrites") == expected_writes
+                    )
+
+                    for width in (893, 894, 1279, 1280):
+                        page.set_viewport_size({"width": width, "height": 760})
+                        page.wait_for_function(
+                            f"() => document.documentElement.clientWidth === {width}"
+                        )
+                        assert (
+                            page.evaluate("window.__readerShellWrites")
+                            == expected_writes
+                        )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+
+                def assert_focus_survives_resize(page, width: int) -> None:
+                    page.set_viewport_size({"width": width, "height": 760})
+                    page.wait_for_function(
+                        "() => document.activeElement?.checkVisibility()"
+                    )
+                    assert (
+                        page.evaluate(
+                            "() => !document.querySelector('[inert]')?.contains(document.activeElement)"
+                        )
+                        is True
+                    )
+
+                for focus_selector, expected_selector in (
+                    (
+                        "#raya-course-map-list a[href]",
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                    ),
+                    (
+                        "#raya-learning-rail-body a[href]",
+                        "[data-raya-learning-rail-expand]",
+                    ),
+                ):
+                    page = browser.new_page(viewport={"width": 894, "height": 760})
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.focus(focus_selector)
+                        assert_focus_survives_resize(page, 893)
+                        assert page.locator(expected_selector).evaluate(
+                            "element => element === document.activeElement"
+                        )
+                    finally:
+                        page.close()
+
+                page = browser.new_page(viewport={"width": 640, "height": 760})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.focus("#raya-course-map [data-raya-course-map-toggle]")
+                    assert_focus_survives_resize(page, 639)
+                    assert page.locator(".raya-mobile-course-map-open").evaluate(
+                        "element => element === document.activeElement"
+                    )
+                finally:
+                    page.close()
+
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert_focus_survives_resize(page, 640)
+                    assert page.locator(
+                        "#raya-course-map [data-raya-course-map-toggle]"
+                    ).evaluate("element => element === document.activeElement")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_rail_state_isolated_by_course_id(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_static.builder import build_course
@@ -16144,10 +16360,10 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     )
                     page.set_viewport_size({"width": 912, "height": 768})
                     page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaLearningRail === 'expanded'
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'
                           && document
                           .querySelector('#raya-learning-rail-body')
-                          ?.getAttribute('aria-hidden') === 'false'"""
+                          ?.getAttribute('aria-hidden') === 'true'"""
                     )
                     tablet_after_collapse = page.evaluate(
                         """() => ({
@@ -16170,12 +16386,12 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                     )
                     assert tablet_after_collapse == {
                         "drawerState": "closed",
-                        "railState": "expanded",
+                        "railState": "collapsed",
                         "railHidden": "false",
                         "railInert": False,
-                        "bodyHidden": "false",
-                        "bodyInert": False,
-                        "collapseVisible": True,
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                        "collapseVisible": False,
                         "contextVisible": True,
                     }
                 finally:

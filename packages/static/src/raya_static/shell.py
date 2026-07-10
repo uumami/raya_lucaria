@@ -191,6 +191,24 @@ _SHELL_JAVASCRIPT = r"""
     return valid(courseMap) && valid(learningRail) ? { courseMap, learningRail } : null;
   }
 
+  function effectiveReaderShellState(preference = savedReaderShellPreference()) {
+    if (!isStructuralRailShell()) {
+      return { courseMap: "expanded", learningRail: "expanded" };
+    }
+    const next = preference || {
+      courseMap: defaultCourseMapExpanded() ? "expanded" : "collapsed",
+      learningRail: defaultLearningRailExpanded() ? "expanded" : "collapsed",
+    };
+    if (
+      !approvedRailGeometryQuery.matches &&
+      next.courseMap === "expanded" &&
+      next.learningRail === "expanded"
+    ) {
+      return { courseMap: "collapsed", learningRail: "collapsed" };
+    }
+    return next;
+  }
+
   function saveReaderShellPreference() {
     const key = readerShellStorageKey();
     if (!key || !isStructuralRailShell()) return;
@@ -1331,80 +1349,82 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
-  desktopMapQuery.addEventListener("change", () => {
+  function readerShellReconciliationFocusTarget(activeElement, next) {
+    if (!(activeElement instanceof Element)) {
+      return null;
+    }
+    if (mobileMapOpener === activeElement && isStructuralRailShell()) {
+      return map.querySelector("[data-raya-course-map-toggle]") || article;
+    }
+    if (map.contains(activeElement)) {
+      if (!isStructuralRailShell()) {
+        return mobileMapOpener || article;
+      }
+      if (
+        next.courseMap === "collapsed" &&
+        !activeElement.matches("[data-raya-course-map-toggle]")
+      ) {
+        return map.querySelector("[data-raya-course-map-toggle]") || article;
+      }
+    }
+    if (learningRail && learningRail.contains(activeElement)) {
+      if (!isStructuralRailShell()) {
+        if (activeElement === learningRailExpand) {
+          return article;
+        }
+      } else if (
+        next.learningRail === "collapsed" &&
+        activeElement !== learningRailExpand
+      ) {
+        return learningRailExpand || article;
+      } else if (
+        next.learningRail === "expanded" &&
+        activeElement === learningRailExpand
+      ) {
+        return article;
+      }
+    }
+    return null;
+  }
+
+  function reconcileReaderShellState({ restoreFocus = true } = {}) {
+    const activeElement = document.activeElement;
+    const next = effectiveReaderShellState();
+    const focusTarget = restoreFocus
+      ? readerShellReconciliationFocusTarget(activeElement, next)
+      : null;
+    if (focusTarget) {
+      const visibleTarget = focusTarget.getClientRects().length > 0 ? focusTarget : article;
+      if (visibleTarget) {
+        visibleTarget.focus();
+      }
+    }
     hideCourseMapCompactPreview();
-    setExpanded(defaultCourseMapExpanded());
-    updateMapLinkTabOrder(root.dataset.rayaCourseMap === "expanded");
-    if (!desktopMapQuery.matches) {
-      setLearningRailExpanded(defaultLearningRailExpanded());
-    } else {
-      setLearningRailExpanded(true);
-      closeLearningRailDrawer();
-    }
+    closeCourseMapDrawer();
+    closeLearningRailDrawer();
+    setExpanded(next.courseMap === "expanded", { skipPersist: true });
+    setLearningRailExpanded(next.learningRail === "expanded", { skipPersist: true });
     syncCourseMapDrawerState();
     syncLearningRailDrawerState();
+    if (focusTarget && focusTarget.getClientRects().length > 0) {
+      focusTarget.focus();
+    }
+  }
+
+  const handleReaderShellMediaChange = () =>
+    reconcileReaderShellState({ restoreFocus: true });
+  [
+    structuralRailQuery,
+    compactStructuralRailQuery,
+    approvedRailGeometryQuery,
+    desktopMapQuery,
+  ].forEach((query) => {
+    if (query.addEventListener) {
+      query.addEventListener("change", handleReaderShellMediaChange);
+    } else if (query.addListener) {
+      query.addListener(handleReaderShellMediaChange);
+    }
   });
-  if (structuralRailQuery.addEventListener) {
-    structuralRailQuery.addEventListener("change", () => {
-      if (!structuralRailQuery.matches) {
-        setExpanded(true);
-        setLearningRailExpanded(true);
-      } else {
-        closeCourseMapDrawer();
-        closeLearningRailDrawer();
-        setExpanded(defaultCourseMapExpanded());
-        setLearningRailExpanded(defaultLearningRailExpanded());
-      }
-      syncCourseMapDrawerState();
-      syncLearningRailDrawerState();
-    });
-  } else if (structuralRailQuery.addListener) {
-    structuralRailQuery.addListener(() => {
-      if (!structuralRailQuery.matches) {
-        setExpanded(true);
-        setLearningRailExpanded(true);
-      } else {
-        closeCourseMapDrawer();
-        closeLearningRailDrawer();
-        setExpanded(defaultCourseMapExpanded());
-        setLearningRailExpanded(defaultLearningRailExpanded());
-      }
-      syncCourseMapDrawerState();
-      syncLearningRailDrawerState();
-    });
-  }
-  const handleCompactStructuralRailChange = () => {
-    if (!isStructuralRailShell()) {
-      return;
-    }
-    closeCourseMapDrawer();
-    closeLearningRailDrawer();
-    setExpanded(defaultCourseMapExpanded());
-    setLearningRailExpanded(defaultLearningRailExpanded());
-    syncCourseMapDrawerState();
-    syncLearningRailDrawerState();
-  };
-  if (compactStructuralRailQuery.addEventListener) {
-    compactStructuralRailQuery.addEventListener("change", handleCompactStructuralRailChange);
-  } else if (compactStructuralRailQuery.addListener) {
-    compactStructuralRailQuery.addListener(handleCompactStructuralRailChange);
-  }
-  const handleApprovedRailGeometryChange = () => {
-    if (!isStructuralRailShell()) {
-      return;
-    }
-    closeCourseMapDrawer();
-    closeLearningRailDrawer();
-    setExpanded(defaultCourseMapExpanded());
-    setLearningRailExpanded(defaultLearningRailExpanded());
-    syncCourseMapDrawerState();
-    syncLearningRailDrawerState();
-  };
-  if (approvedRailGeometryQuery.addEventListener) {
-    approvedRailGeometryQuery.addEventListener("change", handleApprovedRailGeometryChange);
-  } else if (approvedRailGeometryQuery.addListener) {
-    approvedRailGeometryQuery.addListener(handleApprovedRailGeometryChange);
-  }
   if (printQuery.addEventListener) {
     printQuery.addEventListener("change", syncPrintDisclosureState);
   } else if (printQuery.addListener) {
@@ -1778,18 +1798,11 @@ _SHELL_JAVASCRIPT = r"""
     keyObjectTargets.forEach((target) => objectObserver.observe(target));
   }
 
-  setExpanded(root.dataset.rayaCourseMap === "expanded", { skipPersist: true });
-  setLearningRailExpanded(
-    root.dataset.rayaLearningRail === "expanded",
-    { skipPersist: true }
-  );
-  root.dataset.rayaLearningRailDrawer = "closed";
+  reconcileReaderShellState({ restoreFocus: false });
   window.requestAnimationFrame(() => orientCourseMapToCurrentPage());
   initializeCodeCopyControls();
   initializeAssetInspectorControls();
   initializeOfficialQuizControls();
-  syncCourseMapDrawerState();
-  syncLearningRailDrawerState();
   root.dataset.rayaShellReady = "true";
 })();
 """
