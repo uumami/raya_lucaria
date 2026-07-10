@@ -4780,7 +4780,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "localStorage" not in script_text
     assert "sessionStorage" in script_text
     assert "courseMapBranchStorageKey" in script_text
-    assert "loadStoredCollapsedMapBranches" in script_text
+    assert "loadCollapsedMapNodeIds" in script_text
     assert "saveCollapsedMapBranches" in script_text
     assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
