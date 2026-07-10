@@ -15179,6 +15179,15 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                 args=["--no-sandbox"],
             )
             try:
+                review_focus_results: dict[str, bool] = {}
+                write_recorder_script = """window.__readerShellWrites = [];
+                const originalSetItem = Storage.prototype.setItem;
+                Storage.prototype.setItem = function(key, value) {
+                  if (this === window.sessionStorage) {
+                    window.__readerShellWrites.push([key, value]);
+                  }
+                  return originalSetItem.call(this, key, value);
+                };"""
 
                 def assert_focus_survives_resize(page, width: int) -> None:
                     page.set_viewport_size({"width": width, "height": 760})
@@ -15187,7 +15196,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     )
                     assert (
                         page.evaluate(
-                            "() => !document.querySelector('[inert]')?.contains(document.activeElement)"
+                            "() => !document.activeElement?.closest('[inert]')"
                         )
                         is True
                     )
@@ -15230,6 +15239,41 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                 finally:
                     page.close()
 
+                page = browser.new_page(viewport={"width": 640, "height": 760})
+                page.add_init_script(write_recorder_script)
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"collapsed","learningRail":"expanded"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    page.focus("[data-raya-learning-rail-collapse]")
+                    assert_focus_survives_resize(page, 639)
+                    review_focus_results["phone_learning_collapse"] = page.locator(
+                        "#raya-article"
+                    ).evaluate("element => element === document.activeElement")
+                    assert page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return document.documentElement.dataset.rayaLearningRail === 'expanded'
+                            && body?.getAttribute('aria-hidden') === 'false'
+                            && body?.inert === false;
+                        }"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+
                 page = browser.new_page(viewport={"width": 639, "height": 760})
                 try:
                     page.goto(
@@ -15247,6 +15291,44 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     ).evaluate("element => element === document.activeElement")
                 finally:
                     page.close()
+
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                page.add_init_script(write_recorder_script)
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"expanded","learningRail":"collapsed"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert_focus_survives_resize(page, 640)
+                    review_focus_results["structural_map_drawer_close"] = page.evaluate(
+                        """() => document.activeElement?.matches(
+                          '#raya-course-map [data-raya-course-map-toggle], #raya-article'
+                        )"""
+                    )
+                    assert page.evaluate(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'
+                          && document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+                assert review_focus_results == {
+                    "phone_learning_collapse": True,
+                    "structural_map_drawer_close": True,
+                }
             finally:
                 browser.close()
     finally:

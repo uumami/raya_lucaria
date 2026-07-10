@@ -1360,6 +1360,9 @@ _SHELL_JAVASCRIPT = r"""
       if (!isStructuralRailShell()) {
         return mobileMapOpener || article;
       }
+      if (activeElement === mapCloseButton) {
+        return map.querySelector("[data-raya-course-map-toggle]") || article;
+      }
       if (
         next.courseMap === "collapsed" &&
         !activeElement.matches("[data-raya-course-map-toggle]")
@@ -1369,7 +1372,10 @@ _SHELL_JAVASCRIPT = r"""
     }
     if (learningRail && learningRail.contains(activeElement)) {
       if (!isStructuralRailShell()) {
-        if (activeElement === learningRailExpand) {
+        if (
+          activeElement === learningRailExpand ||
+          activeElement === learningRailCollapse
+        ) {
           return article;
         }
       } else if (
