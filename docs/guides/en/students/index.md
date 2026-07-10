@@ -55,7 +55,8 @@ and may show structural sequence numbers from the course order. It gives
 orientation by default, the main article remains the lesson, and the learning
 rail provides page contents and nearby course context. You can collapse the map
 to a minimal floating Map edge opener when you want more reading space; that
-choice is non-persistent and does not store or show personal progress. In
+structural rail choice can remain for the same tab and does not store or show
+personal progress. In
 collapsed desktop and medium-width states, hidden map and context content stops
 reserving reading columns, becomes inert, and is removed from keyboard and
 assistive navigation until restored. On phone-sized layouts, the course map may
@@ -77,6 +78,10 @@ command tiles, and the course map. The map supports collapsible course-map
 branches for nested structure, and the same tab may remember which branches are
 collapsed after refresh or page navigation. That memory is orientation only,
 not progress or personalization.
+Same-tab sessionStorage may restore only course-scoped collapsed course-map
+branch identifiers and the explicit left/right structural rail display pair.
+Drawer, filter, focus, scroll, active-context, progress, mastery,
+recommendation, and personalization state remains non-persistent.
 
 The left course rail may include a static Search handoff to the generated Course
 Search workspace. The reader page does not build a second search index, fetch

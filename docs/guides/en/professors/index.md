@@ -285,8 +285,11 @@ hierarchical course map by default, and let students filter visible page labels 
 collapse the map to a minimal floating Map edge opener for more reading space.
 Phone-sized layouts may open the course map as a temporary drawer, while the
 right learning rail remains readable when collapse controls are hidden.
-Course-map shell collapse, context state, and filter text are non-persistent UI
-state. The shell may show structure such as `Page N of M`;
+Same-tab sessionStorage may restore only course-scoped collapsed course-map
+branch identifiers and the explicit left/right structural rail display pair.
+Drawer, filter, focus, scroll, active-context, progress, mastery,
+recommendation, and personalization state remains non-persistent. The shell may
+show structure such as `Page N of M`;
 treat that as course position, not personal progress or completion.
 Pages may also end with larger Previous/Next cards generated from the authored
 course order. You do not author these cards separately; keep the page order and

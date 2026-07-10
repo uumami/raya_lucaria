@@ -4874,21 +4874,25 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     foundation = (
         ROOT / "docs" / "foundation" / "20_learning_renderer_contract.md"
     ).read_text(encoding="utf-8")
-    english_student = (
-        ROOT / "docs" / "guides" / "en" / "students" / "index.md"
-    ).read_text(encoding="utf-8")
-    spanish_student = (
-        ROOT / "docs" / "guides" / "es" / "estudiantes" / "index.md"
-    ).read_text(encoding="utf-8")
-    english_agent = (
-        ROOT / "docs" / "guides" / "en" / "agents" / "index.md"
-    ).read_text(encoding="utf-8")
-    spanish_agent = (
-        ROOT / "docs" / "guides" / "es" / "agentes" / "index.md"
-    ).read_text(encoding="utf-8")
+    english_paths = tuple(
+        ROOT / f"docs/guides/en/{role}/index.md"
+        for role in ("contributors", "professors", "students", "agents")
+    )
+    spanish_paths = tuple(
+        ROOT / f"docs/guides/es/{role}/index.md"
+        for role in ("colaboradores", "profesores", "estudiantes", "agentes")
+    )
     foundation_lower = foundation.lower()
-    english_guides = tuple(" ".join(text.split()) for text in (english_student, english_agent))
-    spanish_guides = tuple(" ".join(text.split()) for text in (spanish_student, spanish_agent))
+    english_guides = tuple(
+        " ".join(path.read_text(encoding="utf-8").split()) for path in english_paths
+    )
+    spanish_guides = tuple(
+        " ".join(path.read_text(encoding="utf-8").split()) for path in spanish_paths
+    )
+    english_agent = english_paths[-1].read_text(encoding="utf-8")
+    spanish_agent = spanish_paths[-1].read_text(encoding="utf-8")
+    english_student = english_paths[2].read_text(encoding="utf-8")
+    spanish_student = spanish_paths[2].read_text(encoding="utf-8")
 
     for required in (
         "reader pages have no command strip above the article",
@@ -4899,7 +4903,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         "collapsed course-map content is inert, removed from keyboard navigation",
         "no separate workspace section",
         "no visible Current, All, Scan, or Less map action buttons",
-        "course-scoped sessionStorage may restore collapsed course-map branches",
+        "Same-tab sessionStorage may restore only course-scoped collapsed course-map branch identifiers and the explicit left/right structural rail display pair",
     ):
         assert required.lower() in foundation_lower
     for forbidden in (
@@ -4914,25 +4918,52 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     ):
         assert forbidden not in foundation
 
-    for text in english_guides:
+    assert "raya:reader-shell:v1:<course_id>" in foundation
+    assert "raya:course-map-branches:v1:<course_id>" in foundation
+    assert "explicit structural rail display pair" in foundation_lower
+    assert (
+        "course-map branch expansion is the only accepted same-tab exception"
+        not in foundation_lower
+    )
+    assert not (
+        "browser storage must not store" in foundation_lower
+        and "shell collapse state" in foundation_lower
+    )
+
+    for text in english_guides[2:]:
+        lowered = text.lower()
         assert "left course rail" in text
         assert "discovery command bar" in text
         assert "course search" in text
         assert "two" in text and "command" in text and "scrollable course map" in text
         assert "collapsible course-map branches" in text
-        assert "top bar" not in text.lower()
-        assert "top-bar" not in text.lower()
+        assert "top bar" not in lowered
+        assert "top-bar" not in lowered
     assert "tablet/mobile Course map drawer" not in english_agent
     assert "drawer Course map en tablet/movil" not in spanish_agent
 
-    for text in spanish_guides:
+    for text in english_guides:
+        lowered = text.lower()
+        assert "course-scoped" in lowered
+        assert "sessionstorage" in lowered
+        assert "structural rail" in lowered
+        assert "rail choice is non-persistent" not in lowered
+
+    for text in spanish_guides[2:]:
+        lowered = text.lower()
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
         assert "course search" in text
         assert "dos" in text and "comandos" in text and "mapa del curso" in text
         assert "ramas plegables del mapa del curso" in text
-        assert "barra superior" not in text.lower()
-        assert "comando superior" not in text.lower()
+        assert "barra superior" not in lowered
+        assert "comando superior" not in lowered
+
+    for text in spanish_guides:
+        lowered = text.lower()
+        assert "con scope de curso" in lowered
+        assert "sessionstorage" in lowered
+        assert "rieles estructurales" in lowered
 
     for text in (english_student, english_agent):
         assert "Focus reading" not in text

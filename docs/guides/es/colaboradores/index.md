@@ -90,6 +90,12 @@ dinamico de estudio fuera del renderizador estatico. Conserva las reglas: sin
 MathJax en el browser, sin assets externos, sin metas inferidas y sin practica
 relacionada inventada desde la prosa.
 
+sessionStorage en la misma pestana puede restaurar solo identificadores de ramas
+plegadas con scope de curso y el par explicito de estado visual de los rieles
+estructurales izquierdo/derecho. El estado del drawer, filtro, foco, scroll,
+contexto activo, progreso, dominio, recomendacion y personalizacion sigue siendo
+no persistente.
+
 La seccion de practica oficial es una superficie actual de rendering estatico
 para objetos de nivel pagina desde datos `_official/` colocados junto a su
 pagina. Implementala y revisala como conveniencia de lectura sobre autoridad de

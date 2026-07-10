@@ -57,8 +57,8 @@ defecto y puede mostrar numeros estructurales de secuencia del orden del curso.
 Da orientacion por defecto, el articulo principal sigue siendo la leccion, y el
 riel de aprendizaje ofrece contenidos de pagina y contexto cercano. Puedes
 colapsar el mapa a un opener minimo flotante Map cuando quieras mas espacio de
-lectura; esa eleccion es no persistente y no guarda ni muestra progreso
-personal. En estados colapsados de desktop y ancho medio, el mapa y el contexto
+lectura; esa eleccion de riel estructural puede conservarse en la misma pestana
+y no guarda ni muestra progreso personal. En estados colapsados de desktop y ancho medio, el mapa y el contexto
 ocultos dejan de reservar columnas de lectura, quedan inertes, y salen de la
 navegacion de teclado y de asistencia hasta que los restaures. En layouts de
 telefono, el mapa del curso puede abrirse como un drawer temporal mientras el
@@ -81,6 +81,11 @@ mosaicos compactos de comandos en dos columnas y el mapa del curso. El mapa
 admite ramas plegables del mapa del curso para estructuras anidadas, y la misma
 pestana puede recordar que ramas estan plegadas despues de actualizar o
 navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
+sessionStorage en la misma pestana puede restaurar solo identificadores de ramas
+plegadas con scope de curso y el par explicito de estado visual de los rieles
+estructurales izquierdo/derecho. El estado del drawer, filtro, foco, scroll,
+contexto activo, progreso, dominio, recomendacion y personalizacion sigue siendo
+no persistente.
 
 El riel izquierdo del curso puede incluir un handoff estatico de Search al
 workspace generado Course Search. La pagina de lectura no crea un segundo

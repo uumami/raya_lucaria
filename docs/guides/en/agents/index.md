@@ -151,12 +151,11 @@ render-debug output, mobile no-overflow behavior, and no external requests.
 Breadcrumbs should show course home,
 ancestor pages, and the current page with accessible navigation markup,
 deployment-neutral static links, current-page marking, no source paths, and no
-private support paths. Course map shell collapse, filter text, current-page map
-orientation, drawer state, and right-rail context are non-persistent UI state.
-Course-map branch collapse is the only same-tab storage exception: it may store
-course-scoped collapsed branch identifiers in `sessionStorage` across refresh
-and same-tab page navigation, and must not become durable, cross-tab, progress,
-recommendation, or personalization state. Current-page map orientation must also
+private support paths. Same-tab sessionStorage may restore only course-scoped
+collapsed course-map branch identifiers and the explicit left/right structural
+rail display pair. Drawer, filter, focus, scroll, active-context, progress,
+mastery, recommendation, and personalization state remains non-persistent.
+Current-page map orientation must also
 remain non-persistent and must not restore legacy navigation storage. Treat
 structural page position and sequence cards as course orientation, not learner
 progress.
@@ -179,7 +178,7 @@ If the shell exposes a left course rail `Context` command, verify it toggles
 only the right learning rail where the context control is visible, keeps the
 course map available, mirrors `aria-expanded` and labels with the rail controls,
 uses small floating edge openers without reserving shell columns, and writes no
-browser storage or progress/recommendation state.
+browser storage other than same-tab expanded/collapsed rail display state.
 For responsive shell changes, check desktop, tablet, and mobile viewports
 together. Inline desktop may use three shell columns, medium-width reader pages
 should keep the article as the primary shell column with explicit collapse
@@ -188,10 +187,11 @@ keeping the right rail body visible and reachable by assistive technology when
 collapse controls are hidden. Pressing Escape inside
 the rail on mobile must not leave `aria-hidden`, `inert`, or hidden focusable
 content behind. Shell collapse/orientation state must not write localStorage.
-Only course-scoped collapsed course-map branch identifiers may use same-tab
-`sessionStorage`; drawer state, right-rail context, progress, recommendations,
-and personalization must not be stored. Only explicit comfort preferences such
-as text size or `OpenDyslexic` may persist durably.
+Only course-scoped collapsed course-map branch identifiers and explicit
+left/right reader rail expanded/collapsed display state may use same-tab
+`sessionStorage`; drawer state, progress, recommendations, and personalization
+must not be stored. Only explicit comfort preferences such as text size or
+`OpenDyslexic` may persist durably.
 When the phone-sized Course map drawer changes, verify visible drawer chrome,
 the structural page position when present, the close button, backdrop close,
 Escape close, focus restore to the opener, focus containment while open,
@@ -202,7 +202,8 @@ When collapsed reader rails change, verify the desktop Map and Context edge
 openers remain keyboard-operable through their existing controls, increase
 article width without reserved grid columns, become small floating overlays at
 medium widths, stay hidden on phone-sized layouts when their controls are hidden,
-and do not add storage, fetch, progress,
+and do not add storage beyond the accepted same-tab structural rail display pair,
+fetch, progress,
 recommendation, or learner-state behavior. When shell comfort controls change,
 verify that reduced-motion disables nonessential transitions and that collapsed
 desktop regions are removed from keyboard and assistive navigation as specified.

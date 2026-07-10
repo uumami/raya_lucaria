@@ -162,17 +162,15 @@ al final del articulo, la metadata del riel compacto operable, la salida de
 render-debug, el comportamiento movil sin overflow y sin solicitudes externas. Las
 breadcrumbs deben mostrar home del curso, paginas ancestro y pagina actual con
 markup de navegacion accesible, links estaticos neutrales al despliegue, marca
-de pagina actual, sin rutas de fuente y sin rutas privadas de soporte. El
-colapso de shell del mapa del curso, el texto del filtro, la orientacion de la
-pagina actual en el mapa, el estado del drawer y el contexto del riel derecho
-son UI no persistente. El colapso de ramas del mapa del curso es la unica
-excepcion de storage en la misma pestana: puede guardar identificadores de ramas
-plegadas con scope de curso en `sessionStorage` entre refresh y navegacion en la
-misma pestana, y no debe volverse estado durable, cross-tab, de progreso, de
-recomendacion ni de personalizacion. La orientacion de pagina actual en el mapa
-tambien debe seguir no persistente y no debe restaurar storage de navegacion
-legacy. Trata la posicion estructural de pagina y las cards de secuencia como
-orientacion estructural del curso, no como progreso del estudiante.
+de pagina actual, sin rutas de fuente y sin rutas privadas de soporte.
+sessionStorage en la misma pestana puede restaurar solo identificadores de ramas
+plegadas con scope de curso y el par explicito de estado visual de los rieles
+estructurales izquierdo/derecho. El estado del drawer, filtro, foco, scroll,
+contexto activo, progreso, dominio, recomendacion y personalizacion sigue siendo
+no persistente. La orientacion de pagina actual en el mapa tambien debe seguir
+no persistente y no debe restaurar storage de navegacion legacy. Trata la
+posicion estructural de pagina y las cards de secuencia como orientacion
+estructural del curso, no como progreso del estudiante.
 Si la shell expone contexto de seccion actual, verifica que se genere desde los
 contenidos de pagina y anchors de heading, que se actualice con el heading activo
 en tests de browser, que siga siendo un enlace local normal, que no escriba
@@ -193,8 +191,8 @@ precedencia como `Estimated time`.
 Si la shell expone un comando `Context` en el riel izquierdo del curso, verifica
 que alterne solo el riel derecho cuando el control de contexto sea visible,
 mantenga disponible el mapa del curso, sincronice `aria-expanded` y labels con
-los controles del riel, y no escriba storage del browser ni estado de progreso o
-recomendacion.
+los controles del riel, y no escriba storage del browser salvo el estado visual
+expandido/colapsado de rieles en la misma pestana.
 Para cambios responsivos de la shell, revisa juntos los viewports desktop,
 tablet y movil. En desktop y anchos medios, el riel derecho de aprendizaje puede
 colapsar a una pestana compacta de contexto cuando el control esta visible, pero
@@ -203,11 +201,12 @@ tecnologias asistivas cuando los controles de colapso estan ocultos. Presionar
 Escape dentro del riel en movil no debe dejar
 `aria-hidden`, `inert` ni contenido enfocable oculto. El estado de colapso u
 orientacion de la shell no debe escribir `localStorage`. Solo identificadores de
-ramas plegadas del mapa del curso, con scope de curso y en la misma pestana,
-pueden usar `sessionStorage`; el estado del drawer, el contexto del riel derecho,
-el progreso, las recomendaciones y la personalizacion no deben guardarse. Solo
-preferencias explicitas de comodidad como tamano de texto u `OpenDyslexic`
-pueden persistir de forma durable.
+ramas plegadas del mapa del curso, con scope de curso y en la misma pestana, y
+el estado visual expandido/colapsado explicito de los rieles izquierdo/derecho
+pueden usar `sessionStorage`; el estado del drawer, el progreso, las
+recomendaciones y la personalizacion no deben guardarse. Solo preferencias
+explicitas de comodidad como tamano de texto u `OpenDyslexic` pueden persistir
+de forma durable.
 Cuando cambie el drawer Course map en layouts moviles de telefono, verifica chrome visible del
 drawer, posicion estructural de pagina cuando exista, boton de cierre, cierre
 por backdrop, cierre por Escape, restauracion de foco al opener, contencion de
@@ -219,7 +218,9 @@ Cuando cambien los rieles lectores colapsados, verifica que las pestanas
 desktop Map y Context usen labels visuales horizontales estables, sigan siendo
 operables por teclado mediante sus controles existentes, aumenten el ancho del
 articulo, permanezcan ocultas cuando sus controles no estan visibles, y no
-agreguen storage, fetch, progreso, recomendacion ni estado del estudiante. En
+agreguen storage fuera del par aceptado de estado visual de los rieles
+estructurales en la misma pestana, fetch, progreso, recomendacion ni estado del
+estudiante. En
 layouts de telefono, el riel derecho debe seguir disponible
 cuando el control `Context` esta oculto. Cuando cambien controles de comodidad
 del shell, verifica que

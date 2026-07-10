@@ -86,6 +86,11 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
+Same-tab sessionStorage may restore only course-scoped collapsed course-map
+branch identifiers and the explicit left/right structural rail display pair.
+Drawer, filter, focus, scroll, active-context, progress, mastery,
+recommendation, and personalization state remains non-persistent.
+
 The official practice section is a current static rendering surface for
 page-level objects from colocated `_official/` data on their owning page.
 Review it as reader-facing convenience over existing source and

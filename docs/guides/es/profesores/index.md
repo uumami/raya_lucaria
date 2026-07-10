@@ -290,8 +290,12 @@ recomendaciones.
 
 Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
 mapa jerarquico del curso expandido por defecto,
-y permiten filtrar etiquetas visibles de paginas o colapsarlo a un opener minimo flotante Map para dar mas espacio de lectura. El estado del mapa, el contexto y
-el texto del filtro son UI no persistente. La shell puede mostrar estructura como `Page N of M`;
+y permiten filtrar etiquetas visibles de paginas o colapsarlo a un opener minimo flotante Map para dar mas espacio de lectura. sessionStorage en la misma pestana
+puede restaurar solo identificadores de ramas plegadas con scope de curso y el
+par explicito de estado visual de los rieles estructurales izquierdo/derecho. El
+estado del drawer, filtro, foco, scroll, contexto activo, progreso, dominio,
+recomendacion y personalizacion sigue siendo no persistente. La shell puede
+mostrar estructura como `Page N of M`;
 eso es posicion dentro del curso y no es progreso personal ni finalizacion.
 Las paginas tambien pueden terminar con cards Previous/Next generadas desde el
 orden autorado del curso. No las escribas por separado; manten claro el orden y
