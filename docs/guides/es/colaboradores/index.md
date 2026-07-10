@@ -140,8 +140,11 @@ Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
 curso expandido por defecto en escritorio,
 puede filtrar etiquetas renderizadas del mapa localmente, puede colapsarse con
-click explicito a un opener minimo flotante Map, y mantiene ese estado no persistente.
-El mapa del curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
+click explicito a un opener minimo flotante Map. El drawer de telefono y otros
+estados transitorios de la shell siguen siendo no persistentes; el par explicito
+de estado visual de los rieles estructurales puede persistir en sessionStorage
+en la misma pestana bajo el contrato con scope de curso anterior. El mapa del
+curso se colapsa con click explicito, no por hover, usa `aria-expanded`, y debe
 servirse desde recursos locales del renderer sin scripts ni estilos externos.
 Las cards Previous/Next al final del articulo se generan desde el mismo orden del
 curso que los links compactos de secuencia. Mantenlas estaticas, accesibles con

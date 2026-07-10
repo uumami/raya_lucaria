@@ -4965,6 +4965,9 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "sessionstorage" in lowered
         assert "rieles estructurales" in lowered
 
+    assert "keeps that shell state non-persistent" not in english_guides[0].lower()
+    assert "mantiene ese estado no persistente" not in spanish_guides[0].lower()
+
     for text in (english_student, english_agent):
         assert "Focus reading" not in text
         assert "collapse the map and right learning rail together" not in text
