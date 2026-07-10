@@ -10161,8 +10161,19 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                     )
                     assert page.url == initial_url
                     assert page.evaluate(
-                        "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
-                    ) == [[], []]
+                        """() => ({
+                          local: Object.fromEntries(Object.entries(localStorage)),
+                          session: Object.fromEntries(Object.entries(sessionStorage)),
+                        })"""
+                    ) == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"collapsed",'
+                                '"learningRail":"collapsed"}'
+                            ),
+                        },
+                    }
 
                     page.click("#raya-course-map .raya-course-map-toggle")
                     page.wait_for_function(
@@ -13979,7 +13990,9 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                               tabindex: item.getAttribute('tabindex'),
                             })),
                             localKeys: Object.keys(window.localStorage),
-                            sessionKeys: Object.keys(window.sessionStorage),
+                            session: Object.fromEntries(
+                              Object.entries(window.sessionStorage)
+                            ),
                           };
                         }"""
                     )
@@ -13993,7 +14006,12 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                         for item in collapsed["bodyControls"]
                     )
                     assert collapsed["localKeys"] == []
-                    assert collapsed["sessionKeys"] == []
+                    assert collapsed["session"] == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
 
                     page.click("[data-raya-learning-rail-expand]")
                     page.wait_for_function(
@@ -14054,7 +14072,9 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                               ? body.querySelectorAll('a[href], button').length
                               : 0,
                             localKeys: Object.keys(window.localStorage),
-                            sessionKeys: Object.keys(window.sessionStorage),
+                            session: Object.fromEntries(
+                              Object.entries(window.sessionStorage)
+                            ),
                           };
                         }"""
                     )
@@ -14070,7 +14090,12 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                     assert "Connections" in mobile["railText"]
                     assert mobile["bodyControlCount"] > 0
                     assert mobile["localKeys"] == []
-                    assert mobile["sessionKeys"] == []
+                    assert mobile["session"] == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"expanded"}'
+                        ),
+                    }
                 finally:
                     page.close()
             finally:
@@ -14888,7 +14913,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
         handle.close()
 
 
-def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
+def test_reader_rail_pair_survives_reload_and_same_tab_navigation(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -14915,34 +14940,187 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
             )
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
-                page.add_init_script(
-                    """
-                    window.localStorage.setItem('raya.unrelatedReaderPreference', 'collapsed');
-                    """
-                )
                 try:
                     page.goto(
                         f"{handle.base_url}/reader-ux/index.html",
                         wait_until="networkidle",
                     )
-                    stable = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
-                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
-                          shellReady: document.documentElement.dataset.rayaShellReady,
-                        })"""
+                    page.evaluate(
+                        """() => {
+                          window.__readerShellWrites = [];
+                          const originalSetItem = Storage.prototype.setItem;
+                          Storage.prototype.setItem = function(key, value) {
+                            if (this === window.sessionStorage) {
+                              window.__readerShellWrites.push([key, value]);
+                            }
+                            return originalSetItem.call(this, key, value);
+                          };
+                        }"""
                     )
-                    assert stable["shellReady"] == "true"
-                    assert stable["state"] == "expanded"
-                    assert stable["expanded"] == "true"
-                    assert stable["mapWidth"] >= 220
+                    page.locator("#raya-course-map a").first.focus()
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        ]
+                    ]
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(localStorage))"
+                    ) == {}
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+
+                    page.reload(wait_until="networkidle")
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "collapsed"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "collapsed"
+                    )
+                    page.goto(
+                        f"{handle.base_url}/static-path/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "collapsed"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "collapsed"
+                    )
+                    stored_pair = page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    )
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        "() => document.documentElement.clientWidth === 390"
+                    )
+                    page.click("[data-raya-course-map-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == stored_pair
                 finally:
                     page.close()
             finally:
                 browser.close()
     finally:
         handle.close()
+
+
+def test_reader_rail_state_isolated_by_course_id(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    served_parent = tmp_path / "served"
+    course_a = served_parent / "course-a"
+    course_b = served_parent / "course-b"
+    for course, course_id in (
+        (course_a, "reader-course-a"),
+        (course_b, "reader-course-b"),
+    ):
+        shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+        config_path = course / "raya.yaml"
+        config_path.write_text(
+            config_path.read_text(encoding="utf-8").replace(
+                "course_id: minimal-course", f"course_id: {course_id}"
+            ),
+            encoding="utf-8",
+        )
+        report = build_course(course)
+        assert report.ok, [
+            diagnostic.format() for diagnostic in report.diagnostics
+        ]
+
+    browser_executable = _browser_executable()
+    with _serve(served_parent) as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{base_url}/course-a/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-course-map-toggle")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:reader-course-a": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+
+                    page.goto(
+                        f"{base_url}/course-b/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-id")
+                        == "reader-course-b"
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "expanded"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "expanded"
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:reader-course-a": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
 
 
 def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> None:
@@ -15225,8 +15403,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                     )
                     storage_state = page.evaluate(
                         """() => ({
-                          localKeys: Object.keys(window.localStorage),
-                          sessionKeys: Object.keys(window.sessionStorage),
+                          local: Object.fromEntries(Object.entries(localStorage)),
+                          session: Object.fromEntries(Object.entries(sessionStorage)),
                         })"""
                     )
                     compact_links = page.evaluate(
@@ -15313,8 +15491,14 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert collapsed["railAriaLabel"] == "Show learning context"
     assert collapsed["mapToggleWidth"] >= 40
     assert collapsed["railExpandWidth"] >= 40
-    assert storage_state["localKeys"] == []
-    assert storage_state["sessionKeys"] == []
+    assert storage_state == {
+        "local": {},
+        "session": {
+            "raya:reader-shell:v1:render-fixture": (
+                '{"courseMap":"collapsed","learningRail":"collapsed"}'
+            ),
+        },
+    }
     assert compact_links == []
 
 
@@ -17064,8 +17248,8 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                               document.documentElement.scrollWidth - window.innerWidth
                             ),
                             storage: {
-                              local: Object.keys(localStorage),
-                              session: Object.keys(sessionStorage),
+                              local: Object.fromEntries(Object.entries(localStorage)),
+                              session: Object.fromEntries(Object.entries(sessionStorage)),
                             },
                           };
                         }"""
@@ -17079,7 +17263,15 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     assert expanding["listInert"] is True
                     assert expanding["firstLinkTabIndex"] == "-1"
                     assert expanding["overflow"] <= 1
-                    assert expanding["storage"] == {"local": [], "session": []}
+                    assert expanding["storage"] == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"expanded",'
+                                '"learningRail":"expanded"}'
+                            ),
+                        },
+                    }
 
                     page.wait_for_function(
                         "() => !document.querySelector('#raya-course-map')?.dataset.rayaCourseMapTransition"
@@ -17172,8 +17364,8 @@ def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_du
                               document.documentElement.scrollWidth - window.innerWidth
                             ),
                             storage: {
-                              local: Object.keys(localStorage),
-                              session: Object.keys(sessionStorage),
+                              local: Object.fromEntries(Object.entries(localStorage)),
+                              session: Object.fromEntries(Object.entries(sessionStorage)),
                             },
                           };
                         }"""
@@ -17188,7 +17380,15 @@ def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_du
                     assert expanding["expandVisible"] is True
                     assert expanding["collapseVisible"] is False
                     assert expanding["overflow"] <= 1
-                    assert expanding["storage"] == {"local": [], "session": []}
+                    assert expanding["storage"] == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"expanded",'
+                                '"learningRail":"expanded"}'
+                            ),
+                        },
+                    }
 
                     page.wait_for_function(
                         "() => !document.querySelector('#raya-learning-rail')?.dataset.rayaLearningRailTransition"
