@@ -191,6 +191,22 @@ _SHELL_JAVASCRIPT = r"""
     return valid(courseMap) && valid(learningRail) ? { courseMap, learningRail } : null;
   }
 
+  function readReaderShellPreference() {
+    const key = readerShellStorageKey();
+    if (!key) return null;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (raw === null) return null;
+      const value = JSON.parse(raw);
+      const keys = Object.keys(value || {}).sort();
+      const valid = (state) => state === "expanded" || state === "collapsed";
+      return keys.length === 2 && keys[0] === "courseMap" && keys[1] === "learningRail"
+        && valid(value.courseMap) && valid(value.learningRail) ? value : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   function effectiveReaderShellState(preference = savedReaderShellPreference()) {
     if (!isStructuralRailShell()) {
       return { courseMap: "expanded", learningRail: "expanded" };
@@ -1448,6 +1464,18 @@ _SHELL_JAVASCRIPT = r"""
 
   const handleReaderShellMediaChange = () =>
     reconcileReaderShellState({ restoreFocus: true });
+  window.addEventListener("pageshow", (event) => {
+    if (!event.persisted) return;
+    const preference = readReaderShellPreference();
+    if (preference) {
+      root.dataset.rayaCourseMapPreference = preference.courseMap;
+      root.dataset.rayaLearningRailPreference = preference.learningRail;
+    } else {
+      delete root.dataset.rayaCourseMapPreference;
+      delete root.dataset.rayaLearningRailPreference;
+    }
+    reconcileReaderShellState({ restoreFocus: true });
+  });
   [
     structuralRailQuery,
     compactStructuralRailQuery,
