@@ -6959,11 +6959,11 @@ mjx-container[display="true"] {
     padding: 0.18rem 0.3rem;
     transform: translateY(0.05rem);
   }
-  html:not([data-raya-shell-ready="true"]) .raya-learning-shell {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-shell {
     padding-left: 3.75rem;
     padding-right: 3.75rem;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-course-map {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map {
     align-items: start;
     background: transparent;
     border: 0;
@@ -6986,7 +6986,7 @@ mjx-container[display="true"] {
     width: 2.75rem;
     z-index: 45;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail {
     align-items: start;
     background: transparent;
     border: 0;
@@ -7009,23 +7009,23 @@ mjx-container[display="true"] {
     width: 2.75rem;
     z-index: 45;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-course-rail-tools,
-  html:not([data-raya-shell-ready="true"]) .raya-course-map-filter-label,
-  html:not([data-raya-shell-ready="true"]) .raya-course-map-filter,
-  html:not([data-raya-shell-ready="true"]) .raya-map-filter-empty,
-  html:not([data-raya-shell-ready="true"]) .raya-course-map-list,
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail-header,
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail-body {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-rail-tools,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-filter-label,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-filter,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-map-filter-empty,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-list,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-header,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-body {
     display: none;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-course-map-header {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-header {
     display: grid;
     gap: 0;
     justify-items: center;
     width: 100%;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title,
-  html:not([data-raya-shell-ready="true"]) .raya-course-map .raya-page-position {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-page-position {
     clip: rect(0 0 0 0);
     clip-path: inset(50%);
     height: 1px;
@@ -7034,8 +7034,8 @@ mjx-container[display="true"] {
     white-space: nowrap;
     width: 1px;
   }
-  html:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle,
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand {
     align-items: center;
     background: rgba(255, 255, 255, 0.44);
     backdrop-filter: blur(0.35rem);
@@ -7058,12 +7058,12 @@ mjx-container[display="true"] {
     top: auto;
     width: 2.5rem;
   }
-  html:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::before,
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::before,
-  html:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::after {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::before,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::before,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::after {
     display: none;
   }
-  html:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::after {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::after {
     content: "<";
     display: inline-flex;
     font-size: 1.35rem;

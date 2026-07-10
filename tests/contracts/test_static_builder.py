@@ -4986,6 +4986,27 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert '<html lang="en" data-raya-course-id="render-fixture"' in html
+    assert 'data-raya-shell-prepaint="pending"' in html
+    assert 'data-raya-learning-rail="expanded"' in html
+    assert (
+        'data-raya-course-map-storage-key="raya:course-map-branches:v1:render-fixture"'
+        in html
+    )
+    prepaint_tag = '<script src="../_raya/render/shell-prepaint.js"></script>'
+    stylesheet_tag = '<link rel="stylesheet" href="../_raya/render/rich.css">'
+    assert prepaint_tag in html
+    assert html.index(prepaint_tag) < html.index(stylesheet_tag)
+    assert "defer" not in prepaint_tag and "async" not in prepaint_tag
+
+    prepaint = (
+        course / "artifact/site/_raya/render/shell-prepaint.js"
+    ).read_text(encoding="utf-8")
+    assert "raya:reader-shell:v1:" in prepaint
+    assert "sessionStorage.getItem" in prepaint
+    assert "sessionStorage.setItem" not in prepaint
+    assert "localStorage" not in prepaint
+    assert "fetch(" not in prepaint
     assert 'id="raya-learning-rail"' in html
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' not in html
     assert 'class="raya-top-command-bar"' not in html

@@ -144,6 +144,10 @@ from raya_static.schedule import (
     schedule_resources,
 )
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
+from raya_static.shell_prepaint import (
+    SHELL_PREPAINT_SCRIPT_NAME,
+    shell_prepaint_javascript,
+)
 from raya_static.tasks import TASKS_RESOURCE_PATH, TASKS_SCRIPT_NAME, tasks_resources
 
 
@@ -383,6 +387,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             pages_by_reference=pages_by_reference,
             course_root=root,
             source_dir=source_dir,
+            course_id=course_id,
             course_title=str(config["title"]),
             language=str(config["language"]),
             official_counts=official_counts,
@@ -856,6 +861,7 @@ def _render_page(
     pages_by_reference: dict[str, ContentPage],
     course_root: Path,
     source_dir: Path,
+    course_id: str,
     course_title: str,
     language: str,
     official_counts: dict[str, dict[str, int]],
@@ -892,6 +898,10 @@ def _render_page(
     shell_js_href = _relative_href(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
+    )
+    shell_prepaint_js_href = _relative_href(
+        page.output_path,
+        Path(SHELL_RESOURCE_PATH) / SHELL_PREPAINT_SCRIPT_NAME,
     )
     search_href = _href_with_query(
         _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix()),
@@ -999,7 +1009,10 @@ def _render_page(
             "<!doctype html>",
             (
                 f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-prepaint="pending" '
                 'data-raya-course-map="expanded" '
+                'data-raya-learning-rail="expanded" '
                 'data-raya-course-map-drawer="closed">'
             ),
             "<head>",
@@ -1007,6 +1020,7 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -1023,6 +1037,7 @@ def _render_page(
                 course_title,
                 page,
                 content_model,
+                course_id=course_id,
                 search_href=search_href,
                 graph_href=graph_href,
                 practice_href=course_map_practice_href,
@@ -1914,6 +1929,7 @@ def _render_course_map(
     page: ContentPage,
     content_model: ContentModel,
     *,
+    course_id: str,
     search_href: str,
     graph_href: str,
     practice_href: str,
@@ -1929,7 +1945,7 @@ def _render_course_map(
         target.id: index for index, target in enumerate(content_model.pages, start=1)
     }
     root_identity = content_model.root_id or course_title
-    storage_key = "raya:course-map:" + _safe_map_fragment_id(root_identity)
+    storage_key = f"raya:course-map-branches:v1:{course_id}"
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -8255,6 +8271,9 @@ def _write_shell_resources(site_dir: Path, report: ValidationReport) -> None:
     script_path = shell_dir / SHELL_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
+    prepaint_script_path = shell_dir / SHELL_PREPAINT_SCRIPT_NAME
+    prepaint_script_path.write_text(shell_prepaint_javascript(), encoding="utf-8")
+    report.wrote_output(prepaint_script_path)
 
 
 def _write_graph_resources(site_dir: Path, report: ValidationReport) -> None:

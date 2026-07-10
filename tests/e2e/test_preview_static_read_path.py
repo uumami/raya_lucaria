@@ -14718,6 +14718,93 @@ def test_render_fixture_course_map_works_without_storage(
         handle.close()
 
 
+def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                cases = (
+                    (
+                        {"width": 1440, "height": 950},
+                        {"courseMap": "expanded", "learningRail": "collapsed"},
+                        {
+                            "prepaint": "valid",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "collapsed",
+                            "mapPreference": "expanded",
+                            "railPreference": "collapsed",
+                            "mapVisible": True,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 800, "height": 900},
+                        {"courseMap": "expanded", "learningRail": "expanded"},
+                        {
+                            "prepaint": "valid",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": "expanded",
+                            "railPreference": "expanded",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                )
+                for viewport, stored, expected in cases:
+                    page = browser.new_page(viewport=viewport)
+                    page.add_init_script(
+                        "sessionStorage.setItem("
+                        "'raya:reader-shell:v1:render-fixture', "
+                        f"{json.dumps(json.dumps(stored))});"
+                    )
+                    page.route("**/shell.js", lambda route: route.abort())
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        state = page.evaluate(
+                            """() => ({
+                              prepaint: document.documentElement.dataset.rayaShellPrepaint,
+                              ready: document.documentElement.dataset.rayaShellReady || null,
+                              map: document.documentElement.dataset.rayaCourseMap,
+                              rail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference: document.documentElement.dataset.rayaCourseMapPreference,
+                              railPreference: document.documentElement.dataset.rayaLearningRailPreference,
+                              mapVisible: document.querySelector('#raya-course-map-list').checkVisibility(),
+                              railVisible: document.querySelector('#raya-learning-rail-body').checkVisibility(),
+                            })"""
+                        )
+                        assert state == expected
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
     tmp_path: Path,
 ) -> None:
