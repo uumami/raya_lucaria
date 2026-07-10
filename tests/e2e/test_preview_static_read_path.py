@@ -13402,12 +13402,28 @@ def test_course_map_branch_state_uses_course_id_and_validates_payload(
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
                 try:
                     course_a_url = f"{base_url}/course-a/artifact/site/index.html"
+                    course_a_topic_url = (
+                        f"{base_url}/course-a/artifact/site/unit/topic/index.html"
+                    )
                     page.goto(course_a_url, wait_until="networkidle")
                     assert page.locator("#raya-course-map").get_attribute(
                         "data-raya-course-map-storage-key"
                     ) == key_a
 
                     for raw, expected in cases:
+                        page.evaluate("key => sessionStorage.removeItem(key)", key_a)
+                        page.goto(
+                            course_a_topic_url
+                            if expected == "known-deduplicated"
+                            else course_a_url,
+                            wait_until="networkidle",
+                        )
+                        if expected == "known-deduplicated":
+                            assert page.locator(
+                                '[data-raya-map-node="unit-node"] '
+                                "> .raya-course-map-node-row "
+                                "[data-raya-map-node-toggle]"
+                            ).get_attribute("aria-expanded") == "true"
                         page.evaluate(
                             """([key, raw]) => {
                               if (raw === null) sessionStorage.removeItem(key);
