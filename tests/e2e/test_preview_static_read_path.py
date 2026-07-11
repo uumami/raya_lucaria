@@ -16067,7 +16067,6 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                 args=["--no-sandbox"],
             )
             try:
-                review_focus_results: dict[str, bool] = {}
                 write_recorder_script = """window.__readerShellWrites = [];
                 const originalSetItem = Storage.prototype.setItem;
                 Storage.prototype.setItem = function(key, value) {
@@ -16077,16 +16076,18 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                   return originalSetItem.call(this, key, value);
                 };"""
 
-                def assert_focus_survives_resize(page, width: int) -> None:
+                def assert_focus_survives_resize(
+                    page, width: int, expected_selector: str
+                ) -> None:
                     page.set_viewport_size({"width": width, "height": 760})
                     page.wait_for_function(
-                        "() => document.activeElement?.checkVisibility()"
-                    )
-                    assert (
-                        page.evaluate(
-                            "() => !document.activeElement?.closest('[inert]')"
-                        )
-                        is True
+                        """(selector) => {
+                          const expected = document.querySelector(selector);
+                          return document.activeElement === expected
+                            && expected?.checkVisibility()
+                            && !expected.closest('[inert]');
+                        }""",
+                        arg=expected_selector,
                     )
 
                 for focus_selector, expected_selector in (
@@ -16106,10 +16107,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                             wait_until="networkidle",
                         )
                         page.focus(focus_selector)
-                        assert_focus_survives_resize(page, 893)
-                        assert page.locator(expected_selector).evaluate(
-                            "element => element === document.activeElement"
-                        )
+                        assert_focus_survives_resize(page, 893, expected_selector)
                     finally:
                         page.close()
 
@@ -16120,9 +16118,8 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                         wait_until="networkidle",
                     )
                     page.focus("#raya-course-map [data-raya-course-map-toggle]")
-                    assert_focus_survives_resize(page, 639)
-                    assert page.locator(".raya-mobile-course-map-open").evaluate(
-                        "element => element === document.activeElement"
+                    assert_focus_survives_resize(
+                        page, 639, ".raya-mobile-course-map-open"
                     )
                 finally:
                     page.close()
@@ -16146,13 +16143,9 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     page.focus("[data-raya-learning-rail-collapse]")
-                    assert_focus_survives_resize(page, 639)
-                    page.wait_for_function(
-                        "() => document.activeElement?.matches('#raya-article')"
+                    assert_focus_survives_resize(
+                        page, 639, "#raya-article"
                     )
-                    review_focus_results["phone_learning_collapse"] = page.locator(
-                        "#raya-article"
-                    ).evaluate("element => element === document.activeElement")
                     assert page.evaluate(
                         """() => {
                           const body = document.querySelector('#raya-learning-rail-body');
@@ -16176,10 +16169,11 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                         "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
                     )
                     page.focus("[data-raya-course-map-close]")
-                    assert_focus_survives_resize(page, 640)
-                    assert page.locator(
-                        "#raya-course-map [data-raya-course-map-toggle]"
-                    ).evaluate("element => element === document.activeElement")
+                    assert_focus_survives_resize(
+                        page,
+                        640,
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                    )
                 finally:
                     page.close()
 
@@ -16202,11 +16196,10 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                         "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
                     )
                     page.focus("[data-raya-course-map-close]")
-                    assert_focus_survives_resize(page, 640)
-                    review_focus_results["structural_map_drawer_close"] = page.evaluate(
-                        """() => document.activeElement?.matches(
-                          '#raya-course-map [data-raya-course-map-toggle], #raya-article'
-                        )"""
+                    assert_focus_survives_resize(
+                        page,
+                        640,
+                        "#raya-course-map [data-raya-course-map-toggle]",
                     )
                     assert page.evaluate(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
@@ -16216,10 +16209,6 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     assert page.evaluate("window.__readerShellWrites") == []
                 finally:
                     page.close()
-                assert review_focus_results == {
-                    "phone_learning_collapse": True,
-                    "structural_map_drawer_close": True,
-                }
             finally:
                 browser.close()
     finally:
