@@ -144,6 +144,10 @@ from raya_static.schedule import (
     schedule_resources,
 )
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
+from raya_static.shell_prepaint import (
+    SHELL_PREPAINT_SCRIPT_NAME,
+    shell_prepaint_javascript,
+)
 from raya_static.tasks import TASKS_RESOURCE_PATH, TASKS_SCRIPT_NAME, tasks_resources
 
 
@@ -383,6 +387,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             pages_by_reference=pages_by_reference,
             course_root=root,
             source_dir=source_dir,
+            course_id=course_id,
             course_title=str(config["title"]),
             language=str(config["language"]),
             official_counts=official_counts,
@@ -856,6 +861,7 @@ def _render_page(
     pages_by_reference: dict[str, ContentPage],
     course_root: Path,
     source_dir: Path,
+    course_id: str,
     course_title: str,
     language: str,
     official_counts: dict[str, dict[str, int]],
@@ -892,6 +898,10 @@ def _render_page(
     shell_js_href = _relative_href(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
+    )
+    shell_prepaint_js_href = _relative_href(
+        page.output_path,
+        Path(SHELL_RESOURCE_PATH) / SHELL_PREPAINT_SCRIPT_NAME,
     )
     search_href = _href_with_query(
         _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix()),
@@ -999,7 +1009,10 @@ def _render_page(
             "<!doctype html>",
             (
                 f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-prepaint="pending" '
                 'data-raya-course-map="expanded" '
+                'data-raya-learning-rail="expanded" '
                 'data-raya-course-map-drawer="closed">'
             ),
             "<head>",
@@ -1007,6 +1020,7 @@ def _render_page(
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>{html.escape(page.title)} - {html.escape(course_title)}</title>",
             f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -1023,6 +1037,7 @@ def _render_page(
                 course_title,
                 page,
                 content_model,
+                course_id=course_id,
                 search_href=search_href,
                 graph_href=graph_href,
                 practice_href=course_map_practice_href,
@@ -1227,20 +1242,14 @@ def _render_course_map_tools(
 ) -> str:
     return "\n".join(
         [
-            (
-                '<section class="raya-course-map-tools" aria-label="Course tools" '
-                "data-raya-course-map-tools>"
+            '<section class="raya-course-rail-tools" aria-label="Course tools" data-raya-course-map-tools>',
+            _render_command_search_form(search_href).replace(
+                'class="raya-command-search-form"',
+                'class="raya-course-rail-search raya-command-search-form"',
             ),
-            '<p class="raya-course-map-tools-label">Course Tools</p>',
-            '<div class="raya-course-tools raya-course-map-tool-grid">',
-            (
-                '<div class="raya-command-group raya-command-group-discovery" '
-                'data-raya-command-group="discovery" role="group" '
-                'aria-label="Discovery workspaces">'
-            ),
-            _render_command_search_form(search_href),
+            '<div class="raya-course-rail-command-list" role="group" aria-label="Course commands">',
             _render_compact_command_link(
-                class_name="raya-command raya-command-search",
+                class_name="raya-course-rail-command raya-command-search",
                 href=search_href,
                 aria_label="Open course search",
                 icon="search",
@@ -1248,7 +1257,7 @@ def _render_course_map_tools(
                 tooltip="Open course search",
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-graph",
+                class_name="raya-course-rail-command raya-command-graph",
                 href=graph_href,
                 aria_label=graph_label,
                 icon="graph",
@@ -1256,7 +1265,7 @@ def _render_course_map_tools(
                 tooltip=graph_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-practice",
+                class_name="raya-course-rail-command raya-command-practice",
                 href=practice_href,
                 aria_label=practice_label,
                 icon="practice",
@@ -1264,7 +1273,7 @@ def _render_course_map_tools(
                 tooltip=practice_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-tasks",
+                class_name="raya-course-rail-command raya-command-tasks",
                 href=tasks_href,
                 aria_label=tasks_label,
                 icon="tasks",
@@ -1272,51 +1281,34 @@ def _render_course_map_tools(
                 tooltip=tasks_label,
             ),
             _render_compact_command_link(
-                class_name="raya-command raya-command-schedule",
+                class_name="raya-course-rail-command raya-command-schedule",
                 href=schedule_href,
                 aria_label=schedule_label,
                 icon="schedule",
                 label="Schedule",
                 tooltip=schedule_label,
             ),
-            "</div>",
-            (
-                '<div class="raya-command-group raya-command-group-layout" '
-                'data-raya-command-group="layout" role="group" '
-                'aria-label="Reader layout">'
-            ),
             _render_command_button(
-                class_name="raya-command raya-command-context",
+                class_name="raya-course-rail-command raya-command-context",
                 aria_label="Hide learning context",
                 icon="context",
                 label="Context",
-                extra_attrs=(
-                    " data-raya-learning-rail-toggle "
-                    'aria-controls="raya-learning-rail-body" '
-                    'aria-expanded="true"'
-                ),
-            ),
-            "</div>",
-            (
-                '<div class="raya-command-group raya-command-group-comfort" '
-                'data-raya-command-group="comfort" role="group" '
-                'aria-label="Reading comfort">'
+                extra_attrs=' data-raya-learning-rail-toggle aria-controls="raya-learning-rail-body" aria-expanded="true"',
             ),
             _render_command_button(
-                class_name="raya-command raya-command-size raya-text-size-toggle",
+                class_name="raya-course-rail-command raya-text-size-toggle",
                 aria_label="Text size: normal",
                 icon="text-size",
                 label="Text size",
                 aria_pressed="false",
             ),
             _render_command_button(
-                class_name="raya-command raya-command-font raya-font-toggle",
+                class_name="raya-course-rail-command raya-font-toggle",
                 aria_label="Toggle OpenDyslexic font",
                 icon="font",
                 label="OpenDyslexic",
                 aria_pressed="false",
             ),
-            "</div>",
             "</div>",
             "</section>",
         ]
@@ -1937,6 +1929,7 @@ def _render_course_map(
     page: ContentPage,
     content_model: ContentModel,
     *,
+    course_id: str,
     search_href: str,
     graph_href: str,
     practice_href: str,
@@ -1952,7 +1945,7 @@ def _render_course_map(
         target.id: index for index, target in enumerate(content_model.pages, start=1)
     }
     root_identity = content_model.root_id or course_title
-    storage_key = "raya:course-map:" + _safe_map_fragment_id(root_identity)
+    storage_key = f"raya:course-map-branches:v1:{course_id}"
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -2131,7 +2124,6 @@ def _render_course_map(
             else "",
             "</div>",
             '<p class="raya-region-title">Course map</p>',
-            f'<p class="raya-page-position">{position}</p>' if position else "",
             (
                 '<button class="raya-course-map-close" type="button" '
                 'data-raya-course-map-close aria-label="Close course map">'
@@ -2147,6 +2139,8 @@ def _render_course_map(
                 icon="map",
             ),
             "</div>",
+            tools_html,
+            f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -2159,7 +2153,6 @@ def _render_course_map(
             "\n".join(nav_items),
             "</ol>",
             "</div>",
-            tools_html,
             (
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
@@ -8278,6 +8271,9 @@ def _write_shell_resources(site_dir: Path, report: ValidationReport) -> None:
     script_path = shell_dir / SHELL_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
+    prepaint_script_path = shell_dir / SHELL_PREPAINT_SCRIPT_NAME
+    prepaint_script_path.write_text(shell_prepaint_javascript(), encoding="utf-8")
+    report.wrote_output(prepaint_script_path)
 
 
 def _write_graph_resources(site_dir: Path, report: ValidationReport) -> None:

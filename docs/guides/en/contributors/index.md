@@ -86,6 +86,11 @@ queues needs dynamic study state outside the static renderer. Preserve the
 rules: no browser-side MathJax, no external assets, no inferred goals, and no
 related practice invented from prose.
 
+Same-tab sessionStorage may restore only course-scoped collapsed course-map
+branch identifiers and the explicit left/right structural rail display pair.
+Drawer, filter, focus, scroll, active-context, progress, mastery,
+recommendation, and personalization state remains non-persistent.
+
 The official practice section is a current static rendering surface for
 page-level objects from colocated `_official/` data on their owning page.
 Review it as reader-facing convenience over existing source and
@@ -124,10 +129,12 @@ mastery, or recommendation language.
 
 Review shell controls as accessibility surfaces. The current reader uses an
 expanded course map, rendered as an expanded hierarchical course map by default
-on desktop, can filter the rendered
-map labels locally, can collapse by explicit click to a minimal floating Map edge opener,
-uses article-first overlay panels below the inline desktop breakpoint, and keeps
-that shell state non-persistent. The course-map behavior is
+on desktop, can filter the rendered map labels locally, can collapse by explicit
+click to a minimal floating Map edge opener, may open the course map as a
+temporary drawer on phone-sized layouts. The phone drawer and other transient
+shell state remain non-persistent; the explicit structural rail display pair may
+persist in same-tab sessionStorage under the course-scoped contract above. The
+course-map behavior is
 explicit-click rather than hover-triggered, uses `aria-expanded`, and must be
 served from local renderer resources rather than external scripts or styles.
 Article-end Previous/Next cards are generated from the same course order as the

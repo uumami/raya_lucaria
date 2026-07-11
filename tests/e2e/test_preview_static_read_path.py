@@ -748,7 +748,13 @@ def test_preview_reader_breadcrumbs_are_static_location_links(tmp_path: Path) ->
                             wait_until="networkidle",
                         )
                         if viewport["width"] >= 1280:
-                            page.click("#raya-course-map .raya-course-map-toggle")
+                            if (
+                                page.locator("html").get_attribute(
+                                    "data-raya-course-map"
+                                )
+                                != "collapsed"
+                            ):
+                                page.click("#raya-course-map .raya-course-map-toggle")
                             page.wait_for_function(
                                 "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                             )
@@ -1304,7 +1310,9 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                                 )
                               ).map((node) => [
                                 Array.from(node.classList)
-                                  .find((name) => name.startsWith('raya-command-')),
+                                  .find((name) => name.startsWith('raya-command-'))
+                                  || Array.from(node.classList)
+                                    .find((name) => name.endsWith('-toggle')),
                                 (() => {
                                   const icon = node.querySelector('.raya-command-icon');
                                   const labelNode = node.querySelector('.raya-command-label');
@@ -1376,8 +1384,8 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             .evaluate("node => node.href")
                             .endswith("/_raya/search/index.html")
                         )
-                        assert page.locator(".raya-command-size").is_visible()
-                        assert page.locator(".raya-command-font").is_visible()
+                        assert page.locator(".raya-text-size-toggle").is_visible()
+                        assert page.locator(".raya-font-toggle").is_visible()
                         if viewport["width"] < 1280:
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
@@ -7574,18 +7582,18 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             page.wait_for_function(
                                 """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
                             )
-                            page.click(".raya-course-map-tools .raya-command-search")
+                            page.click(".raya-course-rail-tools .raya-command-search")
                             page.wait_for_url(
                                 "**/_raya/search/index.html?q=Projection%20Residuals"
                             )
                         else:
                             page.locator(
-                                ".raya-course-map-tools #raya-command-search-input"
+                                ".raya-course-rail-tools #raya-command-search-input"
                             ).fill(
                                 "projection residual"
                             )
                             page.locator(
-                                ".raya-course-map-tools .raya-command-search-form"
+                                ".raya-course-rail-tools .raya-command-search-form"
                             ).evaluate("form => form.requestSubmit()")
                             page.wait_for_url(
                                 "**/_raya/search/index.html?q=projection+residual"
@@ -7806,8 +7814,8 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             .evaluate("node => node.href")
                             .endswith("/_raya/graph/index.html")
                         )
-                        assert page.locator(".raya-command-size").is_visible()
-                        assert page.locator(".raya-command-font").is_visible()
+                        assert page.locator(".raya-text-size-toggle").is_visible()
+                        assert page.locator(".raya-font-toggle").is_visible()
                         before = page.locator(
                             "#raya-search-results [data-raya-search-result]:visible"
                         ).count()
@@ -8345,16 +8353,16 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             )
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
-                        assert page.locator(".raya-command-size").is_visible()
-                        assert page.locator(".raya-command-font").is_visible()
-                        page.click(".raya-command-font")
+                        assert page.locator(".raya-text-size-toggle").is_visible()
+                        assert page.locator(".raya-font-toggle").is_visible()
+                        page.click(".raya-font-toggle")
                         assert (
                             page.locator("html").get_attribute(
                                 "data-raya-open-dyslexic"
                             )
                             == "true"
                         )
-                        page.click(".raya-command-size")
+                        page.click(".raya-text-size-toggle")
                         assert (
                             page.locator("html").get_attribute("data-raya-text-size")
                             == "large"
@@ -8942,9 +8950,9 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-command-practice").is_visible()
                         assert page.locator(".raya-command-schedule").is_visible()
-                        assert page.locator(".raya-command-size").is_visible()
-                        assert page.locator(".raya-command-font").is_visible()
-                        page.click(".raya-command-font")
+                        assert page.locator(".raya-text-size-toggle").is_visible()
+                        assert page.locator(".raya-font-toggle").is_visible()
+                        page.click(".raya-font-toggle")
                         assert (
                             page.locator("html").get_attribute(
                                 "data-raya-open-dyslexic"
@@ -8953,7 +8961,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         )
                         assert page.evaluate("() => localStorage.length") == 0
                         assert page.evaluate("() => sessionStorage.length") == 0
-                        page.click(".raya-command-size")
+                        page.click(".raya-text-size-toggle")
                         assert (
                             page.locator("html").get_attribute("data-raya-text-size")
                             == "large"
@@ -9717,7 +9725,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert '[data-raya-skin="ghost-in-the-shell"]' in index_skin_css
     assert '[data-raya-skin="practice-lab"]' in reader_skin_css
     assert (
-        '<button class="raya-command raya-command-font raya-font-toggle"' in index_html
+        '<button class="raya-course-rail-command raya-font-toggle"' in index_html
     )
     assert 'aria-pressed="false"' in index_html
     assert 'href="_raya/render/accessibility/open-dyslexic.css"' in index_html
@@ -9897,10 +9905,10 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                             };
                           };
                           return {
-                            size: labelBox('.raya-command-size .raya-command-label'),
-                            font: labelBox('.raya-command-font .raya-command-label'),
+                            size: labelBox('.raya-text-size-toggle .raya-command-label'),
+                            font: labelBox('.raya-font-toggle .raya-command-label'),
                             toolHeight: document
-                              .querySelector('.raya-course-map-tools')
+                              .querySelector('.raya-course-rail-tools')
                               .getBoundingClientRect().height,
                             scrollWidth: document.documentElement.scrollWidth,
                             clientWidth: document.documentElement.clientWidth,
@@ -9911,13 +9919,13 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                     )
                     assert desktop["size"]["text"] == "Text size"
                     assert desktop["font"]["text"] == "OpenDyslexic"
-                    assert desktop["size"]["width"] <= 2
-                    assert desktop["font"]["width"] <= 2
-                    assert desktop["size"]["height"] <= 2
-                    assert desktop["font"]["height"] <= 2
-                    assert desktop["size"]["position"] == "absolute"
-                    assert desktop["font"]["position"] == "absolute"
-                    assert desktop["toolHeight"] <= 180
+                    assert desktop["size"]["width"] >= 24
+                    assert desktop["font"]["width"] >= 24
+                    assert desktop["size"]["height"] >= 24
+                    assert desktop["font"]["height"] >= 24
+                    assert desktop["size"]["position"] == "static"
+                    assert desktop["font"]["position"] == "static"
+                    assert desktop["toolHeight"] <= 340
                     assert desktop["scrollWidth"] <= desktop["clientWidth"]
                     assert desktop["localKeys"] == []
                     assert desktop["sessionKeys"] == []
@@ -9941,8 +9949,8 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                             };
                           };
                           return {
-                            size: labelBox('.raya-command-size .raya-command-label'),
-                            font: labelBox('.raya-command-font .raya-command-label'),
+                            size: labelBox('.raya-text-size-toggle .raya-command-label'),
+                            font: labelBox('.raya-font-toggle .raya-command-label'),
                             scrollWidth: document.documentElement.scrollWidth,
                             clientWidth: document.documentElement.clientWidth,
                           };
@@ -10159,8 +10167,19 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                     )
                     assert page.url == initial_url
                     assert page.evaluate(
-                        "() => [Object.keys(localStorage), Object.keys(sessionStorage)]"
-                    ) == [[], []]
+                        """() => ({
+                          local: Object.fromEntries(Object.entries(localStorage)),
+                          session: Object.fromEntries(Object.entries(sessionStorage)),
+                        })"""
+                    ) == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"collapsed",'
+                                '"learningRail":"collapsed"}'
+                            ),
+                        },
+                    }
 
                     page.click("#raya-course-map .raya-course-map-toggle")
                     page.wait_for_function(
@@ -10172,20 +10191,20 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                     )
                     page.set_viewport_size({"width": 1100, "height": 900})
                     page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
-                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     assert (
                         page.locator("#raya-course-map").get_attribute(
                             "data-raya-course-map"
                         )
-                        == "collapsed"
+                        == "expanded"
                     )
                     assert (
                         page.locator("#raya-learning-rail").get_attribute(
                             "data-raya-learning-rail"
                         )
-                        == "collapsed"
+                        == "expanded"
                     )
 
                     page.set_viewport_size({"width": 1440, "height": 900})
@@ -10445,193 +10464,154 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         _assert_no_horizontal_overflow(page)
                         state = page.evaluate(
                             """() => {
+                              const isVisible = (item) => {
+                                if (!item) return false;
+                                const rect = item.getBoundingClientRect();
+                                const style = getComputedStyle(item);
+                                return rect.width > 0
+                                  && rect.height > 0
+                                  && rect.right > 0
+                                  && rect.left < window.innerWidth
+                                  && rect.bottom > 0
+                                  && rect.top < window.innerHeight
+                                  && style.display !== 'none'
+                                  && style.visibility !== 'hidden';
+                              };
+                              const commandMarker = (command) => (
+                                Array.from(command.classList).find((name) => (
+                                  name.startsWith('raya-command-')
+                                  && name !== 'raya-command-icon'
+                                  && name !== 'raya-command-label'
+                                ))
+                                || Array.from(command.classList).find(
+                                  (name) => name.endsWith('-toggle')
+                                )
+                              );
+                              const tools = document.querySelector('.raya-course-rail-tools');
+                              const searchForm = tools?.querySelector(
+                                '.raya-course-rail-search'
+                              );
+                              const commandList = tools?.querySelector(
+                                '.raya-course-rail-command-list'
+                              );
                               const commands = Array.from(
-                                document.querySelectorAll('.raya-command')
+                                tools?.querySelectorAll('.raya-course-rail-command') || []
                               );
-                              const visibleCommands = commands.filter(
-                                (item) => {
-                                  const rect = item.getBoundingClientRect();
-                                  return rect.width > 0
-                                    && rect.height > 0
-                                    && rect.right > 0
-                                    && rect.left < window.innerWidth
-                                    && rect.bottom > 0
-                                    && rect.top < window.innerHeight
-                                    && getComputedStyle(item).display !== 'none';
-                                }
-                              );
-                              const toolRoot = document.querySelector('.raya-course-map-tool-grid');
-                              const commandTops = visibleCommands.map(
-                                (item) => item.getBoundingClientRect().top
-                              );
-                              const groups = Array.from(
-                                document.querySelectorAll('[data-raya-command-group]')
-                              ).map((group) => ({
-                                kind: group.getAttribute('data-raya-command-group'),
-                                label: group.getAttribute('aria-label'),
-                                role: group.getAttribute('role'),
-                                classes: Array.from(
-                                  group.querySelectorAll('.raya-command')
-                                ).map((command) => Array.from(command.classList)
-                                  .find((name) => name.startsWith('raya-command-')
-                                    && name !== 'raya-command-icon'
-                                    && name !== 'raya-command-label')),
-                                box: (() => {
-                                  const rect = group.getBoundingClientRect();
-                                  return {
-                                    left: rect.left,
-                                    right: rect.right,
-                                    width: rect.width,
-                                  };
-                                })(),
-                              }));
-                              return {
-                                count: commands.length,
-                                groups,
-                                visibleCount: visibleCommands.length,
-                                minHeights: visibleCommands.map(
-                                  (item) => item.getBoundingClientRect().height
-                                ),
-                                toolHeight: toolRoot.getBoundingClientRect().height,
-                                commandTopSpread: commandTops.length
-                                  ? Math.max(...commandTops) - Math.min(...commandTops)
-                                  : 0,
-                                toolWidth: toolRoot.scrollWidth,
-                                viewportWidth: document.documentElement.clientWidth,
-                                formBox: (() => {
-                                  const box = document
-                                    .querySelector('.raya-command-search-form')
-                                    ?.getBoundingClientRect();
-                                  return box
-                                    ? {
-                                        left: box.left,
-                                        right: box.right,
-                                        width: box.width,
-                                      }
-                                      : null;
-                                })(),
-                                submitBox: (() => {
-                                  const box = document
-                                    .querySelector('.raya-command-search-submit')
-                                    ?.getBoundingClientRect();
-                                  return box
-                                    ? {
-                                        width: box.width,
-                                        height: box.height,
-                                      }
-                                    : null;
-                                })(),
-                                submitLabelBox: (() => {
-                                  const box = document
-                                    .querySelector('.raya-command-search-submit span')
-                                    ?.getBoundingClientRect();
-                                  return box
-                                    ? {
-                                        width: box.width,
-                                        height: box.height,
-                                      }
-                                    : null;
-                                })(),
-                                submitWhiteSpace: getComputedStyle(
-                                  document.querySelector('.raya-command-search-submit')
-                                ).whiteSpace,
-                            submitLabelWhiteSpace: getComputedStyle(
-                              document.querySelector('.raya-command-search-submit span')
-                            ).whiteSpace,
-                            commandLabelBoxes: Object.fromEntries(
-                              Array.from(document.querySelectorAll('.raya-course-map-tool-grid .raya-command')).map((command) => {
-                                const marker = Array.from(command.classList)
-                                  .find((name) => name.startsWith('raya-command-')
-                                    && name !== 'raya-command-icon'
-                                    && name !== 'raya-command-label');
+                              const commandBoxes = commands.map((command) => {
+                                const box = command.getBoundingClientRect();
                                 const label = command.querySelector('.raya-command-label');
                                 const icon = command.querySelector('.raya-command-icon');
-                                const commandBox = command.getBoundingClientRect();
-                                const box = label?.getBoundingClientRect();
+                                const labelBox = label?.getBoundingClientRect();
                                 const iconBox = icon?.getBoundingClientRect();
-                                return [marker, {
-                                  text: label?.textContent?.trim() || '',
-                                  commandWidth: commandBox.width,
-                                  commandHeight: commandBox.height,
-                                  iconWidth: iconBox ? iconBox.width : 0,
-                                  iconHeight: iconBox ? iconBox.height : 0,
-                                  width: box ? box.width : 0,
-                                  height: box ? box.height : 0,
-                                  clipped: label
-                                    ? getComputedStyle(label).clip !== 'auto'
-                                      || getComputedStyle(label).clipPath !== 'none'
-                                    : true,
-                                }];
-                              })
-                            ),
-                            searchHref: document
-                              .querySelector('.raya-command-search')
-                              ?.getAttribute('href'),
-                                graphHref: document
-                                  .querySelector('.raya-command-graph')
-                                  ?.getAttribute('href'),
-                                practiceHref: document
-                                  .querySelector('.raya-command-practice')
-                                  ?.getAttribute('href'),
-                                tasksHref: document
-                                  .querySelector('.raya-command-tasks')
-                                  ?.getAttribute('href'),
-                                scheduleHref: document
-                                  .querySelector('.raya-command-schedule')
-                                  ?.getAttribute('href'),
+                                return {
+                                  marker: commandMarker(command),
+                                  text: command.textContent.trim(),
+                                  href: command.getAttribute('href'),
+                                  ariaLabel: command.getAttribute('aria-label'),
+                                  ariaPressed: command.getAttribute('aria-pressed'),
+                                  ariaExpanded: command.getAttribute('aria-expanded'),
+                                  visible: isVisible(command),
+                                  width: Math.round(box.width),
+                                  height: Math.round(box.height),
+                                  left: Math.round(box.left),
+                                  top: Math.round(box.top),
+                                  labelWidth: Math.round(labelBox?.width || 0),
+                                  labelHeight: Math.round(labelBox?.height || 0),
+                                  iconWidth: Math.round(iconBox?.width || 0),
+                                  iconHeight: Math.round(iconBox?.height || 0),
+                                };
+                              });
+                              const visibleCommands = commandBoxes.filter(
+                                (command) => command.visible
+                              );
+                              const visibleRows = [
+                                ...new Set(visibleCommands.map((command) => command.top)),
+                              ];
+                              const visibleColumns = [
+                                ...new Set(visibleCommands.map((command) => command.left)),
+                              ];
+                              const listBox = commandList?.getBoundingClientRect();
+                              const formBox = searchForm?.getBoundingClientRect();
+                              const submit = document.querySelector(
+                                '.raya-command-search-submit'
+                              );
+                              const submitBox = submit?.getBoundingClientRect();
+                              return {
+                                count: commandBoxes.length,
+                                visibleCount: visibleCommands.length,
+                                visibleRows: visibleRows.length,
+                                visibleColumns: visibleColumns.length,
+                                commands: commandBoxes,
+                                visibleCommandTexts: visibleCommands.map(
+                                  (command) => command.text
+                                ),
+                                commandMarkers: commandBoxes.map(
+                                  (command) => command.marker
+                                ),
+                                toolVisible: isVisible(tools),
+                                toolHeight: Math.round(
+                                  tools?.getBoundingClientRect().height || 0
+                                ),
+                                toolWidth: Math.round(
+                                  tools?.getBoundingClientRect().width || 0
+                                ),
+                                toolScrollWidth: tools?.scrollWidth || 0,
+                                toolClientWidth: tools?.clientWidth || 0,
+                                commandListRole: commandList?.getAttribute('role'),
+                                commandListLabel: commandList?.getAttribute('aria-label'),
+                                commandListGrid: commandList
+                                  ? getComputedStyle(commandList).gridTemplateColumns
+                                  : '',
+                                commandListWidth: Math.round(listBox?.width || 0),
+                                formVisible: isVisible(searchForm),
+                                formAction: searchForm?.getAttribute('action'),
+                                formTop: Math.round(formBox?.top || 0),
+                                firstCommandTop: visibleCommands.length
+                                  ? Math.min(...visibleCommands.map(
+                                      (command) => command.top
+                                    ))
+                                  : 0,
+                                formBox: formBox
+                                  ? {
+                                      left: formBox.left,
+                                      right: formBox.right,
+                                      width: formBox.width,
+                                    }
+                                  : null,
+                                submitBox: submitBox
+                                  ? {
+                                      width: submitBox.width,
+                                      height: submitBox.height,
+                                    }
+                                  : null,
+                                submitWhiteSpace: submit
+                                  ? getComputedStyle(submit).whiteSpace
+                                  : '',
                                 mapExpanded: (() => {
                                   const command = Array
                                     .from(document.querySelectorAll('.raya-command-map'))
-                                    .find((item) => {
-                                      const rect = item.getBoundingClientRect();
-                                      return rect.width > 0
-                                        && rect.height > 0
-                                        && rect.right > 0
-                                        && rect.left < window.innerWidth
-                                        && getComputedStyle(item).display !== 'none';
-                                    });
+                                    .find(isVisible);
                                   return command?.getAttribute('aria-expanded');
                                 })(),
-                                focusLabel: document
-                                  .querySelector('.raya-command-focus')
-                                  ?.getAttribute('aria-label'),
-                                focusPressed: document
-                                  .querySelector('.raya-command-focus')
-                                  ?.getAttribute('aria-pressed'),
-                                focusVisible: (() => {
-                                  const item = document.querySelector('.raya-command-focus');
-                                  const rect = item?.getBoundingClientRect();
-                                  return !!rect
-                                    && rect.width > 0
-                                    && rect.height > 0
-                                    && rect.right > 0
-                                    && rect.left < window.innerWidth
-                                    && getComputedStyle(item).display !== 'none';
-                                })(),
+                                focusCount: document
+                                  .querySelectorAll('.raya-command-focus').length,
                                 railContextLabel: document
                                   .querySelector('.raya-command-context')
                                   ?.getAttribute('aria-label'),
                                 railContextExpanded: document
                                   .querySelector('.raya-command-context')
                                   ?.getAttribute('aria-expanded'),
-                                railContextVisible: (() => {
-                                  const item = document.querySelector('.raya-command-context');
-                                  const rect = item?.getBoundingClientRect();
-                                  return !!rect
-                                    && rect.width > 0
-                                    && rect.height > 0
-                                    && rect.right > 0
-                                    && rect.left < window.innerWidth
-                                    && getComputedStyle(item).display !== 'none';
-                                })(),
+                                railContextVisible: isVisible(
+                                  document.querySelector('.raya-command-context')
+                                ),
                                 sizeLabel: document
-                                  .querySelector('.raya-command-size')
+                                  .querySelector('.raya-text-size-toggle')
                                   ?.getAttribute('aria-label'),
                                 sizePressed: document
-                                  .querySelector('.raya-command-size')
+                                  .querySelector('.raya-text-size-toggle')
                                   ?.getAttribute('aria-pressed'),
                                 fontPressed: document
-                                  .querySelector('.raya-command-font')
+                                  .querySelector('.raya-font-toggle')
                                   ?.getAttribute('aria-pressed'),
                                 contextText: [
                                   document.querySelector('.raya-breadcrumbs')?.innerText || '',
@@ -10647,16 +10627,9 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                   .querySelector('[data-raya-current-section-link]')
                                   ?.textContent
                                   ?.trim() || '',
-                                sectionLabelText: document
-                                  .querySelector('[data-raya-current-section-link]')
-                                  ?.textContent
-                                  ?.trim() || '',
-                                sectionLabelVisible: (() => {
-                                  const label = document
-                                    .querySelector('[data-raya-current-section-link]');
-                                  return !!label && label.getClientRects().length > 0
-                                    && getComputedStyle(label).display !== 'none';
-                                })(),
+                                sectionLabelVisible: isVisible(
+                                  document.querySelector('[data-raya-current-section-link]')
+                                ),
                                 sectionWidth: document
                                   .querySelector('[data-raya-current-section-link]')
                                   ?.getBoundingClientRect()
@@ -10667,102 +10640,57 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 nextHref: document
                                   .querySelector('[data-raya-next-page]')
                                   ?.getAttribute('href') || '',
-                          };
-                        }"""
+                                viewportWidth: document.documentElement.clientWidth,
+                              };
+                            }"""
                         )
-                        assert state["count"] == 9
-                        assert [group["kind"] for group in state["groups"]] == [
-                            "discovery",
-                            "layout",
-                            "comfort",
-                        ]
-                        assert [group["label"] for group in state["groups"]] == [
-                            "Discovery workspaces",
-                            "Reader layout",
-                            "Reading comfort",
-                        ]
-                        assert [group["role"] for group in state["groups"]] == [
-                            "group",
-                            "group",
-                            "group",
-                        ]
-                        assert state["groups"][0]["classes"] == [
+                        assert state["count"] == 8
+                        assert state["commandMarkers"] == [
                             "raya-command-search",
                             "raya-command-graph",
                             "raya-command-practice",
                             "raya-command-tasks",
                             "raya-command-schedule",
-                        ]
-                        assert state["groups"][1]["classes"] == [
                             "raya-command-context",
+                            "raya-text-size-toggle",
+                            "raya-font-toggle",
                         ]
-                        assert state["groups"][2]["classes"] == [
-                            "raya-command-size",
-                            "raya-command-font",
-                        ]
+                        assert state["commandListRole"] == "group"
+                        assert state["commandListLabel"] == "Course commands"
+                        assert "Raya Lucaria Render Fixture" in state["contextText"]
+                        if state["contextWidth"] is not None:
+                            assert state["contextWidth"] > 0
+                        assert state["sectionHref"] == "#rich-static-baseline"
+                        assert state["sectionText"] == "Rich Static Baseline"
+                        assert state["sectionLabelVisible"] is (
+                            viewport["width"] >= 1280
+                        )
                         if viewport["width"] >= 1280:
-                            for group in state["groups"]:
-                                assert group["box"]["left"] >= 0
-                                assert group["box"]["right"] <= state["viewportWidth"]
-                                assert group["box"]["width"] > 0
-                        if viewport["width"] >= 1280:
-                            assert state["visibleCount"] <= 8
-                        elif viewport["width"] >= 640:
-                            assert state["visibleCount"] == 0
-                        else:
-                            assert state["visibleCount"] >= 1
-                        assert all(height >= 24 for height in state["minHeights"])
-                        if viewport["width"] >= 1280:
-                            assert state["toolWidth"] <= state["viewportWidth"]
-                        assert state["formBox"] is not None
-                        if viewport["width"] >= 1280:
-                            assert state["formBox"]["left"] >= 0
-                            assert state["formBox"]["right"] <= state["viewportWidth"]
-                            assert state["formBox"]["width"] >= 140
-                        assert state["submitBox"] is not None
-                        assert state["submitLabelBox"] is not None
-                        assert state["submitWhiteSpace"] == "nowrap"
-                        assert state["submitLabelWhiteSpace"] == "nowrap"
-                        if viewport["width"] >= 1280:
-                            assert state["submitBox"]["width"] >= 48
-                            assert state["submitLabelBox"]["height"] < 24
-                        if viewport["width"] >= 640:
-                            for command_name in (
-                                "raya-command-graph",
-                                "raya-command-practice",
-                                "raya-command-tasks",
-                                "raya-command-schedule",
-                                "raya-command-context",
-                            ):
-                                label_box = state["commandLabelBoxes"][command_name]
-                                if label_box["commandWidth"] == 0:
-                                    continue
-                                assert label_box["text"]
-                                assert label_box["clipped"] is True
-                                assert label_box["width"] <= 1
-                                assert label_box["height"] <= 1
-                                assert 14 <= label_box["iconWidth"] <= 20
-                                assert 14 <= label_box["iconHeight"] <= 20
-                                assert label_box["commandHeight"] <= 34
-                        if viewport["width"] >= 1280:
-                            assert state["toolHeight"] <= 240
-                            assert state["commandTopSpread"] <= 170
-                        assert state["searchHref"] == (
+                            assert state["sectionWidth"] >= 40
+                        assert state["prevHref"] == ""
+                        assert state["nextHref"] == "static-path/index.html"
+                        assert state["focusCount"] == 0
+                        command_by_marker = {
+                            command["marker"]: command for command in state["commands"]
+                        }
+                        assert command_by_marker["raya-command-search"]["href"] == (
                             "_raya/search/index.html?q=Raya%20Lucaria%20Render%20Fixture"
                         )
-                        assert (
-                            state["graphHref"]
-                            == "_raya/graph/index.html?page=render-root"
+                        assert command_by_marker["raya-command-graph"]["href"] == (
+                            "_raya/graph/index.html?page=render-root"
                         )
-                        assert state["practiceHref"] == "_raya/practice/index.html"
-                        assert state["tasksHref"] == "_raya/tasks/index.html"
-                        assert state["scheduleHref"] == "_raya/schedule/index.html"
+                        assert command_by_marker["raya-command-practice"]["href"] == (
+                            "_raya/practice/index.html"
+                        )
+                        assert command_by_marker["raya-command-tasks"]["href"] == (
+                            "_raya/tasks/index.html"
+                        )
+                        assert command_by_marker["raya-command-schedule"]["href"] == (
+                            "_raya/schedule/index.html"
+                        )
                         assert state["mapExpanded"] == (
                             "true" if viewport["width"] >= 1280 else "false"
                         )
-                        assert state["focusLabel"] is None
-                        assert state["focusPressed"] is None
-                        assert state["focusVisible"] is False
                         assert state["railContextLabel"] == (
                             "Hide learning context"
                             if viewport["width"] >= 1280
@@ -10775,24 +10703,53 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         assert state["railContextExpanded"] == (
                             "true" if viewport["width"] >= 1280 else "false"
                         )
-                        if viewport["width"] >= 1280:
-                            assert state["railContextVisible"] is True
                         assert state["sizeLabel"] == "Text size: normal"
                         assert state["sizePressed"] == "false"
                         assert state["fontPressed"] == "false"
-                        assert "Raya Lucaria Render Fixture" in state["contextText"]
-                        if state["contextWidth"] is not None:
-                            assert state["contextWidth"] > 0
-                        assert state["sectionHref"] == "#rich-static-baseline"
-                        assert state["sectionText"]
-                        assert state["sectionLabelText"] == "Rich Static Baseline"
-                        assert state["sectionLabelVisible"] is not (
-                            640 <= viewport["width"] <= 767
-                        )
                         if viewport["width"] >= 1280:
-                            assert state["sectionWidth"] >= 40
-                        assert state["prevHref"] == ""
-                        assert state["nextHref"] == "static-path/index.html"
+                            assert state["toolVisible"] is True
+                            assert state["visibleCount"] == 8
+                            assert state["visibleColumns"] == 2
+                            assert state["visibleRows"] == 4
+                            assert state["formVisible"] is True
+                            assert state["formAction"] == "_raya/search/index.html"
+                            assert state["formTop"] < state["firstCommandTop"]
+                            assert state["toolScrollWidth"] <= state["toolClientWidth"]
+                            assert state["toolWidth"] <= state["viewportWidth"]
+                            assert state["formBox"]["left"] >= 0
+                            assert state["formBox"]["right"] <= state["viewportWidth"]
+                            assert state["formBox"]["width"] >= 140
+                            assert state["submitBox"] is not None
+                            assert state["submitBox"]["width"] >= 28
+                            assert state["submitWhiteSpace"] == "nowrap"
+                            assert state["toolHeight"] <= 340
+                            assert state["railContextVisible"] is True
+                            assert state["commandListWidth"] >= 140
+                            assert " " in state["commandListGrid"]
+                            assert state["visibleCommandTexts"] == [
+                                "Search",
+                                "Graph",
+                                "Practice",
+                                "Tasks",
+                                "Schedule",
+                                "Context",
+                                "Text size",
+                                "OpenDyslexic",
+                            ]
+                            assert all(
+                                command["width"] >= 64
+                                and command["height"] >= 28
+                                and command["labelWidth"] >= 24
+                                and 14 <= command["iconWidth"] <= 22
+                                and 14 <= command["iconHeight"] <= 22
+                                for command in state["commands"]
+                            )
+                        elif viewport["width"] >= 640:
+                            assert state["toolVisible"] is False
+                            assert state["visibleCount"] == 0
+                        else:
+                            assert state["toolVisible"] is False
+                            assert state["visibleCount"] == 0
 
                         map_command_selector = (
                             "#raya-course-map .raya-course-map-toggle"
@@ -10829,7 +10786,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 width: bounds.width,
                                 height: bounds.height,
                                 toolWidth: document
-                                  .querySelector('.raya-course-map-tool-grid')
+                                  .querySelector('.raya-course-rail-tools')
                                   .scrollWidth,
                                 viewportWidth: document.documentElement.clientWidth,
                               };
@@ -10872,7 +10829,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             else:
                                 page.wait_for_function(
                                     """() => document
-                                      .querySelector('.raya-command-size')
+                                      .querySelector('.raya-text-size-toggle')
                                       ?.getBoundingClientRect().width > 0"""
                                 )
                         page.evaluate(
@@ -10891,15 +10848,15 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               }
                               command.click();
                             }""",
-                            ".raya-command-size",
+                            ".raya-text-size-toggle",
                         )
                         after_size = page.evaluate(
                             """() => ({
                               label: document
-                                .querySelector('.raya-command-size')
+                                .querySelector('.raya-text-size-toggle')
                                 ?.getAttribute('aria-label'),
                               pressed: document
-                                .querySelector('.raya-command-size')
+                                .querySelector('.raya-text-size-toggle')
                                 ?.getAttribute('aria-pressed'),
                               rootSize: document.documentElement
                                 .getAttribute('data-raya-text-size'),
@@ -10924,12 +10881,12 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                               }
                               command.click();
                             }""",
-                            ".raya-command-font",
+                            ".raya-font-toggle",
                         )
                         after_font = page.evaluate(
                             """() => ({
                               pressed: document
-                                .querySelector('.raya-command-font')
+                                .querySelector('.raya-font-toggle')
                                 ?.getAttribute('aria-pressed'),
                               bodyFont: getComputedStyle(document.body).fontFamily,
                             })"""
@@ -10979,6 +10936,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                     {"width": 390, "height": 844},
                 ):
                     page = browser.new_page(viewport=viewport)
+                    page.add_init_script("window.sessionStorage.clear();")
                     try:
                         page.goto(
                             f"{handle.base_url}/reader-ux/index.html",
@@ -11014,9 +10972,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const map = document.querySelector('#raya-course-map');
                                   const article = document.querySelector('#raya-article');
                                   const rail = document.querySelector('#raya-learning-rail');
-                                  const toolGrid = document.querySelector('.raya-course-map-tool-grid');
+                                  const commandList = document.querySelector(
+                                    '.raya-course-rail-command-list'
+                                  );
                                   const commands = Array.from(
-                                    document.querySelectorAll('.raya-course-map-tool-grid .raya-command')
+                                    document.querySelectorAll(
+                                      '.raya-course-rail-tools .raya-course-rail-command'
+                                    )
                                   );
                                   const visibleCommands = commands.filter(
                                     (button) => button.getClientRects().length > 0
@@ -11024,7 +10986,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
-                                    toolGridWidth: toolGrid.getBoundingClientRect().width,
+                                        commandListWidth: commandList.getBoundingClientRect().width,
                                     mapWidth: map.getBoundingClientRect().width,
                                     articleWidth: article.getBoundingClientRect().width,
                                     railWidth: rail.getBoundingClientRect().width,
@@ -11048,13 +11010,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     metrics["shellWidth"]
                                     >= viewport["width"] - 32
                                 )
-                            assert metrics["toolGridWidth"] <= metrics["mapWidth"]
+                            assert metrics["commandListWidth"] <= metrics["mapWidth"]
                             assert all(
-                                24 <= height <= 48
+                                24 <= height <= 96
                                 for height in metrics["commandHeights"]
                             )
                             assert all(
-                                width >= 28 for width in metrics["commandWidths"]
+                                width >= 64 for width in metrics["commandWidths"]
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
@@ -11071,7 +11033,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                   const readableBlocks = Array.from(article.children)
                                     .filter((child) => getComputedStyle(child).maxWidth !== '100%');
                                   const rail = document.querySelector('#raya-learning-rail');
-                                  const toolGrid = document.querySelector('.raya-course-map-tool-grid');
+                                  const commandList = document.querySelector(
+                                    '.raya-course-rail-command-list'
+                                  );
                                   return {
                                     ready: root.dataset.rayaShellReady,
                                     shellTransition: getComputedStyle(shell).transition,
@@ -11081,7 +11045,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     readableBlockMaxWidths: readableBlocks.map(
                                       (child) => getComputedStyle(child).maxWidth
                                     ),
-                                    toolGap: getComputedStyle(toolGrid).gap,
+                                    toolGap: getComputedStyle(commandList).gap,
                                   };
                                 }"""
                             )
@@ -11102,7 +11066,7 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 """() => {
                                   const links = Array.from(
                                     document.querySelectorAll(
-                                      '.raya-course-map-tools .raya-command-group-discovery .raya-command[href]'
+                                      '.raya-course-rail-tools .raya-course-rail-command[href]'
                                     )
                                   );
                                   return {
@@ -11270,7 +11234,8 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             _assert_no_horizontal_overflow(page)
                             page.locator(".raya-skip-link").focus()
                         else:
-                            if viewport["width"] >= 768:
+                            if viewport["width"] >= 640:
+                                approved_geometry = viewport["width"] >= 894
                                 drawer_state = page.evaluate(
                                     """() => {
                                       const root = document.documentElement;
@@ -11288,7 +11253,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     "drawer": "closed",
                                     "mapHidden": "false",
                                     "mapInert": False,
-                                    "commandExpanded": "false",
+                                    "commandExpanded": (
+                                        "true" if approved_geometry else "false"
+                                    ),
                                 }
                                 medium_shell = page.evaluate(
                                     """() => {
@@ -11321,14 +11288,25 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       };
                                     }"""
                                 )
-                                assert len(medium_shell["columns"].split()) == 1
-                                assert medium_shell["mapState"] == "collapsed"
-                                assert medium_shell["railState"] == "collapsed"
                                 assert medium_shell["mapPosition"] == "fixed"
                                 assert medium_shell["railPosition"] == "fixed"
-                                assert 40 <= medium_shell["mapWidth"] <= 56
-                                assert medium_shell["articleWidth"] >= viewport["width"] - 140
-                                assert 40 <= medium_shell["railWidth"] <= 56
+                                assert len(medium_shell["columns"].split()) == 1
+                                if approved_geometry:
+                                    assert medium_shell["mapState"] == "expanded"
+                                    assert medium_shell["railState"] == "expanded"
+                                    assert 244 <= medium_shell["mapWidth"] <= 264
+                                    assert 244 <= medium_shell["railWidth"] <= 264
+                                    assert medium_shell["articleWidth"] >= (
+                                        viewport["width"] - 572
+                                    )
+                                else:
+                                    assert medium_shell["mapState"] == "collapsed"
+                                    assert medium_shell["railState"] == "collapsed"
+                                    assert 40 <= medium_shell["mapWidth"] <= 56
+                                    assert medium_shell["articleWidth"] >= (
+                                        viewport["width"] - 140
+                                    )
+                                    assert 40 <= medium_shell["railWidth"] <= 56
                                 assert medium_shell["mapH1Overlap"] == 0
                                 assert medium_shell["mapBriefOverlap"] == 0
                                 assert medium_shell["railH1Overlap"] == 0
@@ -11446,8 +11424,11 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                 args=["--no-sandbox"],
             )
             try:
-                for width in (1280, 1366, 1440, 1920):
-                    page = browser.new_page(viewport={"width": width, "height": 900})
+                for viewport in (
+                    {"width": 1440, "height": 900},
+                    {"width": 894, "height": 670},
+                ):
+                    page = browser.new_page(viewport=viewport)
                     try:
                         page.goto(
                             f"{handle.base_url}/reader-ux/index.html",
@@ -11456,7 +11437,6 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                         _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-top-command-bar").count() == 0
                         assert page.locator(".raya-discovery-command-bar").count() == 0
-
                         initial = page.evaluate(
                             """() => {
                               const box = (selector) => {
@@ -11466,11 +11446,14 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                 return {
                                   left: rect.left,
                                   right: rect.right,
+                                  top: rect.top,
                                   width: rect.width,
+                                  height: rect.height,
                                 };
                               };
                               return {
                                 mapState: document.documentElement.dataset.rayaCourseMap,
+                                railState: document.documentElement.dataset.rayaLearningRail,
                                 map: box('#raya-course-map'),
                                 article: box('#raya-article'),
                                 rail: box('#raya-learning-rail'),
@@ -11481,62 +11464,283 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                               };
                             }"""
                         )
-                        assert initial["map"]["right"] <= initial["article"]["left"]
-                        assert initial["article"]["right"] <= initial["rail"]["left"] + 1
                         assert initial["mapState"] == "expanded"
+                        assert initial["railState"] == "expanded"
+                        assert initial["map"]["left"] < initial["article"]["left"]
+                        assert initial["article"]["right"] <= initial["rail"]["left"] + 1
+                        assert 188 <= initial["map"]["width"] <= 290
+                        assert 188 <= initial["rail"]["width"] <= 310
                         assert initial["overflow"] <= 1
-
-                        page.click("#raya-course-map [data-raya-course-map-toggle]")
-                        page.wait_for_function(
-                            """() => document.documentElement.dataset.rayaCourseMap
-                              === 'collapsed'"""
-                        )
-                        page.wait_for_function(
-                            """() => document
-                              .querySelector('#raya-course-map')
-                              ?.getBoundingClientRect().width <= 112"""
-                        )
-                        collapsed = page.evaluate(
-                            """() => {
-                              const box = (selector) => {
-                                const rect = document
-                                  .querySelector(selector)
-                                  .getBoundingClientRect();
-                                return {
-                                  left: rect.left,
-                                  right: rect.right,
-                                  width: rect.width,
-                                };
-                              };
-                              return {
-                                rootMapState: document.documentElement
-                                  .dataset
-                                  .rayaCourseMap,
-                                map: box('#raya-course-map'),
-                                article: box('#raya-article'),
-                                rail: box('#raya-learning-rail'),
-                                overflow: Math.ceil(
-                                  document.documentElement.scrollWidth -
-                                  window.innerWidth
-                                ),
-                              };
-                            }"""
-                        )
-                        assert collapsed["rootMapState"] == "collapsed"
-                        assert (
-                            collapsed["article"]["width"]
-                            >= initial["article"]["width"] + 80
-                        )
-                        assert collapsed["map"]["width"] <= 56
-                        assert collapsed["map"]["left"] <= 8
-                        assert (
-                            collapsed["article"]["right"]
-                            <= collapsed["rail"]["left"] + 1
-                        )
-                        assert collapsed["overflow"] <= 1
-                        _assert_no_horizontal_overflow(page)
+                        assert page.locator(".raya-course-rail-search").is_visible()
+                        assert page.locator(".raya-course-rail-command").first.is_visible()
+                        assert page.locator("#raya-course-map-list").is_visible()
+                        if viewport["width"] == 894:
+                            command_boxes = page.evaluate(
+                                """() => Array.from(
+                                  document.querySelectorAll('.raya-course-rail-command')
+                                )
+                                  .slice(0, 4)
+                                  .map((command) => {
+                                    const rect = command.getBoundingClientRect();
+                                    return {
+                                      left: rect.left,
+                                      top: rect.top,
+                                      right: rect.right,
+                                      bottom: rect.bottom,
+                                    };
+                                  })"""
+                            )
+                            assert len(command_boxes) == 4
+                            row_tolerance = 4
+                            assert (
+                                abs(command_boxes[0]["top"] - command_boxes[1]["top"])
+                                <= row_tolerance
+                            )
+                            assert (
+                                abs(command_boxes[2]["top"] - command_boxes[3]["top"])
+                                <= row_tolerance
+                            )
+                            assert (
+                                command_boxes[1]["left"] > command_boxes[0]["right"] - 1
+                            )
+                            assert (
+                                command_boxes[2]["top"] > command_boxes[0]["bottom"] - 1
+                            )
+                        else:
+                            page.click("#raya-course-map [data-raya-course-map-toggle]")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMap
+                                  === 'collapsed'"""
+                            )
+                            page.wait_for_function(
+                                """() => document
+                                  .querySelector('#raya-course-map')
+                                  ?.getBoundingClientRect().width <= 112"""
+                            )
+                            collapsed = page.evaluate(
+                                """() => {
+                                  const box = (selector) => {
+                                    const rect = document
+                                      .querySelector(selector)
+                                      .getBoundingClientRect();
+                                    return {
+                                      left: rect.left,
+                                      right: rect.right,
+                                      width: rect.width,
+                                    };
+                                  };
+                                  return {
+                                    rootMapState: document.documentElement
+                                      .dataset
+                                      .rayaCourseMap,
+                                    map: box('#raya-course-map'),
+                                    article: box('#raya-article'),
+                                    rail: box('#raya-learning-rail'),
+                                    overflow: Math.ceil(
+                                      document.documentElement.scrollWidth -
+                                      window.innerWidth
+                                    ),
+                                  };
+                                }"""
+                            )
+                            assert collapsed["rootMapState"] == "collapsed"
+                            assert (
+                                collapsed["article"]["width"]
+                                >= initial["article"]["width"] + 80
+                            )
+                            assert collapsed["map"]["width"] <= 56
+                            assert collapsed["map"]["left"] <= 8
+                            assert (
+                                collapsed["article"]["right"]
+                                <= collapsed["rail"]["left"] + 1
+                            )
+                            assert collapsed["overflow"] <= 1
+                            _assert_no_horizontal_overflow(page)
                     finally:
                         page.close()
+                page = browser.new_page(viewport={"width": 893, "height": 670})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail
+                            === 'collapsed'"""
+                    )
+                    page.set_viewport_size({"width": 894, "height": 670})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail
+                            === 'expanded'
+                          && document.documentElement.dataset.rayaCourseMapDrawer
+                            === 'closed'
+                          && document.documentElement.dataset.rayaLearningRailDrawer
+                            === 'closed'"""
+                    )
+                    page.wait_for_function(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map')
+                            .getBoundingClientRect();
+                          const article = document.querySelector('#raya-article')
+                            .getBoundingClientRect();
+                          const rail = document.querySelector('#raya-learning-rail')
+                            .getBoundingClientRect();
+                          return (
+                            188 <= map.width && map.width <= 290
+                            && 188 <= rail.width && rail.width <= 310
+                            && map.left < article.left
+                            && article.right <= rail.left + 1
+                          );
+                        }"""
+                    )
+                    resized = page.evaluate(
+                        """() => {
+                          const box = (selector) => {
+                            const rect = document.querySelector(selector)
+                              .getBoundingClientRect();
+                            return {
+                              left: rect.left,
+                              right: rect.right,
+                              top: rect.top,
+                              width: rect.width,
+                              height: rect.height,
+                            };
+                          };
+                          const commandBoxes = Array.from(
+                            document.querySelectorAll('.raya-course-rail-command')
+                          )
+                            .slice(0, 4)
+                            .map((command) => {
+                              const rect = command.getBoundingClientRect();
+                              return {
+                                left: rect.left,
+                                top: rect.top,
+                                right: rect.right,
+                                bottom: rect.bottom,
+                              };
+                            });
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            railState: document.documentElement.dataset.rayaLearningRail,
+                            mapDrawer: document.documentElement.dataset.rayaCourseMapDrawer,
+                            railDrawer: document.documentElement.dataset.rayaLearningRailDrawer,
+                            map: box('#raya-course-map'),
+                            article: box('#raya-article'),
+                            rail: box('#raya-learning-rail'),
+                            overflow: Math.ceil(
+                              document.documentElement.scrollWidth - window.innerWidth
+                            ),
+                            commandBoxes,
+                          };
+                        }"""
+                    )
+                    assert resized["mapState"] == "expanded"
+                    assert resized["railState"] == "expanded"
+                    assert resized["mapDrawer"] == "closed"
+                    assert resized["railDrawer"] == "closed"
+                    assert 188 <= resized["map"]["width"] <= 290
+                    assert 188 <= resized["rail"]["width"] <= 310
+                    assert resized["map"]["left"] < resized["article"]["left"]
+                    assert resized["article"]["right"] <= resized["rail"]["left"] + 1
+                    assert resized["overflow"] <= 1
+                    assert page.locator(".raya-course-rail-search").is_visible()
+                    assert page.locator(".raya-course-rail-command").first.is_visible()
+                    assert page.locator("#raya-course-map-list").is_visible()
+                    assert len(resized["commandBoxes"]) == 4
+                    row_tolerance = 4
+                    assert (
+                        abs(resized["commandBoxes"][0]["top"] - resized["commandBoxes"][1]["top"])
+                        <= row_tolerance
+                    )
+                    assert (
+                        abs(resized["commandBoxes"][2]["top"] - resized["commandBoxes"][3]["top"])
+                        <= row_tolerance
+                    )
+                    assert resized["commandBoxes"][1]["left"] > resized["commandBoxes"][0]["right"] - 1
+                    assert resized["commandBoxes"][2]["top"] > resized["commandBoxes"][0]["bottom"] - 1
+                    _assert_no_horizontal_overflow(page)
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_collapse_sets_inert_hidden_state_without_tabbable_links(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 894, "height": 670})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.set_viewport_size({"width": 894, "height": 670})
+                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width <= 56"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
+                    state = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const list = document.querySelector('#raya-course-map-list');
+                          const toggle = document.querySelector(
+                            '#raya-course-map .raya-course-map-toggle'
+                          );
+                          return {
+                            mapWidth: map.getBoundingClientRect().width,
+                            listHidden: list.getAttribute('aria-hidden'),
+                            listInert: list.inert,
+                            toggleVisible: getComputedStyle(toggle).display !== 'none',
+                            activeHiddenLinks: Array.from(map.querySelectorAll('a'))
+                              .filter((link) => link.tabIndex >= 0)
+                              .length,
+                          };
+                        }"""
+                    )
+                    assert state["mapWidth"] <= 56
+                    assert state["listHidden"] == "true"
+                    assert state["listInert"] is True
+                    assert state["toggleVisible"] is True
+                    assert state["activeHiddenLinks"] == 0
+                finally:
+                    page.close()
             finally:
                 browser.close()
     finally:
@@ -12242,12 +12446,12 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                             ?.checkVisibility(),
                           toolLabels: Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command-group-discovery .raya-command[href]'
+                              '.raya-course-rail-tools .raya-course-rail-command[href]'
                             )
                           ).map((link) => link.textContent.trim()),
                           toolAriaLabels: Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command-group-discovery .raya-command[href]'
+                              '.raya-course-rail-tools .raya-course-rail-command[href]'
                             )
                           ).map((link) => link.getAttribute('aria-label')),
                           practiceHref: document
@@ -12387,7 +12591,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                         "branchBExpanded": "true",
                         "branchBChildrenHidden": False,
                         "localStorageKeys": [],
-                        "sessionStorageKeys": ["raya:course-map:course-root"],
+                        "sessionStorageKeys": [
+                            "raya:course-map-branches:v1:minimal-course"
+                        ],
                     }
 
                     page.focus(
@@ -13085,20 +13291,14 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                           childHidden: document
                             .querySelector('[data-raya-map-node="render-root"] > [data-raya-map-children]')
                             ?.hidden,
-                          storage: Object.fromEntries(
-                            Object.keys(sessionStorage)
-                              .filter((key) => key.startsWith('raya:course-map:'))
-                              .map((key) => [key, sessionStorage.getItem(key)])
+                          storage: sessionStorage.getItem(
+                            'raya:course-map-branches:v1:render-fixture'
                           ),
                         })"""
                     )
                     assert collapsed["expanded"] == "false"
                     assert collapsed["childHidden"] is True
-                    assert collapsed["storage"]
-                    assert any(
-                        "render-root" in value
-                        for value in collapsed["storage"].values()
-                    )
+                    assert collapsed["storage"] == '["render-root"]'
 
                     page.reload(wait_until="networkidle")
                     page.wait_for_function(
@@ -13123,6 +13323,182 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                 browser.close()
     finally:
         handle.close()
+
+
+def test_course_map_branch_state_uses_course_id_and_validates_payload(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    served_parent = tmp_path / "served"
+    course_a = served_parent / "course-a"
+    course_b = served_parent / "course-b"
+    for course, course_id in (
+        (course_a, "branch-course-a"),
+        (course_b, "branch-course-b"),
+    ):
+        shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+        config_path = course / "raya.yaml"
+        config_path.write_text(
+            config_path.read_text(encoding="utf-8").replace(
+                "course_id: minimal-course", f"course_id: {course_id}"
+            ),
+            encoding="utf-8",
+        )
+        unit_path = course / "course" / "1_unit" / "0_index.md"
+        unit_path.write_text(
+            unit_path.read_text(encoding="utf-8").replace(
+                "id: first-unit", "id: unit-node"
+            ),
+            encoding="utf-8",
+        )
+        topic_path = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+        topic_path.write_text(
+            topic_path.read_text(encoding="utf-8").replace(
+                "  - first-unit", "  - unit-node"
+            ),
+            encoding="utf-8",
+        )
+        report = build_course(course)
+        assert report.ok, [
+            diagnostic.format() for diagnostic in report.diagnostics
+        ]
+
+    cases = (
+        (None, "generated-defaults"),
+        ("[]", "all-expanded"),
+        ('["unit-node","unit-node","missing-node"]', "known-deduplicated"),
+        ('{"bad":true}', "generated-defaults"),
+        ('["unit-node",7]', "generated-defaults"),
+        ('[""]', "generated-defaults"),
+    )
+    expected_states = {
+        "generated-defaults": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "false"},
+        ],
+        "all-expanded": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "true"},
+        ],
+        "known-deduplicated": [
+            {"id": "course-root", "expanded": "true"},
+            {"id": "unit-node", "expanded": "false"},
+        ],
+    }
+    key_a = "raya:course-map-branches:v1:branch-course-a"
+    key_b = "raya:course-map-branches:v1:branch-course-b"
+    browser_executable = _browser_executable()
+
+    with _serve(served_parent) as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    course_a_url = f"{base_url}/course-a/artifact/site/index.html"
+                    course_a_topic_url = (
+                        f"{base_url}/course-a/artifact/site/unit/topic/index.html"
+                    )
+                    page.goto(course_a_url, wait_until="networkidle")
+                    assert page.locator("#raya-course-map").get_attribute(
+                        "data-raya-course-map-storage-key"
+                    ) == key_a
+
+                    for raw, expected in cases:
+                        page.evaluate("key => sessionStorage.removeItem(key)", key_a)
+                        page.goto(
+                            course_a_topic_url
+                            if expected == "known-deduplicated"
+                            else course_a_url,
+                            wait_until="networkidle",
+                        )
+                        if expected == "known-deduplicated":
+                            assert page.locator(
+                                '[data-raya-map-node="unit-node"] '
+                                "> .raya-course-map-node-row "
+                                "[data-raya-map-node-toggle]"
+                            ).get_attribute("aria-expanded") == "true"
+                        page.evaluate(
+                            """([key, raw]) => {
+                              if (raw === null) sessionStorage.removeItem(key);
+                              else sessionStorage.setItem(key, raw);
+                            }""",
+                            [key_a, raw],
+                        )
+                        page.reload(wait_until="networkidle")
+                        state = page.evaluate(
+                            """() => Array.from(
+                              document.querySelectorAll('[data-raya-map-node-toggle]')
+                            ).map((toggle) => ({
+                              id: toggle.closest('[data-raya-map-node]')
+                                ?.getAttribute('data-raya-map-node'),
+                              expanded: toggle.getAttribute('aria-expanded'),
+                            }))"""
+                        )
+                        assert state == expected_states[expected]
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", key_a
+                        ) == raw
+
+                        if expected == "known-deduplicated":
+                            page.click(
+                                '[data-raya-map-node="course-root"] '
+                                "> .raya-course-map-node-row "
+                                "[data-raya-map-node-toggle]"
+                            )
+                            assert page.evaluate(
+                                "key => sessionStorage.getItem(key)", key_a
+                            ) == '["course-root","unit-node"]'
+
+                    page.evaluate(
+                        """([keyA, keyB]) => {
+                          sessionStorage.setItem(keyA, '["course-root"]');
+                          sessionStorage.setItem(keyB, '[]');
+                        }""",
+                        [key_a, key_b],
+                    )
+                    page.reload(wait_until="networkidle")
+                    assert page.locator(
+                        '[data-raya-map-node="course-root"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    ).get_attribute("aria-expanded") == "false"
+                    assert page.locator(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    ).get_attribute("aria-expanded") == "true"
+
+                    page.goto(
+                        f"{base_url}/course-b/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert page.locator("#raya-course-map").get_attribute(
+                        "data-raya-course-map-storage-key"
+                    ) == key_b
+                    assert page.locator(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    ).get_attribute("aria-expanded") == "true"
+                    page.click(
+                        '[data-raya-map-node="unit-node"] [data-raya-map-node-toggle]'
+                    )
+                    assert page.evaluate(
+                        """([keyA, keyB]) => ({
+                          courseA: sessionStorage.getItem(keyA),
+                          courseB: sessionStorage.getItem(keyB),
+                        })""",
+                        [key_a, key_b],
+                    ) == {
+                        "courseA": '["course-root"]',
+                        "courseB": '["unit-node"]',
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
 
 
 def test_render_fixture_course_map_collapses_and_expands_on_click_only(
@@ -13675,6 +14051,13 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-learning-rail')
+                          ?.dataset
+                          ?.rayaLearningRail === 'collapsed'"""
+                    )
+                    page.click("[data-raya-learning-rail-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-learning-rail')
                           ?.getBoundingClientRect()
                           ?.width >= 220"""
                     )
@@ -13793,7 +14176,9 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                               tabindex: item.getAttribute('tabindex'),
                             })),
                             localKeys: Object.keys(window.localStorage),
-                            sessionKeys: Object.keys(window.sessionStorage),
+                            session: Object.fromEntries(
+                              Object.entries(window.sessionStorage)
+                            ),
                           };
                         }"""
                     )
@@ -13807,7 +14192,12 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                         for item in collapsed["bodyControls"]
                     )
                     assert collapsed["localKeys"] == []
-                    assert collapsed["sessionKeys"] == []
+                    assert collapsed["session"] == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
 
                     page.click("[data-raya-learning-rail-expand]")
                     page.wait_for_function(
@@ -13868,7 +14258,9 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                               ? body.querySelectorAll('a[href], button').length
                               : 0,
                             localKeys: Object.keys(window.localStorage),
-                            sessionKeys: Object.keys(window.sessionStorage),
+                            session: Object.fromEntries(
+                              Object.entries(window.sessionStorage)
+                            ),
                           };
                         }"""
                     )
@@ -13884,7 +14276,12 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                     assert "Connections" in mobile["railText"]
                     assert mobile["bodyControlCount"] > 0
                     assert mobile["localKeys"] == []
-                    assert mobile["sessionKeys"] == []
+                    assert mobile["session"] == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"expanded"}'
+                        ),
+                    }
                 finally:
                     page.close()
             finally:
@@ -14436,8 +14833,47 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
         handle.close()
 
 
+@pytest.mark.parametrize(
+    ("failure_name", "failure_script"),
+    (
+        (
+            "accessor",
+            """Object.defineProperty(window, 'sessionStorage', {
+              configurable: true, get() { throw new Error('accessor'); }
+            });""",
+        ),
+        (
+            "read",
+            """const get = Storage.prototype.getItem;
+            Storage.prototype.getItem = function(key) {
+              if (key.startsWith('raya:')) throw new Error('read');
+              return get.call(this, key);
+            };""",
+        ),
+        (
+            "write",
+            """const set = Storage.prototype.setItem;
+            Storage.prototype.setItem = function(key, value) {
+              if (key.startsWith('raya:')) throw new Error('write');
+              return set.call(this, key, value);
+            };""",
+        ),
+        (
+            "one-shot-read",
+            """const get = Storage.prototype.getItem; let failed = false;
+            Storage.prototype.getItem = function(key) {
+              if (!failed && key.startsWith('raya:reader-shell:')) {
+                failed = true; throw new Error('once');
+              }
+              return get.call(this, key);
+            };""",
+        ),
+    ),
+)
 def test_render_fixture_course_map_works_without_storage(
     tmp_path: Path,
+    failure_name: str,
+    failure_script: str,
 ) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -14463,14 +14899,11 @@ def test_render_fixture_course_map_works_without_storage(
                 page_errors: list[str] = []
                 page.on("pageerror", lambda error: page_errors.append(str(error)))
                 page.add_init_script(
-                    """
-                    Object.defineProperty(window, 'localStorage', {
-                      configurable: true,
-                      get() {
-                        throw new Error('storage unavailable');
-                      },
-                    });
-                    """
+                    """sessionStorage.setItem(
+                      'raya:reader-shell:v1:render-fixture',
+                      '{"courseMap":"collapsed","learningRail":"expanded"}'
+                    );"""
+                    + failure_script
                 )
                 try:
                     page.goto(
@@ -14478,17 +14911,41 @@ def test_render_fixture_course_map_works_without_storage(
                         wait_until="networkidle",
                     )
                     initial = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                        """() => {
+                          const map = document.querySelector('#raya-course-map-list');
+                          const rail = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            ready: document.documentElement.dataset.rayaShellReady,
+                            map: document.documentElement.dataset.rayaCourseMap,
+                            rail: document.documentElement.dataset.rayaLearningRail,
+                            mapExpanded: document.querySelector('.raya-course-map-toggle')
+                              ?.getAttribute('aria-expanded'),
+                            mapHidden: map?.getAttribute('aria-hidden'),
+                            mapInert: map?.inert,
+                            railHidden: rail?.getAttribute('aria-hidden'),
+                            railInert: rail?.inert,
+                            linkTabIndexes: Array.from(map?.querySelectorAll('a') || [])
+                              .map((link) => link.getAttribute('tabindex')),
+                          };
+                        }"""
                     )
-                    assert initial["state"] == "expanded"
-                    assert initial["expanded"] == "true"
+                    starts_collapsed = failure_name == "write"
+                    assert initial == {
+                        "ready": "true",
+                        "map": "collapsed" if starts_collapsed else "expanded",
+                        "rail": "expanded",
+                        "mapExpanded": "false" if starts_collapsed else "true",
+                        "mapHidden": "true" if starts_collapsed else "false",
+                        "mapInert": starts_collapsed,
+                        "railHidden": "false",
+                        "railInert": False,
+                        "linkTabIndexes": (
+                            ["-1"] * len(initial["linkTabIndexes"])
+                            if starts_collapsed
+                            else [None] * len(initial["linkTabIndexes"])
+                        ),
+                    }
                     assert initial["linkTabIndexes"]
-                    assert set(initial["linkTabIndexes"]) == {None}
 
                     action_state = page.evaluate(
                         """() => ({
@@ -14501,22 +14958,76 @@ def test_render_fixture_course_map_works_without_storage(
                     )
                     assert action_state == {
                         "oldActionCount": 0,
-                        "currentVisible": True,
+                        "currentVisible": not starts_collapsed,
                     }
                     assert page_errors == []
 
                     page.click(".raya-course-map-toggle")
-                    collapsed = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                    next_map = "expanded" if starts_collapsed else "collapsed"
+                    page.wait_for_function(
+                        """(next) => document.documentElement.dataset.rayaCourseMap === next
+                          && document.querySelector('#raya-course-map-list')
+                            ?.getAttribute('aria-hidden')
+                            === (next === 'collapsed' ? 'true' : 'false')""",
+                        arg=next_map,
                     )
-                    assert collapsed["state"] == "collapsed"
-                    assert collapsed["expanded"] == "false"
-                    assert set(collapsed["linkTabIndexes"]) <= {None, "-1"}
+                    changed = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map-list');
+                          return {
+                            expanded: document.querySelector('.raya-course-map-toggle')
+                              ?.getAttribute('aria-expanded'),
+                            hidden: map?.getAttribute('aria-hidden'),
+                            inert: map?.inert,
+                            focusVisible: document.activeElement?.checkVisibility(),
+                            focusInert: !!document.activeElement?.closest('[inert]'),
+                          };
+                        }"""
+                    )
+                    assert changed == {
+                        "expanded": "true" if starts_collapsed else "false",
+                        "hidden": "false" if starts_collapsed else "true",
+                        "inert": not starts_collapsed,
+                        "focusVisible": True,
+                        "focusInert": False,
+                    }
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRail
+                          === 'collapsed'"""
+                    )
+                    rail = page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return {
+                            hidden: body?.getAttribute('aria-hidden'),
+                            inert: body?.inert,
+                            focused: document.activeElement
+                              ?.matches('[data-raya-learning-rail-expand]'),
+                            focusVisible: document.activeElement?.checkVisibility(),
+                            focusInert: !!document.activeElement?.closest('[inert]'),
+                          };
+                        }"""
+                    )
+                    assert rail == {
+                        "hidden": "true",
+                        "inert": True,
+                        "focused": True,
+                        "focusVisible": True,
+                        "focusInert": False,
+                    }
+
+                    if failure_name == "write":
+                        assert page.evaluate(
+                            """() => sessionStorage.getItem(
+                              'raya:reader-shell:v1:render-fixture'
+                            )"""
+                        ) == (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"expanded"}'
+                        )
+                    assert page_errors == []
 
                     page.locator("#worked-example").scroll_into_view_if_needed()
                     page.wait_for_function(
@@ -14532,7 +15043,689 @@ def test_render_fixture_course_map_works_without_storage(
         handle.close()
 
 
-def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
+def test_reader_shell_bfcache_pageshow_reconciles_saved_state(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+                ignore_default_args=["--disable-back-forward-cache"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    """window.__readerShellWrites = [];
+                    window.__readerShellPageshows = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {
+                      if (this === window.sessionStorage && key.startsWith('raya:')) {
+                        window.__readerShellWrites.push([key, value]);
+                      }
+                      return set.call(this, key, value);
+                    };
+                    window.addEventListener('pageshow', (event) => {
+                      window.__readerShellPageshows.push(event.persisted);
+                    });"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites.length") == 1
+
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites.length") == 1
+                    assert page.evaluate("key => sessionStorage.getItem(key)", storage_key) == (
+                        '{"courseMap":"collapsed","learningRail":"collapsed"}'
+                    )
+
+                    page.go_back(wait_until="commit")
+                    page.wait_for_function(
+                        "() => window.__readerShellPageshows.at(-1) === true"
+                    )
+                    assert page.locator("html").get_attribute(
+                        "data-raya-learning-rail"
+                    ) == "collapsed"
+                    assert page.evaluate("window.__readerShellWrites.length") == 1
+
+                    page.click(".raya-course-map-toggle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites.length") == 2
+                    assert page.evaluate("key => sessionStorage.getItem(key)", storage_key) == (
+                        '{"courseMap":"expanded","learningRail":"collapsed"}'
+                    )
+
+                    page.go_forward(wait_until="commit")
+                    page.wait_for_function(
+                        "() => window.__readerShellPageshows.at(-1) === true"
+                    )
+                    assert page.locator("html").get_attribute(
+                        "data-raya-course-map"
+                    ) == "expanded"
+                    assert page.evaluate("window.__readerShellWrites.length") == 1
+                    assert page.locator("#raya-learning-rail-body").get_attribute(
+                        "aria-hidden"
+                    ) == "true"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_bfcache_rejects_non_atomic_saved_records(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    invalid_records = (
+        '{"courseMap":"collapsed"}',
+        '{"courseMap":"collapsed","learningRail":"expanded","version":1}',
+        '{"courseMap":"sideways","learningRail":"collapsed"}',
+    )
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+                ignore_default_args=["--disable-back-forward-cache"],
+            )
+            try:
+                for raw in invalid_records:
+                    page = browser.new_page(viewport={"width": 1440, "height": 950})
+                    page.add_init_script(
+                        """window.__readerShellWrites = [];
+                        window.__readerShellPageshows = [];
+                        const set = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {
+                          if (this === window.sessionStorage && key.startsWith('raya:')) {
+                            window.__readerShellWrites.push([key, value]);
+                          }
+                          return set.call(this, key, value);
+                        };
+                        window.addEventListener('pageshow', (event) => {
+                          window.__readerShellPageshows.push(event.persisted);
+                        });"""
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.click(".raya-course-map-toggle")
+                        page.wait_for_function(
+                            """() => document.documentElement.dataset.rayaCourseMap
+                              === 'collapsed'"""
+                        )
+                        page.evaluate("window.__readerShellWrites = []")
+                        page.goto(
+                            f"{handle.base_url}/authoring-matrix/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.evaluate(
+                            "([key, value]) => sessionStorage.setItem(key, value)",
+                            [storage_key, raw],
+                        )
+
+                        page.go_back(wait_until="commit")
+                        page.wait_for_function(
+                            "() => window.__readerShellPageshows.at(-1) === true"
+                        )
+                        assert page.evaluate(
+                            """() => ({
+                              courseMap: document.documentElement.dataset.rayaCourseMap,
+                              learningRail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference:
+                                document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference:
+                                document.documentElement.dataset.rayaLearningRailPreference || null,
+                            })"""
+                        ) == {
+                            "courseMap": "expanded",
+                            "learningRail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                        }
+                        assert page.evaluate("window.__readerShellWrites") == []
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == raw
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_tab_sessions_follow_browser_semantics(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        reader_url = f"{handle.base_url}/reader-ux/index.html"
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 1440, "height": 950})
+                independent_a = context.new_page()
+                independent_b = context.new_page()
+                try:
+                    independent_a.goto(reader_url, wait_until="networkidle")
+                    independent_a.click(".raya-course-map-toggle")
+                    assert independent_a.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) == '{"courseMap":"collapsed","learningRail":"expanded"}'
+
+                    independent_b.goto(reader_url, wait_until="networkidle")
+                    assert independent_b.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) is None
+                    assert independent_b.locator("html").get_attribute(
+                        "data-raya-course-map"
+                    ) == "expanded"
+                    independent_b.click("[data-raya-learning-rail-collapse]")
+                    assert independent_b.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) == '{"courseMap":"expanded","learningRail":"collapsed"}'
+                    assert independent_a.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) == '{"courseMap":"collapsed","learningRail":"expanded"}'
+
+                    with context.expect_page() as popup_info:
+                        independent_a.evaluate("url => window.open(url, '_blank')", reader_url)
+                    popup = popup_info.value
+                    try:
+                        popup.wait_for_load_state("networkidle")
+                        assert popup.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == '{"courseMap":"collapsed","learningRail":"expanded"}'
+                        assert popup.locator("html").get_attribute(
+                            "data-raya-course-map"
+                        ) == "collapsed"
+
+                        independent_a.click("[data-raya-learning-rail-collapse]")
+                        assert independent_a.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == '{"courseMap":"collapsed","learningRail":"collapsed"}'
+                        assert popup.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == '{"courseMap":"collapsed","learningRail":"expanded"}'
+
+                        popup.click(".raya-course-map-toggle")
+                        assert popup.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == '{"courseMap":"expanded","learningRail":"expanded"}'
+                        assert independent_a.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == '{"courseMap":"collapsed","learningRail":"collapsed"}'
+                    finally:
+                        popup.close()
+                finally:
+                    independent_b.close()
+                    independent_a.close()
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                def stored_record_script(value: object) -> str:
+                    return (
+                        "sessionStorage.setItem("
+                        "'raya:reader-shell:v1:render-fixture', "
+                        f"{json.dumps(json.dumps(value))});"
+                    )
+
+                cases = (
+                    (
+                        {"width": 1440, "height": 950},
+                        stored_record_script(
+                            {"courseMap": "expanded", "learningRail": "collapsed"}
+                        ),
+                        {
+                            "prepaint": "valid",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "collapsed",
+                            "mapPreference": "expanded",
+                            "railPreference": "collapsed",
+                            "drawer": "closed",
+                            "mapVisible": True,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 800, "height": 900},
+                        stored_record_script(
+                            {"courseMap": "expanded", "learningRail": "expanded"}
+                        ),
+                        {
+                            "prepaint": "valid",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": "expanded",
+                            "railPreference": "expanded",
+                            "drawer": "closed",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 800, "height": 900},
+                        None,
+                        {
+                            "prepaint": "missing",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 1440, "height": 950},
+                        (
+                            "sessionStorage.setItem("
+                            "'raya:reader-shell:v1:render-fixture', "
+                            f"{json.dumps('{not-json')});"
+                        ),
+                        {
+                            "prepaint": "invalid",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": True,
+                            "railVisible": True,
+                        },
+                    ),
+                    (
+                        {"width": 800, "height": 900},
+                        """Object.defineProperty(window, 'sessionStorage', {
+                          configurable: true,
+                          get() {
+                            throw new Error('storage unavailable');
+                          },
+                        });""",
+                        {
+                            "prepaint": "unavailable",
+                            "ready": None,
+                            "map": "collapsed",
+                            "rail": "collapsed",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": False,
+                            "railVisible": False,
+                        },
+                    ),
+                    (
+                        {"width": 390, "height": 844},
+                        None,
+                        {
+                            "prepaint": "missing",
+                            "ready": None,
+                            "map": "expanded",
+                            "rail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                            "drawer": "closed",
+                            "mapVisible": True,
+                            "railVisible": True,
+                        },
+                    ),
+                )
+                for viewport, init_script, expected in cases:
+                    page = browser.new_page(viewport=viewport)
+                    page_errors: list[str] = []
+                    page.on("pageerror", lambda error: page_errors.append(str(error)))
+                    if init_script is not None:
+                        page.add_init_script(init_script)
+                    page.route("**/shell.js", lambda route: route.abort())
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        state = page.evaluate(
+                            """() => ({
+                              prepaint: document.documentElement.dataset.rayaShellPrepaint,
+                              ready: document.documentElement.dataset.rayaShellReady || null,
+                              map: document.documentElement.dataset.rayaCourseMap,
+                              rail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference: document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference: document.documentElement.dataset.rayaLearningRailPreference || null,
+                              drawer: document.documentElement.dataset.rayaCourseMapDrawer,
+                              mapVisible: document.querySelector('#raya-course-map-list').checkVisibility(),
+                              railVisible: document.querySelector('#raya-learning-rail-body').checkVisibility(),
+                            })"""
+                        )
+                        assert state == expected
+                        assert page_errors == []
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_prepaint_rejects_non_atomic_saved_records(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    cases = (
+        (
+            {"width": 800, "height": 900},
+            '{"courseMap":"expanded"}',
+            ("collapsed", "collapsed"),
+        ),
+        (
+            {"width": 1440, "height": 950},
+            '{"courseMap":"collapsed","learningRail":"expanded","version":1}',
+            ("expanded", "expanded"),
+        ),
+        (
+            {"width": 390, "height": 844},
+            '{"courseMap":"sideways","learningRail":"collapsed"}',
+            ("expanded", "expanded"),
+        ),
+    )
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport, raw, expected_pair in cases:
+                    page = browser.new_page(viewport=viewport)
+                    page.add_init_script(
+                        f"""sessionStorage.setItem(
+                          {json.dumps(storage_key)}, {json.dumps(raw)}
+                        );
+                        window.__readerShellWrites = [];
+                        const set = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {{
+                          if (this === window.sessionStorage) {{
+                            window.__readerShellWrites.push([key, value]);
+                          }}
+                          return set.call(this, key, value);
+                        }};"""
+                    )
+                    page.route("**/shell.js", lambda route: route.abort())
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert page.evaluate(
+                            """() => ({
+                              prepaint: document.documentElement.dataset.rayaShellPrepaint,
+                              courseMap: document.documentElement.dataset.rayaCourseMap,
+                              learningRail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference:
+                                document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference:
+                                document.documentElement.dataset.rayaLearningRailPreference || null,
+                            })"""
+                        ) == {
+                            "prepaint": "invalid",
+                            "courseMap": expected_pair[0],
+                            "learningRail": expected_pair[1],
+                            "mapPreference": None,
+                            "railPreference": None,
+                        }
+                        assert page.evaluate("window.__readerShellWrites") == []
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == raw
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    reader_key = "raya:reader-shell:v1:render-fixture"
+    branch_key = "raya:course-map-branches:v1:render-fixture"
+    preserved = {
+        "raya:reader-shell:course-map": "collapsed",
+        "raya:reader-shell:learning-rail": "collapsed",
+        "raya:course-map:/reader-ux": '["render-root"]',
+        "unrelated:sentinel": '{"keep":"byte-for-byte"}',
+    }
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    f"""for (const [key, value] of Object.entries(
+                      {json.dumps(preserved)}
+                    )) {{
+                      sessionStorage.setItem(key, value);
+                    }}
+                    window.__readerStorageWrites = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {{
+                      if (this === window.sessionStorage) {{
+                        window.__readerStorageWrites.push([key, value]);
+                      }}
+                      return set.call(this, key, value);
+                    }};"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == preserved
+                    assert page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          rootBranch: document
+                            .querySelector(
+                              '[data-raya-map-node="render-root"] '
+                              + '> .raya-course-map-node-row '
+                              + '[data-raya-map-node-toggle]'
+                            )?.getAttribute('aria-expanded'),
+                        })"""
+                    ) == {
+                        "courseMap": "expanded",
+                        "learningRail": "expanded",
+                        "rootBranch": "true",
+                    }
+                    assert page.evaluate("window.__readerStorageWrites") == []
+
+                    page.evaluate(
+                        """([readerKey, branchKey]) => {
+                          sessionStorage.setItem(
+                            readerKey,
+                            '{"courseMap":"collapsed","learningRail":"collapsed"}'
+                          );
+                          sessionStorage.setItem(branchKey, '["render-root"]');
+                        }""",
+                        [reader_key, branch_key],
+                    )
+                    page.reload(wait_until="networkidle")
+                    assert page.evaluate("window.__readerStorageWrites") == []
+                    assert page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          rootBranch: document
+                            .querySelector(
+                              '[data-raya-map-node="render-root"] '
+                              + '> .raya-course-map-node-row '
+                              + '[data-raya-map-node-toggle]'
+                            )?.getAttribute('aria-expanded'),
+                        })"""
+                    ) == {
+                        "courseMap": "collapsed",
+                        "learningRail": "collapsed",
+                        "rootBranch": "false",
+                    }
+
+                    page.click(".raya-course-map-toggle")
+                    page.click(
+                        '[data-raya-map-node="render-root"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+
+                    assert page.evaluate("window.__readerStorageWrites") == [
+                        [
+                            reader_key,
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ],
+                        [branch_key, "[]"],
+                    ]
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        **preserved,
+                        reader_key: (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                        branch_key: "[]",
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_rail_pair_survives_reload_and_same_tab_navigation(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -14559,34 +15752,662 @@ def test_render_fixture_course_map_ignores_saved_expanded_state_on_load(
             )
             try:
                 page = browser.new_page(viewport={"width": 1440, "height": 950})
-                page.add_init_script(
-                    """
-                    window.localStorage.setItem('raya.unrelatedReaderPreference', 'collapsed');
-                    """
-                )
                 try:
                     page.goto(
                         f"{handle.base_url}/reader-ux/index.html",
                         wait_until="networkidle",
                     )
-                    stable = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          expanded: document.querySelector('.raya-course-map-toggle')?.getAttribute('aria-expanded'),
-                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
-                          shellReady: document.documentElement.dataset.rayaShellReady,
-                        })"""
+                    page.evaluate(
+                        """() => {
+                          window.__readerShellWrites = [];
+                          const originalSetItem = Storage.prototype.setItem;
+                          Storage.prototype.setItem = function(key, value) {
+                            if (this === window.sessionStorage) {
+                              window.__readerShellWrites.push([key, value]);
+                            }
+                            return originalSetItem.call(this, key, value);
+                          };
+                        }"""
                     )
-                    assert stable["shellReady"] == "true"
-                    assert stable["state"] == "expanded"
-                    assert stable["expanded"] == "true"
-                    assert stable["mapWidth"] >= 220
+                    page.locator("#raya-course-map a").first.focus()
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        ]
+                    ]
+
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(localStorage))"
+                    ) == {}
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:render-fixture": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+
+                    page.reload(wait_until="networkidle")
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "collapsed"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "collapsed"
+                    )
+                    page.goto(
+                        f"{handle.base_url}/static-path/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "collapsed"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "collapsed"
+                    )
+                    stored_pair = page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    )
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    page.wait_for_function(
+                        "() => document.documentElement.clientWidth === 390"
+                    )
+                    page.click("[data-raya-course-map-toggle]")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.keyboard.press("Escape")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == stored_pair
                 finally:
                     page.close()
             finally:
                 browser.close()
     finally:
         handle.close()
+
+
+def test_reader_shell_medium_actions_store_coordinated_pair(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1000, "height": 760})
+                page.add_init_script(
+                    """window.__readerShellWrites = [];
+                    const originalSetItem = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {
+                      if (this === window.sessionStorage) {
+                        window.__readerShellWrites.push([key, value]);
+                      }
+                      return originalSetItem.call(this, key, value);
+                    };"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"expanded","learningRail":"expanded"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.set_viewport_size({"width": 800, "height": 760})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.click("#raya-course-map [data-raya-course-map-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ]
+                    ]
+
+                    page.click("#raya-course-map [data-raya-learning-rail-toggle]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    expected_writes = [
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ],
+                        [
+                            "raya:reader-shell:v1:render-fixture",
+                            '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        ],
+                    ]
+                    assert (
+                        page.evaluate("window.__readerShellWrites") == expected_writes
+                    )
+
+                    for width in (893, 894, 1279, 1280):
+                        page.set_viewport_size({"width": width, "height": 760})
+                        page.wait_for_function(
+                            f"() => document.documentElement.clientWidth === {width}"
+                        )
+                        assert (
+                            page.evaluate("window.__readerShellWrites")
+                            == expected_writes
+                        )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_open_actions_coordinate_only_below_approved_geometry(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                cases = (
+                    (
+                        893,
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                    ),
+                    (
+                        894,
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                        '{"courseMap":"expanded","learningRail":"expanded"}',
+                    ),
+                    (
+                        893,
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        "[data-raya-learning-rail-expand]",
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                    ),
+                    (
+                        894,
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        "[data-raya-learning-rail-expand]",
+                        '{"courseMap":"expanded","learningRail":"expanded"}',
+                    ),
+                )
+                for width, initial, selector, expected in cases:
+                    page = browser.new_page(viewport={"width": width, "height": 760})
+                    page.add_init_script(
+                        """window.__readerShellWrites = [];
+                        const originalSetItem = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {
+                          if (this === window.sessionStorage) {
+                            window.__readerShellWrites.push([key, value]);
+                          }
+                          return originalSetItem.call(this, key, value);
+                        };"""
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.evaluate(
+                            "([key, value]) => sessionStorage.setItem(key, value)",
+                            [storage_key, initial],
+                        )
+                        page.reload(wait_until="networkidle")
+                        assert page.evaluate("window.__readerShellWrites") == []
+
+                        page.click(selector)
+
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == expected
+                        assert page.evaluate("window.__readerShellWrites") == [
+                            [storage_key, expected]
+                        ]
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                write_recorder_script = """window.__readerShellWrites = [];
+                const originalSetItem = Storage.prototype.setItem;
+                Storage.prototype.setItem = function(key, value) {
+                  if (this === window.sessionStorage) {
+                    window.__readerShellWrites.push([key, value]);
+                  }
+                  return originalSetItem.call(this, key, value);
+                };"""
+
+                def assert_focus_survives_resize(
+                    page, width: int, expected_selector: str
+                ) -> None:
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaShellReady === 'true'"
+                    )
+                    page.set_viewport_size({"width": width, "height": 760})
+                    page.wait_for_function(
+                        """(selector) => {
+                          const expected = document.querySelector(selector);
+                          return document.activeElement === expected
+                            && expected?.checkVisibility()
+                            && !expected.closest('[inert]');
+                        }""",
+                        arg=expected_selector,
+                    )
+
+                for focus_selector, expected_selector in (
+                    (
+                        "#raya-course-map-list a[href]",
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                    ),
+                    (
+                        "#raya-learning-rail-body a[href]",
+                        "[data-raya-learning-rail-expand]",
+                    ),
+                ):
+                    page = browser.new_page(viewport={"width": 894, "height": 760})
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.focus(focus_selector)
+                        assert_focus_survives_resize(page, 893, expected_selector)
+                    finally:
+                        page.close()
+
+                page = browser.new_page(viewport={"width": 640, "height": 760})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.focus("#raya-course-map [data-raya-course-map-toggle]")
+                    assert_focus_survives_resize(
+                        page, 639, ".raya-mobile-course-map-open"
+                    )
+                finally:
+                    page.close()
+
+                page = browser.new_page(viewport={"width": 640, "height": 760})
+                page.add_init_script(write_recorder_script)
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"collapsed","learningRail":"expanded"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    page.focus("[data-raya-learning-rail-collapse]")
+                    assert_focus_survives_resize(
+                        page, 639, "#raya-article"
+                    )
+                    assert page.evaluate(
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return document.documentElement.dataset.rayaLearningRail === 'expanded'
+                            && body?.getAttribute('aria-hidden') === 'false'
+                            && body?.inert === false;
+                        }"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert_focus_survives_resize(
+                        page,
+                        640,
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                    )
+                finally:
+                    page.close()
+
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                page.add_init_script(write_recorder_script)
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        """() => sessionStorage.setItem(
+                          'raya:reader-shell:v1:render-fixture',
+                          '{"courseMap":"expanded","learningRail":"collapsed"}'
+                        )"""
+                    )
+                    page.reload(wait_until="networkidle")
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert_focus_survives_resize(
+                        page,
+                        640,
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                    )
+                    assert page.evaluate(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'
+                          && document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_null_focus_loss_does_not_reconcile_without_media_change(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                page.add_init_script(
+                    """window.__readerShellWrites = [];
+                    const originalSetItem = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {
+                      if (this === window.sessionStorage) {
+                        window.__readerShellWrites.push([key, value]);
+                      }
+                      return originalSetItem.call(this, key, value);
+                    };"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaShellReady === 'true'"
+                    )
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert page.evaluate(
+                        """() => {
+                          const close = document.querySelector(
+                            '[data-raya-course-map-close]'
+                          );
+                          return document.activeElement === close
+                            && close?.checkVisibility()
+                            && !close.closest('[inert]');
+                        }"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.evaluate("() => document.activeElement.blur()")
+                    page.evaluate(
+                        """() => new Promise((resolve) => requestAnimationFrame(
+                          () => requestAnimationFrame(resolve)
+                        ))"""
+                    )
+
+                    assert page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const close = document.querySelector(
+                            '[data-raya-course-map-close]'
+                          );
+                          const opener = document.querySelector(
+                            '.raya-mobile-course-map-open'
+                          );
+                          const article = document.querySelector('#raya-article');
+                          return {
+                            drawer: root.dataset.rayaCourseMapDrawer,
+                            courseMap: root.dataset.rayaCourseMap,
+                            learningRail: root.dataset.rayaLearningRail,
+                            closeVisible: close?.checkVisibility(),
+                            closeInert: !!close?.closest('[inert]'),
+                            bodyFocused: document.activeElement === document.body,
+                            openerFocused: document.activeElement === opener,
+                            articleFocused: document.activeElement === article,
+                          };
+                        }"""
+                    ) == {
+                        "drawer": "open",
+                        "courseMap": "expanded",
+                        "learningRail": "expanded",
+                        "closeVisible": True,
+                        "closeInert": False,
+                        "bodyFocused": True,
+                        "openerFocused": False,
+                        "articleFocused": False,
+                    }
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_rail_state_isolated_by_course_id(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    served_parent = tmp_path / "served"
+    course_a = served_parent / "course-a"
+    course_b = served_parent / "course-b"
+    for course, course_id in (
+        (course_a, "reader-course-a"),
+        (course_b, "reader-course-b"),
+    ):
+        shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+        config_path = course / "raya.yaml"
+        config_path.write_text(
+            config_path.read_text(encoding="utf-8").replace(
+                "course_id: minimal-course", f"course_id: {course_id}"
+            ),
+            encoding="utf-8",
+        )
+        report = build_course(course)
+        assert report.ok, [
+            diagnostic.format() for diagnostic in report.diagnostics
+        ]
+
+    browser_executable = _browser_executable()
+    with _serve(served_parent) as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{base_url}/course-a/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click(".raya-course-map-toggle")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:reader-course-a": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+
+                    page.goto(
+                        f"{base_url}/course-b/artifact/site/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-id")
+                        == "reader-course-b"
+                    )
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "expanded"
+                    )
+                    assert (
+                        page.locator("html").get_attribute(
+                            "data-raya-learning-rail"
+                        )
+                        == "expanded"
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        "raya:reader-shell:v1:reader-course-a": (
+                            '{"courseMap":"collapsed",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
 
 
 def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> None:
@@ -14726,7 +16547,7 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                             const parts = rgba[1].split(',').map((part) => part.trim());
                             return parts.length >= 4 ? Number(parts[3]) : 1;
                           };
-                          const courseTools = document.querySelector('.raya-course-map-tools');
+                          const courseTools = document.querySelector('.raya-course-rail-tools');
                           const article = document.querySelector('article.raya-main-article');
                           const firstParagraph = document.querySelector('article.raya-main-article > p');
                           const courseMap = document.querySelector('nav.raya-course-map');
@@ -14773,11 +16594,13 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                         """() => Object.fromEntries(
                           Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command'
+	                              '.raya-course-rail-tools .raya-course-rail-command'
                             )
                           ).map((node) => [
-                            Array.from(node.classList)
-                              .find((name) => name.startsWith('raya-command-')),
+	                            Array.from(node.classList)
+	                              .find((name) => name.startsWith('raya-command-'))
+	                              || Array.from(node.classList)
+	                                .find((name) => name.endsWith('-toggle')),
                             (() => {
                               const icon = node.querySelector('.raya-command-icon');
                               const labelNode = node.querySelector('.raya-command-label');
@@ -14867,8 +16690,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                     )
                     storage_state = page.evaluate(
                         """() => ({
-                          localKeys: Object.keys(window.localStorage),
-                          sessionKeys: Object.keys(window.sessionStorage),
+                          local: Object.fromEntries(Object.entries(localStorage)),
+                          session: Object.fromEntries(Object.entries(sessionStorage)),
                         })"""
                     )
                     compact_links = page.evaluate(
@@ -14929,8 +16752,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
         "raya-command-practice": ("practice", "Practice"),
         "raya-command-tasks": ("tasks", "Tasks"),
         "raya-command-schedule": ("schedule", "Schedule"),
-        "raya-command-size": ("text-size", "Text size"),
-        "raya-command-font": ("font", "OpenDyslexic"),
+        "raya-text-size-toggle": ("text-size", "Text size"),
+        "raya-font-toggle": ("font", "OpenDyslexic"),
     }
     for command_class, (icon_name, label) in expected_icons.items():
         icon = icons[command_class]
@@ -14955,8 +16778,14 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert collapsed["railAriaLabel"] == "Show learning context"
     assert collapsed["mapToggleWidth"] >= 40
     assert collapsed["railExpandWidth"] >= 40
-    assert storage_state["localKeys"] == []
-    assert storage_state["sessionKeys"] == []
+    assert storage_state == {
+        "local": {},
+        "session": {
+            "raya:reader-shell:v1:render-fixture": (
+                '{"courseMap":"collapsed","learningRail":"collapsed"}'
+            ),
+        },
+    }
     assert compact_links == []
 
 
@@ -15001,7 +16830,7 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
                             .querySelector('#raya-course-map a[aria-current="page"]');
                           const courseTools = Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command-group-discovery .raya-command[href]'
+                              '.raya-course-rail-tools .raya-course-rail-command[href]'
                             )
                           );
                           return {
@@ -15219,8 +17048,8 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                     assert tablet["drawerState"] == "closed"
                     assert tablet["mapHidden"] == "false"
                     assert tablet["mapInert"] is False
-                    assert tablet["bodyHidden"] == "true"
-                    assert tablet["bodyInert"] is True
+                    assert tablet["bodyHidden"] == "false"
+                    assert tablet["bodyInert"] is False
                     assert tablet["panelBodies"]
 
                     page.set_viewport_size({"width": 1440, "height": 950})
@@ -15389,23 +17218,28 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                     _assert_no_horizontal_overflow(page)
                     metrics = page.evaluate(
                         """() => {
-                          const toolRoot = document.querySelector('.raya-course-map-tools');
+                          const toolRoot = document.querySelector('.raya-course-rail-tools');
                           const article = document.querySelector('#raya-article');
-                          const searchInput = document.querySelector('.raya-course-map-tools .raya-command-search-input');
-                          const groups = Array.from(
+                          const searchInput = document.querySelector('.raya-course-rail-tools .raya-command-search-input');
+                          const commandList = document.querySelector(
+                            '.raya-course-rail-command-list'
+                          );
+                          const commands = Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command-group'
+                              '.raya-course-rail-tools .raya-course-rail-command'
                             )
                           );
-                          const visibleGroups = groups.filter((group) => {
-                            const box = group.getBoundingClientRect();
-                            const style = getComputedStyle(group);
+                          const visibleCommands = commands.filter((command) => {
+                            const box = command.getBoundingClientRect();
+                            const style = getComputedStyle(command);
                             return box.width > 0
                               && box.height > 0
                               && style.display !== 'none';
                           });
-                          const visibleGroupNames = visibleGroups.map(
-                            (group) => group.getAttribute('data-raya-command-group')
+                          const visibleColumns = new Set(
+                            visibleCommands.map((command) => (
+                              Math.round(command.getBoundingClientRect().left)
+                            ))
                           );
                           const toolBox = toolRoot.getBoundingClientRect();
                           const articleBox = article.getBoundingClientRect();
@@ -15415,19 +17249,22 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                             searchVisible: !!searchInput
                               && searchInput.getClientRects().length > 0,
                             searchWidth: searchInput?.getBoundingClientRect().width ?? 0,
-                            visibleGroupNames,
+                            commandCount: commands.length,
+                            visibleCommandCount: visibleCommands.length,
+                            visibleColumnCount: visibleColumns.size,
+                            commandListGrid: getComputedStyle(commandList)
+                              .gridTemplateColumns,
                           };
                         }"""
                     )
                     assert metrics["toolHeight"] <= 340
                     assert metrics["articleTop"] <= 120
-                    assert {
-                        "discovery",
-                        "layout",
-                        "comfort",
-                    }.issubset(set(metrics["visibleGroupNames"]))
+                    assert metrics["commandCount"] == 8
+                    assert metrics["visibleCommandCount"] == 8
+                    assert metrics["visibleColumnCount"] == 2
+                    assert " " in metrics["commandListGrid"]
                     assert metrics["searchVisible"] is True
-                    assert metrics["searchWidth"] >= 100
+                    assert metrics["searchWidth"] >= 80
                 finally:
                     page.close()
             finally:
@@ -15626,7 +17463,7 @@ def test_render_fixture_top_context_command_toggles_right_rail_only(
                         "bodyHidden": "true",
                         "bodyInert": True,
                         "collapseVisible": False,
-                        "contextVisible": False,
+                        "contextVisible": True,
                     }
                 finally:
                     page.close()
@@ -16069,7 +17906,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 913, "height": 945})
+                page = browser.new_page(viewport={"width": 893, "height": 945})
                 try:
                     page.goto(
                         f"{handle.base_url}/reader-ux/index.html",
@@ -16143,8 +17980,8 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     )
                     assert len(collapsed["shellColumns"].split()) == 1
                     assert 56 <= collapsed["articleLeft"] <= 72
-                    assert collapsed["articleRight"] >= 840
-                    assert collapsed["articleWidth"] >= 780
+                    assert collapsed["articleRight"] >= 820
+                    assert collapsed["articleWidth"] >= 760
                     assert collapsed["mapPosition"] == "fixed"
                     assert collapsed["railPosition"] == "fixed"
                     assert collapsed["mapWidth"] <= 48
@@ -16152,7 +17989,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert collapsed["mapTop"] <= 24
                     assert collapsed["railTop"] <= 24
                     assert collapsed["mapRight"] <= 52
-                    assert collapsed["railLeft"] >= 861
+                    assert collapsed["railLeft"] >= 830
                     assert collapsed["mapBackground"].startswith("rgba(")
                     assert collapsed["railBackground"].startswith("rgba(")
                     assert collapsed["mapH1Overlap"] == 0
@@ -16179,7 +18016,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                           const map = document.querySelector('#raya-course-map');
                           const list = document.querySelector('#raya-course-map-list');
                           const firstLink = list?.querySelector('a[href]');
-                          const tools = document.querySelector('.raya-course-map-tools');
+                          const tools = document.querySelector('.raya-course-rail-tools');
                           const h1 = document.querySelector('#raya-article h1');
                           const brief = document.querySelector('.raya-page-brief');
                           const mapBox = map.getBoundingClientRect();
@@ -16221,7 +18058,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert expanded["mapBottom"] <= expanded["viewportHeight"]
                     assert expanded["linkWidth"] >= 140
                     assert expanded["linkFontSize"] == "15px"
-                    assert expanded["toolsTop"] > expanded["listTop"]
+                    assert expanded["toolsTop"] < expanded["listTop"]
                     assert expanded["mapH1Overlap"] == 0
                     assert expanded["mapBriefOverlap"] == 0
                     _assert_no_horizontal_overflow(page)
@@ -16234,7 +18071,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                         """() => {
                           const rail = document.querySelector('#raya-learning-rail');
                           const width = rail?.getBoundingClientRect().width || 0;
-                          return width >= 284 && width <= 292
+                          return width >= 180 && width <= 292
                             && !rail?.dataset.rayaLearningRailTransition;
                         }"""
                     )
@@ -16263,7 +18100,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                         }"""
                     )
                     assert rail_expanded["mapState"] == "collapsed"
-                    assert 284 <= rail_expanded["railWidth"] <= 292
+                    assert 180 <= rail_expanded["railWidth"] <= 292
                     assert rail_expanded["railHeight"] >= 900
                     assert rail_expanded["railBottom"] >= 925
                     assert rail_expanded["railBottom"] <= rail_expanded["viewportHeight"]
@@ -16330,19 +18167,32 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     state = page.evaluate(
                         """() => {
                           const map = document.querySelector('#raya-course-map');
-                          const tools = document.querySelector('.raya-course-map-tools');
+                          const tools = document.querySelector('.raya-course-rail-tools');
                           const searchForm = document.querySelector(
-                            '.raya-course-map-tools .raya-command-search-form'
-                          );
-                          const layoutGroup = document.querySelector(
-                            '.raya-course-map-tools .raya-command-group-layout'
+                            '.raya-course-rail-tools .raya-command-search-form'
                           );
                           const filter = document.querySelector('#raya-course-map-filter');
+                          const header = document.querySelector('.raya-course-map-header');
+                          const position = document.querySelector(
+                            '#raya-course-map > .raya-page-position'
+                          );
+                          const list = document.querySelector('#raya-course-map-list');
                           const mapBox = map.getBoundingClientRect();
                           const toolsBox = tools.getBoundingClientRect();
+                          const commandList = tools.querySelector(
+                            '.raya-course-rail-command-list'
+                          );
+                          const headerBox = header.getBoundingClientRect();
+                          const positionBox = position?.getBoundingClientRect();
+                          const listBox = list.getBoundingClientRect();
+                          const titleBox = document
+                            .querySelector('.raya-course-map-header .raya-region-title')
+                            .getBoundingClientRect();
                           const toolsStyle = getComputedStyle(tools);
                           const visibleCommands = Array.from(
-                            document.querySelectorAll('.raya-course-map-tools .raya-command')
+                            document.querySelectorAll(
+                              '.raya-course-rail-tools .raya-course-rail-command'
+                            )
                           ).filter((command) => {
                             const box = command.getBoundingClientRect();
                             const style = getComputedStyle(command);
@@ -16354,8 +18204,13 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             const icon = command.querySelector('.raya-command-icon');
                             const iconBox = icon?.getBoundingClientRect();
                             const iconStyle = icon ? getComputedStyle(icon) : null;
+                            const beforeStyle = getComputedStyle(command, '::before');
                             return {
                               text: command.textContent.trim(),
+                              left: Math.round(box.left),
+                              right: Math.round(box.right),
+                              top: Math.round(box.top),
+                              bottom: Math.round(box.bottom),
                               width: Math.round(box.width),
                               height: Math.round(box.height),
                               iconWidth: Math.round(iconBox?.width || 0),
@@ -16370,6 +18225,9 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               ),
                               iconBackground: iconStyle?.backgroundColor || '',
                               iconBorderTopWidth: iconStyle?.borderTopWidth || '',
+                              beforeContent: beforeStyle.content,
+                              beforeDisplay: beforeStyle.display,
+                              beforeBorderTopWidth: beforeStyle.borderTopWidth,
                               background: getComputedStyle(command).backgroundColor,
                               borderTopWidth: getComputedStyle(command).borderTopWidth,
                               boxShadow: getComputedStyle(command).boxShadow,
@@ -16381,26 +18239,14 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                                 : 0,
                             };
                           });
-                          const visibleGroups = Array.from(
-                            document.querySelectorAll('.raya-course-map-tools .raya-command-group')
-                          ).filter((group) => {
-                            const box = group.getBoundingClientRect();
-                            const style = getComputedStyle(group);
-                            return box.width > 0 && box.height > 0
-                              && style.display !== 'none'
-                              && style.visibility !== 'hidden';
-                          }).map((group) => {
-                            const box = group.getBoundingClientRect();
-                            const style = getComputedStyle(group);
+                          const commandsUnion = visibleCommands.reduce((union, command) => {
                             return {
-                              kind: group.getAttribute('data-raya-command-group'),
-                              width: Math.round(box.width),
-                              height: Math.round(box.height),
-                              background: style.backgroundColor,
-                              borderTopWidth: style.borderTopWidth,
-                              boxShadow: style.boxShadow,
+                              left: Math.min(union.left, command.left),
+                              right: Math.max(union.right, command.right),
+                              top: Math.min(union.top, command.top),
+                              bottom: Math.max(union.bottom, command.bottom),
                             };
-                          });
+                          }, {left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity});
                           return {
                             drawer: document.documentElement.dataset.rayaCourseMapDrawer,
                             mapWidth: Math.round(mapBox.width),
@@ -16408,11 +18254,37 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             mapBottom: Math.round(mapBox.bottom),
                             mapLeft: Math.round(mapBox.left),
                             viewportHeight: window.innerHeight,
+                            headerBottom: Math.round(headerBox.bottom),
+                            toolsTop: Math.round(toolsBox.top),
+                            toolsBottom: Math.round(toolsBox.bottom),
+                            toolsLeft: Math.round(toolsBox.left),
+                            titleLeft: Math.round(titleBox.left),
+                            toolsWidth: Math.round(toolsBox.width),
+                            commandListClientWidth: commandList.clientWidth,
+                            commandListScrollWidth: commandList.scrollWidth,
+                            commandListGrid: getComputedStyle(commandList)
+                              .gridTemplateColumns,
+                            commandsUnionLeft: Math.round(commandsUnion.left),
+                            commandsUnionRight: Math.round(commandsUnion.right),
+                            commandsUnionWidth: Math.round(
+                              commandsUnion.right - commandsUnion.left
+                            ),
+                            positionTop: positionBox
+                              ? Math.round(positionBox.top)
+                              : null,
+                            positionBottom: positionBox
+                              ? Math.round(positionBox.bottom)
+                              : null,
+                            listTop: Math.round(listBox.top),
                             unusedMapBottomSpace: Math.round(
                               mapBox.bottom - toolsBox.bottom
                             ),
                             toolsHeight: Math.round(toolsBox.height),
                             toolsBorderTopWidth: toolsStyle.borderTopWidth,
+                            toolsBorderRightWidth: toolsStyle.borderRightWidth,
+                            toolsBackground: toolsStyle.backgroundColor,
+                            toolsBoxShadow: toolsStyle.boxShadow,
+                            toolsBorderRadiusPx: parseFloat(toolsStyle.borderTopLeftRadius),
                             searchFormVisible: !!searchForm
                               && searchForm.getClientRects().length > 0
                               && getComputedStyle(searchForm).display !== 'none',
@@ -16420,11 +18292,8 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               && filter.getClientRects().length > 0
                               && getComputedStyle(filter).display !== 'none',
                             filterValue: filter?.value || '',
-                            layoutGroupVisible: !!layoutGroup
-                              && layoutGroup.getClientRects().length > 0
-                              && getComputedStyle(layoutGroup).display !== 'none',
+                            visibleCommandCount: visibleCommands.length,
                             visibleCommands,
-                            visibleGroups,
                           };
                         }"""
                     )
@@ -16433,52 +18302,175 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     assert 244 <= state["mapWidth"] <= 264
                     assert state["mapHeight"] >= 890
                     assert state["mapBottom"] <= state["viewportHeight"]
-                    assert 0 <= state["unusedMapBottomSpace"] <= 32
-                    assert state["toolsHeight"] <= 44
+                    assert state["positionTop"] is not None
+                    assert state["positionBottom"] is not None
+                    assert state["headerBottom"] <= state["toolsTop"]
+                    assert state["toolsBottom"] <= state["positionTop"]
+                    assert state["positionBottom"] <= state["listTop"]
+                    assert state["visibleCommandCount"] == 8
+                    assert state["toolsTop"] < state["mapBottom"] - 120
+                    assert state["toolsLeft"] <= state["titleLeft"] + 8
+                    assert state["toolsWidth"] <= state["mapWidth"] - 12
+                    assert state["toolsLeft"] <= state["commandsUnionLeft"]
+                    assert (
+                        state["toolsLeft"] + state["toolsWidth"]
+                        >= state["commandsUnionRight"]
+                    )
+                    assert (
+                        state["commandListScrollWidth"]
+                        <= state["commandListClientWidth"]
+                    )
+                    assert " " in state["commandListGrid"]
+                    assert state["toolsWidth"] <= state["commandsUnionWidth"] + 24
+                    assert 200 <= state["toolsHeight"] <= 260
                     assert state["toolsBorderTopWidth"] == "0px"
-                    assert state["searchFormVisible"] is False
+                    assert state["toolsBorderRightWidth"] == "0px"
+                    assert state["toolsBackground"] == "rgba(0, 0, 0, 0)"
+                    assert state["toolsBoxShadow"] == "none"
+                    assert state["toolsBorderRadiusPx"] >= 0
+                    assert state["searchFormVisible"] is True
                     assert state["filterVisible"] is False
                     assert state["filterValue"] == ""
-                    assert state["layoutGroupVisible"] is False
                     assert [command["text"] for command in state["visibleCommands"]] == [
                         "Search",
                         "Graph",
                         "Practice",
                         "Tasks",
                         "Schedule",
+                        "Context",
                         "Text size",
                         "OpenDyslexic",
                     ]
                     assert all(
-                        28 <= command["width"] <= 44
-                        and 28 <= command["height"] <= 44
+                        80 <= command["width"] <= 110
+                        and 28 <= command["height"] <= 64
                         for command in state["visibleCommands"]
                     )
                     assert all(
                         command["shapeCount"] > 0
                         and 14 <= command["iconWidth"] <= 22
                         and 14 <= command["iconHeight"] <= 22
-                        and command["iconCenterDeltaX"] <= 1
-                        and command["iconCenterDeltaY"] <= 1
-                        and command["iconBackground"] == "rgba(0, 0, 0, 0)"
-                        and command["iconBorderTopWidth"] == "0px"
-                        and command["background"] == "rgba(0, 0, 0, 0)"
-                        and command["borderTopWidth"] == "0px"
-                        and command["boxShadow"] == "none"
+                        and command["background"] != "rgba(0, 0, 0, 0)"
+                        and command["borderTopWidth"] == "1px"
                         and command["textDecorationLine"] == "none"
                         for command in state["visibleCommands"]
                     )
-                    assert [group["kind"] for group in state["visibleGroups"]] == [
-                        "discovery",
-                        "comfort",
-                    ]
-                    assert all(
-                        group["height"] <= 32
-                        and group["background"] == "rgba(0, 0, 0, 0)"
-                        and group["borderTopWidth"] == "0px"
-                        and group["boxShadow"] == "none"
-                        for group in state["visibleGroups"]
-                    )
+                    for width in [894, 912, 1279]:
+                        page.set_viewport_size({"width": width, "height": 918})
+                        if (
+                            page.evaluate(
+                                "() => document.documentElement.dataset.rayaCourseMap"
+                            )
+                            != "expanded"
+                        ):
+                            page.click("#raya-course-map .raya-course-map-toggle")
+                        page.wait_for_function(
+                            """() => {
+                              const map = document.querySelector('#raya-course-map');
+                              const box = map?.getBoundingClientRect();
+                              return document.documentElement.dataset.rayaCourseMap === 'expanded'
+                                && box?.width >= 244
+                                && box?.width <= 264
+                                && !map?.dataset.rayaCourseMapTransition;
+                            }"""
+                        )
+                        breakpoint_state = page.evaluate(
+                            """() => {
+                              const visible = (element) => {
+                                const box = element.getBoundingClientRect();
+                                const style = getComputedStyle(element);
+                                return box.width > 0
+                                  && box.height > 0
+                                  && style.display !== 'none'
+                                  && style.visibility !== 'hidden';
+                              };
+                              const map = document.querySelector('#raya-course-map');
+                              const header = document.querySelector('.raya-course-map-header');
+                              const tools = document.querySelector('.raya-course-rail-tools');
+                              const position = document.querySelector(
+                                '#raya-course-map > .raya-page-position'
+                              );
+                              const list = document.querySelector('#raya-course-map-list');
+                              const mapBox = map.getBoundingClientRect();
+                              const headerBox = header.getBoundingClientRect();
+                              const toolsBox = tools.getBoundingClientRect();
+                              const positionBox = position.getBoundingClientRect();
+                              const listBox = list.getBoundingClientRect();
+                              const toolsStyle = getComputedStyle(tools);
+                              const commands = Array.from(
+                                tools.querySelectorAll('.raya-course-rail-command')
+                              ).filter(visible).map((command) => {
+                                const box = command.getBoundingClientRect();
+                                return {
+                                  text: command.textContent.trim(),
+                                  width: Math.round(box.width),
+                                  height: Math.round(box.height),
+                                };
+                              });
+                              return {
+                                width: window.innerWidth,
+                                mapWidth: Math.round(mapBox.width),
+                                mapHeight: Math.round(mapBox.height),
+                                viewportHeight: window.innerHeight,
+                                headerBottom: Math.round(headerBox.bottom),
+                                toolsTop: Math.round(toolsBox.top),
+                                toolsBottom: Math.round(toolsBox.bottom),
+                                positionTop: Math.round(positionBox.top),
+                                positionBottom: Math.round(positionBox.bottom),
+                                listTop: Math.round(listBox.top),
+                                toolsHeight: Math.round(toolsBox.height),
+                                toolsBackground: toolsStyle.backgroundColor,
+                                toolsBorderTopWidth: toolsStyle.borderTopWidth,
+                                toolsBoxShadow: toolsStyle.boxShadow,
+                                visibleCommandTexts: commands.map((command) => command.text),
+                                commandSizes: commands.map((command) => [
+                                  command.width,
+                                  command.height,
+                                ]),
+                              };
+                            }"""
+                        )
+                        assert breakpoint_state["width"] == width
+                        assert 244 <= breakpoint_state["mapWidth"] <= 264
+                        assert (
+                            breakpoint_state["mapHeight"]
+                            >= breakpoint_state["viewportHeight"] - 32
+                        )
+                        assert (
+                            breakpoint_state["headerBottom"]
+                            <= breakpoint_state["toolsTop"]
+                        )
+                        assert (
+                            breakpoint_state["toolsBottom"]
+                            <= breakpoint_state["positionTop"]
+                        )
+                        assert (
+                            breakpoint_state["positionBottom"]
+                            <= breakpoint_state["listTop"]
+                        )
+                        assert breakpoint_state["visibleCommandTexts"] == [
+                            "Search",
+                            "Graph",
+                            "Practice",
+                            "Tasks",
+                            "Schedule",
+                            "Context",
+                            "Text size",
+                            "OpenDyslexic",
+                        ]
+                        assert breakpoint_state["toolsBackground"] == (
+                            "rgba(0, 0, 0, 0)"
+                        )
+                        assert breakpoint_state["toolsBorderTopWidth"] == "0px"
+                        assert breakpoint_state["toolsBoxShadow"] == "none"
+                        assert breakpoint_state["toolsHeight"] <= 260
+                        assert all(
+                            80 <= command_width <= 110
+                            and 28 <= command_height <= 64
+                            for command_width, command_height in breakpoint_state[
+                                "commandSizes"
+                            ]
+                        )
                 finally:
                     page.close()
             finally:
@@ -16543,8 +18535,8 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                               document.documentElement.scrollWidth - window.innerWidth
                             ),
                             storage: {
-                              local: Object.keys(localStorage),
-                              session: Object.keys(sessionStorage),
+                              local: Object.fromEntries(Object.entries(localStorage)),
+                              session: Object.fromEntries(Object.entries(sessionStorage)),
                             },
                           };
                         }"""
@@ -16558,7 +18550,15 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     assert expanding["listInert"] is True
                     assert expanding["firstLinkTabIndex"] == "-1"
                     assert expanding["overflow"] <= 1
-                    assert expanding["storage"] == {"local": [], "session": []}
+                    assert expanding["storage"] == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"expanded",'
+                                '"learningRail":"expanded"}'
+                            ),
+                        },
+                    }
 
                     page.wait_for_function(
                         "() => !document.querySelector('#raya-course-map')?.dataset.rayaCourseMapTransition"
@@ -16651,8 +18651,8 @@ def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_du
                               document.documentElement.scrollWidth - window.innerWidth
                             ),
                             storage: {
-                              local: Object.keys(localStorage),
-                              session: Object.keys(sessionStorage),
+                              local: Object.fromEntries(Object.entries(localStorage)),
+                              session: Object.fromEntries(Object.entries(sessionStorage)),
                             },
                           };
                         }"""
@@ -16667,7 +18667,15 @@ def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_du
                     assert expanding["expandVisible"] is True
                     assert expanding["collapseVisible"] is False
                     assert expanding["overflow"] <= 1
-                    assert expanding["storage"] == {"local": [], "session": []}
+                    assert expanding["storage"] == {
+                        "local": {},
+                        "session": {
+                            "raya:reader-shell:v1:render-fixture": (
+                                '{"courseMap":"expanded",'
+                                '"learningRail":"expanded"}'
+                            ),
+                        },
+                    }
 
                     page.wait_for_function(
                         "() => !document.querySelector('#raya-learning-rail')?.dataset.rayaLearningRailTransition"
@@ -17215,29 +19223,29 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                           };
                           return {
                             searchInput: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-search-input'
+                              '.raya-course-rail-tools .raya-command-search-input'
                             ),
                             searchSubmit: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-search-submit'
+                              '.raya-course-rail-tools .raya-command-search-submit'
                             ),
                             graphLink: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-graph'
+                              '.raya-course-rail-tools .raya-command-graph'
                             ),
                             practiceLink: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-practice'
+                              '.raya-course-rail-tools .raya-command-practice'
                             ),
                             tasksLink: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-tasks'
+                              '.raya-course-rail-tools .raya-command-tasks'
                             ),
                             scheduleLink: visibleInViewport(
-                              '.raya-course-map-tools .raya-command-schedule'
+                              '.raya-course-rail-tools .raya-command-schedule'
                             ),
                             mapButton: visibleInViewport('.raya-mobile-course-map-open'),
                             textSizeButton: visibleInViewport(
-                              '.raya-course-map-tools .raya-text-size-toggle'
+                              '.raya-course-rail-tools .raya-text-size-toggle'
                             ),
                             fontButton: visibleInViewport(
-                              '.raya-course-map-tools .raya-font-toggle'
+                              '.raya-course-rail-tools .raya-font-toggle'
                             ),
                             skinButton: visibleInViewport('[data-raya-skin-toggle]'),
                           };
@@ -17395,7 +19403,7 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
                     assert opened_drawer["mapInert"] is False
                     assert opened_drawer["mapBox"]["x"] == 0
                     assert 264 <= opened_drawer["mapBox"]["width"] <= 288
-                    assert 320 <= opened_drawer["mapBox"]["height"] <= 560
+                    assert 320 <= opened_drawer["mapBox"]["height"] <= 640
                     assert set(opened_drawer["linkTabIndexes"]) == {None}
 
                     drawer_actions = page.evaluate(
@@ -17673,25 +19681,33 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "articleInert": False,
                         "railHidden": "false",
                         "railInert": False,
-                        "railBodyHidden": "true",
-                        "railBodyInert": True,
+                        "railBodyHidden": "false",
+                        "railBodyInert": False,
                         "backdropHidden": True,
                         "backdropDisplay": "none",
                         "backdropFilter": "none",
                         "mobileOpenerVisible": False,
-                        "contextVisible": False,
+                        "contextVisible": True,
                     }
                     assert geometry["mapLeft"] >= 0
                     assert geometry["articleLeft"] < geometry["articleRight"]
-                    assert geometry["articleWidth"] >= 760
-                    assert geometry["mapWidth"] <= 56
-                    assert geometry["railWidth"] <= 56
+                    assert geometry["articleWidth"] >= 320
+                    assert 244 <= geometry["mapWidth"] <= 264
+                    assert 244 <= geometry["railWidth"] <= 264
                     assert len(geometry["shellColumns"].split()) == 1
 
-                    page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
-                    page.wait_for_function(
-                        "() => document.documentElement.dataset.rayaCourseMap === 'expanded'"
-                    )
+                    if (
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
+                        )
+                        != "expanded"
+                    ):
+                        page.click(
+                            "#raya-course-map .raya-command-map.raya-course-map-toggle"
+                        )
+                        page.wait_for_function(
+                            "() => document.documentElement.dataset.rayaCourseMap === 'expanded'"
+                        )
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-course-map')
@@ -17701,7 +19717,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         """() => {
                           const visibleCommands = Array.from(
                             document.querySelectorAll(
-                              '.raya-course-map-tool-grid .raya-command'
+                              '.raya-course-rail-tools .raya-course-rail-command'
                             )
                           ).filter((button) => button.checkVisibility());
                           const labels = visibleCommands.map((button) => {
@@ -17736,7 +19752,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert tools["minWidth"] >= 28
                     assert tools["mapHeight"] >= 736
                     assert tools["mapBottom"] >= 756
-                    assert len(tools["labelsWithoutTextRoom"]) == tools["visibleCount"]
+                    assert tools["labelsWithoutTextRoom"] == []
 
                     page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
                     page.wait_for_function(
@@ -17810,9 +19826,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "mapLeft": 6,
                         "mapRight": 50,
                         "articleLeft": 60,
-                        "articleWidth": 792,
-                        "railLeft": 862,
-                        "railWidth": 44,
+                        "articleWidth": 548,
+                        "railLeft": 644,
+                        "railWidth": 256,
                         "toggleWidth": 40,
                         "toggleHeight": 40,
                         "toggleOpacity": "1",
@@ -17827,11 +19843,6 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     }
                     assert len(collapsed_columns) == 1
 
-                    page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.getBoundingClientRect().width < 80"""
-                    )
                     page.wait_for_function(
                         """() => !document
                           .querySelector('#raya-learning-rail')
@@ -17880,24 +19891,19 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     )
                     both_columns = both_collapsed.pop("shellColumns").split()
                     both_article_width = both_collapsed.pop("articleWidth")
-                    assert both_collapsed == {
-                        "mapState": "collapsed",
-                        "railState": "collapsed",
-                        "shellAreas": '"main-article"',
-                        "mapWidth": 44,
-                        "railWidth": 44,
-                        "railHidden": "false",
-                        "railInert": False,
-                        "railBodyHidden": "true",
-                        "railBodyInert": True,
-                        "mapToggleVisible": True,
-                        "mapToggleOpacity": "1",
-                        "railExpandVisible": True,
-                        "railExpandOpacity": "1",
-                        "railExpandPointerEvents": "auto",
-                        "railExpandedValues": ["false"],
-                    }
-                    assert both_article_width >= 760
+                    assert both_collapsed["mapState"] == "collapsed"
+                    assert both_collapsed["railState"] == "expanded"
+                    assert both_collapsed["shellAreas"] == '"main-article"'
+                    assert both_collapsed["mapWidth"] == 44
+                    assert 244 <= both_collapsed["railWidth"] <= 264
+                    assert both_collapsed["railHidden"] == "false"
+                    assert both_collapsed["railInert"] is False
+                    assert both_collapsed["railBodyHidden"] == "false"
+                    assert both_collapsed["railBodyInert"] is False
+                    assert both_collapsed["mapToggleVisible"] is True
+                    assert both_collapsed["mapToggleOpacity"] == "1"
+                    assert both_collapsed["railExpandedValues"] == ["true"]
+                    assert both_article_width >= 520
                     assert len(both_columns) == 1
                 finally:
                     page.close()
@@ -17936,11 +19942,14 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                     (730, False),
                     (767, False),
                     (768, False),
+                    (893, False),
+                    (894, False),
                     (1279, False),
                     (1280, False),
                 )
                 for width, modal in cases:
-                    medium_structural = 640 <= width < 1280
+                    compact_structural = 640 <= width < 894
+                    approved_geometry = 894 <= width < 1280
                     page = browser.new_page(viewport={"width": width, "height": 760})
                     try:
                         page.goto(
@@ -18006,18 +20015,18 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                         }
                         assert state == {
                             "mapState": "expanded"
-                            if modal or not medium_structural
+                            if modal or approved_geometry or width >= 1280
                             else "collapsed",
                             "railState": (
                                 "expanded"
-                                if modal or not medium_structural
+                                if modal or approved_geometry or width >= 1280
                                 else "collapsed"
                             ),
                             "drawer": "open" if modal else "closed",
                             "scrollLock": "true" if modal else "false",
                             "role": "dialog" if modal else None,
                             "modal": "true" if modal else None,
-                            "position": "fixed" if modal or medium_structural else "sticky",
+                            "position": "fixed" if modal or width < 1280 else "sticky",
                             "backdropHidden": not modal,
                             "backdropDisplay": "block" if modal else "none",
                             "openerVisible": modal,
@@ -18027,15 +20036,26 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                             "articleHidden": "true" if modal else None,
                             "railInert": modal,
                             "railHidden": "true" if modal else "false",
-                            "railBodyHidden": "true" if medium_structural else "false",
-                            "railBodyInert": medium_structural,
+                            "railBodyHidden": "true" if compact_structural else "false",
+                            "railBodyInert": compact_structural,
                         }
                         if not modal:
-                            if medium_structural:
+                            if compact_structural:
                                 assert len(geometry["shellColumns"].split()) == 1
                                 assert geometry["articleBox"]["width"] >= width - 140
                                 assert geometry["mapBox"]["width"] <= 56
                                 assert geometry["railBox"]["width"] <= 56
+                            elif approved_geometry:
+                                assert len(geometry["shellColumns"].split()) == 1
+                                assert 244 <= geometry["mapBox"]["width"] <= 264
+                                assert 244 <= geometry["railBox"]["width"] <= 264
+                                assert geometry["mapBox"]["right"] <= (
+                                    geometry["articleBox"]["left"]
+                                )
+                                assert geometry["articleBox"]["right"] <= (
+                                    geometry["railBox"]["left"]
+                                )
+                                assert geometry["articleBox"]["width"] >= width - 572
                             else:
                                 assert (
                                     geometry["mapBox"]["right"]
@@ -18147,16 +20167,13 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                           const position = document.querySelector(
                             '#raya-course-map > .raya-course-map-header > .raya-page-position'
                           );
-                          const tools = document.querySelector('.raya-course-map-tools');
+                          const tools = document.querySelector('.raya-course-rail-tools');
                           const searchForm = document.querySelector(
-                            '.raya-course-map-tools .raya-command-search-form'
-                          );
-                          const layoutGroup = document.querySelector(
-                            '.raya-course-map-tools .raya-command-group-layout'
+                            '.raya-course-rail-tools .raya-command-search-form'
                           );
                           const visibleToolCommands = Array
                             .from(document.querySelectorAll(
-                              '.raya-course-map-tools .raya-command'
+                              '.raya-course-rail-tools .raya-course-rail-command'
                             ))
                             .filter((node) => {
                               const box = node.getBoundingClientRect();
@@ -18229,9 +20246,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             searchFormVisible: !!searchForm
                               && searchForm.getClientRects().length > 0
                               && getComputedStyle(searchForm).display !== 'none',
-                            layoutGroupVisible: !!layoutGroup
-                              && layoutGroup.getClientRects().length > 0
-                              && getComputedStyle(layoutGroup).display !== 'none',
                             visibleToolCommands,
                             visibleMapToolCount: visibleToolCommands.filter(
                               (command) => command.text === 'Map'
@@ -18271,23 +20285,22 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["closeLabel"] == "Close course map"
                     assert state["regionTitleVisible"] is False
                     assert state["positionVisible"] is False
-                    assert state["toolsHeight"] <= 44
-                    assert state["searchFormVisible"] is False
-                    assert state["layoutGroupVisible"] is False
+                    assert state["toolsHeight"] <= 220
+                    assert state["searchFormVisible"] is True
                     assert state["visibleMapToolCount"] == 0
                     assert state["visibleToolCommands"]
                     assert all(
-                        28 <= command["width"] <= 44
+                        96 <= command["width"] <= 116
                         for command in state["visibleToolCommands"]
                         if command["text"] != "Go"
                     )
                     assert all(
-                        28 <= command["height"] <= 44
+                        28 <= command["height"] <= 48
                         for command in state["visibleToolCommands"]
                     )
                     assert all(
-                        command["labelWidth"] <= 1
-                        and command["labelHeight"] <= 1
+                        command["labelWidth"] >= 24
+                        and command["labelHeight"] >= 14
                         for command in state["visibleToolCommands"]
                         if command["text"] != "Go"
                     )
@@ -18300,14 +20313,8 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                         if command["text"] != "Go"
                     )
                     assert all(
-                        command["iconBackground"] == "rgba(0, 0, 0, 0)"
-                        and command["iconBorderTopWidth"] == "0px"
-                        for command in state["visibleToolCommands"]
-                        if command["text"] != "Go"
-                    )
-                    assert all(
-                        command["background"] == "rgba(0, 0, 0, 0)"
-                        and command["borderTopWidth"] == "0px"
+                        command["background"] != "rgba(0, 0, 0, 0)"
+                        and command["borderTopWidth"] == "1px"
                         for command in state["visibleToolCommands"]
                         if command["text"] != "Go"
                     )
@@ -19392,7 +21399,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
         handle.close()
 
     assert (
-        '<section class="raya-course-map-tools" aria-label="Course tools"'
+        '<section class="raya-course-rail-tools" aria-label="Course tools"'
         in root_html
     )
     assert 'class="raya-top-command-bar"' not in root_html

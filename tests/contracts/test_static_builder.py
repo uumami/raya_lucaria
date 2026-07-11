@@ -28,6 +28,7 @@ from raya_static import build_course
 from raya_static import builder as static_builder
 from raya_static.math_renderer import MathRenderResult
 from raya_static.rendering import render_markdown_body
+from raya_static.shell import shell_resources
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -4779,7 +4780,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "localStorage" not in script_text
     assert "sessionStorage" in script_text
     assert "courseMapBranchStorageKey" in script_text
-    assert "loadStoredCollapsedMapBranches" in script_text
+    assert "loadCollapsedMapNodeIds" in script_text
     assert "saveCollapsedMapBranches" in script_text
     assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
@@ -4869,35 +4870,42 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "overflow: auto;" in css_text
 
 
-def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
+def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     foundation = (
         ROOT / "docs" / "foundation" / "20_learning_renderer_contract.md"
     ).read_text(encoding="utf-8")
-    english_student = (
-        ROOT / "docs" / "guides" / "en" / "students" / "index.md"
-    ).read_text(encoding="utf-8")
-    spanish_student = (
-        ROOT / "docs" / "guides" / "es" / "estudiantes" / "index.md"
-    ).read_text(encoding="utf-8")
-    english_agent = (
-        ROOT / "docs" / "guides" / "en" / "agents" / "index.md"
-    ).read_text(encoding="utf-8")
-    spanish_agent = (
-        ROOT / "docs" / "guides" / "es" / "agentes" / "index.md"
-    ).read_text(encoding="utf-8")
+    english_paths = tuple(
+        ROOT / f"docs/guides/en/{role}/index.md"
+        for role in ("contributors", "professors", "students", "agents")
+    )
+    spanish_paths = tuple(
+        ROOT / f"docs/guides/es/{role}/index.md"
+        for role in ("colaboradores", "profesores", "estudiantes", "agentes")
+    )
+    foundation_lower = foundation.lower()
+    english_guides = tuple(
+        " ".join(path.read_text(encoding="utf-8").split()) for path in english_paths
+    )
+    spanish_guides = tuple(
+        " ".join(path.read_text(encoding="utf-8").split()) for path in spanish_paths
+    )
+    english_agent = english_paths[-1].read_text(encoding="utf-8")
+    spanish_agent = spanish_paths[-1].read_text(encoding="utf-8")
+    english_student = english_paths[2].read_text(encoding="utf-8")
+    spanish_student = spanish_paths[2].read_text(encoding="utf-8")
 
     for required in (
-        "reader pages have no reader top bar",
+        "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
+        "course search, then compact icon-labeled command tiles rendered two per row",
         "minimal floating Map edge opener",
-        "collapsed course-map content is removed from keyboard and assistive navigation",
-        "one compact Course Tools surface",
-        "no separate Course Workspaces section",
+        "collapsed course-map content is inert, removed from keyboard navigation",
+        "no separate workspace section",
         "no visible Current, All, Scan, or Less map action buttons",
-        "course-scoped sessionStorage may restore collapsed course-map branches",
+        "Same-tab sessionStorage may restore only course-scoped collapsed course-map branch identifiers and the explicit left/right structural rail display pair",
     ):
-        assert required in foundation
+        assert required.lower() in foundation_lower
     for forbidden in (
         "compact command-bar search form",
         "sticky command bar may show",
@@ -4910,23 +4918,55 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
     ):
         assert forbidden not in foundation
 
-    for text in (english_student, english_agent):
+    assert "raya:reader-shell:v1:<course_id>" in foundation
+    assert "raya:course-map-branches:v1:<course_id>" in foundation
+    assert "explicit structural rail display pair" in foundation_lower
+    assert (
+        "course-map branch expansion is the only accepted same-tab exception"
+        not in foundation_lower
+    )
+    assert not (
+        "browser storage must not store" in foundation_lower
+        and "shell collapse state" in foundation_lower
+    )
+
+    for text in english_guides[2:]:
+        lowered = text.lower()
         assert "left course rail" in text
         assert "discovery command bar" in text
-        assert "single Course Tools area" in text
+        assert "course search" in text
+        assert "two" in text and "command" in text and "scrollable course map" in text
         assert "collapsible course-map branches" in text
-        assert "top bar" not in text.lower()
-        assert "top-bar" not in text.lower()
+        assert "top bar" not in lowered
+        assert "top-bar" not in lowered
     assert "tablet/mobile Course map drawer" not in english_agent
     assert "drawer Course map en tablet/movil" not in spanish_agent
 
-    for text in (spanish_student, spanish_agent):
+    for text in english_guides:
+        lowered = text.lower()
+        assert "course-scoped" in lowered
+        assert "sessionstorage" in lowered
+        assert "structural rail" in lowered
+        assert "rail choice is non-persistent" not in lowered
+
+    for text in spanish_guides[2:]:
+        lowered = text.lower()
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
-        assert "una sola area de Course Tools" in text
+        assert "course search" in text
+        assert "dos" in text and "comandos" in text and "mapa del curso" in text
         assert "ramas plegables del mapa del curso" in text
-        assert "barra superior" not in text.lower()
-        assert "comando superior" not in text.lower()
+        assert "barra superior" not in lowered
+        assert "comando superior" not in lowered
+
+    for text in spanish_guides:
+        lowered = text.lower()
+        assert "con scope de curso" in lowered
+        assert "sessionstorage" in lowered
+        assert "rieles estructurales" in lowered
+
+    assert "keeps that shell state non-persistent" not in english_guides[0].lower()
+    assert "mantiene ese estado no persistente" not in spanish_guides[0].lower()
 
     for text in (english_student, english_agent):
         assert "Focus reading" not in text
@@ -4937,7 +4977,7 @@ def test_reader_shell_guidance_matches_no_top_bar_contract() -> None:
         assert "colapsar juntos el mapa" not in text
 
 
-def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
+def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
     report = build_course(course)
@@ -4946,6 +4986,27 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     html = (course / "artifact" / "site" / "reader-ux" / "index.html").read_text(
         encoding="utf-8"
     )
+    assert '<html lang="en" data-raya-course-id="render-fixture"' in html
+    assert 'data-raya-shell-prepaint="pending"' in html
+    assert 'data-raya-learning-rail="expanded"' in html
+    assert (
+        'data-raya-course-map-storage-key="raya:course-map-branches:v1:render-fixture"'
+        in html
+    )
+    prepaint_tag = '<script src="../_raya/render/shell-prepaint.js"></script>'
+    stylesheet_tag = '<link rel="stylesheet" href="../_raya/render/rich.css">'
+    assert prepaint_tag in html
+    assert html.index(prepaint_tag) < html.index(stylesheet_tag)
+    assert "defer" not in prepaint_tag and "async" not in prepaint_tag
+
+    prepaint = (
+        course / "artifact/site/_raya/render/shell-prepaint.js"
+    ).read_text(encoding="utf-8")
+    assert "raya:reader-shell:v1:" in prepaint
+    assert "sessionStorage.getItem" in prepaint
+    assert "sessionStorage.setItem" not in prepaint
+    assert "localStorage" not in prepaint
+    assert "fetch(" not in prepaint
     assert 'id="raya-learning-rail"' in html
     assert '<header class="raya-top-command-bar" aria-label="Course tools">' not in html
     assert 'class="raya-top-command-bar"' not in html
@@ -4953,23 +5014,37 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'role="dialog"' not in html
     assert 'aria-modal="true"' not in html
     assert (
-        '<section class="raya-course-map-tools" aria-label="Course tools" '
-        'data-raya-course-map-tools>'
-    ) in html
-    assert 'class="raya-course-tools raya-course-map-tool-grid"' in html
-    assert '<a class="raya-command raya-command-search"' in html
+        '<section class="raya-course-rail-tools" aria-label="Course tools"'
+        in html
+    )
+    assert 'data-raya-course-map-tools' in _tag_html(
+        html, "section", "raya-course-rail-tools"
+    )
+    assert (
+        '<form class="raya-course-rail-search raya-command-search-form"' in html
+    )
+    assert 'class="raya-course-rail-command raya-command-graph"' in html
+    assert 'class="raya-course-rail-command raya-command-practice"' in html
+    assert 'class="raya-course-rail-command raya-command-tasks"' in html
+    assert 'class="raya-course-rail-command raya-command-schedule"' in html
+    assert 'class="raya-course-rail-command raya-text-size-toggle"' in html
+    assert 'class="raya-course-rail-command raya-font-toggle"' in html
+    assert 'class="raya-course-rail-command raya-command-context"' in html
+    assert 'class="raya-course-map-tool-grid"' not in html
+    assert '<p class="raya-course-map-tools-label">Course Tools</p>' not in html
+    assert '<a class="raya-course-rail-command raya-command-search"' in html
     assert 'aria-label="Open course search"' in html
-    assert '<a class="raya-command raya-command-graph"' in html
+    assert '<a class="raya-course-rail-command raya-command-graph"' in html
     assert (
         '<button class="raya-command raya-command-map raya-course-map-toggle"'
         not in html
     )
     assert 'aria-label="Collapse course map"' in html
-    assert '<button class="raya-command raya-command-context"' in html
+    assert '<button class="raya-course-rail-command raya-command-context"' in html
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
     assert 'aria-label="Hide learning context"' in html
-    assert '<form class="raya-command-search-form"' in html
+    assert '<div class="raya-course-rail-search">' not in html
     assert 'action="../_raya/search/index.html"' in html
     assert 'method="get"' in html
     assert 'name="q"' in html
@@ -4980,11 +5055,11 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
         'aria-label="Open search results">'
     ) in html
     assert (
-        '<button class="raya-command raya-command-size raya-text-size-toggle"' in html
+        '<button class="raya-course-rail-command raya-text-size-toggle"' in html
     )
     assert 'aria-label="Text size: normal"' in html
     assert '<span class="raya-command-label">Text size</span>' in html
-    assert '<button class="raya-command raya-command-font raya-font-toggle"' in html
+    assert '<button class="raya-course-rail-command raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
     assert (
         '<nav class="raya-article-sequence raya-article-sequence-top" '
@@ -5004,7 +5079,8 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'aria-label="Course tools"' in html
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert 'class="raya-course-map-workspaces"' not in html
-    assert 'aria-label="Course workspaces"' not in html
+    assert 'class="raya-course-rail-command-list"' in html
+    assert 'aria-label="Course commands"' in html
     assert "data-raya-course-map-workspaces" not in html
     assert 'class="raya-course-map-drawer-chrome"' in html
     assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
@@ -5016,6 +5092,9 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'data-raya-course-map-action="expand-all"' not in html
     assert 'data-raya-course-map-action="scan"' not in html
     assert 'data-raya-course-map-action="less"' not in html
+    shell_js = shell_resources().javascript
+    assert '".raya-course-rail-tools"' in shell_js
+    assert '".raya-course-map-tools"' not in shell_js
     assert 'data-raya-course-map-storage-key=' in html
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-command-tooltip=' in html
@@ -5080,7 +5159,7 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     root_html = (course / "artifact" / "site" / "index.html").read_text(
         encoding="utf-8"
     )
-    assert '<a class="raya-command raya-command-graph"' in root_html
+    assert '<a class="raya-course-rail-command raya-command-graph"' in root_html
     assert (
         'aria-label="Open course graph, 6 links, 5 from this page, 1 link here"'
         in root_html
@@ -5106,11 +5185,14 @@ def test_render_fixture_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    assert course_map_html.index('class="raya-course-rail-tools"') < (
+        course_map_html.index('class="raya-page-position"')
+    )
+    assert course_map_html.index('class="raya-page-position"') < (
+        course_map_html.index('id="raya-course-map-filter"')
+    )
     assert course_map_html.index('id="raya-course-map-filter"') < (
         course_map_html.index('class="raya-course-map-list"')
-    )
-    assert course_map_html.index('class="raya-course-map-list"') < (
-        course_map_html.index('class="raya-course-map-tools"')
     )
     reading_flow_panel = _section_html(last_html, "raya-page-reading-flow")
     assert 'aria-expanded="true">Reading flow</button>' in reading_flow_panel
@@ -5471,10 +5553,13 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         encoding="utf-8"
     )
 
-    assert (
-        '<html lang="en" data-raya-course-map="expanded" '
-        'data-raya-course-map-drawer="closed">'
-    ) in html
+    root_tag = html.splitlines()[1]
+    assert root_tag.startswith('<html lang="en" ')
+    assert 'data-raya-course-id="minimal-course"' in root_tag
+    assert 'data-raya-shell-prepaint="pending"' in root_tag
+    assert 'data-raya-course-map="expanded"' in root_tag
+    assert 'data-raya-learning-rail="expanded"' in root_tag
+    assert 'data-raya-course-map-drawer="closed"' in root_tag
     assert (
         '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
         in html
@@ -5505,7 +5590,7 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-course-map-action="less"' not in html
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
-    assert "Course Tools" in html
+    assert 'aria-label="Course tools"' in html
     assert "_raya/search/index.html?q=" in html
     assert "_raya/graph/index.html?page=" in html
     assert "_raya/practice/index.html" in html
@@ -5769,7 +5854,10 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     for selector in (
-        ".raya-course-map-tools",
+        ".raya-course-rail-tools",
+        ".raya-course-rail-search",
+        ".raya-course-rail-command-list",
+        ".raya-course-rail-command",
         ".raya-mobile-course-map-open",
         ".raya-command",
         ".raya-command-icon",
@@ -5792,6 +5880,14 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
+    assert ".raya-course-rail-tools" in css
+    assert ".raya-course-rail-command-list" in css
+    assert ".raya-course-rail-command {" in css
+    assert ".raya-course-map-tool-grid" not in css
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in css
+    assert "grid-template-columns: repeat(3" not in css
+    assert "height: calc(100vh - 1.5rem)" in css
+    assert ".raya-learning-rail" in css
     assert "min-width: 2.75rem" in css
     assert ".raya-graph-workspace {\n  align-items: start;" in css
     assert "height: clamp(24rem, 50vh, 36rem);" in css

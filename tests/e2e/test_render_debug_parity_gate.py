@@ -468,7 +468,7 @@ def _learning_shell_html(content: str) -> str:
       <body data-raya-skin="warm-academic">
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <section class="raya-course-map-tools" aria-label="Course tools"
+            <section class="raya-course-rail-tools" aria-label="Course tools"
               data-raya-course-map-tools>
               <button class="raya-course-map-toggle" type="button"
                 data-raya-course-map-toggle aria-expanded="false">
