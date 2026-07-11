@@ -1438,8 +1438,8 @@ _SHELL_JAVASCRIPT = r"""
     return null;
   }
 
-  function reconcileReaderShellState({ restoreFocus = true } = {}) {
-    const activeElement = document.activeElement;
+  function reconcileReaderShellState({ restoreFocus = true, focusOwner = null } = {}) {
+    const activeElement = focusOwner instanceof Element ? focusOwner : document.activeElement;
     const next = effectiveReaderShellState();
     const focusTarget = restoreFocus
       ? readerShellReconciliationFocusTarget(activeElement, next)
@@ -1464,6 +1464,24 @@ _SHELL_JAVASCRIPT = r"""
 
   const handleReaderShellMediaChange = () =>
     reconcileReaderShellState({ restoreFocus: true });
+  document.addEventListener("focusout", (event) => {
+    const focusOwner = event.target;
+    const ownsFocus =
+      focusOwner instanceof Element &&
+      (focusOwner === mobileMapOpener ||
+        map.contains(focusOwner) ||
+        (learningRail && learningRail.contains(focusOwner)));
+    if (event.relatedTarget !== null || !ownsFocus) {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      const activeElement = document.activeElement;
+      if (activeElement !== document.body && activeElement !== document.documentElement) {
+        return;
+      }
+      reconcileReaderShellState({ restoreFocus: true, focusOwner });
+    });
+  }, true);
   window.addEventListener("pageshow", (event) => {
     if (!event.persisted) return;
     const preference = readReaderShellPreference();

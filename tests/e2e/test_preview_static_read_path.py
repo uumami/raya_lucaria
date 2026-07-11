@@ -16079,6 +16079,9 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                 def assert_focus_survives_resize(
                     page, width: int, expected_selector: str
                 ) -> None:
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaShellReady === 'true'"
+                    )
                     page.set_viewport_size({"width": width, "height": 760})
                     page.wait_for_function(
                         """(selector) => {
