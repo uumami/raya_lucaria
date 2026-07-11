@@ -159,7 +159,7 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function isMediumStructuralShell() {
-    return isStructuralRailShell() && !isDesktopShell();
+    return isStructuralRailShell() && !approvedRailGeometryQuery.matches;
   }
 
   function defaultCourseMapExpanded() {

@@ -15147,6 +15147,103 @@ def test_reader_shell_bfcache_pageshow_reconciles_saved_state(
         handle.close()
 
 
+def test_reader_shell_bfcache_rejects_non_atomic_saved_records(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    invalid_records = (
+        '{"courseMap":"collapsed"}',
+        '{"courseMap":"collapsed","learningRail":"expanded","version":1}',
+        '{"courseMap":"sideways","learningRail":"collapsed"}',
+    )
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+                ignore_default_args=["--disable-back-forward-cache"],
+            )
+            try:
+                for raw in invalid_records:
+                    page = browser.new_page(viewport={"width": 1440, "height": 950})
+                    page.add_init_script(
+                        """window.__readerShellWrites = [];
+                        window.__readerShellPageshows = [];
+                        const set = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {
+                          if (this === window.sessionStorage && key.startsWith('raya:')) {
+                            window.__readerShellWrites.push([key, value]);
+                          }
+                          return set.call(this, key, value);
+                        };
+                        window.addEventListener('pageshow', (event) => {
+                          window.__readerShellPageshows.push(event.persisted);
+                        });"""
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.click(".raya-course-map-toggle")
+                        page.wait_for_function(
+                            """() => document.documentElement.dataset.rayaCourseMap
+                              === 'collapsed'"""
+                        )
+                        page.evaluate("window.__readerShellWrites = []")
+                        page.goto(
+                            f"{handle.base_url}/authoring-matrix/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.evaluate(
+                            "([key, value]) => sessionStorage.setItem(key, value)",
+                            [storage_key, raw],
+                        )
+
+                        page.go_back(wait_until="commit")
+                        page.wait_for_function(
+                            "() => window.__readerShellPageshows.at(-1) === true"
+                        )
+                        assert page.evaluate(
+                            """() => ({
+                              courseMap: document.documentElement.dataset.rayaCourseMap,
+                              learningRail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference:
+                                document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference:
+                                document.documentElement.dataset.rayaLearningRailPreference || null,
+                            })"""
+                        ) == {
+                            "courseMap": "expanded",
+                            "learningRail": "expanded",
+                            "mapPreference": None,
+                            "railPreference": None,
+                        }
+                        assert page.evaluate("window.__readerShellWrites") == []
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == raw
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_shell_tab_sessions_follow_browser_semantics(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -15404,6 +15501,230 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
         handle.close()
 
 
+def test_reader_shell_prepaint_rejects_non_atomic_saved_records(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    cases = (
+        (
+            {"width": 800, "height": 900},
+            '{"courseMap":"expanded"}',
+            ("collapsed", "collapsed"),
+        ),
+        (
+            {"width": 1440, "height": 950},
+            '{"courseMap":"collapsed","learningRail":"expanded","version":1}',
+            ("expanded", "expanded"),
+        ),
+        (
+            {"width": 390, "height": 844},
+            '{"courseMap":"sideways","learningRail":"collapsed"}',
+            ("expanded", "expanded"),
+        ),
+    )
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport, raw, expected_pair in cases:
+                    page = browser.new_page(viewport=viewport)
+                    page.add_init_script(
+                        f"""sessionStorage.setItem(
+                          {json.dumps(storage_key)}, {json.dumps(raw)}
+                        );
+                        window.__readerShellWrites = [];
+                        const set = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {{
+                          if (this === window.sessionStorage) {{
+                            window.__readerShellWrites.push([key, value]);
+                          }}
+                          return set.call(this, key, value);
+                        }};"""
+                    )
+                    page.route("**/shell.js", lambda route: route.abort())
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        assert page.evaluate(
+                            """() => ({
+                              prepaint: document.documentElement.dataset.rayaShellPrepaint,
+                              courseMap: document.documentElement.dataset.rayaCourseMap,
+                              learningRail: document.documentElement.dataset.rayaLearningRail,
+                              mapPreference:
+                                document.documentElement.dataset.rayaCourseMapPreference || null,
+                              railPreference:
+                                document.documentElement.dataset.rayaLearningRailPreference || null,
+                            })"""
+                        ) == {
+                            "prepaint": "invalid",
+                            "courseMap": expected_pair[0],
+                            "learningRail": expected_pair[1],
+                            "mapPreference": None,
+                            "railPreference": None,
+                        }
+                        assert page.evaluate("window.__readerShellWrites") == []
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == raw
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    reader_key = "raya:reader-shell:v1:render-fixture"
+    branch_key = "raya:course-map-branches:v1:render-fixture"
+    preserved = {
+        "raya:reader-shell:course-map": "collapsed",
+        "raya:reader-shell:learning-rail": "collapsed",
+        "raya:course-map:/reader-ux": '["render-root"]',
+        "unrelated:sentinel": '{"keep":"byte-for-byte"}',
+    }
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    f"""for (const [key, value] of Object.entries(
+                      {json.dumps(preserved)}
+                    )) {{
+                      sessionStorage.setItem(key, value);
+                    }}
+                    window.__readerStorageWrites = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {{
+                      if (this === window.sessionStorage) {{
+                        window.__readerStorageWrites.push([key, value]);
+                      }}
+                      return set.call(this, key, value);
+                    }};"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == preserved
+                    assert page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          rootBranch: document
+                            .querySelector(
+                              '[data-raya-map-node="render-root"] '
+                              + '> .raya-course-map-node-row '
+                              + '[data-raya-map-node-toggle]'
+                            )?.getAttribute('aria-expanded'),
+                        })"""
+                    ) == {
+                        "courseMap": "expanded",
+                        "learningRail": "expanded",
+                        "rootBranch": "true",
+                    }
+                    assert page.evaluate("window.__readerStorageWrites") == []
+
+                    page.evaluate(
+                        """([readerKey, branchKey]) => {
+                          sessionStorage.setItem(
+                            readerKey,
+                            '{"courseMap":"collapsed","learningRail":"collapsed"}'
+                          );
+                          sessionStorage.setItem(branchKey, '["render-root"]');
+                        }""",
+                        [reader_key, branch_key],
+                    )
+                    page.reload(wait_until="networkidle")
+                    assert page.evaluate("window.__readerStorageWrites") == []
+                    assert page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          rootBranch: document
+                            .querySelector(
+                              '[data-raya-map-node="render-root"] '
+                              + '> .raya-course-map-node-row '
+                              + '[data-raya-map-node-toggle]'
+                            )?.getAttribute('aria-expanded'),
+                        })"""
+                    ) == {
+                        "courseMap": "collapsed",
+                        "learningRail": "collapsed",
+                        "rootBranch": "false",
+                    }
+
+                    page.click(".raya-course-map-toggle")
+                    page.click(
+                        '[data-raya-map-node="render-root"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+
+                    assert page.evaluate("window.__readerStorageWrites") == [
+                        [
+                            reader_key,
+                            '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        ],
+                        [branch_key, "[]"],
+                    ]
+                    assert page.evaluate(
+                        "Object.fromEntries(Object.entries(sessionStorage))"
+                    ) == {
+                        **preserved,
+                        reader_key: (
+                            '{"courseMap":"expanded",'
+                            '"learningRail":"collapsed"}'
+                        ),
+                        branch_key: "[]",
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_rail_pair_survives_reload_and_same_tab_navigation(
     tmp_path: Path,
 ) -> None:
@@ -15633,6 +15954,96 @@ def test_reader_shell_medium_actions_store_coordinated_pair(tmp_path: Path) -> N
         handle.close()
 
 
+def test_reader_shell_open_actions_coordinate_only_below_approved_geometry(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    storage_key = "raya:reader-shell:v1:render-fixture"
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                cases = (
+                    (
+                        893,
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                    ),
+                    (
+                        894,
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                        "#raya-course-map [data-raya-course-map-toggle]",
+                        '{"courseMap":"expanded","learningRail":"expanded"}',
+                    ),
+                    (
+                        893,
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        "[data-raya-learning-rail-expand]",
+                        '{"courseMap":"collapsed","learningRail":"expanded"}',
+                    ),
+                    (
+                        894,
+                        '{"courseMap":"expanded","learningRail":"collapsed"}',
+                        "[data-raya-learning-rail-expand]",
+                        '{"courseMap":"expanded","learningRail":"expanded"}',
+                    ),
+                )
+                for width, initial, selector, expected in cases:
+                    page = browser.new_page(viewport={"width": width, "height": 760})
+                    page.add_init_script(
+                        """window.__readerShellWrites = [];
+                        const originalSetItem = Storage.prototype.setItem;
+                        Storage.prototype.setItem = function(key, value) {
+                          if (this === window.sessionStorage) {
+                            window.__readerShellWrites.push([key, value]);
+                          }
+                          return originalSetItem.call(this, key, value);
+                        };"""
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.evaluate(
+                            "([key, value]) => sessionStorage.setItem(key, value)",
+                            [storage_key, initial],
+                        )
+                        page.reload(wait_until="networkidle")
+                        assert page.evaluate("window.__readerShellWrites") == []
+
+                        page.click(selector)
+
+                        assert page.evaluate(
+                            "key => sessionStorage.getItem(key)", storage_key
+                        ) == expected
+                        assert page.evaluate("window.__readerShellWrites") == [
+                            [storage_key, expected]
+                        ]
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
     tmp_path: Path,
 ) -> None:
@@ -15736,6 +16147,9 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     )
                     page.focus("[data-raya-learning-rail-collapse]")
                     assert_focus_survives_resize(page, 639)
+                    page.wait_for_function(
+                        "() => document.activeElement?.matches('#raya-article')"
+                    )
                     review_focus_results["phone_learning_collapse"] = page.locator(
                         "#raya-article"
                     ).evaluate("element => element === document.activeElement")
