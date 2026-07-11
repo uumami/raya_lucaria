@@ -16218,6 +16218,112 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
         handle.close()
 
 
+def test_reader_shell_null_focus_loss_does_not_reconcile_without_media_change(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 639, "height": 760})
+                page.add_init_script(
+                    """window.__readerShellWrites = [];
+                    const originalSetItem = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {
+                      if (this === window.sessionStorage) {
+                        window.__readerShellWrites.push([key, value]);
+                      }
+                      return originalSetItem.call(this, key, value);
+                    };"""
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaShellReady === 'true'"
+                    )
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    page.focus("[data-raya-course-map-close]")
+                    assert page.evaluate(
+                        """() => {
+                          const close = document.querySelector(
+                            '[data-raya-course-map-close]'
+                          );
+                          return document.activeElement === close
+                            && close?.checkVisibility()
+                            && !close.closest('[inert]');
+                        }"""
+                    )
+                    assert page.evaluate("window.__readerShellWrites") == []
+
+                    page.evaluate("() => document.activeElement.blur()")
+                    page.evaluate(
+                        """() => new Promise((resolve) => requestAnimationFrame(
+                          () => requestAnimationFrame(resolve)
+                        ))"""
+                    )
+
+                    assert page.evaluate(
+                        """() => {
+                          const root = document.documentElement;
+                          const close = document.querySelector(
+                            '[data-raya-course-map-close]'
+                          );
+                          const opener = document.querySelector(
+                            '.raya-mobile-course-map-open'
+                          );
+                          const article = document.querySelector('#raya-article');
+                          return {
+                            drawer: root.dataset.rayaCourseMapDrawer,
+                            courseMap: root.dataset.rayaCourseMap,
+                            learningRail: root.dataset.rayaLearningRail,
+                            closeVisible: close?.checkVisibility(),
+                            closeInert: !!close?.closest('[inert]'),
+                            bodyFocused: document.activeElement === document.body,
+                            openerFocused: document.activeElement === opener,
+                            articleFocused: document.activeElement === article,
+                          };
+                        }"""
+                    ) == {
+                        "drawer": "open",
+                        "courseMap": "expanded",
+                        "learningRail": "expanded",
+                        "closeVisible": True,
+                        "closeInert": False,
+                        "bodyFocused": True,
+                        "openerFocused": False,
+                        "articleFocused": False,
+                    }
+                    assert page.evaluate("window.__readerShellWrites") == []
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_reader_rail_state_isolated_by_course_id(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_static.builder import build_course

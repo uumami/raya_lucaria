@@ -1462,27 +1462,52 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
-  const handleReaderShellMediaChange = () =>
-    reconcileReaderShellState({ restoreFocus: true });
+  let pendingReaderShellFocusOwner = null;
+  let pendingReaderShellFocusOwnerFrame = 0;
+
+  function clearPendingReaderShellFocusOwner() {
+    pendingReaderShellFocusOwner = null;
+    if (pendingReaderShellFocusOwnerFrame) {
+      window.cancelAnimationFrame(pendingReaderShellFocusOwnerFrame);
+      pendingReaderShellFocusOwnerFrame = 0;
+    }
+  }
+
+  function takePendingReaderShellFocusOwner() {
+    const focusOwner =
+      pendingReaderShellFocusOwner && pendingReaderShellFocusOwner.isConnected
+        ? pendingReaderShellFocusOwner
+        : null;
+    clearPendingReaderShellFocusOwner();
+    return focusOwner;
+  }
+
+  const handleReaderShellMediaChange = () => {
+    const focusOwner = takePendingReaderShellFocusOwner();
+    reconcileReaderShellState({ restoreFocus: true, focusOwner });
+  };
   document.addEventListener("focusout", (event) => {
     const focusOwner = event.target;
     const ownsFocus =
       focusOwner instanceof Element &&
+      focusOwner.isConnected &&
       (focusOwner === mobileMapOpener ||
         map.contains(focusOwner) ||
         (learningRail && learningRail.contains(focusOwner)));
     if (event.relatedTarget !== null || !ownsFocus) {
       return;
     }
-    window.requestAnimationFrame(() => {
-      const activeElement = document.activeElement;
-      if (activeElement !== document.body && activeElement !== document.documentElement) {
-        return;
-      }
-      reconcileReaderShellState({ restoreFocus: true, focusOwner });
+    clearPendingReaderShellFocusOwner();
+    pendingReaderShellFocusOwner = focusOwner;
+    pendingReaderShellFocusOwnerFrame = window.requestAnimationFrame(() => {
+      pendingReaderShellFocusOwner = null;
+      pendingReaderShellFocusOwnerFrame = 0;
     });
   }, true);
+  document.addEventListener("focusin", clearPendingReaderShellFocusOwner, true);
+  window.addEventListener("pagehide", clearPendingReaderShellFocusOwner);
   window.addEventListener("pageshow", (event) => {
+    clearPendingReaderShellFocusOwner();
     if (!event.persisted) return;
     const preference = readReaderShellPreference();
     if (preference) {
