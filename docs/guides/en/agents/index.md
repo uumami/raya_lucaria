@@ -139,10 +139,9 @@ runtime fetch, no external requests, no browser storage, and no calendar sync,
 reminder, grading, submission, progress, mastery, recommendation, or
 learner-state language.
 
-When changing the shell, verify reader pages render no `.raya-top-command-bar`,
-reader commands render under `[data-raya-course-map-tools]` in the left course
-rail, and discovery workspaces still render `.raya-discovery-command-bar` as a
-discovery command bar.
+When changing the shell, verify reader pages render no `.raya-top-command-bar`
+and discovery workspaces still render `.raya-discovery-command-bar` as a
+discovery command bar. Verify the structural `Hide map` header Map action separately from the eight reader commands under `[data-raya-course-map-tools]`. Verify `.raya-course-map-body` owns search, the ordered Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic command tiles, position, filter, and tree, while `[data-raya-course-map-expand]` remains outside that hidden/inert body.
 Also verify the expanded course map default, including the expanded hierarchical
 course map structure, generated structural map numbers, current-page map
 orientation, map filter behavior, reader breadcrumbs, compact previous/next

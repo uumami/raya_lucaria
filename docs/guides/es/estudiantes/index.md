@@ -49,9 +49,8 @@ no estima dominio ni contacta servicios externos.
 
 La estructura actual del curso es una ayuda de lectura estatica. Las paginas
 lectoras no tienen una franja de comandos lectora sobre el articulo; los
-comandos lectores viven en el riel izquierdo del curso. El riel empieza con
-course search, luego mosaicos compactos con icono y label acomodados dos por
-fila, y despues el mapa del curso con scroll. Cuando esta activa la geometria
+comandos lectores viven en el riel izquierdo del curso. En anchos estructurales, el header del riel muestra `Course map` con una accion Map `Hide map`. El body empieza con course search, luego mosaicos compactos con icono y label acomodados dos por fila para Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, seguidos por la posicion de pagina y el mapa del curso. Al colapsar el riel, ese body desaparece y queda un solo opener flotante Map que corresponde al opener Context de la derecha.
+Cuando esta activa la geometria
 de lectura aprobada de `894px+`, el mapa del curso expandido se muestra por
 defecto y puede mostrar numeros estructurales de secuencia del orden del curso.
 Da orientacion por defecto, el articulo principal sigue siendo la leccion, y el
@@ -63,11 +62,8 @@ ocultos dejan de reservar columnas de lectura, quedan inertes, y salen de la
 navegacion de teclado y de asistencia hasta que los restaures. En layouts de
 telefono, el mapa del curso puede abrirse como un drawer temporal mientras el
 riel de aprendizaje sigue legible y alcanzable por tecnologias asistivas. Los
-controles Map, Context,
-Text size, OpenDyslexic, Search, Graph, Practice, Tasks y Schedule son
-herramientas de comodidad y navegacion en el riel izquierdo del curso. Pueden
-ampliar el articulo, restaurar el contexto alrededor o pasar a workspaces
-generados sin guardar un estado personal de avance.
+controles del riel pueden ampliar el articulo, restaurar el contexto alrededor
+o pasar a workspaces generados sin guardar un estado personal de avance.
 Cuando una pagina tiene tabla de contenidos, el riel de aprendizaje tambien
 puede mostrar la seccion actual del articulo mientras haces scroll. Esa etiqueta
 solo orienta por encabezados de la pagina; no es porcentaje leido, marca de
