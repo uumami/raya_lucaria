@@ -13529,37 +13529,53 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     )
                     _assert_no_horizontal_overflow(page)
                     initial = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
-                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-expanded')),
-                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-label')),
-                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.textContent.trim()),
-                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
-                          listInert: document.querySelector('#raya-course-map-list')?.inert,
-                          mapText: document.querySelector('#raya-course-map')?.innerText,
-                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
-                          articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
-                          railWidth: document.querySelector('.raya-learning-rail')?.getBoundingClientRect().width,
-                          oldChipCount: document
-                            .querySelectorAll('[data-raya-course-map-current-chip]')
-                            .length,
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                        """() => {
+                          const body = document.querySelector('#raya-course-map-body');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
+                          const expand = document.querySelector('[data-raya-course-map-expand]');
+                          return {
+                            state: document.documentElement.dataset.rayaCourseMap,
+                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            expanded: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-expanded')),
+                            labels: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-label')),
+                            texts: [collapse, expand]
+                              .map((button) => button.textContent.trim()),
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            bodyTabbableCount: Array.from(body.querySelectorAll(
+                              'a[href], button, input, [tabindex]'
+                            )).filter((element) => element.tabIndex >= 0).length,
+                            collapseVisible: collapse.checkVisibility(),
+                            expandVisible: expand.checkVisibility(),
+                            mapText: document.querySelector('#raya-course-map')?.innerText,
+                            mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                            articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
+                            railWidth: document.querySelector('.raya-learning-rail')?.getBoundingClientRect().width,
+                            oldChipCount: document
+                              .querySelectorAll('[data-raya-course-map-current-chip]')
+                              .length,
+                            linkTabIndexes: Array.from(body.querySelectorAll('a'))
+                              .map((link) => link.getAttribute('tabindex')),
+                          };
+                        }"""
                     )
                     assert initial["state"] == "expanded"
                     assert initial["shellState"] == "expanded"
                     assert initial["mapState"] == "expanded"
-                    assert initial["expanded"] == ["true"]
-                    assert initial["labels"] == ["Collapse course map"]
-                    assert set(initial["texts"]) == {"Map"}
-                    assert initial["listHidden"] == "false"
-                    assert initial["listInert"] is False
+                    assert initial["expanded"] == ["true", "true"]
+                    assert initial["labels"] == [
+                        "Hide course map",
+                        "Expand course map",
+                    ]
+                    assert initial["texts"] == ["Hide map", "Map"]
+                    assert initial["bodyHidden"] == "false"
+                    assert initial["bodyInert"] is False
+                    assert initial["bodyTabbableCount"] > 0
+                    assert initial["collapseVisible"] is True
+                    assert initial["expandVisible"] is False
                     assert "Toggle map" not in initial["mapText"]
                     assert "Collapse map" not in initial["mapText"]
                     assert initial["oldChipCount"] == 0
@@ -13588,7 +13604,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     )
                     assert expanded_preview_state == {"hidden": True, "text": ""}
 
-                    page.click(".raya-course-map-toggle")
+                    page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-course-map')
@@ -13613,54 +13629,62 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     )
                     assert collapsed_without_focus == {"hidden": True, "text": ""}
                     collapsed = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
-                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-expanded')),
-                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-label')),
-                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.textContent.trim()),
-                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
-                          listInert: document.querySelector('#raya-course-map-list')?.inert,
-                          activeElement: document.activeElement?.id,
-                          mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
-                          articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
-                          visibleLinkCount: Array
-                            .from(document.querySelectorAll('#raya-course-map a'))
-                            .filter((link) => link.checkVisibility()).length,
-                          oldChipCount: document
-                            .querySelectorAll('[data-raya-course-map-current-chip]')
-                            .length,
-                          buttonVisualLabel: getComputedStyle(
-                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
-                            '::after'
-                          ).content,
-                          buttonVisualWritingMode: getComputedStyle(
-                            document.querySelector('#raya-course-map .raya-course-map-toggle'),
-                            '::after'
-                          ).writingMode,
-                          wrappedLinkTexts: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .filter((link) => link.checkVisibility())
-                            .map((link) => link.innerText)
-                            .filter((text) => text.includes('\\n')),
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                        """() => {
+                          const body = document.querySelector('#raya-course-map-body');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
+                          const expand = document.querySelector('[data-raya-course-map-expand]');
+                          return {
+                            state: document.documentElement.dataset.rayaCourseMap,
+                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            expanded: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-expanded')),
+                            labels: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-label')),
+                            texts: [collapse, expand]
+                              .map((button) => button.textContent.trim()),
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            bodyTabbableCount: Array.from(body.querySelectorAll(
+                              'a[href], button, input, [tabindex]'
+                            )).filter((element) => element.tabIndex >= 0).length,
+                            activeIsExpand: document.activeElement === expand,
+                            mapWidth: document.querySelector('#raya-course-map')?.getBoundingClientRect().width,
+                            articleWidth: document.querySelector('#raya-article')?.getBoundingClientRect().width,
+                            visibleLinkCount: Array.from(body.querySelectorAll('a'))
+                              .filter((link) => link.checkVisibility()).length,
+                            oldChipCount: document
+                              .querySelectorAll('[data-raya-course-map-current-chip]')
+                              .length,
+                            buttonVisualLabel: getComputedStyle(expand, '::after').content,
+                            buttonVisualWritingMode: getComputedStyle(
+                              expand,
+                              '::after'
+                            ).writingMode,
+                            wrappedLinkTexts: Array.from(body.querySelectorAll('a'))
+                              .filter((link) => link.checkVisibility())
+                              .map((link) => link.innerText)
+                              .filter((text) => text.includes('\\n')),
+                            linkTabIndexes: Array.from(body.querySelectorAll('a'))
+                              .map((link) => link.getAttribute('tabindex')),
+                          };
+                        }"""
                     )
                     assert collapsed["state"] == "collapsed"
                     assert collapsed["shellState"] == "collapsed"
                     assert collapsed["mapState"] == "collapsed"
-                    assert collapsed["expanded"] == ["false"]
-                    assert collapsed["labels"] == ["Expand course map"]
-                    assert set(collapsed["texts"]) == {"Map"}
-                    assert collapsed["listHidden"] == "true"
-                    assert collapsed["listInert"] is True
+                    assert collapsed["expanded"] == ["false", "false"]
+                    assert collapsed["labels"] == [
+                        "Hide course map",
+                        "Expand course map",
+                    ]
+                    assert collapsed["texts"] == ["Hide map", "Map"]
+                    assert collapsed["bodyHidden"] == "true"
+                    assert collapsed["bodyInert"] is True
+                    assert collapsed["bodyTabbableCount"] == 0
+                    assert collapsed["activeIsExpand"] is True
                     assert 40 <= collapsed["mapWidth"] <= 56
                     assert collapsed["articleWidth"] > 760
-                    assert set(collapsed["texts"]) == {"Map"}
                     assert collapsed["buttonVisualLabel"] in {'"Map"', '">"'}
                     assert collapsed["buttonVisualWritingMode"] == "horizontal-tb"
                     assert collapsed["oldChipCount"] == 0
@@ -13669,7 +13693,7 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert collapsed["linkTabIndexes"]
                     assert set(collapsed["linkTabIndexes"]) <= {None, "-1"}
 
-                    page.click(".raya-course-map-toggle")
+                    page.click("[data-raya-course-map-expand]")
                     page.wait_for_function(
                         """() => document
                           .querySelector('#raya-course-map')
@@ -13682,58 +13706,80 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           ?.rayaCourseMapTransition"""
                     )
                     expanded = page.evaluate(
-                        """() => ({
-                          state: document.documentElement.dataset.rayaCourseMap,
-                          shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                          mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
-                          expanded: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-expanded')),
-                          labels: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.getAttribute('aria-label')),
-                          texts: Array.from(document.querySelectorAll('.raya-course-map-toggle'))
-                            .map((button) => button.textContent.trim()),
-                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
-                          listInert: document.querySelector('#raya-course-map-list')?.inert,
-                          oldChipCount: document
-                            .querySelectorAll('[data-raya-course-map-current-chip]')
-                            .length,
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                        """() => {
+                          const body = document.querySelector('#raya-course-map-body');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
+                          const expand = document.querySelector('[data-raya-course-map-expand]');
+                          return {
+                            state: document.documentElement.dataset.rayaCourseMap,
+                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
+                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            expanded: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-expanded')),
+                            labels: [collapse, expand]
+                              .map((button) => button.getAttribute('aria-label')),
+                            texts: [collapse, expand]
+                              .map((button) => button.textContent.trim()),
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            bodyTabbableCount: Array.from(body.querySelectorAll(
+                              'a[href], button, input, [tabindex]'
+                            )).filter((element) => element.tabIndex >= 0).length,
+                            activeIsCollapse: document.activeElement === collapse,
+                            oldChipCount: document
+                              .querySelectorAll('[data-raya-course-map-current-chip]')
+                              .length,
+                            linkTabIndexes: Array.from(body.querySelectorAll('a'))
+                              .map((link) => link.getAttribute('tabindex')),
+                          };
+                        }"""
                     )
                     assert expanded["state"] == "expanded"
                     assert expanded["shellState"] == "expanded"
                     assert expanded["mapState"] == "expanded"
-                    assert expanded["expanded"] == ["true"]
-                    assert expanded["labels"] == ["Collapse course map"]
-                    assert set(expanded["texts"]) == {"Map"}
-                    assert expanded["listHidden"] == "false"
-                    assert expanded["listInert"] is False
+                    assert expanded["expanded"] == ["true", "true"]
+                    assert expanded["labels"] == [
+                        "Hide course map",
+                        "Expand course map",
+                    ]
+                    assert expanded["texts"] == ["Hide map", "Map"]
+                    assert expanded["bodyHidden"] == "false"
+                    assert expanded["bodyInert"] is False
+                    assert (
+                        expanded["bodyTabbableCount"]
+                        == initial["bodyTabbableCount"]
+                    )
+                    assert expanded["activeIsCollapse"] is True
                     assert expanded["oldChipCount"] == 0
                     assert set(expanded["linkTabIndexes"]) == {None}
 
-                    page.locator("#raya-course-map a").first.focus()
+                    page.locator("#raya-course-map-body a").first.focus()
                     page.keyboard.press("Escape")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"""
                     )
                     escape_collapsed = page.evaluate(
-                        """() => ({
-                          activeElementClass: document.activeElement?.className,
-                          activeElementText: document.activeElement?.textContent.trim(),
-                          listHidden: document.querySelector('#raya-course-map-list')?.getAttribute('aria-hidden'),
-                          listInert: document.querySelector('#raya-course-map-list')?.inert,
-                          linkTabIndexes: Array.from(document.querySelectorAll('#raya-course-map a'))
-                            .map((link) => link.getAttribute('tabindex')),
-                        })"""
+                        """() => {
+                          const body = document.querySelector('#raya-course-map-body');
+                          const expand = document.querySelector('[data-raya-course-map-expand]');
+                          return {
+                            activeIsExpand: document.activeElement === expand,
+                            activeElementText: document.activeElement?.textContent.trim(),
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            bodyTabbableCount: Array.from(body.querySelectorAll(
+                              'a[href], button, input, [tabindex]'
+                            )).filter((element) => element.tabIndex >= 0).length,
+                            linkTabIndexes: Array.from(body.querySelectorAll('a'))
+                              .map((link) => link.getAttribute('tabindex')),
+                          };
+                        }"""
                     )
-                    assert (
-                        "raya-course-map-toggle"
-                        in escape_collapsed["activeElementClass"]
-                    )
+                    assert escape_collapsed["activeIsExpand"] is True
                     assert escape_collapsed["activeElementText"] == "Map"
-                    assert escape_collapsed["listHidden"] == "true"
-                    assert escape_collapsed["listInert"] is True
+                    assert escape_collapsed["bodyHidden"] == "true"
+                    assert escape_collapsed["bodyInert"] is True
+                    assert escape_collapsed["bodyTabbableCount"] == 0
                     assert set(escape_collapsed["linkTabIndexes"]) <= {None, "-1"}
                 finally:
                     page.close()
@@ -15988,13 +16034,13 @@ def test_reader_shell_open_actions_coordinate_only_below_approved_geometry(
                     (
                         893,
                         '{"courseMap":"collapsed","learningRail":"expanded"}',
-                        "#raya-course-map [data-raya-course-map-toggle]",
+                        "[data-raya-course-map-expand]",
                         '{"courseMap":"expanded","learningRail":"collapsed"}',
                     ),
                     (
                         894,
                         '{"courseMap":"collapsed","learningRail":"expanded"}',
-                        "#raya-course-map [data-raya-course-map-toggle]",
+                        "[data-raya-course-map-expand]",
                         '{"courseMap":"expanded","learningRail":"expanded"}',
                     ),
                     (
@@ -19616,6 +19662,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                           const mapBox = map.getBoundingClientRect();
                           const articleBox = article.getBoundingClientRect();
                           const railBox = rail.getBoundingClientRect();
+                          const mapCollapse = document
+                            .querySelector('[data-raya-course-map-collapse]');
+                          const mapCollapseBox = mapCollapse.getBoundingClientRect();
                           const opener = document.querySelector('.raya-mobile-course-map-open');
                           const contextCommand = document
                             .querySelector('#raya-course-map [data-raya-learning-rail-toggle]');
@@ -19642,6 +19691,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                             mapHeight: Math.round(mapBox.height),
                             mapBottom: Math.round(mapBox.bottom),
                             railWidth: Math.round(railBox.width),
+                            mapCollapseWidth: Math.round(mapCollapseBox.width),
+                            mapCollapseHeight: Math.round(mapCollapseBox.height),
+                            mapCollapseVisible: mapCollapse.checkVisibility(),
                             articleHidden: article.getAttribute('aria-hidden'),
                             articleInert: article.inert,
                             railHidden: rail.getAttribute('aria-hidden'),
@@ -19672,6 +19724,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "mapHeight": state.pop("mapHeight"),
                         "mapBottom": state.pop("mapBottom"),
                         "railWidth": state.pop("railWidth"),
+                        "mapCollapseWidth": state.pop("mapCollapseWidth"),
+                        "mapCollapseHeight": state.pop("mapCollapseHeight"),
                         "shellColumns": state.pop("shellColumns"),
                     }
                     assert state == {
@@ -19694,12 +19748,15 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "backdropFilter": "none",
                         "mobileOpenerVisible": False,
                         "contextVisible": True,
+                        "mapCollapseVisible": True,
                     }
                     assert geometry["mapLeft"] >= 0
                     assert geometry["articleLeft"] < geometry["articleRight"]
                     assert geometry["articleWidth"] >= 320
                     assert 244 <= geometry["mapWidth"] <= 264
                     assert 244 <= geometry["railWidth"] <= 264
+                    assert geometry["mapCollapseWidth"] == 40
+                    assert geometry["mapCollapseHeight"] == 40
                     assert len(geometry["shellColumns"].split()) == 1
 
                     if (
@@ -19709,7 +19766,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         != "expanded"
                     ):
                         page.click(
-                            "#raya-course-map .raya-command-map.raya-course-map-toggle"
+                            "[data-raya-course-map-expand]"
                         )
                         page.wait_for_function(
                             "() => document.documentElement.dataset.rayaCourseMap === 'expanded'"
@@ -19760,7 +19817,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert tools["mapBottom"] >= 756
                     assert tools["labelsWithoutTextRoom"] == []
 
-                    page.click("#raya-course-map .raya-command-map.raya-course-map-toggle")
+                    page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
@@ -19783,7 +19840,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                           const article = document.querySelector('#raya-article');
                           const rail = document.querySelector('#raya-learning-rail');
                           const toggle = document
-                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                            .querySelector('[data-raya-course-map-expand]');
                           const shellStyle = getComputedStyle(shell);
                           const mapStyle = getComputedStyle(map);
                           const toggleStyle = getComputedStyle(toggle);
@@ -19814,7 +19871,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                             toggleVisible: toggle.checkVisibility(),
                             togglePointerEvents: toggleStyle.pointerEvents,
                             commandExpanded: Array.from(
-                              document.querySelectorAll('[data-raya-course-map-toggle]')
+                              document.querySelectorAll(
+                                '[data-raya-course-map-collapse], [data-raya-course-map-expand]'
+                              )
                             ).map((button) => button.getAttribute('aria-expanded')),
                           };
                         }"""
@@ -19863,7 +19922,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                           const rail = document.querySelector('#raya-learning-rail');
                           const railBody = document.querySelector('#raya-learning-rail-body');
                           const mapToggle = document
-                            .querySelector('#raya-course-map .raya-course-map-toggle');
+                            .querySelector('[data-raya-course-map-expand]');
                           const railExpand = document
                             .querySelector('[data-raya-learning-rail-expand]');
                           const shellStyle = getComputedStyle(shell);
