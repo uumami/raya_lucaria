@@ -17777,6 +17777,46 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                 args=["--no-sandbox"],
             )
             try:
+                def assert_expanded_header_parity(
+                    map_state: dict, rail_state: dict
+                ) -> None:
+                    assert map_state["mapCollapse"]["visible"] is True
+                    assert rail_state["railCollapse"]["visible"] is True
+                    assert map_state["mapCollapse"]["scrollWidth"] <= (
+                        map_state["mapCollapse"]["clientWidth"] + 1
+                    )
+                    assert rail_state["railCollapse"]["scrollWidth"] <= (
+                        rail_state["railCollapse"]["clientWidth"] + 1
+                    )
+                    assert abs(
+                        map_state["mapHeader"]["top"]
+                        - rail_state["railHeader"]["top"]
+                    ) <= 1
+                    assert abs(
+                        map_state["mapHeader"]["width"]
+                        - rail_state["railHeader"]["width"]
+                    ) <= 1
+                    assert abs(
+                        (
+                            map_state["mapHeader"]["left"]
+                            - map_state["map"]["left"]
+                        )
+                        - (
+                            rail_state["railHeader"]["left"]
+                            - rail_state["rail"]["left"]
+                        )
+                    ) <= 1
+                    assert abs(
+                        (
+                            map_state["map"]["right"]
+                            - map_state["mapHeader"]["right"]
+                        )
+                        - (
+                            rail_state["rail"]["right"]
+                            - rail_state["railHeader"]["right"]
+                        )
+                    ) <= 1
+
                 def expanded_state(width: int, rail: str | None = None) -> dict:
                     page = browser.new_page(viewport={"width": width, "height": 950})
                     try:
@@ -17833,6 +17873,7 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                         map_state["mapHeader"]["height"]
                         - rail_state["railHeader"]["height"]
                     ) <= 1
+                    assert_expanded_header_parity(map_state, rail_state)
                     assert map_state["mapStyle"] == rail_state["railStyle"]
                     assert map_state["overflow"] <= 1
                     assert rail_state["overflow"] <= 1
@@ -17849,6 +17890,7 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                         state["mapHeader"]["height"]
                         - state["railHeader"]["height"]
                     ) <= 1
+                    assert_expanded_header_parity(state, state)
                     assert state["mapStyle"] == state["railStyle"]
                     assert state["overflow"] <= 1
                     assert state["map"]["width"] in range(239, 242)
@@ -18016,6 +18058,8 @@ def test_render_fixture_collapsed_reader_rails_use_mirrored_edge_openers(
                             railState: document.documentElement.dataset.rayaLearningRail,
                             articleWidth: document.querySelector('#raya-article')
                               ?.getBoundingClientRect().width,
+                            mapWidth: document.querySelector('#raya-course-map')
+                              ?.getBoundingClientRect().width,
                             railWidth: document.querySelector('#raya-learning-rail')
                               ?.getBoundingClientRect().width,
                             contextButtonExpanded: document
@@ -18036,7 +18080,12 @@ def test_render_fixture_collapsed_reader_rails_use_mirrored_edge_openers(
                     assert both_collapsed["mapState"] == "collapsed"
                     assert both_collapsed["railState"] == "collapsed"
                     assert both_collapsed["articleWidth"] > map_collapsed["articleWidth"] + 40
-                    assert both_collapsed["railWidth"] <= 56
+                    assert abs(both_collapsed["mapWidth"] - 44) <= 1
+                    assert abs(both_collapsed["railWidth"] - 44) <= 1
+                    assert abs(both_collapsed["mapOpener"]["width"] - 40) <= 1
+                    assert abs(both_collapsed["mapOpener"]["height"] - 40) <= 1
+                    assert abs(both_collapsed["railOpener"]["width"] - 40) <= 1
+                    assert abs(both_collapsed["railOpener"]["height"] - 40) <= 1
                     assert both_collapsed["contextButtonExpanded"] == "false"
                     assert both_collapsed["railExpandExpanded"] == "false"
                     assert both_collapsed["railExpandAriaLabel"] == "Show learning context"
@@ -23559,6 +23608,14 @@ def _reader_rail_outer_geometry(page) -> dict:
               boxShadow: computed.boxShadow,
             };
           };
+          const control = (selector) => {
+            const element = document.querySelector(selector);
+            return {
+              ...box(selector),
+              clientWidth: element.clientWidth,
+              scrollWidth: element.scrollWidth,
+            };
+          };
           return {
             map: box('#raya-course-map'),
             rail: box('#raya-learning-rail'),
@@ -23567,6 +23624,8 @@ def _reader_rail_outer_geometry(page) -> dict:
             article: box('#raya-article'),
             mapHeader: box('.raya-course-map-header'),
             railHeader: box('.raya-learning-rail-header'),
+            mapCollapse: control('[data-raya-course-map-collapse]'),
+            railCollapse: control('[data-raya-learning-rail-collapse]'),
             mapCollapseText: document
               .querySelector('[data-raya-course-map-collapse]')
               .textContent.trim(),
