@@ -11701,44 +11701,41 @@ def test_reader_shell_collapse_sets_inert_hidden_state_without_tabbable_links(
                         wait_until="networkidle",
                     )
                     page.set_viewport_size({"width": 894, "height": 670})
-                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
-                    page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-course-map')
-                          ?.getBoundingClientRect().width <= 56"""
-                    )
-                    page.wait_for_function(
-                        """() => !document
-                          .querySelector('#raya-course-map')
-                          ?.dataset
-                          ?.rayaCourseMapTransition"""
-                    )
                     state = page.evaluate(
                         """() => {
-                          const map = document.querySelector('#raya-course-map');
-                          const list = document.querySelector('#raya-course-map-list');
-                          const toggle = document.querySelector(
-                            '#raya-course-map .raya-course-map-toggle'
-                          );
+                          const body = document.querySelector('#raya-course-map-body');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
+                          const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
-                            mapWidth: map.getBoundingClientRect().width,
-                            listHidden: list.getAttribute('aria-hidden'),
-                            listInert: list.inert,
-                            toggleVisible: getComputedStyle(toggle).display !== 'none',
-                            activeHiddenLinks: Array.from(map.querySelectorAll('a'))
-                              .filter((link) => link.tabIndex >= 0)
-                              .length,
+                            bodyDisplay: getComputedStyle(body).display,
+                            bodyHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            tabbableBodyControls: Array.from(body.querySelectorAll(
+                              'a[href], button, input, [tabindex]'
+                            )).filter((element) => element.tabIndex >= 0).length,
+                            collapseVisible: collapse.checkVisibility(),
+                            expandVisible: expand.checkVisibility(),
+                            expandLabel: expand.getAttribute('aria-label'),
+                            expandExpanded: expand.getAttribute('aria-expanded'),
+                            activeIsExpand: document.activeElement === expand,
                           };
                         }"""
                     )
-                    assert state["mapWidth"] <= 56
-                    assert state["listHidden"] == "true"
-                    assert state["listInert"] is True
-                    assert state["toggleVisible"] is True
-                    assert state["activeHiddenLinks"] == 0
+                    assert state == {
+                        "bodyDisplay": "none",
+                        "bodyHidden": "true",
+                        "bodyInert": True,
+                        "tabbableBodyControls": 0,
+                        "collapseVisible": False,
+                        "expandVisible": True,
+                        "expandLabel": "Expand course map",
+                        "expandExpanded": "false",
+                        "activeIsExpand": True,
+                    }
                 finally:
                     page.close()
             finally:
@@ -15376,6 +15373,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": "collapsed",
                             "drawer": "closed",
                             "mapVisible": True,
+                            "mapBodyDisplay": "flex",
                             "railVisible": False,
                         },
                     ),
@@ -15393,6 +15391,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": "expanded",
                             "drawer": "closed",
                             "mapVisible": False,
+                            "mapBodyDisplay": "none",
                             "railVisible": False,
                         },
                     ),
@@ -15408,6 +15407,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": False,
+                            "mapBodyDisplay": "none",
                             "railVisible": False,
                         },
                     ),
@@ -15427,6 +15427,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
+                            "mapBodyDisplay": "flex",
                             "railVisible": True,
                         },
                     ),
@@ -15447,6 +15448,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": False,
+                            "mapBodyDisplay": "none",
                             "railVisible": False,
                         },
                     ),
@@ -15462,6 +15464,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
+                            "mapBodyDisplay": "flex",
                             "railVisible": True,
                         },
                     ),
@@ -15487,7 +15490,10 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                               mapPreference: document.documentElement.dataset.rayaCourseMapPreference || null,
                               railPreference: document.documentElement.dataset.rayaLearningRailPreference || null,
                               drawer: document.documentElement.dataset.rayaCourseMapDrawer,
-                              mapVisible: document.querySelector('#raya-course-map-list').checkVisibility(),
+                              mapVisible: document.querySelector('#raya-course-map-body').checkVisibility(),
+                              mapBodyDisplay: getComputedStyle(
+                                document.querySelector('#raya-course-map-body')
+                              ).display,
                               railVisible: document.querySelector('#raya-learning-rail-body').checkVisibility(),
                             })"""
                         )
@@ -15906,7 +15912,7 @@ def test_reader_shell_medium_actions_store_coordinated_pair(tmp_path: Path) -> N
                     )
                     assert page.evaluate("window.__readerShellWrites") == []
 
-                    page.click("#raya-course-map [data-raya-course-map-toggle]")
+                    page.click("[data-raya-course-map-expand]")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
@@ -16096,7 +16102,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                 for focus_selector, expected_selector in (
                     (
                         "#raya-course-map-list a[href]",
-                        "#raya-course-map [data-raya-course-map-toggle]",
+                        "[data-raya-course-map-expand]",
                     ),
                     (
                         "#raya-learning-rail-body a[href]",
@@ -16120,7 +16126,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                         f"{handle.base_url}/reader-ux/index.html",
                         wait_until="networkidle",
                     )
-                    page.focus("#raya-course-map [data-raya-course-map-toggle]")
+                    page.focus("[data-raya-course-map-expand]")
                     assert_focus_survives_resize(
                         page, 639, ".raya-mobile-course-map-open"
                     )
@@ -16175,7 +16181,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     assert_focus_survives_resize(
                         page,
                         640,
-                        "#raya-course-map [data-raya-course-map-toggle]",
+                        "[data-raya-course-map-expand]",
                     )
                 finally:
                     page.close()
@@ -16202,7 +16208,7 @@ def test_reader_shell_breakpoint_reconciliation_preserves_visible_focus(
                     assert_focus_survives_resize(
                         page,
                         640,
-                        "#raya-course-map [data-raya-course-map-toggle]",
+                        "[data-raya-course-map-collapse]",
                     )
                     assert page.evaluate(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
