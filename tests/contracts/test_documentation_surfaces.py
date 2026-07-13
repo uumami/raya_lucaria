@@ -385,6 +385,8 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     }
     text = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
 
+    for name in paths:
+        assert "Expand course map" in text[name], name
     for name in ("foundation", "student_en", "agent_en"):
         assert "Hide map" in text[name], name
         assert "Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic" in text[name], name
