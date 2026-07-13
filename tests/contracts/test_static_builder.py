@@ -4898,7 +4898,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
-        "course search, then compact icon-labeled command tiles rendered two per row",
+        "course search, then exactly eight compact icon-labeled command tiles rendered two per row",
         "minimal floating Map edge opener",
         "collapsed course-map content is inert, removed from keyboard navigation",
         "no separate workspace section",
@@ -4935,7 +4935,12 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "left course rail" in text
         assert "discovery command bar" in text
         assert "course search" in text
-        assert "two" in text and "command" in text and "scrollable course map" in text
+        assert "Hide map" in text
+        assert (
+            "Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic"
+            in text
+        )
+        assert "Expand course map" in text
         assert "collapsible course-map branches" in text
         assert "top bar" not in lowered
         assert "top-bar" not in lowered
@@ -4954,7 +4959,12 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
         assert "course search" in text
-        assert "dos" in text and "comandos" in text and "mapa del curso" in text
+        assert "Hide map" in text
+        assert (
+            "Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic"
+            in text
+        )
+        assert "Expand course map" in text
         assert "ramas plegables del mapa del curso" in text
         assert "barra superior" not in lowered
         assert "comando superior" not in lowered
