@@ -5039,7 +5039,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
         '<button class="raya-command raya-command-map raya-course-map-toggle"'
         not in html
     )
-    assert 'aria-label="Collapse course map"' in html
+    assert 'aria-label="Hide course map"' in html
     assert '<button class="raya-course-rail-command raya-command-context"' in html
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
@@ -5570,14 +5570,34 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-course-map-storage-key=' in html
     assert (
-        '<button class="raya-course-map-toggle raya-course-map-header-toggle raya-command-map"'
+        '<button class="raya-course-map-collapse" type="button" '
+        'data-raya-course-map-toggle data-raya-course-map-collapse '
+        'aria-controls="raya-course-map-body" aria-expanded="true" '
+        'aria-label="Hide course map">Hide map</button>'
         in html
     )
-    assert "data-raya-course-map-toggle" in html
-    assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="true" aria-label="Collapse course map">' in html
-    assert 'data-raya-command-icon="map"' in html
-    assert '<span class="raya-command-label">Map</span>' in html
+    assert (
+        '<div id="raya-course-map-body" class="raya-course-map-body" '
+        'aria-hidden="false">'
+    ) in html
+    assert (
+        '<button class="raya-course-map-expand" type="button" '
+        'data-raya-course-map-toggle data-raya-course-map-expand '
+        'aria-controls="raya-course-map-body" aria-expanded="true" '
+        'aria-label="Expand course map">Map</button>'
+    ) in html
+
+    header_index = html.index('<div class="raya-course-map-header">')
+    body_index = html.index('<div id="raya-course-map-body"')
+    expand_index = html.index('<button class="raya-course-map-expand"')
+    assert header_index < body_index < expand_index
+    body_html = html[body_index:expand_index]
+    assert body_html.count('class="raya-course-rail-command ') == 8
+    assert body_html.index('class="raya-course-rail-search') < body_html.index(
+        'class="raya-course-rail-command-list'
+    )
+    assert 'data-raya-course-map-collapse' not in body_html
+    assert 'data-raya-course-map-expand' not in body_html
     assert 'aria-expanded="true">Collapse map</button>' not in html
     assert 'class="raya-course-map-workspaces"' not in html
     assert 'aria-label="Course workspaces"' not in html

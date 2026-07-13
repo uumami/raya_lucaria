@@ -1898,11 +1898,14 @@ def _render_course_map_toggle(
     class_name: str = "raya-course-map-toggle",
     aria_label: str | None = None,
     icon: str | None = None,
+    controls: str = "raya-course-map",
+    marker: str = "",
 ) -> str:
     aria_expanded = "true" if expanded else "false"
     aria_label_attr = (
         f' aria-label="{html.escape(aria_label, quote=True)}"' if aria_label else ""
     )
+    marker_attr = f" {marker}" if marker else ""
     label_markup = html.escape(label)
     if icon is not None:
         label_markup = (
@@ -1911,8 +1914,8 @@ def _render_course_map_toggle(
         )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
-        "data-raya-course-map-toggle "
-        'aria-controls="raya-course-map" '
+        f"data-raya-course-map-toggle{marker_attr} "
+        f'aria-controls="{html.escape(controls, quote=True)}" '
         f'aria-expanded="{aria_expanded}"{aria_label_attr}>'
         f"{label_markup}"
         "</button>"
@@ -2130,15 +2133,14 @@ def _render_course_map(
                 "Close</button>"
             ),
             _render_course_map_toggle(
-                "Map",
-                class_name=(
-                    "raya-course-map-toggle raya-course-map-header-toggle "
-                    "raya-command-map"
-                ),
-                aria_label="Collapse course map",
-                icon="map",
+                "Hide map",
+                class_name="raya-course-map-collapse",
+                aria_label="Hide course map",
+                controls="raya-course-map-body",
+                marker="data-raya-course-map-collapse",
             ),
             "</div>",
+            '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">',
             tools_html,
             f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
@@ -2156,6 +2158,14 @@ def _render_course_map(
             (
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
+            ),
+            "</div>",
+            _render_course_map_toggle(
+                "Map",
+                class_name="raya-course-map-expand",
+                aria_label="Expand course map",
+                controls="raya-course-map-body",
+                marker="data-raya-course-map-expand",
             ),
             "</nav>",
             (
