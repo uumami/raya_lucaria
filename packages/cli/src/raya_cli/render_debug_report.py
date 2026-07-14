@@ -24,6 +24,22 @@ RENDER_RAW_TEX_MARKERS = (
     "a^2 + b^2 = c^2",
 )
 SUPPORT_TEXT_TAGS = {"script", "style", "code", "pre", "kbd", "samp", "textarea"}
+VOID_HTML_TAGS = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
 BLOCKED_RENDERER_FRAGMENTS = (
     "mathjax.js",
     "tex-chtml",
@@ -836,7 +852,13 @@ def _inspect_learning_shell(
         ]
         if FORBIDDEN_READER_TOP_BAR_CLASS in elements["classes"]:
             missing_selectors.append(FORBIDDEN_READER_TOP_BAR_DIAGNOSTIC)
-        missing = missing_classes + missing_ids + missing_selectors
+        ownership_failures = elements["ownership_failures"]
+        missing = (
+            missing_classes
+            + missing_ids
+            + missing_selectors
+            + ownership_failures
+        )
         _add_check(
             report,
             check_id=(
@@ -860,6 +882,7 @@ def _inspect_learning_shell(
                 "missing_classes": missing_classes,
                 "missing_ids": missing_ids,
                 "missing_selectors": missing_selectors,
+                "ownership_failures": ownership_failures,
             },
         )
 
@@ -871,7 +894,7 @@ def _learning_shell_page_id(site_dir: Path, html_path: Path) -> str:
     return _path_id(relative)
 
 
-def _element_markers_from_html(text: str) -> dict[str, set[str]]:
+def _element_markers_from_html(text: str) -> dict[str, Any]:
     parser = _ElementMarkerParser()
     parser.feed(text)
     parser.close()
@@ -879,6 +902,7 @@ def _element_markers_from_html(text: str) -> dict[str, set[str]]:
         "classes": parser.classes,
         "ids": parser.ids,
         "selectors": parser.selectors,
+        "ownership_failures": parser.course_map_ownership_failures(),
     }
 
 
@@ -888,15 +912,33 @@ class _ElementMarkerParser(HTMLParser):
         self.classes: set[str] = set()
         self.ids: set[str] = set()
         self.selectors: set[str] = set()
+        self.nodes: list[dict[str, Any]] = []
+        self.stack: list[int] = []
 
     def handle_starttag(
         self,
-        tag: str,  # noqa: ARG002
+        tag: str,
         attrs: list[tuple[str, str | None]],
     ) -> None:
         attributes = {name.lower(): value or "" for name, value in attrs}
         class_name = attributes.get("class")
         class_tokens = class_name.split() if class_name else []
+        tag_lower = tag.lower()
+        parent = self.stack[-1] if self.stack else None
+        node_index = len(self.nodes)
+        self.nodes.append(
+            {
+                "tag": tag_lower,
+                "attributes": attributes,
+                "classes": set(class_tokens),
+                "parent": parent,
+                "children": [],
+            }
+        )
+        if parent is not None:
+            self.nodes[parent]["children"].append(node_index)
+        if tag_lower not in VOID_HTML_TAGS:
+            self.stack.append(node_index)
         for name in attributes:
             self.selectors.add(f"[{name}]")
         if class_name:
@@ -904,7 +946,6 @@ class _ElementMarkerParser(HTMLParser):
         element_id = attributes.get("id")
         if element_id:
             self.ids.add(element_id)
-        tag_lower = tag.lower()
         for class_token in class_tokens:
             self.selectors.add(f".{class_token}")
             self.selectors.add(f"{tag_lower}.{class_token}")
@@ -912,6 +953,103 @@ class _ElementMarkerParser(HTMLParser):
             self.selectors.add(f"{tag_lower}#{element_id}")
             for class_token in class_tokens:
                 self.selectors.add(f"{tag_lower}#{element_id}.{class_token}")
+
+    def handle_endtag(self, tag: str) -> None:
+        tag_lower = tag.lower()
+        for stack_index in range(len(self.stack) - 1, -1, -1):
+            node_index = self.stack[stack_index]
+            if self.nodes[node_index]["tag"] == tag_lower:
+                del self.stack[stack_index:]
+                return
+
+    def course_map_ownership_failures(self) -> list[str]:
+        map_node = self._first_node(
+            lambda node: node["attributes"].get("id") == "raya-course-map"
+        )
+        if map_node is None:
+            return []
+
+        header = self._first_node(
+            lambda node: "raya-course-map-header" in node["classes"]
+        )
+        body = self._first_node(
+            lambda node: node["attributes"].get("id") == "raya-course-map-body"
+        )
+        collapse = self._first_node(
+            lambda node: "data-raya-course-map-collapse" in node["attributes"]
+        )
+        expand = self._first_node(
+            lambda node: "data-raya-course-map-expand" in node["attributes"]
+        )
+        failures: list[str] = []
+
+        if header is not None and self.nodes[header]["parent"] != map_node:
+            failures.append(
+                "course map header must be a direct child of #raya-course-map"
+            )
+        if body is not None and self.nodes[body]["parent"] != map_node:
+            failures.append(
+                "course map body must be a direct child of #raya-course-map"
+            )
+        if expand is not None and self.nodes[expand]["parent"] != map_node:
+            failures.append(
+                "course map expand opener must be a direct child of #raya-course-map"
+            )
+        if collapse is not None and (
+            header is None or not self._is_descendant(collapse, header)
+        ):
+            failures.append(
+                "course map collapse control must be inside the course map header"
+            )
+
+        if header is not None and body is not None and expand is not None:
+            if self.nodes[map_node]["children"] != [header, body, expand]:
+                failures.append(
+                    "course map direct children must be ordered header, body, expand opener"
+                )
+
+        for selector, owned_node in (
+            (
+                "[data-raya-course-map-tools]",
+                self._first_node(
+                    lambda node: "data-raya-course-map-tools"
+                    in node["attributes"]
+                ),
+            ),
+            (
+                "[data-raya-course-map-filter]",
+                self._first_node(
+                    lambda node: "data-raya-course-map-filter"
+                    in node["attributes"]
+                ),
+            ),
+            (
+                "#raya-course-map-list",
+                self._first_node(
+                    lambda node: node["attributes"].get("id")
+                    == "raya-course-map-list"
+                ),
+            ),
+        ):
+            if body is None or owned_node is None or not self._is_descendant(
+                owned_node, body
+            ):
+                failures.append(f"course map body must own {selector}")
+        return failures
+
+    def _first_node(self, predicate: Any) -> int | None:
+        for node_index, node in enumerate(self.nodes):
+            if predicate(node):
+                return node_index
+        return None
+
+    def _is_descendant(self, node_index: int, ancestor_index: int) -> bool:
+        parent = self.nodes[node_index]["parent"]
+        while parent is not None:
+            if parent == ancestor_index:
+                return True
+            parent = self.nodes[parent]["parent"]
+        return False
 
 
 def _inspect_skin_css(

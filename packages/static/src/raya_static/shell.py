@@ -1059,13 +1059,25 @@ _SHELL_JAVASCRIPT = r"""
       && previousExpanded !== nextExpanded
       && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
+    const focusAfterExpansion = Boolean(
+      nextExpanded && options.focusAfterExpansion
+    );
     if (desktopTransition) {
       window.clearTimeout(learningRailTransitionTimer);
       learningRail.dataset.rayaLearningRailTransition = nextExpanded
         ? "expanding"
         : "collapsing";
       learningRailTransitionTimer = window.setTimeout(() => {
+        const shouldTransferFocus =
+          desktopExpanding
+          && focusAfterExpansion
+          && root.dataset.rayaLearningRail === "expanded"
+          && learningRail.dataset.rayaLearningRailTransition === "expanding"
+          && document.activeElement === learningRailExpand;
         delete learningRail.dataset.rayaLearningRailTransition;
+        if (shouldTransferFocus && learningRailCollapse) {
+          learningRailCollapse.focus();
+        }
       }, SHELL_TRANSITION_MS);
     } else {
       window.clearTimeout(learningRailTransitionTimer);
@@ -1090,6 +1102,13 @@ _SHELL_JAVASCRIPT = r"""
       learningRailExpand.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     }
     syncLearningRailDrawerState();
+    if (focusAfterExpansion) {
+      if (desktopExpanding && learningRailExpand) {
+        learningRailExpand.focus();
+      } else if (learningRailCollapse) {
+        learningRailCollapse.focus();
+      }
+    }
   }
 
   function openLearningRailDrawer(opener = null) {
@@ -1672,11 +1691,11 @@ _SHELL_JAVASCRIPT = r"""
       if (isMediumStructuralShell()) {
         setExpanded(false, { skipPersist: true });
       }
-      setLearningRailExpanded(true, { skipPersist: true });
+      setLearningRailExpanded(true, {
+        skipPersist: true,
+        focusAfterExpansion: true,
+      });
       saveReaderShellPreference();
-      if (learningRailCollapse) {
-        learningRailCollapse.focus();
-      }
     });
   }
 
@@ -1692,7 +1711,10 @@ _SHELL_JAVASCRIPT = r"""
       if (nextExpanded && isMediumStructuralShell()) {
         setExpanded(false, { skipPersist: true });
       }
-      setLearningRailExpanded(nextExpanded, { skipPersist: true });
+      setLearningRailExpanded(nextExpanded, {
+        skipPersist: true,
+        focusAfterExpansion: nextExpanded,
+      });
       saveReaderShellPreference();
     });
   });
@@ -1726,14 +1748,18 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     let structuralRailChanged = false;
-    if (event.key === "Escape" && root.dataset.rayaCourseMap === "expanded") {
+    if (
+      event.key === "Escape" &&
+      isStructuralRailShell() &&
+      root.dataset.rayaCourseMap === "expanded"
+    ) {
       const activeElement = document.activeElement;
-      const shouldMoveFocus =
+      const mapOwnsFocus =
         activeElement instanceof Element &&
         map.contains(activeElement);
-      setExpanded(false, { skipPersist: true });
-      structuralRailChanged = isStructuralRailShell();
-      if (shouldMoveFocus) {
+      if (mapOwnsFocus) {
+        setExpanded(false, { skipPersist: true });
+        structuralRailChanged = true;
         courseMapFocusTarget("collapsed").focus();
       }
     }

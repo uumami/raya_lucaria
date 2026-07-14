@@ -485,6 +485,14 @@ def _learning_shell_html(content: str) -> str:
             <div id="raya-course-map-body" class="raya-course-map-body">
               <section class="raya-course-rail-tools" aria-label="Course tools"
                 data-raya-course-map-tools></section>
+              <label class="raya-course-map-filter-label"
+                for="raya-course-map-filter">Filter map</label>
+              <input id="raya-course-map-filter" class="raya-course-map-filter"
+                data-raya-course-map-filter>
+              <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
+                No map matches.
+              </p>
+              <div id="raya-course-map-list" class="raya-course-map-list"></div>
             </div>
             <button class="raya-course-map-expand" type="button"
               data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
