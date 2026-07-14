@@ -4850,7 +4850,15 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "data-raya-map-depth" in index_html
     assert ".raya-learning-rail-context-chip" in css_text
     assert (
-        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip'
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-header,'
+        in css_text
+    )
+    assert (
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-body,'
+        in css_text
+    )
+    assert (
+        'html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand,'
         in css_text
     )
     assert ".raya-visually-hidden" in css_text
