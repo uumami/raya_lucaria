@@ -5114,9 +5114,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 .raya-course-map-list a {
   border-left: 3px solid transparent;
-  align-items: center;
-  display: flex;
-  gap: 0.45rem;
+  display: block;
+  min-width: 0;
   overflow-wrap: break-word;
   padding: 0.25rem 0 0.25rem 0.5rem;
   text-decoration: none;
@@ -5134,6 +5133,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   font-weight: 900;
   justify-content: center;
   line-height: 1;
+  margin-right: 0.45rem;
   min-width: 1.45rem;
   padding: 0.22rem 0.35rem;
 }
@@ -6578,14 +6578,13 @@ mjx-container[display="true"] {
     padding-left: 0.75rem;
   }
   .raya-course-map-list a {
-    align-items: flex-start;
     font-size: 0.9375rem;
-    gap: 0.35rem;
     line-height: 1.35;
     padding: 0.24rem 0.28rem 0.24rem 0.35rem;
   }
   .raya-course-map-list a::before {
     font-size: 0.64rem;
+    margin-right: 0.35rem;
     min-width: 1.3rem;
     padding: 0.18rem 0.3rem;
     transform: translateY(0.05rem);

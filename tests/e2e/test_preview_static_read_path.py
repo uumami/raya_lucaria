@@ -18156,7 +18156,13 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
 
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.wait_for_function(
-                        """() => document.documentElement.dataset.rayaLearningRailDrawer === 'closed'"""
+                        """() => {
+                          const body = document.querySelector('#raya-learning-rail-body');
+                          return document.documentElement.dataset.rayaLearningRailDrawer
+                            === 'closed'
+                            && body?.getAttribute('aria-hidden') === 'false'
+                            && body.inert === false;
+                        }"""
                     )
                     mobile = page.evaluate(
                         """() => ({
@@ -19379,6 +19385,164 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                 finally:
                     page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                problems = {}
+                for viewport in (
+                    {"width": 1440, "height": 950},
+                    {"width": 894, "height": 900},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document.documentElement.dataset.rayaShellReady === 'true'
+                              && document.documentElement.dataset.rayaCourseMap === 'expanded'
+                              && document.querySelector('#raya-course-map-body')
+                                ?.getAttribute('aria-hidden') === 'false'
+                              && document.querySelector('#raya-course-map-list')
+                                ?.checkVisibility()"""
+                        )
+                        page.evaluate(
+                            "() => document.fonts ? document.fonts.ready.then(() => true) : true"
+                        )
+                        tree = page.evaluate(
+                            """() => {
+                              const list = document.querySelector('#raya-course-map-list');
+                              const listBox = list.getBoundingClientRect();
+                              const scrollLeft = listBox.left + list.clientLeft;
+                              const scrollRight = scrollLeft + list.clientWidth;
+                              const links = Array.from(list.querySelectorAll('a'))
+                                .filter((link) => link.checkVisibility())
+                                .map((link) => {
+                                  const linkBox = link.getBoundingClientRect();
+                                  const row = link.closest('.raya-course-map-node-row');
+                                  const rowBox = row.getBoundingClientRect();
+                                  const disclosure = row.querySelector(
+                                    ':scope > .raya-course-map-node-toggle, '
+                                    + ':scope > .raya-course-map-node-spacer'
+                                  );
+                                  const disclosureBox = disclosure.getBoundingClientRect();
+                                  const range = document.createRange();
+                                  range.selectNodeContents(link);
+                                  const textRects = Array.from(range.getClientRects())
+                                    .filter((rect) => rect.width > 0 && rect.height > 0)
+                                    .map((rect) => ({
+                                      left: rect.left,
+                                      right: rect.right,
+                                      top: rect.top,
+                                      bottom: rect.bottom,
+                                    }));
+                                  const linkStyle = getComputedStyle(link);
+                                  const badgeStyle = getComputedStyle(link, '::before');
+                                  const number = (value) => Number.parseFloat(value) || 0;
+                                  const badgeClearance = linkBox.left
+                                    + number(linkStyle.paddingLeft)
+                                    + number(badgeStyle.minWidth)
+                                    + number(badgeStyle.paddingLeft)
+                                    + number(badgeStyle.paddingRight)
+                                    + number(badgeStyle.borderLeftWidth)
+                                    + number(badgeStyle.borderRightWidth)
+                                    + number(badgeStyle.marginRight);
+                                  return {
+                                    label: link.getAttribute('data-raya-map-label'),
+                                    linkLeft: linkBox.left,
+                                    linkRight: linkBox.right,
+                                    rowLeft: rowBox.left,
+                                    rowRight: rowBox.right,
+                                    disclosureRight: disclosureBox.right,
+                                    badgeClearance,
+                                    textRects,
+                                  };
+                                });
+                              return {
+                                viewportWidth: window.innerWidth,
+                                listClientWidth: list.clientWidth,
+                                listScrollWidth: list.scrollWidth,
+                                scrollLeft,
+                                scrollRight,
+                                links,
+                              };
+                            }"""
+                        )
+                        assert tree["viewportWidth"] == viewport["width"]
+                        assert tree["links"]
+                        clipped = []
+                        for link in tree["links"]:
+                            assert link["textRects"]
+                            assert link["disclosureRight"] <= link["linkLeft"] + 1
+                            for index, rect in enumerate(link["textRects"]):
+                                if (
+                                    rect["left"] < tree["scrollLeft"] - 1
+                                    or rect["right"] > tree["scrollRight"] + 1
+                                    or rect["left"] < link["linkLeft"] - 1
+                                    or rect["right"] > link["linkRight"] + 1
+                                    or (
+                                        index == 0
+                                        and rect["left"]
+                                        < link["badgeClearance"] - 1
+                                    )
+                                    or rect["right"] > link["rowRight"] + 1
+                                ):
+                                    clipped.append(
+                                        {
+                                            "label": link["label"],
+                                            "linkLeft": link["linkLeft"],
+                                            "linkRight": link["linkRight"],
+                                            "rowRight": link["rowRight"],
+                                            "badgeClearance": link["badgeClearance"],
+                                            "textRect": rect,
+                                        }
+                                    )
+                        overflow = {
+                            "clientWidth": tree["listClientWidth"],
+                            "scrollWidth": tree["listScrollWidth"],
+                        }
+                        problems[viewport["width"]] = {
+                            "clipped": clipped,
+                            "overflow": overflow
+                            if tree["listScrollWidth"] > tree["listClientWidth"] + 1
+                            else None,
+                        }
+                        assert any(
+                            len(link["textRects"]) > 1 for link in tree["links"]
+                        ), repr(tree["links"])
+                    finally:
+                        page.close()
+                assert problems == {
+                    1440: {"clipped": [], "overflow": None},
+                    894: {"clipped": [], "overflow": None},
+                }
             finally:
                 browser.close()
     finally:
