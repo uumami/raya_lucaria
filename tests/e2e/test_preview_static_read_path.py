@@ -11968,9 +11968,15 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                               };
                               const map = document.querySelector('#raya-course-map');
                               const filter = document.querySelector('#raya-course-map-filter');
+                              const tools = map.querySelector('.raya-course-rail-tools');
+                              const commandList = tools.querySelector(
+                                '.raya-course-rail-command-list'
+                              );
                               const currentLink = map.querySelector(
                                 '#raya-course-map-list a[aria-current="page"]'
                               );
+                              const toolsStyle = getComputedStyle(tools);
+                              const commandListStyle = getComputedStyle(commandList);
                               return {
                                 drawer: document.documentElement
                                   .dataset
@@ -11991,6 +11997,22 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                                 ),
                                 filterValue: filter?.value || '',
                                 currentVisible: !!currentLink && currentLink.checkVisibility(),
+                                phoneTools: {
+                                  marginLeft: parseFloat(toolsStyle.marginLeft),
+                                  marginRight: parseFloat(toolsStyle.marginRight),
+                                  paddingTop: parseFloat(toolsStyle.paddingTop),
+                                  paddingRight: parseFloat(toolsStyle.paddingRight),
+                                  paddingBottom: parseFloat(toolsStyle.paddingBottom),
+                                  paddingLeft: parseFloat(toolsStyle.paddingLeft),
+                                  rowGap: parseFloat(toolsStyle.rowGap),
+                                  columnGap: parseFloat(toolsStyle.columnGap),
+                                  commandListMarginLeft: parseFloat(
+                                    commandListStyle.marginLeft
+                                  ),
+                                  commandListMarginRight: parseFloat(
+                                    commandListStyle.marginRight
+                                  ),
+                                },
                                 localKeys: Object.keys(localStorage),
                                 sessionKeys: Object.keys(sessionStorage),
                               };
@@ -12012,6 +12034,18 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                             "activeIsClose": True,
                             "filterValue": "",
                             "currentVisible": True,
+                            "phoneTools": {
+                                "marginLeft": 8,
+                                "marginRight": 8,
+                                "paddingTop": 8,
+                                "paddingRight": 10.4,
+                                "paddingBottom": 8,
+                                "paddingLeft": 10.4,
+                                "rowGap": 6,
+                                "columnGap": 6,
+                                "commandListMarginLeft": 0,
+                                "commandListMarginRight": 0,
+                            },
                             "localKeys": [],
                             "sessionKeys": [],
                         }
@@ -12216,6 +12250,35 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                     assert state["mapTransitionMarker"] is None
                     assert state["activeIsMapExpand"] is True
                     assert state["bodyDisplay"] == "none"
+                    page.click("[data-raya-learning-rail-collapse]")
+                    rail_state = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                          const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector(
+                            '#raya-learning-rail-body'
+                          );
+                          const expand = document.querySelector(
+                            '[data-raya-learning-rail-expand]'
+                          );
+                          return {
+                            railState:
+                              document.documentElement.dataset.rayaLearningRail,
+                            railTransitionMarker:
+                              rail?.dataset.rayaLearningRailTransition ?? null,
+                            activeIsRailExpand: document.activeElement === expand,
+                            bodyDisplay: getComputedStyle(body).display,
+                            bodyAriaHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                          };
+                        }"""
+                    )
+                    assert rail_state["railState"] == "collapsed"
+                    assert rail_state["railTransitionMarker"] is None
+                    assert rail_state["activeIsRailExpand"] is True
+                    assert rail_state["bodyDisplay"] == "none"
+                    assert rail_state["bodyAriaHidden"] == "true"
+                    assert rail_state["bodyInert"] is True
                 finally:
                     page.close()
             finally:
@@ -18709,10 +18772,12 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 '.raya-course-rail-command-list'
                               );
                               const mapBox = map.getBoundingClientRect();
+                              const bodyBox = body.getBoundingClientRect();
                               const headerBox = header.getBoundingClientRect();
                               const toolsBox = tools.getBoundingClientRect();
                               const positionBox = position.getBoundingClientRect();
                               const listBox = list.getBoundingClientRect();
+                              const commandListBox = commandList.getBoundingClientRect();
                               const toolsStyle = getComputedStyle(tools);
                               const commands = Array.from(
                                 tools.querySelectorAll('.raya-course-rail-command')
@@ -18725,6 +18790,8 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 const iconBox = icon?.getBoundingClientRect();
                                 return {
                                   text: command.textContent.trim(),
+                                  left: box.left,
+                                  right: box.right,
                                   width: Math.round(box.width),
                                   height: Math.round(box.height),
                                   clientWidth: command.clientWidth,
@@ -18757,9 +18824,17 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 width: window.innerWidth,
                                 mapWidth: Math.round(mapBox.width),
                                 mapHeight: Math.round(mapBox.height),
+                                mapLeft: mapBox.left,
+                                mapRight: mapBox.right,
+                                mapClientWidth: map.clientWidth,
+                                mapScrollWidth: map.scrollWidth,
                                 viewportHeight: window.innerHeight,
                                 bodyDisplay: getComputedStyle(body).display,
                                 bodyFlexGrow: getComputedStyle(body).flexGrow,
+                                bodyLeft: bodyBox.left,
+                                bodyRight: bodyBox.right,
+                                bodyClientWidth: body.clientWidth,
+                                bodyScrollWidth: body.scrollWidth,
                                 listFlexGrow: getComputedStyle(list).flexGrow,
                                 headerBottom: Math.round(headerBox.bottom),
                                 toolsTop: Math.round(toolsBox.top),
@@ -18775,6 +18850,8 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 searchFormVisible: !!searchForm && visible(searchForm),
                                 commandListClientWidth: commandList.clientWidth,
                                 commandListScrollWidth: commandList.scrollWidth,
+                                commandListLeft: commandListBox.left,
+                                commandListRight: commandListBox.right,
                                 commandListMinWidth: getComputedStyle(commandList).minWidth,
                                 commandGridColumns: getComputedStyle(commandList)
                                   .gridTemplateColumns,
@@ -18794,6 +18871,18 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert breakpoint_state["bodyDisplay"] == "flex"
                         assert breakpoint_state["bodyFlexGrow"] == "1"
+                        assert breakpoint_state["mapScrollWidth"] <= (
+                            breakpoint_state["mapClientWidth"] + 1
+                        )
+                        assert breakpoint_state["bodyScrollWidth"] <= (
+                            breakpoint_state["bodyClientWidth"] + 1
+                        )
+                        assert breakpoint_state["bodyLeft"] >= (
+                            breakpoint_state["mapLeft"] - 1
+                        )
+                        assert breakpoint_state["bodyRight"] <= (
+                            breakpoint_state["mapRight"] + 1
+                        )
                         assert breakpoint_state["listFlexGrow"] == "1"
                         assert (
                             breakpoint_state["headerBottom"]
@@ -18814,6 +18903,18 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         assert breakpoint_state["searchFormVisible"] is True
                         assert breakpoint_state["commandListScrollWidth"] <= (
                             breakpoint_state["commandListClientWidth"]
+                        )
+                        assert breakpoint_state["commandListLeft"] >= (
+                            breakpoint_state["bodyLeft"] - 1
+                        )
+                        assert breakpoint_state["commandListRight"] <= (
+                            breakpoint_state["bodyRight"] + 1
+                        )
+                        assert breakpoint_state["commandListLeft"] >= (
+                            breakpoint_state["mapLeft"] - 1
+                        )
+                        assert breakpoint_state["commandListRight"] <= (
+                            breakpoint_state["mapRight"] + 1
                         )
                         assert breakpoint_state["commandListMinWidth"] == "0px"
                         assert (
@@ -18845,6 +18946,16 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             if item["scrollWidth"] > item["clientWidth"] + 1
                         ]
                         assert overflowing_commands == [], repr(overflowing_commands)
+                        assert all(
+                            item["left"] >= breakpoint_state["commandListLeft"] - 1
+                            and item["right"]
+                            <= breakpoint_state["commandListRight"] + 1
+                            and item["left"] >= breakpoint_state["bodyLeft"] - 1
+                            and item["right"] <= breakpoint_state["bodyRight"] + 1
+                            and item["left"] >= breakpoint_state["mapLeft"] - 1
+                            and item["right"] <= breakpoint_state["mapRight"] + 1
+                            for item in breakpoint_state["commands"]
+                        )
                         assert all(
                             command_width > 0 and 28 <= command_height <= 64
                             for command_width, command_height in breakpoint_state[
