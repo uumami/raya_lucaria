@@ -11788,48 +11788,85 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                             "() => document.fonts ? document.fonts.ready.then(() => true) : true"
                         )
 
-                        state = page.evaluate(
-                            """() => {
-                              const box = (selector) => {
-                                const rect = document
-                                  .querySelector(selector)
-                                  .getBoundingClientRect();
-                                return {
-                                  left: rect.left,
-                                  right: rect.right,
-                                  width: rect.width,
-                                };
-                              };
-                              return {
-                                textSize: document.documentElement
-                                  .getAttribute('data-raya-text-size'),
-                                openDyslexic: document.documentElement
-                                  .getAttribute('data-raya-open-dyslexic'),
-                                localKeys: Object.keys(localStorage).sort(),
-                                sessionKeys: Object.keys(sessionStorage).sort(),
-                                map: box('#raya-course-map'),
-                                article: box('#raya-article'),
-                                rail: box('#raya-learning-rail'),
-                                overflow: Math.ceil(
-                                  document.documentElement.scrollWidth -
-                                  window.innerWidth
-                                ),
-                              };
-                            }"""
+                        preference_state = page.evaluate(
+                            """() => ({
+                              textSize: document.documentElement
+                                .getAttribute('data-raya-text-size'),
+                              openDyslexic: document.documentElement
+                                .getAttribute('data-raya-open-dyslexic'),
+                              localKeys: Object.keys(localStorage).sort(),
+                              sessionKeys: Object.keys(sessionStorage).sort(),
+                            })"""
                         )
-                        _assert_no_horizontal_overflow(page)
                         assert page.locator(".raya-top-command-bar").count() == 0
                         assert page.locator(".raya-discovery-command-bar").count() == 0
-                        assert state["textSize"] == "x-large"
-                        assert state["openDyslexic"] == "true"
-                        assert state["localKeys"] == [
+                        assert preference_state["textSize"] == "x-large"
+                        assert preference_state["openDyslexic"] == "true"
+                        assert preference_state["localKeys"] == [
                             "raya:open-dyslexic",
                             "raya:text-size",
                         ]
-                        assert state["sessionKeys"] == []
-                        assert state["map"]["right"] <= state["article"]["left"]
-                        assert state["article"]["right"] <= state["rail"]["left"] + 1
-                        assert state["overflow"] <= 1
+                        assert preference_state["sessionKeys"] == []
+
+                        skin_ids = [
+                            "eva-unit-01",
+                            "eva-unit-02",
+                            "eva-unit-03",
+                            "ghost-in-the-shell",
+                            "practice-lab",
+                            "warm-academic",
+                        ]
+                        for skin_id in skin_ids:
+                            page.evaluate(
+                                "skin => { document.body.dataset.rayaSkin = skin; }",
+                                skin_id,
+                            )
+                            for width in (894, 1279, 1280):
+                                page.set_viewport_size({"width": width, "height": 900})
+                                state = page.evaluate(
+                                    """() => {
+                                      const box = (selector) => {
+                                        const rect = document
+                                          .querySelector(selector)
+                                          .getBoundingClientRect();
+                                        return {
+                                          left: rect.left,
+                                          right: rect.right,
+                                          width: rect.width,
+                                        };
+                                      };
+                                      return {
+                                        map: box('#raya-course-map'),
+                                        article: box('#raya-article'),
+                                        rail: box('#raya-learning-rail'),
+                                        commandWritingModes: Array.from(
+                                          document.querySelectorAll(
+                                            '.raya-course-rail-command .raya-command-label'
+                                          )
+                                        ).map((label) => getComputedStyle(label).writingMode),
+                                        overflow: Math.ceil(
+                                          document.documentElement.scrollWidth - innerWidth
+                                        ),
+                                      };
+                                    }"""
+                                )
+                                assert abs(
+                                    state["map"]["width"] - state["rail"]["width"]
+                                ) <= 1
+                                assert state["map"]["right"] <= (
+                                    state["article"]["left"] + 1
+                                )
+                                assert state["article"]["right"] <= (
+                                    state["rail"]["left"] + 1
+                                )
+                                assert state["article"]["width"] >= (
+                                    672 if width == 1280 else 380
+                                )
+                                assert set(state["commandWritingModes"]) == {
+                                    "horizontal-tb"
+                                }
+                                assert state["overflow"] <= 1
+                                _assert_no_horizontal_overflow(page)
                     finally:
                         page.close()
                 finally:
@@ -12157,6 +12194,28 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                         "0s, 0s",
                         "0s, 0s, 0s",
                     }
+                    page.click("[data-raya-course-map-collapse]")
+                    state = page.evaluate(
+                        """async () => {
+                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                          const map = document.querySelector('#raya-course-map');
+                          const body = document.querySelector('#raya-course-map-body');
+                          const expand = document.querySelector(
+                            '[data-raya-course-map-expand]'
+                          );
+                          return {
+                            mapState: document.documentElement.dataset.rayaCourseMap,
+                            mapTransitionMarker:
+                              map?.dataset.rayaCourseMapTransition ?? null,
+                            activeIsMapExpand: document.activeElement === expand,
+                            bodyDisplay: getComputedStyle(body).display,
+                          };
+                        }"""
+                    )
+                    assert state["mapState"] == "collapsed"
+                    assert state["mapTransitionMarker"] is None
+                    assert state["activeIsMapExpand"] is True
+                    assert state["bodyDisplay"] == "none"
                 finally:
                     page.close()
             finally:
@@ -18353,7 +18412,7 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
         handle.close()
 
 
-def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
+def test_render_fixture_structural_course_map_uses_stable_command_body(
     tmp_path: Path,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -18376,11 +18435,24 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                 args=["--no-sandbox"],
             )
             try:
+                expected_commands = [
+                    "Search",
+                    "Graph",
+                    "Practice",
+                    "Tasks",
+                    "Schedule",
+                    "Context",
+                    "Text size",
+                    "OpenDyslexic",
+                ]
                 page = browser.new_page(viewport={"width": 1280, "height": 918})
                 try:
                     page.goto(
                         f"{handle.base_url}/index.html",
                         wait_until="networkidle",
+                    )
+                    page.evaluate(
+                        "() => document.fonts ? document.fonts.ready.then(() => true) : true"
                     )
                     page.fill("#raya-course-map-filter", "zz-no-match")
                     page.wait_for_function(
@@ -18392,7 +18464,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
-                    page.click("#raya-course-map .raya-course-map-toggle")
+                    page.click("[data-raya-course-map-expand]")
                     page.wait_for_function(
                         """() => {
                           const map = document.querySelector('#raya-course-map');
@@ -18413,7 +18485,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                           const filter = document.querySelector('#raya-course-map-filter');
                           const header = document.querySelector('.raya-course-map-header');
                           const position = document.querySelector(
-                            '#raya-course-map > .raya-page-position'
+                            '#raya-course-map-body > .raya-page-position'
                           );
                           const list = document.querySelector('#raya-course-map-list');
                           const mapBox = map.getBoundingClientRect();
@@ -18440,6 +18512,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               && style.visibility !== 'hidden';
                           }).map((command) => {
                             const box = command.getBoundingClientRect();
+                            const label = command.querySelector('.raya-command-label');
                             const icon = command.querySelector('.raya-command-icon');
                             const iconBox = icon?.getBoundingClientRect();
                             const iconStyle = icon ? getComputedStyle(icon) : null;
@@ -18452,6 +18525,11 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               bottom: Math.round(box.bottom),
                               width: Math.round(box.width),
                               height: Math.round(box.height),
+                              clientWidth: command.clientWidth,
+                              scrollWidth: command.scrollWidth,
+                              writingMode: label
+                                ? getComputedStyle(label).writingMode
+                                : '',
                               iconWidth: Math.round(iconBox?.width || 0),
                               iconHeight: Math.round(iconBox?.height || 0),
                               iconCenterDeltaX: Math.abs(
@@ -18501,7 +18579,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             toolsWidth: Math.round(toolsBox.width),
                             commandListClientWidth: commandList.clientWidth,
                             commandListScrollWidth: commandList.scrollWidth,
-                            commandListGrid: getComputedStyle(commandList)
+                            commandGridColumns: getComputedStyle(commandList)
                               .gridTemplateColumns,
                             commandsUnionLeft: Math.round(commandsUnion.left),
                             commandsUnionRight: Math.round(commandsUnion.right),
@@ -18532,6 +18610,10 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               && getComputedStyle(filter).display !== 'none',
                             filterValue: filter?.value || '',
                             visibleCommandCount: visibleCommands.length,
+                            visibleCommandTexts: visibleCommands.map(
+                              (command) => command.text
+                            ),
+                            commands: visibleCommands,
                             visibleCommands,
                           };
                         }"""
@@ -18547,42 +18629,31 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                     assert state["toolsBottom"] <= state["positionTop"]
                     assert state["positionBottom"] <= state["listTop"]
                     assert state["visibleCommandCount"] == 8
-                    assert state["toolsTop"] < state["mapBottom"] - 120
-                    assert state["toolsLeft"] <= state["titleLeft"] + 8
-                    assert state["toolsWidth"] <= state["mapWidth"] - 12
-                    assert state["toolsLeft"] <= state["commandsUnionLeft"]
-                    assert (
-                        state["toolsLeft"] + state["toolsWidth"]
-                        >= state["commandsUnionRight"]
-                    )
                     assert (
                         state["commandListScrollWidth"]
                         <= state["commandListClientWidth"]
                     )
-                    assert " " in state["commandListGrid"]
-                    assert state["toolsWidth"] <= state["commandsUnionWidth"] + 24
-                    assert 200 <= state["toolsHeight"] <= 260
-                    assert state["toolsBorderTopWidth"] == "0px"
-                    assert state["toolsBorderRightWidth"] == "0px"
-                    assert state["toolsBackground"] == "rgba(0, 0, 0, 0)"
-                    assert state["toolsBoxShadow"] == "none"
-                    assert state["toolsBorderRadiusPx"] >= 0
+                    assert len(state["commandGridColumns"].split()) == 2
                     assert state["searchFormVisible"] is True
                     assert state["filterVisible"] is False
                     assert state["filterValue"] == ""
-                    assert [command["text"] for command in state["visibleCommands"]] == [
-                        "Search",
-                        "Graph",
-                        "Practice",
-                        "Tasks",
-                        "Schedule",
-                        "Context",
-                        "Text size",
-                        "OpenDyslexic",
-                    ]
+                    assert state["visibleCommandTexts"] == expected_commands
                     assert all(
-                        80 <= command["width"] <= 110
-                        and 28 <= command["height"] <= 64
+                        item["writingMode"] == "horizontal-tb"
+                        for item in state["commands"]
+                    )
+                    overflowing_commands = [
+                        {
+                            "text": item["text"],
+                            "clientWidth": item["clientWidth"],
+                            "scrollWidth": item["scrollWidth"],
+                        }
+                        for item in state["commands"]
+                        if item["scrollWidth"] > item["clientWidth"] + 1
+                    ]
+                    assert overflowing_commands == [], repr(overflowing_commands)
+                    assert all(
+                        command["width"] > 0 and 28 <= command["height"] <= 64
                         for command in state["visibleCommands"]
                     )
                     assert all(
@@ -18594,7 +18665,7 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                         and command["textDecorationLine"] == "none"
                         for command in state["visibleCommands"]
                     )
-                    for width in [894, 912, 1279]:
+                    for width in [640, 893, 894, 912, 1279, 1280]:
                         page.set_viewport_size({"width": width, "height": 918})
                         if (
                             page.evaluate(
@@ -18602,14 +18673,14 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             )
                             != "expanded"
                         ):
-                            page.click("#raya-course-map .raya-course-map-toggle")
+                            page.click("[data-raya-course-map-expand]")
                         page.wait_for_function(
                             """() => {
                               const map = document.querySelector('#raya-course-map');
                               const box = map?.getBoundingClientRect();
                               return document.documentElement.dataset.rayaCourseMap === 'expanded'
-                                && box?.width >= 244
-                                && box?.width <= 264
+                                && box?.width >= 239
+                                && box?.width <= 253
                                 && !map?.dataset.rayaCourseMapTransition;
                             }"""
                         )
@@ -18625,11 +18696,18 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                               };
                               const map = document.querySelector('#raya-course-map');
                               const header = document.querySelector('.raya-course-map-header');
+                              const body = document.querySelector('#raya-course-map-body');
                               const tools = document.querySelector('.raya-course-rail-tools');
                               const position = document.querySelector(
-                                '#raya-course-map > .raya-page-position'
+                                '#raya-course-map-body > .raya-page-position'
                               );
                               const list = document.querySelector('#raya-course-map-list');
+                              const searchForm = tools.querySelector(
+                                '.raya-command-search-form'
+                              );
+                              const commandList = tools.querySelector(
+                                '.raya-course-rail-command-list'
+                              );
                               const mapBox = map.getBoundingClientRect();
                               const headerBox = header.getBoundingClientRect();
                               const toolsBox = tools.getBoundingClientRect();
@@ -18640,10 +18718,39 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                                 tools.querySelectorAll('.raya-course-rail-command')
                               ).filter(visible).map((command) => {
                                 const box = command.getBoundingClientRect();
+                                const label = command.querySelector(
+                                  '.raya-command-label'
+                                );
+                                const icon = command.querySelector('.raya-command-icon');
+                                const iconBox = icon?.getBoundingClientRect();
                                 return {
                                   text: command.textContent.trim(),
                                   width: Math.round(box.width),
                                   height: Math.round(box.height),
+                                  clientWidth: command.clientWidth,
+                                  scrollWidth: command.scrollWidth,
+                                  writingMode: label
+                                    ? getComputedStyle(label).writingMode
+                                    : '',
+                                  overflowWrap: label
+                                    ? getComputedStyle(label).overflowWrap
+                                    : '',
+                                  wordBreak: label
+                                    ? getComputedStyle(label).wordBreak
+                                    : '',
+                                  hyphens: label
+                                    ? getComputedStyle(label).hyphens
+                                    : '',
+                                  minWidth: getComputedStyle(command).minWidth,
+                                  overflowX: getComputedStyle(command).overflowX,
+                                  boxSizing: getComputedStyle(command).boxSizing,
+                                  iconWidth: Math.round(iconBox?.width || 0),
+                                  iconHeight: Math.round(iconBox?.height || 0),
+                                  shapeCount: icon
+                                    ? icon.querySelectorAll(
+                                        'path, circle, rect, line, polyline, polygon'
+                                      ).length
+                                    : 0,
                                 };
                               });
                               return {
@@ -18651,6 +18758,9 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                                 mapWidth: Math.round(mapBox.width),
                                 mapHeight: Math.round(mapBox.height),
                                 viewportHeight: window.innerHeight,
+                                bodyDisplay: getComputedStyle(body).display,
+                                bodyFlexGrow: getComputedStyle(body).flexGrow,
+                                listFlexGrow: getComputedStyle(list).flexGrow,
                                 headerBottom: Math.round(headerBox.bottom),
                                 toolsTop: Math.round(toolsBox.top),
                                 toolsBottom: Math.round(toolsBox.bottom),
@@ -18662,6 +18772,13 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                                 toolsBorderTopWidth: toolsStyle.borderTopWidth,
                                 toolsBoxShadow: toolsStyle.boxShadow,
                                 visibleCommandTexts: commands.map((command) => command.text),
+                                searchFormVisible: !!searchForm && visible(searchForm),
+                                commandListClientWidth: commandList.clientWidth,
+                                commandListScrollWidth: commandList.scrollWidth,
+                                commandListMinWidth: getComputedStyle(commandList).minWidth,
+                                commandGridColumns: getComputedStyle(commandList)
+                                  .gridTemplateColumns,
+                                commands,
                                 commandSizes: commands.map((command) => [
                                   command.width,
                                   command.height,
@@ -18670,11 +18787,14 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             }"""
                         )
                         assert breakpoint_state["width"] == width
-                        assert 244 <= breakpoint_state["mapWidth"] <= 264
+                        assert 239 <= breakpoint_state["mapWidth"] <= 253
                         assert (
                             breakpoint_state["mapHeight"]
                             >= breakpoint_state["viewportHeight"] - 32
                         )
+                        assert breakpoint_state["bodyDisplay"] == "flex"
+                        assert breakpoint_state["bodyFlexGrow"] == "1"
+                        assert breakpoint_state["listFlexGrow"] == "1"
                         assert (
                             breakpoint_state["headerBottom"]
                             <= breakpoint_state["toolsTop"]
@@ -18687,28 +18807,79 @@ def test_render_fixture_tablet_course_map_uses_compact_tool_strip(
                             breakpoint_state["positionBottom"]
                             <= breakpoint_state["listTop"]
                         )
-                        assert breakpoint_state["visibleCommandTexts"] == [
-                            "Search",
-                            "Graph",
-                            "Practice",
-                            "Tasks",
-                            "Schedule",
-                            "Context",
-                            "Text size",
-                            "OpenDyslexic",
-                        ]
-                        assert breakpoint_state["toolsBackground"] == (
-                            "rgba(0, 0, 0, 0)"
+                        assert (
+                            breakpoint_state["visibleCommandTexts"]
+                            == expected_commands
                         )
-                        assert breakpoint_state["toolsBorderTopWidth"] == "0px"
-                        assert breakpoint_state["toolsBoxShadow"] == "none"
-                        assert breakpoint_state["toolsHeight"] <= 260
+                        assert breakpoint_state["searchFormVisible"] is True
+                        assert breakpoint_state["commandListScrollWidth"] <= (
+                            breakpoint_state["commandListClientWidth"]
+                        )
+                        assert breakpoint_state["commandListMinWidth"] == "0px"
+                        assert (
+                            len(breakpoint_state["commandGridColumns"].split()) == 2
+                        )
                         assert all(
-                            80 <= command_width <= 110
-                            and 28 <= command_height <= 64
+                            item["writingMode"] == "horizontal-tb"
+                            for item in breakpoint_state["commands"]
+                        )
+                        assert all(
+                            item["overflowWrap"] == "normal"
+                            and item["wordBreak"] == "normal"
+                            and item["hyphens"] == "none"
+                            for item in breakpoint_state["commands"]
+                        )
+                        assert all(
+                            item["minWidth"] == "0px"
+                            and item["overflowX"] == "hidden"
+                            and item["boxSizing"] == "border-box"
+                            for item in breakpoint_state["commands"]
+                        )
+                        overflowing_commands = [
+                            {
+                                "text": item["text"],
+                                "clientWidth": item["clientWidth"],
+                                "scrollWidth": item["scrollWidth"],
+                            }
+                            for item in breakpoint_state["commands"]
+                            if item["scrollWidth"] > item["clientWidth"] + 1
+                        ]
+                        assert overflowing_commands == [], repr(overflowing_commands)
+                        assert all(
+                            command_width > 0 and 28 <= command_height <= 64
                             for command_width, command_height in breakpoint_state[
                                 "commandSizes"
                             ]
+                        )
+                        assert all(
+                            command["shapeCount"] > 0
+                            and 14 <= command["iconWidth"] <= 22
+                            and 14 <= command["iconHeight"] <= 22
+                            for command in breakpoint_state["commands"]
+                        )
+                        page.locator(
+                            ".raya-course-rail-command",
+                            has_text="OpenDyslexic",
+                        ).focus()
+                        focused_command_sizes = page.evaluate(
+                            """() => Array.from(document.querySelectorAll(
+                              '.raya-course-rail-command'
+                            )).filter((command) => command.checkVisibility()).map((command) => {
+                              const box = command.getBoundingClientRect();
+                              return [Math.round(box.width), Math.round(box.height)];
+                            })"""
+                        )
+                        assert len(focused_command_sizes) == len(
+                            breakpoint_state["commandSizes"]
+                        )
+                        assert all(
+                            abs(focused[0] - before_focus[0]) <= 1
+                            and abs(focused[1] - before_focus[1]) <= 1
+                            for focused, before_focus in zip(
+                                focused_command_sizes,
+                                breakpoint_state["commandSizes"],
+                                strict=True,
+                            )
                         )
                 finally:
                     page.close()

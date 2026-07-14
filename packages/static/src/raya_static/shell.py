@@ -52,6 +52,7 @@ _SHELL_JAVASCRIPT = r"""
     "(min-width: 640px) and (max-width: 767px)"
   );
   const approvedRailGeometryQuery = window.matchMedia("(min-width: 894px)");
+  const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const currentSectionLinks = Array.from(
@@ -462,7 +463,10 @@ _SHELL_JAVASCRIPT = r"""
 
   function setExpanded(nextExpanded, options = {}) {
     const previousExpanded = root.dataset.rayaCourseMap !== "collapsed";
-    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
+    const desktopTransition =
+      isStructuralRailShell()
+      && previousExpanded !== nextExpanded
+      && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
       clearCourseMapFilter();
@@ -1052,7 +1056,10 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     const previousExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
+    const desktopTransition =
+      isStructuralRailShell()
+      && previousExpanded !== nextExpanded
+      && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (desktopTransition) {
       window.clearTimeout(learningRailTransitionTimer);
