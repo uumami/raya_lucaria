@@ -277,13 +277,18 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
           <body data-raya-skin="warm-academic">
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-rail-tools" aria-label="Course tools"
-                  data-raya-course-map-tools>
-                  <button class="raya-course-map-toggle" type="button"
-                    data-raya-course-map-toggle aria-expanded="false">
-                    Course map
+                <header class="raya-course-map-header">
+                  <button class="raya-course-map-collapse" type="button"
+                    data-raya-course-map-toggle data-raya-course-map-collapse>
+                    Hide map
                   </button>
-                </section>
+                </header>
+                <div id="raya-course-map-body" class="raya-course-map-body">
+                  <section class="raya-course-rail-tools" aria-label="Course tools"
+                    data-raya-course-map-tools></section>
+                </div>
+                <button class="raya-course-map-expand" type="button"
+                  data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
               </nav>
               <article id="raya-article" class="raya-main-article"></article>
               <aside id="raya-learning-rail" class="raya-learning-rail"
@@ -392,12 +397,76 @@ def test_render_debug_report_requires_collapsible_shell_controls(
     shell_check = checks["site:learning-shell:index"]
     assert report["ok"] is False
     assert shell_check["status"] == "fail"
-    assert "button.raya-course-map-toggle" in shell_check["details"][
+    assert "div#raya-course-map-body.raya-course-map-body" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "button.raya-course-map-collapse" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "[data-raya-course-map-collapse]" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "button.raya-course-map-expand" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "[data-raya-course-map-expand]" in shell_check["details"][
         "missing_selectors"
     ]
     assert "[data-raya-course-map-toggle]" in shell_check["details"][
         "missing_selectors"
     ]
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "missing_selector"),
+    (
+        (
+            'id="raya-course-map-body" class="raya-course-map-body"',
+            'class="missing-course-map-body"',
+            "div#raya-course-map-body.raya-course-map-body",
+        ),
+        (
+            'class="raya-course-map-collapse"',
+            'class="missing-course-map-collapse"',
+            "button.raya-course-map-collapse",
+        ),
+        (
+            "data-raya-course-map-toggle data-raya-course-map-collapse",
+            "data-raya-course-map-toggle",
+            "[data-raya-course-map-collapse]",
+        ),
+        (
+            'class="raya-course-map-expand"',
+            'class="missing-course-map-expand"',
+            "button.raya-course-map-expand",
+        ),
+        (
+            "data-raya-course-map-toggle data-raya-course-map-expand",
+            "data-raya-course-map-toggle",
+            "[data-raya-course-map-expand]",
+        ),
+    ),
+)
+def test_render_debug_report_requires_each_dedicated_course_map_region(
+    tmp_path: Path,
+    old: str,
+    new: str,
+    missing_selector: str,
+) -> None:
+    html = _learning_shell_html("<p>Reader shell fixture.</p>")
+    assert old in html
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        html.replace(old, new, 1),
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index"]
+    assert shell_check["status"] == "fail"
+    assert missing_selector in shell_check["details"]["missing_selectors"]
 
 
 def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
@@ -411,13 +480,18 @@ def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
           <body data-raya-skin="warm-academic">
             <main class="raya-learning-shell">
               <nav class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-rail-tools" aria-label="Course tools"
-                  data-raya-course-map-tools>
-                  <button class="raya-course-map-toggle" type="button"
-                    data-raya-course-map-toggle aria-expanded="false">
-                    Course map
+                <header class="raya-course-map-header">
+                  <button class="raya-course-map-collapse" type="button"
+                    data-raya-course-map-toggle data-raya-course-map-collapse>
+                    Hide map
                   </button>
-                </section>
+                </header>
+                <div id="raya-course-map-body" class="raya-course-map-body">
+                  <section class="raya-course-rail-tools" aria-label="Course tools"
+                    data-raya-course-map-tools></section>
+                </div>
+                <button class="raya-course-map-expand" type="button"
+                  data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
               </nav>
               <aside class="raya-learning-rail" aria-label="Learning context"></aside>
               <article class="raya-main-article"></article>
@@ -473,7 +547,11 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
         "nav.raya-course-map",
         ".raya-course-rail-tools",
         "[data-raya-course-map-tools]",
-        "button.raya-course-map-toggle",
+        "div#raya-course-map-body.raya-course-map-body",
+        "button.raya-course-map-collapse",
+        "[data-raya-course-map-collapse]",
+        "button.raya-course-map-expand",
+        "[data-raya-course-map-expand]",
         "[data-raya-course-map-toggle]",
         "article#raya-article.raya-main-article",
         "aside#raya-learning-rail.raya-learning-rail",
@@ -1430,13 +1508,18 @@ def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
       <body data-raya-skin="{skin}">
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <section class="raya-course-rail-tools" aria-label="Course tools"
-              data-raya-course-map-tools>
-              <button class="raya-course-map-toggle" type="button"
-                data-raya-course-map-toggle aria-expanded="false">
-                Course map
+            <header class="raya-course-map-header">
+              <button class="raya-course-map-collapse" type="button"
+                data-raya-course-map-toggle data-raya-course-map-collapse>
+                Hide map
               </button>
-            </section>
+            </header>
+            <div id="raya-course-map-body" class="raya-course-map-body">
+              <section class="raya-course-rail-tools" aria-label="Course tools"
+                data-raya-course-map-tools></section>
+            </div>
+            <button class="raya-course-map-expand" type="button"
+              data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
           </nav>
           <article id="raya-article" class="raya-main-article">
             {content}

@@ -840,10 +840,8 @@ _SHELL_JAVASCRIPT = r"""
         );
       }
     };
+    map.scrollTop = 0;
     orientWithin(scrollContainer);
-    if (map !== scrollContainer) {
-      orientWithin(map);
-    }
     scrollContainer.dataset.rayaCourseMapOriented = "true";
     map.dataset.rayaCourseMapOriented = "true";
     return true;

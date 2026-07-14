@@ -5103,7 +5103,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'data-raya-course-map-action="scan"' not in html
     assert 'data-raya-course-map-action="less"' not in html
     shell_js = shell_resources().javascript
-    assert '".raya-course-rail-tools"' in shell_js
+    assert '"#raya-course-map-body"' in shell_js
+    assert '"[data-raya-course-map-collapse]"' in shell_js
+    assert '"[data-raya-course-map-expand]"' in shell_js
     assert '".raya-course-map-tools"' not in shell_js
     assert 'data-raya-course-map-storage-key=' in html
     assert 'data-raya-course-map-root=' in html
@@ -5893,7 +5895,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-command-icon",
         ".raya-command-icon-text",
         ".raya-command-map .raya-command-icon",
-        ".raya-course-map a::before",
+        ".raya-course-map-list a::before",
         ".raya-learning-shell",
         ".raya-course-map",
         ".raya-main-article",
@@ -5906,7 +5908,8 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-status-chip",
         ".raya-command:focus-visible",
         ".raya-font-toggle:focus-visible",
-        ".raya-course-map-toggle:focus-visible",
+        ".raya-course-map-collapse:focus-visible",
+        ".raya-course-map-expand:focus-visible",
         '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
@@ -5927,11 +5930,11 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(13.75rem, 13.75rem);"
+        "grid-template-columns: 15rem minmax(42rem, 1fr) 15rem;"
         in css
     )
     assert (
-        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);"
+        "grid-template-columns: 15rem minmax(48rem, 1fr);"
         in css
     )
     assert (
