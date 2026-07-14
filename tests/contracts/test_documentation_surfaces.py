@@ -373,3 +373,27 @@ def test_discovery_workspace_fuzzy_filters_are_documented() -> None:
     spanish_text = spanish_student_guide.read_text(encoding="utf-8")
     assert "Los filtros de texto pueden tolerar errores pequenos" in spanish_text
     assert "no ranking, personalizacion" in spanish_text
+
+
+def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
+    paths = {
+        "foundation": ROOT / "docs/foundation/20_learning_renderer_contract.md",
+        "student_en": ROOT / "docs/guides/en/students/index.md",
+        "student_es": ROOT / "docs/guides/es/estudiantes/index.md",
+        "agent_en": ROOT / "docs/guides/en/agents/index.md",
+        "agent_es": ROOT / "docs/guides/es/agentes/index.md",
+    }
+    text = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
+
+    for name in paths:
+        assert "Expand course map" in text[name], name
+    for name in ("foundation", "student_en", "agent_en"):
+        assert "Hide map" in text[name], name
+        assert "Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic" in text[name], name
+    for name in ("student_es", "agent_es"):
+        assert "Hide map" in text[name], name
+        assert "Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic" in text[name], name
+
+    assert "header Map action" in text["agent_en"]
+    assert "accion Map del header" in text["agent_es"]
+    assert "all nine actions as body tiles" not in text["foundation"]

@@ -48,8 +48,8 @@ an external service.
 
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
-rail. The rail starts with course search, then compact icon-labeled command
-tiles arranged two per row, then the scrollable course map. When the approved
+rail. At structural widths, the rail header shows `Course map` with a `Hide map` Map action. The body starts with course search, then compact icon-labeled tiles arranged two per row for Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic, followed by page position and the course map. Collapsing the rail removes that body and leaves one floating Map opener with the accessible name `Expand course map` that matches the right Context opener.
+When the approved
 `894px+` reader geometry is active, the expanded course map is shown by default
 and may show structural sequence numbers from the course order. It gives
 orientation by default, the main article remains the lesson, and the learning
@@ -61,11 +61,9 @@ collapsed desktop and medium-width states, hidden map and context content stops
 reserving reading columns, becomes inert, and is removed from keyboard and
 assistive navigation until restored. On phone-sized layouts, the course map may
 open as a temporary drawer while the learning rail remains readable and
-assistive-technology reachable. The Map,
-Context, Text size, OpenDyslexic, Search, Graph, Practice, Tasks, and Schedule
-controls are reading-comfort and navigation tools in the left course rail. They
-can widen the article, restore surrounding context, or hand off to generated
-workspaces without saving a personal progress state.
+assistive-technology reachable. The rail controls can widen the article,
+restore surrounding context, or hand off to generated workspaces without
+saving a personal progress state.
 When a page has a table of contents, the learning rail may also show the
 current article section as you scroll. That label is just section orientation
 from the page headings, not a reading percentage, completion marker, or progress

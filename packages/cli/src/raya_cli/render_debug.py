@@ -265,20 +265,21 @@ def _capture_desktop_shell_state_screenshots(
 ) -> dict[str, str]:
     if viewport_name != "desktop":
         return {}
-    toggle = page.locator(".raya-course-map-toggle").first
-    if toggle.count() == 0:
+    collapse = page.locator("[data-raya-course-map-collapse]:visible").first
+    if collapse.count() == 0:
         return {}
 
     collapsed_path = debug_dir / f"desktop-collapsed-{page_name}.png"
     expanded_path = debug_dir / f"desktop-expanded-{page_name}.png"
-    if toggle.get_attribute("aria-expanded") == "true":
-        toggle.click()
-        page.wait_for_timeout(100)
+    collapse.click()
+    page.wait_for_timeout(100)
     page.screenshot(path=str(collapsed_path), full_page=False)
 
-    if toggle.get_attribute("aria-expanded") != "true":
-        toggle.click()
-        page.wait_for_timeout(100)
+    expand = page.locator("[data-raya-course-map-expand]:visible").first
+    if expand.count() == 0:
+        return {}
+    expand.click()
+    page.wait_for_timeout(100)
     page.screenshot(path=str(expanded_path), full_page=False)
     return {
         "desktop-collapsed": str(collapsed_path),

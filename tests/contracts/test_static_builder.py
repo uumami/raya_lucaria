@@ -4850,7 +4850,15 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "data-raya-map-depth" in index_html
     assert ".raya-learning-rail-context-chip" in css_text
     assert (
-        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-context-chip'
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-header,'
+        in css_text
+    )
+    assert (
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-body,'
+        in css_text
+    )
+    assert (
+        'html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand,'
         in css_text
     )
     assert ".raya-visually-hidden" in css_text
@@ -4898,7 +4906,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
         "discovery workspaces may keep command bars",
-        "course search, then compact icon-labeled command tiles rendered two per row",
+        "course search, then exactly eight compact icon-labeled command tiles rendered two per row",
         "minimal floating Map edge opener",
         "collapsed course-map content is inert, removed from keyboard navigation",
         "no separate workspace section",
@@ -4935,7 +4943,12 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "left course rail" in text
         assert "discovery command bar" in text
         assert "course search" in text
-        assert "two" in text and "command" in text and "scrollable course map" in text
+        assert "Hide map" in text
+        assert (
+            "Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic"
+            in text
+        )
+        assert "Expand course map" in text
         assert "collapsible course-map branches" in text
         assert "top bar" not in lowered
         assert "top-bar" not in lowered
@@ -4954,7 +4967,12 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "riel izquierdo del curso" in text
         assert "barra de comandos de descubrimiento" in text
         assert "course search" in text
-        assert "dos" in text and "comandos" in text and "mapa del curso" in text
+        assert "Hide map" in text
+        assert (
+            "Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic"
+            in text
+        )
+        assert "Expand course map" in text
         assert "ramas plegables del mapa del curso" in text
         assert "barra superior" not in lowered
         assert "comando superior" not in lowered
@@ -5039,7 +5057,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
         '<button class="raya-command raya-command-map raya-course-map-toggle"'
         not in html
     )
-    assert 'aria-label="Collapse course map"' in html
+    assert 'aria-label="Hide course map"' in html
     assert '<button class="raya-course-rail-command raya-command-context"' in html
     assert "data-raya-learning-rail-toggle" in html
     assert 'aria-controls="raya-learning-rail-body"' in html
@@ -5093,7 +5111,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'data-raya-course-map-action="scan"' not in html
     assert 'data-raya-course-map-action="less"' not in html
     shell_js = shell_resources().javascript
-    assert '".raya-course-rail-tools"' in shell_js
+    assert '"#raya-course-map-body"' in shell_js
+    assert '"[data-raya-course-map-collapse]"' in shell_js
+    assert '"[data-raya-course-map-expand]"' in shell_js
     assert '".raya-course-map-tools"' not in shell_js
     assert 'data-raya-course-map-storage-key=' in html
     assert 'data-raya-course-map-root=' in html
@@ -5570,14 +5590,34 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-course-map-storage-key=' in html
     assert (
-        '<button class="raya-course-map-toggle raya-course-map-header-toggle raya-command-map"'
+        '<button class="raya-course-map-collapse" type="button" '
+        'data-raya-course-map-toggle data-raya-course-map-collapse '
+        'aria-controls="raya-course-map-body" aria-expanded="true" '
+        'aria-label="Hide course map">Hide map</button>'
         in html
     )
-    assert "data-raya-course-map-toggle" in html
-    assert 'aria-controls="raya-course-map"' in html
-    assert 'aria-expanded="true" aria-label="Collapse course map">' in html
-    assert 'data-raya-command-icon="map"' in html
-    assert '<span class="raya-command-label">Map</span>' in html
+    assert (
+        '<div id="raya-course-map-body" class="raya-course-map-body" '
+        'aria-hidden="false">'
+    ) in html
+    assert (
+        '<button class="raya-course-map-expand" type="button" '
+        'data-raya-course-map-toggle data-raya-course-map-expand '
+        'aria-controls="raya-course-map-body" aria-expanded="true" '
+        'aria-label="Expand course map">Map</button>'
+    ) in html
+
+    header_index = html.index('<div class="raya-course-map-header">')
+    body_index = html.index('<div id="raya-course-map-body"')
+    expand_index = html.index('<button class="raya-course-map-expand"')
+    assert header_index < body_index < expand_index
+    body_html = html[body_index:expand_index]
+    assert body_html.count('class="raya-course-rail-command ') == 8
+    assert body_html.index('class="raya-course-rail-search') < body_html.index(
+        'class="raya-course-rail-command-list'
+    )
+    assert 'data-raya-course-map-collapse' not in body_html
+    assert 'data-raya-course-map-expand' not in body_html
     assert 'aria-expanded="true">Collapse map</button>' not in html
     assert 'class="raya-course-map-workspaces"' not in html
     assert 'aria-label="Course workspaces"' not in html
@@ -5863,7 +5903,7 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-command-icon",
         ".raya-command-icon-text",
         ".raya-command-map .raya-command-icon",
-        ".raya-course-map a::before",
+        ".raya-course-map-list a::before",
         ".raya-learning-shell",
         ".raya-course-map",
         ".raya-main-article",
@@ -5876,7 +5916,8 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-status-chip",
         ".raya-command:focus-visible",
         ".raya-font-toggle:focus-visible",
-        ".raya-course-map-toggle:focus-visible",
+        ".raya-course-map-collapse:focus-visible",
+        ".raya-course-map-expand:focus-visible",
         '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
@@ -5897,11 +5938,11 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(13.75rem, 13.75rem);"
+        "grid-template-columns: 15rem minmax(42rem, 1fr) 15rem;"
         in css
     )
     assert (
-        "grid-template-columns: minmax(13.75rem, 13.75rem) minmax(42rem, 1fr) minmax(15rem, 15rem);"
+        "grid-template-columns: 15rem minmax(48rem, 1fr);"
         in css
     )
     assert (

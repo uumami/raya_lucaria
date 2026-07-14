@@ -271,27 +271,7 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
 ) -> None:
     site_dir, debug_dir = _write_debug_fixture(
         tmp_path,
-        """
-        <!doctype html>
-        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
-          <body data-raya-skin="warm-academic">
-            <main id="raya-content" class="raya-learning-shell">
-              <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-rail-tools" aria-label="Course tools"
-                  data-raya-course-map-tools>
-                  <button class="raya-course-map-toggle" type="button"
-                    data-raya-course-map-toggle aria-expanded="false">
-                    Course map
-                  </button>
-                </section>
-              </nav>
-              <article id="raya-article" class="raya-main-article"></article>
-              <aside id="raya-learning-rail" class="raya-learning-rail"
-                aria-label="Learning context"></aside>
-            </main>
-          </body>
-        </html>
-        """,
+        _learning_shell_html("<p>Reader shell fixture.</p>"),
         skin="warm-academic",
     )
 
@@ -302,6 +282,7 @@ def test_render_debug_report_passes_when_learning_shell_regions_exist(
         encoding="utf-8"
     )
     assert checks["site:learning-shell:index"]["status"] == "pass"
+    assert checks["site:learning-shell:index"]["details"]["ownership_failures"] == []
 
 
 def test_render_debug_report_skips_discovery_command_bar_pages(
@@ -392,12 +373,122 @@ def test_render_debug_report_requires_collapsible_shell_controls(
     shell_check = checks["site:learning-shell:index"]
     assert report["ok"] is False
     assert shell_check["status"] == "fail"
-    assert "button.raya-course-map-toggle" in shell_check["details"][
+    assert "div#raya-course-map-body.raya-course-map-body" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "button.raya-course-map-collapse" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "[data-raya-course-map-collapse]" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "button.raya-course-map-expand" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "[data-raya-course-map-expand]" in shell_check["details"][
         "missing_selectors"
     ]
     assert "[data-raya-course-map-toggle]" in shell_check["details"][
         "missing_selectors"
     ]
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "missing_selector"),
+    (
+        (
+            'id="raya-course-map-body" class="raya-course-map-body"',
+            'class="missing-course-map-body"',
+            "div#raya-course-map-body.raya-course-map-body",
+        ),
+        (
+            'class="raya-course-map-collapse"',
+            'class="missing-course-map-collapse"',
+            "button.raya-course-map-collapse",
+        ),
+        (
+            "data-raya-course-map-toggle data-raya-course-map-collapse",
+            "data-raya-course-map-toggle",
+            "[data-raya-course-map-collapse]",
+        ),
+        (
+            'class="raya-course-map-expand"',
+            'class="missing-course-map-expand"',
+            "button.raya-course-map-expand",
+        ),
+        (
+            "data-raya-course-map-toggle data-raya-course-map-expand",
+            "data-raya-course-map-toggle",
+            "[data-raya-course-map-expand]",
+        ),
+    ),
+)
+def test_render_debug_report_requires_each_dedicated_course_map_region(
+    tmp_path: Path,
+    old: str,
+    new: str,
+    missing_selector: str,
+) -> None:
+    html = _learning_shell_html("<p>Reader shell fixture.</p>")
+    assert old in html
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        html.replace(old, new, 1),
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index"]
+    assert shell_check["status"] == "fail"
+    assert missing_selector in shell_check["details"]["missing_selectors"]
+
+
+@pytest.mark.parametrize(
+    ("layout", "expected_failure"),
+    (
+        (
+            "expand-inside-body",
+            "course map expand opener must be a direct child",
+        ),
+        (
+            "collapse-outside-header",
+            "course map collapse control must be inside",
+        ),
+        (
+            "body-outside-map",
+            "course map body must be a direct child",
+        ),
+        (
+            "wrong-direct-order",
+            "course map direct children must be ordered",
+        ),
+    ),
+)
+def test_render_debug_report_rejects_invalid_course_map_ownership(
+    tmp_path: Path,
+    layout: str,
+    expected_failure: str,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        _learning_shell_html(
+            "<p>Reader shell fixture.</p>", course_map_layout=layout
+        ),
+        skin="warm-academic",
+    )
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    checks = {check["id"]: check for check in report["checks"]}
+    shell_check = checks["site:learning-shell:index"]
+    assert shell_check["status"] == "fail"
+    assert shell_check["details"]["missing_selectors"] == []
+    assert any(
+        expected_failure in failure
+        for failure in shell_check["details"]["ownership_failures"]
+    )
 
 
 def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
@@ -411,13 +502,18 @@ def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
           <body data-raya-skin="warm-academic">
             <main class="raya-learning-shell">
               <nav class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-rail-tools" aria-label="Course tools"
-                  data-raya-course-map-tools>
-                  <button class="raya-course-map-toggle" type="button"
-                    data-raya-course-map-toggle aria-expanded="false">
-                    Course map
+                <header class="raya-course-map-header">
+                  <button class="raya-course-map-collapse" type="button"
+                    data-raya-course-map-toggle data-raya-course-map-collapse>
+                    Hide map
                   </button>
-                </section>
+                </header>
+                <div id="raya-course-map-body" class="raya-course-map-body">
+                  <section class="raya-course-rail-tools" aria-label="Course tools"
+                    data-raya-course-map-tools></section>
+                </div>
+                <button class="raya-course-map-expand" type="button"
+                  data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
               </nav>
               <aside class="raya-learning-rail" aria-label="Learning context"></aside>
               <article class="raya-main-article"></article>
@@ -473,7 +569,11 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
         "nav.raya-course-map",
         ".raya-course-rail-tools",
         "[data-raya-course-map-tools]",
-        "button.raya-course-map-toggle",
+        "div#raya-course-map-body.raya-course-map-body",
+        "button.raya-course-map-collapse",
+        "[data-raya-course-map-collapse]",
+        "button.raya-course-map-expand",
+        "[data-raya-course-map-expand]",
         "[data-raya-course-map-toggle]",
         "article#raya-article.raya-main-article",
         "aside#raya-learning-rail.raya-learning-rail",
@@ -1423,21 +1523,19 @@ def _write_debug_fixture(
     return site_dir, debug_dir
 
 
-def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
+def _learning_shell_html(
+    content: str,
+    *,
+    skin: str = "warm-academic",
+    course_map_layout: str = "valid",
+) -> str:
+    course_map = _course_map_markup(course_map_layout)
     return f"""
     <!doctype html>
     <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
       <body data-raya-skin="{skin}">
         <main id="raya-content" class="raya-learning-shell">
-          <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <section class="raya-course-rail-tools" aria-label="Course tools"
-              data-raya-course-map-tools>
-              <button class="raya-course-map-toggle" type="button"
-                data-raya-course-map-toggle aria-expanded="false">
-                Course map
-              </button>
-            </section>
-          </nav>
+          {course_map}
           <article id="raya-article" class="raya-main-article">
             {content}
           </article>
@@ -1447,6 +1545,58 @@ def _learning_shell_html(content: str, *, skin: str = "warm-academic") -> str:
       </body>
     </html>
     """
+
+
+def _course_map_markup(layout: str) -> str:
+    collapse = """
+      <button class="raya-course-map-collapse" type="button"
+        data-raya-course-map-toggle data-raya-course-map-collapse>
+        Hide map
+      </button>
+    """
+    header = f'<header class="raya-course-map-header">{collapse}</header>'
+    empty_header = '<header class="raya-course-map-header"></header>'
+    expand = """
+      <button class="raya-course-map-expand" type="button"
+        data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
+    """
+    body_contents = """
+      <section class="raya-course-rail-tools" aria-label="Course tools"
+        data-raya-course-map-tools></section>
+      <label class="raya-course-map-filter-label"
+        for="raya-course-map-filter">Filter map</label>
+      <input id="raya-course-map-filter" class="raya-course-map-filter"
+        data-raya-course-map-filter>
+      <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
+        No map matches.
+      </p>
+      <div id="raya-course-map-list" class="raya-course-map-list"></div>
+    """
+    body = (
+        '<div id="raya-course-map-body" class="raya-course-map-body">'
+        f"{body_contents}"
+        f"{expand if layout == 'expand-inside-body' else ''}"
+        "</div>"
+    )
+    if layout == "collapse-outside-header":
+        direct_children = f"{empty_header}{collapse}{body}{expand}"
+    elif layout == "wrong-direct-order":
+        direct_children = f"{header}{expand}{body}"
+    elif layout == "body-outside-map":
+        return (
+            '<nav id="raya-course-map" class="raya-course-map" '
+            f'aria-label="Course map">{header}{expand}</nav>{body}'
+        )
+    elif layout in {"valid", "expand-inside-body"}:
+        direct_children = (
+            f"{header}{body}{'' if layout == 'expand-inside-body' else expand}"
+        )
+    else:
+        raise ValueError(f"unsupported course map layout: {layout}")
+    return (
+        '<nav id="raya-course-map" class="raya-course-map" '
+        f'aria-label="Course map">{direct_children}</nav>'
+    )
 
 
 def _write_skin_css(site_dir: Path, *, css: str | None = None) -> None:

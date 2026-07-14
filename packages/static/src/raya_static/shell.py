@@ -21,6 +21,9 @@ _SHELL_JAVASCRIPT = r"""
   const root = document.documentElement;
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
+  const mapBody = document.querySelector("#raya-course-map-body");
+  const mapCollapseButton = document.querySelector("[data-raya-course-map-collapse]");
+  const mapExpandButton = document.querySelector("[data-raya-course-map-expand]");
   const article = document.querySelector("#raya-article");
   const skipLink = document.querySelector('.raya-skip-link[href="#raya-article"]');
   const mobileMapOpener = document.querySelector(".raya-mobile-course-map-open");
@@ -49,6 +52,7 @@ _SHELL_JAVASCRIPT = r"""
     "(min-width: 640px) and (max-width: 767px)"
   );
   const approvedRailGeometryQuery = window.matchMedia("(min-width: 894px)");
+  const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
   const currentSectionLinks = Array.from(
@@ -80,7 +84,14 @@ _SHELL_JAVASCRIPT = r"""
     })
     .filter(Boolean);
 
-  if (!shell || !map || toggleButtons.length === 0) {
+  if (
+    !shell ||
+    !map ||
+    !mapBody ||
+    !mapCollapseButton ||
+    !mapExpandButton ||
+    toggleButtons.length === 0
+  ) {
     return;
   }
   let courseMapDrawerOpener = null;
@@ -95,49 +106,31 @@ _SHELL_JAVASCRIPT = r"""
   const SHELL_TRANSITION_MS = 240;
 
   function updateMapLinkTabOrder(nextExpanded) {
-    const mapList = map.querySelector("#raya-course-map-list");
-    const hideFullMapContent = structuralRailQuery.matches && !nextExpanded;
-    if (mapList) {
-      mapList.setAttribute("aria-hidden", hideFullMapContent ? "true" : "false");
-      mapList.inert = hideFullMapContent;
-      setFocusableDescendantsEnabled(mapList, !hideFullMapContent);
-    }
+    const hideBody = isStructuralRailShell() && !nextExpanded;
+    mapBody.setAttribute("aria-hidden", hideBody ? "true" : "false");
+    setElementInert(mapBody, hideBody);
+    setFocusableDescendantsEnabled(mapBody, !hideBody);
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
     } else {
       map.setAttribute("tabindex", "-1");
     }
-    map.querySelectorAll("a").forEach((link) => {
-      if (hideFullMapContent) {
-        link.setAttribute("tabindex", "-1");
+  }
+
+  function syncCourseMapToggleButtons(nextExpanded) {
+    toggleButtons.forEach((button) => {
+      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
+      if (button === mapCollapseButton) {
+        button.setAttribute("aria-label", "Hide course map");
+        button.textContent = "Hide map";
+      } else if (button === mapExpandButton) {
+        button.setAttribute("aria-label", "Expand course map");
+        button.textContent = "Map";
       } else {
-        link.removeAttribute("tabindex");
-      }
-    });
-    map
-      .querySelectorAll(
-        [
-          ".raya-course-rail-tools",
-          ".raya-course-map-filter-label",
-          ".raya-course-map-filter",
-          ".raya-map-filter-empty",
-          ".raya-course-map-close",
-        ].join(",")
-      )
-      .forEach((element) => {
-        element.setAttribute("aria-hidden", hideFullMapContent ? "true" : "false");
-        setElementInert(element, hideFullMapContent);
-        setFocusableDescendantsEnabled(element, !hideFullMapContent);
-      });
-    map.querySelectorAll("[data-raya-course-map-toggle]").forEach((button) => {
-      if (button.dataset.rayaPreviousTabindex === "__none__") {
-        button.removeAttribute("tabindex");
-        delete button.dataset.rayaPreviousTabindex;
-      } else if (button.dataset.rayaPreviousTabindex) {
-        button.setAttribute("tabindex", button.dataset.rayaPreviousTabindex);
-        delete button.dataset.rayaPreviousTabindex;
-      } else {
-        button.removeAttribute("tabindex");
+        button.setAttribute(
+          "aria-label",
+          nextExpanded ? "Collapse course map" : "Expand course map"
+        );
       }
     });
   }
@@ -148,6 +141,15 @@ _SHELL_JAVASCRIPT = r"""
 
   function isStructuralRailShell() {
     return structuralRailQuery.matches;
+  }
+
+  function courseMapFocusTarget(nextState) {
+    if (!isStructuralRailShell()) {
+      return mobileMapOpener || article;
+    }
+    return nextState === "collapsed"
+      ? mapExpandButton || article
+      : mapCollapseButton || article;
   }
 
   function isCompactStructuralRailShell() {
@@ -461,7 +463,10 @@ _SHELL_JAVASCRIPT = r"""
 
   function setExpanded(nextExpanded, options = {}) {
     const previousExpanded = root.dataset.rayaCourseMap !== "collapsed";
-    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
+    const desktopTransition =
+      isStructuralRailShell()
+      && previousExpanded !== nextExpanded
+      && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
       clearCourseMapFilter();
@@ -487,27 +492,13 @@ _SHELL_JAVASCRIPT = r"""
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    toggleButtons.forEach((button) => {
-      button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
-      button.setAttribute(
-        "aria-label",
-        nextExpanded ? "Collapse course map" : "Expand course map"
-      );
-      if (map.contains(button) && !button.classList.contains("raya-command-map")) {
-        button.textContent = nextExpanded ? "Collapse map" : "Expand map";
-      }
-    });
+    syncCourseMapToggleButtons(nextExpanded);
     if (!desktopExpanding) {
       updateMapLinkTabOrder(nextExpanded);
     }
     syncCourseMapDrawerState();
     if (desktopExpanding) {
-      const mapList = map.querySelector("#raya-course-map-list");
-      if (mapList) {
-        mapList.setAttribute("aria-hidden", "true");
-        mapList.inert = true;
-        setFocusableDescendantsEnabled(mapList, false);
-      }
+      updateMapLinkTabOrder(false);
     }
   }
 
@@ -849,10 +840,8 @@ _SHELL_JAVASCRIPT = r"""
         );
       }
     };
+    map.scrollTop = 0;
     orientWithin(scrollContainer);
-    if (map !== scrollContainer) {
-      orientWithin(map);
-    }
     scrollContainer.dataset.rayaCourseMapOriented = "true";
     map.dataset.rayaCourseMapOriented = "true";
     return true;
@@ -1065,15 +1054,30 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     const previousExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    const desktopTransition = isStructuralRailShell() && previousExpanded !== nextExpanded;
+    const desktopTransition =
+      isStructuralRailShell()
+      && previousExpanded !== nextExpanded
+      && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
+    const focusAfterExpansion = Boolean(
+      nextExpanded && options.focusAfterExpansion
+    );
     if (desktopTransition) {
       window.clearTimeout(learningRailTransitionTimer);
       learningRail.dataset.rayaLearningRailTransition = nextExpanded
         ? "expanding"
         : "collapsing";
       learningRailTransitionTimer = window.setTimeout(() => {
+        const shouldTransferFocus =
+          desktopExpanding
+          && focusAfterExpansion
+          && root.dataset.rayaLearningRail === "expanded"
+          && learningRail.dataset.rayaLearningRailTransition === "expanding"
+          && document.activeElement === learningRailExpand;
         delete learningRail.dataset.rayaLearningRailTransition;
+        if (shouldTransferFocus && learningRailCollapse) {
+          learningRailCollapse.focus();
+        }
       }, SHELL_TRANSITION_MS);
     } else {
       window.clearTimeout(learningRailTransitionTimer);
@@ -1098,6 +1102,13 @@ _SHELL_JAVASCRIPT = r"""
       learningRailExpand.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
     }
     syncLearningRailDrawerState();
+    if (focusAfterExpansion) {
+      if (desktopExpanding && learningRailExpand) {
+        learningRailExpand.focus();
+      } else if (learningRailCollapse) {
+        learningRailCollapse.focus();
+      }
+    }
   }
 
   function openLearningRailDrawer(opener = null) {
@@ -1399,20 +1410,26 @@ _SHELL_JAVASCRIPT = r"""
       return null;
     }
     if (mobileMapOpener === activeElement && isStructuralRailShell()) {
-      return map.querySelector("[data-raya-course-map-toggle]") || article;
+      return courseMapFocusTarget(next.courseMap);
     }
     if (map.contains(activeElement)) {
       if (!isStructuralRailShell()) {
-        return mobileMapOpener || article;
+        return courseMapFocusTarget(next.courseMap);
       }
       if (activeElement === mapCloseButton) {
-        return map.querySelector("[data-raya-course-map-toggle]") || article;
+        return courseMapFocusTarget(next.courseMap);
       }
       if (
         next.courseMap === "collapsed" &&
-        !activeElement.matches("[data-raya-course-map-toggle]")
+        activeElement !== mapExpandButton
       ) {
-        return map.querySelector("[data-raya-course-map-toggle]") || article;
+        return courseMapFocusTarget(next.courseMap);
+      }
+      if (
+        next.courseMap === "expanded" &&
+        activeElement === mapExpandButton
+      ) {
+        return courseMapFocusTarget(next.courseMap);
       }
     }
     if (learningRail && learningRail.contains(activeElement)) {
@@ -1554,6 +1571,9 @@ _SHELL_JAVASCRIPT = r"""
         setLearningRailExpanded(false, { skipPersist: true });
       }
       setExpanded(nextExpanded, { skipPersist: true });
+      if (map.contains(button)) {
+        courseMapFocusTarget(nextExpanded ? "expanded" : "collapsed").focus();
+      }
       saveReaderShellPreference();
       if (root.dataset.rayaCourseMap !== "collapsed") {
         hideCourseMapCompactPreview();
@@ -1671,11 +1691,11 @@ _SHELL_JAVASCRIPT = r"""
       if (isMediumStructuralShell()) {
         setExpanded(false, { skipPersist: true });
       }
-      setLearningRailExpanded(true, { skipPersist: true });
+      setLearningRailExpanded(true, {
+        skipPersist: true,
+        focusAfterExpansion: true,
+      });
       saveReaderShellPreference();
-      if (learningRailCollapse) {
-        learningRailCollapse.focus();
-      }
     });
   }
 
@@ -1691,7 +1711,10 @@ _SHELL_JAVASCRIPT = r"""
       if (nextExpanded && isMediumStructuralShell()) {
         setExpanded(false, { skipPersist: true });
       }
-      setLearningRailExpanded(nextExpanded, { skipPersist: true });
+      setLearningRailExpanded(nextExpanded, {
+        skipPersist: true,
+        focusAfterExpansion: nextExpanded,
+      });
       saveReaderShellPreference();
     });
   });
@@ -1725,19 +1748,19 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     let structuralRailChanged = false;
-    if (event.key === "Escape" && root.dataset.rayaCourseMap === "expanded") {
+    if (
+      event.key === "Escape" &&
+      isStructuralRailShell() &&
+      root.dataset.rayaCourseMap === "expanded"
+    ) {
       const activeElement = document.activeElement;
-      const shouldMoveFocus =
+      const mapOwnsFocus =
         activeElement instanceof Element &&
-        map.contains(activeElement) &&
-        !activeElement.matches("[data-raya-course-map-toggle]");
-      setExpanded(false, { skipPersist: true });
-      structuralRailChanged = isStructuralRailShell();
-      if (shouldMoveFocus) {
-        const mapToggle = map.querySelector("[data-raya-course-map-toggle]");
-        if (mapToggle) {
-          mapToggle.focus();
-        }
+        map.contains(activeElement);
+      if (mapOwnsFocus) {
+        setExpanded(false, { skipPersist: true });
+        structuralRailChanged = true;
+        courseMapFocusTarget("collapsed").focus();
       }
     }
     if (

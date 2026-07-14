@@ -130,6 +130,14 @@ def test_render_debug_capture_does_not_seed_persisted_course_map_state() -> None
     assert "localStorage.setItem" not in source
 
 
+def test_render_debug_capture_uses_dedicated_course_map_controls() -> None:
+    source = RENDER_DEBUG_SOURCE.read_text(encoding="utf-8")
+
+    assert 'page.locator("[data-raya-course-map-collapse]:visible")' in source
+    assert 'page.locator("[data-raya-course-map-expand]:visible")' in source
+    assert 'page.locator(".raya-course-map-toggle")' not in source
+
+
 def test_render_debug_parity_gate_inspects_explicit_copied_site_contents(
     tmp_path: Path,
 ) -> None:
@@ -468,13 +476,26 @@ def _learning_shell_html(content: str) -> str:
       <body data-raya-skin="warm-academic">
         <main id="raya-content" class="raya-learning-shell">
           <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-            <section class="raya-course-rail-tools" aria-label="Course tools"
-              data-raya-course-map-tools>
-              <button class="raya-course-map-toggle" type="button"
-                data-raya-course-map-toggle aria-expanded="false">
-                Course map
+            <header class="raya-course-map-header">
+              <button class="raya-course-map-collapse" type="button"
+                data-raya-course-map-toggle data-raya-course-map-collapse>
+                Hide map
               </button>
-            </section>
+            </header>
+            <div id="raya-course-map-body" class="raya-course-map-body">
+              <section class="raya-course-rail-tools" aria-label="Course tools"
+                data-raya-course-map-tools></section>
+              <label class="raya-course-map-filter-label"
+                for="raya-course-map-filter">Filter map</label>
+              <input id="raya-course-map-filter" class="raya-course-map-filter"
+                data-raya-course-map-filter>
+              <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
+                No map matches.
+              </p>
+              <div id="raya-course-map-list" class="raya-course-map-list"></div>
+            </div>
+            <button class="raya-course-map-expand" type="button"
+              data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
           </nav>
           <article id="raya-article" class="raya-main-article">
             {content}
