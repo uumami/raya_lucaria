@@ -3982,6 +3982,20 @@ img {
   gap: 0.875rem;
   grid-template-areas: "course-map main-article learning-rail";
   grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr) minmax(16rem, 18rem);
+  /* grid-template-columns is transitioned (below) for smooth rail/map
+     collapse, but that same transition also fires when a responsive
+     breakpoint is crossed by a plain viewport resize (media queries are
+     just computed-value changes to a transition-aware property). Column
+     tracks then animate from a wider band's resolved px values down to
+     this band's, and because the viewport itself snaps to its new width
+     instantly while the 220ms transition catches up, the *sum* of
+     mid-transition track widths can briefly exceed the (already-narrower)
+     viewport before settling. overflow-x: clip (not hidden, so it doesn't
+     also touch overflow-y or break the rail/map position: sticky, which
+     only cares about the vertical axis) contains that transient overshoot
+     without affecting the settled layout or any content's own horizontal
+     scroll (mjx-container, pre, tables keep their own overflow-x: auto). */
+  overflow-x: clip;
 }
 html[data-raya-shell-ready="true"] .raya-learning-shell {
   transition: grid-template-columns 220ms ease, gap 220ms ease;
