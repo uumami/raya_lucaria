@@ -1,6 +1,11 @@
+from raya_static.rendering import rich_render_css
 from raya_static.shell import shell_resources
 from raya_static.shell_prepaint import shell_prepaint_javascript
-from raya_static.shell_geometry import RAIL_EFFECTIVE_DERIVATION_JS
+from raya_static.shell_geometry import (
+    _TOKENS,
+    RAIL_APPROVED_PX,
+    RAIL_EFFECTIVE_DERIVATION_JS,
+)
 
 
 def test_rail_geometry_is_single_sourced_across_scripts():
@@ -17,3 +22,20 @@ def test_rail_geometry_is_single_sourced_across_scripts():
     # The pairwise derivation is byte-identical in both scripts (no rule drift).
     assert RAIL_EFFECTIVE_DERIVATION_JS in runtime
     assert RAIL_EFFECTIVE_DERIVATION_JS in prepaint
+
+
+def test_css_and_js_share_the_same_rail_boundaries():
+    # The approved-geometry complement token must exist in the single source
+    # of truth (guards against the CSS boundary being re-hardcoded instead
+    # of derived from RAIL_APPROVED_PX).
+    assert _TOKENS["__RAYA_APPROVED_MINUS_PX__"] == str(RAIL_APPROVED_PX - 1)
+    css = rich_render_css()
+    for token in ("__RAYA_STRUCTURAL_PX__", "__RAYA_APPROVED_PX__",
+                  "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
+        assert token not in css, token
+    # The approved-geometry boundary appears in CSS exactly as in JS.
+    assert "(min-width: 894px)" in css
+    # Its complement is emitted from the same source (guards the sub-pixel gap).
+    assert "(max-width: 893px)" in css
+    # The structural boundary is shared too.
+    assert "(min-width: 640px)" in css

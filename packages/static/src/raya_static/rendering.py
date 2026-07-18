@@ -24,6 +24,7 @@ from raya_static.numbered_objects import (
     expand_shorthand_references,
 )
 from raya_static.proofs import StaticEnvironmentRenderContext, StaticEnvironmentRenderItem
+from raya_static.shell_geometry import apply_rail_geometry_tokens
 
 
 INDEX_MARKER = "<!-- raya:index -->"
@@ -4074,7 +4075,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
 .raya-course-map-expand {
   display: none;
 }
-@media (min-width: 640px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) {
   .raya-course-map-collapse {
     display: inline-flex;
   }
@@ -4107,7 +4108,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   overflow-wrap: normal;
   word-break: normal;
 }
-@media (min-width: 894px) {
+@media (min-width: __RAYA_APPROVED_PX__px) {
   .raya-course-map-header,
   .raya-learning-rail-header {
     min-height: 3.9375rem;
@@ -5303,7 +5304,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     flex: 1 1 auto;
   }
 }
-@media (min-width: 1280px) {
+@media (min-width: __RAYA_DESKTOP_PX__px) {
   .raya-learning-shell {
     gap: 1.5rem;
   }
@@ -6443,7 +6444,7 @@ mjx-container[display="true"] {
     text-align: left;
   }
 }
-@media (min-width: 640px) and (max-width: 1279px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 1279px) {
   .raya-learning-shell {
     align-items: start;
     gap: 0;
@@ -6699,7 +6700,7 @@ mjx-container[display="true"] {
     line-height: 1;
   }
 }
-@media (min-width: 640px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) {
   html[data-raya-course-map-drawer="closed"] .raya-course-map,
   .raya-course-map {
     display: flex;
@@ -6827,7 +6828,7 @@ mjx-container[display="true"] {
     line-height: 1;
   }
 }
-@media (min-width: 640px) and (max-width: 1279px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 1279px) {
   html[data-raya-course-map="collapsed"] .raya-course-map,
   .raya-course-map[data-raya-course-map="collapsed"],
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail,
@@ -6836,7 +6837,7 @@ mjx-container[display="true"] {
     transform: none;
   }
 }
-@media (min-width: 1280px) {
+@media (min-width: __RAYA_DESKTOP_PX__px) {
   html[data-raya-course-map="collapsed"] .raya-course-map,
   .raya-course-map[data-raya-course-map="collapsed"],
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail,
@@ -6845,7 +6846,7 @@ mjx-container[display="true"] {
     transform: translateY(-50%);
   }
 }
-@media (min-width: 640px) and (max-width: 893px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_APPROVED_MINUS_PX__px) {
   .raya-course-map,
   .raya-learning-rail {
     width: min(15.75rem, calc(100vw - 3rem));
@@ -6859,7 +6860,7 @@ mjx-container[display="true"] {
     padding-right: calc(min(15.75rem, calc(100vw - 3rem)) + 1rem);
   }
 }
-@media (min-width: 640px) and (max-width: 767px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 767px) {
   .raya-learning-shell {
     gap: 0.6rem;
     grid-template-areas: "main-article";
@@ -7387,7 +7388,9 @@ mjx-container[display="true"] {
   }
 }
 """.strip()
-    return base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"
+    return apply_rail_geometry_tokens(
+        base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"
+    )
 
 
 def _new_env(
