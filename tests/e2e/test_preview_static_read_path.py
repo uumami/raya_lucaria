@@ -10152,14 +10152,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "collapsed"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
@@ -10169,8 +10169,8 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "collapsed"
                     )
@@ -10204,14 +10204,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "expanded"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
@@ -10232,14 +10232,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "data-raya-reader-focus"
                     ) is None
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "expanded"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
