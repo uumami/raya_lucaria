@@ -14548,7 +14548,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             hidden: body?.getAttribute('aria-hidden'),
                             inertAttribute: body?.hasAttribute('inert'),
                             inertProperty: body?.inert,
@@ -14600,7 +14600,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             hidden: body?.getAttribute('aria-hidden'),
                             inertAttribute: body?.hasAttribute('inert'),
                             inertProperty: body?.inert,
@@ -14628,7 +14628,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           );
                           const bodyBox = body?.getBoundingClientRect();
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             bodyVisible: !!body?.getClientRects().length
                               && bodyBox.width > 0
                               && bodyBox.height > 0,
