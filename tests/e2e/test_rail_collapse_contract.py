@@ -1,3 +1,6 @@
+from pathlib import Path
+
+import raya_static.rendering as rendering_module
 from raya_static.rendering import rich_render_css
 from raya_static.shell import shell_resources
 from raya_static.shell_prepaint import shell_prepaint_javascript
@@ -29,6 +32,23 @@ def test_css_and_js_share_the_same_rail_boundaries():
     # of truth (guards against the CSS boundary being re-hardcoded instead
     # of derived from RAIL_APPROVED_PX).
     assert _TOKENS["__RAYA_APPROVED_MINUS_PX__"] == str(RAIL_APPROVED_PX - 1)
+
+    # Assert against the UN-SUBSTITUTED template source, not the substituted
+    # output. rich_render_css() resolves tokens before returning, so checking
+    # only its output can never distinguish "value happens to match" from
+    # "value is sourced from the shared token" — a hardcoded literal that
+    # equals the current token value would pass an output-only check and
+    # silently reintroduce drift risk the next time RAIL_APPROVED_PX etc.
+    # change. Reading the template source is what actually proves the
+    # rail-collapse @media boundaries are token-sourced.
+    source = Path(rendering_module.__file__).read_text(encoding="utf-8")
+    assert "(min-width: __RAYA_STRUCTURAL_PX__px)" in source
+    assert "(min-width: __RAYA_APPROVED_PX__px)" in source
+    assert "(max-width: __RAYA_APPROVED_MINUS_PX__px)" in source
+
+    # And the substituted output is still the final, token-free CSS with the
+    # expected resolved boundaries (belt-and-suspenders on top of the
+    # source-level check above).
     css = rich_render_css()
     for token in ("__RAYA_STRUCTURAL_PX__", "__RAYA_APPROVED_PX__",
                   "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
