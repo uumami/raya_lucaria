@@ -17564,7 +17564,6 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                     mobile_state = page.evaluate(
                         """() => {
                           const root = document.documentElement;
-                          const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
@@ -17580,7 +17579,7 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                           }));
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            railState: root.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             bodyDisplay: body ? getComputedStyle(body).display : '',
