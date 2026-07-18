@@ -11564,6 +11564,15 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                   .querySelector('#raya-course-map')
                                   ?.getBoundingClientRect().width <= 112"""
                             )
+                            # The collapse animates grid-template-columns over
+                            # ~220ms; the chip settles instantly but the article
+                            # track keeps growing until the transition clears.
+                            # Wait for transition-complete before measuring.
+                            page.wait_for_function(
+                                """() => !document
+                                  .querySelector('#raya-course-map')
+                                  ?.dataset.rayaCourseMapTransition"""
+                            )
                             collapsed = page.evaluate(
                                 """() => {
                                   const box = (selector) => {
@@ -11643,6 +11652,19 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                             && article.right <= rail.left + 1
                           );
                         }"""
+                    )
+                    # The expand animates grid-template-columns over ~220ms; the
+                    # course-map-list stays visibility:hidden while
+                    # data-raya-course-map-transition="expanding". Wait for
+                    # transition-complete on both rails before measuring/reading
+                    # visibility, or this races the animation.
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset.rayaCourseMapTransition
+                          && !document
+                            .querySelector('#raya-learning-rail')
+                            ?.dataset.rayaLearningRailTransition"""
                     )
                     resized = page.evaluate(
                         """() => {
