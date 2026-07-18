@@ -213,6 +213,58 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
         handle.close()
 
 
+def test_learning_rail_inert_is_width_gated_via_shared_helper():
+    # Both rail bodies must derive own-state inert through ONE shared,
+    # width-gated helper (isStructuralRailShell() && collapsed) — the same
+    # pattern the map body already uses. Before this fix, the learning-rail
+    # toggle path (setLearningRailExpanded) set inert unconditionally on
+    # `!nextExpanded` with no width gate; that specific assignment is
+    # unobservable from outside the module because the SAME function
+    # unconditionally calls syncLearningRailDrawerState() immediately
+    # afterward, which re-derives the correct width-gated value and masks
+    # the bug before any external read can see it. A black-box DOM read
+    # (see test_phone_right_rail_never_own_state_inert) therefore cannot
+    # distinguish the buggy code from the fixed code — this source-level
+    # assertion is what actually goes red for the missing refactor.
+    js = shell_resources().javascript
+    assert "function applyRailBodyInert(" in js, js
+    assert "applyRailBodyInert(learningRailBody, !nextExpanded)" in js, js
+    assert "applyRailBodyInert(mapBody, !nextExpanded)" in js, js
+    # The old unconditional (non-width-gated) assignment must be gone from
+    # the toggle path.
+    assert "setElementInert(learningRailBody, !nextExpanded)" not in js, js
+
+
+def test_phone_right_rail_never_own_state_inert(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 780})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.wait_for_timeout(120)
+                state = page.evaluate("""() => {
+                  const body = document.querySelector('#raya-learning-rail-body');
+                  return { ariaHidden: body.getAttribute('aria-hidden'),
+                           inert: body.hasAttribute('inert') };
+                }""")
+                # Phone: right rail body is reachable (not own-state inert), drawer closed.
+                assert state["ariaHidden"] != "true", state
+                assert state["inert"] is False, state
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_expanded_rails_do_not_overflow_at_894_band(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

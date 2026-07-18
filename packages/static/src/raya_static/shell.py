@@ -108,11 +108,15 @@ _SHELL_JAVASCRIPT = r"""
   let learningRailTransitionTimer = 0;
   const SHELL_TRANSITION_MS = 240;
 
+  function applyRailBodyInert(body, collapsed) {
+    const hide = isStructuralRailShell() && collapsed;
+    body.setAttribute("aria-hidden", hide ? "true" : "false");
+    setElementInert(body, hide);
+    setFocusableDescendantsEnabled(body, !hide);
+  }
+
   function updateMapLinkTabOrder(nextExpanded) {
-    const hideBody = isStructuralRailShell() && !nextExpanded;
-    mapBody.setAttribute("aria-hidden", hideBody ? "true" : "false");
-    setElementInert(mapBody, hideBody);
-    setFocusableDescendantsEnabled(mapBody, !hideBody);
+    applyRailBodyInert(mapBody, !nextExpanded);
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
     } else {
@@ -1012,9 +1016,7 @@ _SHELL_JAVASCRIPT = r"""
       learningRail.setAttribute("aria-hidden", "false");
       setElementInert(learningRail, false);
       setFocusableDescendantsEnabled(learningRail, true);
-      learningRailBody.setAttribute("aria-hidden", "false");
-      setElementInert(learningRailBody, false);
-      setFocusableDescendantsEnabled(learningRailBody, true);
+      applyRailBodyInert(learningRailBody, root.dataset.rayaLearningRail === "collapsed");
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
       });
@@ -1025,9 +1027,7 @@ _SHELL_JAVASCRIPT = r"""
     setElementInert(learningRail, false);
     setFocusableDescendantsEnabled(learningRail, true);
     const railExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    learningRailBody.setAttribute("aria-hidden", railExpanded ? "false" : "true");
-    setElementInert(learningRailBody, !railExpanded);
-    setFocusableDescendantsEnabled(learningRailBody, railExpanded);
+    applyRailBodyInert(learningRailBody, !railExpanded);
     if (root.dataset.rayaLearningRailDrawer !== "closed") {
       root.dataset.rayaLearningRailDrawer = "closed";
     }
@@ -1079,9 +1079,7 @@ _SHELL_JAVASCRIPT = r"""
     }
     root.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     syncLearningRailToggleButtons(nextExpanded);
-    learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-    setElementInert(learningRailBody, !nextExpanded);
-    setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
+    applyRailBodyInert(learningRailBody, !nextExpanded);
     if (nextExpanded) {
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
