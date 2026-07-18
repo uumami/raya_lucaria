@@ -225,13 +225,15 @@ from raya_static.rendering import rich_render_css
 
 def test_css_and_js_share_the_same_rail_boundaries():
     css = rich_render_css()
-    for token in ("__RAYA_STRUCTURAL_PX__", "__RAYA_APPROVED_PX__", "__RAYA_DESKTOP_PX__"):
+    for token in ("__RAYA_STRUCTURAL_PX__", "__RAYA_APPROVED_PX__",
+                  "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
         assert token not in css, token
-    # The approved-geometry boundary appears identically in CSS and JS.
+    # The approved-geometry boundary appears in CSS exactly as in JS.
     assert "(min-width: 894px)" in css
-    # No collapse rule pivots at a boundary the JS does not know (guards the
-    # historical 894-vs-1280 mismatch): the in-flow grid boundary is 894.
-    assert "(min-width: 894px)" in css
+    # Its complement is emitted from the same source (guards the sub-pixel gap).
+    assert "(max-width: 893px)" in css
+    # The structural boundary is shared too.
+    assert "(min-width: 640px)" in css
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
