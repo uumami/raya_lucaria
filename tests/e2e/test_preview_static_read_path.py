@@ -20018,7 +20018,9 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                             currentSectionText: currentSectionLink?.textContent?.trim() || '',
                             currentSectionHref: currentSectionLink?.getAttribute('href') || '',
                             viewportHeight,
-                            railState: rail?.getAttribute('data-raya-learning-rail'),
+                            railState: document.documentElement.getAttribute(
+                              'data-raya-learning-rail'
+                            ),
                             bodyHidden: body?.getAttribute('aria-hidden'),
                           };
                         }"""
