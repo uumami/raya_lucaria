@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from raya_static.shell_geometry import apply_rail_geometry_tokens
+
 
 SHELL_SCRIPT_NAME = "shell.js"
 SHELL_RESOURCE_PATH = "_raya/render"
@@ -13,12 +15,13 @@ class ShellResources:
 
 
 def shell_resources() -> ShellResources:
-    return ShellResources(javascript=_SHELL_JAVASCRIPT)
+    return ShellResources(javascript=apply_rail_geometry_tokens(_SHELL_JAVASCRIPT))
 
 
 _SHELL_JAVASCRIPT = r"""
 (() => {
   const root = document.documentElement;
+  __RAYA_RAIL_DERIVATION__
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
   const mapBody = document.querySelector("#raya-course-map-body");
@@ -46,12 +49,12 @@ _SHELL_JAVASCRIPT = r"""
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
   const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
   const assetInspectButtons = Array.from(document.querySelectorAll("[data-raya-asset-inspect]"));
-  const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
-  const structuralRailQuery = window.matchMedia("(min-width: 640px)");
+  const desktopMapQuery = window.matchMedia("(min-width: __RAYA_DESKTOP_PX__px)");
+  const structuralRailQuery = window.matchMedia("(min-width: __RAYA_STRUCTURAL_PX__px)");
   const compactStructuralRailQuery = window.matchMedia(
-    "(min-width: 640px) and (max-width: 767px)"
+    "(min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 767px)"
   );
-  const approvedRailGeometryQuery = window.matchMedia("(min-width: 894px)");
+  const approvedRailGeometryQuery = window.matchMedia("(min-width: __RAYA_APPROVED_PX__px)");
   const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
@@ -105,11 +108,15 @@ _SHELL_JAVASCRIPT = r"""
   let learningRailTransitionTimer = 0;
   const SHELL_TRANSITION_MS = 240;
 
+  function applyRailBodyInert(body, collapsed) {
+    const hide = isStructuralRailShell() && collapsed;
+    body.setAttribute("aria-hidden", hide ? "true" : "false");
+    setElementInert(body, hide);
+    setFocusableDescendantsEnabled(body, !hide);
+  }
+
   function updateMapLinkTabOrder(nextExpanded) {
-    const hideBody = isStructuralRailShell() && !nextExpanded;
-    mapBody.setAttribute("aria-hidden", hideBody ? "true" : "false");
-    setElementInert(mapBody, hideBody);
-    setFocusableDescendantsEnabled(mapBody, !hideBody);
+    applyRailBodyInert(mapBody, !nextExpanded);
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
     } else {
@@ -217,14 +224,7 @@ _SHELL_JAVASCRIPT = r"""
       courseMap: defaultCourseMapExpanded() ? "expanded" : "collapsed",
       learningRail: defaultLearningRailExpanded() ? "expanded" : "collapsed",
     };
-    if (
-      !approvedRailGeometryQuery.matches &&
-      next.courseMap === "expanded" &&
-      next.learningRail === "expanded"
-    ) {
-      return { courseMap: "collapsed", learningRail: "collapsed" };
-    }
-    return next;
+    return rayaEffectiveRailState(next.courseMap, next.learningRail, innerWidth);
   }
 
   function saveReaderShellPreference() {
@@ -490,8 +490,6 @@ _SHELL_JAVASCRIPT = r"""
       delete map.dataset.rayaCourseMapTransition;
     }
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     syncCourseMapToggleButtons(nextExpanded);
     if (!desktopExpanding) {
       updateMapLinkTabOrder(nextExpanded);
@@ -1018,9 +1016,7 @@ _SHELL_JAVASCRIPT = r"""
       learningRail.setAttribute("aria-hidden", "false");
       setElementInert(learningRail, false);
       setFocusableDescendantsEnabled(learningRail, true);
-      learningRailBody.setAttribute("aria-hidden", "false");
-      setElementInert(learningRailBody, false);
-      setFocusableDescendantsEnabled(learningRailBody, true);
+      applyRailBodyInert(learningRailBody, root.dataset.rayaLearningRail === "collapsed");
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");
       });
@@ -1031,9 +1027,7 @@ _SHELL_JAVASCRIPT = r"""
     setElementInert(learningRail, false);
     setFocusableDescendantsEnabled(learningRail, true);
     const railExpanded = root.dataset.rayaLearningRail !== "collapsed";
-    learningRailBody.setAttribute("aria-hidden", railExpanded ? "false" : "true");
-    setElementInert(learningRailBody, !railExpanded);
-    setFocusableDescendantsEnabled(learningRailBody, railExpanded);
+    applyRailBodyInert(learningRailBody, !railExpanded);
     if (root.dataset.rayaLearningRailDrawer !== "closed") {
       root.dataset.rayaLearningRailDrawer = "closed";
     }
@@ -1084,12 +1078,8 @@ _SHELL_JAVASCRIPT = r"""
       delete learningRail.dataset.rayaLearningRailTransition;
     }
     root.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
-    shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
-    learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     syncLearningRailToggleButtons(nextExpanded);
-    learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
-    setElementInert(learningRailBody, !nextExpanded);
-    setFocusableDescendantsEnabled(learningRailBody, nextExpanded);
+    applyRailBodyInert(learningRailBody, !nextExpanded);
     if (nextExpanded) {
       railToggleButtons.forEach((button) => {
         setRailPanelExpanded(button, button.getAttribute("aria-expanded") === "true");

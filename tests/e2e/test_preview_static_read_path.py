@@ -519,8 +519,12 @@ def test_graph_detail_navigator_jumps_without_state_or_storage(
                         }"""
                     )
                     assert no_js["ready"] == ""
-                    assert no_js["map"]["width"] <= 48
-                    assert no_js["rail"]["width"] <= 48
+                    # 913px is >= the 894px in-flow boundary, so without JS the
+                    # SSR default (data-raya-course-map/-learning-rail="expanded"
+                    # baked into <html>) renders both rails in-flow and expanded
+                    # (15rem = 240px), not collapsed/overlay.
+                    assert no_js["map"]["width"] >= 200
+                    assert no_js["rail"]["width"] >= 200
                     assert no_js["article"]["left"] >= no_js["map"]["right"]
                     assert no_js["article"]["right"] <= no_js["rail"]["left"]
                     assert no_js["mapArticleOverlap"] == 0
@@ -9758,9 +9762,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert 'data-raya-command-icon="map"' in index_html
     assert '<span class="raya-command-label">Course</span>' in index_html
-    assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
+    assert 'id="raya-content" class="raya-learning-shell"' in index_html
     assert (
-        'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"'
+        'class="raya-course-map" aria-label="Course map" data-raya-course-map-root='
         in index_html
     )
     assert (
@@ -9781,7 +9785,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert "@media (min-width: 1280px)" in rich_css
     assert (
-        'grid-template-areas: "main-article learning-rail"'
+        'grid-template-areas: "course-map . main-article . learning-rail"'
         in rich_css
     )
     assert "transition: grid-template-columns 220ms ease" in rich_css
@@ -10148,14 +10152,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "collapsed"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
@@ -10165,8 +10169,8 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "collapsed"
                     )
@@ -10200,14 +10204,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "expanded"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
@@ -10228,14 +10232,14 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
                         "data-raya-reader-focus"
                     ) is None
                     assert (
-                        page.locator("#raya-course-map").get_attribute(
-                            "data-raya-course-map"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaCourseMap"
                         )
                         == "expanded"
                     )
                     assert (
-                        page.locator("#raya-learning-rail").get_attribute(
-                            "data-raya-learning-rail"
+                        page.evaluate(
+                            "() => document.documentElement.dataset.rayaLearningRail"
                         )
                         == "expanded"
                     )
@@ -11324,10 +11328,14 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       };
                                     }"""
                                 )
-                                assert medium_shell["mapPosition"] == "fixed"
-                                assert medium_shell["railPosition"] == "fixed"
-                                assert len(medium_shell["columns"].split()) == 1
                                 if approved_geometry:
+                                    # 894-1279 is now the in-flow band: rails are
+                                    # position: sticky (not fixed) and the shell
+                                    # is the 5-track token grid (map/gap/article/
+                                    # gap/rail), not a single collapsed-width track.
+                                    assert medium_shell["mapPosition"] == "sticky"
+                                    assert medium_shell["railPosition"] == "sticky"
+                                    assert len(medium_shell["columns"].split()) == 5
                                     assert medium_shell["mapState"] == "expanded"
                                     assert medium_shell["railState"] == "expanded"
                                     assert 239 <= medium_shell["mapWidth"] <= 241
@@ -11336,6 +11344,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                         viewport["width"] - 572
                                     )
                                 else:
+                                    assert medium_shell["mapPosition"] == "fixed"
+                                    assert medium_shell["railPosition"] == "fixed"
+                                    assert len(medium_shell["columns"].split()) == 1
                                     assert medium_shell["mapState"] == "collapsed"
                                     assert medium_shell["railState"] == "collapsed"
                                     assert 40 <= medium_shell["mapWidth"] <= 56
@@ -11553,6 +11564,15 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                   .querySelector('#raya-course-map')
                                   ?.getBoundingClientRect().width <= 112"""
                             )
+                            # The collapse animates grid-template-columns over
+                            # ~220ms; the chip settles instantly but the article
+                            # track keeps growing until the transition clears.
+                            # Wait for transition-complete before measuring.
+                            page.wait_for_function(
+                                """() => !document
+                                  .querySelector('#raya-course-map')
+                                  ?.dataset.rayaCourseMapTransition"""
+                            )
                             collapsed = page.evaluate(
                                 """() => {
                                   const box = (selector) => {
@@ -11632,6 +11652,19 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                             && article.right <= rail.left + 1
                           );
                         }"""
+                    )
+                    # The expand animates grid-template-columns over ~220ms; the
+                    # course-map-list stays visibility:hidden while
+                    # data-raya-course-map-transition="expanding". Wait for
+                    # transition-complete on both rails before measuring/reading
+                    # visibility, or this races the animation.
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset.rayaCourseMapTransition
+                          && !document
+                            .querySelector('#raya-learning-rail')
+                            ?.dataset.rayaLearningRailTransition"""
                     )
                     resized = page.evaluate(
                         """() => {
@@ -11895,8 +11928,19 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                                 assert state["article"]["right"] <= (
                                     state["rail"]["left"] + 1
                                 )
+                                # At exactly 894 both rails still cost their full
+                                # 15rem + 1.5rem gutter tracks, squeezing the
+                                # article to its real settled floor (~334px =
+                                # 894 - 32 padding - 240 map - 24 gap - 240 rail
+                                # - 24 gap); 320 allows minor sub-pixel/font
+                                # variance. 1279 already has generous room and
+                                # 1280 reintroduces the 42rem comfort floor.
                                 assert state["article"]["width"] >= (
-                                    672 if width == 1280 else 380
+                                    672
+                                    if width == 1280
+                                    else 320
+                                    if width == 894
+                                    else 380
                                 )
                                 assert set(state["commandWritingModes"]) == {
                                     "horizontal-tb"
@@ -13783,8 +13827,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13883,8 +13927,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13960,8 +14004,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -14029,6 +14073,63 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert escape_collapsed["bodyInert"] is True
                     assert escape_collapsed["bodyTabbableCount"] == 0
                     assert set(escape_collapsed["linkTabIndexes"]) <= {None, "-1"}
+
+                    # Branch disclosure (raya:course-map-branches sessionStorage)
+                    # must survive a collapse/expand cycle: it is a separate key
+                    # persisted by setMapNodeExpanded/saveCollapsedMapBranches and
+                    # is not touched by the rail collapse state machine.
+                    page.click("[data-raya-course-map-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width >= 220"""
+                    )
+                    page.click(
+                        '[data-raya-map-node="render-root"] [data-raya-map-node-toggle]'
+                    )
+                    branches_before_cycle = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const key = map?.getAttribute(
+                            'data-raya-course-map-storage-key'
+                          );
+                          return {
+                            key,
+                            value: key ? window.sessionStorage.getItem(key) : null,
+                          };
+                        }"""
+                    )
+                    assert branches_before_cycle["key"]
+                    assert branches_before_cycle["value"] is not None
+                    assert "render-root" in json.loads(
+                        branches_before_cycle["value"]
+                    )
+
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width < 130"""
+                    )
+                    page.click("[data-raya-course-map-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width >= 220"""
+                    )
+                    branches_after_cycle = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const key = map?.getAttribute(
+                            'data-raya-course-map-storage-key'
+                          );
+                          return {
+                            key,
+                            value: key ? window.sessionStorage.getItem(key) : null,
+                          };
+                        }"""
+                    )
+                    assert branches_after_cycle == branches_before_cycle
                 finally:
                     page.close()
             finally:
@@ -14184,8 +14285,8 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: shell?.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            shellState: document.documentElement.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14232,8 +14333,8 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const chipBox = chip?.getBoundingClientRect();
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: shell?.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            shellState: document.documentElement.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14287,7 +14388,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const rail = document.querySelector('#raya-learning-rail');
                           return {
                             rootState: document.documentElement.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             railWidth: rail?.getBoundingClientRect().width,
@@ -14313,10 +14414,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     )
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'expanded'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     resized_mobile = page.evaluate(
                         """() => {
@@ -14340,10 +14438,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
 
                     page.set_viewport_size({"width": 1280, "height": 900})
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'collapsed'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
                     )
                     page.click("[data-raya-learning-rail-expand]")
                     page.wait_for_function(
@@ -14355,10 +14450,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     page.focus("[data-raya-learning-rail-collapse]")
                     page.keyboard.press("Escape")
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'collapsed'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
                     )
                     escape_collapsed = page.evaluate(
                         """() => ({
@@ -14456,7 +14548,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             hidden: body?.getAttribute('aria-hidden'),
                             inertAttribute: body?.hasAttribute('inert'),
                             inertProperty: body?.inert,
@@ -14508,7 +14600,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             hidden: body?.getAttribute('aria-hidden'),
                             inertAttribute: body?.hasAttribute('inert'),
                             inertProperty: body?.inert,
@@ -14536,7 +14628,7 @@ def test_reader_navigation_spine_collapse_keeps_static_contract(
                           );
                           const bodyBox = body?.getBoundingClientRect();
                           return {
-                            rail: rail?.getAttribute('data-raya-learning-rail'),
+                            rail: document.documentElement.getAttribute('data-raya-learning-rail'),
                             bodyVisible: !!body?.getClientRects().length
                               && bodyBox.width > 0
                               && bodyBox.height > 0,
@@ -16938,17 +17030,25 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
                           const courseMap = document.querySelector('nav.raya-course-map');
                           const rail = document.querySelector('aside.raya-learning-rail');
                           const articleStyle = getComputedStyle(article);
+                          const articleBox = article.getBoundingClientRect();
+                          const mapBox = courseMap.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
                           return {
                             bodyBackground: bodyStyle.backgroundColor,
                             articleBackground: articleStyle.backgroundColor,
-                            articleWidth: article.getBoundingClientRect().width,
+                            articleWidth: articleBox.width,
                             shellWidth: shell.getBoundingClientRect().width,
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            // column-gap is pinned to 0; the visual gutter now
+                            // lives in the --raya-map-gap/--raya-rail-gap grid
+                            // tracks, so measure the rendered gap between the
+                            // rail edges and the article edges instead.
+                            mapGutter: articleBox.left - mapBox.right,
+                            railGutter: railBox.left - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
-                            mapWidth: courseMap.getBoundingClientRect().width,
-                            railWidth: rail.getBoundingClientRect().width,
+                            mapWidth: mapBox.width,
+                            railWidth: railBox.width,
                           };
                         }"""
                     )
@@ -16960,13 +17060,19 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
                         """() => {
                           const article = document.querySelector('article.raya-main-article');
                           const shell = document.querySelector('.raya-learning-shell');
+                          const courseMap = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
                           const articleStyle = getComputedStyle(article);
+                          const articleBox = article.getBoundingClientRect();
                           return {
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            mapGutter: articleBox.left
+                              - courseMap.getBoundingClientRect().right,
+                            railGutter: rail.getBoundingClientRect().left
+                              - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
-                            articleRight: article.getBoundingClientRect().right,
+                            articleRight: articleBox.right,
                             viewportWidth: window.innerWidth,
                           };
                         }"""
@@ -16981,11 +17087,13 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
     assert hierarchy["articleWidth"] > hierarchy["mapWidth"] * 2
     assert hierarchy["articleWidth"] > hierarchy["railWidth"] * 2
     assert hierarchy["articleWidth"] < hierarchy["shellWidth"]
-    assert hierarchy["shellColumnGap"] >= 24
+    assert hierarchy["mapGutter"] >= 20
+    assert hierarchy["railGutter"] >= 20
     assert hierarchy["articlePaddingInline"] >= 28
     assert hierarchy["articleBorderLeftWidth"] >= 1
     assert 4 <= hierarchy["articleBorderRadius"] <= 8
-    assert threshold["shellColumnGap"] >= 24
+    assert threshold["mapGutter"] >= 20
+    assert threshold["railGutter"] >= 20
     assert threshold["articlePaddingInline"] >= 28
     assert threshold["articleBorderLeftWidth"] >= 1
     assert 4 <= threshold["articleBorderRadius"] <= 8
@@ -17050,13 +17158,21 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           const articleStyle = getComputedStyle(article);
                           const courseMapStyle = getComputedStyle(courseMap);
                           const railStyle = getComputedStyle(rail);
+                          const articleBox = article.getBoundingClientRect();
+                          const mapBox = courseMap.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
                           return {
                             shellWidth: shell.getBoundingClientRect().width,
-                            articleWidth: article.getBoundingClientRect().width,
+                            articleWidth: articleBox.width,
                             paragraphWidth: firstParagraph.getBoundingClientRect().width,
-                            mapWidth: courseMap.getBoundingClientRect().width,
-                            railWidth: rail.getBoundingClientRect().width,
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            mapWidth: mapBox.width,
+                            railWidth: railBox.width,
+                            // column-gap is pinned to 0; the visual gutter now
+                            // lives in the --raya-map-gap/--raya-rail-gap grid
+                            // tracks, so measure the rendered gap between the
+                            // rail edges and the article edges instead.
+                            mapGutter: articleBox.left - mapBox.right,
+                            railGutter: railBox.left - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
@@ -17208,7 +17324,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["articleWidth"] > chrome["railWidth"] * 3
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
-    assert chrome["shellColumnGap"] >= 24
+    assert chrome["mapGutter"] >= 20
+    assert chrome["railGutter"] >= 20
     assert chrome["articlePaddingInline"] >= 28
     assert chrome["articleBorderLeftWidth"] >= 1
     assert 4 <= chrome["articleBorderRadius"] <= 8
@@ -17447,7 +17564,6 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                     mobile_state = page.evaluate(
                         """() => {
                           const root = document.documentElement;
-                          const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           const collapse = document.querySelector('[data-raya-learning-rail-collapse]');
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
@@ -17463,7 +17579,7 @@ def test_render_fixture_responsive_shell_state_remains_accessible(
                           }));
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            railState: root.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             bodyDisplay: body ? getComputedStyle(body).display : '',
@@ -18055,7 +18171,11 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         rail_collapsed["articleWidth"]
                         >= initial["articleWidth"] + 120
                     )
-                    assert len(rail_collapsed["shellColumns"].split()) == 2
+                    # Grid is now the constant 5-track token grid (map/gap/
+                    # article/gap/rail); collapsing a rail zeroes its column
+                    # and gap tracks rather than removing tracks from the
+                    # template, so the token count stays 5.
+                    assert len(rail_collapsed["shellColumns"].split()) == 5
                     assert rail_collapsed["railWidth"] <= 56
                     assert rail_collapsed["railExpandWidth"] >= 40
                     assert rail_collapsed["articleRight"] <= rail_collapsed[
@@ -18131,7 +18251,7 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         both_collapsed["articleWidth"]
                         >= rail_collapsed["articleWidth"] + 120
                     )
-                    assert len(both_collapsed["shellColumns"].split()) == 1
+                    assert len(both_collapsed["shellColumns"].split()) == 5
                     assert both_collapsed["mapWidth"] <= 56
                     assert both_collapsed["railWidth"] <= 56
                     assert both_collapsed["mapButtonWidth"] >= 40
@@ -18346,7 +18466,10 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     assert state["overflow"] <= 1
                     assert state["map"]["width"] in range(239, 242)
                     if width == 894:
-                        assert state["article"]["width"] >= 380
+                        # Real settled floor at exactly 894 with both rails
+                        # expanded: 894 - 32 padding - 240 map - 24 gap -
+                        # 240 rail - 24 gap = 334px. 320 allows minor variance.
+                        assert state["article"]["width"] >= 320
                     if width == 1280:
                         assert state["article"]["width"] >= 672
             finally:
@@ -19895,7 +20018,9 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
                             currentSectionText: currentSectionLink?.textContent?.trim() || '',
                             currentSectionHref: currentSectionLink?.getAttribute('href') || '',
                             viewportHeight,
-                            railState: rail?.getAttribute('data-raya-learning-rail'),
+                            railState: document.documentElement.getAttribute(
+                              'data-raya-learning-rail'
+                            ),
                             bodyHidden: body?.getAttribute('aria-hidden'),
                           };
                         }"""
@@ -20787,12 +20912,15 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert state == {
                         "drawer": "closed",
                         "scrollLock": "false",
-                        "shellAreas": '"main-article"',
+                        # 912px is >= the 894px in-flow boundary: rails render
+                        # inline (not overlay/drawer), using the constant
+                        # 5-track token grid and position: sticky.
+                        "shellAreas": '"course-map . main-article . learning-rail"',
                         "mapRole": None,
                         "mapModal": None,
                         "mapBodyHidden": "false",
                         "mapBodyInert": False,
-                        "mapPosition": "fixed",
+                        "mapPosition": "sticky",
                         "articleHidden": None,
                         "articleInert": False,
                         "railHidden": "false",
@@ -20817,7 +20945,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert geometry["mapCollapseScrollWidth"] <= (
                         geometry["mapCollapseClientWidth"] + 1
                     )
-                    assert len(geometry["shellColumns"].split()) == 1
+                    # Constant 5-track token grid (map/gap/article/gap/rail)
+                    # regardless of collapse state; only the widths zero out.
+                    assert len(geometry["shellColumns"].split()) == 5
 
                     if (
                         page.evaluate(
@@ -20877,7 +21007,12 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert tools["visibleCount"] >= 7
                     assert tools["minWidth"] >= 28
                     assert tools["mapHeight"] >= 736
-                    assert tools["mapBottom"] >= 756
+                    # At >= 894 the expanded map uses the base position:
+                    # sticky rule (top: 1rem, max-height: calc(100vh - 2rem))
+                    # instead of the old fixed/top:0.75rem chrome, so the
+                    # settled bottom edge moved from 756 to 752 (16 top +
+                    # 736 height). 748 allows minor sub-pixel variance.
+                    assert tools["mapBottom"] >= 748
                     assert tools["labelsWithoutTextRoom"] == []
 
                     page.click("[data-raya-course-map-collapse]")
@@ -20946,17 +21081,30 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     collapsed_background = collapsed.pop("toggleBackground")
                     assert collapsed == {
                         "mapState": "collapsed",
-                        "shellAreas": '"main-article"',
+                        # Grid areas stay the constant 3-region template at
+                        # >= 894 regardless of collapse state; only the
+                        # column widths (not the template) zero out.
+                        "shellAreas": (
+                            '"course-map . main-article . learning-rail"'
+                        ),
                         "mapBodyHidden": "true",
                         "mapBodyInert": True,
+                        # Collapse is width-invariant: a collapsed rail always
+                        # becomes a fixed-position chip (see
+                        # "rail collapse: appearance" in rendering.py), even
+                        # though the expanded rail is position: sticky here.
                         "mapPosition": "fixed",
                         "mapDisplay": "grid",
                         "mapWidth": 44,
                         "mapLeft": 6,
                         "mapRight": 50,
                         "articleLeft": 60,
-                        "articleWidth": 596,
-                        "railLeft": 660,
+                        # column-gap is 0 now; the gutter moved into the
+                        # 1.5rem (24px) --raya-map-gap/--raya-rail-gap
+                        # tracks (was 0.875rem/14px column-gap), so the
+                        # settled article/rail geometry shifted accordingly.
+                        "articleWidth": 572,
+                        "railLeft": 656,
                         "railWidth": 240,
                         "toggleWidth": 40,
                         "toggleHeight": 40,
@@ -20970,7 +21118,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "rgba(255, 255, 255, 0.44)",
                         "rgba(255, 255, 255, 0.72)",
                     }
-                    assert len(collapsed_columns) == 1
+                    assert len(collapsed_columns) == 5
 
                     page.wait_for_function(
                         """() => !document
@@ -21025,7 +21173,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     both_article_width = both_collapsed.pop("articleWidth")
                     assert both_collapsed["mapState"] == "collapsed"
                     assert both_collapsed["railState"] == "expanded"
-                    assert both_collapsed["shellAreas"] == '"main-article"'
+                    assert both_collapsed["shellAreas"] == (
+                        '"course-map . main-article . learning-rail"'
+                    )
                     assert both_collapsed["mapWidth"] == 44
                     assert both_collapsed["mapBodyHidden"] == "true"
                     assert both_collapsed["mapBodyInert"] is True
@@ -21038,7 +21188,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert both_collapsed["mapToggleOpacity"] == "1"
                     assert both_collapsed["railExpandedValues"] == ["true"]
                     assert both_article_width >= 520
-                    assert len(both_columns) == 1
+                    assert len(both_columns) == 5
                 finally:
                     page.close()
             finally:
@@ -21203,7 +21353,11 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                             "scrollLock": "true" if modal else "false",
                             "role": "dialog" if modal else None,
                             "modal": "true" if modal else None,
-                            "position": "fixed" if modal or width < 1280 else "sticky",
+                            # The in-flow boundary is 894 (not 1280): rails
+                            # are position: sticky from 894 up, and only
+                            # fixed below that (structural/drawer bands) or
+                            # while the mobile drawer is open (modal).
+                            "position": "fixed" if modal or width < 894 else "sticky",
                             "backdropHidden": not modal,
                             "backdropDisplay": "block" if modal else "none",
                             "openerVisible": modal,
@@ -21235,7 +21389,9 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                                 assert geometry["mapBox"]["width"] <= 56
                                 assert geometry["railBox"]["width"] <= 56
                             elif approved_geometry:
-                                assert len(geometry["shellColumns"].split()) == 1
+                                # Constant 5-track token grid at >= 894, not
+                                # the old collapsed single-track format.
+                                assert len(geometry["shellColumns"].split()) == 5
                                 assert geometry["mapBox"]["width"] in range(239, 242)
                                 assert geometry["railBox"]["width"] in range(239, 242)
                                 assert geometry["mapBox"]["right"] <= (
@@ -21257,7 +21413,10 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                                 assert geometry["mapBox"]["width"] in range(239, 242)
                                 assert geometry["railBox"]["width"] in range(239, 242)
                                 assert geometry["articleBox"]["width"] >= 240
-                                assert len(geometry["shellColumns"].split()) == 3
+                                # Still the constant 5-track token grid at
+                                # >= 1280 (comfort layer only widens the
+                                # article's minmax floor, not the track count).
+                                assert len(geometry["shellColumns"].split()) == 5
                     finally:
                         page.close()
                 page = browser.new_page(viewport={"width": 639, "height": 760})
@@ -21291,13 +21450,13 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'
-                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
+                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
                           && getComputedStyle(document.querySelector('#raya-course-map-body')).display === 'flex'"""
                     )
                     assert_visible_focus_and_clear_openers(page)
                     page.set_viewport_size({"width": 1279, "height": 760})
                     page.wait_for_function(
-                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
+                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
                           && document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
@@ -22617,8 +22776,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
         in root_html
     )
     assert (
-        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
-        in root_html
+        '<main id="raya-content" class="raya-learning-shell">' in root_html
     )
     assert (
         '<article id="raya-article" class="raya-main-article" tabindex="-1">'
@@ -22626,7 +22784,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     )
     assert (
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
-        'aria-label="Learning context" data-raya-learning-rail="expanded">'
+        'aria-label="Learning context">'
     ) in root_html
     assert root_html.index(
         '<nav id="raya-course-map" class="raya-course-map"'

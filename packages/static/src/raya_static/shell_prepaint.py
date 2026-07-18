@@ -1,32 +1,27 @@
 from __future__ import annotations
 
+from raya_static.shell_geometry import apply_rail_geometry_tokens
+
 
 SHELL_PREPAINT_SCRIPT_NAME = "shell-prepaint.js"
 
 
 def shell_prepaint_javascript() -> str:
-    return _SHELL_PREPAINT_JAVASCRIPT
+    return apply_rail_geometry_tokens(_SHELL_PREPAINT_JAVASCRIPT)
 
 
 _SHELL_PREPAINT_JAVASCRIPT = r"""
 (() => {
   const root = document.documentElement;
   const courseId = root.dataset.rayaCourseId || "";
+  __RAYA_RAIL_DERIVATION__
   const applyEffective = (courseMap, learningRail) => {
-    let map = courseMap;
-    let rail = learningRail;
-    if (innerWidth < 640) {
-      map = "expanded";
-      rail = "expanded";
-    } else if (innerWidth < 894 && map === "expanded" && rail === "expanded") {
-      map = "collapsed";
-      rail = "collapsed";
-    }
-    root.dataset.rayaCourseMap = map;
-    root.dataset.rayaLearningRail = rail;
+    const result = rayaEffectiveRailState(courseMap, learningRail, innerWidth);
+    root.dataset.rayaCourseMap = result.courseMap;
+    root.dataset.rayaLearningRail = result.learningRail;
   };
   const applyDefaults = () => {
-    const expanded = innerWidth < 640 || innerWidth >= 894;
+    const expanded = innerWidth < __RAYA_STRUCTURAL_PX__ || innerWidth >= __RAYA_APPROVED_PX__;
     applyEffective(expanded ? "expanded" : "collapsed", expanded ? "expanded" : "collapsed");
   };
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(courseId)) {
