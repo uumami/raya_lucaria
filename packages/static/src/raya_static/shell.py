@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from raya_static.shell_geometry import apply_rail_geometry_tokens
+
 
 SHELL_SCRIPT_NAME = "shell.js"
 SHELL_RESOURCE_PATH = "_raya/render"
@@ -13,12 +15,13 @@ class ShellResources:
 
 
 def shell_resources() -> ShellResources:
-    return ShellResources(javascript=_SHELL_JAVASCRIPT)
+    return ShellResources(javascript=apply_rail_geometry_tokens(_SHELL_JAVASCRIPT))
 
 
 _SHELL_JAVASCRIPT = r"""
 (() => {
   const root = document.documentElement;
+  __RAYA_RAIL_DERIVATION__
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
   const mapBody = document.querySelector("#raya-course-map-body");
@@ -46,12 +49,12 @@ _SHELL_JAVASCRIPT = r"""
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
   const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
   const assetInspectButtons = Array.from(document.querySelectorAll("[data-raya-asset-inspect]"));
-  const desktopMapQuery = window.matchMedia("(min-width: 1280px)");
-  const structuralRailQuery = window.matchMedia("(min-width: 640px)");
+  const desktopMapQuery = window.matchMedia("(min-width: __RAYA_DESKTOP_PX__px)");
+  const structuralRailQuery = window.matchMedia("(min-width: __RAYA_STRUCTURAL_PX__px)");
   const compactStructuralRailQuery = window.matchMedia(
-    "(min-width: 640px) and (max-width: 767px)"
+    "(min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 767px)"
   );
-  const approvedRailGeometryQuery = window.matchMedia("(min-width: 894px)");
+  const approvedRailGeometryQuery = window.matchMedia("(min-width: __RAYA_APPROVED_PX__px)");
   const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const printQuery = window.matchMedia("print");
   const tocLinks = Array.from(document.querySelectorAll(".raya-page-toc a[href^='#']"));
@@ -217,14 +220,7 @@ _SHELL_JAVASCRIPT = r"""
       courseMap: defaultCourseMapExpanded() ? "expanded" : "collapsed",
       learningRail: defaultLearningRailExpanded() ? "expanded" : "collapsed",
     };
-    if (
-      !approvedRailGeometryQuery.matches &&
-      next.courseMap === "expanded" &&
-      next.learningRail === "expanded"
-    ) {
-      return { courseMap: "collapsed", learningRail: "collapsed" };
-    }
-    return next;
+    return rayaEffectiveRailState(next.courseMap, next.learningRail, innerWidth);
   }
 
   function saveReaderShellPreference() {
