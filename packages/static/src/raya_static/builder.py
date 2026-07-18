@@ -1927,6 +1927,51 @@ def _safe_map_fragment_id(value: str) -> str:
     return fragment or "course-map-node"
 
 
+def _render_rail_chrome(
+    *,
+    landmark_open_html: str,
+    landmark_close_html: str,
+    header_class: str,
+    region_title: str,
+    collapse_button_html: str,
+    body_open_html: str,
+    body_html: str,
+    expand_button_html: str,
+    backdrop_html: str,
+    header_prefix_html: str | None = None,
+    header_suffix_html: str | None = None,
+    body_suffix_html: str | None = None,
+) -> str:
+    """Shared collapse chrome for the course map and learning rail.
+
+    Both rails share the same skeleton: landmark wrapper, header (region
+    title + collapse button), body wrapper, expand chip/edge opener, and a
+    drawer backdrop. Each rail supplies its own landmark attributes, body
+    contract, and any rail-specific header/body extras (course map's mobile
+    drawer chrome and close button; learning rail's context chip). Optional
+    segments are omitted entirely (not emitted as blank items) when a rail
+    does not use them, to keep output byte-identical to the pre-extraction
+    hand-rolled markup.
+    """
+    items: list[str | None] = [
+        landmark_open_html,
+        f'<div class="{header_class}">',
+        header_prefix_html,
+        f'<p class="raya-region-title">{html.escape(region_title)}</p>',
+        header_suffix_html,
+        collapse_button_html,
+        "</div>",
+        body_open_html,
+        body_html,
+        "</div>",
+        body_suffix_html,
+        expand_button_html,
+        landmark_close_html,
+        backdrop_html,
+    ]
+    return "\n".join(item for item in items if item is not None)
+
+
 def _render_course_map(
     course_title: str,
     page: ContentPage,
@@ -2110,15 +2155,8 @@ def _render_course_map(
         tasks_label=tasks_aria,
         schedule_label=schedule_aria,
     )
-    return "\n".join(
+    drawer_chrome_html = "\n".join(
         [
-            (
-                '<nav id="raya-course-map" class="raya-course-map" '
-                'aria-label="Course map" '
-                f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
-                f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">'
-            ),
-            '<div class="raya-course-map-header">',
             '<div class="raya-course-map-drawer-chrome">',
             '<span class="raya-course-map-drawer-grip" aria-hidden="true"></span>',
             '<p class="raya-course-map-drawer-title">Course map</p>',
@@ -2126,21 +2164,15 @@ def _render_course_map(
             if position
             else "",
             "</div>",
-            '<p class="raya-region-title">Course map</p>',
-            (
-                '<button class="raya-course-map-close" type="button" '
-                'data-raya-course-map-close aria-label="Close course map">'
-                "Close</button>"
-            ),
-            _render_course_map_toggle(
-                "Hide map",
-                class_name="raya-course-map-collapse",
-                aria_label="Hide course map",
-                controls="raya-course-map-body",
-                marker="data-raya-course-map-collapse",
-            ),
-            "</div>",
-            '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">',
+        ]
+    )
+    close_button_html = (
+        '<button class="raya-course-map-close" type="button" '
+        'data-raya-course-map-close aria-label="Close course map">'
+        "Close</button>"
+    )
+    body_html = "\n".join(
+        [
             tools_html,
             f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
@@ -2159,20 +2191,42 @@ def _render_course_map(
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
             ),
-            "</div>",
-            _render_course_map_toggle(
-                "Map",
-                class_name="raya-course-map-expand",
-                aria_label="Expand course map",
-                controls="raya-course-map-body",
-                marker="data-raya-course-map-expand",
-            ),
-            "</nav>",
-            (
-                '<div class="raya-course-map-drawer-backdrop" '
-                'data-raya-course-map-drawer-backdrop hidden></div>'
-            ),
         ]
+    )
+    return _render_rail_chrome(
+        landmark_open_html=(
+            '<nav id="raya-course-map" class="raya-course-map" '
+            'aria-label="Course map" '
+            f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
+            f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">'
+        ),
+        landmark_close_html="</nav>",
+        header_class="raya-course-map-header",
+        header_prefix_html=drawer_chrome_html,
+        region_title="Course map",
+        header_suffix_html=close_button_html,
+        collapse_button_html=_render_course_map_toggle(
+            "Hide map",
+            class_name="raya-course-map-collapse",
+            aria_label="Hide course map",
+            controls="raya-course-map-body",
+            marker="data-raya-course-map-collapse",
+        ),
+        body_open_html=(
+            '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">'
+        ),
+        body_html=body_html,
+        expand_button_html=_render_course_map_toggle(
+            "Map",
+            class_name="raya-course-map-expand",
+            aria_label="Expand course map",
+            controls="raya-course-map-body",
+            marker="data-raya-course-map-expand",
+        ),
+        backdrop_html=(
+            '<div class="raya-course-map-drawer-backdrop" '
+            'data-raya-course-map-drawer-backdrop hidden></div>'
+        ),
     )
 
 
@@ -2200,39 +2254,37 @@ def _render_learning_rail(
     if not body:
         return ""
     context_chip = _render_learning_rail_context_chip(page)
-    return "\n".join(
-        [
-            (
-                '<aside id="raya-learning-rail" class="raya-learning-rail" '
-                'aria-label="Learning context">'
-            ),
-            '<div class="raya-learning-rail-header">',
-            '<p class="raya-region-title">Learning context</p>',
-            (
-                '<button class="raya-learning-rail-collapse" type="button" '
-                "data-raya-learning-rail-collapse "
-                'aria-controls="raya-learning-rail-body" '
-                'aria-expanded="true" '
-                'aria-label="Hide learning context">Hide context</button>'
-            ),
-            "</div>",
-            '<div id="raya-learning-rail-body" class="raya-learning-rail-body" aria-hidden="false">',
-            body,
-            "</div>",
-            context_chip,
-            (
-                '<button class="raya-learning-rail-expand" type="button" '
-                "data-raya-learning-rail-expand "
-                'aria-controls="raya-learning-rail-body" '
-                'aria-expanded="true" '
-                'aria-label="Show learning context">Context</button>'
-            ),
-            "</aside>",
-            (
-                '<div class="raya-learning-rail-drawer-backdrop" '
-                "data-raya-learning-rail-drawer-backdrop hidden></div>"
-            ),
-        ]
+    return _render_rail_chrome(
+        landmark_open_html=(
+            '<aside id="raya-learning-rail" class="raya-learning-rail" '
+            'aria-label="Learning context">'
+        ),
+        landmark_close_html="</aside>",
+        header_class="raya-learning-rail-header",
+        region_title="Learning context",
+        collapse_button_html=(
+            '<button class="raya-learning-rail-collapse" type="button" '
+            "data-raya-learning-rail-collapse "
+            'aria-controls="raya-learning-rail-body" '
+            'aria-expanded="true" '
+            'aria-label="Hide learning context">Hide context</button>'
+        ),
+        body_open_html=(
+            '<div id="raya-learning-rail-body" class="raya-learning-rail-body" aria-hidden="false">'
+        ),
+        body_html=body,
+        body_suffix_html=context_chip,
+        expand_button_html=(
+            '<button class="raya-learning-rail-expand" type="button" '
+            "data-raya-learning-rail-expand "
+            'aria-controls="raya-learning-rail-body" '
+            'aria-expanded="true" '
+            'aria-label="Show learning context">Context</button>'
+        ),
+        backdrop_html=(
+            '<div class="raya-learning-rail-drawer-backdrop" '
+            "data-raya-learning-rail-drawer-backdrop hidden></div>"
+        ),
     )
 
 
