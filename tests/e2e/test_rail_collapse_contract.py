@@ -1,5 +1,9 @@
+import os
 import re
+import shutil
 from pathlib import Path
+
+import pytest
 
 import raya_static.rendering as rendering_module
 from raya_static.rendering import rich_render_css
@@ -10,6 +14,33 @@ from raya_static.shell_geometry import (
     RAIL_APPROVED_PX,
     RAIL_EFFECTIVE_DERIVATION_JS,
 )
+
+ROOT = Path(__file__).resolve().parents[2]
+RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+
+
+def _browser_executable() -> Path:
+    # Local copy of tests/e2e/test_preview_static_read_path._browser_executable:
+    # a cross-module `tests.e2e....` import does not resolve under pytest's
+    # rootdir-relative import mode here (no tests/__init__.py package), so we
+    # duplicate the small helper rather than fight import mode configuration.
+    configured = os.environ.get("RAYA_TEST_BROWSER")
+    if configured:
+        path = Path(configured)
+        if path.exists():
+            return path
+        pytest.fail(f"RAYA_TEST_BROWSER does not exist: {configured}")
+
+    for name in (
+        "chromium",
+        "chromium-browser",
+        "google-chrome-stable",
+        "google-chrome",
+    ):
+        resolved = shutil.which(name)
+        if resolved is not None:
+            return Path(resolved)
+    pytest.fail("A Chromium-compatible browser is required for visual/layout e2e tests")
 
 
 def test_rail_geometry_is_single_sourced_across_scripts():
@@ -77,3 +108,69 @@ def test_collapse_selectors_key_off_html_only():
            or re.search(r"\.raya-learning-shell\[data-raya-learning-rail=", line):
             offenders.append(line.strip())
     assert offenders == [], offenders
+
+
+def _collapsed_chip(page, rail_sel):
+    return page.evaluate(
+        """(sel) => {
+          const rail = document.querySelector(sel);
+          const controls = Array.from(rail.querySelectorAll('a,button')).filter((el) => {
+            const b = el.getBoundingClientRect();
+            return b.width > 1 && b.height > 1 && getComputedStyle(el).visibility !== 'hidden';
+          });
+          const chip = controls[0];
+          const cb = chip ? chip.getBoundingClientRect() : null;
+          const header = rail.querySelector('.raya-course-map-header,.raya-learning-rail-header');
+          const body = rail.querySelector('#raya-course-map-body,#raya-learning-rail-body');
+          const shown = (el) => el && getComputedStyle(el).display !== 'none';
+          return {
+            controlCount: controls.length,
+            w: cb ? Math.round(cb.width) : null,
+            h: cb ? Math.round(cb.height) : null,
+            headerShown: shown(header),
+            bodyShown: shown(body),
+          };
+        }""",
+        rail_sel,
+    )
+
+
+def test_collapsed_rails_are_single_clean_chips(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (768, 894, 1280, 1440):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    # Drive both rails collapsed via their html state.
+                    page.evaluate("""() => {
+                      const r = document.documentElement;
+                      r.dataset.rayaCourseMap = 'collapsed';
+                      r.dataset.rayaLearningRail = 'collapsed';
+                    }""")
+                    page.wait_for_timeout(320)
+                    left = _collapsed_chip(page, "#raya-course-map")
+                    right = _collapsed_chip(page, "#raya-learning-rail")
+                    for side in (left, right):
+                        assert side["controlCount"] == 1, (width, side)
+                        assert 36 <= side["w"] <= 48 and 36 <= side["h"] <= 48, (width, side)
+                        assert side["headerShown"] is False, (width, side)
+                        assert side["bodyShown"] is False, (width, side)
+                    assert left["w"] == right["w"] and left["h"] == right["h"], (width, left, right)
+                    overflow = page.evaluate(
+                        "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
+                    assert overflow <= 1, (width, overflow)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

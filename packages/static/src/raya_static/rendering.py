@@ -4079,14 +4079,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   .raya-course-map-collapse {
     display: inline-flex;
   }
-  html[data-raya-course-map="collapsed"] .raya-course-map-header,
-  html[data-raya-course-map="collapsed"] .raya-course-map-body {
-    display: none;
-  }
-  html[data-raya-course-map="collapsed"] .raya-course-map-expand {
-    display: inline-flex;
-    pointer-events: auto;
-  }
+  /* Collapsed-appearance (container geometry, header/body display:none,
+     expand chip) lives in ONE place: the
+     "rail collapse: appearance (single source)" region below. */
 }
 @media (max-width: 639px) {
   .raya-course-map-expand,
@@ -5332,10 +5327,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   html[data-raya-learning-rail="collapsed"] .raya-learning-shell {
     padding-right: 3.75rem;
   }
-  [data-raya-learning-rail="collapsed"] .raya-learning-rail-header,
-  [data-raya-learning-rail="collapsed"] .raya-learning-rail-body {
-    display: none;
-  }
+  /* Collapsed header/body display:none lives in the single "rail collapse:
+     appearance" region (not band-scoped here — it's width-invariant). */
   [data-raya-learning-rail="collapsed"] .raya-learning-rail[data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body,
   .raya-learning-rail[data-raya-learning-rail="collapsed"][data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body {
     display: block;
@@ -6531,10 +6524,8 @@ mjx-container[display="true"] {
     grid-template-areas: "main-article";
     grid-template-columns: minmax(0, 1fr);
   }
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-header,
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-body {
-    display: none;
-  }
+  /* Collapsed header/body display:none lives in the single "rail collapse:
+     appearance" region (not band-scoped here — it's width-invariant). */
   html[data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-expand:hover,
   html[data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-expand:focus-visible,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:hover,
@@ -6739,6 +6730,21 @@ mjx-container[display="true"] {
   .raya-course-rail-command.raya-font-toggle .raya-command-label {
     font-size: 0.725rem;
   }
+  /* --- rail collapse: appearance (single source) --- */
+  /* Collapsed = the header and body are fully removed (display:none, which
+     also drops them from the a11y tree) and the rail container becomes a
+     fixed 2.75rem chip strip holding exactly one visible/interactive
+     control: the 2.5rem chevron expand chip (`>` on the left/course-map,
+     `<` on the right/learning-rail). One vertical placement (top: 0.75rem)
+     applies across the whole >=640 band — no per-band offset. This is the
+     only place collapsed-appearance rules for either rail live; do not
+     reintroduce band-scoped fragments elsewhere. */
+  html[data-raya-course-map="collapsed"] .raya-course-map-header,
+  html[data-raya-course-map="collapsed"] .raya-course-map-body,
+  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-header,
+  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-body {
+    display: none;
+  }
   html[data-raya-course-map="collapsed"] .raya-course-map,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail {
     align-items: start;
@@ -6755,6 +6761,7 @@ mjx-container[display="true"] {
     padding: 0;
     pointer-events: none;
     position: fixed;
+    top: 0.75rem;
     width: 2.75rem;
     z-index: 45;
   }
@@ -6795,20 +6802,7 @@ mjx-container[display="true"] {
     font-weight: 900;
     line-height: 1;
   }
-}
-@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 1279px) {
-  html[data-raya-course-map="collapsed"] .raya-course-map,
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail {
-    top: 0.75rem;
-    transform: none;
-  }
-}
-@media (min-width: __RAYA_DESKTOP_PX__px) {
-  html[data-raya-course-map="collapsed"] .raya-course-map,
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail {
-    top: 50%;
-    transform: translateY(-50%);
-  }
+  /* --- end rail collapse: appearance --- */
 }
 @media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_APPROVED_MINUS_PX__px) {
   .raya-course-map,
