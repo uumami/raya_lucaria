@@ -211,3 +211,34 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+def test_expanded_rails_do_not_overflow_at_894_band(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (894, 1000, 1152, 1279):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.evaluate("""() => {
+                      const r = document.documentElement;
+                      r.dataset.rayaCourseMap = 'expanded';
+                      r.dataset.rayaLearningRail = 'expanded';
+                    }""")
+                    page.wait_for_timeout(120)
+                    overflow = page.evaluate(
+                        "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
+                    assert overflow <= 1, (width, overflow)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

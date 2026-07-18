@@ -5296,30 +5296,41 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     flex: 1 1 auto;
   }
 }
-@media (min-width: __RAYA_DESKTOP_PX__px) {
+@media (min-width: __RAYA_APPROVED_PX__px) {
+  /* In-flow token grid (single 894 boundary). Rail tracks are driven by
+     CSS custom properties keyed off the html[data-raya-*] state, not by
+     four literal grid-template-columns branches: each rail contributes a
+     15rem content track plus its own 1.5rem gutter track when expanded,
+     and 0 for both when collapsed. column-gap is pinned to 0 so a
+     collapsed (0-width) track never leaves a phantom gap behind it — the
+     gutter is baked into the *-gap custom property instead, which zeroes
+     together with the content track. The article track floor is
+     minmax(0, 1fr) here on purpose: the comfortable 42rem floor is only
+     safe to reintroduce once the viewport is wide enough (see the
+     __RAYA_DESKTOP_PX__ layer below) — reusing it here is the overflow
+     trap this layer exists to avoid. */
+  html[data-raya-course-map="expanded"] {
+    --raya-map-col: 15rem;
+    --raya-map-gap: 1.5rem;
+  }
+  html[data-raya-course-map="collapsed"] {
+    --raya-map-col: 0;
+    --raya-map-gap: 0;
+  }
+  html[data-raya-learning-rail="expanded"] {
+    --raya-rail-col: 15rem;
+    --raya-rail-gap: 1.5rem;
+  }
+  html[data-raya-learning-rail="collapsed"] {
+    --raya-rail-col: 0;
+    --raya-rail-gap: 0;
+  }
   .raya-learning-shell {
-    gap: 1.5rem;
-  }
-  .raya-main-article {
-    border: 1px solid color-mix(in srgb, var(--raya-color-border) 58%, transparent);
-    border-radius: 0.5rem;
-    padding: clamp(1.75rem, 1vw + 1rem, 2rem);
-  }
-  [data-raya-course-map="expanded"][data-raya-learning-rail="expanded"] .raya-learning-shell {
-    grid-template-areas: "course-map main-article learning-rail";
-    grid-template-columns: 15rem minmax(42rem, 1fr) 15rem;
-  }
-  [data-raya-course-map="expanded"][data-raya-learning-rail="collapsed"] .raya-learning-shell {
-    grid-template-areas: "course-map main-article";
-    grid-template-columns: 15rem minmax(48rem, 1fr);
-  }
-  [data-raya-course-map="collapsed"][data-raya-learning-rail="expanded"] .raya-learning-shell {
-    grid-template-areas: "main-article learning-rail";
-    grid-template-columns: minmax(48rem, 1fr) 15rem;
-  }
-  [data-raya-course-map="collapsed"][data-raya-learning-rail="collapsed"] .raya-learning-shell {
-    grid-template-areas: "main-article";
-    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    grid-template-areas: "course-map . main-article . learning-rail";
+    grid-template-columns:
+      var(--raya-map-col) var(--raya-map-gap) minmax(0, 1fr)
+      var(--raya-rail-gap) var(--raya-rail-col);
   }
   html[data-raya-course-map="collapsed"] .raya-learning-shell {
     padding-left: 3.75rem;
@@ -5340,6 +5351,24 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     display: grid;
     pointer-events: none;
     visibility: hidden;
+  }
+}
+@media (min-width: __RAYA_DESKTOP_PX__px) {
+  /* Comfort layer: reintroduce the 42rem article floor only once the
+     viewport is wide enough to afford it (15rem map + 1.5rem gap + 42rem
+     article + 1.5rem gap + 15rem rail = 75rem = 1200px, which fits under
+     the 1280px trigger). Everything else (token columns, gutters, gap
+     zeroing, collapsed padding push) is inherited unchanged from the
+     __RAYA_APPROVED_PX__ layer above. */
+  .raya-learning-shell {
+    grid-template-columns:
+      var(--raya-map-col) var(--raya-map-gap) minmax(42rem, 1fr)
+      var(--raya-rail-gap) var(--raya-rail-col);
+  }
+  .raya-main-article {
+    border: 1px solid color-mix(in srgb, var(--raya-color-border) 58%, transparent);
+    border-radius: 0.5rem;
+    padding: clamp(1.75rem, 1vw + 1rem, 2rem);
   }
 }
 .raya-breadcrumbs {
@@ -6426,7 +6455,7 @@ mjx-container[display="true"] {
     text-align: left;
   }
 }
-@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 1279px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_APPROVED_MINUS_PX__px) {
   .raya-learning-shell {
     align-items: start;
     gap: 0;
