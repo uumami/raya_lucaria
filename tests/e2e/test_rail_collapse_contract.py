@@ -110,6 +110,33 @@ def test_collapse_selectors_key_off_html_only():
     assert offenders == [], offenders
 
 
+def test_no_id_selectors_reference_collapse_state():
+    css = rich_render_css()
+    offenders = []
+    collapse_state_markers = (
+        "data-raya-course-map=",
+        "data-raya-learning-rail=",
+        # The prepaint-pending skeleton gates the SAME toggle/expand chip
+        # elements the html-only collapse-state rules style (see
+        # test_collapse_selectors_key_off_html_only), just via the
+        # shell-prepaint/shell-ready temporal signal instead of the
+        # collapse-state attribute directly. Every other prepaint-pending
+        # rule in this file already targets these elements by class (see
+        # e.g. the html[data-raya-shell-ready="true"] .raya-course-map-*
+        # rules), so an #id selector here is the same specificity-cliff
+        # bug the collapse-state markers above catch, just spelled
+        # differently.
+        "data-raya-shell-prepaint=",
+        "data-raya-shell-ready=",
+    )
+    for line in css.splitlines():
+        if "#raya-course-map" not in line and "#raya-learning-rail" not in line:
+            continue
+        if any(marker in line for marker in collapse_state_markers):
+            offenders.append(line.strip())
+    assert offenders == [], offenders
+
+
 def _collapsed_chip(page, rail_sel):
     return page.evaluate(
         """(sel) => {

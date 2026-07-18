@@ -6617,8 +6617,8 @@ mjx-container[display="true"] {
     white-space: nowrap;
     width: 1px;
   }
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-expand,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-toggle,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-expand,
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand {
     align-items: center;
     background: rgba(255, 255, 255, 0.44);
@@ -6642,11 +6642,11 @@ mjx-container[display="true"] {
     top: auto;
     width: 2.5rem;
   }
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::before,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-expand::before,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-toggle::before,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-expand::before,
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::before,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-toggle::after,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) #raya-course-map .raya-course-map-expand::after {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-toggle::after,
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-course-map-expand::after {
     display: none;
   }
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-expand::after {
