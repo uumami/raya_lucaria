@@ -20912,12 +20912,15 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert state == {
                         "drawer": "closed",
                         "scrollLock": "false",
-                        "shellAreas": '"main-article"',
+                        # 912px is >= the 894px in-flow boundary: rails render
+                        # inline (not overlay/drawer), using the constant
+                        # 5-track token grid and position: sticky.
+                        "shellAreas": '"course-map . main-article . learning-rail"',
                         "mapRole": None,
                         "mapModal": None,
                         "mapBodyHidden": "false",
                         "mapBodyInert": False,
-                        "mapPosition": "fixed",
+                        "mapPosition": "sticky",
                         "articleHidden": None,
                         "articleInert": False,
                         "railHidden": "false",
@@ -20942,7 +20945,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert geometry["mapCollapseScrollWidth"] <= (
                         geometry["mapCollapseClientWidth"] + 1
                     )
-                    assert len(geometry["shellColumns"].split()) == 1
+                    # Constant 5-track token grid (map/gap/article/gap/rail)
+                    # regardless of collapse state; only the widths zero out.
+                    assert len(geometry["shellColumns"].split()) == 5
 
                     if (
                         page.evaluate(
@@ -21002,7 +21007,12 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert tools["visibleCount"] >= 7
                     assert tools["minWidth"] >= 28
                     assert tools["mapHeight"] >= 736
-                    assert tools["mapBottom"] >= 756
+                    # At >= 894 the expanded map uses the base position:
+                    # sticky rule (top: 1rem, max-height: calc(100vh - 2rem))
+                    # instead of the old fixed/top:0.75rem chrome, so the
+                    # settled bottom edge moved from 756 to 752 (16 top +
+                    # 736 height). 748 allows minor sub-pixel variance.
+                    assert tools["mapBottom"] >= 748
                     assert tools["labelsWithoutTextRoom"] == []
 
                     page.click("[data-raya-course-map-collapse]")
@@ -21071,17 +21081,30 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     collapsed_background = collapsed.pop("toggleBackground")
                     assert collapsed == {
                         "mapState": "collapsed",
-                        "shellAreas": '"main-article"',
+                        # Grid areas stay the constant 3-region template at
+                        # >= 894 regardless of collapse state; only the
+                        # column widths (not the template) zero out.
+                        "shellAreas": (
+                            '"course-map . main-article . learning-rail"'
+                        ),
                         "mapBodyHidden": "true",
                         "mapBodyInert": True,
+                        # Collapse is width-invariant: a collapsed rail always
+                        # becomes a fixed-position chip (see
+                        # "rail collapse: appearance" in rendering.py), even
+                        # though the expanded rail is position: sticky here.
                         "mapPosition": "fixed",
                         "mapDisplay": "grid",
                         "mapWidth": 44,
                         "mapLeft": 6,
                         "mapRight": 50,
                         "articleLeft": 60,
-                        "articleWidth": 596,
-                        "railLeft": 660,
+                        # column-gap is 0 now; the gutter moved into the
+                        # 1.5rem (24px) --raya-map-gap/--raya-rail-gap
+                        # tracks (was 0.875rem/14px column-gap), so the
+                        # settled article/rail geometry shifted accordingly.
+                        "articleWidth": 572,
+                        "railLeft": 656,
                         "railWidth": 240,
                         "toggleWidth": 40,
                         "toggleHeight": 40,
@@ -21095,7 +21118,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                         "rgba(255, 255, 255, 0.44)",
                         "rgba(255, 255, 255, 0.72)",
                     }
-                    assert len(collapsed_columns) == 1
+                    assert len(collapsed_columns) == 5
 
                     page.wait_for_function(
                         """() => !document
@@ -21150,7 +21173,9 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     both_article_width = both_collapsed.pop("articleWidth")
                     assert both_collapsed["mapState"] == "collapsed"
                     assert both_collapsed["railState"] == "expanded"
-                    assert both_collapsed["shellAreas"] == '"main-article"'
+                    assert both_collapsed["shellAreas"] == (
+                        '"course-map . main-article . learning-rail"'
+                    )
                     assert both_collapsed["mapWidth"] == 44
                     assert both_collapsed["mapBodyHidden"] == "true"
                     assert both_collapsed["mapBodyInert"] is True
@@ -21163,7 +21188,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert both_collapsed["mapToggleOpacity"] == "1"
                     assert both_collapsed["railExpandedValues"] == ["true"]
                     assert both_article_width >= 520
-                    assert len(both_columns) == 1
+                    assert len(both_columns) == 5
                 finally:
                     page.close()
             finally:
