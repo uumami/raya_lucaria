@@ -13783,8 +13783,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13883,8 +13883,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13960,8 +13960,8 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.querySelector('#raya-content')?.dataset.rayaCourseMap,
-                            mapState: document.querySelector('#raya-course-map')?.dataset.rayaCourseMap,
+                            shellState: document.documentElement.dataset.rayaCourseMap,
+                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -14029,6 +14029,63 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                     assert escape_collapsed["bodyInert"] is True
                     assert escape_collapsed["bodyTabbableCount"] == 0
                     assert set(escape_collapsed["linkTabIndexes"]) <= {None, "-1"}
+
+                    # Branch disclosure (raya:course-map-branches sessionStorage)
+                    # must survive a collapse/expand cycle: it is a separate key
+                    # persisted by setMapNodeExpanded/saveCollapsedMapBranches and
+                    # is not touched by the rail collapse state machine.
+                    page.click("[data-raya-course-map-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width >= 220"""
+                    )
+                    page.click(
+                        '[data-raya-map-node="render-root"] [data-raya-map-node-toggle]'
+                    )
+                    branches_before_cycle = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const key = map?.getAttribute(
+                            'data-raya-course-map-storage-key'
+                          );
+                          return {
+                            key,
+                            value: key ? window.sessionStorage.getItem(key) : null,
+                          };
+                        }"""
+                    )
+                    assert branches_before_cycle["key"]
+                    assert branches_before_cycle["value"] is not None
+                    assert "render-root" in json.loads(
+                        branches_before_cycle["value"]
+                    )
+
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width < 130"""
+                    )
+                    page.click("[data-raya-course-map-expand]")
+                    page.wait_for_function(
+                        """() => document
+                          .querySelector('#raya-course-map')
+                          ?.getBoundingClientRect().width >= 220"""
+                    )
+                    branches_after_cycle = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('#raya-course-map');
+                          const key = map?.getAttribute(
+                            'data-raya-course-map-storage-key'
+                          );
+                          return {
+                            key,
+                            value: key ? window.sessionStorage.getItem(key) : null,
+                          };
+                        }"""
+                    )
+                    assert branches_after_cycle == branches_before_cycle
                 finally:
                     page.close()
             finally:
