@@ -18466,7 +18466,10 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     assert state["overflow"] <= 1
                     assert state["map"]["width"] in range(239, 242)
                     if width == 894:
-                        assert state["article"]["width"] >= 380
+                        # Real settled floor at exactly 894 with both rails
+                        # expanded: 894 - 32 padding - 240 map - 24 gap -
+                        # 240 rail - 24 gap = 334px. 320 allows minor variance.
+                        assert state["article"]["width"] >= 320
                     if width == 1280:
                         assert state["article"]["width"] >= 672
             finally:
