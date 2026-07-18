@@ -14285,8 +14285,8 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: shell?.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            shellState: document.documentElement.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14333,8 +14333,8 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const chipBox = chip?.getBoundingClientRect();
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: shell?.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            shellState: document.documentElement.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14388,7 +14388,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const rail = document.querySelector('#raya-learning-rail');
                           return {
                             rootState: document.documentElement.dataset.rayaLearningRail,
-                            railState: rail?.dataset.rayaLearningRail,
+                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             railWidth: rail?.getBoundingClientRect().width,
@@ -14414,10 +14414,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     )
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'expanded'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
                     resized_mobile = page.evaluate(
                         """() => {
@@ -14441,10 +14438,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
 
                     page.set_viewport_size({"width": 1280, "height": 900})
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'collapsed'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
                     )
                     page.click("[data-raya-learning-rail-expand]")
                     page.wait_for_function(
@@ -14456,10 +14450,7 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     page.focus("[data-raya-learning-rail-collapse]")
                     page.keyboard.press("Escape")
                     page.wait_for_function(
-                        """() => document
-                          .querySelector('#raya-learning-rail')
-                          ?.dataset
-                          ?.rayaLearningRail === 'collapsed'"""
+                        """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
                     )
                     escape_collapsed = page.evaluate(
                         """() => ({
