@@ -486,8 +486,6 @@ _SHELL_JAVASCRIPT = r"""
       delete map.dataset.rayaCourseMapTransition;
     }
     root.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    shell.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
-    map.dataset.rayaCourseMap = nextExpanded ? "expanded" : "collapsed";
     syncCourseMapToggleButtons(nextExpanded);
     if (!desktopExpanding) {
       updateMapLinkTabOrder(nextExpanded);
@@ -1080,8 +1078,6 @@ _SHELL_JAVASCRIPT = r"""
       delete learningRail.dataset.rayaLearningRailTransition;
     }
     root.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
-    shell.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
-    learningRail.dataset.rayaLearningRail = nextExpanded ? "expanded" : "collapsed";
     syncLearningRailToggleButtons(nextExpanded);
     learningRailBody.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
     setElementInert(learningRailBody, !nextExpanded);

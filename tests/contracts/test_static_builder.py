@@ -4854,11 +4854,11 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
         in css_text
     )
     assert (
-        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-body,'
+        '[data-raya-learning-rail="collapsed"] .raya-learning-rail-body {'
         in css_text
     )
     assert (
-        'html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand,'
+        'html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand {'
         in css_text
     )
     assert ".raya-visually-hidden" in css_text
@@ -5130,13 +5130,13 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     assert 'href="../_raya/tasks/index.html?page=reader-ux"' not in html
     assert 'href="../_raya/schedule/index.html?page=reader-ux"' not in html
     assert (
-        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
+        '<main id="raya-content" class="raya-learning-shell">'
         in html
     )
     assert '<article id="raya-article" class="raya-main-article" tabindex="-1">' in html
     assert (
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
-        'aria-label="Learning context" data-raya-learning-rail="expanded">'
+        'aria-label="Learning context">'
     ) in html
     assert html.count('aria-label="Learning context"') == 1
     assert 'data-raya-learning-rail="expanded">aria-label=' not in html
@@ -5581,12 +5581,11 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-learning-rail="expanded"' in root_tag
     assert 'data-raya-course-map-drawer="closed"' in root_tag
     assert (
-        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
+        '<main id="raya-content" class="raya-learning-shell">'
         in html
     )
     assert '<nav id="raya-course-map" class="raya-course-map"' in html
     assert 'aria-label="Course map"' in html
-    assert 'data-raya-course-map="expanded"' in html
     assert 'data-raya-course-map-root=' in html
     assert 'data-raya-course-map-storage-key=' in html
     assert (

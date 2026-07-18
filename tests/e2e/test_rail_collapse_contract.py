@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import raya_static.rendering as rendering_module
@@ -59,3 +60,20 @@ def test_css_and_js_share_the_same_rail_boundaries():
     assert "(max-width: 893px)" in css
     # The structural boundary is shared too.
     assert "(min-width: 640px)" in css
+
+
+def test_collapse_selectors_key_off_html_only():
+    css = rich_render_css()
+    offenders = []
+    for line in css.splitlines():
+        if "data-raya-course-map=" not in line and "data-raya-learning-rail=" not in line:
+            continue
+        if "-transition" in line or "-drawer" in line or "-preference" in line:
+            continue  # animation/drawer/preference channels are exempt element attrs
+        # Element-mirror forms that go dead when the mirror write is removed:
+        if re.search(r"\.raya-course-map\[data-raya-course-map=", line) \
+           or re.search(r"\.raya-learning-rail\[data-raya-learning-rail=", line) \
+           or re.search(r"\.raya-learning-shell\[data-raya-course-map=", line) \
+           or re.search(r"\.raya-learning-shell\[data-raya-learning-rail=", line):
+            offenders.append(line.strip())
+    assert offenders == [], offenders

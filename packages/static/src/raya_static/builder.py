@@ -1032,7 +1032,7 @@ def _render_page(
             ),
             '<a class="raya-skip-link" href="#raya-article">Skip to content</a>',
             _render_mobile_course_map_opener(),
-            '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">',
+            '<main id="raya-content" class="raya-learning-shell">',
             _render_course_map(
                 course_title,
                 page,
@@ -2114,7 +2114,7 @@ def _render_course_map(
         [
             (
                 '<nav id="raya-course-map" class="raya-course-map" '
-                'aria-label="Course map" data-raya-course-map="expanded" '
+                'aria-label="Course map" '
                 f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
                 f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">'
             ),
@@ -2204,7 +2204,7 @@ def _render_learning_rail(
         [
             (
                 '<aside id="raya-learning-rail" class="raya-learning-rail" '
-                'aria-label="Learning context" data-raya-learning-rail="expanded">'
+                'aria-label="Learning context">'
             ),
             '<div class="raya-learning-rail-header">',
             '<p class="raya-region-title">Learning context</p>',
