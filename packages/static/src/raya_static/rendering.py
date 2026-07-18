@@ -6524,18 +6524,9 @@ mjx-container[display="true"] {
     grid-template-areas: "main-article";
     grid-template-columns: minmax(0, 1fr);
   }
-  /* Collapsed header/body display:none lives in the single "rail collapse:
-     appearance" region (not band-scoped here — it's width-invariant). */
-  html[data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-expand:hover,
-  html[data-raya-course-map="collapsed"] #raya-course-map .raya-course-map-expand:focus-visible,
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:hover,
-  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:focus-visible {
-    background: rgba(255, 255, 255, 0.72);
-    border-color: color-mix(in srgb, var(--raya-color-accent) 44%, var(--raya-color-border));
-    box-shadow: 0 0.55rem 1.1rem rgba(31, 35, 40, 0.14);
-    color: var(--raya-color-text);
-    opacity: 1;
-  }
+  /* Collapsed header/body display:none, and the expand-chip hover/focus
+     glass-highlight, live in the single "rail collapse: appearance" region
+     (not band-scoped here — they're width-invariant). */
   html[data-raya-course-map="collapsed"] .raya-course-map[data-raya-course-map-transition="collapsing"] .raya-course-map-list,
   .raya-course-map[data-raya-course-map="collapsed"][data-raya-course-map-transition="collapsing"] .raya-course-map-list,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail[data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body,
@@ -6789,6 +6780,16 @@ mjx-container[display="true"] {
     padding: 0;
     pointer-events: auto;
     width: 2.5rem;
+  }
+  html[data-raya-course-map="collapsed"] .raya-course-map-expand:hover,
+  html[data-raya-course-map="collapsed"] .raya-course-map-expand:focus-visible,
+  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:hover,
+  html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:focus-visible {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: color-mix(in srgb, var(--raya-color-accent) 44%, var(--raya-color-border));
+    box-shadow: 0 0.55rem 1.1rem rgba(31, 35, 40, 0.14);
+    color: var(--raya-color-text);
+    opacity: 1;
   }
   html[data-raya-course-map="collapsed"] .raya-course-map-expand::after {
     content: ">";

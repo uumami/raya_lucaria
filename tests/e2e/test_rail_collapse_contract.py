@@ -127,6 +127,7 @@ def _collapsed_chip(page, rail_sel):
             controlCount: controls.length,
             w: cb ? Math.round(cb.width) : null,
             h: cb ? Math.round(cb.height) : null,
+            top: cb ? Math.round(cb.top) : null,
             headerShown: shown(header),
             bodyShown: shown(body),
           };
@@ -148,6 +149,8 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
             browser = p.chromium.launch(executable_path=str(_browser_executable()),
                                         headless=True, args=["--no-sandbox"])
             try:
+                tops_left = []
+                tops_right = []
                 for width in (768, 894, 1280, 1440):
                     page = browser.new_page(viewport={"width": width, "height": 900})
                     page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
@@ -166,10 +169,17 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
                         assert side["headerShown"] is False, (width, side)
                         assert side["bodyShown"] is False, (width, side)
                     assert left["w"] == right["w"] and left["h"] == right["h"], (width, left, right)
+                    tops_left.append(left["top"])
+                    tops_right.append(right["top"])
                     overflow = page.evaluate(
                         "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
                     assert overflow <= 1, (width, overflow)
                     page.close()
+                # Chip vertical placement is width-invariant across the whole
+                # >=640 band — no per-band top offset (guards against
+                # reintroducing e.g. a vertically-centered desktop band).
+                assert len(set(tops_left)) == 1, tops_left
+                assert len(set(tops_right)) == 1, tops_right
             finally:
                 browser.close()
     finally:
