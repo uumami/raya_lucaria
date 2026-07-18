@@ -5937,18 +5937,20 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         in css
     )
     assert (
-        "grid-template-columns: 15rem minmax(42rem, 1fr) 15rem;"
+        "grid-template-columns:\n"
+        "      var(--raya-map-col) var(--raya-map-gap) minmax(0, 1fr)\n"
+        "      var(--raya-rail-gap) var(--raya-rail-col);"
         in css
     )
     assert (
-        "grid-template-columns: 15rem minmax(48rem, 1fr);"
+        "grid-template-columns:\n"
+        "      var(--raya-map-col) var(--raya-map-gap) minmax(42rem, 1fr)\n"
+        "      var(--raya-rail-gap) var(--raya-rail-col);"
         in css
     )
     assert (
-        'grid-template-areas: "main-article learning-rail";' in css
-    )
-    assert (
-        'grid-template-areas: "course-map main-article";' in css
+        'grid-template-areas: "course-map . main-article . learning-rail";'
+        in css
     )
     assert (
         'grid-template-areas: "main-article";' in css
