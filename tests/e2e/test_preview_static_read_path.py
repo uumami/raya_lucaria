@@ -11328,10 +11328,14 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       };
                                     }"""
                                 )
-                                assert medium_shell["mapPosition"] == "fixed"
-                                assert medium_shell["railPosition"] == "fixed"
-                                assert len(medium_shell["columns"].split()) == 1
                                 if approved_geometry:
+                                    # 894-1279 is now the in-flow band: rails are
+                                    # position: sticky (not fixed) and the shell
+                                    # is the 5-track token grid (map/gap/article/
+                                    # gap/rail), not a single collapsed-width track.
+                                    assert medium_shell["mapPosition"] == "sticky"
+                                    assert medium_shell["railPosition"] == "sticky"
+                                    assert len(medium_shell["columns"].split()) == 5
                                     assert medium_shell["mapState"] == "expanded"
                                     assert medium_shell["railState"] == "expanded"
                                     assert 239 <= medium_shell["mapWidth"] <= 241
@@ -11340,6 +11344,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                         viewport["width"] - 572
                                     )
                                 else:
+                                    assert medium_shell["mapPosition"] == "fixed"
+                                    assert medium_shell["railPosition"] == "fixed"
+                                    assert len(medium_shell["columns"].split()) == 1
                                     assert medium_shell["mapState"] == "collapsed"
                                     assert medium_shell["railState"] == "collapsed"
                                     assert 40 <= medium_shell["mapWidth"] <= 56
