@@ -18171,7 +18171,11 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         rail_collapsed["articleWidth"]
                         >= initial["articleWidth"] + 120
                     )
-                    assert len(rail_collapsed["shellColumns"].split()) == 2
+                    # Grid is now the constant 5-track token grid (map/gap/
+                    # article/gap/rail); collapsing a rail zeroes its column
+                    # and gap tracks rather than removing tracks from the
+                    # template, so the token count stays 5.
+                    assert len(rail_collapsed["shellColumns"].split()) == 5
                     assert rail_collapsed["railWidth"] <= 56
                     assert rail_collapsed["railExpandWidth"] >= 40
                     assert rail_collapsed["articleRight"] <= rail_collapsed[
@@ -18247,7 +18251,7 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         both_collapsed["articleWidth"]
                         >= rail_collapsed["articleWidth"] + 120
                     )
-                    assert len(both_collapsed["shellColumns"].split()) == 1
+                    assert len(both_collapsed["shellColumns"].split()) == 5
                     assert both_collapsed["mapWidth"] <= 56
                     assert both_collapsed["railWidth"] <= 56
                     assert both_collapsed["mapButtonWidth"] >= 40
