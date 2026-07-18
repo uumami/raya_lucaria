@@ -11928,8 +11928,19 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                                 assert state["article"]["right"] <= (
                                     state["rail"]["left"] + 1
                                 )
+                                # At exactly 894 both rails still cost their full
+                                # 15rem + 1.5rem gutter tracks, squeezing the
+                                # article to its real settled floor (~334px =
+                                # 894 - 32 padding - 240 map - 24 gap - 240 rail
+                                # - 24 gap); 320 allows minor sub-pixel/font
+                                # variance. 1279 already has generous room and
+                                # 1280 reintroduces the 42rem comfort floor.
                                 assert state["article"]["width"] >= (
-                                    672 if width == 1280 else 380
+                                    672
+                                    if width == 1280
+                                    else 320
+                                    if width == 894
+                                    else 380
                                 )
                                 assert set(state["commandWritingModes"]) == {
                                     "horizontal-tb"
