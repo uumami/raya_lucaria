@@ -21353,7 +21353,11 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                             "scrollLock": "true" if modal else "false",
                             "role": "dialog" if modal else None,
                             "modal": "true" if modal else None,
-                            "position": "fixed" if modal or width < 1280 else "sticky",
+                            # The in-flow boundary is 894 (not 1280): rails
+                            # are position: sticky from 894 up, and only
+                            # fixed below that (structural/drawer bands) or
+                            # while the mobile drawer is open (modal).
+                            "position": "fixed" if modal or width < 894 else "sticky",
                             "backdropHidden": not modal,
                             "backdropDisplay": "block" if modal else "none",
                             "openerVisible": modal,
@@ -21385,7 +21389,9 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                                 assert geometry["mapBox"]["width"] <= 56
                                 assert geometry["railBox"]["width"] <= 56
                             elif approved_geometry:
-                                assert len(geometry["shellColumns"].split()) == 1
+                                # Constant 5-track token grid at >= 894, not
+                                # the old collapsed single-track format.
+                                assert len(geometry["shellColumns"].split()) == 5
                                 assert geometry["mapBox"]["width"] in range(239, 242)
                                 assert geometry["railBox"]["width"] in range(239, 242)
                                 assert geometry["mapBox"]["right"] <= (
@@ -21407,7 +21413,10 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                                 assert geometry["mapBox"]["width"] in range(239, 242)
                                 assert geometry["railBox"]["width"] in range(239, 242)
                                 assert geometry["articleBox"]["width"] >= 240
-                                assert len(geometry["shellColumns"].split()) == 3
+                                # Still the constant 5-track token grid at
+                                # >= 1280 (comfort layer only widens the
+                                # article's minmax floor, not the track count).
+                                assert len(geometry["shellColumns"].split()) == 5
                     finally:
                         page.close()
                 page = browser.new_page(viewport={"width": 639, "height": 760})
@@ -21441,13 +21450,13 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'
-                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
+                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
                           && getComputedStyle(document.querySelector('#raya-course-map-body')).display === 'flex'"""
                     )
                     assert_visible_focus_and_clear_openers(page)
                     page.set_viewport_size({"width": 1279, "height": 760})
                     page.wait_for_function(
-                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
+                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
                           && document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
