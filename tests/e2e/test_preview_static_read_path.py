@@ -519,8 +519,12 @@ def test_graph_detail_navigator_jumps_without_state_or_storage(
                         }"""
                     )
                     assert no_js["ready"] == ""
-                    assert no_js["map"]["width"] <= 48
-                    assert no_js["rail"]["width"] <= 48
+                    # 913px is >= the 894px in-flow boundary, so without JS the
+                    # SSR default (data-raya-course-map/-learning-rail="expanded"
+                    # baked into <html>) renders both rails in-flow and expanded
+                    # (15rem = 240px), not collapsed/overlay.
+                    assert no_js["map"]["width"] >= 200
+                    assert no_js["rail"]["width"] >= 200
                     assert no_js["article"]["left"] >= no_js["map"]["right"]
                     assert no_js["article"]["right"] <= no_js["rail"]["left"]
                     assert no_js["mapArticleOverlap"] == 0
@@ -9758,9 +9762,9 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert 'data-raya-command-icon="map"' in index_html
     assert '<span class="raya-command-label">Course</span>' in index_html
-    assert 'class="raya-learning-shell" data-raya-course-map="expanded"' in index_html
+    assert 'id="raya-content" class="raya-learning-shell"' in index_html
     assert (
-        'class="raya-course-map" aria-label="Course map" data-raya-course-map="expanded"'
+        'class="raya-course-map" aria-label="Course map" data-raya-course-map-root='
         in index_html
     )
     assert (
@@ -9781,7 +9785,7 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     )
     assert "@media (min-width: 1280px)" in rich_css
     assert (
-        'grid-template-areas: "main-article learning-rail"'
+        'grid-template-areas: "course-map . main-article . learning-rail"'
         in rich_css
     )
     assert "transition: grid-template-columns 220ms ease" in rich_css
@@ -22674,8 +22678,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
         in root_html
     )
     assert (
-        '<main id="raya-content" class="raya-learning-shell" data-raya-course-map="expanded">'
-        in root_html
+        '<main id="raya-content" class="raya-learning-shell">' in root_html
     )
     assert (
         '<article id="raya-article" class="raya-main-article" tabindex="-1">'
@@ -22683,7 +22686,7 @@ def test_preview_default_and_inspection_pages_have_responsive_layout_regions(
     )
     assert (
         '<aside id="raya-learning-rail" class="raya-learning-rail" '
-        'aria-label="Learning context" data-raya-learning-rail="expanded">'
+        'aria-label="Learning context">'
     ) in root_html
     assert root_html.index(
         '<nav id="raya-course-map" class="raya-course-map"'
