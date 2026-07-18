@@ -17030,17 +17030,25 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
                           const courseMap = document.querySelector('nav.raya-course-map');
                           const rail = document.querySelector('aside.raya-learning-rail');
                           const articleStyle = getComputedStyle(article);
+                          const articleBox = article.getBoundingClientRect();
+                          const mapBox = courseMap.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
                           return {
                             bodyBackground: bodyStyle.backgroundColor,
                             articleBackground: articleStyle.backgroundColor,
-                            articleWidth: article.getBoundingClientRect().width,
+                            articleWidth: articleBox.width,
                             shellWidth: shell.getBoundingClientRect().width,
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            // column-gap is pinned to 0; the visual gutter now
+                            // lives in the --raya-map-gap/--raya-rail-gap grid
+                            // tracks, so measure the rendered gap between the
+                            // rail edges and the article edges instead.
+                            mapGutter: articleBox.left - mapBox.right,
+                            railGutter: railBox.left - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
-                            mapWidth: courseMap.getBoundingClientRect().width,
-                            railWidth: rail.getBoundingClientRect().width,
+                            mapWidth: mapBox.width,
+                            railWidth: railBox.width,
                           };
                         }"""
                     )
@@ -17052,13 +17060,19 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
                         """() => {
                           const article = document.querySelector('article.raya-main-article');
                           const shell = document.querySelector('.raya-learning-shell');
+                          const courseMap = document.querySelector('nav.raya-course-map');
+                          const rail = document.querySelector('aside.raya-learning-rail');
                           const articleStyle = getComputedStyle(article);
+                          const articleBox = article.getBoundingClientRect();
                           return {
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            mapGutter: articleBox.left
+                              - courseMap.getBoundingClientRect().right,
+                            railGutter: rail.getBoundingClientRect().left
+                              - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
-                            articleRight: article.getBoundingClientRect().right,
+                            articleRight: articleBox.right,
                             viewportWidth: window.innerWidth,
                           };
                         }"""
@@ -17073,11 +17087,13 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
     assert hierarchy["articleWidth"] > hierarchy["mapWidth"] * 2
     assert hierarchy["articleWidth"] > hierarchy["railWidth"] * 2
     assert hierarchy["articleWidth"] < hierarchy["shellWidth"]
-    assert hierarchy["shellColumnGap"] >= 24
+    assert hierarchy["mapGutter"] >= 20
+    assert hierarchy["railGutter"] >= 20
     assert hierarchy["articlePaddingInline"] >= 28
     assert hierarchy["articleBorderLeftWidth"] >= 1
     assert 4 <= hierarchy["articleBorderRadius"] <= 8
-    assert threshold["shellColumnGap"] >= 24
+    assert threshold["mapGutter"] >= 20
+    assert threshold["railGutter"] >= 20
     assert threshold["articlePaddingInline"] >= 28
     assert threshold["articleBorderLeftWidth"] >= 1
     assert 4 <= threshold["articleBorderRadius"] <= 8
@@ -17142,13 +17158,21 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
                           const articleStyle = getComputedStyle(article);
                           const courseMapStyle = getComputedStyle(courseMap);
                           const railStyle = getComputedStyle(rail);
+                          const articleBox = article.getBoundingClientRect();
+                          const mapBox = courseMap.getBoundingClientRect();
+                          const railBox = rail.getBoundingClientRect();
                           return {
                             shellWidth: shell.getBoundingClientRect().width,
-                            articleWidth: article.getBoundingClientRect().width,
+                            articleWidth: articleBox.width,
                             paragraphWidth: firstParagraph.getBoundingClientRect().width,
-                            mapWidth: courseMap.getBoundingClientRect().width,
-                            railWidth: rail.getBoundingClientRect().width,
-                            shellColumnGap: parseFloat(getComputedStyle(shell).columnGap),
+                            mapWidth: mapBox.width,
+                            railWidth: railBox.width,
+                            // column-gap is pinned to 0; the visual gutter now
+                            // lives in the --raya-map-gap/--raya-rail-gap grid
+                            // tracks, so measure the rendered gap between the
+                            // rail edges and the article edges instead.
+                            mapGutter: articleBox.left - mapBox.right,
+                            railGutter: railBox.left - articleBox.right,
                             articlePaddingInline: parseFloat(articleStyle.paddingLeft),
                             articleBorderLeftWidth: parseFloat(articleStyle.borderLeftWidth),
                             articleBorderRadius: parseFloat(articleStyle.borderTopLeftRadius),
@@ -17300,7 +17324,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["articleWidth"] > chrome["railWidth"] * 3
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
-    assert chrome["shellColumnGap"] >= 24
+    assert chrome["mapGutter"] >= 20
+    assert chrome["railGutter"] >= 20
     assert chrome["articlePaddingInline"] >= 28
     assert chrome["articleBorderLeftWidth"] >= 1
     assert 4 <= chrome["articleBorderRadius"] <= 8
