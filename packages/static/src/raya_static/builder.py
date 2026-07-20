@@ -3472,11 +3472,35 @@ def _validate_rich_markdown_inputs(
             )
 
 
+def _course_home_page(content_model: ContentModel) -> ContentPage | None:
+    """Resolve the course root page.
+
+    `content_model.pages` is ordered by ordered path parts, so `pages[0]` is the
+    first-sorted page, NOT necessarily the root: a zero-order *directory* whose
+    slug sorts before "index" (`0_appendix`, `0_about`, `0_faq`, ...) outranks
+    the root's own `0_index.md`. Zero-order directories are legal -- the
+    "zero-order content files must be index pages" guard applies to files only
+    -- so such a course validates cleanly while `pages[0]` is the appendix.
+
+    This mirrors the resolution the course map already uses so the breadcrumb
+    home and the map's root node can never disagree.
+    """
+    root_id = content_model.root_id
+    if root_id and root_id in content_model.pages_by_id:
+        return content_model.pages_by_id[root_id]
+    for candidate_id in content_model.children_by_parent.get(None, []):
+        if candidate_id in content_model.pages_by_id:
+            return content_model.pages_by_id[candidate_id]
+    return None
+
+
 def _render_breadcrumbs(page: ContentPage, content_model: ContentModel) -> str:
     breadcrumbs = _breadcrumb_pages(page, content_model)
     if not breadcrumbs:
         return ""
-    home_page = content_model.pages[0]
+    home_page = _course_home_page(content_model)
+    if home_page is None:
+        return ""
     crumbs: list[tuple[str, str | None, str]] = [
         (
             home_page.nav_title,
