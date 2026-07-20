@@ -6981,3 +6981,45 @@ def _tag_html(html_text: str, tag_name: str, class_name: str) -> str:
 class _MissingMathHtmlRenderer:
     def render_many(self, items, *, report: ValidationReport) -> MathRenderResult:
         return MathRenderResult(html_by_id={}, css="")
+
+
+def test_breadcrumb_home_resolves_course_root_not_first_sorted_page(
+    tmp_path: Path,
+) -> None:
+    # `content_model.pages` is sorted by ordered path parts, so a zero-order
+    # DIRECTORY whose slug sorts before "index" outranks the root's own
+    # 0_index.md -- `0_appendix`, `0_about`, `0_faq` all do. Zero-order
+    # directories are legal: the "zero-order content files must be index
+    # pages" guard applies to files only. Taking pages[0] as the course home
+    # therefore pointed the breadcrumb at the wrong page for every page in
+    # such a course. Resolve the root explicitly instead.
+    course = _copy_minimal(tmp_path)
+    appendix = course / "course" / "0_appendix"
+    appendix.mkdir(parents=True)
+    (appendix / "0_index.md").write_text(
+        "---\n"
+        "id: appendix-index\n"
+        "title: Appendix\n"
+        "summary: Zero-order sibling that sorts before the course root.\n"
+        "status: ready\n"
+        "---\n"
+        "\n"
+        "# Appendix\n"
+        "\n"
+        "Zero-order directory that sorts before the root index page.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "unit" / "topic" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    breadcrumb_html = _tag_html(html, "nav", "raya-breadcrumbs")
+    assert 'class="raya-breadcrumb-home"' in breadcrumb_html
+    # The home crumb must be the course root, not the appendix.
+    assert "Minimal Course" in breadcrumb_html, breadcrumb_html
+    assert "Appendix" not in breadcrumb_html, breadcrumb_html
+    assert 'href="../../index.html"' in breadcrumb_html, breadcrumb_html
+    assert "appendix" not in breadcrumb_html.lower(), breadcrumb_html
