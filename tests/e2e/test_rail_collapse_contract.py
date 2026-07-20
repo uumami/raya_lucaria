@@ -294,3 +294,50 @@ def test_expanded_rails_do_not_overflow_at_894_band(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+def test_course_map_tree_keeps_usable_height_on_short_viewports(tmp_path):
+    # The course map's chrome (header, search + command tiles, page position,
+    # filter label, filter) is ~398px of FIXED height. The section tree is the
+    # only flex:1 1 auto item with min-height:0, so it absorbed the entire
+    # squeeze and collapsed to 5px at a 520px-tall viewport -- making the
+    # primary navigation unscrollable and giving the impression that the page
+    # scrolls instead of the rail. The tree must keep a usable window; the
+    # rail (already overflow:auto, max-height:calc(100vh - 2rem)) takes the
+    # overflow instead.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for height in (520, 600, 700, 900):
+                    page = browser.new_page(viewport={"width": 1440, "height": height})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(300)
+                    geo = page.evaluate("""() => {
+                      const list = document.querySelector('.raya-course-map-list');
+                      const cs = getComputedStyle(list);
+                      return {
+                        h: Math.round(list.getBoundingClientRect().height),
+                        overflowY: cs.overflowY,
+                        overscroll: cs.overscrollBehaviorY,
+                      };
+                    }""")
+                    # A tree window smaller than this cannot show even a few
+                    # rows and reads as "scrolling does nothing".
+                    assert geo["h"] >= 160, (height, geo)
+                    # The tree keeps its own contained scroll at every height.
+                    assert geo["overflowY"] == "auto", (height, geo)
+                    assert geo["overscroll"] == "contain", (height, geo)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
