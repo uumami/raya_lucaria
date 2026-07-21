@@ -19,6 +19,8 @@ from raya_static.shell_geometry import (
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 
+_MIRROR_ATTR = re.compile(r"\[data-raya-(?:course-map|learning-rail)=")
+
 
 def _browser_executable() -> Path:
     # Local copy of tests/e2e/test_preview_static_read_path._browser_executable:
@@ -142,14 +144,23 @@ def test_collapse_selectors_key_off_html_only():
     for line in css.splitlines():
         if "data-raya-course-map=" not in line and "data-raya-learning-rail=" not in line:
             continue
-        if "-transition" in line or "-drawer" in line or "-preference" in line:
-            continue  # animation/drawer/preference channels are exempt element attrs
-        # Element-mirror forms that go dead when the mirror write is removed:
-        if re.search(r"\.raya-course-map\[data-raya-course-map=", line) \
-           or re.search(r"\.raya-learning-rail\[data-raya-learning-rail=", line) \
-           or re.search(r"\.raya-learning-shell\[data-raya-course-map=", line) \
-           or re.search(r"\.raya-learning-shell\[data-raya-learning-rail=", line):
-            offenders.append(line.strip())
+        if "-drawer" in line or "-preference" in line:
+            continue  # drawer/preference channels are genuine element attrs
+        # Element-mirror forms that go dead when the mirror write is removed.
+        # NOTE: these regexes anchor on `data-raya-*=` immediately, so a
+        # suffixed attribute (`data-raya-*-transition=`) never matches them.
+        # The ancestor-rooted selectors that pair with each mirror are LIVE
+        # during the 240ms transition window and are intentionally not caught.
+        # Any selector that reads collapse state off a non-root element is a
+        # mirror. Enumerating element classes (as before) missed mirrors on
+        # `body`, `main`, or the article element entirely. A lookbehind-based
+        # matcher does NOT work here: `(?<!html)` guards only the FIRST
+        # attribute, so a chain like `html[data-raya-course-map=...]
+        # [data-raya-learning-rail=...]` false-positives on the second.
+        for compound in re.split(r"[,\s>+~]+", line):
+            if _MIRROR_ATTR.search(compound) and compound.split("[", 1)[0] not in ("", "html"):
+                offenders.append(line.strip())
+                break
     assert offenders == [], offenders
 
 
@@ -178,6 +189,49 @@ def test_no_id_selectors_reference_collapse_state():
         if any(marker in line for marker in collapse_state_markers):
             offenders.append(line.strip())
     assert offenders == [], offenders
+
+
+def test_transition_window_keeps_rail_chrome_painted(tmp_path):
+    # The ancestor-rooted transition selectors are LIVE: they keep the expand
+    # chip painted and the header/body hidden during the 240ms animation.
+    # Without them the rail renders completely empty mid-expand.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                # Collapse, settle, then start expanding and sample mid-flight.
+                page.evaluate(
+                    "() => { document.documentElement.dataset.rayaLearningRail = 'collapsed'; }")
+                page.wait_for_timeout(320)
+                page.click("[data-raya-learning-rail-expand]")
+                page.wait_for_timeout(80)  # inside the 240ms window
+                mid = page.evaluate("""() => {
+                  const rail = document.querySelector('#raya-learning-rail');
+                  const chip = rail.querySelector('.raya-learning-rail-expand');
+                  const header = rail.querySelector('.raya-learning-rail-header');
+                  return {
+                    transition: rail.dataset.rayaLearningRailTransition || '',
+                    chipShown: getComputedStyle(chip).display !== 'none',
+                    headerShown: getComputedStyle(header).display !== 'none',
+                  };
+                }""")
+                assert mid["transition"] == "expanding", mid
+                assert mid["chipShown"] is True, mid
+                assert mid["headerShown"] is False, mid
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 def _collapsed_chip(page, rail_sel):
