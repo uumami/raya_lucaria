@@ -5,10 +5,27 @@ RAIL_APPROVED_PX = 894
 RAIL_DESKTOP_PX = 1280
 
 # The one definition of the effective-state rule, embedded verbatim in BOTH
-# the prepaint and runtime scripts. Pure function of (preference, width):
-#   < 640            -> both expanded (left is presented as a drawer in CSS/JS)
-#   >= 894           -> caller's preference (default expanded)
-#   640..893, both expanded -> collapse both (medium-band mutual exclusion)
+# the prepaint and runtime scripts. Pure function of (preference, bands):
+#   not structural   -> both expanded (left is presented as a drawer in CSS/JS)
+#   approved         -> caller's preference (default expanded)
+#   structural & !approved & both expanded -> collapse both (medium-band
+#                                             mutual exclusion)
+#
+# Bands are read via matchMedia against the SAME boundary strings the CSS
+# @media rules use, so JS and CSS converge on the same answer. Deriving from
+# innerWidth instead allows a PERMANENT mismatch on engines where the
+# media-query width excludes a classic scrollbar.
+#
+# The prepaint read is PROVISIONAL: shell-prepaint.js runs before any
+# stylesheet and before <body>, so no scrollbar exists yet and the query
+# returns the no-scrollbar answer. Agreement is reached once shell.js runs
+# and the MQ change listeners fire.
+#
+# `printing` forces the widest band. During print, viewport media features
+# resolve against the PAGE BOX (~700-760px at A4/Letter 96dpi), which would
+# otherwise flip `approved` false and collapse BOTH rails in the printout for
+# any user with an expanded/expanded preference. innerWidth was immune
+# because it is not re-scoped to the page box.
 #
 # NOTE: built directly from the RAIL_STRUCTURAL_PX / RAIL_APPROVED_PX ints
 # (not from the __RAYA_*_PX__ placeholder tokens) so this constant is already
@@ -19,11 +36,20 @@ RAIL_DESKTOP_PX = 1280
 # from this module-level constant after substitution — breaking the
 # byte-identical-across-scripts guarantee the guardrail test checks for.
 RAIL_EFFECTIVE_DERIVATION_JS = (
-    "function rayaEffectiveRailState(courseMap, learningRail, width) {\n"
-    "  if (width < " + str(RAIL_STRUCTURAL_PX) + ") {\n"
+    "function rayaRailBands() {\n"
+    "  var printing = matchMedia(\"print\").matches;\n"
+    "  return {\n"
+    "    structural: printing || matchMedia(\"(min-width: "
+    + str(RAIL_STRUCTURAL_PX) + "px)\").matches,\n"
+    "    approved: printing || matchMedia(\"(min-width: "
+    + str(RAIL_APPROVED_PX) + "px)\").matches\n"
+    "  };\n"
+    "}\n"
+    "function rayaEffectiveRailState(courseMap, learningRail, bands) {\n"
+    "  if (!bands.structural) {\n"
     "    return { courseMap: \"expanded\", learningRail: \"expanded\" };\n"
     "  }\n"
-    "  if (width < " + str(RAIL_APPROVED_PX) + " && courseMap === \"expanded\""
+    "  if (!bands.approved && courseMap === \"expanded\""
     " && learningRail === \"expanded\") {\n"
     "    return { courseMap: \"collapsed\", learningRail: \"collapsed\" };\n"
     "  }\n"

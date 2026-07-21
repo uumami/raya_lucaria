@@ -294,3 +294,61 @@ def test_expanded_rails_do_not_overflow_at_894_band(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+def test_rail_state_derives_from_media_queries_not_inner_width():
+    # JS must derive band membership from the SAME media queries CSS uses.
+    # Deriving from innerWidth allows disagreement on engines where the
+    # media-query width excludes a classic scrollbar: an innerWidth in
+    # [640, 640+scrollbarWidth) puts JS in the structural band (state ->
+    # collapsed) while CSS is still below it (body not hidden), which
+    # renders a collapsed rail leaking its full body.
+    runtime = shell_resources().javascript
+    prepaint = shell_prepaint_javascript()
+    for script, allowed_inner_width in ((runtime, 2), (prepaint, 0)):
+        assert "function rayaRailBands()" in script
+        assert "rayaRailBands())" in script
+        # Substring assertions like `", innerWidth)" not in script` are a
+        # false-pass hole: they do not match `, window.innerWidth)`, which is
+        # the spelling used elsewhere in this file. Count instead. The only
+        # permitted innerWidth reads are the two compact-preview geometry
+        # calculations at shell.py:864,868 -- neither is a band decision.
+        assert script.count("innerWidth") == allowed_inner_width, script
+
+
+def test_rail_state_does_not_flip_after_first_paint(tmp_path):
+    # Task 1 made band reads reactive to media queries. Verify that does not
+    # produce a visible rail flip when content loads and a scrollbar appears.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (638, 640, 645, 648, 892, 894, 898):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.add_init_script("""
+                      window.__rayaFlips = [];
+                      document.addEventListener('DOMContentLoaded', () => {
+                        const r = document.documentElement;
+                        new MutationObserver(() => {
+                          window.__rayaFlips.push(r.dataset.rayaCourseMap);
+                        }).observe(r, { attributes: true,
+                                        attributeFilter: ['data-raya-course-map'] });
+                      });
+                    """)
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(400)
+                    flips = page.evaluate("() => window.__rayaFlips || []")
+                    # Any change of VALUE after first paint is a visible flip.
+                    assert len(set(flips)) <= 1, (width, flips)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

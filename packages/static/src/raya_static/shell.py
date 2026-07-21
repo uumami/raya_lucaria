@@ -224,7 +224,7 @@ _SHELL_JAVASCRIPT = r"""
       courseMap: defaultCourseMapExpanded() ? "expanded" : "collapsed",
       learningRail: defaultLearningRailExpanded() ? "expanded" : "collapsed",
     };
-    return rayaEffectiveRailState(next.courseMap, next.learningRail, innerWidth);
+    return rayaEffectiveRailState(next.courseMap, next.learningRail, rayaRailBands());
   }
 
   function saveReaderShellPreference() {
