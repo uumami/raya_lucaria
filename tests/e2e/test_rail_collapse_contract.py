@@ -12,6 +12,7 @@ from raya_static.shell_prepaint import shell_prepaint_javascript
 from raya_static.shell_geometry import (
     _TOKENS,
     RAIL_APPROVED_PX,
+    RAIL_STRUCTURAL_PX,
     RAIL_EFFECTIVE_DERIVATION_JS,
 )
 
@@ -43,6 +44,47 @@ def _browser_executable() -> Path:
     pytest.fail("A Chromium-compatible browser is required for visual/layout e2e tests")
 
 
+# Exactly one media query in these files uses a rail-boundary number but is
+# NOT a rail boundary: the discovery workspace shell. Its true partner is
+# graph.py:1725 (`matchMedia("(max-width: 1279px)")`), which this test does
+# not scan, so tokenizing it against a READER-rail constant would couple two
+# unrelated subsystems and silently desync from graph.py. It is tracked as
+# deferred debt item 5 instead. Allowlist entries must be exact full-line
+# matches and must each reference a tracked debt item -- this is not a
+# pattern-based skip, which is how the previous guardrail went vacuous.
+_NON_RAIL_BOUNDARY_ALLOWLIST = {
+    "rendering.py: @media (max-width: 1279px) {",  # debt item 5: discovery rail
+}
+
+
+def test_no_hardcoded_rail_boundaries_in_templates():
+    # The presence-only boundary assertions let five literals survive the
+    # single-sourcing refactor. Assert ABSENCE: every rail boundary in the
+    # CSS/JS templates must be token-sourced, so changing a constant in
+    # shell_geometry.py cannot leave a stale literal behind.
+    import raya_static.shell as shell_module
+    import raya_static.shell_prepaint as prepaint_module
+
+    boundaries = ("640", "639", "894", "893", "1280", "1279", "768", "767")
+    sources = {
+        "rendering.py": Path(rendering_module.__file__).read_text(encoding="utf-8"),
+        "shell.py": Path(shell_module.__file__).read_text(encoding="utf-8"),
+        "shell_prepaint.py": Path(prepaint_module.__file__).read_text(encoding="utf-8"),
+    }
+    offenders = []
+    for name, source in sources.items():
+        for line in source.splitlines():
+            if "min-width:" not in line and "max-width:" not in line:
+                continue
+            entry = f"{name}: {line.strip()}"
+            if entry in _NON_RAIL_BOUNDARY_ALLOWLIST:
+                continue
+            for boundary in boundaries:
+                if f"{boundary}px" in line:
+                    offenders.append(entry)
+    assert offenders == [], offenders
+
+
 def test_rail_geometry_is_single_sourced_across_scripts():
     runtime = shell_resources().javascript
     prepaint = shell_prepaint_javascript()
@@ -52,8 +94,9 @@ def test_rail_geometry_is_single_sourced_across_scripts():
         assert token not in runtime, token
         assert token not in prepaint, token
     # Boundaries agree across scripts.
-    assert "(min-width: 894px)" in runtime
-    assert "894" in prepaint and "640" in prepaint and "640" in runtime
+    assert f"(min-width: {RAIL_APPROVED_PX}px)" in runtime
+    assert str(RAIL_APPROVED_PX) in prepaint and str(RAIL_STRUCTURAL_PX) in prepaint
+    assert str(RAIL_STRUCTURAL_PX) in runtime
     # The pairwise derivation is byte-identical in both scripts (no rule drift).
     assert RAIL_EFFECTIVE_DERIVATION_JS in runtime
     assert RAIL_EFFECTIVE_DERIVATION_JS in prepaint
@@ -86,11 +129,11 @@ def test_css_and_js_share_the_same_rail_boundaries():
                   "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
         assert token not in css, token
     # The approved-geometry boundary appears in CSS exactly as in JS.
-    assert "(min-width: 894px)" in css
+    assert f"(min-width: {RAIL_APPROVED_PX}px)" in css
     # Its complement is emitted from the same source (guards the sub-pixel gap).
-    assert "(max-width: 893px)" in css
+    assert f"(max-width: {RAIL_APPROVED_PX - 1}px)" in css
     # The structural boundary is shared too.
-    assert "(min-width: 640px)" in css
+    assert f"(min-width: {RAIL_STRUCTURAL_PX}px)" in css
 
 
 def test_collapse_selectors_key_off_html_only():

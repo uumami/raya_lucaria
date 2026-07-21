@@ -3,6 +3,12 @@ from __future__ import annotations
 RAIL_STRUCTURAL_PX = 640
 RAIL_APPROVED_PX = 894
 RAIL_DESKTOP_PX = 1280
+RAIL_COMPACT_PX = 768
+
+# defaultRailExpanded() (shell.py) drops its isDesktopShell() term because
+# desktop implies approved. That reduction is only valid while this holds,
+# and nothing else enforces it -- make it structural, not coincidental.
+assert RAIL_DESKTOP_PX > RAIL_APPROVED_PX > RAIL_STRUCTURAL_PX
 
 # The one definition of the effective-state rule, embedded verbatim in BOTH
 # the prepaint and runtime scripts. Pure function of (preference, bands):
@@ -62,7 +68,9 @@ _TOKENS = {
     "__RAYA_STRUCTURAL_PX__": str(RAIL_STRUCTURAL_PX),
     "__RAYA_APPROVED_PX__": str(RAIL_APPROVED_PX),
     "__RAYA_DESKTOP_PX__": str(RAIL_DESKTOP_PX),
+    "__RAYA_STRUCTURAL_MINUS_PX__": str(RAIL_STRUCTURAL_PX - 1),
     "__RAYA_APPROVED_MINUS_PX__": str(RAIL_APPROVED_PX - 1),
+    "__RAYA_COMPACT_MINUS_PX__": str(RAIL_COMPACT_PX - 1),
 }
 
 

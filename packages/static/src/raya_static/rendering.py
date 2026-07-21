@@ -4097,7 +4097,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
      expand chip) lives in ONE place: the
      "rail collapse: appearance (single source)" region below. */
 }
-@media (max-width: 639px) {
+@media (max-width: __RAYA_STRUCTURAL_MINUS_PX__px) {
   .raya-course-map-expand,
   .raya-course-map-collapse {
     display: none;
@@ -5163,7 +5163,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     width: 1px;
   }
 }
-@media (min-width: 1280px) {
+@media (min-width: __RAYA_DESKTOP_PX__px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-top-command-bar-inner {
     align-items: center;
     flex-wrap: nowrap;
@@ -5258,7 +5258,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     min-width: 10rem;
   }
 }
-@media (max-width: 639px) {
+@media (max-width: __RAYA_STRUCTURAL_MINUS_PX__px) {
   .raya-mobile-course-map-open.raya-command {
     align-items: center;
     background: var(--raya-color-accent-soft);
@@ -6226,7 +6226,7 @@ mjx-container[display="true"] {
     display: block;
   }
 }
-@media (max-width: 639px) {
+@media (max-width: __RAYA_STRUCTURAL_MINUS_PX__px) {
   .raya-learning-shell {
     grid-template-areas:
       "main-article"
@@ -6860,7 +6860,7 @@ mjx-container[display="true"] {
     padding-right: calc(min(15.75rem, calc(100vw - 3rem)) + 1rem);
   }
 }
-@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 767px) {
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_COMPACT_MINUS_PX__px) {
   .raya-learning-shell {
     gap: 0.6rem;
     grid-template-areas: "main-article";

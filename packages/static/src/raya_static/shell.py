@@ -52,7 +52,7 @@ _SHELL_JAVASCRIPT = r"""
   const desktopMapQuery = window.matchMedia("(min-width: __RAYA_DESKTOP_PX__px)");
   const structuralRailQuery = window.matchMedia("(min-width: __RAYA_STRUCTURAL_PX__px)");
   const compactStructuralRailQuery = window.matchMedia(
-    "(min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: 767px)"
+    "(min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_COMPACT_MINUS_PX__px)"
   );
   const approvedRailGeometryQuery = window.matchMedia("(min-width: __RAYA_APPROVED_PX__px)");
   const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -171,16 +171,8 @@ _SHELL_JAVASCRIPT = r"""
     return isStructuralRailShell() && !approvedRailGeometryQuery.matches;
   }
 
-  function defaultCourseMapExpanded() {
-    return (
-      !isStructuralRailShell() || isDesktopShell() || approvedRailGeometryQuery.matches
-    );
-  }
-
-  function defaultLearningRailExpanded() {
-    return (
-      !isStructuralRailShell() || isDesktopShell() || approvedRailGeometryQuery.matches
-    );
+  function defaultRailExpanded() {
+    return !isStructuralRailShell() || approvedRailGeometryQuery.matches;
   }
 
   function validCourseId() {
@@ -221,8 +213,8 @@ _SHELL_JAVASCRIPT = r"""
       return { courseMap: "expanded", learningRail: "expanded" };
     }
     const next = preference || {
-      courseMap: defaultCourseMapExpanded() ? "expanded" : "collapsed",
-      learningRail: defaultLearningRailExpanded() ? "expanded" : "collapsed",
+      courseMap: defaultRailExpanded() ? "expanded" : "collapsed",
+      learningRail: defaultRailExpanded() ? "expanded" : "collapsed",
     };
     return rayaEffectiveRailState(next.courseMap, next.learningRail, rayaRailBands());
   }
