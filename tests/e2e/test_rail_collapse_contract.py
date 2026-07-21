@@ -310,6 +310,55 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
         handle.close()
 
 
+def test_collapse_via_real_clicks_produces_clean_chips(tmp_path):
+    # The dataset-driven test bypasses every toggle handler. This drives the
+    # real interaction path: handler -> state -> persistence -> appearance.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (894, 1280, 1440):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    # [data-raya-course-map-toggle] matches three elements (the
+                    # mobile-open button, the desktop "Hide map" collapse
+                    # button, and the collapsed-state expand chip); the
+                    # legacy page.click(selector) API picks the first DOM
+                    # match regardless of visibility, which is the
+                    # mobile-only button hidden at these widths. Target the
+                    # unique, always-present desktop collapse control
+                    # instead, mirroring [data-raya-learning-rail-collapse].
+                    page.click("[data-raya-course-map-collapse]")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_timeout(320)  # past the 240ms transition
+                    state = page.evaluate("""() => {
+                      const r = document.documentElement;
+                      return { map: r.dataset.rayaCourseMap,
+                               rail: r.dataset.rayaLearningRail };
+                    }""")
+                    assert state == {"map": "collapsed", "rail": "collapsed"}, (width, state)
+                    for sel in ("#raya-course-map", "#raya-learning-rail"):
+                        side = _collapsed_chip(page, sel)
+                        assert side["controlCount"] == 1, (width, sel, side)
+                        assert side["headerShown"] is False, (width, sel, side)
+                        assert side["bodyShown"] is False, (width, sel, side)
+                    overflow = page.evaluate(
+                        "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
+                    assert overflow <= 1, (width, overflow)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_learning_rail_inert_is_width_gated_via_shared_helper():
     # Both rail bodies must derive own-state inert through ONE shared,
     # width-gated helper (isStructuralRailShell() && collapsed) — the same
