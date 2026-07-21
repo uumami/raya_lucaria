@@ -5350,9 +5350,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   /* Collapsed header/body display:none lives in the single "rail collapse:
      appearance" region (not band-scoped here — it's width-invariant). */
   [data-raya-learning-rail="collapsed"] .raya-learning-rail[data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body {
-    display: block;
-    pointer-events: none;
-    visibility: hidden;
+    display: none;
   }
   [data-raya-course-map="expanded"] .raya-course-map[data-raya-course-map-transition="expanding"] .raya-course-map-list {
     display: grid;

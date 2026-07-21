@@ -518,3 +518,43 @@ def test_js_and_css_agree_on_band_membership_across_engines(tmp_path, engine):
                 browser.close()
     finally:
         handle.close()
+
+
+def test_collapsed_rail_never_exceeds_viewport_height(tmp_path):
+    # At >=894 the collapsing rule re-granted display:block to the rail body,
+    # overriding the collapse display:none, making the collapsed rail a
+    # 44 x 10466px fixed element -- a latent full-page click-blocker.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (894, 1000, 1280, 1440):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_timeout(100)  # mid-transition, the risky window
+                    box = page.evaluate("""() => {
+                      const r = document.querySelector('#raya-learning-rail');
+                      const b = r.getBoundingClientRect();
+                      return { w: Math.round(b.width), h: Math.round(b.height) };
+                    }""")
+                    assert box["h"] <= 900, (width, box)
+                    page.wait_for_timeout(250)  # settled
+                    settled = page.evaluate("""() => {
+                      const r = document.querySelector('#raya-learning-rail');
+                      const b = r.getBoundingClientRect();
+                      return { w: Math.round(b.width), h: Math.round(b.height) };
+                    }""")
+                    assert settled["h"] <= 900, (width, settled)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
