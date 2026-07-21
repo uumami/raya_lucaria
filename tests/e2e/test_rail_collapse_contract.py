@@ -352,3 +352,72 @@ def test_rail_state_does_not_flip_after_first_paint(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+@pytest.mark.parametrize("engine", ["chromium", "firefox", "webkit"])
+def test_js_and_css_agree_on_band_membership_across_engines(tmp_path, engine):
+    # Across the structural boundary, the state JS derives must match the
+    # appearance CSS applies. A disagreement here is the exact shape of the
+    # reported bug: state says "collapsed" while the body stays visible.
+    #
+    # Chromium has exact innerWidth/media-query agreement, so it alone cannot
+    # detect a regression of the mismatch class Task 1 removed -- Firefox and
+    # WebKit can (classic scrollbars shrink the media-query width but not
+    # innerWidth in some engine/platform combinations).
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            launcher = getattr(p, engine)
+            if engine == "chromium":
+                # Chromium must NEVER skip: a bare launcher.launch() finds no
+                # Playwright-downloaded chromium in CI, so a blanket
+                # try/except would make ALL THREE parametrizations skip and
+                # the test would be green-by-skip from the day it lands.
+                browser = launcher.launch(executable_path=str(_browser_executable()),
+                                          headless=True, args=["--no-sandbox"])
+            else:
+                try:
+                    browser = launcher.launch(headless=True)
+                except Exception as exc:
+                    if os.environ.get("RAYA_REQUIRE_ALL_ENGINES") == "1":
+                        pytest.fail(f"{engine} required but unavailable: {exc}")
+                    pytest.skip(f"{engine} unavailable: {exc}")
+            try:
+                divergences = []
+                for width in (636, 639, 640, 641, 645, 655, 660, 893, 894, 900):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(150)
+                    result = page.evaluate("""() => {
+                      const r = document.documentElement;
+                      const body = document.querySelector('#raya-course-map-body');
+                      return {
+                        state: r.dataset.rayaCourseMap,
+                        bodyShown: getComputedStyle(body).display !== 'none',
+                        structuralMQ: matchMedia('(min-width: 640px)').matches,
+                      };
+                    }""")
+                    probe = page.evaluate("""() => ({
+                      mqStructural: matchMedia('(min-width: 640px)').matches,
+                      iwStructural: innerWidth >= 640,
+                    })""")
+                    if probe["mqStructural"] != probe["iwStructural"]:
+                        divergences.append((engine, width, probe))
+                    # Collapsed state must always mean a hidden body inside the
+                    # structural band. NOTE: only this half tests anything --
+                    # the `not structuralMQ -> expanded` half is TAUTOLOGICAL
+                    # after Task 1, because both sides now read the same
+                    # matchMedia('(min-width: 640px)'). Do not over-trust it.
+                    if result["structuralMQ"] and result["state"] == "collapsed":
+                        assert result["bodyShown"] is False, (engine, width, result)
+                    page.close()
+                print(f"[{engine}] innerWidth/media-query divergences: {divergences}")
+            finally:
+                browser.close()
+    finally:
+        handle.close()
