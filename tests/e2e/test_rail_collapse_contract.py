@@ -12,11 +12,14 @@ from raya_static.shell_prepaint import shell_prepaint_javascript
 from raya_static.shell_geometry import (
     _TOKENS,
     RAIL_APPROVED_PX,
+    RAIL_STRUCTURAL_PX,
     RAIL_EFFECTIVE_DERIVATION_JS,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+
+_MIRROR_ATTR = re.compile(r"\[data-raya-(?:course-map|learning-rail)=")
 
 
 def _browser_executable() -> Path:
@@ -43,6 +46,47 @@ def _browser_executable() -> Path:
     pytest.fail("A Chromium-compatible browser is required for visual/layout e2e tests")
 
 
+# Exactly one media query in these files uses a rail-boundary number but is
+# NOT a rail boundary: the discovery workspace shell. Its true partner is
+# graph.py:1725 (`matchMedia("(max-width: 1279px)")`), which this test does
+# not scan, so tokenizing it against a READER-rail constant would couple two
+# unrelated subsystems and silently desync from graph.py. It is tracked as
+# deferred debt item 5 instead. Allowlist entries must be exact full-line
+# matches and must each reference a tracked debt item -- this is not a
+# pattern-based skip, which is how the previous guardrail went vacuous.
+_NON_RAIL_BOUNDARY_ALLOWLIST = {
+    "rendering.py: @media (max-width: 1279px) {",  # debt item 5: discovery rail
+}
+
+
+def test_no_hardcoded_rail_boundaries_in_templates():
+    # The presence-only boundary assertions let five literals survive the
+    # single-sourcing refactor. Assert ABSENCE: every rail boundary in the
+    # CSS/JS templates must be token-sourced, so changing a constant in
+    # shell_geometry.py cannot leave a stale literal behind.
+    import raya_static.shell as shell_module
+    import raya_static.shell_prepaint as prepaint_module
+
+    boundaries = ("640", "639", "894", "893", "1280", "1279", "768", "767")
+    sources = {
+        "rendering.py": Path(rendering_module.__file__).read_text(encoding="utf-8"),
+        "shell.py": Path(shell_module.__file__).read_text(encoding="utf-8"),
+        "shell_prepaint.py": Path(prepaint_module.__file__).read_text(encoding="utf-8"),
+    }
+    offenders = []
+    for name, source in sources.items():
+        for line in source.splitlines():
+            if "min-width:" not in line and "max-width:" not in line:
+                continue
+            entry = f"{name}: {line.strip()}"
+            if entry in _NON_RAIL_BOUNDARY_ALLOWLIST:
+                continue
+            for boundary in boundaries:
+                if f"{boundary}px" in line:
+                    offenders.append(entry)
+    assert offenders == [], offenders
+
+
 def test_rail_geometry_is_single_sourced_across_scripts():
     runtime = shell_resources().javascript
     prepaint = shell_prepaint_javascript()
@@ -52,8 +96,9 @@ def test_rail_geometry_is_single_sourced_across_scripts():
         assert token not in runtime, token
         assert token not in prepaint, token
     # Boundaries agree across scripts.
-    assert "(min-width: 894px)" in runtime
-    assert "894" in prepaint and "640" in prepaint and "640" in runtime
+    assert f"(min-width: {RAIL_APPROVED_PX}px)" in runtime
+    assert str(RAIL_APPROVED_PX) in prepaint and str(RAIL_STRUCTURAL_PX) in prepaint
+    assert str(RAIL_STRUCTURAL_PX) in runtime
     # The pairwise derivation is byte-identical in both scripts (no rule drift).
     assert RAIL_EFFECTIVE_DERIVATION_JS in runtime
     assert RAIL_EFFECTIVE_DERIVATION_JS in prepaint
@@ -86,11 +131,11 @@ def test_css_and_js_share_the_same_rail_boundaries():
                   "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
         assert token not in css, token
     # The approved-geometry boundary appears in CSS exactly as in JS.
-    assert "(min-width: 894px)" in css
+    assert f"(min-width: {RAIL_APPROVED_PX}px)" in css
     # Its complement is emitted from the same source (guards the sub-pixel gap).
-    assert "(max-width: 893px)" in css
+    assert f"(max-width: {RAIL_APPROVED_PX - 1}px)" in css
     # The structural boundary is shared too.
-    assert "(min-width: 640px)" in css
+    assert f"(min-width: {RAIL_STRUCTURAL_PX}px)" in css
 
 
 def test_collapse_selectors_key_off_html_only():
@@ -99,14 +144,23 @@ def test_collapse_selectors_key_off_html_only():
     for line in css.splitlines():
         if "data-raya-course-map=" not in line and "data-raya-learning-rail=" not in line:
             continue
-        if "-transition" in line or "-drawer" in line or "-preference" in line:
-            continue  # animation/drawer/preference channels are exempt element attrs
-        # Element-mirror forms that go dead when the mirror write is removed:
-        if re.search(r"\.raya-course-map\[data-raya-course-map=", line) \
-           or re.search(r"\.raya-learning-rail\[data-raya-learning-rail=", line) \
-           or re.search(r"\.raya-learning-shell\[data-raya-course-map=", line) \
-           or re.search(r"\.raya-learning-shell\[data-raya-learning-rail=", line):
-            offenders.append(line.strip())
+        if "-drawer" in line or "-preference" in line:
+            continue  # drawer/preference channels are genuine element attrs
+        # Element-mirror forms that go dead when the mirror write is removed.
+        # NOTE: these regexes anchor on `data-raya-*=` immediately, so a
+        # suffixed attribute (`data-raya-*-transition=`) never matches them.
+        # The ancestor-rooted selectors that pair with each mirror are LIVE
+        # during the 240ms transition window and are intentionally not caught.
+        # Any selector that reads collapse state off a non-root element is a
+        # mirror. Enumerating element classes (as before) missed mirrors on
+        # `body`, `main`, or the article element entirely. A lookbehind-based
+        # matcher does NOT work here: `(?<!html)` guards only the FIRST
+        # attribute, so a chain like `html[data-raya-course-map=...]
+        # [data-raya-learning-rail=...]` false-positives on the second.
+        for compound in re.split(r"[,\s>+~]+", line):
+            if _MIRROR_ATTR.search(compound) and compound.split("[", 1)[0] not in ("", "html"):
+                offenders.append(line.strip())
+                break
     assert offenders == [], offenders
 
 
@@ -135,6 +189,49 @@ def test_no_id_selectors_reference_collapse_state():
         if any(marker in line for marker in collapse_state_markers):
             offenders.append(line.strip())
     assert offenders == [], offenders
+
+
+def test_transition_window_keeps_rail_chrome_painted(tmp_path):
+    # The ancestor-rooted transition selectors are LIVE: they keep the expand
+    # chip painted and the header/body hidden during the 240ms animation.
+    # Without them the rail renders completely empty mid-expand.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                # Collapse, settle, then start expanding and sample mid-flight.
+                page.evaluate(
+                    "() => { document.documentElement.dataset.rayaLearningRail = 'collapsed'; }")
+                page.wait_for_timeout(320)
+                page.click("[data-raya-learning-rail-expand]")
+                page.wait_for_timeout(80)  # inside the 240ms window
+                mid = page.evaluate("""() => {
+                  const rail = document.querySelector('#raya-learning-rail');
+                  const chip = rail.querySelector('.raya-learning-rail-expand');
+                  const header = rail.querySelector('.raya-learning-rail-header');
+                  return {
+                    transition: rail.dataset.rayaLearningRailTransition || '',
+                    chipShown: getComputedStyle(chip).display !== 'none',
+                    headerShown: getComputedStyle(header).display !== 'none',
+                  };
+                }""")
+                assert mid["transition"] == "expanding", mid
+                assert mid["chipShown"] is True, mid
+                assert mid["headerShown"] is False, mid
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 def _collapsed_chip(page, rail_sel):
@@ -207,6 +304,55 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
                 # reintroducing e.g. a vertically-centered desktop band).
                 assert len(set(tops_left)) == 1, tops_left
                 assert len(set(tops_right)) == 1, tops_right
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_collapse_via_real_clicks_produces_clean_chips(tmp_path):
+    # The dataset-driven test bypasses every toggle handler. This drives the
+    # real interaction path: handler -> state -> persistence -> appearance.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (894, 1280, 1440):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    # [data-raya-course-map-toggle] matches three elements (the
+                    # mobile-open button, the desktop "Hide map" collapse
+                    # button, and the collapsed-state expand chip); the
+                    # legacy page.click(selector) API picks the first DOM
+                    # match regardless of visibility, which is the
+                    # mobile-only button hidden at these widths. Target the
+                    # unique, always-present desktop collapse control
+                    # instead, mirroring [data-raya-learning-rail-collapse].
+                    page.click("[data-raya-course-map-collapse]")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_timeout(320)  # past the 240ms transition
+                    state = page.evaluate("""() => {
+                      const r = document.documentElement;
+                      return { map: r.dataset.rayaCourseMap,
+                               rail: r.dataset.rayaLearningRail };
+                    }""")
+                    assert state == {"map": "collapsed", "rail": "collapsed"}, (width, state)
+                    for sel in ("#raya-course-map", "#raya-learning-rail"):
+                        side = _collapsed_chip(page, sel)
+                        assert side["controlCount"] == 1, (width, sel, side)
+                        assert side["headerShown"] is False, (width, sel, side)
+                        assert side["bodyShown"] is False, (width, sel, side)
+                    overflow = page.evaluate(
+                        "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
+                    assert overflow <= 1, (width, overflow)
+                    page.close()
             finally:
                 browser.close()
     finally:
@@ -289,6 +435,173 @@ def test_expanded_rails_do_not_overflow_at_894_band(tmp_path):
                     overflow = page.evaluate(
                         "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
                     assert overflow <= 1, (width, overflow)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_rail_state_derives_from_media_queries_not_inner_width():
+    # JS must derive band membership from the SAME media queries CSS uses.
+    # Deriving from innerWidth allows disagreement on engines where the
+    # media-query width excludes a classic scrollbar: an innerWidth in
+    # [640, 640+scrollbarWidth) puts JS in the structural band (state ->
+    # collapsed) while CSS is still below it (body not hidden), which
+    # renders a collapsed rail leaking its full body.
+    runtime = shell_resources().javascript
+    prepaint = shell_prepaint_javascript()
+    for script, allowed_inner_width in ((runtime, 2), (prepaint, 0)):
+        assert "function rayaRailBands()" in script
+        assert "rayaRailBands())" in script
+        # Substring assertions like `", innerWidth)" not in script` are a
+        # false-pass hole: they do not match `, window.innerWidth)`, which is
+        # the spelling used elsewhere in this file. Count instead. The only
+        # permitted innerWidth reads are the two compact-preview geometry
+        # calculations at shell.py:864,868 -- neither is a band decision.
+        assert script.count("innerWidth") == allowed_inner_width, script
+
+
+def test_rail_state_does_not_flip_after_first_paint(tmp_path):
+    # Task 1 made band reads reactive to media queries. Verify that does not
+    # produce a visible rail flip when content loads and a scrollbar appears.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (638, 640, 645, 648, 892, 894, 898):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.add_init_script("""
+                      window.__rayaFlips = [];
+                      document.addEventListener('DOMContentLoaded', () => {
+                        const r = document.documentElement;
+                        new MutationObserver(() => {
+                          window.__rayaFlips.push(r.dataset.rayaCourseMap);
+                        }).observe(r, { attributes: true,
+                                        attributeFilter: ['data-raya-course-map'] });
+                      });
+                    """)
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(400)
+                    flips = page.evaluate("() => window.__rayaFlips || []")
+                    # Any change of VALUE after first paint is a visible flip.
+                    assert len(set(flips)) <= 1, (width, flips)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize("engine", ["chromium", "firefox", "webkit"])
+def test_js_and_css_agree_on_band_membership_across_engines(tmp_path, engine):
+    # Across the structural boundary, the state JS derives must match the
+    # appearance CSS applies. A disagreement here is the exact shape of the
+    # reported bug: state says "collapsed" while the body stays visible.
+    #
+    # Chromium has exact innerWidth/media-query agreement, so it alone cannot
+    # detect a regression of the mismatch class Task 1 removed -- Firefox and
+    # WebKit can (classic scrollbars shrink the media-query width but not
+    # innerWidth in some engine/platform combinations).
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            launcher = getattr(p, engine)
+            if engine == "chromium":
+                # Chromium must NEVER skip: a bare launcher.launch() finds no
+                # Playwright-downloaded chromium in CI, so a blanket
+                # try/except would make ALL THREE parametrizations skip and
+                # the test would be green-by-skip from the day it lands.
+                browser = launcher.launch(executable_path=str(_browser_executable()),
+                                          headless=True, args=["--no-sandbox"])
+            else:
+                try:
+                    browser = launcher.launch(headless=True)
+                except Exception as exc:
+                    if os.environ.get("RAYA_REQUIRE_ALL_ENGINES") == "1":
+                        pytest.fail(f"{engine} required but unavailable: {exc}")
+                    pytest.skip(f"{engine} unavailable: {exc}")
+            try:
+                divergences = []
+                for width in (636, 639, 640, 641, 645, 655, 660, 893, 894, 900):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(150)
+                    result = page.evaluate("""() => {
+                      const r = document.documentElement;
+                      const body = document.querySelector('#raya-course-map-body');
+                      return {
+                        state: r.dataset.rayaCourseMap,
+                        bodyShown: getComputedStyle(body).display !== 'none',
+                        structuralMQ: matchMedia('(min-width: 640px)').matches,
+                      };
+                    }""")
+                    probe = page.evaluate("""() => ({
+                      mqStructural: matchMedia('(min-width: 640px)').matches,
+                      iwStructural: innerWidth >= 640,
+                    })""")
+                    if probe["mqStructural"] != probe["iwStructural"]:
+                        divergences.append((engine, width, probe))
+                    # Collapsed state must always mean a hidden body inside the
+                    # structural band. NOTE: only this half tests anything --
+                    # the `not structuralMQ -> expanded` half is TAUTOLOGICAL
+                    # after Task 1, because both sides now read the same
+                    # matchMedia('(min-width: 640px)'). Do not over-trust it.
+                    if result["structuralMQ"] and result["state"] == "collapsed":
+                        assert result["bodyShown"] is False, (engine, width, result)
+                    page.close()
+                print(f"[{engine}] innerWidth/media-query divergences: {divergences}")
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_collapsed_rail_never_exceeds_viewport_height(tmp_path):
+    # At >=894 the collapsing rule re-granted display:block to the rail body,
+    # overriding the collapse display:none, making the collapsed rail a
+    # 44 x 10466px fixed element -- a latent full-page click-blocker.
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(executable_path=str(_browser_executable()),
+                                        headless=True, args=["--no-sandbox"])
+            try:
+                for width in (894, 1000, 1280, 1440):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_timeout(100)  # mid-transition, the risky window
+                    box = page.evaluate("""() => {
+                      const r = document.querySelector('#raya-learning-rail');
+                      const b = r.getBoundingClientRect();
+                      return { w: Math.round(b.width), h: Math.round(b.height) };
+                    }""")
+                    assert box["h"] <= 900, (width, box)
+                    page.wait_for_timeout(250)  # settled
+                    settled = page.evaluate("""() => {
+                      const r = document.querySelector('#raya-learning-rail');
+                      const b = r.getBoundingClientRect();
+                      return { w: Math.round(b.width), h: Math.round(b.height) };
+                    }""")
+                    assert settled["h"] <= 900, (width, settled)
                     page.close()
             finally:
                 browser.close()

@@ -15,14 +15,16 @@ _SHELL_PREPAINT_JAVASCRIPT = r"""
   const root = document.documentElement;
   const courseId = root.dataset.rayaCourseId || "";
   __RAYA_RAIL_DERIVATION__
-  const applyEffective = (courseMap, learningRail) => {
-    const result = rayaEffectiveRailState(courseMap, learningRail, innerWidth);
+  const applyEffective = (courseMap, learningRail, bands) => {
+    const result = rayaEffectiveRailState(courseMap, learningRail, bands || rayaRailBands());
     root.dataset.rayaCourseMap = result.courseMap;
     root.dataset.rayaLearningRail = result.learningRail;
   };
   const applyDefaults = () => {
-    const expanded = innerWidth < __RAYA_STRUCTURAL_PX__ || innerWidth >= __RAYA_APPROVED_PX__;
-    applyEffective(expanded ? "expanded" : "collapsed", expanded ? "expanded" : "collapsed");
+    const bands = rayaRailBands();
+    const expanded = !bands.structural || bands.approved;
+    const state = expanded ? "expanded" : "collapsed";
+    applyEffective(state, state, bands);
   };
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(courseId)) {
     applyDefaults();
