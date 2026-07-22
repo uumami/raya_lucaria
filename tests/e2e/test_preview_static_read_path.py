@@ -13827,8 +13827,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.documentElement.dataset.rayaCourseMap,
-                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13855,8 +13853,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         }"""
                     )
                     assert initial["state"] == "expanded"
-                    assert initial["shellState"] == "expanded"
-                    assert initial["mapState"] == "expanded"
                     assert initial["expanded"] == ["true", "true"]
                     assert initial["labels"] == [
                         "Hide course map",
@@ -13927,8 +13923,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.documentElement.dataset.rayaCourseMap,
-                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -13963,8 +13957,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         }"""
                     )
                     assert collapsed["state"] == "collapsed"
-                    assert collapsed["shellState"] == "collapsed"
-                    assert collapsed["mapState"] == "collapsed"
                     assert collapsed["expanded"] == ["false", "false"]
                     assert collapsed["labels"] == [
                         "Hide course map",
@@ -14004,8 +13996,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                           const expand = document.querySelector('[data-raya-course-map-expand]');
                           return {
                             state: document.documentElement.dataset.rayaCourseMap,
-                            shellState: document.documentElement.dataset.rayaCourseMap,
-                            mapState: document.documentElement.dataset.rayaCourseMap,
                             expanded: [collapse, expand]
                               .map((button) => button.getAttribute('aria-expanded')),
                             labels: [collapse, expand]
@@ -14027,8 +14017,6 @@ def test_render_fixture_course_map_collapses_and_expands_on_click_only(
                         }"""
                     )
                     assert expanded["state"] == "expanded"
-                    assert expanded["shellState"] == "expanded"
-                    assert expanded["mapState"] == "expanded"
                     assert expanded["expanded"] == ["true", "true"]
                     assert expanded["labels"] == [
                         "Hide course map",
@@ -14278,15 +14266,12 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     initial = page.evaluate(
                         """() => {
                           const root = document.documentElement;
-                          const shell = document.querySelector('#raya-content');
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           const article = document.querySelector('#raya-article');
                           const expand = document.querySelector('[data-raya-learning-rail-expand]');
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: document.documentElement.dataset.rayaLearningRail,
-                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14302,8 +14287,6 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                         }"""
                     )
                     assert initial["rootState"] == "expanded"
-                    assert initial["shellState"] == "expanded"
-                    assert initial["railState"] == "expanded"
                     assert initial["bodyHidden"] == "false"
                     assert initial["bodyInert"] in {False, None}
                     assert initial["articleWidth"] > 520
@@ -14322,7 +14305,6 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     collapsed = page.evaluate(
                         """() => {
                           const root = document.documentElement;
-                          const shell = document.querySelector('#raya-content');
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector('#raya-learning-rail-body');
                           const article = document.querySelector('#raya-article');
@@ -14333,8 +14315,6 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           const chipBox = chip?.getBoundingClientRect();
                           return {
                             rootState: root.dataset.rayaLearningRail,
-                            shellState: document.documentElement.dataset.rayaLearningRail,
-                            railState: document.documentElement.dataset.rayaLearningRail,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
                             articleWidth: article?.getBoundingClientRect().width,
@@ -14355,8 +14335,6 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                         }"""
                     )
                     assert collapsed["rootState"] == "collapsed"
-                    assert collapsed["shellState"] == "collapsed"
-                    assert collapsed["railState"] == "collapsed"
                     assert collapsed["bodyHidden"] == "true"
                     assert collapsed["bodyInert"] is True
                     assert collapsed["articleWidth"] > initial["articleWidth"]
@@ -17087,13 +17065,23 @@ def test_render_fixture_balanced_workspace_visual_hierarchy(tmp_path: Path) -> N
     assert hierarchy["articleWidth"] > hierarchy["mapWidth"] * 2
     assert hierarchy["articleWidth"] > hierarchy["railWidth"] * 2
     assert hierarchy["articleWidth"] < hierarchy["shellWidth"]
-    assert hierarchy["mapGutter"] >= 20
-    assert hierarchy["railGutter"] >= 20
+    # 1.5rem grid track -> 24px at the stock 16px root font size. This
+    # assertion therefore depends on the BROWSER's default font size, not
+    # any in-page setting: a profile with a 15px default yields 22.5 and
+    # fails. Relevant when running via RAYA_TEST_BROWSER against a
+    # personal browser profile.
+    assert hierarchy["mapGutter"] >= 24
+    assert hierarchy["railGutter"] >= 24
     assert hierarchy["articlePaddingInline"] >= 28
     assert hierarchy["articleBorderLeftWidth"] >= 1
     assert 4 <= hierarchy["articleBorderRadius"] <= 8
-    assert threshold["mapGutter"] >= 20
-    assert threshold["railGutter"] >= 20
+    # 1.5rem grid track -> 24px at the stock 16px root font size. This
+    # assertion therefore depends on the BROWSER's default font size, not
+    # any in-page setting: a profile with a 15px default yields 22.5 and
+    # fails. Relevant when running via RAYA_TEST_BROWSER against a
+    # personal browser profile.
+    assert threshold["mapGutter"] >= 24
+    assert threshold["railGutter"] >= 24
     assert threshold["articlePaddingInline"] >= 28
     assert threshold["articleBorderLeftWidth"] >= 1
     assert 4 <= threshold["articleBorderRadius"] <= 8
@@ -17324,8 +17312,13 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["articleWidth"] > chrome["railWidth"] * 3
     assert chrome["paragraphWidth"] >= 1000
     assert chrome["paragraphWidth"] <= 1120
-    assert chrome["mapGutter"] >= 20
-    assert chrome["railGutter"] >= 20
+    # 1.5rem grid track -> 24px at the stock 16px root font size. This
+    # assertion therefore depends on the BROWSER's default font size, not
+    # any in-page setting: a profile with a 15px default yields 22.5 and
+    # fails. Relevant when running via RAYA_TEST_BROWSER against a
+    # personal browser profile.
+    assert chrome["mapGutter"] >= 24
+    assert chrome["railGutter"] >= 24
     assert chrome["articlePaddingInline"] >= 28
     assert chrome["articleBorderLeftWidth"] >= 1
     assert 4 <= chrome["articleBorderRadius"] <= 8
@@ -21369,7 +21362,7 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                             "backdropHidden": not modal,
                             "backdropDisplay": "block" if modal else "none",
                             "openerVisible": modal,
-                            "mapHidden": "false" if not modal else "false",
+                            "mapHidden": "false",
                             "mapInert": False,
                             "articleInert": modal,
                             "articleHidden": "true" if modal else None,
