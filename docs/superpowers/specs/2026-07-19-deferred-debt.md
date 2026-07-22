@@ -52,10 +52,10 @@ modules, some in the string) is worse than a consistent monolith.
 
 ## 3. Right-rail dead drawer path
 
-**What:** `openLearningRailDrawer` (`packages/static/src/raya_static/shell.py:1104-1122`)
+**What:** `openLearningRailDrawer` (`packages/static/src/raya_static/shell.py:1096`)
 is never called, yet `closeLearningRailDrawer`, `trapLearningRailDrawerFocus`
-(`:352`), the scroll-lock write (`:1008`), the backdrop element
-(`builder.py:2285`), and CSS at `rendering.py:6408`/`6443` all exist for a
+(`:341`), the scroll-lock write (`:1001`, reset at `:1026`), the backdrop element
+(`builder.py:2285`), and CSS at `rendering.py:4317`/`6403`/`6412-6414` all exist for a
 state that cannot be entered.
 
 **Decision needed:** remove the dead path, or wire it up if a right-rail
@@ -65,8 +65,8 @@ drawer is intended on phones. This is a product decision, not a cleanup.
 
 ## 4. Missing width guard on the right expand handler
 
-**What:** `shell.py:1668` guards `if (!isStructuralRailShell())`; its sibling
-expand handler at `:1680` has no such guard. Currently masked because
+**What:** `shell.py:1659` guards `if (!isStructuralRailShell())`; its sibling
+expand handler at `:1671-1682` has no such guard. Currently masked because
 `syncLearningRailDrawerState()` re-derives the correct value immediately
 afterward.
 
@@ -75,7 +75,7 @@ handlers.
 
 ## 5. Discovery-rail boundary drift
 
-**What:** `rendering.py:6054` (`@media (max-width: 1279px)`, styling
+**What:** `rendering.py:6045` (`@media (max-width: 1279px)`, styling
 `.raya-discovery-workspace-shell` / `.raya-discovery-course-rail`) and its
 partner `packages/static/src/raya_static/graph.py:1725`
 (`matchMedia("(max-width: 1279px)")`) are the same boundary duplicated across
@@ -141,7 +141,7 @@ itself for WebKit specifically.
 
 **Fix:** extend `scripts/check-python.sh` to install firefox/webkit behind a
 new `RAYA_INSTALL_PLAYWRIGHT_ENGINES` flag and set it in
-`scripts/check-docker.sh:53`, or provision system firefox/webkit in the
+`scripts/check-docker.sh:51`, or provision system firefox/webkit in the
 Docker image directly; additionally ensure the CI image installs WebKit's
 host dependencies (`libavif13` at minimum) so the download that already
 succeeds can also launch.
