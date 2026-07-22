@@ -222,3 +222,48 @@ These non-goals protect student trust. A static page may organize current data, 
 ## Verification
 
 Changes to the course shell, right learning rail, reader controls, official practice rendering, local assets, MathJax output, print handout behavior, or visual layout should include static-read-path and render-debug checks. Breadcrumb checks should cover accessible navigation markup, course-home and ancestor links, current-page marking, deployment-neutral relative URLs, no source/private paths, no external requests, and desktop/mobile no-overflow behavior. Page brief checks should cover public metadata only, escaped summary/status/tags, resolved prerequisite links, page-focused graph links, official-practice anchors, no source/private paths, no storage/fetch calls, no recommendation/progress/mastery wording, no learner-state wording, and desktop/mobile no-overflow behavior. Print checks should cover print media hiding of interactive chrome, visible article content, readable MathJax/code/tables/static environments, temporary non-persistent opening of support disclosures, no source/private paths, no external requests, no storage calls, and no browser-side MathJax conversion. Page-connection preview checks should cover public metadata only, escaped text, local page and graph links, native disclosure controls, no source/private paths, no storage/fetch calls, no recommendation/progress/mastery wording, and no external requests. Graph checks should cover desktop page-focused handoffs such as `?page=<page-id>` by asserting that the selected SVG node and at least one edge intersect the visible graph canvas on first paint, not only that SVG nodes exist in the DOM. Search workspace checks should cover `_raya/search/index.html`, local script only, generated `data/search-index.json`, public prose queries, public section/object subresult links, exact URL-only `?page=<page-id>` filtering, visible page-focus notice for valid handoffs, hidden notice for missing/invalid page focus, Clear/Escape reset to all visible results, no private source paths, no MathJax internals or raw TeX leakage, no answer/support-only content leakage, no storage/fetch calls, no external requests, and no learner-state language. Official practice checks should cover escaping, source path privacy, native reveal controls, no storage/fetch calls, no external renderer requests, and no browser-side MathJax conversion. Practice workspace checks should cover `_raya/practice/index.html`, local script only, links to owning page anchors, graph focus links, URL-only `?page=<page-id>` filtering from Search or Graph handoffs, visible page-focus notice for valid handoffs, hidden notice for missing/invalid page focus, Clear/Escape reset to all accepted objects, no private source paths, no answer-only hidden duplication, no storage/fetch calls, no external requests, and no learner-state language. Tasks workspace checks should cover `_raya/tasks/index.html`, local script only, accepted task-family objects, links to owning page anchors and graph focus links, URL-only `?page=<page-id>` filtering from Search or Graph handoffs, visible page-focus notice for valid handoffs, hidden notice for missing/invalid page focus, Clear/Escape reset to all accepted task-family objects, no private source paths, no storage/fetch calls, no external requests, no personal due-state language, and no learner-state language. Schedule workspace checks should cover `_raya/schedule/index.html`, local script only, inclusion of accepted task-family objects with authored `due` or `available`, exclusion of undated task objects, links to owning page anchors and graph focus links, URL-only `?page=<page-id>` filtering from Search or Graph handoffs, visible page-focus notice for valid handoffs, hidden notice for missing/invalid page focus, Clear/Escape reset to all dated task-family objects, no private source paths, no storage/fetch calls, no external requests, no personal due-state language, and no learner-state language. Use `scripts/check-render-debug.sh` for the focused render-fixture gate when browser-visible math, local resources, screenshots, external requests, or overflow can regress.
+
+## Rail Collapse Invariants
+
+These four rules exist because the collapsed rail broke repeatedly when one
+visual state was expressible in many places. Each is enforced by a guardrail
+in `tests/e2e/test_rail_collapse_contract.py`.
+
+1. **Geometry is single-sourced.** Every rail breakpoint lives in
+   `packages/static/src/raya_static/shell_geometry.py` and reaches CSS and JS
+   only through `__RAYA_*__` tokens. A literal `px` boundary **outside**
+   `shell_geometry.py` — in a rail `@media` rule or a `matchMedia` string — is
+   a defect, not a shortcut. Inside `shell_geometry.py` the literals are the
+   single source, built from the Python ints.
+
+2. **JS and CSS derive band membership from the same source.** Both read
+   `matchMedia` against identical boundary strings. Deriving band membership
+   from `innerWidth` is forbidden: on engines where the media-query width
+   excludes a classic scrollbar the two disagree **permanently**, producing a
+   rail whose state says "collapsed" while its body stays visible.
+
+   Two caveats, both deliberate. The **prepaint read is provisional**:
+   `shell-prepaint.js` runs before any stylesheet and before `<body>`
+   (`builder.py:1023` vs `:1024-1029`), so no scrollbar exists yet and the
+   query returns the no-scrollbar answer. Agreement is reached once
+   `shell.js` runs and the MQ `change` listeners fire — so the guarantee is
+   *eventual consistency*, not structural impossibility. And `rayaRailBands()`
+   **forces the widest band while printing**, because viewport media features
+   resolve against the page box (~700-760px), which would otherwise collapse
+   both rails in the printout.
+
+3. **Collapse state lives only on the root element.** It is written to
+   `document.documentElement.dataset.rayaCourseMap` / `.rayaLearningRail` and
+   nowhere else. Never mirror it onto a rail element or `main`. CSS reads it
+   only via `html[data-raya-...]`.
+
+4. **Collapsed appearance is defined in one region.** The
+   "rail collapse: appearance (single source)" region owns the collapsed
+   header/body hiding and the chip. Band-scoped fragments elsewhere are how
+   the original drift happened.
+
+Note that the transition channel (`data-raya-*-transition`) is a genuine
+element-level attribute and is not a state mirror. Its ancestor-rooted
+selectors are live during the 240 ms animation window: they keep the expand
+chip painted and the header hidden while the rail animates. Removing them
+makes the rail render empty mid-animation.
