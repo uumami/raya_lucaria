@@ -18583,8 +18583,16 @@ def test_render_fixture_collapsed_reader_rails_use_mirrored_edge_openers(
                     )
                     assert rail_transitioning == {
                         "transition": "collapsing",
-                        "bodyDisplay": "block",
-                        "bodyVisibility": "hidden",
+                        # Task 5 (8f7ac03) removed the >=894 band's display:block
+                        # re-grant on the collapsing rail body (a latent full-height
+                        # overlay), aligning it with the single-source width-invariant
+                        # rule that already sets display:none. The body was already
+                        # invisible from frame 1 (nothing transitions opacity/visibility
+                        # on it), so this is a mechanism change, not a visual one. With
+                        # visibility no longer set, its computed value falls back to the
+                        # inherited initial "visible".
+                        "bodyDisplay": "none",
+                        "bodyVisibility": "visible",
                         "bodyHidden": "true",
                         "bodyInert": True,
                     }
