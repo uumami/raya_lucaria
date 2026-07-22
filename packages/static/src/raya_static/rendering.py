@@ -6728,6 +6728,15 @@ mjx-container[display="true"] {
   }
   .raya-course-map-list {
     flex: 1 1 auto;
+    /* The rail's chrome (header, tools, page position, filter) is ~398px of
+       FIXED height, and the tree is the only flexible item -- so without a
+       floor it absorbs the entire squeeze and collapses (measured 5px at a
+       520px-tall viewport), making the primary navigation unusable. The
+       floor pushes the overflow up to .raya-course-map, which already
+       declares overflow:auto and max-height:calc(100vh - 2rem) but never
+       reached them because the tree swallowed every pixel first. Tall
+       viewports are unaffected: flex grow still sizes the tree above this. */
+    min-height: 12rem;
   }
   .raya-course-rail-tools {
     padding: 0.5rem 0;
