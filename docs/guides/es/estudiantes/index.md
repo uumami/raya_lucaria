@@ -49,7 +49,7 @@ no estima dominio ni contacta servicios externos.
 
 La estructura actual del curso es una ayuda de lectura estatica. Las paginas
 lectoras no tienen una franja de comandos lectora sobre el articulo; los
-comandos lectores viven en el riel izquierdo del curso. En anchos estructurales, el header del riel muestra `Course map` con una accion Map `Hide map`. El body empieza con course search, luego mosaicos compactos con icono y label acomodados dos por fila para Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, seguidos por la posicion de pagina y el mapa del curso. Al colapsar el riel, ese body desaparece y queda un solo opener flotante Map con el nombre accesible `Expand course map` que corresponde al opener Context de la derecha.
+comandos lectores viven en el riel izquierdo del curso. En anchos estructurales, el header del riel muestra un control course-home, `Course map`, y una accion Map `Hide map` renderizada como icono. El body empieza con course search, luego mosaicos compactos con icono y label acomodados dos por fila para Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, seguidos por la posicion de pagina y el mapa del curso. Al colapsar el riel, ese body desaparece y queda un solo opener flotante Map con el nombre accesible `Expand course map` que corresponde al opener Context de la derecha.
 Cuando esta activa la geometria
 de lectura aprobada de `894px+`, el mapa del curso expandido se muestra por
 defecto y puede mostrar numeros estructurales de secuencia del orden del curso.
