@@ -1,11 +1,15 @@
+import contextlib
 import os
 import shutil
+import threading
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+TWO_ROOT_FIXTURE = ROOT / "examples" / "courses" / "rail-two-root-fixture"
 
 
 def _browser_executable() -> Path:
@@ -460,3 +464,78 @@ def test_collapsed_rail_exposes_one_visible_control(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+@contextlib.contextmanager
+def _serve_directory(directory: Path):
+    # Local re-implementation of tests/e2e/test_static_read_path._serve: a
+    # plain ThreadingHTTPServer over a built site directory. This fixture's
+    # site has no site/index.html (two depth-0 roots, no zero-order index),
+    # and raya_cli.preview.create_preview() refuses to start a server at all
+    # when the entrypoint is missing (its _validate_site() adds a hard error
+    # and create_preview() returns a handle with base_url is None) -- that
+    # gate is about preview's own single-landing-page contract and is
+    # unrelated to the rail home-control gate under test here. Serving the
+    # directory directly lets the test reach a real page in this course
+    # shape without touching that unrelated preview behavior.
+    handler = lambda *args, **kwargs: SimpleHTTPRequestHandler(  # noqa: E731
+        *args,
+        directory=str(directory),
+        **kwargs,
+    )
+    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_home_control_omitted_when_no_index_root(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_schema import validate_course
+    from raya_static import build_course
+
+    # rail-two-root-fixture has two depth-0 files (course/1_alpha.md,
+    # course/2_beta.md) and no 0_/00_ index, so content_model.root_id stays
+    # unset. Task 3's home control is gated on `root_id is not None`, so it
+    # must never render here -- there is no single course landing page to
+    # link back to.
+    course = tmp_path / "rail-two-root-fixture"
+    shutil.copytree(TWO_ROOT_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    validation_report = validate_course(course)
+    assert validation_report.ok, [
+        diagnostic.format() for diagnostic in validation_report.diagnostics
+    ]
+    build_report = build_course(course)
+    assert build_report.ok, [
+        diagnostic.format() for diagnostic in build_report.diagnostics
+    ]
+
+    site_dir = course / "artifact" / "site"
+    # No single course landing page for a two-root, no-index course.
+    assert not (site_dir / "index.html").is_file()
+
+    with _serve_directory(site_dir) as base_url:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page()
+                try:
+                    page.goto(
+                        f"{base_url}/alpha/index.html",
+                        wait_until="networkidle",
+                    )
+                    assert page.locator("a.raya-course-map-home").count() == 0
+                finally:
+                    page.close()
+            finally:
+                browser.close()

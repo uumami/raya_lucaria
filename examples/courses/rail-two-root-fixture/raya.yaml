@@ -1,0 +1,6 @@
+course_id: rail-two-root-fixture
+title: Rail Two Root Fixture
+description: Fixture with two depth-0 roots and no zero-order index, for course-home control omission tests.
+language: en
+source: course
+artifact: artifact
