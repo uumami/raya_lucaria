@@ -4079,7 +4079,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   gap: 0.75rem;
   justify-content: space-between;
   margin-bottom: 0.25rem;
-  min-height: 2.9375rem;
+  min-height: 3.625rem;
   padding-bottom: 0.75rem;
 }
 .raya-course-map-body {

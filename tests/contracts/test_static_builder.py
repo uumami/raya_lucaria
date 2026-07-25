@@ -5592,7 +5592,12 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         '<button class="raya-course-map-collapse" type="button" '
         'data-raya-course-map-toggle data-raya-course-map-collapse '
         'aria-controls="raya-course-map-body" aria-expanded="true" '
-        'aria-label="Hide course map">Hide map</button>'
+        'aria-label="Hide course map">'
+        '<svg class="raya-command-icon" data-raya-command-icon="collapse" '
+        'aria-hidden="true" focusable="false" viewBox="0 0 24 24" '
+        'width="24" height="24">'
+        '<path d="M13 7l-5 5 5 5"/><path d="M18 7v10"/></svg>'
+        '<span class="raya-visually-hidden">Hide map</span></button>'
         in html
     )
     assert (
@@ -5741,6 +5746,24 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
         < html.index('<article id="raya-article"')
         < html.index('<aside id="raya-learning-rail"')
     )
+
+
+def test_course_map_collapse_renders_icon_with_hidden_label(tmp_path: Path) -> None:
+    from raya_static.builder import build_course
+
+    course = _copy_minimal(tmp_path)
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    site = course / "artifact" / "site"
+    html_out = (site / "index.html").read_text(encoding="utf-8")
+
+    # icon present, aria-hidden
+    assert 'data-raya-command-icon="collapse"' in html_out
+    # label preserved but visually hidden (textContent stays "Hide map")
+    assert '<span class="raya-visually-hidden">Hide map</span>' in html_out
+    # accessible name preserved via aria-label
+    assert 'aria-label="Hide course map"' in html_out
 
 
 def test_static_builder_course_map_child_ids_do_not_collide_after_sanitizing(

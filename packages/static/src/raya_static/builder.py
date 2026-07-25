@@ -1900,6 +1900,7 @@ def _render_course_map_toggle(
     icon: str | None = None,
     controls: str = "raya-course-map",
     marker: str = "",
+    label_hidden: bool = False,
 ) -> str:
     aria_expanded = "true" if expanded else "false"
     aria_label_attr = (
@@ -1908,9 +1909,10 @@ def _render_course_map_toggle(
     marker_attr = f" {marker}" if marker else ""
     label_markup = html.escape(label)
     if icon is not None:
+        label_span_class = "raya-visually-hidden" if label_hidden else "raya-command-label"
         label_markup = (
             f"{_command_icon(icon)}"
-            f'<span class="raya-command-label">{html.escape(label)}</span>'
+            f'<span class="{label_span_class}">{html.escape(label)}</span>'
         )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
@@ -2209,8 +2211,10 @@ def _render_course_map(
             "Hide map",
             class_name="raya-course-map-collapse",
             aria_label="Hide course map",
+            icon="collapse",
             controls="raya-course-map-body",
             marker="data-raya-course-map-collapse",
+            label_hidden=True,
         ),
         body_open_html=(
             '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">'
@@ -3234,6 +3238,10 @@ _COMMAND_ICON_BODIES = {
         '<path d="M4.5 11.2 12 5l7.5 6.2"/>'
         '<path d="M6.8 10.5v8h10.4v-8"/>'
         '<path d="M10 18.5v-5h4v5"/>'
+    ),
+    "collapse": (
+        '<path d="M13 7l-5 5 5 5"/>'
+        '<path d="M18 7v10"/>'
     ),
     "search": '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
     "graph": (

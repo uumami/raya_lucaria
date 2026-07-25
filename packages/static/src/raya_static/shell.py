@@ -124,15 +124,26 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function setButtonLabel(button, label) {
+    const labelNode = button.querySelector(
+      ".raya-visually-hidden, .raya-command-label"
+    );
+    if (labelNode) {
+      labelNode.textContent = label;
+    } else {
+      button.textContent = label;
+    }
+  }
+
   function syncCourseMapToggleButtons(nextExpanded) {
     toggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
       if (button === mapCollapseButton) {
         button.setAttribute("aria-label", "Hide course map");
-        button.textContent = "Hide map";
+        setButtonLabel(button, "Hide map");
       } else if (button === mapExpandButton) {
         button.setAttribute("aria-label", "Expand course map");
-        button.textContent = "Map";
+        setButtonLabel(button, "Map");
       } else {
         button.setAttribute(
           "aria-label",

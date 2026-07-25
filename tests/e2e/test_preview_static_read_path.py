@@ -9757,7 +9757,12 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
     assert 'data-raya-course-map="expanded"' in index_html
     assert (
         'data-raya-course-map-collapse aria-controls="raya-course-map-body" '
-        'aria-expanded="true" aria-label="Hide course map">Hide map</button>'
+        'aria-expanded="true" aria-label="Hide course map">'
+        '<svg class="raya-command-icon" data-raya-command-icon="collapse" '
+        'aria-hidden="true" focusable="false" viewBox="0 0 24 24" '
+        'width="24" height="24">'
+        '<path d="M13 7l-5 5 5 5"/><path d="M18 7v10"/></svg>'
+        '<span class="raya-visually-hidden">Hide map</span></button>'
         in index_html
     )
     assert 'data-raya-command-icon="map"' in index_html
@@ -17335,8 +17340,8 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert chrome["railBackground"] != chrome["articleBackground"]
     assert chrome["courseMapButtonVisible"] is True
     assert chrome["fontButtonVisible"] is True
-    assert 80 <= header_collapse["width"] <= 100
-    assert 28 <= header_collapse["height"] <= 40
+    assert 40 <= header_collapse["width"] <= 56
+    assert 28 <= header_collapse["height"] <= 44
     assert header_collapse["ariaLabel"] == "Hide course map"
     assert header_collapse["text"] == "Hide map"
     expected_icons = {
@@ -20940,8 +20945,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert geometry["articleWidth"] >= 320
                     assert 239 <= geometry["mapWidth"] <= 241
                     assert 239 <= geometry["railWidth"] <= 241
-                    assert 80 <= geometry["mapCollapseWidth"] <= 100
-                    assert 28 <= geometry["mapCollapseHeight"] <= 40
+                    assert 40 <= geometry["mapCollapseWidth"] <= 56
+                    assert 28 <= geometry["mapCollapseHeight"] <= 44
                     assert geometry["mapCollapseWidth"] < geometry["mapWidth"]
                     assert geometry["mapCollapseScrollWidth"] <= (
                         geometry["mapCollapseClientWidth"] + 1
