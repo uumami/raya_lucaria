@@ -14307,6 +14307,15 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           ?.getBoundingClientRect()
                           ?.width < 120"""
                     )
+                    # Wait for the collapse transition to COMPLETE before measuring
+                    # geometry. The width threshold above is crossed mid-animation
+                    # (the shell keeps data-raya-learning-rail-transition set until
+                    # SHELL_TRANSITION_MS), so article/rail widths are still settling.
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-learning-rail')
+                          ?.hasAttribute('data-raya-learning-rail-transition')"""
+                    )
                     collapsed = page.evaluate(
                         """() => {
                           const root = document.documentElement;
@@ -14365,6 +14374,11 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                             && body.inert === false;
                         }"""
                     )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-learning-rail')
+                          ?.hasAttribute('data-raya-learning-rail-transition')"""
+                    )
                     expanded = page.evaluate(
                         """() => {
                           const body = document.querySelector('#raya-learning-rail-body');
@@ -14394,6 +14408,11 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                           .querySelector('#raya-learning-rail')
                           ?.getBoundingClientRect()
                           ?.width < 120"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-learning-rail')
+                          ?.hasAttribute('data-raya-learning-rail-transition')"""
                     )
                     page.set_viewport_size({"width": 390, "height": 844})
                     page.wait_for_function(
@@ -14434,6 +14453,14 @@ def test_render_fixture_learning_rail_collapses_to_compact_context_tab(
                     page.keyboard.press("Escape")
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaLearningRail === 'collapsed'"""
+                    )
+                    # rootState flips synchronously on Escape, but the rail width
+                    # animates over SHELL_TRANSITION_MS; wait for the transition to
+                    # finish before measuring railWidth/expandWidth.
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-learning-rail')
+                          ?.hasAttribute('data-raya-learning-rail-transition')"""
                     )
                     escape_collapsed = page.evaluate(
                         """() => ({
