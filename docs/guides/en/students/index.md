@@ -48,7 +48,7 @@ an external service.
 
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
-rail. At structural widths, the rail header shows `Course map` with a `Hide map` Map action. The body starts with course search, then compact icon-labeled tiles arranged two per row for Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic, followed by page position and the course map. Collapsing the rail removes that body and leaves one floating Map opener with the accessible name `Expand course map` that matches the right Context opener.
+rail. At structural widths, the rail header shows a course-home control, `Course map`, and a `Hide map` Map action rendered as an icon. The body starts with course search, then compact icon-labeled tiles arranged two per row for Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic, followed by page position and the course map. Collapsing the rail removes that body and leaves one floating Map opener with the accessible name `Expand course map` that matches the right Context opener.
 When the approved
 `894px+` reader geometry is active, the expanded course map is shown by default
 and may show structural sequence numbers from the course order. It gives

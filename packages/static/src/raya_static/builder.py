@@ -1900,6 +1900,7 @@ def _render_course_map_toggle(
     icon: str | None = None,
     controls: str = "raya-course-map",
     marker: str = "",
+    label_hidden: bool = False,
 ) -> str:
     aria_expanded = "true" if expanded else "false"
     aria_label_attr = (
@@ -1908,9 +1909,10 @@ def _render_course_map_toggle(
     marker_attr = f" {marker}" if marker else ""
     label_markup = html.escape(label)
     if icon is not None:
+        label_span_class = "raya-visually-hidden" if label_hidden else "raya-command-label"
         label_markup = (
             f"{_command_icon(icon)}"
-            f'<span class="raya-command-label">{html.escape(label)}</span>'
+            f'<span class="{label_span_class}">{html.escape(label)}</span>'
         )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
@@ -1919,6 +1921,22 @@ def _render_course_map_toggle(
         f'aria-expanded="{aria_expanded}"{aria_label_attr}>'
         f"{label_markup}"
         "</button>"
+    )
+
+
+def _render_rail_home_link(home_href: str) -> str:
+    """Icon-only course-home control for the left rail header.
+
+    Accessible name comes from aria-label (matching the discovery command bar's
+    "Back to course"); the home glyph is aria-hidden. No aria-current: the map
+    tree already marks the current page inside this same landmark.
+    """
+    return (
+        '<a class="raya-course-map-home" '
+        f'href="{html.escape(home_href)}" '
+        'aria-label="Back to course">'
+        f'{_command_icon("home")}'
+        "</a>"
     )
 
 
@@ -1939,6 +1957,7 @@ def _render_rail_chrome(
     expand_button_html: str,
     backdrop_html: str,
     header_prefix_html: str | None = None,
+    header_home_html: str | None = None,
     header_suffix_html: str | None = None,
     body_suffix_html: str | None = None,
 ) -> str:
@@ -1957,6 +1976,7 @@ def _render_rail_chrome(
         landmark_open_html,
         f'<div class="{header_class}">',
         header_prefix_html,
+        header_home_html,
         f'<p class="raya-region-title">{html.escape(region_title)}</p>',
         header_suffix_html,
         collapse_button_html,
@@ -1994,6 +2014,12 @@ def _render_course_map(
     }
     root_identity = content_model.root_id or course_title
     storage_key = f"raya:course-map-branches:v1:{course_id}"
+    header_home_html: str | None = None
+    if content_model.root_id is not None:
+        home_page = _course_home_page(content_model)
+        if home_page is not None:
+            home_href = _relative_href(page.output_path, home_page.output_path)
+            header_home_html = _render_rail_home_link(home_href)
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -2203,14 +2229,17 @@ def _render_course_map(
         landmark_close_html="</nav>",
         header_class="raya-course-map-header",
         header_prefix_html=drawer_chrome_html,
+        header_home_html=header_home_html,
         region_title="Course map",
         header_suffix_html=close_button_html,
         collapse_button_html=_render_course_map_toggle(
             "Hide map",
             class_name="raya-course-map-collapse",
             aria_label="Hide course map",
+            icon="collapse",
             controls="raya-course-map-body",
             marker="data-raya-course-map-collapse",
+            label_hidden=True,
         ),
         body_open_html=(
             '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">'
@@ -3234,6 +3263,10 @@ _COMMAND_ICON_BODIES = {
         '<path d="M4.5 11.2 12 5l7.5 6.2"/>'
         '<path d="M6.8 10.5v8h10.4v-8"/>'
         '<path d="M10 18.5v-5h4v5"/>'
+    ),
+    "collapse": (
+        '<path d="M13 7l-5 5 5 5"/>'
+        '<path d="M18 7v10"/>'
     ),
     "search": '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
     "graph": (

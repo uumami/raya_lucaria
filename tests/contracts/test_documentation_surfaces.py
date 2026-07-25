@@ -397,3 +397,7 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     assert "header Map action" in text["agent_en"]
     assert "accion Map del header" in text["agent_es"]
     assert "all nine actions as body tiles" not in text["foundation"]
+
+    # Rail home control is part of the amended header enumeration.
+    assert "course-home action" in text["foundation"]
+    assert "ten reader actions" in text["foundation"]

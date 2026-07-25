@@ -152,7 +152,7 @@ estudiante.
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
 `.raya-top-command-bar` y que los workspaces de descubrimiento sigan
 renderizando `.raya-discovery-command-bar` como barra de comandos de
-descubrimiento. Verifica la accion Map `Hide map` del header estructural por separado de los ocho comandos lectores bajo `[data-raya-course-map-tools]`. Verifica que `.raya-course-map-body` contenga search, los mosaicos ordenados Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, posicion, filtro y arbol, mientras `[data-raya-course-map-expand]` permanece fuera de ese body oculto e inerte y usa el nombre accesible `Expand course map`. Trata la accion Map del header como un control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido
+descubrimiento. Verifica la accion Map `Hide map` del header estructural por separado de los ocho comandos lectores bajo `[data-raya-course-map-tools]`. El header tambien presenta el control course-home junto a la accion icono `Hide map`. Verifica que `.raya-course-map-body` contenga search, los mosaicos ordenados Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, posicion, filtro y arbol, mientras `[data-raya-course-map-expand]` permanece fuera de ese body oculto e inerte y usa el nombre accesible `Expand course map`. Trata la accion Map del header como un control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido
 por defecto, incluida la estructura de mapa jerarquico del curso
 expandido, los numeros estructurales generados del mapa, la orientacion de
 pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links
