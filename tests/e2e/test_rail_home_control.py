@@ -534,6 +534,12 @@ def test_home_control_omitted_when_no_index_root(tmp_path):
                         f"{base_url}/alpha/index.html",
                         wait_until="networkidle",
                     )
+                    # Sanity: the course rail actually rendered on this page, so
+                    # the zero home-control count below is a real omission — not a
+                    # 404 or empty page where nothing would match either.
+                    assert (
+                        page.locator("[data-raya-course-map-collapse]").count() == 1
+                    )
                     assert page.locator("a.raya-course-map-home").count() == 0
                 finally:
                     page.close()
