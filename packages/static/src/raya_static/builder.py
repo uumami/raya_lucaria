@@ -1924,6 +1924,22 @@ def _render_course_map_toggle(
     )
 
 
+def _render_rail_home_link(home_href: str) -> str:
+    """Icon-only course-home control for the left rail header.
+
+    Accessible name comes from aria-label (matching the discovery command bar's
+    "Back to course"); the home glyph is aria-hidden. No aria-current: the map
+    tree already marks the current page inside this same landmark.
+    """
+    return (
+        '<a class="raya-course-map-home" '
+        f'href="{html.escape(home_href)}" '
+        'aria-label="Back to course">'
+        f'{_command_icon("home")}'
+        "</a>"
+    )
+
+
 def _safe_map_fragment_id(value: str) -> str:
     fragment = re.sub(r"[^a-zA-Z0-9_-]+", "-", value).strip("-")
     return fragment or "course-map-node"
@@ -1941,6 +1957,7 @@ def _render_rail_chrome(
     expand_button_html: str,
     backdrop_html: str,
     header_prefix_html: str | None = None,
+    header_home_html: str | None = None,
     header_suffix_html: str | None = None,
     body_suffix_html: str | None = None,
 ) -> str:
@@ -1959,6 +1976,7 @@ def _render_rail_chrome(
         landmark_open_html,
         f'<div class="{header_class}">',
         header_prefix_html,
+        header_home_html,
         f'<p class="raya-region-title">{html.escape(region_title)}</p>',
         header_suffix_html,
         collapse_button_html,
@@ -1996,6 +2014,12 @@ def _render_course_map(
     }
     root_identity = content_model.root_id or course_title
     storage_key = f"raya:course-map-branches:v1:{course_id}"
+    header_home_html: str | None = None
+    if content_model.root_id is not None:
+        home_page = _course_home_page(content_model)
+        if home_page is not None:
+            home_href = _relative_href(page.output_path, home_page.output_path)
+            header_home_html = _render_rail_home_link(home_href)
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -2205,6 +2229,7 @@ def _render_course_map(
         landmark_close_html="</nav>",
         header_class="raya-course-map-header",
         header_prefix_html=drawer_chrome_html,
+        header_home_html=header_home_html,
         region_title="Course map",
         header_suffix_html=close_button_html,
         collapse_button_html=_render_course_map_toggle(

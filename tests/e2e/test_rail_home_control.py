@@ -111,6 +111,47 @@ def test_rail_header_height_parity_across_widths(tmp_path):
         handle.close()
 
 
+def test_rail_home_link_present_and_resolves_from_nested_page(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page()
+                try:
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    link = page.locator(
+                        ".raya-course-map-header a.raya-course-map-home"
+                    )
+                    assert link.count() == 1
+                    assert link.get_attribute("aria-label") == "Back to course"
+                    assert link.get_attribute("aria-current") is None
+                    href = link.get_attribute("href")
+                    assert href and "://" not in href and not href.startswith("/")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_course_map_collapse_is_icon_with_preserved_names(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -151,6 +192,268 @@ def test_course_map_collapse_is_icon_with_preserved_names(tmp_path):
                     assert data["hasIcon"] is True
                     assert data["text"] == "Hide map"
                     assert data["aria"] == "Hide course map"
+
+                    # Regression (Task 2 review): clicking the collapse toggle
+                    # triggers shell.js's syncCourseMapToggleButtons(), which
+                    # calls setButtonLabel() on every toggle button sharing this
+                    # aria-controls target. setButtonLabel() must update only the
+                    # text node, not overwrite the button's innerHTML -- doing so
+                    # would destroy the icon <svg> sibling. Assert the icon
+                    # survives one full sync.
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'collapsed'"""
+                    )
+                    after_toggle = page.evaluate(
+                        """() => {
+                            const b = document.querySelector('[data-raya-course-map-collapse]');
+                            return {
+                                hasIcon: !!b.querySelector(
+                                    '[data-raya-command-icon="collapse"]'
+                                ),
+                                text: b.textContent.trim(),
+                            };
+                        }"""
+                    )
+                    assert after_toggle["hasIcon"] is True
+                    assert after_toggle["text"] == "Hide map"
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_no_home_control_in_learning_rail_header(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    # Sanity: the control does exist in the left rail header.
+                    assert (
+                        page.locator(
+                            ".raya-course-map-header a.raya-course-map-home"
+                        ).count()
+                        == 1
+                    )
+                    # But the shared _render_rail_chrome() helper must never
+                    # leak it into the learning rail's header.
+                    count = page.locator(
+                        ".raya-learning-rail-header a.raya-course-map-home"
+                    ).count()
+                    assert count == 0
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_single_aria_current_on_course_root_page(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/index.html",
+                        wait_until="networkidle",
+                    )
+                    # The home control never carries aria-current, so on the
+                    # course root page the map tree's own root node remains
+                    # the single source of "current page" truth.
+                    n = page.locator(
+                        '#raya-course-map a[aria-current="page"]'
+                    ).count()
+                    assert n == 1
+                    home_link = page.locator(
+                        ".raya-course-map-header a.raya-course-map-home"
+                    )
+                    assert home_link.count() == 1
+                    assert home_link.get_attribute("aria-current") is None
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(viewport={"width": 390, "height": 844})
+                try:
+                    page = context.new_page()
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/authoring-matrix/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.click(".raya-mobile-course-map-open")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset
+                              .rayaCourseMapDrawer === 'open'"""
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('#raya-course-map')
+                              ?.contains(document.activeElement)"""
+                        )
+                        # Initial drawer focus stays on the close button, and
+                        # the home link is the first focusable element inside
+                        # the trap (it precedes close in DOM: header_prefix,
+                        # then header_home, then the title, then close).
+                        initial = page.evaluate(
+                            """() => {
+                              const map = document.querySelector('#raya-course-map');
+                              const focusable = Array.from(
+                                map.querySelectorAll('a[href], button, input, [tabindex]')
+                              ).filter((el) => el.tabIndex >= 0 && el.checkVisibility());
+                              return {
+                                activeIsClose: document.activeElement?.matches(
+                                  '[data-raya-course-map-close]'
+                                ),
+                                firstFocusableIsHome: focusable[0]?.matches(
+                                  '.raya-course-map-home'
+                                ),
+                              };
+                            }"""
+                        )
+                        assert initial["activeIsClose"] is True
+                        assert initial["firstFocusableIsHome"] is True
+
+                        page.keyboard.press("Shift+Tab")
+                        after_shift_tab = page.evaluate(
+                            """() => ({
+                              activeIsHome: document.activeElement?.matches(
+                                '.raya-course-map-home'
+                              ),
+                            })"""
+                        )
+                        assert after_shift_tab["activeIsHome"] is True
+                    finally:
+                        page.close()
+                finally:
+                    context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_collapsed_rail_exposes_one_visible_control(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/authoring-matrix/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'collapsed'"""
+                    )
+                    page.wait_for_function(
+                        """() => !document
+                          .querySelector('#raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
+                    state = page.evaluate(
+                        """() => {
+                          const header = document.querySelector(
+                            '.raya-course-map-header'
+                          );
+                          const home = document.querySelector(
+                            '.raya-course-map-header a.raya-course-map-home'
+                          );
+                          const expand = document.querySelector(
+                            '[data-raya-course-map-expand]'
+                          );
+                          return {
+                            headerVisible: header.checkVisibility(),
+                            homeVisible: home.checkVisibility(),
+                            expandVisible: expand.checkVisibility(),
+                          };
+                        }"""
+                    )
+                    assert state["headerVisible"] is False
+                    assert state["homeVisible"] is False
+                    assert state["expandVisible"] is True
                 finally:
                     page.close()
             finally:
