@@ -20656,12 +20656,23 @@ def test_render_fixture_mobile_prioritizes_article_and_tracks_active_heading(
 
                     page.keyboard.press("Shift+Tab")
                     reverse_trap = page.evaluate(
-                        """() => ({
-                          activeInsideMap: document
-                            .querySelector('#raya-course-map')
-                            ?.contains(document.activeElement),
-                          activeText: document.activeElement?.textContent?.trim() || '',
-                        })"""
+                        """() => {
+                          const active = document.activeElement;
+                          // Accessible name: textContent, else aria-label. The
+                          // reverse-trap wrap target is the icon-only course-home
+                          // control (aria-label "Back to course", no textContent),
+                          // so accept either — this still proves focus landed on a
+                          // named interactive control, not a bare container.
+                          const name = (active?.textContent?.trim()
+                            || active?.getAttribute('aria-label')
+                            || '').trim();
+                          return {
+                            activeInsideMap: document
+                              .querySelector('#raya-course-map')
+                              ?.contains(active),
+                            activeText: name,
+                          };
+                        }"""
                     )
                     assert reverse_trap["activeInsideMap"] is True
                     assert reverse_trap["activeText"]
