@@ -4010,8 +4010,11 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
      `contain` swallowed every wheel gesture over the header, tools row and
      filter -- 41% of the rail where nothing moved. Containment belongs on
      .raya-course-map-list, which actually scrolls. */
+  /* No scrollbar-gutter either: it reserved ~15px in a frame that almost
+     never scrolls, costing 15px of label column. It is kept on
+     .raya-course-map-list, the real scroller, so the tree's scrollbar does
+     not shift labels. Must stay symmetric with .raya-learning-rail. */
   overflow: auto;
-  scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-course-map {
   transition: border-color 180ms ease, box-shadow 180ms ease, max-height 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
@@ -4029,9 +4032,11 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   grid-area: learning-rail;
   font-size: calc(1rem * var(--raya-reader-text-scale, 1));
   max-height: calc(100vh - 2rem);
+  /* No scrollbar-gutter: symmetric with .raya-course-map. Both rail
+     headers are sized through one shared rule, so an asymmetric gutter
+     breaks header width parity by 15px. */
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-learning-rail {
   transition: border-color 180ms ease, box-shadow 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
@@ -6701,7 +6706,6 @@ mjx-container[display="true"] {
     display: flex;
     flex-direction: column;
     padding-inline: 0;
-    scrollbar-gutter: stable;
   }
   .raya-learning-rail {
     display: flex;
@@ -6726,6 +6730,7 @@ mjx-container[display="true"] {
     overflow: auto;
     overscroll-behavior: contain;
     padding-inline: var(--raya-space-panel);
+    scrollbar-gutter: stable;
   }
   .raya-course-map-body {
     flex: 1 1 auto;

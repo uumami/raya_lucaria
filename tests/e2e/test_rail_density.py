@@ -145,3 +145,89 @@ def test_wheel_over_any_rail_region_moves_something(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+_HEADER_BOXES = """() => {
+  const box = (sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return {
+      w: Math.round(r.width * 100) / 100,
+      h: Math.round(r.height * 100) / 100,
+      top: Math.round(r.top * 100) / 100,
+      left: Math.round(r.left * 100) / 100,
+      right: Math.round(r.right * 100) / 100,
+    };
+  };
+  return {
+    mapHeader: box('.raya-course-map-header'),
+    railHeader: box('.raya-learning-rail-header'),
+    map: box('.raya-course-map'),
+    rail: box('.raya-learning-rail'),
+  };
+}"""
+
+
+def test_both_rails_gain_content_width_without_breaking_parity(
+    tmp_path: Path,
+) -> None:
+    """The gutter is dropped from BOTH rail frames or neither.
+
+    scrollbar-gutter:stable reserves ~15px in each rail frame even when the
+    frame never scrolls. Dropping it widens the content box from 191px to
+    206px -- but dropping it from only one rail makes the two rail headers
+    206px vs 191px, breaking the width and inset halves of the pinned
+    outer-geometry parity contract.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (894, 1279, 1280, 1440):
+                    page = browser.new_page(
+                        viewport={"width": width, "height": 950}
+                    )
+                    page.goto(
+                        f"{handle.base_url}/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.wait_for_timeout(400)
+                    boxes = page.evaluate(_HEADER_BOXES)
+                    map_header = boxes["mapHeader"]
+                    rail_header = boxes["railHeader"]
+                    assert map_header is not None and rail_header is not None
+
+                    # Parity: width, height, top, and both insets.
+                    assert abs(map_header["w"] - rail_header["w"]) <= 1, (
+                        width,
+                        boxes,
+                    )
+                    assert abs(map_header["h"] - rail_header["h"]) <= 1, (
+                        width,
+                        boxes,
+                    )
+                    assert abs(map_header["top"] - rail_header["top"]) <= 1, (
+                        width,
+                        boxes,
+                    )
+                    left_inset = map_header["left"] - boxes["map"]["left"]
+                    right_inset = boxes["rail"]["right"] - rail_header["right"]
+                    assert abs(left_inset - right_inset) <= 1, (width, boxes)
+
+                    # Outcome: the gutter is gone, so each header is wider
+                    # than the 191px it measured while the gutter was
+                    # reserved.
+                    assert map_header["w"] >= 200, (width, boxes)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
