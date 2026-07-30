@@ -793,6 +793,10 @@ Mapping, applied at the **rail call site only** (`builder.py:1305-1311`), never 
 
 `overflow-wrap` on `.raya-command-label` stays `normal` in the structural band. Mid-word breaking of captions is not acceptable; shortening the captions is what makes it unnecessary. The acceptance gate is therefore **not** a tools-row pixel budget but: every caption renders on one line, and no caption or tile reports `scrollWidth > clientWidth`.
 
+**One existing assertion's premise is invalidated by this task and must be replaced, not tolerance-fudged.** `test_render_fixture_structural_course_map_uses_stable_command_body` asserts `mapHeight >= viewportHeight - 32` and `mapHeight >= 890`. Both mean "the rail fills its column", and both passed only *incidentally*: `.raya-course-map` has `align-self: start` and no `height`, so it renders at its natural content height capped by `max-height: calc(100vh - 2rem)`. On the 6-page `render-fixture` the old 253px tools row was just barely enough to push total content past the cap. Cutting the tools row to ~164px — the entire point of this task — drops natural content to 880px against an 886px cap, so the rail correctly no longer fills the column.
+
+Do not add a tolerance, and do not add `height: 100%` (a Global Constraint, and it would stretch every short course's rail). Replace both height assertions with what that test actually guards: `mapBottom <= viewportHeight` (already present, keep it) plus a non-degeneracy floor `mapHeight >= 400`, with a comment recording that "the rail reaches its cap" is asserted instead on the 41-page density fixture in `tests/e2e/test_rail_density.py::test_density_fixture_renders_a_deep_wide_map`, where a tree actually fills the column. That test already carries `mapHeight >= viewportHeight - 32` and passes, so the intent is preserved rather than dropped.
+
 **Files:**
 - Modify: `packages/static/src/raya_static/rendering.py:4230` (`grid-template-columns`), `:4260-4265` (`.raya-command-icon` size), per-command colour rules
 - Modify: `packages/static/src/raya_static/accessibility.py:81-94` (`.raya-font-toggle` background)
