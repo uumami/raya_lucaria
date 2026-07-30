@@ -785,6 +785,14 @@ The eight command tiles are the single largest block of fixed chrome at 252.8px.
 
 Labels stay visible. Icon-only was rejected: `data-raya-command-tooltip` is inert markup that no CSS or JS reads, and only five of the eight controls carry it at all.
 
+**Rail visible captions are shortened so each fits one line at `0.75rem`.** Owner decision, 2026-07-29, after measurement showed no column count makes `OpenDyslexic` fit a 240px rail: at 4-up the tile is 57px, where 8-character words are already at the edge (`Schedule` clipped at 12px while `Practice` fit) and `OpenDyslexic` needs ~74px. The rejected alternatives were a 10px font plus mid-word wrapping — on the dyslexia control specifically — and 3-up, which costs 42px more and still clips `OpenDyslexic`.
+
+Mapping, applied at the **rail call site only** (`builder.py:1305-1311`), never to the top-command-bar (`:1176`) or discovery (`:1421`) call sites: `OpenDyslexic` → `Font`, `Schedule` → `Plan`, and `Text size` → `Size` only if it wraps or clips. `Search`, `Graph`, `Practice`, `Tasks`, and `Context` are unchanged — measurement shows they fit.
+
+**Accessible names do not change by default.** `aria-label="Toggle OpenDyslexic font"` and the rest stay as they are, so screen-reader output and voice control are unaffected. WCAG 2.5.3 Label in Name requires each visible caption to be contained in its accessible name: `Font` is contained in "Toggle OpenDyslexic font", and `Size` in "Text size". `Plan` is **not** contained in the Schedule control's current `aria-label` — for that one control, extend the `aria-label` so it contains the word `Plan` rather than reverting the caption.
+
+`overflow-wrap` on `.raya-command-label` stays `normal` in the structural band. Mid-word breaking of captions is not acceptable; shortening the captions is what makes it unnecessary. The acceptance gate is therefore **not** a tools-row pixel budget but: every caption renders on one line, and no caption or tile reports `scrollWidth > clientWidth`.
+
 **Files:**
 - Modify: `packages/static/src/raya_static/rendering.py:4230` (`grid-template-columns`), `:4260-4265` (`.raya-command-icon` size), per-command colour rules
 - Modify: `packages/static/src/raya_static/accessibility.py:81-94` (`.raya-font-toggle` background)
@@ -2300,6 +2308,8 @@ In `docs/foundation/20_learning_renderer_contract.md`:
 - "rendered two per row" becomes "rendered four per row"
 - delete "structural page position," so it reads "followed by the locally filterable hierarchical map, and its scrollable course tree"
 - keep "course search", "exactly eight", "icon-labeled", and the command names unchanged
+
+Also add, because Task 4 shortens three visible rail captions (`Schedule` → `Plan`, `Text size` → `Size` if needed, `OpenDyslexic` → `Font`) while leaving command identities intact: "The rail may render shortened visible captions for these controls provided each caption remains contained in its accessible name; the eight command identities and their accessible names are unchanged." Keep the enumeration itself in canonical command names so the contract still identifies all eight.
 
 Then add, in the same paragraph: "The rail may omit structural page position from its body when the article Page brief already renders it. The left course rail owns exactly one scrolling region — its course tree — with the rail frame fixed at accepted reader heights."
 
