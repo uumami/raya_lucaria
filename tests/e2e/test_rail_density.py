@@ -231,3 +231,78 @@ def test_both_rails_gain_content_width_without_breaking_parity(
                 browser.close()
     finally:
         handle.close()
+
+
+def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
+    """The density fixture must be big enough to exercise flex leftover.
+
+    render-fixture has 6 pages; its map never reaches the rail's max-height
+    clamp, so no density outcome is measurable on it.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(500)
+                # Expand every branch so the tree is fully realised.
+                #
+                # Every node's toggle is eagerly present in the DOM at load
+                # (children are hidden via an ancestor `hidden` attribute,
+                # not lazily created -- see setMapNodeExpanded in
+                # packages/static/src/raya_static/shell.py), so each click
+                # flips exactly one element out of this live
+                # aria-expanded="false" selector's match set. A fixed
+                # `range(toggles.count())` loop goes stale mid-loop as the
+                # set shrinks one-for-one with each click, so re-query
+                # `.first` after every click instead of indexing by a count
+                # taken before any clicks happened.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
+
+                stats = page.evaluate(
+                    """() => {
+                      const links = [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')];
+                      const depths = links.map((a) => Number(
+                        a.closest('[data-raya-map-depth]')
+                          ?.dataset.rayaMapDepth ?? 0));
+                      const map = document.querySelector('.raya-course-map');
+                      return {
+                        links: links.length,
+                        maxDepth: Math.max(...depths),
+                        mapHeight: Math.round(
+                          map.getBoundingClientRect().height),
+                        listScrollHeight: document.querySelector(
+                          '.raya-course-map-list').scrollHeight,
+                        viewportHeight: window.innerHeight,
+                      };
+                    }"""
+                )
+                assert stats["links"] >= 30, stats
+                assert stats["maxDepth"] >= 3, stats
+                # The rail must actually reach its max-height clamp, or flex
+                # never distributes leftover space and density is untestable.
+                assert stats["mapHeight"] >= stats["viewportHeight"] - 32, stats
+                assert stats["listScrollHeight"] > 900, stats
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

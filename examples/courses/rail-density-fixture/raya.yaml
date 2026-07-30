@@ -1,0 +1,14 @@
+course_id: rail-density-fixture
+title: Rail Density Fixture
+description: Wide, deep tree for measuring course-map density.
+language: en
+source: course
+artifact: artifact
+hierarchy:
+  levels:
+    - key: unit
+      label: Unit
+    - key: section
+      label: Section
+    - key: topic
+      label: Topic
