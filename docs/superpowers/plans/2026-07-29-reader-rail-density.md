@@ -677,15 +677,22 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                 )
                 page.wait_for_timeout(500)
                 # Expand every branch so the tree is fully realised.
-                for _ in range(4):
-                    toggles = page.locator(
-                        '[data-raya-map-node-toggle][aria-expanded="false"]'
-                    )
-                    if toggles.count() == 0:
-                        break
-                    for i in range(toggles.count()):
-                        toggles.nth(i).click()
-                    page.wait_for_timeout(200)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
 
                 stats = page.evaluate(
                     """() => {
@@ -1417,15 +1424,22 @@ def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                for _ in range(4):
-                    toggles = page.locator(
-                        '[data-raya-map-node-toggle][aria-expanded="false"]'
-                    )
-                    if toggles.count() == 0:
-                        break
-                    for i in range(toggles.count()):
-                        toggles.nth(i).click()
-                    page.wait_for_timeout(200)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
 
                 state = page.evaluate(_DEEP_LINK)
                 assert state is not None
@@ -1587,15 +1601,22 @@ def test_long_labels_clamp_to_two_lines_and_release_on_focus(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                for _ in range(4):
-                    toggles = page.locator(
-                        '[data-raya-map-node-toggle][aria-expanded="false"]'
-                    )
-                    if toggles.count() == 0:
-                        break
-                    for i in range(toggles.count()):
-                        toggles.nth(i).click()
-                    page.wait_for_timeout(200)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
 
                 # No map link carries a title attribute.
                 assert page.evaluate(
@@ -2379,15 +2400,22 @@ def test_course_map_index_gains_usable_height(tmp_path: Path) -> None:
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                for _ in range(4):
-                    toggles = page.locator(
-                        '[data-raya-map-node-toggle][aria-expanded="false"]'
-                    )
-                    if toggles.count() == 0:
-                        break
-                    for i in range(toggles.count()):
-                        toggles.nth(i).click()
-                    page.wait_for_timeout(200)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
 
                 state = page.evaluate(
                     """() => {
