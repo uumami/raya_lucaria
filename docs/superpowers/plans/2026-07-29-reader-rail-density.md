@@ -399,7 +399,30 @@ def test_both_rails_gain_content_width_without_breaking_parity(
 
 Run: `UV_PROJECT_ENVIRONMENT=.venv-local uv run pytest tests/e2e/test_rail_density.py::test_both_rails_gain_content_width_without_breaking_parity -v`
 
-Expected: FAIL on `assert map_header["w"] >= 200` with `w` reported as `191`. The parity assertions above it pass — that is the point: they are green before *and* must stay green after.
+Expected: **two** failures, both of which this task fixes.
+
+1. `assert map_header["w"] >= 200` fails with `w` reported as `191`.
+2. The **mirrored inset** assertion `abs(left_inset - right_inset) <= 1` fails
+   by 15px, reporting 17 vs 32.
+
+Failure 2 was mis-predicted in an earlier revision of this plan, which claimed
+every parity assertion was baseline-green. Measured at 1440x950 on the shipped
+code: map outer inset 17px, map **inner** inset **32px**, rail inner inset
+17px, rail **outer** inset **32px**. `scrollbar-gutter: stable` reserves space
+on each element's own inline-end (right) edge — which is the map's *inner*
+(article-facing) side but the rail's *outer* (page-edge) side. The two rails
+are therefore **not mirror-symmetric today**.
+
+This is why the pinned invariant test does not catch it: it compares
+*same-side* insets (`map.right - mapHeader.right` vs
+`rail.right - railHeader.right`) — 32 vs 32, which matches. The mirrored
+assertion here is deliberately stricter and is the better check; after the
+gutter is removed from both frames all four insets become 17px, so both the
+mirrored and the same-side comparisons pass.
+
+The width/height/top parity assertions **are** baseline-green and must stay
+green. If one of *those* fails on the red run, stop and report — that would be
+unrelated breakage.
 
 - [ ] **Step 3: Remove the gutter from both frames**
 
