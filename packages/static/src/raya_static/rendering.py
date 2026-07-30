@@ -4237,6 +4237,14 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
 .raya-course-rail-command-list {
   display: grid;
   gap: 0.3125rem;
+  /* Base (mobile/drawer, <__RAYA_STRUCTURAL_PX__px): stays two columns.
+     Below that width .raya-course-rail-command keeps its row layout (icon
+     beside label, not the caption-under-glyph column layout the
+     >=__RAYA_STRUCTURAL_PX__px override below switches to), so four narrow
+     columns there would force the label to wrap across many lines instead
+     of measuring wider. Four columns is a desktop/tablet density change,
+     not a mobile drawer one -- see the override next to the caption layout
+     further down this file. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .raya-course-rail-command {
@@ -4270,9 +4278,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   background: color-mix(in srgb, currentColor 12%, transparent);
   border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   flex: 0 0 auto;
-  height: 0.9375rem;
+  height: 1.25rem;
   padding: 0.1rem;
-  width: 0.9375rem;
+  width: 1.25rem;
 }
 .raya-course-rail-command .raya-command-label {
   display: inline;
@@ -4281,30 +4289,6 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   line-height: 1.2;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-.raya-course-rail-command.raya-command-search {
-  color: var(--raya-color-accent);
-}
-.raya-course-rail-command.raya-command-graph {
-  color: color-mix(in srgb, var(--raya-color-accent) 78%, var(--raya-color-text));
-}
-.raya-course-rail-command.raya-command-practice {
-  color: var(--raya-color-success);
-}
-.raya-course-rail-command.raya-command-tasks {
-  color: var(--raya-color-warning);
-}
-.raya-course-rail-command.raya-command-schedule {
-  color: color-mix(in srgb, var(--raya-color-warning) 56%, var(--raya-color-text));
-}
-.raya-course-rail-command.raya-command-context {
-  color: color-mix(in srgb, var(--raya-color-success) 72%, var(--raya-color-accent));
-}
-.raya-course-rail-command.raya-text-size-toggle {
-  color: var(--raya-color-text);
-}
-.raya-course-rail-command.raya-font-toggle {
-  color: color-mix(in srgb, var(--raya-color-accent) 54%, var(--raya-color-text));
 }
 .raya-course-map-close {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
@@ -6749,28 +6733,50 @@ mjx-container[display="true"] {
     min-height: 12rem;
   }
   .raya-course-rail-tools {
-    padding: 0.5rem 0;
+    padding: 0.4375rem 0;
   }
   .raya-course-rail-command-list {
     min-width: 0;
+    /* Four per row instead of two: this is the block of fixed rail chrome
+       the tools row costs, and the caption-under-glyph layout below has
+       room to go denser once labels sit under, not beside, the glyph.
+       A slightly tighter gap than the two-column mobile/drawer grid keeps
+       the two-row total inside the density budget. */
+    gap: 0.25rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .raya-course-rail-command {
     box-sizing: border-box;
     flex-direction: column;
     gap: 0.125rem;
     justify-content: center;
+    /* WCAG 2.5.8 Target Size (Minimum, 24x24) with margin: four columns in
+       a ~206px content box leaves each tile ~48px wide, so the floor only
+       needs to guarantee the vertical axis. */
+    min-height: 2.5rem;
     min-width: 0;
     overflow: hidden;
     padding: 0.25rem 0;
     text-align: center;
   }
   .raya-course-rail-command .raya-command-label {
-    hyphens: none;
-    overflow-wrap: normal;
-    word-break: normal;
+    /* At two columns tiles were wide enough (120px+) that "normal"
+       (word-boundary-only) wrapping never needed to break a single long
+       word. At four columns tiles are ~48px, narrow enough that
+       unbreakable captions like "OpenDyslexic" exceed the tile and get
+       invisibly clipped by its overflow:hidden -- confirmed by
+       .raya-course-rail-command's own scrollWidth exceeding its
+       clientWidth. overflow-wrap: anywhere (the same value the
+       <__RAYA_STRUCTURAL_PX__px row layout already relies on) lets the
+       caption wrap instead of overflowing. The font-size step down keeps
+       ordinary one-word captions ("Practice", "Search") on a single line
+       so only genuinely long words like "OpenDyslexic" cost a second
+       line. */
+    overflow-wrap: anywhere;
+    font-size: 0.6875rem;
   }
   .raya-course-rail-command.raya-font-toggle .raya-command-label {
-    font-size: 0.725rem;
+    font-size: 0.625rem;
   }
   /* --- rail collapse: appearance (single source) --- */
   /* Collapsed = the header and body are fully removed (display:none, which

@@ -98,6 +98,25 @@ def open_dyslexic_resources() -> AccessibilityResources:
   border-color: var(--raya-color-accent);
   color: var(--raya-color-surface);
 }}
+
+.raya-course-rail-command.raya-font-toggle[aria-pressed="false"] {{
+  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
+}}
+
+/* The bare .raya-font-toggle rule above targets the standalone top-command-
+   bar toggle (.raya-command.raya-command-font.raya-font-toggle), sized for
+   a wide row layout with its own horizontal breathing room. It also
+   matches the rail tile because both share the .raya-font-toggle class,
+   and wins at equal specificity by source order, silently overriding the
+   rail's own 0.25rem 0 padding with 0.45rem 0.65rem. That leaves this one
+   tile with roughly a third of its seven siblings' content width for the
+   label to wrap into (measured 33px vs. 54px at four columns), which is
+   what was forcing "OpenDyslexic" onto extra lines. The compound selector
+   here (0,2,0) outranks the bare .raya-font-toggle rule (0,1,0) regardless
+   of source order, so this tile sizes like its siblings. */
+.raya-course-rail-command.raya-font-toggle {{
+  padding: 0.25rem 0;
+}}
 '''
     javascript = '''(() => {
   const dyslexicStorageKey = "raya:open-dyslexic";

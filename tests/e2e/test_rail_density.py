@@ -314,3 +314,91 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+_COMMANDS = """() => {
+  const list = document.querySelector('.raya-course-rail-command-list');
+  const cs = getComputedStyle(list);
+  const tiles = [...document.querySelectorAll('.raya-course-rail-command')];
+  return {
+    columns: cs.gridTemplateColumns.split(/\\s+/).filter(Boolean).length,
+    toolsHeight: Math.round(
+      document.querySelector('.raya-course-rail-tools')
+        .getBoundingClientRect().height),
+    tiles: tiles.map((t) => {
+      const r = t.getBoundingClientRect();
+      const label = t.querySelector('.raya-command-label');
+      const lr = label ? label.getBoundingClientRect() : null;
+      return {
+        name: t.getAttribute('aria-label'),
+        w: Math.round(r.width), h: Math.round(r.height),
+        labelText: label ? label.textContent.trim() : null,
+        labelVisible: !!(lr && lr.width > 8 && lr.height > 4),
+        labelClipped: label
+          ? label.scrollWidth > label.clientWidth + 1 : null,
+        bg: getComputedStyle(t).backgroundColor,
+        pressed: t.getAttribute('aria-pressed'),
+        colour: getComputedStyle(t).color,
+      };
+    }),
+  };
+}"""
+
+
+def test_command_tiles_render_four_per_row_with_visible_labels(
+    tmp_path: Path,
+) -> None:
+    """Eight tiles, four per row, labels still visible and not clipped.
+
+    Icon-only was rejected: data-raya-command-tooltip is inert markup that
+    nothing reads, and three of the eight controls never carried it, so
+    hiding labels would leave no visible name recovery.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(400)
+                state = page.evaluate(_COMMANDS)
+
+                assert len(state["tiles"]) == 8, state
+                assert state["columns"] == 4, state
+                # Two rows of four must cost far less than the 252.8px the
+                # search form plus a 2x4 grid cost before.
+                assert state["toolsHeight"] <= 170, state
+
+                for tile in state["tiles"]:
+                    assert tile["name"], tile
+                    assert tile["w"] >= 40 and tile["h"] >= 40, tile
+                    assert tile["labelVisible"] is True, tile
+                    assert tile["labelClipped"] is False, tile
+
+                # One resting colour: the eight hues carried no information.
+                resting = {
+                    t["colour"] for t in state["tiles"] if t["pressed"] != "true"
+                }
+                assert len(resting) == 1, resting
+
+                # No tile may wear the "on" fill while reporting pressed=false.
+                # .raya-font-toggle used to win on source order and render a
+                # permanently false active state.
+                unpressed_bgs = {
+                    t["bg"] for t in state["tiles"] if t["pressed"] != "true"
+                }
+                assert len(unpressed_bgs) == 1, unpressed_bgs
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

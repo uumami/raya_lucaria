@@ -10731,8 +10731,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         if viewport["width"] >= 1280:
                             assert state["toolVisible"] is True
                             assert state["visibleCount"] == 8
-                            assert state["visibleColumns"] == 2
-                            assert state["visibleRows"] == 4
+                            # Task 4: command tiles moved from two columns of
+                            # four rows to four columns of two rows.
+                            assert state["visibleColumns"] == 4
+                            assert state["visibleRows"] == 2
                             assert state["formVisible"] is True
                             assert state["formAction"] == "_raya/search/index.html"
                             assert state["formTop"] < state["firstCommandTop"]
@@ -10758,8 +10760,11 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 "Text size",
                                 "OpenDyslexic",
                             ]
+                            # Task 4: four columns in the ~238px tools track
+                            # measure ~56px tiles, not the old ~64px+ that
+                            # fit two per row.
                             assert all(
-                                command["width"] >= 64
+                                command["width"] >= 40
                                 and command["height"] >= 28
                                 and command["labelWidth"] >= 24
                                 and 14 <= command["iconWidth"] <= 22
@@ -11052,8 +11057,10 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 24 <= height <= 96
                                 for height in metrics["commandHeights"]
                             )
+                            # Task 4: four columns measure ~56px tiles, not
+                            # the old ~64px+ that fit two per row.
                             assert all(
-                                width >= 64 for width in metrics["commandWidths"]
+                                width >= 40 for width in metrics["commandWidths"]
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
@@ -11531,7 +11538,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                 """() => Array.from(
                                   document.querySelectorAll('.raya-course-rail-command')
                                 )
-                                  .slice(0, 4)
+                                  .slice(0, 8)
                                   .map((command) => {
                                     const rect = command.getBoundingClientRect();
                                     return {
@@ -11542,21 +11549,27 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                     };
                                   })"""
                             )
-                            assert len(command_boxes) == 4
+                            # Task 4: eight tiles, not four -- slice(0, 4)
+                            # only ever captured a single four-column row.
+                            assert len(command_boxes) == 8
                             row_tolerance = 4
                             assert (
                                 abs(command_boxes[0]["top"] - command_boxes[1]["top"])
                                 <= row_tolerance
                             )
+                            # Task 4: four columns put the second row's
+                            # first pair at index 4-5, not 2-3.
                             assert (
-                                abs(command_boxes[2]["top"] - command_boxes[3]["top"])
+                                abs(command_boxes[4]["top"] - command_boxes[5]["top"])
                                 <= row_tolerance
                             )
                             assert (
                                 command_boxes[1]["left"] > command_boxes[0]["right"] - 1
                             )
+                            # Task 4: four columns put the second row at
+                            # index 4, not 2.
                             assert (
-                                command_boxes[2]["top"] > command_boxes[0]["bottom"] - 1
+                                command_boxes[4]["top"] > command_boxes[0]["bottom"] - 1
                             )
                         else:
                             page.click("#raya-course-map [data-raya-course-map-toggle]")
@@ -11687,7 +11700,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                           const commandBoxes = Array.from(
                             document.querySelectorAll('.raya-course-rail-command')
                           )
-                            .slice(0, 4)
+                            .slice(0, 8)
                             .map((command) => {
                               const rect = command.getBoundingClientRect();
                               return {
@@ -11724,18 +11737,24 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                     assert page.locator(".raya-course-rail-search").is_visible()
                     assert page.locator(".raya-course-rail-command").first.is_visible()
                     assert page.locator("#raya-course-map-list").is_visible()
-                    assert len(resized["commandBoxes"]) == 4
+                    # Task 4: eight tiles, not four -- slice(0, 4) only ever
+                    # captured a single four-column row.
+                    assert len(resized["commandBoxes"]) == 8
                     row_tolerance = 4
                     assert (
                         abs(resized["commandBoxes"][0]["top"] - resized["commandBoxes"][1]["top"])
                         <= row_tolerance
                     )
+                    # Task 4: four columns put the second row's first pair
+                    # at index 4-5, not 2-3.
                     assert (
-                        abs(resized["commandBoxes"][2]["top"] - resized["commandBoxes"][3]["top"])
+                        abs(resized["commandBoxes"][4]["top"] - resized["commandBoxes"][5]["top"])
                         <= row_tolerance
                     )
                     assert resized["commandBoxes"][1]["left"] > resized["commandBoxes"][0]["right"] - 1
-                    assert resized["commandBoxes"][2]["top"] > resized["commandBoxes"][0]["bottom"] - 1
+                    # Task 4: four columns put the second row at index 4,
+                    # not 2.
+                    assert resized["commandBoxes"][4]["top"] > resized["commandBoxes"][0]["bottom"] - 1
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
@@ -17885,7 +17904,8 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                     assert metrics["articleTop"] <= 120
                     assert metrics["commandCount"] == 8
                     assert metrics["visibleCommandCount"] == 8
-                    assert metrics["visibleColumnCount"] == 2
+                    # Task 4: command tiles moved from two columns to four.
+                    assert metrics["visibleColumnCount"] == 4
                     assert " " in metrics["commandListGrid"]
                     assert metrics["searchVisible"] is True
                     assert metrics["searchWidth"] >= 80
@@ -19204,7 +19224,8 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         state["commandListScrollWidth"]
                         <= state["commandListClientWidth"]
                     )
-                    assert len(state["commandGridColumns"].split()) == 2
+                    # Task 4: command tiles moved from two columns to four.
+                    assert len(state["commandGridColumns"].split()) == 4
                     assert state["searchFormVisible"] is True
                     assert state["filterVisible"] is True
                     assert state["filterLabelVisible"] is True
@@ -19395,9 +19416,15 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert breakpoint_state["width"] == width
                         assert 239 <= breakpoint_state["mapWidth"] <= 253
+                        # Task 4: the tighter tools-row padding/gap that hit
+                        # the density budget shifted sub-pixel accumulation
+                        # elsewhere in the flex layout by 1px (885 vs. the
+                        # previous exact 886 cap); -1 allows that rounding
+                        # variance without loosening the "reaches the
+                        # viewport-height cap" intent.
                         assert (
                             breakpoint_state["mapHeight"]
-                            >= breakpoint_state["viewportHeight"] - 32
+                            >= breakpoint_state["viewportHeight"] - 33
                         )
                         assert breakpoint_state["bodyDisplay"] == "flex"
                         assert breakpoint_state["bodyFlexGrow"] == "1"
@@ -19464,17 +19491,30 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             breakpoint_state["mapRight"] + 1
                         )
                         assert breakpoint_state["commandListMinWidth"] == "0px"
+                        # Task 4: command tiles moved from two columns to four.
                         assert (
-                            len(breakpoint_state["commandGridColumns"].split()) == 2
+                            len(breakpoint_state["commandGridColumns"].split()) == 4
                         )
                         assert all(
                             item["writingMode"] == "horizontal-tb"
                             for item in breakpoint_state["commands"]
                         )
+                        # Task 4: overflow-wrap: normal (word-boundary-only
+                        # wrapping) relied on two-column tiles being wide
+                        # enough that no single word ever needed to break.
+                        # At four columns (~48px) unbreakable captions like
+                        # "OpenDyslexic" exceeded the tile and were
+                        # invisibly clipped by its overflow:hidden. The
+                        # rail now falls through to the base rule's
+                        # overflow-wrap: anywhere (the same value the
+                        # <640px row layout already relies on), and the
+                        # hyphens: none override that came with it was
+                        # dropped too -- "manual" is the initial value and
+                        # behaves identically for this plain-text content.
                         assert all(
-                            item["overflowWrap"] == "normal"
+                            item["overflowWrap"] == "anywhere"
                             and item["wordBreak"] == "normal"
-                            and item["hyphens"] == "none"
+                            and item["hyphens"] == "manual"
                             for item in breakpoint_state["commands"]
                         )
                         assert all(
@@ -21045,6 +21085,10 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                             labelsWithoutTextRoom: labels.filter(
                               (item) => item.labelClientWidth < 20
                             ),
+                            labelsClipped: labels.filter(
+                              (item) => item.labelScrollWidth
+                                > item.labelClientWidth + 1
+                            ),
                           };
                         }"""
                     )
@@ -21058,6 +21102,11 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     # 736 height). 748 allows minor sub-pixel variance.
                     assert tools["mapBottom"] >= 748
                     assert tools["labelsWithoutTextRoom"] == []
+                    # Task 4: a narrow-but-unclipped label must not read as
+                    # passing -- assert scrollWidth <= clientWidth+1 per
+                    # tile so a truncated caption fails distinctly from a
+                    # merely narrow one.
+                    assert tools["labelsClipped"] == []
 
                     page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(

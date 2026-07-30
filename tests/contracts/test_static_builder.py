@@ -5947,7 +5947,25 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     assert ".raya-course-rail-command-list" in css
     assert ".raya-course-rail-command {" in css
     assert ".raya-course-map-tool-grid" not in css
-    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in css
+    # Scoped, not substring: the bare literal also appears in four unrelated
+    # rules, so the old assertion passed regardless of the rail's layout.
+    # Two .raya-course-rail-command-list blocks exist: the base rule (two
+    # columns, for the <640px mobile drawer, which keeps the row layout
+    # where four narrow columns would wrap labels across many lines) and
+    # the >=640px override next to the caption-under-glyph layout (four
+    # columns, the density change this task makes).
+    rail_blocks = re.findall(
+        r"\.raya-course-rail-command-list \{[^}]*\}", css, re.S
+    )
+    assert rail_blocks
+    assert any(
+        "grid-template-columns: repeat(4, minmax(0, 1fr))" in block
+        for block in rail_blocks
+    ), rail_blocks
+    assert any(
+        "grid-template-columns: repeat(2, minmax(0, 1fr))" in block
+        for block in rail_blocks
+    ), rail_blocks
     assert "grid-template-columns: repeat(3" not in css
     assert "height: calc(100vh - 1.5rem)" in css
     assert ".raya-learning-rail" in css
