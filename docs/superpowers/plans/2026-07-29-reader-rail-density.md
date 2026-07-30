@@ -693,6 +693,14 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                     toggles.first.click()
                     guard += 1
                 page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
 
                 stats = page.evaluate(
                     """() => {
@@ -1440,6 +1448,14 @@ def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
                     toggles.first.click()
                     guard += 1
                 page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
 
                 state = page.evaluate(_DEEP_LINK)
                 assert state is not None
@@ -1617,6 +1633,14 @@ def test_long_labels_clamp_to_two_lines_and_release_on_focus(
                     toggles.first.click()
                     guard += 1
                 page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
 
                 # No map link carries a title attribute.
                 assert page.evaluate(
@@ -2416,6 +2440,14 @@ def test_course_map_index_gains_usable_height(tmp_path: Path) -> None:
                     toggles.first.click()
                     guard += 1
                 page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
 
                 state = page.evaluate(
                     """() => {
