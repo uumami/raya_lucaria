@@ -4004,8 +4004,13 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
   align-self: start;
   grid-area: course-map;
   max-height: calc(100vh - 2rem);
+  /* No overscroll-behavior here. The frame declares overflow:auto as a
+     relief valve for enlarged root fonts, but normally scrollHeight ==
+     clientHeight. Chrome still treats it as a scroll container, so
+     `contain` swallowed every wheel gesture over the header, tools row and
+     filter -- 41% of the rail where nothing moved. Containment belongs on
+     .raya-course-map-list, which actually scrolls. */
   overflow: auto;
-  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-course-map {
