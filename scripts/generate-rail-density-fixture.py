@@ -99,7 +99,7 @@ def main() -> None:
     write(
         COURSE / "4_identifier.md",
         "rail-density-identifier",
-        "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ",
+        "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
         "Covers the unbreakable-token path.",
     )
     (FIXTURE / "raya.yaml").write_text(RAYA_YAML, encoding="utf-8")

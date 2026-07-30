@@ -275,6 +275,14 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                     toggles.first.click()
                     guard += 1
                 page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
 
                 stats = page.evaluate(
                     """() => {

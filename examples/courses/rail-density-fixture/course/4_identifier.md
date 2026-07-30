@@ -1,9 +1,9 @@
 ---
 id: rail-density-identifier
-title: ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ
+title: ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007
 status: ready
 ---
 
-# ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ
+# ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007
 
 Covers the unbreakable-token path.
