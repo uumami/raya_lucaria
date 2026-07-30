@@ -2340,6 +2340,16 @@ Run the same command as Step 1. Expected: `test_reader_shell_guidance_matches_le
 4b. `tests/contracts/test_documentation_surfaces.py:378-403` — update whatever strings it binds so the contract and the four guides agree.
 
 4c. The eight role-doc locations. English and Spanish stay separate; control names, class names, and paths stay in English. Only the two-per-row wording and the rail page position change — the `course search` mentions stay correct, and the literal `course search` must survive because `tests/contracts/test_static_builder.py:4945` and `:4969` assert it.
+**Also update the rail caption names in the guides.** Task 4 renamed two rail
+captions (`Schedule` → `Plan`, `OpenDyslexic` → `Font`), and the guides
+enumerate the rail tiles by caption text. `tests/contracts/test_static_builder.py:4949-4952`
+pins that exact sentence, so the drift will never self-surface — it will just
+sit there wrong while the test stays green. In each of the four guides, the
+rail enumeration must name the rail's actual captions while still identifying
+the eight commands; keep the canonical command names for the workspaces
+themselves (the destinations are still Schedule and OpenDyslexic everywhere
+else in the product). Update the pinned sentence in that contract test to match.
+
 - `docs/guides/en/students/index.md:51` — "arranged two per row" becomes "arranged four per row"; drop "followed by page position and".
 - `docs/guides/en/students/index.md:74` — "compact two-per-row command tiles" becomes "compact four-per-row command tiles".
 - `docs/guides/es/estudiantes/index.md:52`, `:75` — mirror both, in Spanish, keeping `course search` and control names in English.
