@@ -9932,7 +9932,12 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                         }"""
                     )
                     assert desktop["size"]["text"] == "Text size"
-                    assert desktop["font"]["text"] == "OpenDyslexic"
+                    # Task 4 requirements change: the rail caption was
+                    # shortened from "OpenDyslexic" to "Font" so it fits
+                    # the four-column tile on one line without shrinking
+                    # type; aria-label still says "Toggle OpenDyslexic
+                    # font".
+                    assert desktop["font"]["text"] == "Font"
                     assert desktop["size"]["width"] >= 24
                     assert desktop["font"]["width"] >= 24
                     assert desktop["size"]["height"] > 0
@@ -10750,15 +10755,18 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             assert state["railContextVisible"] is True
                             assert state["commandListWidth"] >= 140
                             assert " " in state["commandListGrid"]
+                            # Task 4 requirements change: rail captions
+                            # shortened so full words fit one line at
+                            # 0.75rem without wrapping/shrinking type.
                             assert state["visibleCommandTexts"] == [
                                 "Search",
                                 "Graph",
                                 "Practice",
                                 "Tasks",
-                                "Schedule",
+                                "Plan",
                                 "Context",
                                 "Text size",
-                                "OpenDyslexic",
+                                "Font",
                             ]
                             # Task 4: four columns in the ~238px tools track
                             # measure ~56px tiles, not the old ~64px+ that
@@ -11122,12 +11130,15 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 }"""
                             )
                             assert course_tools["visible"] is True
+                            # Task 4 requirements change: "Schedule" ->
+                            # "Plan" so the rail tile's caption fits one
+                            # line at 0.75rem.
                             assert course_tools["labels"] == [
                                 "Search",
                                 "Graph",
                                 "Practice",
                                 "Tasks",
-                                "Schedule",
+                                "Plan",
                             ]
                             assert (
                                 "Open course graph, 2 links, 0 from this page, 2 links here"
@@ -12778,18 +12789,23 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     assert initial["firstUnitChildrenHidden"] is False
                     assert initial["firstTopicVisible"] is True
                     assert initial["filterVisible"] is True
+                    # Task 4 requirements change: "Schedule" -> "Plan" so
+                    # the rail tile's caption fits one line at 0.75rem.
                     assert initial["toolLabels"] == [
                         "Search",
                         "Graph",
                         "Practice",
                         "Tasks",
-                        "Schedule",
+                        "Plan",
                     ]
                     assert "Open official practice, 8 official" in initial[
                         "toolAriaLabels"
                     ]
                     assert "Open official tasks, 4 tasks" in initial["toolAriaLabels"]
-                    assert "Open official schedule, 3 dated" in initial[
+                    # Task 4 requirements change: WCAG 2.5.3 Label in Name
+                    # -- the visible caption is "Plan", so the accessible
+                    # name must contain that word.
+                    assert "Open schedule plan, 3 dated" in initial[
                         "toolAriaLabels"
                     ]
                     assert initial["practiceHref"].endswith(
@@ -17390,14 +17406,17 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert 28 <= header_collapse["height"] <= 44
     assert header_collapse["ariaLabel"] == "Hide course map"
     assert header_collapse["text"] == "Hide map"
+    # Task 4 requirements change: rail captions shortened ("Schedule" ->
+    # "Plan", "OpenDyslexic" -> "Font") so full words fit one line at
+    # 0.75rem in the four-column tile without shrinking type.
     expected_icons = {
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),
         "raya-command-tasks": ("tasks", "Tasks"),
-        "raya-command-schedule": ("schedule", "Schedule"),
+        "raya-command-schedule": ("schedule", "Plan"),
         "raya-text-size-toggle": ("text-size", "Text size"),
-        "raya-font-toggle": ("font", "OpenDyslexic"),
+        "raya-font-toggle": ("font", "Font"),
     }
     for command_class, (icon_name, label) in expected_icons.items():
         icon = icons[command_class]
@@ -19003,15 +19022,18 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                 args=["--no-sandbox"],
             )
             try:
+                # Task 4 requirements change: rail captions shortened
+                # ("Schedule" -> "Plan", "OpenDyslexic" -> "Font") so full
+                # words fit one line at 0.75rem in the four-column tile.
                 expected_commands = [
                     "Search",
                     "Graph",
                     "Practice",
                     "Tasks",
-                    "Schedule",
+                    "Plan",
                     "Context",
                     "Text size",
-                    "OpenDyslexic",
+                    "Font",
                 ]
                 page = browser.new_page(viewport={"width": 1280, "height": 918})
                 try:
@@ -19210,7 +19232,17 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                     assert state["drawer"] == "closed"
                     assert state["mapLeft"] <= 16
                     assert 244 <= state["mapWidth"] <= 264
-                    assert state["mapHeight"] >= 890
+                    # Not "fills the column": .raya-course-map has
+                    # align-self:start and no height, so it renders at natural
+                    # content height under max-height:calc(100vh - 2rem). On
+                    # this 6-page fixture the pre-density 253px tools row was
+                    # only incidentally enough to reach that cap; a chrome cut
+                    # legitimately drops the rail below it. "The rail reaches
+                    # its cap" is asserted on the 41-page tree instead, in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_renders_a_deep_wide_map. This floor
+                    # only guards against a degenerate/collapsed rail.
+                    assert state["mapHeight"] >= 400
                     assert state["mapBottom"] <= state["viewportHeight"]
                     assert state["positionTop"] is not None
                     assert state["positionBottom"] is not None
@@ -19416,16 +19448,17 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert breakpoint_state["width"] == width
                         assert 239 <= breakpoint_state["mapWidth"] <= 253
-                        # Task 4: the tighter tools-row padding/gap that hit
-                        # the density budget shifted sub-pixel accumulation
-                        # elsewhere in the flex layout by 1px (885 vs. the
-                        # previous exact 886 cap); -1 allows that rounding
-                        # variance without loosening the "reaches the
-                        # viewport-height cap" intent.
-                        assert (
-                            breakpoint_state["mapHeight"]
-                            >= breakpoint_state["viewportHeight"] - 33
-                        )
+                        # Not "fills the column": .raya-course-map has
+                        # align-self:start and no height, so it renders at natural
+                        # content height under max-height:calc(100vh - 2rem). On
+                        # this 6-page fixture the pre-density 253px tools row was
+                        # only incidentally enough to reach that cap; a chrome cut
+                        # legitimately drops the rail below it. "The rail reaches
+                        # its cap" is asserted on the 41-page tree instead, in
+                        # tests/e2e/test_rail_density.py::
+                        # test_density_fixture_renders_a_deep_wide_map. This floor
+                        # only guards against a degenerate/collapsed rail.
+                        assert breakpoint_state["mapHeight"] >= 400
                         assert breakpoint_state["bodyDisplay"] == "flex"
                         assert breakpoint_state["bodyFlexGrow"] == "1"
                         assert breakpoint_state["mapScrollWidth"] <= (
@@ -19499,22 +19532,10 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             item["writingMode"] == "horizontal-tb"
                             for item in breakpoint_state["commands"]
                         )
-                        # Task 4: overflow-wrap: normal (word-boundary-only
-                        # wrapping) relied on two-column tiles being wide
-                        # enough that no single word ever needed to break.
-                        # At four columns (~48px) unbreakable captions like
-                        # "OpenDyslexic" exceeded the tile and were
-                        # invisibly clipped by its overflow:hidden. The
-                        # rail now falls through to the base rule's
-                        # overflow-wrap: anywhere (the same value the
-                        # <640px row layout already relies on), and the
-                        # hyphens: none override that came with it was
-                        # dropped too -- "manual" is the initial value and
-                        # behaves identically for this plain-text content.
                         assert all(
-                            item["overflowWrap"] == "anywhere"
+                            item["overflowWrap"] == "normal"
                             and item["wordBreak"] == "normal"
-                            and item["hyphens"] == "manual"
+                            and item["hyphens"] == "none"
                             for item in breakpoint_state["commands"]
                         )
                         assert all(
@@ -19555,9 +19576,10 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             and 14 <= command["iconHeight"] <= 22
                             for command in breakpoint_state["commands"]
                         )
+                        # Task 4 requirements change: "OpenDyslexic" -> "Font".
                         page.locator(
                             ".raya-course-rail-command",
-                            has_text="OpenDyslexic",
+                            has_text="Font",
                         ).focus()
                         focused_command_sizes = page.evaluate(
                             """() => Array.from(document.querySelectorAll(

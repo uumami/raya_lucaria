@@ -329,6 +329,9 @@ _COMMANDS = """() => {
       const r = t.getBoundingClientRect();
       const label = t.querySelector('.raya-command-label');
       const lr = label ? label.getBoundingClientRect() : null;
+      const lineHeight = label
+        ? parseFloat(getComputedStyle(label).lineHeight) || lr.height
+        : null;
       return {
         name: t.getAttribute('aria-label'),
         w: Math.round(r.width), h: Math.round(r.height),
@@ -336,6 +339,8 @@ _COMMANDS = """() => {
         labelVisible: !!(lr && lr.width > 8 && lr.height > 4),
         labelClipped: label
           ? label.scrollWidth > label.clientWidth + 1 : null,
+        labelLines: lr ? Math.round(lr.height / lineHeight) : null,
+        tileClipped: t.scrollWidth > t.clientWidth + 1,
         bg: getComputedStyle(t).backgroundColor,
         pressed: t.getAttribute('aria-pressed'),
         colour: getComputedStyle(t).color,
@@ -374,15 +379,22 @@ def test_command_tiles_render_four_per_row_with_visible_labels(
 
                 assert len(state["tiles"]) == 8, state
                 assert state["columns"] == 4, state
-                # Two rows of four must cost far less than the 252.8px the
-                # search form plus a 2x4 grid cost before.
-                assert state["toolsHeight"] <= 170, state
+                # Sanity bound only, not the binding constraint: an 11px/
+                # mid-word-broken caption ("OpenDysle/xic") could satisfy a
+                # tight height budget while reproducing the "crowded and
+                # unreadable" complaint this change exists to fix. The real
+                # acceptance criteria are per-tile below -- one line, never
+                # clipped -- achieved by shortening captions ("OpenDyslexic"
+                # -> "Font", "Schedule" -> "Plan"), not shrinking type.
+                assert state["toolsHeight"] <= 200, state
 
                 for tile in state["tiles"]:
                     assert tile["name"], tile
                     assert tile["w"] >= 40 and tile["h"] >= 40, tile
                     assert tile["labelVisible"] is True, tile
                     assert tile["labelClipped"] is False, tile
+                    assert tile["tileClipped"] is False, tile
+                    assert tile["labelLines"] == 1, tile
 
                 # One resting colour: the eight hues carried no information.
                 resting = {

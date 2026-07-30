@@ -2933,7 +2933,9 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "2026-10-15" in schedule_html
     topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
     assert 'aria-label="Open official tasks, 4 tasks"' in topic_html
-    assert 'aria-label="Open official schedule, 3 dated"' in topic_html
+    # Task 4 requirements change: WCAG 2.5.3 Label in Name -- the rail's
+    # visible caption is "Plan", so the accessible name must contain it.
+    assert 'aria-label="Open schedule plan, 3 dated"' in topic_html
     assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in schedule_html
     assert 'href="../graph/index.html?page=first-topic"' in schedule_html
 
