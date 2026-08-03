@@ -1079,10 +1079,12 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                 # absolutely-positioned "inline-flex" box computes to "flex",
                 # not "inline-flex" -- position:absolute is mandatory here
                 # (see rendering.py) so the badge cannot become a block child
-                # inside Task 8's -webkit-box clamp. Same accepted pair
-                # already used in test_preview_static_read_path.py for this
-                # badge.
-                assert current[0]["display"] in {"inline-flex", "flex"}, current[0]
+                # inside Task 8's -webkit-box clamp. Assert "flex" only, not
+                # {"inline-flex", "flex"}: accepting "inline-flex" would also
+                # accept the in-flow regression this task exists to prevent
+                # (in-flow computes "inline-flex"; only out-of-flow
+                # computes "flex"), which defeats the point of the check.
+                assert current[0]["display"] == "flex", current[0]
                 assert current[0]["content"] not in {"none", "normal"}, current[0]
                 for badge in badges:
                     if not badge["current"]:

@@ -11081,10 +11081,15 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
-                            assert metrics["mapNumberDisplay"] in {
-                                "inline-flex",
-                                "flex",
-                            }
+                            # "flex" only, not {"inline-flex", "flex"}: the
+                            # current-row badge is position:absolute
+                            # (rendering.py), which blockifies a computed
+                            # "inline-flex" to "flex". Accepting "inline-flex"
+                            # here would also accept an in-flow regression
+                            # (the badge becoming a block child inside the
+                            # -webkit-box clamp) -- in-flow computes
+                            # "inline-flex", only out-of-flow computes "flex".
+                            assert metrics["mapNumberDisplay"] == "flex"
                             # Companion: the badge is out of flow everywhere
                             # except the current row (rendering.py). A
                             # non-current link's ::before must compute
