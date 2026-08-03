@@ -19214,6 +19214,15 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             filterLabelVisible: !!filterLabel
                               && filterLabel.getClientRects().length > 0
                               && getComputedStyle(filterLabel).display !== 'none',
+                            filterLabelWidth: filterLabelBox
+                              ? Math.round(filterLabelBox.width)
+                              : null,
+                            filterLabelHeight: filterLabelBox
+                              ? Math.round(filterLabelBox.height)
+                              : null,
+                            filterLabelClipPath: filterLabel
+                              ? getComputedStyle(filterLabel).clipPath
+                              : null,
                             filterEmptyVisible: !!filterEmpty
                               && filterEmpty.checkVisibility(),
                             filterValue: filter?.value || '',
@@ -19254,7 +19263,19 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                     assert len(state["commandGridColumns"].split()) == 4
                     assert state["searchFormVisible"] is True
                     assert state["filterVisible"] is True
+                    # filterLabelVisible alone is a trap, not a check:
+                    # .raya-visually-hidden (position: absolute; width: 1px;
+                    # height: 1px; clip-path: inset(50%)) still satisfies
+                    # getClientRects().length > 0 and display != 'none', so
+                    # the old assertion would pass even for a hidden label.
+                    # Keep it as an explicit non-null/truthiness guard --
+                    # toolsBottom <= filterLabelTop below depends on
+                    # filterLabelTop being non-null -- and add real
+                    # painted-size checks alongside it.
                     assert state["filterLabelVisible"] is True
+                    assert state["filterLabelWidth"] >= 40, state
+                    assert state["filterLabelHeight"] >= 10, state
+                    assert state["filterLabelClipPath"] in {"none", ""}, state
                     assert state["filterEmptyVisible"] is False
                     assert state["filterValue"] == ""
                     assert state["visibleCommandTexts"] == expected_commands
@@ -19411,6 +19432,9 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 filterRight: filterBox.right,
                                 filterVisible: visible(filter),
                                 filterLabelVisible: visible(filterLabel),
+                                filterLabelWidth: Math.round(filterLabelBox.width),
+                                filterLabelHeight: Math.round(filterLabelBox.height),
+                                filterLabelClipPath: getComputedStyle(filterLabel).clipPath,
                                 filterEmptyVisible: filterEmpty.checkVisibility(),
                                 listTop: Math.round(listBox.top),
                                 toolsHeight: Math.round(toolsBox.height),
@@ -19483,7 +19507,23 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             == expected_commands
                         )
                         assert breakpoint_state["searchFormVisible"] is True
+                        # filterLabelVisible alone is a trap, not a check: see
+                        # the comment above the equivalent assertion earlier
+                        # in this file. Keep it as an explicit non-null/
+                        # truthiness guard -- toolsBottom <= filterLabelTop
+                        # above depends on filterLabelTop being non-null --
+                        # and add real painted-size checks alongside it.
                         assert breakpoint_state["filterLabelVisible"] is True
+                        assert breakpoint_state["filterLabelWidth"] >= 40, (
+                            breakpoint_state
+                        )
+                        assert breakpoint_state["filterLabelHeight"] >= 10, (
+                            breakpoint_state
+                        )
+                        assert breakpoint_state["filterLabelClipPath"] in {
+                            "none",
+                            "",
+                        }, breakpoint_state
                         assert breakpoint_state["filterVisible"] is True
                         assert breakpoint_state["filterEmptyVisible"] is False
                         assert breakpoint_state["filterLeft"] >= (

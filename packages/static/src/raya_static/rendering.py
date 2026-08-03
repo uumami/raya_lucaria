@@ -4237,7 +4237,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
 }
 .raya-course-rail-search .raya-command-search-input,
 .raya-course-rail-search .raya-command-search-submit {
-  min-height: 2.25rem;
+  min-height: 2rem;
 }
 .raya-course-rail-command-list {
   display: grid;
@@ -5090,9 +5090,9 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-filter-label {
   color: var(--raya-color-muted);
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 .raya-course-map-filter {
   background: var(--raya-color-surface);
@@ -5100,9 +5100,18 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   border-radius: 0.375rem;
   color: var(--raya-color-text);
   font: inherit;
-  margin-bottom: 0.65rem;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.55rem;
+  /* `font: inherit` pulls in body's line-height: 1.6 (25.6px at 16px), which
+     inflates the unconstrained content height to ~35.6px -- taller than the
+     1.75rem/28px min-height floor below. At tall viewports the flex column
+     has slack, so nothing forces a shrink and the box renders at that
+     natural 35.6px, busting the rail's fixed-chrome budget. Setting
+     line-height explicitly makes the box's own content height match its
+     min-height (28px) so it is exactly 28px regardless of how much slack
+     the surrounding flex layout has, not just under space pressure. */
+  line-height: 1.125;
+  margin-bottom: 0.25rem;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
   width: 100%;
 }
 .raya-map-filter-empty {

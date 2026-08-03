@@ -557,3 +557,66 @@ def test_page_position_lives_only_in_the_page_brief(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+@pytest.mark.parametrize("height", [900, 720, 600, 520, 480])
+def test_filter_and_search_stay_present_and_focusable_at_every_height(
+    tmp_path: Path, height: int
+) -> None:
+    """No viewport height may remove the filter or the search form.
+
+    Hiding the filter at short heights was rejected: no / hotkey and no
+    mapFilter.focus() exist, so a hidden filter is reachable by nothing --
+    WCAG 1.4.4 and 1.4.10.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(
+                    viewport={"width": 1440, "height": height}
+                )
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(400)
+
+                filter_input = page.locator(".raya-course-map-filter")
+                assert filter_input.count() == 1, height
+                assert filter_input.is_visible(), height
+                filter_input.focus()
+                assert page.evaluate(
+                    "() => document.activeElement"
+                    ".classList.contains('raya-course-map-filter')"
+                ), height
+
+                assert page.locator(".raya-course-rail-search").is_visible()
+                assert page.locator(
+                    ".raya-course-map-filter-label"
+                ).is_visible(), height
+
+                chrome = page.evaluate(
+                    """() => {
+                      const h = (s) => {
+                        const el = document.querySelector(s);
+                        return el
+                          ? Math.round(el.getBoundingClientRect().height) : 0;
+                      };
+                      return h('.raya-course-map-filter-label')
+                           + h('.raya-course-map-filter');
+                    }"""
+                )
+                # Was 24.8 + 46.4 = 71.2px.
+                assert chrome <= 52, (height, chrome)
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
