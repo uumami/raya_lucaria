@@ -2158,6 +2158,14 @@ In `packages/static/src/raya_static/rendering.py`:
 }
 ```
 
+**Also remove `overscroll-behavior: contain` from `.raya-learning-rail-body`** (in the structural band, alongside its `overflow: auto`). This is mandatory, not optional, and this task is what makes it necessary.
+
+The same defect has now appeared twice: `overscroll-behavior: contain` is only safe on an element **guaranteed to overflow**. A non-overflowing `overflow: auto` element is still a scroll container in Chrome, and `contain` makes it swallow the wheel entirely — neither the element nor the page moves. Task 1 removed it from `.raya-course-map` for this reason; Task 5 had to remove it from `.raya-course-map-list` once the chrome cut let a small course's tree fit its window.
+
+This task creates the identical condition on the right rail: collapsing three panels drops content from 1358.3px to roughly 590px inside a 767px window, so `.raya-learning-rail-body` stops overflowing on ordinary pages and would swallow the wheel over the entire right rail. Remove the declaration in the same commit, with a comment recording the mechanism, and extend `test_wheel_over_any_rail_region_moves_something` to cover the right rail's regions the way it already covers the left rail's.
+
+What is given up is scroll chaining being blocked at the end of the rail — the page keeps scrolling once the rail bottoms out. Standard behaviour, and strictly better than a dead control.
+
 `.raya-learning-rail-body` base rule — `display: grid` becomes `display: flex; flex-direction: column`, so the settled layout matches the band:
 
 ```css
