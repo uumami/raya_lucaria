@@ -2211,7 +2211,6 @@ def _render_course_map(
     body_html = "\n".join(
         [
             tools_html,
-            f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '

@@ -4130,13 +4130,6 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
     min-height: 3.9375rem;
   }
 }
-.raya-course-map > .raya-page-position {
-  color: var(--raya-color-muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 0.35rem;
-}
 .raya-learning-rail-body {
   display: grid;
   gap: 0;
@@ -4213,8 +4206,20 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-height: 0;
   display: grid;
   gap: 0.15rem;
+  /* No overscroll-behavior here either. Containment is only safe on an
+     element guaranteed to overflow, and this list is not guaranteed to:
+     once the rail's fixed chrome is short enough (Task 5,
+     2026-07-29-reader-rail-density, freed ~57.6px by dropping the
+     duplicated page-position paragraph), a short course's tree can fit
+     without scrolling. A non-overflowing overflow:auto element with
+     overscroll-behavior:contain still gets treated as a scroll container
+     by Chrome, so `contain` swallows the wheel gesture over it entirely --
+     the same mechanism .raya-course-map itself was fixed for above. What
+     we give up: scroll chaining is no longer blocked at the end of a long
+     index, so the page keeps scrolling once the tree bottoms out. That is
+     standard behaviour on most sites and strictly better than a dead
+     control. */
   overflow: auto;
-  overscroll-behavior: contain;
   padding-right: 0.2rem;
   scrollbar-gutter: stable;
 }
@@ -6633,8 +6638,7 @@ mjx-container[display="true"] {
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-body {
     display: none;
   }
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-page-position {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title {
     clip: rect(0 0 0 0);
     clip-path: inset(50%);
     height: 1px;
@@ -6697,7 +6701,6 @@ mjx-container[display="true"] {
     padding-inline: 0;
   }
   .raya-course-map-header,
-  .raya-course-map-body > .raya-page-position,
   .raya-course-map-filter-label,
   .raya-course-map-filter,
   .raya-map-filter-empty,

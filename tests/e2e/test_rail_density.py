@@ -75,7 +75,14 @@ _SCROLL_STATE = """() => [
 ]"""
 
 
-def test_wheel_over_any_rail_region_moves_something(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "fixture",
+    [RENDER_FIXTURE, DENSITY_FIXTURE],
+    ids=["render-fixture", "density-fixture"],
+)
+def test_wheel_over_any_rail_region_moves_something(
+    tmp_path: Path, fixture: Path
+) -> None:
     """No region of the expanded course rail may swallow a wheel gesture.
 
     Regression: .raya-course-map carried overflow:auto AND
@@ -83,10 +90,19 @@ def test_wheel_over_any_rail_region_moves_something(tmp_path: Path) -> None:
     as a scroll container with nowhere to put the delta. Wheeling over the
     header, the tools row, or the filter moved NOTHING -- not the rail, not
     the page -- which reads as "scrolling is broken".
+
+    Parametrised over render-fixture (a six-page tree that, since Task 5
+    freed ~57.6px of fixed rail chrome, now fits the rail at a 900px
+    viewport without overflowing) and density-fixture (a 30+-page tree that
+    still overflows it once fully expanded). overscroll-behavior:contain was
+    removed from .raya-course-map-list for the same "swallowed by a
+    non-overflowing scroll container" reason -- this covers both a tree that
+    fits and one that overflows, so that removal cannot regress "scrolling
+    does nothing" on either course size.
     """
     from playwright.sync_api import sync_playwright
 
-    handle = _preview(tmp_path)
+    handle = _preview(tmp_path, fixture)
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -100,6 +116,24 @@ def test_wheel_over_any_rail_region_moves_something(tmp_path: Path) -> None:
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
+
+                if fixture is DENSITY_FIXTURE:
+                    # Expand every branch so the tree is fully realised and
+                    # genuinely overflows the rail. Re-query `.first` after
+                    # every click rather than indexing a count taken before
+                    # any clicks: see test_density_fixture_renders_a_deep_
+                    # wide_map for why a fixed range() loop goes stale.
+                    toggles = page.locator(
+                        '[data-raya-map-node-toggle][aria-expanded="false"]'
+                    )
+                    guard = 0
+                    while toggles.count() > 0 and guard < 200:
+                        toggles.first.click()
+                        guard += 1
+                    page.wait_for_timeout(200)
+                    assert toggles.count() == 0, (
+                        "guard exhausted before draining all node toggles"
+                    )
 
                 # Positive anchor: the rail is expanded and the tree rendered,
                 # so a "nothing moved" result below is a real dead zone and not
@@ -137,9 +171,16 @@ def test_wheel_over_any_rail_region_moves_something(tmp_path: Path) -> None:
                         outcomes[name] = "dead"
 
                 assert "dead" not in outcomes.values(), outcomes
-                # The index keeps its own contained scroll rather than
-                # chaining to the document.
-                assert outcomes["index"] == "index", outcomes
+                if fixture is DENSITY_FIXTURE:
+                    # This tree overflows the rail, so the index must keep
+                    # its own scroll window rather than chain into the page.
+                    assert outcomes["index"] == "index", outcomes
+                else:
+                    # This tree fits the rail without overflowing, so either
+                    # the index scrolls itself (if it's borderline) or the
+                    # page scrolls cleanly underneath it -- either is fine,
+                    # "dead" is not.
+                    assert outcomes["index"] in {"index", "page"}, outcomes
                 page.close()
             finally:
                 browser.close()
@@ -467,6 +508,50 @@ def test_command_tiles_render_four_per_row_with_visible_labels(
                     page.mouse.move(0, 0)
                     assert before != after, (index, before, after)
 
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_page_position_lives_only_in_the_page_brief(tmp_path: Path) -> None:
+    """Page N of M renders once, in the Page brief, not twice.
+
+    The rail copy and the brief fact are gated on the same predicate, so the
+    rail copy was pure duplication costing 57.6px of fixed chrome.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(400)
+
+                # Positive anchor: the rail rendered, so a zero count below is
+                # a real removal and not an empty page.
+                assert page.locator("[data-raya-course-map-collapse]").count() == 1
+                assert page.evaluate(
+                    "() => document.documentElement.dataset.rayaCourseMap"
+                ) == "expanded"
+                assert (
+                    page.locator("#raya-course-map .raya-page-position").count()
+                    == 0
+                )
+                # The information itself must survive, in the brief.
+                brief = page.locator("#raya-article .raya-page-brief")
+                assert brief.count() == 1
+                assert "Page" in brief.inner_text()
                 page.close()
             finally:
                 browser.close()

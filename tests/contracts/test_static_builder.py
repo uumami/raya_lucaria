@@ -5209,12 +5209,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
-    assert course_map_html.index('class="raya-course-rail-tools"') < (
-        course_map_html.index('class="raya-page-position"')
-    )
-    assert course_map_html.index('class="raya-page-position"') < (
-        course_map_html.index('id="raya-course-map-filter"')
-    )
+    # The rail body no longer emits a page-position paragraph (Page N of M
+    # lives only in the Page brief); the surviving ordering contract is
+    # that the filter still precedes the tree.
     assert course_map_html.index('id="raya-course-map-filter"') < (
         course_map_html.index('class="raya-course-map-list"')
     )
@@ -5553,7 +5550,7 @@ def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None
     assert "localStorage" not in article_connections
 
 
-def test_static_builder_renders_collapsible_shell_controls_and_page_position(
+def test_static_builder_renders_collapsible_shell_controls(
     tmp_path: Path,
 ) -> None:
     from raya_static.builder import build_course
@@ -5681,7 +5678,8 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-map-index="1"' in render_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
     assert 'tabindex="-1"' not in course_map_html
-    assert '<p class="raya-page-position">Page 1 of 3</p>' in html
+    assert '<li class="raya-page-brief-fact raya-page-brief-position">' in html
+    assert '<span class="raya-page-brief-value">Page 1 of 3</span>' in html
     assert '<span class="raya-reading-context-position">Page 3 of 3</span>' in topic_html
     assert 'class="raya-course-map-current-chip-path"' not in topic_html
     assert 'class="raya-course-map-current-chip-separator"' not in topic_html

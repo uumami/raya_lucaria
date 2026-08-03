@@ -12773,7 +12773,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                             .querySelector('.raya-command-schedule')
                             ?.getAttribute('href'),
                           pagePosition: document
-                            .querySelector('.raya-page-position')
+                            .querySelector(
+                              '.raya-page-brief-position .raya-page-brief-value'
+                            )
                             ?.textContent
                             ?.trim(),
                           currentLinkText: document
@@ -15119,6 +15121,8 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                             ).map((link) => link.getAttribute('href')),
                             railPanels,
                             railText: textOf('#raya-learning-rail'),
+                            pageBriefText: textOf('.raya-page-brief'),
+                            articleSequenceTopText: textOf('.raya-article-sequence-top'),
                             localKeys: Object.keys(window.localStorage),
                             sessionKeys: Object.keys(window.sessionStorage),
                             privateLinks: Array.from(document.querySelectorAll('a[href]'))
@@ -15167,10 +15171,10 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                     assert all(
                         panel["hidden"] == "false" for panel in state["railPanels"]
                     )
-                    rail_text = state["railText"].lower()
-                    assert "page 5 of 6" in rail_text
-                    assert "previous" in rail_text
-                    assert "next" in rail_text
+                    assert "page 5 of 6" in state["pageBriefText"].lower()
+                    article_sequence_top_text = state["articleSequenceTopText"]
+                    assert "Previous" in article_sequence_top_text
+                    assert "Next" in article_sequence_top_text
                     assert state["localKeys"] == []
                     assert state["sessionKeys"] == []
                     assert state["privateLinks"] == []
@@ -19083,9 +19087,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             '[data-raya-map-filter-empty]'
                           );
                           const header = document.querySelector('.raya-course-map-header');
-                          const position = document.querySelector(
-                            '#raya-course-map-body > .raya-page-position'
-                          );
                           const list = document.querySelector('#raya-course-map-list');
                           const mapBox = map.getBoundingClientRect();
                           const toolsBox = tools.getBoundingClientRect();
@@ -19093,7 +19094,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             '.raya-course-rail-command-list'
                           );
                           const headerBox = header.getBoundingClientRect();
-                          const positionBox = position?.getBoundingClientRect();
                           const filterLabelBox = filterLabel?.getBoundingClientRect();
                           const filterBox = filter?.getBoundingClientRect();
                           const listBox = list.getBoundingClientRect();
@@ -19187,12 +19187,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             commandsUnionWidth: Math.round(
                               commandsUnion.right - commandsUnion.left
                             ),
-                            positionTop: positionBox
-                              ? Math.round(positionBox.top)
-                              : null,
-                            positionBottom: positionBox
-                              ? Math.round(positionBox.bottom)
-                              : null,
                             filterLabelTop: filterLabelBox
                               ? Math.round(filterLabelBox.top)
                               : null,
@@ -19247,11 +19241,8 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                     # only guards against a degenerate/collapsed rail.
                     assert state["mapHeight"] >= 400
                     assert state["mapBottom"] <= state["viewportHeight"]
-                    assert state["positionTop"] is not None
-                    assert state["positionBottom"] is not None
                     assert state["headerBottom"] <= state["toolsTop"]
-                    assert state["toolsBottom"] <= state["positionTop"]
-                    assert state["positionBottom"] <= state["filterLabelTop"]
+                    assert state["toolsBottom"] <= state["filterLabelTop"]
                     assert state["filterLabelBottom"] <= state["filterTop"]
                     assert state["filterBottom"] <= state["listTop"]
                     assert state["visibleCommandCount"] == 8
@@ -19327,9 +19318,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                               const header = document.querySelector('.raya-course-map-header');
                               const body = document.querySelector('#raya-course-map-body');
                               const tools = document.querySelector('.raya-course-rail-tools');
-                              const position = document.querySelector(
-                                '#raya-course-map-body > .raya-page-position'
-                              );
                               const filterLabel = document.querySelector(
                                 '.raya-course-map-filter-label'
                               );
@@ -19350,7 +19338,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                               const bodyBox = body.getBoundingClientRect();
                               const headerBox = header.getBoundingClientRect();
                               const toolsBox = tools.getBoundingClientRect();
-                              const positionBox = position.getBoundingClientRect();
                               const filterLabelBox = filterLabel.getBoundingClientRect();
                               const filterBox = filter.getBoundingClientRect();
                               const listBox = list.getBoundingClientRect();
@@ -19416,8 +19403,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 headerBottom: Math.round(headerBox.bottom),
                                 toolsTop: Math.round(toolsBox.top),
                                 toolsBottom: Math.round(toolsBox.bottom),
-                                positionTop: Math.round(positionBox.top),
-                                positionBottom: Math.round(positionBox.bottom),
                                 filterLabelTop: Math.round(filterLabelBox.top),
                                 filterLabelBottom: Math.round(filterLabelBox.bottom),
                                 filterTop: Math.round(filterBox.top),
@@ -19483,10 +19468,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert (
                             breakpoint_state["toolsBottom"]
-                            <= breakpoint_state["positionTop"]
-                        )
-                        assert (
-                            breakpoint_state["positionBottom"]
                             <= breakpoint_state["filterLabelTop"]
                         )
                         assert (
@@ -21657,9 +21638,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                           const regionTitle = document.querySelector(
                             '#raya-course-map > .raya-course-map-header > .raya-region-title'
                           );
-                          const position = document.querySelector(
-                            '#raya-course-map > .raya-course-map-header > .raya-page-position'
-                          );
                           const tools = document.querySelector('.raya-course-rail-tools');
                           const searchForm = document.querySelector(
                             '.raya-course-rail-tools .raya-command-search-form'
@@ -21732,9 +21710,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             regionTitleVisible: !!regionTitle
                               && regionTitle.getClientRects().length > 0
                               && getComputedStyle(regionTitle).display !== 'none',
-                            positionVisible: !!position
-                              && position.getClientRects().length > 0
-                              && getComputedStyle(position).display !== 'none',
                             toolsHeight: Math.round(toolsBox?.height || 0),
                             searchFormVisible: !!searchForm
                               && searchForm.getClientRects().length > 0
@@ -21777,7 +21752,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["gripVisible"] is True
                     assert state["closeLabel"] == "Close course map"
                     assert state["regionTitleVisible"] is False
-                    assert state["positionVisible"] is False
                     assert state["toolsHeight"] <= 220
                     assert state["searchFormVisible"] is True
                     assert state["visibleMapToolCount"] == 0
