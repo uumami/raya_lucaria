@@ -6585,11 +6585,16 @@ mjx-container[display="true"] {
   .raya-course-map ol {
     padding-left: 0.75rem;
   }
-  .raya-course-map-list a {
-    font-size: 0.8125rem;
-    line-height: 1.3;
-    padding: 0.24rem 0.28rem 0.24rem 0.35rem;
-  }
+  /* .raya-course-map-list a is deliberately not re-declared in this band.
+     The unconditional `@media (min-width: __RAYA_STRUCTURAL_PX__px)` rule
+     below (search for the next `.raya-course-map-list a` block) already
+     matches every width in this 640-893 band and comes later in source
+     order, so at equal specificity it wins every property it declares here
+     -- font-size, line-height, AND padding, not just the two that happen to
+     carry the same values. A rule here would be fully shadowed at every
+     width from 640 to 893px; verified inert by measuring computed
+     font-size/line-height/padding at 640, 700, 800, 893, 894, and 1440px
+     before and after removing it -- identical at every width. */
   .raya-course-map-list a::before {
     font-size: 0.64rem;
     margin-right: 0.35rem;

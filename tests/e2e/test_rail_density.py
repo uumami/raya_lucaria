@@ -716,3 +716,207 @@ def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+_ORIENTATION = """() => {
+  const map = document.querySelector('.raya-course-map');
+  const list = document.querySelector('#raya-course-map-list');
+  const current = list?.querySelector('a[aria-current="page"]');
+  if (!map || !list || !current) return null;
+  const listRect = list.getBoundingClientRect();
+  const currentRect = current.getBoundingClientRect();
+  return {
+    oriented: list.dataset.rayaCourseMapOriented,
+    listScrollTop: list.scrollTop,
+    outerScrollTop: map.scrollTop,
+    currentTop: currentRect.top,
+    currentBottom: currentRect.bottom,
+    currentHeight: currentRect.height,
+    listTop: listRect.top,
+    listBottom: listRect.bottom,
+    listHeight: listRect.height,
+  };
+}"""
+
+
+def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
+    tmp_path: Path,
+) -> None:
+    """Orienting the map to the current page scrolls it into view.
+
+    tests/e2e/test_preview_static_read_path.py::
+    test_render_fixture_course_map_hierarchy_filters_without_requests used to
+    assert `listScrollTop > 0` on render-fixture (6 pages). Since the rail
+    density work cut ~444.6px of fixed chrome and tightened the tree indent/
+    font (see test_deep_map_labels_get_a_usable_text_column above), that
+    six-page tree now fits its window without overflowing at every viewport
+    it was checked at, so `listScrollTop` is pinned at 0 there and the
+    assertion's premise (a scrollable list) no longer holds -- "short course,
+    no scrollbar" is correct behaviour, not a regression. This test carries
+    the same "orientation scrolls the current page into view" contract on
+    density-fixture (41 pages, 3 levels deep), which genuinely overflows the
+    rail once fully expanded (see test_density_fixture_renders_a_deep_wide_map
+    above), so `listScrollTop > 0` is a meaningful assertion here.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                requested_urls: list[str] = []
+                page.on("request", lambda request: requested_urls.append(request.url))
+                # The deepest, last leaf in the tree: bringing it into view
+                # from a fully expanded, scrolled-to-top list requires the
+                # largest scroll distance, so this is the least accidental
+                # page to orient toward.
+                page.goto(
+                    f"{handle.base_url}/verification/review/summary/index.html",
+                    wait_until="networkidle",
+                )
+                page.evaluate(
+                    "() => document.fonts ? document.fonts.ready.then(() => true) : true"
+                )
+                requested_urls.clear()
+
+                # Expand every branch so the tree is fully realised and
+                # genuinely overflows the rail. Re-query `.first` after every
+                # click rather than indexing a count taken before any clicks:
+                # see test_density_fixture_renders_a_deep_wide_map for why a
+                # fixed range() loop goes stale.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
+
+                # Positive anchor: prove the precondition this test exists to
+                # provide -- a list that actually overflows its own window,
+                # unlike render-fixture.
+                overflow = page.evaluate(
+                    """() => {
+                      const list = document.querySelector('#raya-course-map-list');
+                      return {
+                        clientHeight: list.clientHeight,
+                        scrollHeight: list.scrollHeight,
+                      };
+                    }"""
+                )
+                assert overflow["scrollHeight"] > overflow["clientHeight"] + 50, (
+                    overflow
+                )
+
+                # Reset scroll/orientation state, then force orientation --
+                # mirrors the initial-load orientation contract.
+                page.evaluate(
+                    """() => {
+                      const map = document.querySelector('.raya-course-map');
+                      const list = document.querySelector('#raya-course-map-list');
+                      list.scrollTop = 0;
+                      map.scrollTop = 0;
+                      delete list.dataset.rayaCourseMapOriented;
+                      delete map.dataset.rayaCourseMapOriented;
+                      window.rayaOrientCourseMapToCurrentPage?.();
+                    }"""
+                )
+                initial = page.evaluate(_ORIENTATION)
+                assert initial is not None
+                assert initial["oriented"] == "true"
+                assert initial["listScrollTop"] > 0
+                assert initial["outerScrollTop"] == 0
+                assert initial["currentTop"] >= initial["listTop"] - 1
+                if initial["currentHeight"] <= initial["listHeight"]:
+                    assert initial["currentBottom"] <= initial["listBottom"] + 1
+                else:
+                    assert initial["currentBottom"] >= initial["listTop"]
+
+                # A live filter suppresses automatic re-orientation.
+                page.evaluate(
+                    """() => {
+                      const map = document.querySelector('.raya-course-map');
+                      const list = document.querySelector('#raya-course-map-list');
+                      const filter = document.querySelector('#raya-course-map-filter');
+                      if (!map || !list || !filter) {
+                        throw new Error('missing course map controls');
+                      }
+                      list.scrollTop = 0;
+                      map.scrollTop = 0;
+                      delete list.dataset.rayaCourseMapOriented;
+                      delete map.dataset.rayaCourseMapOriented;
+                      filter.value = 'summary';
+                      window.rayaOrientCourseMapToCurrentPageAutomatic?.();
+                      if (list.scrollTop !== 0 || map.scrollTop !== 0) {
+                        throw new Error('filtered automatic orientation scrolled');
+                      }
+                      filter.value = '';
+                      window.rayaOrientCourseMapToCurrentPage?.();
+                    }"""
+                )
+                reoriented = page.evaluate(_ORIENTATION)
+                assert reoriented is not None
+                assert reoriented["oriented"] == "true"
+                assert reoriented["listScrollTop"] > 0
+                assert reoriented["outerScrollTop"] == 0
+
+                # Collapse/expand round trip: expanding re-orients even when
+                # the list was already marked oriented (repeat: true bypasses
+                # the "already oriented" short-circuit), scrolling the
+                # current page back into view.
+                page.click("[data-raya-course-map-collapse]")
+                page.wait_for_function(
+                    """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                      && !document
+                      .querySelector('.raya-course-map')
+                      ?.dataset
+                      ?.rayaCourseMapTransition"""
+                )
+                page.evaluate(
+                    """() => {
+                      const map = document.querySelector('.raya-course-map');
+                      const list = document.querySelector('#raya-course-map-list');
+                      list.scrollTop = 0;
+                      map.scrollTop = 0;
+                      list.dataset.rayaCourseMapOriented = 'true';
+                      map.dataset.rayaCourseMapOriented = 'true';
+                    }"""
+                )
+                page.click("[data-raya-course-map-expand]")
+                page.wait_for_function(
+                    """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                      && !document
+                      .querySelector('.raya-course-map')
+                      ?.dataset
+                      ?.rayaCourseMapTransition"""
+                )
+                # Safe on this fixture (unlike render-fixture): the list
+                # genuinely overflows, so this condition is guaranteed to
+                # become true and will not hang out to the 30s timeout.
+                page.wait_for_function(
+                    """() => {
+                      const list = document.querySelector('#raya-course-map-list');
+                      return !!list && list.scrollTop > 0;
+                    }"""
+                )
+                reexpanded = page.evaluate(_ORIENTATION)
+                assert reexpanded is not None
+                assert reexpanded["listScrollTop"] > 0
+                assert reexpanded["outerScrollTop"] == 0
+
+                assert requested_urls == []
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

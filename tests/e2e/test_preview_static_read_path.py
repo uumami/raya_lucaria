@@ -12493,7 +12493,16 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     )
                     assert initial_orientation is not None
                     assert initial_orientation["oriented"] == "true"
-                    assert initial_orientation["listScrollTop"] > 0
+                    # render-fixture is a flat 6-page tree. Since the rail
+                    # density work cut ~444.6px of fixed chrome and tightened
+                    # the tree indent/font, this fixture's whole map now fits
+                    # its window without overflowing, so `listScrollTop` is
+                    # pinned at 0 -- "short course, no scrollbar" is correct
+                    # behaviour here, not a bug. The "orientation scrolls the
+                    # current page into view" contract is covered on a tree
+                    # that genuinely overflows in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_course_map_orientation_scrolls_current_page_into_view.
                     assert initial_orientation["outerScrollTop"] == 0
                     assert initial_orientation["headerTop"] >= (
                         initial_orientation["mapTop"] - 1
@@ -12557,7 +12566,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     )
                     assert orientation is not None
                     assert orientation["oriented"] == "true"
-                    assert orientation["listScrollTop"] > 0
+                    # Same non-overflowing fixture as above -- see the
+                    # comment on `initial_orientation` for why `listScrollTop`
+                    # is not asserted here.
                     assert orientation["outerScrollTop"] == 0
                     assert orientation["currentTop"] >= orientation["listTop"] - 1
                     if orientation["currentHeight"] <= orientation["listHeight"]:
@@ -12570,6 +12581,13 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert orientation["localStorageKeys"] == []
                     assert orientation["sessionStorageKeys"] == []
                     page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && !document
+                          .querySelector('.raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
                     page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
@@ -12582,11 +12600,19 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         }"""
                     )
                     page.click("[data-raya-course-map-expand]")
+                    # Do NOT wait on `list.scrollTop > 0` here: render-fixture
+                    # no longer overflows (see the comment on
+                    # `initial_orientation` above), so that condition would
+                    # never become true and this would hang for the full 30s
+                    # Playwright timeout instead of failing fast. Wait on the
+                    # transition marker clearing instead -- it always
+                    # resolves, overflow or not.
                     page.wait_for_function(
-                        """() => {
-                          const list = document.querySelector('#raya-course-map-list');
-                          return !!list && list.scrollTop > 0;
-                        }"""
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && !document
+                          .querySelector('.raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
                     )
                     reexpanded = page.evaluate(
                         """() => {
@@ -12616,7 +12642,8 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         }"""
                     )
                     assert reexpanded is not None
-                    assert reexpanded["listScrollTop"] > 0
+                    # Same non-overflowing fixture as `initial_orientation`
+                    # above -- `listScrollTop` is not meaningful here.
                     assert reexpanded["outerScrollTop"] == 0
                     assert reexpanded["headerTop"] >= reexpanded["mapTop"] - 1
                     assert reexpanded["headerBottom"] <= reexpanded["mapBottom"] + 1
