@@ -1799,6 +1799,12 @@ MSG
 
 ### Task 9: Show the sequence badge on the current row only
 
+**Re-evaluate Task 7's vertical-padding trim as part of this task.** Task 7 reduced `.raya-course-map-list a` padding from `0.25rem` to `0.125rem` for a specific reason: the `::before` badge's box (~20.2px) is taller than the 16.9px text line-height, so a genuinely two-line label's `clientHeight` already exceeded `2 × lineHeight` before padding was added, and the extra 4px pushed it over the rounding threshold for a line count it had not reached.
+
+This task removes the badge from every row except the current one. On 32 of 33 rows that justification disappears, and the trimmed padding then makes rows tighter than intended rather than compensating for anything. Measure both values once the badge is gone and restore `0.25rem` unless the measurement says otherwise. Do not simply inherit the trim — a workaround outliving the problem it worked around is how the row rhythm quietly degrades.
+
+
+
 The badge costs 42px of every row: `min-width: 1.45rem` + `margin-right: 0.45rem` + `0.35rem` padding each side. It carries the flat reading-order ordinal (`builder.py:2012-2014`) — a different fact from the label's hierarchical prefix, so it is not redundant and cannot simply be deleted.
 
 Revealing it on `:hover` was rejected: measured, it grew rows from 25px to 48px, shifted every row below the pointer in a 30-row list, pushed the label past its own clamp exactly when the reader hovered to read it, failed WCAG 1.4.13 Dismissible, and was dead on touch.
