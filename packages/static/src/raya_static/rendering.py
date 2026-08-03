@@ -5047,9 +5047,13 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   padding-left: 0;
 }
 .raya-course-map [data-raya-map-children] {
+  /* 8px per level, not 22.6px. At depth 3 the old margin+padding+border
+     consumed 67.8px of a 191px column, which is why every label wrapped.
+     The 1px guide border stays -- it is the only visual hierarchy cue left
+     after the indent shrinks. */
   border-left: 1px solid var(--raya-color-border);
-  margin-left: 0.7rem;
-  padding-left: 0.65rem;
+  margin-left: 0.375rem;
+  padding-left: 0;
 }
 .raya-course-map-node[hidden],
 .raya-course-map [data-raya-map-children][hidden],
@@ -5130,9 +5134,17 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-list a {
   border-left: 3px solid transparent;
   display: block;
+  font-size: 0.8125rem;
+  line-height: 1.3;
   min-width: 0;
   overflow-wrap: break-word;
-  padding: 0.25rem 0 0.25rem 0.5rem;
+  /* Vertical padding trimmed from 0.25rem to 0.125rem alongside the font
+     drop: the numbered ::before badge's own box (~20.2px) is taller than
+     the 16.9px text line-height, so a genuinely 2-line label's clientHeight
+     already exceeds 2 * lineHeight before padding is even added. The extra
+     4px of padding this rule used to carry pushed every 2-line label over
+     the rounding threshold for a line count it did not actually reach. */
+  padding: 0.125rem 0 0.125rem 0.5rem;
   text-decoration: none;
 }
 .raya-course-map-list a::before {
@@ -6582,8 +6594,8 @@ mjx-container[display="true"] {
     padding-left: 0.75rem;
   }
   .raya-course-map-list a {
-    font-size: 0.9375rem;
-    line-height: 1.35;
+    font-size: 0.8125rem;
+    line-height: 1.3;
     padding: 0.24rem 0.28rem 0.24rem 0.35rem;
   }
   .raya-course-map-list a::before {

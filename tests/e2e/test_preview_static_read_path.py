@@ -18949,7 +18949,10 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert expanded["mapBottom"] >= 925
                     assert expanded["mapBottom"] <= expanded["viewportHeight"]
                     assert expanded["linkWidth"] >= 140
-                    assert expanded["linkFontSize"] == "15px"
+                    # The density change (task 7, 2026-07-29-reader-rail-density)
+                    # applies to the 640-893 band too, deliberately, so the fix
+                    # is not desktop-only.
+                    assert expanded["linkFontSize"] == "13px"
                     assert expanded["toolsTop"] < expanded["listTop"]
                     assert expanded["mapH1Overlap"] == 0
                     assert expanded["mapBriefOverlap"] == 0
@@ -19706,6 +19709,10 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                       bottom: rect.bottom,
                                     }));
                                   const linkStyle = getComputedStyle(link);
+                                  const renderedLines = Math.round(
+                                    link.clientHeight
+                                      / parseFloat(linkStyle.lineHeight)
+                                  );
                                   const badgeStyle = getComputedStyle(link, '::before');
                                   const number = (value) => Number.parseFloat(value) || 0;
                                   const badgeClearance = linkBox.left
@@ -19725,6 +19732,7 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     disclosureRight: disclosureBox.right,
                                     badgeClearance,
                                     textRects,
+                                    renderedLines,
                                   };
                                 });
                               return {
@@ -19776,9 +19784,10 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                             if tree["listScrollWidth"] > tree["listClientWidth"] + 1
                             else None,
                         }
-                        assert any(
-                            len(link["textRects"]) > 1 for link in tree["links"]
-                        ), repr(tree["links"])
+                        # Design inverts this: the column is wide enough that fixture labels no
+                        # longer need to wrap. Assert none exceeds the two-line clamp instead.
+                        for link in tree["links"]:
+                            assert link["renderedLines"] <= 2, link
                     finally:
                         page.close()
                 assert problems == {

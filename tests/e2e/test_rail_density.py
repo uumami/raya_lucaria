@@ -620,3 +620,99 @@ def test_filter_and_search_stay_present_and_focusable_at_every_height(
                 browser.close()
     finally:
         handle.close()
+
+
+_DEEP_LINK = """() => {
+  const links = [...document.querySelectorAll('.raya-course-map-node-row a')]
+    .filter((a) => a.getBoundingClientRect().width > 0);
+  if (!links.length) return null;
+  const withDepth = links.map((a) => ({
+    a,
+    depth: Number(
+      a.closest('[data-raya-map-depth]')?.dataset.rayaMapDepth ?? 0),
+  }));
+  const maxDepth = Math.max(...withDepth.map((x) => x.depth));
+  const deepest = withDepth.filter((x) => x.depth === maxDepth);
+  const narrowest = deepest.reduce(
+    (best, x) =>
+      x.a.getBoundingClientRect().width < best.a.getBoundingClientRect().width
+        ? x : best,
+    deepest[0]);
+  const cs = getComputedStyle(narrowest.a);
+  const children = narrowest.a.closest('[data-raya-map-children]');
+  const ccs = children ? getComputedStyle(children) : null;
+  return {
+    maxDepth,
+    linkWidth: Math.round(narrowest.a.getBoundingClientRect().width),
+    fontSize: cs.fontSize,
+    overflowWrap: cs.overflowWrap,
+    perLevel: ccs
+      ? Math.round(
+          (parseFloat(ccs.marginLeft) + parseFloat(ccs.paddingLeft)
+            + parseFloat(ccs.borderLeftWidth)) * 10) / 10
+      : null,
+  };
+}"""
+
+
+def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
+    """Indent and font must leave a readable column at depth 3.
+
+    Before: 22.6px per level and a 15px font left 103.2px at depth 3, so
+    every one of 23 entries wrapped and the worst rendered 5 line boxes.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(500)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
+
+                state = page.evaluate(_DEEP_LINK)
+                assert state is not None
+                assert state["maxDepth"] >= 3, state
+                assert state["perLevel"] <= 9, state
+                assert state["fontSize"] == "13px", state
+                assert state["linkWidth"] >= 140, state
+                # The emergency break must survive: it is what keeps a
+                # 55-character unbroken identifier inside the 240px rail.
+                assert state["overflowWrap"] == "break-word", state
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
