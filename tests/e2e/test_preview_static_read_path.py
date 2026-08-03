@@ -17519,9 +17519,8 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
                     map_labels = page.evaluate(
                         """() => {
                           const lineCount = (node) => {
-                            const box = node.getBoundingClientRect();
                             const style = getComputedStyle(node);
-                            return box.height / parseFloat(style.lineHeight);
+                            return node.clientHeight / parseFloat(style.lineHeight);
                           };
                           const current = document
                             .querySelector('#raya-course-map a[aria-current="page"]');
@@ -17533,6 +17532,9 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
                           return {
                             currentText: current?.textContent?.trim(),
                             currentLines: lineCount(current),
+                            currentLineClamp: getComputedStyle(current).webkitLineClamp,
+                            currentFits:
+                              current.scrollHeight <= current.clientHeight + 1,
                             currentOverflowWrap: getComputedStyle(current).overflowWrap,
                             courseToolLines: courseTools.map(lineCount),
                             courseToolOverflowWrap: courseTools.map(
@@ -17549,7 +17551,20 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
         handle.close()
 
     assert "Projection Residuals" in map_labels["currentText"]
+    # `currentLines <= 3.5` alone no longer says anything about the task-8
+    # two-line clamp: .raya-course-map-list a[aria-current="page"] releases
+    # -webkit-line-clamp unconditionally (rendering.py), specifically so the
+    # reader's own position is never truncated -- this link is the one
+    # link the clamp is designed to skip, so it can never show
+    # scrollHeight > clientHeight the way a genuinely clamped label does
+    # (verified: with the clamp CSS applied, this link measures
+    # scrollHeight == clientHeight == 41px, lineClamp "none"). Assert the
+    # exemption itself instead: no active line-clamp and full content
+    # shown, so dropping the aria-current selector from the release rule
+    # (leaving this row clamped like any other) would fail here.
     assert map_labels["currentLines"] <= 3.5
+    assert map_labels["currentLineClamp"] == "none", map_labels
+    assert map_labels["currentFits"] is True, map_labels
     assert map_labels["currentOverflowWrap"] != "anywhere"
     assert max(map_labels["courseToolLines"]) <= 3
     assert all(
@@ -17610,6 +17625,8 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
                             text: node.textContent.trim(),
                             linkRight: nodeBox.right,
                             mapRight: mapBox.right,
+                            scrollWidth: node.scrollWidth,
+                            clientWidth: node.clientWidth,
                             overflowWrap: style.overflowWrap,
                           };
                         }"""
@@ -17622,6 +17639,16 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
         handle.close()
 
     assert "ProjectionResidualsWithAnUnbrokenAuthorIdentifier" in current_state["text"]
+    # linkRight <= mapRight alone is tautological: `overflow: hidden` on
+    # .raya-course-map-list a means the link's own border box can never
+    # grow past its layout column no matter what the content does, so this
+    # passed even measured with overflow-wrap disabled entirely. The
+    # test's real subject is that the 55-character unbroken token does not
+    # overflow ITS OWN box -- i.e. break-word is actually doing the work,
+    # not merely that a box that was never going to move stayed put.
+    # Confirmed the failure mode: forcing overflow-wrap back to "normal" on
+    # this element pushes scrollWidth to 549px against a 153px clientWidth.
+    assert current_state["scrollWidth"] <= current_state["clientWidth"] + 1
     assert current_state["linkRight"] <= current_state["mapRight"]
     assert current_state["overflowWrap"] == "break-word"
 
@@ -19764,8 +19791,6 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                 });
                               return {
                                 viewportWidth: window.innerWidth,
-                                listClientWidth: list.clientWidth,
-                                listScrollWidth: list.scrollWidth,
                                 scrollLeft,
                                 scrollRight,
                                 links,
@@ -19801,26 +19826,23 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                             "textRect": rect,
                                         }
                                     )
-                        overflow = {
-                            "clientWidth": tree["listClientWidth"],
-                            "scrollWidth": tree["listScrollWidth"],
-                        }
-                        problems[viewport["width"]] = {
-                            "clipped": clipped,
-                            "overflow": overflow
-                            if tree["listScrollWidth"] > tree["listClientWidth"] + 1
-                            else None,
-                        }
+                        # The "overflow" field this block used to derive from
+                        # listScrollWidth > listClientWidth + 1 is gone:
+                        # overflow-x: hidden on the list forces that
+                        # comparison to equality regardless of content, so it
+                        # was tautologically None. Horizontal containment of
+                        # an unbroken token is covered by the scrollWidth <=
+                        # clientWidth assertion in
+                        # test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels
+                        # instead.
+                        problems[viewport["width"]] = clipped
                         # Design inverts this: the column is wide enough that fixture labels no
                         # longer need to wrap. Assert none exceeds the two-line clamp instead.
                         for link in tree["links"]:
                             assert link["renderedLines"] <= 2, link
                     finally:
                         page.close()
-                assert problems == {
-                    1440: {"clipped": [], "overflow": None},
-                    894: {"clipped": [], "overflow": None},
-                }
+                assert problems == {1440: [], 894: []}
             finally:
                 browser.close()
     finally:

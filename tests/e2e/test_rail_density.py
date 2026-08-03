@@ -920,3 +920,117 @@ def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
                 browser.close()
     finally:
         handle.close()
+
+
+def test_long_labels_clamp_to_two_lines_and_release_on_focus(
+    tmp_path: Path,
+) -> None:
+    """Clamped labels must be recoverable without a title attribute.
+
+    title was rejected: not exposed on touch, unreliable for keyboard-only
+    users, and a redundant description announcement on every link.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(500)
+                # Expand every branch. Every toggle is eagerly present in the
+                # DOM at load (children are hidden by an ancestor `hidden`
+                # attribute, not lazily created), so each click flips exactly
+                # one element out of this LIVE aria-expanded="false" match
+                # set. Indexing with `nth(i)` over a count taken before any
+                # click goes stale one-for-one as the set shrinks and then
+                # hangs for the full 30s Playwright timeout. Drain with
+                # `.first` instead, re-querying after every click.
+                toggles = page.locator(
+                    '[data-raya-map-node-toggle][aria-expanded="false"]'
+                )
+                guard = 0
+                while toggles.count() > 0 and guard < 200:
+                    toggles.first.click()
+                    guard += 1
+                page.wait_for_timeout(200)
+                # The guard must not silently mask a partially expanded tree.
+                # `hidden` only suppresses rendering, so querySelectorAll
+                # still sees unexpanded nodes -- link counts and depth read
+                # the same with zero clicks as with a full drain. Only this
+                # post-condition proves the drain completed.
+                assert toggles.count() == 0, (
+                    "guard exhausted before draining all node toggles"
+                )
+
+                # No map link carries a title attribute.
+                assert page.evaluate(
+                    """() => [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                      .every((a) => !a.hasAttribute('title'))"""
+                )
+
+                # Every link renders at most two lines...
+                lines = page.evaluate(
+                    """() => [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                      .filter((a) => a.getBoundingClientRect().width > 0)
+                      .map((a) => Math.round(
+                        a.clientHeight
+                          / parseFloat(getComputedStyle(a).lineHeight)))"""
+                )
+                assert lines, "no visible map links"
+                assert max(lines) <= 2, lines
+
+                # ...and at least one is genuinely clamped, so the release
+                # path below is actually exercised.
+                clamped = page.evaluate(
+                    """() => [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                      .filter((a) => a.scrollHeight > a.clientHeight + 1)
+                      .map((a) => a.textContent.trim())"""
+                )
+                assert clamped, "fixture has no label long enough to clamp"
+
+                # Focus releases the clamp, reachable by keyboard alone. A
+                # real keyboard event has to precede the programmatic
+                # .focus() call: Chromium's :focus-visible heuristic tracks
+                # input modality for the whole page, and the branch-drain
+                # above already clicked with the mouse, so an unpreceded
+                # `element.focus()` here would land as a non-visible focus
+                # and :focus-visible (the release selector) would not match
+                # -- confirmed by measurement: without this Tab press,
+                # `fits` comes back False even though the CSS release rule
+                # is correct. Tab is real keyboard input Playwright can
+                # dispatch without needing to land on this exact link.
+                page.keyboard.press("Tab")
+                released = page.evaluate(
+                    """(text) => {
+                      const a = [...document.querySelectorAll(
+                          '.raya-course-map-node-row a')]
+                        .find((x) => x.textContent.trim() === text);
+                      a.focus();
+                      return {
+                        active: document.activeElement === a,
+                        matchesFocusVisible: a.matches(':focus-visible'),
+                        fits: a.scrollHeight <= a.clientHeight + 1,
+                      };
+                    }""",
+                    clamped[0],
+                )
+                assert released["active"] is True, released
+                assert released["matchesFocusVisible"] is True, released
+                assert released["fits"] is True, released
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

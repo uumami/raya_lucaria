@@ -6762,7 +6762,10 @@ mjx-container[display="true"] {
     /* Scoped to >=640: below that, the course-map drawer is a full-width
        overlay with no horizontal pressure, so labels stay at their larger
        default size there -- shrinking them would be a readability
-       regression on a touch surface bought for nothing. */
+       regression on a touch surface bought for nothing. The two-line clamp
+       below is scoped here for the same reason: below 640 the drawer has
+       room to show the full label, so clamping there would truncate text
+       that would otherwise fit entirely, for no benefit. */
     font-size: 0.8125rem;
     line-height: 1.3;
     /* Vertical padding trimmed from 0.25rem to 0.125rem alongside the font
@@ -6772,6 +6775,24 @@ mjx-container[display="true"] {
        4px of padding this rule used to carry pushed every 2-line label over
        the rounding threshold for a line count it did not actually reach. */
     padding: 0.125rem 0 0.125rem 0.5rem;
+    /* Clamp beyond two lines with an ellipsis. `overflow-wrap: break-word`
+       on the unmedia'd base rule above stays -- it is the emergency path
+       keeping a 55-character unbroken identifier inside the rail; the
+       clamp below is orthogonal (line count, not word breaking). */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  /* Nothing is permanently unreadable: the clamp releases on pointer, on
+     keyboard focus, and on the current page. A title attribute was
+     rejected -- not exposed on touch, unreliable for keyboard-only users,
+     and it would add a redundant description announcement on every one of
+     30+ links. */
+  .raya-course-map-list a:hover,
+  .raya-course-map-list a:focus-visible,
+  .raya-course-map-list a[aria-current="page"] {
+    -webkit-line-clamp: unset;
   }
   .raya-course-rail-tools {
     padding: 0.5rem 0;
