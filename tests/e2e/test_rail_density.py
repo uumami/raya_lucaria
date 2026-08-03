@@ -410,6 +410,39 @@ def test_command_tiles_render_four_per_row_with_visible_labels(
                 }
                 assert len(unpressed_bgs) == 1, unpressed_bgs
 
+                # Mirror of the unpressed check above, for the pressed half
+                # of the cascade. Driven by forcing aria-pressed="true" via
+                # JS rather than clicking, since Text size cycles through
+                # three states instead of toggling -- this keeps the
+                # assertion independent of interaction semantics.
+                # Regression: .raya-font-toggle[aria-pressed="true"] is
+                # (0,2,0), exactly equal to .raya-course-rail-command
+                # [aria-pressed="true"], so unscoped it won by source order
+                # (accessibility.py links after rich.css) and left the Font
+                # tile permanently rendering a solid accent fill instead of
+                # the shared soft accent-soft-38% pressed style every other
+                # tile uses.
+                pressed_bgs = page.evaluate(
+                    """() => {
+                      const tiles = [...document.querySelectorAll(
+                        '.raya-course-rail-command'
+                      )];
+                      const original = tiles.map(
+                        (t) => t.getAttribute('aria-pressed')
+                      );
+                      tiles.forEach((t) => t.setAttribute('aria-pressed', 'true'));
+                      const bgs = tiles.map(
+                        (t) => getComputedStyle(t).backgroundColor
+                      );
+                      tiles.forEach((t, i) => {
+                        if (original[i] === null) t.removeAttribute('aria-pressed');
+                        else t.setAttribute('aria-pressed', original[i]);
+                      });
+                      return bgs;
+                    }"""
+                )
+                assert len(set(pressed_bgs)) == 1, pressed_bgs
+
                 # Every tile must answer pointer hover, not just keyboard
                 # focus. Regression: a `.raya-course-rail-command.raya-
                 # font-toggle[aria-pressed="false"]` compound override
