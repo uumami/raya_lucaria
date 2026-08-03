@@ -11034,6 +11034,12 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     (button) => button.getClientRects().length > 0
                                   );
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
+                                  const nonCurrentMapLink = Array.from(
+                                    document.querySelectorAll('#raya-course-map .raya-course-map-list a')
+                                  ).find(
+                                    (link) => link.getAttribute('aria-current') !== 'page'
+                                      && link.getBoundingClientRect().width > 0
+                                  );
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
                                         commandListWidth: commandList.getBoundingClientRect().width,
@@ -11048,6 +11054,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       : '',
                                     mapNumberDisplay: currentMapLink
                                       ? getComputedStyle(currentMapLink, '::before').display
+                                      : '',
+                                    nonCurrentMapNumberDisplay: nonCurrentMapLink
+                                      ? getComputedStyle(nonCurrentMapLink, '::before').display
                                       : '',
                                   };
                                 }"""
@@ -11076,6 +11085,13 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 "inline-flex",
                                 "flex",
                             }
+                            # Companion: the badge is out of flow everywhere
+                            # except the current row (rendering.py). A
+                            # non-current link's ::before must compute
+                            # display:none -- content for a display:none
+                            # pseudo-element is engine-dependent, so only
+                            # display is checked here, not content.
+                            assert metrics["nonCurrentMapNumberDisplay"] == "none"
                             shell_state = page.evaluate(
                                 """() => {
                                   const root = document.documentElement;
@@ -17562,6 +17578,12 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
     # exemption itself instead: no active line-clamp and full content
     # shown, so dropping the aria-current selector from the release rule
     # (leaving this row clamped like any other) would fail here.
+    # Task 9 (badge shown on the current row only): the current row now
+    # also carries the 1.625rem padding-left gutter for the absolutely
+    # positioned badge, narrowing its content column. Re-measured:
+    # scrollHeight == clientHeight == 42px (was 41px), currentLines == 2.485
+    # -- moved by ~0.06 line, not enough to make 3.5 meaninglessly loose, so
+    # the bound is left as-is.
     assert map_labels["currentLines"] <= 3.5
     assert map_labels["currentLineClamp"] == "none", map_labels
     assert map_labels["currentFits"] is True, map_labels
@@ -19767,16 +19789,6 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     link.clientHeight
                                       / parseFloat(linkStyle.lineHeight)
                                   );
-                                  const badgeStyle = getComputedStyle(link, '::before');
-                                  const number = (value) => Number.parseFloat(value) || 0;
-                                  const badgeClearance = linkBox.left
-                                    + number(linkStyle.paddingLeft)
-                                    + number(badgeStyle.minWidth)
-                                    + number(badgeStyle.paddingLeft)
-                                    + number(badgeStyle.paddingRight)
-                                    + number(badgeStyle.borderLeftWidth)
-                                    + number(badgeStyle.borderRightWidth)
-                                    + number(badgeStyle.marginRight);
                                   return {
                                     label: link.getAttribute('data-raya-map-label'),
                                     linkLeft: linkBox.left,
@@ -19784,7 +19796,6 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     rowLeft: rowBox.left,
                                     rowRight: rowBox.right,
                                     disclosureRight: disclosureBox.right,
-                                    badgeClearance,
                                     textRects,
                                     renderedLines,
                                   };
@@ -19803,17 +19814,12 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                         for link in tree["links"]:
                             assert link["textRects"]
                             assert link["disclosureRight"] <= link["linkLeft"] + 1
-                            for index, rect in enumerate(link["textRects"]):
+                            for rect in link["textRects"]:
                                 if (
                                     rect["left"] < tree["scrollLeft"] - 1
                                     or rect["right"] > tree["scrollRight"] + 1
                                     or rect["left"] < link["linkLeft"] - 1
                                     or rect["right"] > link["linkRight"] + 1
-                                    or (
-                                        index == 0
-                                        and rect["left"]
-                                        < link["badgeClearance"] - 1
-                                    )
                                     or rect["right"] > link["rowRight"] + 1
                                 ):
                                     clipped.append(
@@ -19822,7 +19828,6 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                             "linkLeft": link["linkLeft"],
                                             "linkRight": link["linkRight"],
                                             "rowRight": link["rowRight"],
-                                            "badgeClearance": link["badgeClearance"],
                                             "textRect": rect,
                                         }
                                     )

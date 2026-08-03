@@ -5146,15 +5146,28 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   border-radius: 999px;
   color: var(--raya-color-muted);
   content: attr(data-raya-map-index);
-  display: inline-flex;
+  /* Hidden at rest: 42px per row of a ~150px column, on 30+ rows, for the
+     reading-order ordinal. Shown on the current row only -- always, never
+     on hover, because a hover reveal reflows the row being read. */
+  display: none;
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 900;
   justify-content: center;
   line-height: 1;
-  margin-right: 0.45rem;
   min-width: 1.45rem;
   padding: 0.22rem 0.35rem;
+}
+.raya-course-map-list a[aria-current="page"] {
+  padding-left: 1.625rem;
+  position: relative;
+}
+.raya-course-map-list a[aria-current="page"]::before {
+  display: inline-flex;
+  left: 0;
+  margin-right: 0;
+  position: absolute;
+  top: 0.25rem;
 }
 .raya-course-map [data-raya-map-active="ancestor"] > .raya-course-map-node-row a {
   color: var(--raya-color-text);
@@ -6597,10 +6610,8 @@ mjx-container[display="true"] {
      before and after removing it -- identical at every width. */
   .raya-course-map-list a::before {
     font-size: 0.64rem;
-    margin-right: 0.35rem;
     min-width: 1.3rem;
     padding: 0.18rem 0.3rem;
-    transform: translateY(0.05rem);
   }
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-shell {
     padding-left: 3.75rem;
@@ -6768,13 +6779,18 @@ mjx-container[display="true"] {
        that would otherwise fit entirely, for no benefit. */
     font-size: 0.8125rem;
     line-height: 1.3;
-    /* Vertical padding trimmed from 0.25rem to 0.125rem alongside the font
-       drop: the numbered ::before badge's own box (~20.2px) is taller than
-       the 16.9px text line-height, so a genuinely 2-line label's clientHeight
-       already exceeds 2 * lineHeight before padding is even added. The extra
-       4px of padding this rule used to carry pushed every 2-line label over
-       the rounding threshold for a line count it did not actually reach. */
-    padding: 0.125rem 0 0.125rem 0.5rem;
+    /* Restored to 0.25rem (was trimmed to 0.125rem for the in-flow badge:
+       see git history). That trim compensated for the ::before badge's own
+       box (~20.2px) being taller than the 16.9px text line-height, which
+       pushed a genuinely 2-line label's clientHeight over the rounding
+       threshold before padding was even added. The badge is display:none on
+       32 of 33 rows now and contributes no height at all on the current row
+       (absolutely positioned, out of flow), so that no longer happens --
+       measured: with 0.25rem restored, the longest fixture label still
+       renders clientHeight 42px / 2.485 lines (rounds to 2, matches
+       scrollHeight, no clamp truncation) and every rendered row in the
+       41-link density fixture still measures 1 or 2 lines, never 3. */
+    padding: 0.25rem 0 0.25rem 0.5rem;
     /* Clamp beyond two lines with an ellipsis. `overflow-wrap: break-word`
        on the unmedia'd base rule above stays -- it is the emergency path
        keeping a 55-character unbroken identifier inside the rail; the

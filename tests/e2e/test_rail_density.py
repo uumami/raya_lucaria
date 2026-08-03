@@ -1034,3 +1034,84 @@ def test_long_labels_clamp_to_two_lines_and_release_on_focus(
                 browser.close()
     finally:
         handle.close()
+
+
+def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
+    """The badge is always visible where it matters, and never on hover.
+
+    A hover reveal grew rows 25px -> 48px, shifted every row below the
+    pointer, re-clamped the label being read, failed WCAG 1.4.13
+    Dismissible, and was unreachable on touch.
+    """
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(400)
+
+                badges = page.evaluate(
+                    """() => {
+                      const links = [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                        .filter((a) => a.getBoundingClientRect().width > 0);
+                      return links.map((a) => ({
+                        current: a.getAttribute('aria-current') === 'page',
+                        display: getComputedStyle(a, '::before').display,
+                        content: getComputedStyle(a, '::before').content,
+                      }));
+                    }"""
+                )
+                assert badges, "no visible map links"
+                current = [b for b in badges if b["current"]]
+                assert len(current) == 1, badges
+                # Blockification (CSS Display Module Level 3): an
+                # absolutely-positioned "inline-flex" box computes to "flex",
+                # not "inline-flex" -- position:absolute is mandatory here
+                # (see rendering.py) so the badge cannot become a block child
+                # inside Task 8's -webkit-box clamp. Same accepted pair
+                # already used in test_preview_static_read_path.py for this
+                # badge.
+                assert current[0]["display"] in {"inline-flex", "flex"}, current[0]
+                assert current[0]["content"] not in {"none", "normal"}, current[0]
+                for badge in badges:
+                    if not badge["current"]:
+                        assert badge["display"] == "none", badge
+
+                # Hovering a non-current row must not move anything.
+                target = page.locator(
+                    '.raya-course-map-node-row a:not([aria-current="page"])'
+                ).first
+                before = page.evaluate(
+                    """() => ({
+                      scrollH: document.querySelector(
+                        '.raya-course-map-list').scrollHeight,
+                    })"""
+                )
+                box = target.bounding_box()
+                page.mouse.move(
+                    box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+                )
+                page.wait_for_timeout(200)
+                after = page.evaluate(
+                    """() => ({
+                      scrollH: document.querySelector(
+                        '.raya-course-map-list').scrollHeight,
+                    })"""
+                )
+                assert after["scrollH"] == before["scrollH"], (before, after)
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
