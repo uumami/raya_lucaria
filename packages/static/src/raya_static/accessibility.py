@@ -78,7 +78,20 @@ def open_dyslexic_resources() -> AccessibilityResources:
   --raya-reader-text-scale: 1.25;
 }}
 
-.raya-font-toggle {{
+/* :not(.raya-course-rail-command) scopes this to the standalone
+   top-command-bar toggle (.raya-command.raya-command-font.raya-font-toggle).
+   Without the scope, this bare rule also matched the rail tile (both share
+   .raya-font-toggle) and won at equal-or-higher specificity regardless of
+   source order -- first silently overriding the rail's own 0.25rem 0
+   padding with 0.45rem 0.65rem (starving the rail label of width), and
+   then, when patched with a `.raya-course-rail-command.raya-font-toggle`
+   compound override, outranking `.raya-course-rail-command:hover` and
+   killing pointer hover feedback on that one tile. Scoping the source
+   instead of compounding a patch on top avoids both failure modes and
+   needs no override rule at all: the rail tile now falls through cleanly
+   to the shared .raya-course-rail-command padding/background/hover rules
+   its seven siblings already use. */
+.raya-font-toggle:not(.raya-course-rail-command) {{
   align-items: center;
   background: var(--raya-color-accent-soft);
   border: 1px solid var(--raya-color-border);
@@ -97,25 +110,6 @@ def open_dyslexic_resources() -> AccessibilityResources:
   background: var(--raya-color-accent);
   border-color: var(--raya-color-accent);
   color: var(--raya-color-surface);
-}}
-
-.raya-course-rail-command.raya-font-toggle[aria-pressed="false"] {{
-  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
-}}
-
-/* The bare .raya-font-toggle rule above targets the standalone top-command-
-   bar toggle (.raya-command.raya-command-font.raya-font-toggle), sized for
-   a wide row layout with its own horizontal breathing room. It also
-   matches the rail tile because both share the .raya-font-toggle class,
-   and wins at equal specificity by source order, silently overriding the
-   rail's own 0.25rem 0 padding with 0.45rem 0.65rem. That leaves this one
-   tile with roughly a third of its seven siblings' content width for the
-   label to wrap into (measured 33px vs. 54px at four columns), which is
-   what was forcing "OpenDyslexic" onto extra lines. The compound selector
-   here (0,2,0) outranks the bare .raya-font-toggle rule (0,1,0) regardless
-   of source order, so this tile sizes like its siblings. */
-.raya-course-rail-command.raya-font-toggle {{
-  padding: 0.25rem 0;
 }}
 '''
     javascript = '''(() => {

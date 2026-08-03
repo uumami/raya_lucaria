@@ -12804,8 +12804,11 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     assert "Open official tasks, 4 tasks" in initial["toolAriaLabels"]
                     # Task 4 requirements change: WCAG 2.5.3 Label in Name
                     # -- the visible caption is "Plan", so the accessible
-                    # name must contain that word.
-                    assert "Open schedule plan, 3 dated" in initial[
+                    # name must contain that word. "official" is kept (the
+                    # word is added, not substituted) for symmetry with its
+                    # siblings "Open official practice"/"Open official
+                    # tasks".
+                    assert "Open official schedule plan, 3 dated" in initial[
                         "toolAriaLabels"
                     ]
                     assert initial["practiceHref"].endswith(
@@ -21091,6 +21094,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                               height: Math.round(buttonBox.height),
                               labelClientWidth: label?.clientWidth || 0,
                               labelScrollWidth: label?.scrollWidth || 0,
+                              buttonScrollWidth: button.scrollWidth,
+                              buttonClientWidth: button.clientWidth,
                             };
                           });
                           return {
@@ -21108,8 +21113,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                               (item) => item.labelClientWidth < 20
                             ),
                             labelsClipped: labels.filter(
-                              (item) => item.labelScrollWidth
-                                > item.labelClientWidth + 1
+                              (item) => item.buttonScrollWidth
+                                > item.buttonClientWidth + 1
                             ),
                           };
                         }"""
@@ -21125,9 +21130,14 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     assert tools["mapBottom"] >= 748
                     assert tools["labelsWithoutTextRoom"] == []
                     # Task 4: a narrow-but-unclipped label must not read as
-                    # passing -- assert scrollWidth <= clientWidth+1 per
-                    # tile so a truncated caption fails distinctly from a
-                    # merely narrow one.
+                    # passing. The label itself is a shrink-to-fit flex item
+                    # that grows past the tile rather than being clamped, so
+                    # when a caption doesn't fit it's the BUTTON
+                    # (.raya-course-rail-command) whose scrollWidth exceeds
+                    # its clientWidth, not the label's -- comparing the
+                    # label's own scrollWidth/clientWidth was vacuous
+                    # (always equal). Measure the button so a truncated
+                    # caption fails distinctly from a merely narrow one.
                     assert tools["labelsClipped"] == []
 
                     page.click("[data-raya-course-map-collapse]")

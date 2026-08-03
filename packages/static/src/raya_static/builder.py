@@ -2167,15 +2167,19 @@ def _render_course_map(
     )
     # WCAG 2.5.3 Label in Name: the rail's visible caption for this control
     # is "Plan" (shortened from "Schedule" to fit the four-column rail
-    # tile), so the accessible name must contain that exact word. This
-    # aria-label is only consumed by the rail (_render_course_map_tools);
-    # the top command bar and discovery workspace bar keep their own
-    # "Open official schedule" labels alongside an unshortened "Schedule"
-    # caption, since those tiles are 120px+ wide and unaffected.
+    # tile), so the accessible name must contain that exact word. The word
+    # is added, not substituted: "official" stays so the label keeps its
+    # symmetry with its siblings ("Open official practice", "Open official
+    # tasks") and with the contract's name for the workspace ("Official
+    # Schedule"). This aria-label is only consumed by the rail
+    # (_render_course_map_tools); the top command bar and discovery
+    # workspace bar keep their own "Open official schedule" labels
+    # alongside an unshortened "Schedule" caption, since those tiles are
+    # 120px+ wide and unaffected.
     schedule_aria = (
-        f"Open schedule plan, {direct_dated_task_count} dated"
+        f"Open official schedule plan, {direct_dated_task_count} dated"
         if direct_dated_task_count
-        else "Open schedule plan"
+        else "Open official schedule plan"
     )
     tools_html = _render_course_map_tools(
         search_href=search_href,

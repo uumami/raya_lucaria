@@ -6748,7 +6748,7 @@ mjx-container[display="true"] {
     gap: 0.125rem;
     justify-content: center;
     /* WCAG 2.5.8 Target Size (Minimum, 24x24) with margin: four columns in
-       a ~206px content box leaves each tile ~48px wide, so the floor only
+       a ~238px content box leaves each tile ~56px wide, so the floor only
        needs to guarantee the vertical axis. */
     min-height: 2.5rem;
     min-width: 0;

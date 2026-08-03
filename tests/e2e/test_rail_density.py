@@ -409,6 +409,31 @@ def test_command_tiles_render_four_per_row_with_visible_labels(
                     t["bg"] for t in state["tiles"] if t["pressed"] != "true"
                 }
                 assert len(unpressed_bgs) == 1, unpressed_bgs
+
+                # Every tile must answer pointer hover, not just keyboard
+                # focus. Regression: a `.raya-course-rail-command.raya-
+                # font-toggle[aria-pressed="false"]` compound override
+                # (0,3,0) used to outrank `.raya-course-rail-command:hover`
+                # (0,2,0), leaving the Font tile the only one of eight with
+                # no hover feedback for a pointer user.
+                tiles_locator = page.locator(".raya-course-rail-command")
+                for index in range(tiles_locator.count()):
+                    tile = tiles_locator.nth(index)
+                    box = tile.bounding_box()
+                    assert box is not None, index
+                    before = tile.evaluate(
+                        "(el) => getComputedStyle(el).backgroundColor"
+                    )
+                    page.mouse.move(
+                        box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+                    )
+                    page.wait_for_timeout(60)
+                    after = tile.evaluate(
+                        "(el) => getComputedStyle(el).backgroundColor"
+                    )
+                    page.mouse.move(0, 0)
+                    assert before != after, (index, before, after)
+
                 page.close()
             finally:
                 browser.close()
