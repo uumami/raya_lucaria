@@ -4235,10 +4235,15 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-width: 0;
   width: 100%;
 }
-.raya-course-rail-search .raya-command-search-input,
-.raya-course-rail-search .raya-command-search-submit {
-  min-height: 2rem;
-}
+/* The rail's search controls are NOT shrunk here. .raya-command-search-input
+   sets an explicit `height: 2.5rem`, and .raya-command-search-submit sets
+   both `height: 2.5rem` and `min-height: 2.5rem` (see the base rules above).
+   An explicit `height` only defers to `min-height` when `min-height` is
+   *larger* than it -- min-height raises a floor, it never caps -- so a
+   smaller `min-height` here has no visible effect; both controls render at
+   a constant 40px regardless. Actually shrinking them would mean touching
+   those shared base classes, which .raya-top-command-bar also uses, so
+   that is deliberately out of scope for this task. */
 .raya-course-rail-command-list {
   display: grid;
   gap: 0.3125rem;
