@@ -21139,6 +21139,7 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                               document.querySelector('#raya-course-map')
                                 .getBoundingClientRect().bottom
                             ),
+                            viewportHeight: window.innerHeight,
                             labelsWithoutTextRoom: labels.filter(
                               (item) => item.labelClientWidth < 20
                             ),
@@ -21151,13 +21152,18 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                     )
                     assert tools["visibleCount"] >= 7
                     assert tools["minWidth"] >= 28
-                    assert tools["mapHeight"] >= 736
-                    # At >= 894 the expanded map uses the base position:
-                    # sticky rule (top: 1rem, max-height: calc(100vh - 2rem))
-                    # instead of the old fixed/top:0.75rem chrome, so the
-                    # settled bottom edge moved from 756 to 752 (16 top +
-                    # 736 height). 748 allows minor sub-pixel variance.
-                    assert tools["mapBottom"] >= 748
+                    # Not "fills the column": .raya-course-map has
+                    # align-self:start and no height, so it renders at natural
+                    # content height under max-height:calc(100vh - 2rem). On
+                    # this 6-page fixture the pre-density chrome and indent
+                    # were only incidentally enough to reach that cap; the
+                    # density work legitimately drops the rail below it. "The
+                    # rail reaches its cap" is asserted on the 41-page tree in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_renders_a_deep_wide_map. This floor
+                    # only guards against a degenerate/collapsed rail.
+                    assert tools["mapHeight"] >= 400
+                    assert tools["mapBottom"] <= tools["viewportHeight"]
                     assert tools["labelsWithoutTextRoom"] == []
                     # Task 4: a narrow-but-unclipped label must not read as
                     # passing. The label itself is a shrink-to-fit flex item

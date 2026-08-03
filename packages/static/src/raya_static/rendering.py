@@ -5134,17 +5134,9 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-list a {
   border-left: 3px solid transparent;
   display: block;
-  font-size: 0.8125rem;
-  line-height: 1.3;
   min-width: 0;
   overflow-wrap: break-word;
-  /* Vertical padding trimmed from 0.25rem to 0.125rem alongside the font
-     drop: the numbered ::before badge's own box (~20.2px) is taller than
-     the 16.9px text line-height, so a genuinely 2-line label's clientHeight
-     already exceeds 2 * lineHeight before padding is even added. The extra
-     4px of padding this rule used to carry pushed every 2-line label over
-     the rounding threshold for a line count it did not actually reach. */
-  padding: 0.125rem 0 0.125rem 0.5rem;
+  padding: 0.25rem 0 0.25rem 0.5rem;
   text-decoration: none;
 }
 .raya-course-map-list a::before {
@@ -6760,6 +6752,21 @@ mjx-container[display="true"] {
        reached them because the tree swallowed every pixel first. Tall
        viewports are unaffected: flex grow still sizes the tree above this. */
     min-height: 12rem;
+  }
+  .raya-course-map-list a {
+    /* Scoped to >=640: below that, the course-map drawer is a full-width
+       overlay with no horizontal pressure, so labels stay at their larger
+       default size there -- shrinking them would be a readability
+       regression on a touch surface bought for nothing. */
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    /* Vertical padding trimmed from 0.25rem to 0.125rem alongside the font
+       drop: the numbered ::before badge's own box (~20.2px) is taller than
+       the 16.9px text line-height, so a genuinely 2-line label's clientHeight
+       already exceeds 2 * lineHeight before padding is even added. The extra
+       4px of padding this rule used to carry pushed every 2-line label over
+       the rounding threshold for a line count it did not actually reach. */
+    padding: 0.125rem 0 0.125rem 0.5rem;
   }
   .raya-course-rail-tools {
     padding: 0.5rem 0;
