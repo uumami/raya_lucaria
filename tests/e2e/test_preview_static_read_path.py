@@ -21734,7 +21734,6 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
             )
             try:
                 def assert_visible_focus_and_clear_openers(page) -> None:
-                    page.wait_for_timeout(320)
                     state = page.evaluate(
                         """() => {
                           const article = document

@@ -453,7 +453,9 @@ _SHELL_JAVASCRIPT = r"""
       ...options,
       previousFocus,
     });
+    const immediate = options.immediate === true;
 
+    if (immediate) root.dataset.rayaShellReconciling = "true";
     root.dataset.rayaCourseMapDrawer = "closed";
     root.dataset.rayaLearningRailDrawer = "closed";
     if (isMediumStructuralShell()) {
@@ -474,6 +476,12 @@ _SHELL_JAVASCRIPT = r"""
       ...options,
       previousState: previousPair.learningRail,
     });
+    if (immediate) {
+      shell.getBoundingClientRect();
+      map.getBoundingClientRect();
+      if (learningRail) learningRail.getBoundingClientRect();
+      delete root.dataset.rayaShellReconciling;
+    }
     if (options.persist !== false) saveReaderShellPreference();
     restoreValidFocus(previousFocus, next, options);
     return next;
@@ -708,6 +716,7 @@ _SHELL_JAVASCRIPT = r"""
     const desktopTransition =
       isStructuralRailShell()
       && previousExpanded !== nextExpanded
+      && options.immediate !== true
       && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
@@ -1264,6 +1273,7 @@ _SHELL_JAVASCRIPT = r"""
     const desktopTransition =
       isStructuralRailShell()
       && previousExpanded !== nextExpanded
+      && options.immediate !== true
       && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
     const focusAfterExpansion = Boolean(
@@ -1699,6 +1709,7 @@ _SHELL_JAVASCRIPT = r"""
     }
     hideCourseMapCompactPreview();
     applyStructuralRailPair(next.courseMap, next.learningRail, {
+      immediate: true,
       persist: false,
       previousFocus: activeElement,
       focusTarget,

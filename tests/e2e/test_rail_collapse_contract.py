@@ -406,7 +406,6 @@ def test_intermediate_handoff_transition_table(tmp_path):
                                 "&& document.documentElement.dataset.rayaLearningRail === learningRail",
                                 arg=list(expected),
                             )
-                            page.wait_for_timeout(320)
                             state = page.evaluate(
                                 """() => {
                                   const root = document.documentElement;
@@ -458,6 +457,350 @@ def test_intermediate_handoff_transition_table(tmp_path):
                             assert state["focusVisible"] is True, state
                         finally:
                             page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+_RAIL_FRAME_STATE = """() => {
+  const root = document.documentElement;
+  const map = document.querySelector('#raya-course-map');
+  const rail = document.querySelector('#raya-learning-rail');
+  const article = document.querySelector('#raya-article');
+  const overlap = (left, right) => {
+    if (!left?.checkVisibility() || !right?.checkVisibility()) return false;
+    const a = left.getBoundingClientRect();
+    const b = right.getBoundingClientRect();
+    return a.left < b.right && a.right > b.left
+      && a.top < b.bottom && a.bottom > b.top;
+  };
+  const active = document.activeElement;
+  return {
+    pair: [root.dataset.rayaCourseMap, root.dataset.rayaLearningRail],
+    mapIntersectsArticle: overlap(map, article),
+    railIntersectsArticle: overlap(rail, article),
+    mapControlIntersectsArticle: overlap(
+      document.querySelector('[data-raya-course-map-expand]'), article
+    ),
+    railControlIntersectsArticle: overlap(
+      document.querySelector('[data-raya-learning-rail-expand]'), article
+    ),
+    mapTransition: map.dataset.rayaCourseMapTransition || null,
+    railTransition: rail.dataset.rayaLearningRailTransition || null,
+    focusInInert: !!active?.closest('[inert]'),
+    focusVisible: !active || active === document.body || active.checkVisibility(),
+  };
+}"""
+
+
+def _rail_frame_states(page):
+    immediate = page.evaluate(_RAIL_FRAME_STATE)
+    early = page.evaluate(
+        f"""async () => {{
+          const sample = {_RAIL_FRAME_STATE};
+          const states = [];
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+          states.push(sample());
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+          states.push(sample());
+          return states;
+        }}"""
+    )
+    return [immediate, *early]
+
+
+def _assert_atomic_rail_frames(states, expected_pair):
+    for frame, state in enumerate(states):
+        assert state["pair"] == list(expected_pair), (frame, state)
+        assert state["mapIntersectsArticle"] is False, (frame, state)
+        assert state["railIntersectsArticle"] is False, (frame, state)
+        assert state["mapControlIntersectsArticle"] is False, (frame, state)
+        assert state["railControlIntersectsArticle"] is False, (frame, state)
+        assert state["mapTransition"] is None, (frame, state)
+        assert state["railTransition"] is None, (frame, state)
+        assert state["focusInInert"] is False, (frame, state)
+        assert state["focusVisible"] is True, (frame, state)
+
+
+def test_intermediate_handoff_reconciliation_is_immediate_at_boundaries_and_pageshow(
+    tmp_path,
+):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    try:
+        assert handle.report.ok
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 894, "height": 900})
+                page.add_init_script(
+                    "sessionStorage.setItem("
+                    f"{json.dumps(storage_key)}, "
+                    "'{\"courseMap\":\"expanded\",\"learningRail\":\"expanded\"}'"
+                    ");"
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.focus("[data-raya-learning-rail-collapse]")
+                    page.set_viewport_size({"width": 893, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("collapsed", "expanded")
+                    )
+
+                    page.set_viewport_size({"width": 894, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("expanded", "expanded")
+                    )
+
+                    metrics = page.context.new_cdp_session(page)
+                    metrics.send(
+                        "Emulation.setDeviceMetricsOverride",
+                        {
+                            "width": 893,
+                            "height": 900,
+                            "deviceScaleFactor": 1.25,
+                            "mobile": False,
+                        },
+                    )
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("collapsed", "expanded")
+                    )
+                    metrics.send("Emulation.clearDeviceMetricsOverride")
+                    page.set_viewport_size({"width": 894, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("expanded", "expanded")
+                    )
+                    metrics.detach()
+
+                    page.set_viewport_size({"width": 640, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("collapsed", "expanded")
+                    )
+                    page.set_viewport_size({"width": 639, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("expanded", "expanded")
+                    )
+                    page.set_viewport_size({"width": 640, "height": 900})
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("expanded", "collapsed")
+                    )
+
+                    page.focus("#raya-article")
+                    page.evaluate(
+                        "([key, value]) => sessionStorage.setItem(key, value)",
+                        [
+                            storage_key,
+                            '{"courseMap":"expanded","learningRail":"expanded"}',
+                        ],
+                    )
+                    page.evaluate(
+                        "() => window.dispatchEvent(new PageTransitionEvent("
+                        "'pageshow', { persisted: true }))"
+                    )
+                    _assert_atomic_rail_frames(
+                        _rail_frame_states(page), ("expanded", "collapsed")
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_intermediate_handoff_focus_matrix_round_trips_and_pageshow(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+
+    def focus_state(page):
+        return page.evaluate(
+            """() => ({
+              inMap: document.querySelector('#raya-course-map')
+                .contains(document.activeElement),
+              inRail: document.querySelector('#raya-learning-rail')
+                .contains(document.activeElement),
+              inArticle: document.querySelector('#raya-article')
+                .contains(document.activeElement)
+                || document.activeElement === document.querySelector('#raya-article'),
+              inMapLauncher: document.activeElement === document.querySelector(
+                '.raya-mobile-course-map-open'
+              ),
+              inert: !!document.activeElement?.closest('[inert]'),
+              visible: document.activeElement?.checkVisibility(),
+            })"""
+        )
+
+    try:
+        assert handle.report.ok
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for selector, owner, intermediate_pair in (
+                    (
+                        "#raya-course-map-list a[href]",
+                        "inMap",
+                        ("expanded", "collapsed"),
+                    ),
+                    (
+                        "#raya-learning-rail-body a[href]",
+                        "inRail",
+                        ("collapsed", "expanded"),
+                    ),
+                    ("#raya-article", "inArticle", ("expanded", "collapsed")),
+                ):
+                    page = browser.new_page(viewport={"width": 894, "height": 900})
+                    page.add_init_script(
+                        "sessionStorage.setItem("
+                        f"{json.dumps(storage_key)}, "
+                        "'{\"courseMap\":\"expanded\",\"learningRail\":\"expanded\"}'"
+                        ");"
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.focus(selector)
+                        page.set_viewport_size({"width": 893, "height": 900})
+                        _assert_atomic_rail_frames(
+                            _rail_frame_states(page), intermediate_pair
+                        )
+                        assert focus_state(page)[owner] is True
+                        page.set_viewport_size({"width": 894, "height": 900})
+                        _assert_atomic_rail_frames(
+                            _rail_frame_states(page), ("expanded", "expanded")
+                        )
+                        assert focus_state(page)[owner] is True
+                    finally:
+                        page.close()
+
+                for saved_pair, selector, phone_owner, expected_back_owner in (
+                    (
+                        ("expanded", "collapsed"),
+                        "#raya-course-map-list a[href]",
+                        "inMapLauncher",
+                        "inMap",
+                    ),
+                    (
+                        ("collapsed", "expanded"),
+                        "#raya-learning-rail-body a[href]",
+                        "inRail",
+                        "inRail",
+                    ),
+                    (
+                        ("expanded", "collapsed"),
+                        "#raya-article",
+                        "inArticle",
+                        "inArticle",
+                    ),
+                ):
+                    page = browser.new_page(viewport={"width": 640, "height": 900})
+                    serialized = json.dumps(
+                        {"courseMap": saved_pair[0], "learningRail": saved_pair[1]},
+                        separators=(",", ":"),
+                    )
+                    page.add_init_script(
+                        "sessionStorage.setItem("
+                        f"{json.dumps(storage_key)}, {json.dumps(serialized)}"
+                        ");"
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.focus(selector)
+                        page.set_viewport_size({"width": 639, "height": 900})
+                        _assert_atomic_rail_frames(
+                            _rail_frame_states(page), ("expanded", "expanded")
+                        )
+                        phone_focus = focus_state(page)
+                        assert phone_focus[phone_owner] is True, phone_focus
+                        page.set_viewport_size({"width": 640, "height": 900})
+                        _assert_atomic_rail_frames(_rail_frame_states(page), saved_pair)
+                        assert focus_state(page)[expected_back_owner] is True
+                    finally:
+                        page.close()
+
+                for initial_pair, selector, owner, expected_pair in (
+                    (
+                        ("expanded", "collapsed"),
+                        "#raya-course-map-list a[href]",
+                        "inMap",
+                        ("expanded", "collapsed"),
+                    ),
+                    (
+                        ("collapsed", "expanded"),
+                        "#raya-learning-rail-body a[href]",
+                        "inRail",
+                        ("collapsed", "expanded"),
+                    ),
+                    (
+                        ("expanded", "collapsed"),
+                        "#raya-article",
+                        "inArticle",
+                        ("expanded", "collapsed"),
+                    ),
+                ):
+                    page = browser.new_page(viewport={"width": 893, "height": 900})
+                    initial = json.dumps(
+                        {
+                            "courseMap": initial_pair[0],
+                            "learningRail": initial_pair[1],
+                        },
+                        separators=(",", ":"),
+                    )
+                    page.add_init_script(
+                        "sessionStorage.setItem("
+                        f"{json.dumps(storage_key)}, {json.dumps(initial)}"
+                        ");"
+                    )
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.focus(selector)
+                        page.evaluate(
+                            "([key, value]) => sessionStorage.setItem(key, value)",
+                            [
+                                storage_key,
+                                '{"courseMap":"expanded",'
+                                '"learningRail":"expanded"}',
+                            ],
+                        )
+                        page.evaluate(
+                            "() => window.dispatchEvent(new PageTransitionEvent("
+                            "'pageshow', { persisted: true }))"
+                        )
+                        _assert_atomic_rail_frames(
+                            _rail_frame_states(page), expected_pair
+                        )
+                        assert focus_state(page)[owner] is True
+                    finally:
+                        page.close()
             finally:
                 browser.close()
     finally:

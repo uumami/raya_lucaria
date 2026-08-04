@@ -4032,6 +4032,11 @@ html[data-raya-shell-ready="true"] .raya-course-map {
 html[data-raya-shell-ready="true"] .raya-learning-rail {
   transition: border-color 180ms ease, box-shadow 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
 }
+html[data-raya-shell-reconciling="true"] .raya-learning-shell,
+html[data-raya-shell-reconciling="true"] .raya-course-map,
+html[data-raya-shell-reconciling="true"] .raya-learning-rail {
+  transition: none;
+}
 .raya-course-map,
 .raya-learning-rail,
 .raya-inspection-main {
