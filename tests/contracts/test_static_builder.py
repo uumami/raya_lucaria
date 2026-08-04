@@ -4828,7 +4828,15 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "function syncLearningRailToggleButtons" in script_text
     assert "data-raya-learning-rail-toggle" in script_text
     assert "rayaCourseMapOriented" in script_text
-    assert "scrollIntoView" not in script_text
+    assert (
+        'const mapNavigation = document.querySelector('
+        '"[data-raya-course-map-navigation]");'
+        in script_text
+    )
+    assert script_text.count(
+        'currentLink.scrollIntoView({ block: "nearest", inline: "nearest" });'
+    ) == 1
+    assert "orientCourseMapToCurrentPage({ repeat: true })" not in script_text
     assert "glintstone-nav-expanded" not in script_text
     assert "data-raya-course-map-filter" in script_text
     assert "data-raya-map-node-toggle" in script_text

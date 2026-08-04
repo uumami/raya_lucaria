@@ -594,7 +594,7 @@ def test_filter_and_search_stay_present_and_focusable_at_every_height(
                     ".classList.contains('raya-course-map-filter')"
                 ), height
 
-                assert page.locator(".raya-course-rail-search").is_visible()
+                assert page.locator(".raya-course-action.raya-command-search").is_visible()
                 assert page.locator(
                     ".raya-course-map-filter-label"
                 ).is_visible(), height
@@ -619,45 +619,10 @@ def test_filter_and_search_stay_present_and_focusable_at_every_height(
         handle.close()
 
 
-_DEEP_LINK = """() => {
-  const links = [...document.querySelectorAll('.raya-course-map-node-row a')]
-    .filter((a) => a.getBoundingClientRect().width > 0);
-  if (!links.length) return null;
-  const withDepth = links.map((a) => ({
-    a,
-    depth: Number(
-      a.closest('[data-raya-map-depth]')?.dataset.rayaMapDepth ?? 0),
-  }));
-  const maxDepth = Math.max(...withDepth.map((x) => x.depth));
-  const deepest = withDepth.filter((x) => x.depth === maxDepth);
-  const narrowest = deepest.reduce(
-    (best, x) =>
-      x.a.getBoundingClientRect().width < best.a.getBoundingClientRect().width
-        ? x : best,
-    deepest[0]);
-  const cs = getComputedStyle(narrowest.a);
-  const children = narrowest.a.closest('[data-raya-map-children]');
-  const ccs = children ? getComputedStyle(children) : null;
-  return {
-    maxDepth,
-    linkWidth: Math.round(narrowest.a.getBoundingClientRect().width),
-    fontSize: cs.fontSize,
-    overflowWrap: cs.overflowWrap,
-    perLevel: ccs
-      ? Math.round(
-          (parseFloat(ccs.marginLeft) + parseFloat(ccs.paddingLeft)
-            + parseFloat(ccs.borderLeftWidth)) * 10) / 10
-      : null,
-  };
-}"""
-
-
-def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
-    """Indent and font must leave a readable column at depth 3.
-
-    Before: 22.6px per level and a 15px font left 103.2px at depth 3, so
-    every one of 23 entries wrapped and the worst rendered 5 line boxes.
-    """
+def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
+    tmp_path: Path,
+) -> None:
+    """Fine pointers get compact rows without making long labels unreadable."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path, DENSITY_FIXTURE)
@@ -674,40 +639,118 @@ def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                # Expand every branch. Every toggle is eagerly present in the
-                # DOM at load (children are hidden by an ancestor `hidden`
-                # attribute, not lazily created), so each click flips exactly
-                # one element out of this LIVE aria-expanded="false" match
-                # set. Indexing with `nth(i)` over a count taken before any
-                # click goes stale one-for-one as the set shrinks and then
-                # hangs for the full 30s Playwright timeout. Drain with
-                # `.first` instead, re-querying after every click.
-                toggles = page.locator(
-                    '[data-raya-map-node-toggle][aria-expanded="false"]'
-                )
-                guard = 0
-                while toggles.count() > 0 and guard < 200:
-                    toggles.first.click()
-                    guard += 1
-                page.wait_for_timeout(200)
-                # The guard must not silently mask a partially expanded tree.
-                # `hidden` only suppresses rendering, so querySelectorAll
-                # still sees unexpanded nodes -- link counts and depth read
-                # the same with zero clicks as with a full drain. Only this
-                # post-condition proves the drain completed.
-                assert toggles.count() == 0, (
-                    "guard exhausted before draining all node toggles"
+                _expand_course_map_branches(page)
+                assert page.evaluate(
+                    "() => matchMedia('(any-pointer: fine)').matches"
                 )
 
-                state = page.evaluate(_DEEP_LINK)
+                state = page.evaluate(
+                    """() => {
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      const links = [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                        .filter((link) => link.getBoundingClientRect().width > 0);
+                      const nonCurrent = links.filter(
+                        (link) => link.getAttribute('aria-current') !== 'page');
+                      const oneLineRows = nonCurrent
+                        .filter((link) => {
+                          const style = getComputedStyle(link);
+                          const contentHeight = link.clientHeight
+                            - parseFloat(style.paddingTop)
+                            - parseFloat(style.paddingBottom);
+                          return contentHeight <= parseFloat(style.lineHeight) + 1;
+                        })
+                        .map((link) => link.closest(
+                          '.raya-course-map-node-row').getBoundingClientRect().height);
+                      const lineCounts = nonCurrent.map((link) => {
+                        const style = getComputedStyle(link);
+                        const contentHeight = link.clientHeight
+                          - parseFloat(style.paddingTop)
+                          - parseFloat(style.paddingBottom);
+                        return Math.round(
+                          contentHeight / parseFloat(style.lineHeight));
+                      });
+                      const clamped = [...nonCurrent].reverse().find(
+                        (link) => link.scrollHeight > link.clientHeight + 1);
+                      const identifier = links.find((link) =>
+                        link.textContent.includes(
+                          'ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007'));
+                      if (!navigation || !clamped || !identifier) return null;
+                      const navigationRect = navigation.getBoundingClientRect();
+                      const identifierRow = identifier.closest(
+                        '.raya-course-map-node-row');
+                      const identifierRect = identifierRow.getBoundingClientRect();
+                      const identifierStyle = getComputedStyle(identifier);
+                      return {
+                        fontSizes: [...new Set(nonCurrent.map(
+                          (link) => parseFloat(getComputedStyle(link).fontSize)))],
+                        lineCounts,
+                        oneLineRows,
+                        clampedText: clamped.textContent.trim(),
+                        currentReleased: links
+                          .filter((link) => link.getAttribute('aria-current') === 'page')
+                          .every((link) => {
+                            const style = getComputedStyle(link);
+                            return style.display === 'block'
+                              && style.webkitLineClamp === 'none';
+                          }),
+                        identifier: {
+                          right: identifierRect.right,
+                          scrollWidth: identifierRow.scrollWidth,
+                          writingMode: identifierStyle.writingMode,
+                        },
+                        scrollport: {
+                          right: navigationRect.right,
+                          clientWidth: navigation.clientWidth,
+                        },
+                      };
+                    }"""
+                )
                 assert state is not None
-                assert state["maxDepth"] >= 3, state
-                assert state["perLevel"] <= 9, state
-                assert state["fontSize"] == "13px", state
-                assert state["linkWidth"] >= 140, state
-                # The emergency break must survive: it is what keeps a
-                # 55-character unbroken identifier inside the 240px rail.
-                assert state["overflowWrap"] == "break-word", state
+                assert all(12 <= size <= 13 for size in state["fontSizes"]), state
+                assert state["oneLineRows"], state
+                assert all(27 <= height <= 30 for height in state["oneLineRows"]), state
+                assert max(state["lineCounts"]) <= 2, state
+                assert state["currentReleased"] is True, state
+                assert state["identifier"]["right"] <= (
+                    state["scrollport"]["right"] + 1
+                ), state
+                assert state["identifier"]["scrollWidth"] <= (
+                    state["scrollport"]["clientWidth"] + 1
+                ), state
+                assert state["identifier"]["writingMode"] == "horizontal-tb", state
+
+                page.keyboard.press("Tab")
+                released = page.evaluate(
+                    """(text) => {
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      const link = [...document.querySelectorAll(
+                        '.raya-course-map-node-row a')]
+                        .find((candidate) => candidate.textContent.trim() === text);
+                      link.focus();
+                      link.scrollIntoView({block: 'nearest'});
+                      const navigationRect = navigation.getBoundingClientRect();
+                      const rowRect = link.closest(
+                        '.raya-course-map-node-row').getBoundingClientRect();
+                      return {
+                        active: document.activeElement === link,
+                        fits: link.scrollHeight <= link.clientHeight + 1,
+                        rowTop: rowRect.top,
+                        rowBottom: rowRect.bottom,
+                        navigationTop: navigationRect.top,
+                        navigationBottom: navigationRect.bottom,
+                      };
+                    }""",
+                    state["clampedText"],
+                )
+                assert released["active"] is True, released
+                assert released["fits"] is True, released
+                assert released["rowTop"] >= released["navigationTop"] - 1, released
+                assert released["rowBottom"] <= (
+                    released["navigationBottom"] + 1
+                ), released
                 page.close()
             finally:
                 browser.close()
@@ -716,45 +759,28 @@ def test_deep_map_labels_get_a_usable_text_column(tmp_path: Path) -> None:
 
 
 _ORIENTATION = """() => {
-  const map = document.querySelector('.raya-course-map');
-  const list = document.querySelector('#raya-course-map-list');
-  const current = list?.querySelector('a[aria-current="page"]');
-  if (!map || !list || !current) return null;
-  const listRect = list.getBoundingClientRect();
+  const navigation = document.querySelector('[data-raya-course-map-navigation]');
+  const current = navigation?.querySelector('a[aria-current="page"]');
+  if (!navigation || !current) return null;
+  const navigationRect = navigation.getBoundingClientRect();
   const currentRect = current.getBoundingClientRect();
   return {
-    oriented: list.dataset.rayaCourseMapOriented,
-    listScrollTop: list.scrollTop,
-    outerScrollTop: map.scrollTop,
+    oriented: navigation.dataset.rayaCourseMapOriented,
+    navigationScrollTop: navigation.scrollTop,
     currentTop: currentRect.top,
     currentBottom: currentRect.bottom,
     currentHeight: currentRect.height,
-    listTop: listRect.top,
-    listBottom: listRect.bottom,
-    listHeight: listRect.height,
+    navigationTop: navigationRect.top,
+    navigationBottom: navigationRect.bottom,
+    navigationHeight: navigationRect.height,
   };
 }"""
 
 
-def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
+def test_course_map_orientation_is_one_shot_against_the_central_owner(
     tmp_path: Path,
 ) -> None:
-    """Orienting the map to the current page scrolls it into view.
-
-    tests/e2e/test_preview_static_read_path.py::
-    test_render_fixture_course_map_hierarchy_filters_without_requests used to
-    assert `listScrollTop > 0` on render-fixture (6 pages). Since the rail
-    density work cut ~444.6px of fixed chrome and tightened the tree indent/
-    font (see test_deep_map_labels_get_a_usable_text_column above), that
-    six-page tree now fits its window without overflowing at every viewport
-    it was checked at, so `listScrollTop` is pinned at 0 there and the
-    assertion's premise (a scrollable list) no longer holds -- "short course,
-    no scrollbar" is correct behaviour, not a regression. This test carries
-    the same "orientation scrolls the current page into view" contract on
-    density-fixture (41 pages, 3 levels deep), which genuinely overflows the
-    rail once fully expanded (see test_density_fixture_renders_a_deep_wide_map
-    above), so `listScrollTop > 0` is a meaningful assertion here.
-    """
+    """Initial reconciliation may orient once; later layout work may not."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path, DENSITY_FIXTURE)
@@ -782,29 +808,15 @@ def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
                 )
                 requested_urls.clear()
 
-                # Expand every branch so the tree is fully realised and
-                # genuinely overflows the rail. Re-query `.first` after every
-                # click rather than indexing a count taken before any clicks:
-                # see test_density_fixture_renders_a_deep_wide_map for why a
-                # fixed range() loop goes stale.
-                toggles = page.locator(
-                    '[data-raya-map-node-toggle][aria-expanded="false"]'
-                )
-                guard = 0
-                while toggles.count() > 0 and guard < 200:
-                    toggles.first.click()
-                    guard += 1
-                page.wait_for_timeout(200)
-                assert toggles.count() == 0, (
-                    "guard exhausted before draining all node toggles"
-                )
+                _expand_course_map_branches(page)
 
                 # Positive anchor: prove the precondition this test exists to
                 # provide -- a list that actually overflows its own window,
                 # unlike render-fixture.
                 overflow = page.evaluate(
                     """() => {
-                      const list = document.querySelector('#raya-course-map-list');
+                      const list = document.querySelector(
+                        '[data-raya-course-map-navigation]');
                       return {
                         clientHeight: list.clientHeight,
                         scrollHeight: list.scrollHeight,
@@ -819,97 +831,43 @@ def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
                 # mirrors the initial-load orientation contract.
                 page.evaluate(
                     """() => {
-                      const map = document.querySelector('.raya-course-map');
-                      const list = document.querySelector('#raya-course-map-list');
-                      list.scrollTop = 0;
-                      map.scrollTop = 0;
-                      delete list.dataset.rayaCourseMapOriented;
-                      delete map.dataset.rayaCourseMapOriented;
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      navigation.scrollTop = 0;
+                      delete navigation.dataset.rayaCourseMapOriented;
                       window.rayaOrientCourseMapToCurrentPage?.();
                     }"""
                 )
                 initial = page.evaluate(_ORIENTATION)
                 assert initial is not None
                 assert initial["oriented"] == "true"
-                assert initial["listScrollTop"] > 0
-                assert initial["outerScrollTop"] == 0
-                assert initial["currentTop"] >= initial["listTop"] - 1
-                if initial["currentHeight"] <= initial["listHeight"]:
-                    assert initial["currentBottom"] <= initial["listBottom"] + 1
+                assert initial["navigationScrollTop"] > 0
+                assert initial["currentTop"] >= initial["navigationTop"] - 1
+                if initial["currentHeight"] <= initial["navigationHeight"]:
+                    assert initial["currentBottom"] <= initial["navigationBottom"] + 1
                 else:
-                    assert initial["currentBottom"] >= initial["listTop"]
+                    assert initial["currentBottom"] >= initial["navigationTop"]
 
-                # A live filter suppresses automatic re-orientation.
-                page.evaluate(
+                manual_scroll = page.evaluate(
                     """() => {
-                      const map = document.querySelector('.raya-course-map');
-                      const list = document.querySelector('#raya-course-map-list');
-                      const filter = document.querySelector('#raya-course-map-filter');
-                      if (!map || !list || !filter) {
-                        throw new Error('missing course map controls');
-                      }
-                      list.scrollTop = 0;
-                      map.scrollTop = 0;
-                      delete list.dataset.rayaCourseMapOriented;
-                      delete map.dataset.rayaCourseMapOriented;
-                      filter.value = 'summary';
-                      window.rayaOrientCourseMapToCurrentPageAutomatic?.();
-                      if (list.scrollTop !== 0 || map.scrollTop !== 0) {
-                        throw new Error('filtered automatic orientation scrolled');
-                      }
-                      filter.value = '';
-                      window.rayaOrientCourseMapToCurrentPage?.();
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      navigation.scrollTop = Math.max(
+                        1,
+                        Math.min(48, navigation.scrollHeight - navigation.clientHeight)
+                      );
+                      return navigation.scrollTop;
                     }"""
                 )
-                reoriented = page.evaluate(_ORIENTATION)
-                assert reoriented is not None
-                assert reoriented["oriented"] == "true"
-                assert reoriented["listScrollTop"] > 0
-                assert reoriented["outerScrollTop"] == 0
-
-                # Collapse/expand round trip: expanding re-orients even when
-                # the list was already marked oriented (repeat: true bypasses
-                # the "already oriented" short-circuit), scrolling the
-                # current page back into view.
-                page.click("[data-raya-course-map-collapse]")
-                page.wait_for_function(
-                    """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
-                      && !document
-                      .querySelector('.raya-course-map')
-                      ?.dataset
-                      ?.rayaCourseMapTransition"""
+                assert manual_scroll > 0
+                page.set_viewport_size({"width": 1279, "height": 899})
+                page.set_viewport_size({"width": 1280, "height": 900})
+                page.wait_for_timeout(300)
+                after_resize = page.evaluate(
+                    """() => document.querySelector(
+                      '[data-raya-course-map-navigation]').scrollTop"""
                 )
-                page.evaluate(
-                    """() => {
-                      const map = document.querySelector('.raya-course-map');
-                      const list = document.querySelector('#raya-course-map-list');
-                      list.scrollTop = 0;
-                      map.scrollTop = 0;
-                      list.dataset.rayaCourseMapOriented = 'true';
-                      map.dataset.rayaCourseMapOriented = 'true';
-                    }"""
-                )
-                page.click("[data-raya-course-map-expand]")
-                page.wait_for_function(
-                    """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
-                      && !document
-                      .querySelector('.raya-course-map')
-                      ?.dataset
-                      ?.rayaCourseMapTransition"""
-                )
-                # Safe on this fixture (unlike render-fixture): the list
-                # genuinely overflows, so this condition is guaranteed to
-                # become true and will not hang out to the 30s timeout.
-                page.wait_for_function(
-                    """() => {
-                      const list = document.querySelector('#raya-course-map-list');
-                      return !!list && list.scrollTop > 0;
-                    }"""
-                )
-                reexpanded = page.evaluate(_ORIENTATION)
-                assert reexpanded is not None
-                assert reexpanded["listScrollTop"] > 0
-                assert reexpanded["outerScrollTop"] == 0
+                assert abs(after_resize - manual_scroll) <= 1
 
                 assert requested_urls == []
                 page.close()
@@ -919,14 +877,10 @@ def test_density_fixture_course_map_orientation_scrolls_current_page_into_view(
         handle.close()
 
 
-def test_long_labels_clamp_to_two_lines_and_release_on_focus(
+def test_coarse_pointer_labels_are_full_height_and_targets_do_not_overlap(
     tmp_path: Path,
 ) -> None:
-    """Clamped labels must be recoverable without a title attribute.
-
-    title was rejected: not exposed on touch, unreliable for keyboard-only
-    users, and a redundant description announcement on every link.
-    """
+    """Hybrid/touch layouts expose full labels with 44px target geometry."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path, DENSITY_FIXTURE)
@@ -938,95 +892,73 @@ def test_long_labels_clamp_to_two_lines_and_release_on_focus(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                context = browser.new_context(
+                    viewport={"width": 1440, "height": 900}, has_touch=True
+                )
+                page = context.new_page()
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                # Expand every branch. Every toggle is eagerly present in the
-                # DOM at load (children are hidden by an ancestor `hidden`
-                # attribute, not lazily created), so each click flips exactly
-                # one element out of this LIVE aria-expanded="false" match
-                # set. Indexing with `nth(i)` over a count taken before any
-                # click goes stale one-for-one as the set shrinks and then
-                # hangs for the full 30s Playwright timeout. Drain with
-                # `.first` instead, re-querying after every click.
-                toggles = page.locator(
-                    '[data-raya-map-node-toggle][aria-expanded="false"]'
-                )
-                guard = 0
-                while toggles.count() > 0 and guard < 200:
-                    toggles.first.click()
-                    guard += 1
-                page.wait_for_timeout(200)
-                # The guard must not silently mask a partially expanded tree.
-                # `hidden` only suppresses rendering, so querySelectorAll
-                # still sees unexpanded nodes -- link counts and depth read
-                # the same with zero clicks as with a full drain. Only this
-                # post-condition proves the drain completed.
-                assert toggles.count() == 0, (
-                    "guard exhausted before draining all node toggles"
-                )
-
-                # No map link carries a title attribute.
-                assert page.evaluate(
-                    """() => [...document.querySelectorAll(
-                        '.raya-course-map-node-row a')]
-                      .every((a) => !a.hasAttribute('title'))"""
-                )
-
-                # Every link renders at most two lines...
-                lines = page.evaluate(
-                    """() => [...document.querySelectorAll(
-                        '.raya-course-map-node-row a')]
-                      .filter((a) => a.getBoundingClientRect().width > 0)
-                      .map((a) => Math.round(
-                        a.clientHeight
-                          / parseFloat(getComputedStyle(a).lineHeight)))"""
-                )
-                assert lines, "no visible map links"
-                assert max(lines) <= 2, lines
-
-                # ...and at least one is genuinely clamped, so the release
-                # path below is actually exercised.
-                clamped = page.evaluate(
-                    """() => [...document.querySelectorAll(
-                        '.raya-course-map-node-row a')]
-                      .filter((a) => a.scrollHeight > a.clientHeight + 1)
-                      .map((a) => a.textContent.trim())"""
-                )
-                assert clamped, "fixture has no label long enough to clamp"
-
-                # Focus releases the clamp, reachable by keyboard alone. A
-                # real keyboard event has to precede the programmatic
-                # .focus() call: Chromium's :focus-visible heuristic tracks
-                # input modality for the whole page, and the branch-drain
-                # above already clicked with the mouse, so an unpreceded
-                # `element.focus()` here would land as a non-visible focus
-                # and :focus-visible (the release selector) would not match
-                # -- confirmed by measurement: without this Tab press,
-                # `fits` comes back False even though the CSS release rule
-                # is correct. Tab is real keyboard input Playwright can
-                # dispatch without needing to land on this exact link.
-                page.keyboard.press("Tab")
-                released = page.evaluate(
-                    """(text) => {
-                      const a = [...document.querySelectorAll(
-                          '.raya-course-map-node-row a')]
-                        .find((x) => x.textContent.trim() === text);
-                      a.focus();
+                _expand_course_map_branches(page)
+                state = page.evaluate(
+                    """() => {
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      const rows = [...document.querySelectorAll(
+                        '.raya-course-map-node-row')]
+                        .filter((row) => row.getBoundingClientRect().width > 0);
+                      const identifier = rows.find((row) => row.textContent.includes(
+                        'ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007'));
+                      const navigationRect = navigation.getBoundingClientRect();
+                      const identifierRect = identifier.getBoundingClientRect();
+                      const identifierLink = identifier.querySelector('a');
+                      const rowRects = rows.map((row) => row.getBoundingClientRect());
                       return {
-                        active: document.activeElement === a,
-                        matchesFocusVisible: a.matches(':focus-visible'),
-                        fits: a.scrollHeight <= a.clientHeight + 1,
+                        coarse: matchMedia('(any-pointer: coarse)').matches,
+                        fullLabels: rows.every((row) => {
+                          const link = row.querySelector('a');
+                          return link.scrollHeight <= link.clientHeight + 1;
+                        }),
+                        rows: rows.map((row) => ({
+                          height: row.getBoundingClientRect().height,
+                          linkHeight: row.querySelector('a').getBoundingClientRect().height,
+                          controlHeight: row.querySelector(
+                            '[data-raya-map-node-toggle]')
+                            ?.getBoundingClientRect().height ?? null,
+                        })),
+                        overlap: rowRects.some((rect, index) =>
+                          index > 0 && rect.top < rowRects[index - 1].bottom - 1),
+                        identifier: {
+                          right: identifierRect.right,
+                          scrollWidth: identifier.scrollWidth,
+                          writingMode: getComputedStyle(identifierLink).writingMode,
+                        },
+                        scrollport: {
+                          right: navigationRect.right,
+                          clientWidth: navigation.clientWidth,
+                        },
                       };
-                    }""",
-                    clamped[0],
+                    }"""
                 )
-                assert released["active"] is True, released
-                assert released["matchesFocusVisible"] is True, released
-                assert released["fits"] is True, released
+                assert state["coarse"] is True, state
+                assert state["fullLabels"] is True, state
+                assert state["overlap"] is False, state
+                assert all(row["height"] >= 44 for row in state["rows"]), state
+                assert all(row["linkHeight"] >= 44 for row in state["rows"]), state
+                assert all(
+                    row["controlHeight"] is None or row["controlHeight"] >= 44
+                    for row in state["rows"]
+                ), state
+                assert state["identifier"]["right"] <= (
+                    state["scrollport"]["right"] + 1
+                ), state
+                assert state["identifier"]["scrollWidth"] <= (
+                    state["scrollport"]["clientWidth"] + 1
+                ), state
+                assert state["identifier"]["writingMode"] == "horizontal-tb", state
                 page.close()
+                context.close()
             finally:
                 browser.close()
     finally:
@@ -1034,12 +966,7 @@ def test_long_labels_clamp_to_two_lines_and_release_on_focus(
 
 
 def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
-    """The badge is always visible where it matters, and never on hover.
-
-    A hover reveal grew rows 25px -> 48px, shifted every row below the
-    pointer, re-clamped the label being read, failed WCAG 1.4.13
-    Dismissible, and was unreachable on touch.
-    """
+    """The current sequence badge remains contained in the label grid."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path)
@@ -1062,10 +989,19 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                       const links = [...document.querySelectorAll(
                         '.raya-course-map-node-row a')]
                         .filter((a) => a.getBoundingClientRect().width > 0);
+                      const navigation = document.querySelector(
+                        '[data-raya-course-map-navigation]');
+                      const navigationRect = navigation.getBoundingClientRect();
                       return links.map((a) => ({
                         current: a.getAttribute('aria-current') === 'page',
                         display: getComputedStyle(a, '::before').display,
                         content: getComputedStyle(a, '::before').content,
+                        rowRight: a.closest(
+                          '.raya-course-map-node-row').getBoundingClientRect().right,
+                        rowScrollWidth: a.closest(
+                          '.raya-course-map-node-row').scrollWidth,
+                        navigationRight: navigationRect.right,
+                        navigationClientWidth: navigation.clientWidth,
                       }));
                     }"""
                 )
@@ -1083,32 +1019,13 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                 # computes "flex"), which defeats the point of the check.
                 assert current[0]["display"] == "flex", current[0]
                 assert current[0]["content"] not in {"none", "normal"}, current[0]
+                assert current[0]["rowRight"] <= current[0]["navigationRight"] + 1
+                assert current[0]["rowScrollWidth"] <= (
+                    current[0]["navigationClientWidth"] + 1
+                )
                 for badge in badges:
                     if not badge["current"]:
                         assert badge["display"] == "none", badge
-
-                # Hovering a non-current row must not move anything.
-                target = page.locator(
-                    '.raya-course-map-node-row a:not([aria-current="page"])'
-                ).first
-                before = page.evaluate(
-                    """() => ({
-                      scrollH: document.querySelector(
-                        '.raya-course-map-list').scrollHeight,
-                    })"""
-                )
-                box = target.bounding_box()
-                page.mouse.move(
-                    box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
-                )
-                page.wait_for_timeout(200)
-                after = page.evaluate(
-                    """() => ({
-                      scrollH: document.querySelector(
-                        '.raya-course-map-list').scrollHeight,
-                    })"""
-                )
-                assert after["scrollH"] == before["scrollH"], (before, after)
                 page.close()
             finally:
                 browser.close()

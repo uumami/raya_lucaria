@@ -5127,8 +5127,10 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-node-row {
   align-items: start;
   display: grid;
-  gap: 0.28rem;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
+  gap: 0.125rem;
+  grid-template-columns: 24px minmax(0, 1fr);
+  min-block-size: 27px;
+  min-inline-size: 0;
 }
 .raya-course-map-node-toggle,
 .raya-course-map-node-spacer {
@@ -5139,10 +5141,12 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   color: var(--raya-color-muted);
   display: grid;
   font: inherit;
+  min-block-size: 24px;
+  min-inline-size: 24px;
   min-width: 0;
   padding: 0;
   place-items: center;
-  width: 1.25rem;
+  width: 24px;
 }
 .raya-course-map-node-toggle {
   cursor: pointer;
@@ -5197,11 +5201,25 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 .raya-course-map-list a {
   border-left: 3px solid transparent;
-  display: block;
+  display: -webkit-box;
+  font-size: 0.8125rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.3;
+  min-block-size: 27px;
+  max-inline-size: 100%;
   min-width: 0;
-  overflow-wrap: break-word;
-  padding: 0.25rem 0 0.25rem 0.5rem;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding: 5px 0 5px 0.375rem;
   text-decoration: none;
+  writing-mode: horizontal-tb;
+}
+.raya-course-map-node-row:is(:hover, :focus-within) a,
+.raya-course-map-node-row a[aria-current="page"] {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
 }
 .raya-course-map-list a::before {
   align-items: center;
@@ -5241,6 +5259,27 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   border-left-color: var(--raya-color-success);
   color: var(--raya-color-success);
   font-weight: 700;
+}
+@media (any-pointer: coarse), (hover: none) {
+  .raya-course-map-node-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    min-block-size: 44px;
+  }
+  .raya-course-map-node-toggle,
+  .raya-course-map-node-spacer {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    width: 44px;
+  }
+  .raya-course-map-list a,
+  .raya-course-map-node-row:is(:hover, :focus-within) a,
+  .raya-course-map-node-row a[aria-current="page"] {
+    display: block;
+    -webkit-line-clamp: unset;
+    min-block-size: 44px;
+    overflow: visible;
+    padding-block: 0.65rem;
+  }
 }
 @media (max-width: 1500px) {
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
@@ -6796,47 +6835,6 @@ mjx-container[display="true"] {
   .raya-course-map-list {
     min-height: 0;
   }
-  .raya-course-map-list a {
-    /* Scoped to >=640: below that, the course-map drawer is a full-width
-       overlay with no horizontal pressure, so labels stay at their larger
-       default size there -- shrinking them would be a readability
-       regression on a touch surface bought for nothing. The two-line clamp
-       below is scoped here for the same reason: below 640 the drawer has
-       room to show the full label, so clamping there would truncate text
-       that would otherwise fit entirely, for no benefit. */
-    font-size: 0.8125rem;
-    line-height: 1.3;
-    /* Restored to 0.25rem (was trimmed to 0.125rem for the in-flow badge:
-       see git history). That trim compensated for the ::before badge's own
-       box (~20.2px) being taller than the 16.9px text line-height, which
-       pushed a genuinely 2-line label's clientHeight over the rounding
-       threshold before padding was even added. The badge is display:none on
-       32 of 33 rows now and contributes no height at all on the current row
-       (absolutely positioned, out of flow), so that no longer happens --
-       measured: with 0.25rem restored, the longest fixture label still
-       renders clientHeight 42px / 2.485 lines (rounds to 2, matches
-       scrollHeight, no clamp truncation) and every rendered row in the
-       41-link density fixture still measures 1 or 2 lines, never 3. */
-    padding: 0.25rem 0 0.25rem 0.5rem;
-    /* Clamp beyond two lines with an ellipsis. `overflow-wrap: break-word`
-       on the unmedia'd base rule above stays -- it is the emergency path
-       keeping a 55-character unbroken identifier inside the rail; the
-       clamp below is orthogonal (line count, not word breaking). */
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-  }
-  /* Nothing is permanently unreadable: the clamp releases on pointer, on
-     keyboard focus, and on the current page. A title attribute was
-     rejected -- not exposed on touch, unreliable for keyboard-only users,
-     and it would add a redundant description announcement on every one of
-     30+ links. */
-  .raya-course-map-list a:hover,
-  .raya-course-map-list a:focus-visible,
-  .raya-course-map-list a[aria-current="page"] {
-    -webkit-line-clamp: unset;
-  }
   /* --- rail collapse: appearance (single source) --- */
   /* Collapsed = the header and body are fully removed (display:none, which
      also drops them from the a11y tree) and the rail container becomes a
@@ -6966,11 +6964,6 @@ mjx-container[display="true"] {
   }
   .raya-course-map-filter {
     min-height: 2rem;
-  }
-  .raya-course-map-list a {
-    font-size: 0.86rem;
-    line-height: 1.28;
-    padding-inline: 0.22rem;
   }
 }
 @media (max-width: 380px) {
