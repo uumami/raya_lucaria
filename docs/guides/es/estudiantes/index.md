@@ -37,7 +37,7 @@ agregan un selector de skin en el browser.
 
 Las paginas lectoras renderizadas pueden incluir botones `Text size` y
 `OpenDyslexic` en el riel izquierdo del curso. Son preferencias de lectura
-locales que guarda tu navegador para ese sitio estatico; cambian la escala del
+locales que guarda tu navegador para ese sitio estatico; Text size se aplica solo al articulo autorado y los controles cambian la escala del
 texto o la fuente para facilitar lectura. Cada preferencia de lectura no cambia
 contenido, evaluacion, enlaces, identidad de skin ni etiquetas de autoridad.
 
@@ -49,14 +49,19 @@ no estima dominio ni contacta servicios externos.
 
 La estructura actual del curso es una ayuda de lectura estatica. Las paginas
 lectoras no tienen una franja de comandos lectora sobre el articulo; los
-comandos lectores viven en el riel izquierdo del curso. En anchos estructurales, el header del riel muestra un control course-home, `Course map`, y una accion Map `Hide map` renderizada como icono. El body empieza con course search, luego mosaicos compactos con icono y label acomodados dos por fila para Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, seguidos por la posicion de pagina y el mapa del curso. Al colapsar el riel, ese body desaparece y queda un solo opener flotante Map con el nombre accesible `Expand course map` que corresponde al opener Context de la derecha.
+comandos lectores viven en el riel izquierdo del curso. En anchos estructurales
+es un riel expandido de 256px con header fijo, un solo propietario central de
+scroll vertical nativo y footer fijo. Sus seis acciones de curso en dos
+columnas son Search, Graph, Practice, Tasks, Schedule y Context. Search abre el workspace generado Course Search; el filtro local Content solo limita labels
+visibles del mapa. El footer contiene posicion de pagina y controles de comodidad Text size y OpenDyslexic. Desde 640px, al colapsarlo usa un mini riel
+estructural reservado de 48px con `Expand course map` y los mismos controles.
 Cuando esta activa la geometria
 de lectura aprobada de `894px+`, el mapa del curso expandido se muestra por
 defecto y puede mostrar numeros estructurales de secuencia del orden del curso.
 Da orientacion por defecto, el articulo principal sigue siendo la leccion, y el
 riel de aprendizaje ofrece contenidos de pagina y contexto cercano. Puedes
-colapsar el mapa a un opener minimo flotante Map cuando quieras mas espacio de
-lectura; esa eleccion de riel estructural puede conservarse en la misma pestana
+colapsar el mapa al mini riel reservado cuando quieras mas espacio de lectura;
+esa eleccion de riel estructural puede conservarse en la misma pestana
 y no guarda ni muestra progreso personal. En estados colapsados de desktop y ancho medio, el mapa y el contexto
 ocultos dejan de reservar columnas de lectura, quedan inertes, y salen de la
 navegacion de teclado y de asistencia hasta que los restaures. En layouts de
@@ -72,8 +77,8 @@ Cuando un mapa largo se abre, la pagina puede mover el enlace de la pagina
 actual a la parte visible del mapa. Esa orientacion es contexto temporal de
 lectura, no estado guardado.
 
-Las paginas de lectura usan el riel izquierdo del curso para course search,
-mosaicos compactos de comandos en dos columnas y el mapa del curso. El mapa
+Las paginas de lectura usan el riel izquierdo del curso para seis acciones de
+curso en dos columnas, el filtro local Content y el mapa del curso. El mapa
 admite ramas plegables del mapa del curso para estructuras anidadas, y la misma
 pestana puede recordar que ramas estan plegadas despues de actualizar o
 navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.

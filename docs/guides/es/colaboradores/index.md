@@ -26,7 +26,7 @@ El rich static rendering pertenece a Glintstone. Mantiene parser, highlighter y 
 Los bloques de codigo fenced renderizan controles locales de copiado. Preserva el texto exacto copiado desde `pre code`, botones accesibles por teclado, fallback HTML estatico y la regla de no storage, no fetch y no scripts externos al cambiar este comportamiento.
 
 Los controles de comodidad lectora viven en recursos locales de accesibilidad.
-`Text size` y `OpenDyslexic` pueden persistir preferencias locales del browser,
+`Text size` se aplica solo al articulo autorado, y `Text size` y `OpenDyslexic` pueden persistir preferencias locales del browser,
 pero no deben cambiar skins del curso, datos fuente, datos del grafo, identidad
 de objetos numerados, progreso, respuestas, dominio ni recomendaciones.
 
@@ -137,10 +137,13 @@ rutas privadas, sin `fetch` en runtime, sin browser storage y sin lenguaje de
 grading, entregas, progreso, dominio o recomendaciones.
 
 Revisa los controles de la shell como superficies de accesibilidad. El lector
-actual usa un mapa del curso expandido, renderizado como un mapa jerarquico del
-curso expandido por defecto en escritorio,
-puede filtrar etiquetas renderizadas del mapa localmente, puede colapsarse con
-click explicito a un opener minimo flotante Map. El drawer de telefono y otros
+actual usa un riel expandido de 256px con header fijo, un solo propietario
+central de scroll vertical nativo y footer fijo. Sus acciones en dos columnas
+son Search, Graph, Practice, Tasks, Schedule y Context; Search abre el
+workspace generado, mientras el filtro local Content solo limita etiquetas
+renderizadas del mapa. El footer contiene Text size y OpenDyslexic. Desde
+640px, el colapso explicito usa un mini riel estructural reservado de 48px. El
+drawer de telefono y otros
 estados transitorios de la shell siguen siendo no persistentes; el par explicito
 de estado visual de los rieles estructurales puede persistir en sessionStorage
 en la misma pestana bajo el contrato con scope de curso anterior. El mapa del

@@ -55,7 +55,7 @@ introduce browser-side MathJax or an external renderer.
 
 For the `Text size` reader toggle, verify the same local accessibility resource
 path, `data-raya-text-size` on the document root, labels in the left course
-rail, computed article text size, and reload persistence. Treat it as a local comfort
+rail, computed article text size only, and reload persistence. Treat it as a local comfort
 preference only; it must not change `data-raya-skin`, source content, graph
 data, progress, answers, mastery, or recommendations.
 
@@ -141,7 +141,14 @@ learner-state language.
 
 When changing the shell, verify reader pages render no `.raya-top-command-bar`
 and discovery workspaces still render `.raya-discovery-command-bar` as a
-discovery command bar. Verify the structural `Hide map` header Map action separately from the eight reader commands under `[data-raya-course-map-tools]`. The header also presents the course-home control alongside the `Hide map` icon action. Verify `.raya-course-map-body` owns search, the ordered Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic command tiles, position, filter, and tree, while `[data-raya-course-map-expand]` remains outside that hidden/inert body and uses the accessible name `Expand course map`.
+discovery command bar. Verify the 256px expanded course rail has a fixed header,
+one central native vertical scroll owner, and a fixed footer. The header presents
+the course-home control only when an index root exists. Verify the navigation
+owns the ordered two-column Search, Graph, Practice, Tasks, Schedule, and Context course actions, followed by the local Content filter and tree. Search must open
+the generated workspace rather than filter the rail; Content only filters map
+labels. Verify the footer holds structural position plus Text size and OpenDyslexic. At 640px and wider, verify the reserved 48px mini rail provides
+course home when available, `Expand course map`, and synchronized comfort
+controls while the expanded content is hidden and inert.
 Also verify the expanded course map default, including the expanded hierarchical
 course map structure, generated structural map numbers, current-page map
 orientation, map filter behavior, reader breadcrumbs, compact previous/next
@@ -163,8 +170,8 @@ page contents and heading anchors, updates with the active heading in browser
 tests, remains a normal local anchor link, writes no browser storage, and does
 not use reading percentage, completion, mastery, recommendation, or progress
 language.
-Reader pages use the left course rail for course search, compact two-per-row
-command tiles, and then the scrollable course map. The map supports collapsible
+Reader pages use the left course rail for six compact two-per-row course actions,
+the local Content filter, and then the scrollable course map. The map supports collapsible
 course-map branches for nested structure, and the same tab may remember which
 branches are collapsed after refresh or page navigation. That memory is
 orientation only, not progress or personalization.
@@ -176,8 +183,8 @@ When authored `estimated_time` exists, it takes precedence as `Estimated time`.
 If the shell exposes a left course rail `Context` command, verify it toggles
 only the right learning rail where the context control is visible, keeps the
 course map available, mirrors `aria-expanded` and labels with the rail controls,
-uses small floating edge openers without reserving shell columns, and writes no
-browser storage other than same-tab expanded/collapsed rail display state.
+uses its explicit structural controls and writes no browser storage other than
+same-tab expanded/collapsed rail display state.
 For responsive shell changes, check desktop, tablet, and mobile viewports
 together. Inline desktop may use three shell columns, medium-width reader pages
 should keep the article as the primary shell column with explicit collapse
@@ -197,10 +204,10 @@ Escape close, focus restore to the opener, focus containment while open,
 `aria-hidden`/`inert` closed state, background scroll lock only while open,
 scroll-lock cleanup after close or desktop resize, no storage writes, no
 external requests, and article/right-rail availability after close.
-When collapsed reader rails change, verify the desktop Map and Context edge
-openers remain keyboard-operable through their existing controls, increase
-article width without reserved grid columns, become small floating overlays at
-medium widths, stay hidden on phone-sized layouts when their controls are hidden,
+When collapsed reader rails change, verify the desktop Map control exposes the
+reserved 48px mini rail and the Context control remains keyboard-operable through
+its existing control. Verify that the mini rail stays hidden on phone-sized
+layouts when its controls are hidden,
 and do not add storage beyond the accepted same-tab structural rail display pair,
 fetch, progress,
 recommendation, or learner-state behavior. When shell comfort controls change,

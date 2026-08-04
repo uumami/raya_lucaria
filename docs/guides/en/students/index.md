@@ -37,7 +37,7 @@ browser skin switcher.
 
 Rendered reader pages may include `Text size` and `OpenDyslexic` buttons in the
 left course rail. They are local reading preferences stored by your browser for
-that static site; they change text scale or page font for easier reading but do
+that static site; Text size applies only to the authored article, and the controls change text scale or page font for easier reading but do
 not change course content, grading, links, skin identity, or authority labels.
 
 You can print a generated page or save it as a PDF when you want a handout for
@@ -48,14 +48,19 @@ an external service.
 
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
-rail. At structural widths, the rail header shows a course-home control, `Course map`, and a `Hide map` Map action rendered as an icon. The body starts with course search, then compact icon-labeled tiles arranged two per row for Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic, followed by page position and the course map. Collapsing the rail removes that body and leaves one floating Map opener with the accessible name `Expand course map` that matches the right Context opener.
+rail. At structural widths, it is a 256px expanded course rail with a fixed
+header, one central native vertical scroll owner, and a fixed footer. Its six
+two-column course actions are Search, Graph, Practice, Tasks, Schedule, and Context. Search opens the generated Course Search workspace; the local Content
+filter only narrows visible map labels. The footer holds page position and Text size and OpenDyslexic comfort controls. At 640px and wider, collapsing it uses
+a reserved 48px structural mini rail with `Expand course map` and the same
+comfort controls.
 When the approved
 `894px+` reader geometry is active, the expanded course map is shown by default
 and may show structural sequence numbers from the course order. It gives
 orientation by default, the main article remains the lesson, and the learning
 rail provides page contents and nearby course context. You can collapse the map
-to a minimal floating Map edge opener when you want more reading space; that
-structural rail choice can remain for the same tab and does not store or show
+to the reserved mini rail when you want more reading space; that structural rail
+choice can remain for the same tab and does not store or show
 personal progress. In
 collapsed desktop and medium-width states, hidden map and context content stops
 reserving reading columns, becomes inert, and is removed from keyboard and
@@ -71,8 +76,8 @@ record.
 When a long map opens, the page can move the current page link into the visible
 part of the map. That orientation is temporary reading context, not saved state.
 
-Reader pages use the left course rail for course search, compact two-per-row
-command tiles, and the course map. The map supports collapsible course-map
+Reader pages use the left course rail for six compact two-column course actions,
+the local Content filter, and the course map. The map supports collapsible course-map
 branches for nested structure, and the same tab may remember which branches are
 collapsed after refresh or page navigation. That memory is orientation only,
 not progress or personalization.

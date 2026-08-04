@@ -25,8 +25,9 @@ Rich static rendering is Glintstone-owned. Keep parser, highlighter, and MathJax
 
 Fenced code blocks render with local copy controls. Preserve exact copied `pre code` text, keyboard-reachable buttons, static HTML fallback, and the no-storage/no-fetch/no-external-script rule when changing this behavior.
 
-Reader comfort controls live in local accessibility resources. `Text size` and
-`OpenDyslexic` may persist local browser preferences, but they must not change
+Reader comfort controls live in local accessibility resources. `Text size`
+applies only to the authored article, and `Text size` and `OpenDyslexic` may
+persist local browser preferences, but they must not change
 course skins, source data, graph data, numbered object identity, progress,
 answers, mastery, or recommendations.
 
@@ -127,11 +128,14 @@ filtering, owning page anchors, graph focus links, no private paths, no
 runtime fetch, no browser storage, and no grading, submission, progress,
 mastery, or recommendation language.
 
-Review shell controls as accessibility surfaces. The current reader uses an
-expanded course map, rendered as an expanded hierarchical course map by default
-on desktop, can filter the rendered map labels locally, can collapse by explicit
-click to a minimal floating Map edge opener, may open the course map as a
-temporary drawer on phone-sized layouts. The phone drawer and other transient
+Review shell controls as accessibility surfaces. The current reader uses a 256px
+expanded course rail with a fixed header, one central native vertical scroll
+owner, and a fixed footer. Its six two-column actions are Search, Graph,
+Practice, Tasks, Schedule, and Context; Search opens the generated workspace,
+while the local Content filter narrows only rendered map labels. The footer
+contains Text size and OpenDyslexic. At 640px and wider, explicit collapse uses
+a reserved 48px structural mini rail. Phone-sized layouts may open the course
+map as a temporary drawer. The phone drawer and other transient
 shell state remain non-persistent; the explicit structural rail display pair may
 persist in same-tab sessionStorage under the course-scoped contract above. The
 course-map behavior is

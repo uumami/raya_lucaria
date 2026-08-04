@@ -183,7 +183,7 @@ copy its pattern when you want a stronger visual identity without reducing
 contrast or changing course meaning.
 
 Reader comfort controls such as `Text size` and `OpenDyslexic` are local display
-preferences. They do not replace course skins and should not be used to encode
+preferences. Text size applies only to the authored article. They do not replace course skins and should not be used to encode
 course meaning, level, grading, progress, or official status.
 
 Generated pages can also be printed or saved to PDF as static handouts. Print
@@ -280,9 +280,12 @@ Clear/Escape reset to all visible dated items. It is not a separate calendar
 source, personal calendar sync, reminder system, submission system, gradebook,
 progress tracker, or recommendation engine.
 
-Rendered pages now use an expanded course map, rendered as an expanded
-hierarchical course map by default, and let students filter visible page labels or
-collapse the map to a minimal floating Map edge opener for more reading space.
+Rendered pages now use a 256px expanded course rail with a fixed header, one
+central native vertical scroll owner, and a fixed footer. Its two-column course
+actions are Search, Graph, Practice, Tasks, Schedule, and Context; Search opens
+the generated workspace, while the local Content filter narrows visible page
+labels. The footer holds Text size and OpenDyslexic. From 640px, collapse uses a
+reserved 48px structural mini rail for more reading space.
 Phone-sized layouts may open the course map as a temporary drawer, while the
 right learning rail remains readable when collapse controls are hidden.
 Same-tab sessionStorage may restore only course-scoped collapsed course-map

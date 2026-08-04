@@ -57,7 +57,7 @@ externo.
 
 Para el toggle lector `Text size`, verifica la misma ruta local de recursos de
 accesibilidad, `data-raya-text-size` en la raiz del documento, labels en el
-riel izquierdo del curso, tamano de texto computado del articulo y persistencia tras recargar.
+riel izquierdo del curso, tamano de texto computado solo del articulo y persistencia tras recargar.
 Tratalo solo como preferencia local de comodidad; no debe cambiar
 `data-raya-skin`, contenido fuente, datos del grafo, progreso, respuestas,
 dominio ni recomendaciones.
@@ -152,7 +152,14 @@ estudiante.
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
 `.raya-top-command-bar` y que los workspaces de descubrimiento sigan
 renderizando `.raya-discovery-command-bar` como barra de comandos de
-descubrimiento. Verifica la accion Map `Hide map` del header estructural por separado de los ocho comandos lectores bajo `[data-raya-course-map-tools]`. El header tambien presenta el control course-home junto a la accion icono `Hide map`. Verifica que `.raya-course-map-body` contenga search, los mosaicos ordenados Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, posicion, filtro y arbol, mientras `[data-raya-course-map-expand]` permanece fuera de ese body oculto e inerte y usa el nombre accesible `Expand course map`. Trata la accion Map del header como un control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido
+descubrimiento. Verifica que el riel expandido de 256px tenga header fijo, un
+solo propietario central de scroll vertical nativo y footer fijo. El header
+presenta course-home solo cuando existe un index root. Verifica que la
+navegacion contenga las acciones de curso en dos columnas Search, Graph, Practice, Tasks, Schedule y Context, seguidas por el filtro local Content y el
+arbol. Search debe abrir el workspace generado; Content solo filtra labels del
+mapa. Verifica que el footer contenga posicion estructural, Text size y OpenDyslexic. Desde 640px, verifica que el mini riel reservado de 48px ofrezca
+course-home cuando exista, `Expand course map` y controles de comodidad
+sincronizados mientras el contenido expandido esta oculto e inerte. Tambien verifica el mapa del curso expandido
 por defecto, incluida la estructura de mapa jerarquico del curso
 expandido, los numeros estructurales generados del mapa, la orientacion de
 pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links

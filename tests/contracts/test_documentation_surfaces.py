@@ -378,26 +378,26 @@ def test_discovery_workspace_fuzzy_filters_are_documented() -> None:
 def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     paths = {
         "foundation": ROOT / "docs/foundation/20_learning_renderer_contract.md",
+        "contributor_en": ROOT / "docs/guides/en/contributors/index.md",
+        "professor_en": ROOT / "docs/guides/en/professors/index.md",
         "student_en": ROOT / "docs/guides/en/students/index.md",
         "student_es": ROOT / "docs/guides/es/estudiantes/index.md",
         "agent_en": ROOT / "docs/guides/en/agents/index.md",
         "agent_es": ROOT / "docs/guides/es/agentes/index.md",
+        "contributor_es": ROOT / "docs/guides/es/colaboradores/index.md",
+        "professor_es": ROOT / "docs/guides/es/profesores/index.md",
     }
     text = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
 
-    for name in paths:
-        assert "Expand course map" in text[name], name
     for name in ("foundation", "student_en", "agent_en"):
-        assert "Hide map" in text[name], name
-        assert "Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic" in text[name], name
+        assert "Search, Graph, Practice, Tasks, Schedule, and Context" in text[name]
+        assert "Text size and OpenDyslexic" in text[name]
     for name in ("student_es", "agent_es"):
-        assert "Hide map" in text[name], name
-        assert "Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic" in text[name], name
+        assert "Search, Graph, Practice, Tasks, Schedule y Context" in text[name]
+        assert "Text size y OpenDyslexic" in text[name]
 
-    assert "header Map action" in text["agent_en"]
-    assert "accion Map del header" in text["agent_es"]
-    assert "all nine actions as body tiles" not in text["foundation"]
-
-    # Rail home control is part of the amended header enumeration.
-    assert "course-home action" in text["foundation"]
-    assert "ten reader actions" in text["foundation"]
+    for name in paths:
+        assert "256px" in text[name]
+        assert "48px" in text[name]
+    assert "exactly eight compact icon-labeled command tiles" not in text["foundation"]
+    assert "minimal floating Map edge opener" not in text["foundation"]

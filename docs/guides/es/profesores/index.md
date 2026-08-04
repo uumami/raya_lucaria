@@ -183,7 +183,7 @@ copia ese patron cuando quieras una identidad visual mas fuerte sin bajar
 contraste ni cambiar el significado del curso.
 
 Los controles de comodidad lectora como `Text size` y `OpenDyslexic` son
-preferencias locales de visualizacion. No reemplazan las skins del curso y no
+preferencias locales de visualizacion. Text size se aplica solo al articulo autorado. No reemplazan las skins del curso y no
 deben usarse para codificar significado del curso, nivel, evaluacion, progreso
 ni estado oficial.
 
@@ -288,9 +288,13 @@ separada, sincronizacion de calendario personal, sistema de recordatorios,
 sistema de entregas, gradebook, registro de progreso ni motor de
 recomendaciones.
 
-Las paginas renderizadas usan un mapa del curso expandido, renderizado como un
-mapa jerarquico del curso expandido por defecto,
-y permiten filtrar etiquetas visibles de paginas o colapsarlo a un opener minimo flotante Map para dar mas espacio de lectura. sessionStorage en la misma pestana
+Las paginas renderizadas usan un riel expandido de 256px con header fijo, un
+solo propietario central de scroll vertical nativo y footer fijo. Sus acciones
+de curso en dos columnas son Search, Graph, Practice, Tasks, Schedule y
+Context; Search abre el workspace generado, mientras el filtro local Content
+limita etiquetas visibles de paginas. El footer contiene Text size y
+OpenDyslexic. Desde 640px, el colapso usa un mini riel estructural reservado de
+48px para dar mas espacio de lectura. sessionStorage en la misma pestana
 puede restaurar solo identificadores de ramas plegadas con scope de curso y el
 par explicito de estado visual de los rieles estructurales izquierdo/derecho. El
 estado del drawer, filtro, foco, scroll, contexto activo, progreso, dominio,
