@@ -22,9 +22,11 @@ _SHELL_PREPAINT_JAVASCRIPT = r"""
   };
   const applyDefaults = () => {
     const bands = rayaRailBands();
-    const expanded = !bands.structural || bands.approved;
-    const state = expanded ? "expanded" : "collapsed";
-    applyEffective(state, state, bands);
+    if (bands.structural && !bands.approved) {
+      applyEffective("expanded", "collapsed", bands);
+      return;
+    }
+    applyEffective("expanded", "expanded", bands);
   };
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(courseId)) {
     applyDefaults();

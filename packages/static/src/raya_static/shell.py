@@ -182,10 +182,6 @@ _SHELL_JAVASCRIPT = r"""
     return isStructuralRailShell() && !approvedRailGeometryQuery.matches;
   }
 
-  function defaultRailExpanded() {
-    return !isStructuralRailShell() || approvedRailGeometryQuery.matches;
-  }
-
   function validCourseId() {
     const value = root.dataset.rayaCourseId || "";
     return /^[a-z0-9][a-z0-9._-]*$/.test(value) ? value : "";
@@ -220,14 +216,44 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function effectiveReaderShellState(preference = savedReaderShellPreference()) {
-    if (!isStructuralRailShell()) {
-      return { courseMap: "expanded", learningRail: "expanded" };
-    }
+    const bands = rayaRailBands();
     const next = preference || {
-      courseMap: defaultRailExpanded() ? "expanded" : "collapsed",
-      learningRail: defaultRailExpanded() ? "expanded" : "collapsed",
+      courseMap: "expanded",
+      learningRail: bands.structural && !bands.approved ? "collapsed" : "expanded",
     };
     return rayaEffectiveRailState(next.courseMap, next.learningRail, rayaRailBands());
+  }
+
+  function intermediateWinnerForTransition() {
+    if (map.contains(document.activeElement)) return "courseMap";
+    if (learningRail && learningRail.contains(document.activeElement)) return "learningRail";
+    return "courseMap";
+  }
+
+  function reconcileFocusedIntermediateState(
+    preference = savedReaderShellPreference(),
+    focusOwner = null
+  ) {
+    const next = effectiveReaderShellState(preference);
+    if (
+      !isMediumStructuralShell() ||
+      !preference ||
+      preference.courseMap !== "expanded" ||
+      preference.learningRail !== "expanded"
+    ) {
+      return next;
+    }
+    let winner = intermediateWinnerForTransition();
+    if (focusOwner instanceof Element) {
+      if (map.contains(focusOwner)) {
+        winner = "courseMap";
+      } else if (learningRail && learningRail.contains(focusOwner)) {
+        winner = "learningRail";
+      }
+    }
+    return winner === "learningRail"
+      ? { courseMap: "collapsed", learningRail: "expanded" }
+      : { courseMap: "expanded", learningRail: "collapsed" };
   }
 
   function saveReaderShellPreference() {
@@ -1448,17 +1474,34 @@ _SHELL_JAVASCRIPT = r"""
     return null;
   }
 
-  function reconcileReaderShellState({ restoreFocus = true, focusOwner = null } = {}) {
+  function reconcileReaderShellState({
+    restoreFocus = true,
+    focusOwner = null,
+    preferFocusedIntermediate = false,
+  } = {}) {
     const activeElement = focusOwner instanceof Element ? focusOwner : document.activeElement;
-    const next = effectiveReaderShellState();
-    const focusTarget = restoreFocus
+    const preference = savedReaderShellPreference();
+    const next = preferFocusedIntermediate
+      ? reconcileFocusedIntermediateState(preference, activeElement)
+      : effectiveReaderShellState(preference);
+    const arbitratingExpandedPair =
+      preferFocusedIntermediate &&
+      isMediumStructuralShell() &&
+      preference &&
+      preference.courseMap === "expanded" &&
+      preference.learningRail === "expanded";
+    const focusedRailBecomesInert =
+      (next.courseMap === "collapsed" && map.contains(activeElement)) ||
+      (next.learningRail === "collapsed" &&
+        learningRail &&
+        learningRail.contains(activeElement));
+    let focusTarget = restoreFocus
       ? readerShellReconciliationFocusTarget(activeElement, next)
       : null;
-    if (focusTarget) {
-      const visibleTarget = focusTarget.getClientRects().length > 0 ? focusTarget : article;
-      if (visibleTarget) {
-        visibleTarget.focus();
-      }
+    if (restoreFocus && focusedRailBecomesInert && arbitratingExpandedPair) {
+      focusTarget = next.courseMap === "expanded"
+        ? mapCollapseButton || mapExpandButton || article
+        : learningRailCollapse || learningRailExpand || article;
     }
     hideCourseMapCompactPreview();
     closeCourseMapDrawer();
@@ -1467,8 +1510,11 @@ _SHELL_JAVASCRIPT = r"""
     setLearningRailExpanded(next.learningRail === "expanded", { skipPersist: true });
     syncCourseMapDrawerState();
     syncLearningRailDrawerState();
-    if (focusTarget && focusTarget.getClientRects().length > 0) {
-      focusTarget.focus();
+    if (focusTarget) {
+      const visibleTarget = focusTarget.getClientRects().length > 0 ? focusTarget : article;
+      if (visibleTarget) {
+        visibleTarget.focus();
+      }
     }
   }
 
@@ -1494,7 +1540,11 @@ _SHELL_JAVASCRIPT = r"""
 
   const handleReaderShellMediaChange = () => {
     const focusOwner = takePendingReaderShellFocusOwner();
-    reconcileReaderShellState({ restoreFocus: true, focusOwner });
+    reconcileReaderShellState({
+      restoreFocus: true,
+      focusOwner,
+      preferFocusedIntermediate: true,
+    });
   };
   document.addEventListener("focusout", (event) => {
     const focusOwner = event.target;
@@ -1527,7 +1577,7 @@ _SHELL_JAVASCRIPT = r"""
       delete root.dataset.rayaCourseMapPreference;
       delete root.dataset.rayaLearningRailPreference;
     }
-    reconcileReaderShellState({ restoreFocus: true });
+    reconcileReaderShellState({ restoreFocus: true, preferFocusedIntermediate: true });
   });
   [
     structuralRailQuery,

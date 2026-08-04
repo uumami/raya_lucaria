@@ -2,6 +2,8 @@ from __future__ import annotations
 
 RAIL_STRUCTURAL_PX = 640
 RAIL_APPROVED_PX = 894
+RAIL_EXPANDED_PX = 256
+RAIL_MINI_PX = 48
 RAIL_DESKTOP_PX = 1280
 RAIL_COMPACT_PX = 768
 
@@ -14,7 +16,7 @@ assert RAIL_DESKTOP_PX > RAIL_APPROVED_PX > RAIL_STRUCTURAL_PX
 # the prepaint and runtime scripts. Pure function of (preference, bands):
 #   not structural   -> both expanded (left is presented as a drawer in CSS/JS)
 #   approved         -> caller's preference (default expanded)
-#   structural & !approved & both expanded -> collapse both (medium-band
+#   structural & !approved & both expanded -> keep left expanded (medium-band
 #                                             mutual exclusion)
 #
 # Bands are read via matchMedia against the SAME boundary strings the CSS
@@ -57,7 +59,7 @@ RAIL_EFFECTIVE_DERIVATION_JS = (
     "  }\n"
     "  if (!bands.approved && courseMap === \"expanded\""
     " && learningRail === \"expanded\") {\n"
-    "    return { courseMap: \"collapsed\", learningRail: \"collapsed\" };\n"
+    "    return { courseMap: \"expanded\", learningRail: \"collapsed\" };\n"
     "  }\n"
     "  return { courseMap: courseMap, learningRail: learningRail };\n"
     "}"
@@ -67,6 +69,8 @@ _TOKENS = {
     "__RAYA_RAIL_DERIVATION__": RAIL_EFFECTIVE_DERIVATION_JS,
     "__RAYA_STRUCTURAL_PX__": str(RAIL_STRUCTURAL_PX),
     "__RAYA_APPROVED_PX__": str(RAIL_APPROVED_PX),
+    "__RAYA_RAIL_EXPANDED_PX__": str(RAIL_EXPANDED_PX),
+    "__RAYA_RAIL_MINI_PX__": str(RAIL_MINI_PX),
     "__RAYA_DESKTOP_PX__": str(RAIL_DESKTOP_PX),
     "__RAYA_STRUCTURAL_MINUS_PX__": str(RAIL_STRUCTURAL_PX - 1),
     "__RAYA_APPROVED_MINUS_PX__": str(RAIL_APPROVED_PX - 1),

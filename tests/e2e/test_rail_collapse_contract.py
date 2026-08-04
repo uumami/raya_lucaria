@@ -1,6 +1,8 @@
+import json
 import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -12,6 +14,8 @@ from raya_static.shell_prepaint import shell_prepaint_javascript
 from raya_static.shell_geometry import (
     _TOKENS,
     RAIL_APPROVED_PX,
+    RAIL_EXPANDED_PX,
+    RAIL_MINI_PX,
     RAIL_STRUCTURAL_PX,
     RAIL_EFFECTIVE_DERIVATION_JS,
 )
@@ -102,6 +106,235 @@ def test_rail_geometry_is_single_sourced_across_scripts():
     # The pairwise derivation is byte-identical in both scripts (no rule drift).
     assert RAIL_EFFECTIVE_DERIVATION_JS in runtime
     assert RAIL_EFFECTIVE_DERIVATION_JS in prepaint
+
+
+def test_navigation_rail_geometry_tokens_are_single_sourced():
+    assert RAIL_EXPANDED_PX == 256
+    assert RAIL_MINI_PX == 48
+    for resource in (
+        rich_render_css(),
+        shell_resources().javascript,
+        shell_prepaint_javascript(),
+    ):
+        assert "__RAYA_RAIL_EXPANDED_PX__" not in resource
+        assert "__RAYA_RAIL_MINI_PX__" not in resource
+
+
+def _evaluate_intermediate_derivation(course_map: str, learning_rail: str):
+    script = f"""
+{RAIL_EFFECTIVE_DERIVATION_JS}
+const result = rayaEffectiveRailState(
+  {json.dumps(course_map)},
+  {json.dumps(learning_rail)},
+  {{structural: true, approved: false}}
+);
+process.stdout.write(JSON.stringify(result));
+"""
+    completed = subprocess.run(
+        ["node", "-e", script],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(completed.stdout)
+
+
+def test_intermediate_effective_state_prefers_left_without_focus():
+    result = _evaluate_intermediate_derivation("expanded", "expanded")
+    assert result == {"courseMap": "expanded", "learningRail": "collapsed"}
+
+
+def test_prepaint_uses_deterministic_boundary_state_table(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    saved_pairs = (
+        None,
+        ("collapsed", "collapsed"),
+        ("expanded", "collapsed"),
+        ("collapsed", "expanded"),
+        ("expanded", "expanded"),
+    )
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (894, 893, 640, 639):
+                    for saved_pair in saved_pairs:
+                        page = browser.new_page(viewport={"width": width, "height": 900})
+                        if saved_pair is not None:
+                            record = {
+                                "courseMap": saved_pair[0],
+                                "learningRail": saved_pair[1],
+                            }
+                            serialized = json.dumps(record, separators=(",", ":"))
+                            page.add_init_script(
+                                "sessionStorage.setItem("
+                                f"{json.dumps(storage_key)}, {json.dumps(serialized)}"
+                                ");"
+                            )
+                        page.route("**/shell.js", lambda route: route.abort())
+                        try:
+                            page.goto(
+                                f"{handle.base_url}/reader-ux/index.html",
+                                wait_until="networkidle",
+                            )
+                            actual = page.evaluate(
+                                """() => {
+                                  const root = document.documentElement;
+                                  return {
+                                    prepaint: root.dataset.rayaShellPrepaint,
+                                    courseMap: root.dataset.rayaCourseMap,
+                                    learningRail: root.dataset.rayaLearningRail,
+                                  };
+                                }"""
+                            )
+                            if width < RAIL_STRUCTURAL_PX:
+                                expected_pair = ("expanded", "expanded")
+                            elif width < RAIL_APPROVED_PX:
+                                requested = saved_pair or ("expanded", "collapsed")
+                                expected_pair = (
+                                    ("expanded", "collapsed")
+                                    if requested == ("expanded", "expanded")
+                                    else requested
+                                )
+                            else:
+                                expected_pair = saved_pair or ("expanded", "expanded")
+                            assert actual == {
+                                "prepaint": "missing" if saved_pair is None else "valid",
+                                "courseMap": expected_pair[0],
+                                "learningRail": expected_pair[1],
+                            }, (width, saved_pair, actual)
+                        finally:
+                            page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_runtime_intermediate_reconciliation_prefers_focused_rail(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    serialized = json.dumps(
+        {"courseMap": "expanded", "learningRail": "expanded"},
+        separators=(",", ":"),
+    )
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 894, "height": 900})
+                page.add_init_script(
+                    "sessionStorage.setItem("
+                    f"{json.dumps(storage_key)}, {json.dumps(serialized)}"
+                    ");"
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.focus("[data-raya-learning-rail-collapse]")
+                    page.set_viewport_size({"width": 893, "height": 900})
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
+                    )
+                    state = page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          focusInLearningRail: document.querySelector(
+                            '#raya-learning-rail'
+                          ).contains(document.activeElement),
+                        })"""
+                    )
+                    assert state == {
+                        "courseMap": "collapsed",
+                        "learningRail": "expanded",
+                        "focusInLearningRail": True,
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_runtime_intermediate_reconciliation_preserves_focus_for_valid_pair(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    serialized = json.dumps(
+        {"courseMap": "collapsed", "learningRail": "expanded"},
+        separators=(",", ":"),
+    )
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 894, "height": 900})
+                page.add_init_script(
+                    "sessionStorage.setItem("
+                    f"{json.dumps(storage_key)}, {json.dumps(serialized)}"
+                    ");"
+                )
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.focus("[data-raya-course-map-expand]")
+                    page.set_viewport_size({"width": 893, "height": 900})
+                    page.wait_for_timeout(120)
+                    state = page.evaluate(
+                        """() => ({
+                          courseMap: document.documentElement.dataset.rayaCourseMap,
+                          learningRail: document.documentElement.dataset.rayaLearningRail,
+                          focusedCourseMapExpand:
+                            document.activeElement.hasAttribute(
+                              'data-raya-course-map-expand'
+                            ),
+                        })"""
+                    )
+                    assert state == {
+                        "courseMap": "collapsed",
+                        "learningRail": "expanded",
+                        "focusedCourseMapExpand": True,
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 def test_css_and_js_share_the_same_rail_boundaries():
