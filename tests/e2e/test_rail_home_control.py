@@ -140,14 +140,21 @@ def test_rail_home_link_present_and_resolves_from_nested_page(tmp_path):
                         f"{handle.base_url}/authoring-matrix/index.html",
                         wait_until="networkidle",
                     )
-                    link = page.locator(
-                        ".raya-course-map-header a.raya-course-map-home"
+                    links = page.locator(
+                        ".raya-course-map-header a.raya-course-map-home, "
+                        ".raya-course-map-mini a.raya-course-map-home"
                     )
-                    assert link.count() == 1
-                    assert link.get_attribute("aria-label") == "Back to course"
-                    assert link.get_attribute("aria-current") is None
-                    href = link.get_attribute("href")
-                    assert href and "://" not in href and not href.startswith("/")
+                    assert links.count() == 2
+                    for index in range(2):
+                        link = links.nth(index)
+                        assert link.get_attribute("aria-label") == "Back to course"
+                        assert link.get_attribute("aria-current") is None
+                        href = link.get_attribute("href")
+                        assert href and "://" not in href and not href.startswith("/")
+                        assert (
+                            link.evaluate("element => new URL(element.href).pathname")
+                            == "/index.html"
+                        )
                 finally:
                     page.close()
             finally:
@@ -540,7 +547,13 @@ def test_home_control_omitted_when_no_index_root(tmp_path):
                     assert (
                         page.locator("[data-raya-course-map-collapse]").count() == 1
                     )
-                    assert page.locator("a.raya-course-map-home").count() == 0
+                    assert (
+                        page.locator(
+                            ".raya-course-map-header .raya-course-map-home, "
+                            ".raya-course-map-mini .raya-course-map-home"
+                        ).count()
+                        == 0
+                    )
                 finally:
                     page.close()
             finally:

@@ -1228,7 +1228,20 @@ def _render_mobile_course_map_opener() -> str:
     )
 
 
-def _render_course_map_tools(
+def _render_tooltip_control(control_html: str, tooltip_id: str, tooltip: str) -> str:
+    described_control = control_html.replace(
+        ">",
+        f' aria-describedby="{html.escape(tooltip_id, quote=True)}">',
+        1,
+    )
+    tooltip_html = (
+        f'<span id="{html.escape(tooltip_id, quote=True)}" '
+        f'class="raya-tooltip" role="tooltip" hidden>{html.escape(tooltip)}</span>'
+    )
+    return f"{described_control}{tooltip_html}"
+
+
+def _render_course_actions(
     *,
     search_href: str,
     graph_href: str,
@@ -1240,77 +1253,189 @@ def _render_course_map_tools(
     tasks_label: str,
     schedule_label: str,
 ) -> str:
-    return "\n".join(
-        [
-            '<section class="raya-course-rail-tools" aria-label="Course tools" data-raya-course-map-tools>',
-            _render_command_search_form(search_href).replace(
-                'class="raya-command-search-form"',
-                'class="raya-course-rail-search raya-command-search-form"',
-            ),
-            '<div class="raya-course-rail-command-list" role="group" aria-label="Course commands">',
-            _render_compact_command_link(
-                class_name="raya-course-rail-command raya-command-search",
+    actions = [
+        _render_tooltip_control(
+            _render_command_link(
+                class_name="raya-course-action raya-command-search",
                 href=search_href,
                 aria_label="Open course search",
                 icon="search",
                 label="Search",
-                tooltip="Open course search",
             ),
-            _render_compact_command_link(
-                class_name="raya-course-rail-command raya-command-graph",
+            "raya-course-action-search-tooltip",
+            "Open course search",
+        ),
+        _render_tooltip_control(
+            _render_command_link(
+                class_name="raya-course-action raya-command-graph",
                 href=graph_href,
                 aria_label=graph_label,
                 icon="graph",
                 label="Graph",
-                tooltip=graph_label,
             ),
-            _render_compact_command_link(
-                class_name="raya-course-rail-command raya-command-practice",
+            "raya-course-action-graph-tooltip",
+            graph_label,
+        ),
+        _render_tooltip_control(
+            _render_command_link(
+                class_name="raya-course-action raya-command-practice",
                 href=practice_href,
                 aria_label=practice_label,
                 icon="practice",
                 label="Practice",
-                tooltip=practice_label,
             ),
-            _render_compact_command_link(
-                class_name="raya-course-rail-command raya-command-tasks",
+            "raya-course-action-practice-tooltip",
+            practice_label,
+        ),
+        _render_tooltip_control(
+            _render_command_link(
+                class_name="raya-course-action raya-command-tasks",
                 href=tasks_href,
                 aria_label=tasks_label,
                 icon="tasks",
                 label="Tasks",
-                tooltip=tasks_label,
             ),
-            _render_compact_command_link(
-                class_name="raya-course-rail-command raya-command-schedule",
+            "raya-course-action-tasks-tooltip",
+            tasks_label,
+        ),
+        _render_tooltip_control(
+            _render_command_link(
+                class_name="raya-course-action raya-command-schedule",
                 href=schedule_href,
                 aria_label=schedule_label,
                 icon="schedule",
-                label="Plan",
-                tooltip=schedule_label,
+                label="Schedule",
             ),
+            "raya-course-action-schedule-tooltip",
+            schedule_label,
+        ),
+        _render_tooltip_control(
             _render_command_button(
-                class_name="raya-course-rail-command raya-command-context",
+                class_name="raya-course-action raya-command-context",
                 aria_label="Hide learning context",
                 icon="context",
                 label="Context",
-                extra_attrs=' data-raya-learning-rail-toggle aria-controls="raya-learning-rail-body" aria-expanded="true"',
+                extra_attrs=(
+                    ' data-raya-learning-rail-toggle '
+                    'aria-controls="raya-learning-rail-body" aria-expanded="true"'
+                ),
             ),
-            _render_command_button(
-                class_name="raya-course-rail-command raya-text-size-toggle",
-                aria_label="Text size: normal",
-                icon="text-size",
-                label="Text size",
-                aria_pressed="false",
-            ),
-            _render_command_button(
-                class_name="raya-course-rail-command raya-font-toggle",
-                aria_label="Toggle OpenDyslexic font",
-                icon="font",
-                label="Font",
-                aria_pressed="false",
-            ),
+            "raya-course-action-context-tooltip",
+            "Hide learning context",
+        ),
+    ]
+    return "\n".join(
+        [
+            '<section class="raya-course-actions" aria-labelledby="raya-course-actions-title">',
+            '<h2 id="raya-course-actions-title" class="raya-course-section-title">Course</h2>',
+            '<div class="raya-course-actions-list">',
+            *actions,
             "</div>",
             "</section>",
+        ]
+    )
+
+
+def _render_course_map_footer(position: str) -> str:
+    position_match = re.fullmatch(r"Page (\d+) of (\d+)", position)
+    position_html = ""
+    if position_match is not None:
+        current, total = position_match.groups()
+        position_html = (
+            '<span class="raya-course-map-position">'
+            f'<span class="raya-visually-hidden">{html.escape(position)}</span>'
+            f'<span aria-hidden="true">{current} / {total}</span>'
+            "</span>"
+        )
+    text_size = _render_tooltip_control(
+        _render_command_button(
+            class_name="raya-course-map-comfort raya-text-size-toggle",
+            aria_label="Text size: normal",
+            icon="text-size",
+            label="Text size",
+            aria_pressed="false",
+        ),
+        "raya-course-map-text-size-tooltip",
+        "Text size",
+    )
+    open_dyslexic = _render_tooltip_control(
+        _render_command_button(
+            class_name="raya-course-map-comfort raya-font-toggle",
+            aria_label="Toggle OpenDyslexic font",
+            icon="font",
+            label="OpenDyslexic",
+            aria_pressed="false",
+        ),
+        "raya-course-map-font-tooltip",
+        "OpenDyslexic",
+    )
+    return "\n".join(
+        [
+            '<footer class="raya-course-map-footer">',
+            text_size,
+            open_dyslexic,
+            position_html,
+            "</footer>",
+        ]
+    )
+
+
+def _render_course_map_mini(home_href: str | None) -> str:
+    controls: list[str] = []
+    if home_href is not None:
+        controls.append(
+            _render_tooltip_control(
+                _render_rail_home_link(home_href),
+                "raya-course-map-mini-home-tooltip",
+                "Back to course",
+            )
+        )
+    controls.extend(
+        [
+            _render_tooltip_control(
+                _render_course_map_toggle(
+                    "Expand map",
+                    expanded=False,
+                    class_name="raya-course-map-expand",
+                    aria_label="Expand course map",
+                    icon="map",
+                    controls="raya-course-map-body",
+                    marker="data-raya-course-map-expand",
+                    label_hidden=True,
+                ),
+                "raya-course-map-expand-tooltip",
+                "Expand course map",
+            ),
+            _render_tooltip_control(
+                _render_command_button(
+                    class_name="raya-course-map-mini-comfort raya-text-size-toggle",
+                    aria_label="Text size: normal",
+                    icon="text-size",
+                    label="Text size",
+                    aria_pressed="false",
+                ).replace('class="raya-command-label"', 'class="raya-visually-hidden"'),
+                "raya-course-map-mini-text-size-tooltip",
+                "Text size",
+            ),
+            _render_tooltip_control(
+                _render_command_button(
+                    class_name="raya-course-map-mini-comfort raya-font-toggle",
+                    aria_label="Toggle OpenDyslexic font",
+                    icon="font",
+                    label="OpenDyslexic",
+                    aria_pressed="false",
+                ).replace('class="raya-command-label"', 'class="raya-visually-hidden"'),
+                "raya-course-map-mini-font-tooltip",
+                "OpenDyslexic",
+            ),
+        ]
+    )
+    return "\n".join(
+        [
+            '<div class="raya-course-map-mini" data-raya-course-map-mini '
+            'aria-hidden="true">',
+            *controls,
+            "</div>",
         ]
     )
 
@@ -2014,12 +2139,17 @@ def _render_course_map(
     }
     root_identity = content_model.root_id or course_title
     storage_key = f"raya:course-map-branches:v1:{course_id}"
+    home_href: str | None = None
     header_home_html: str | None = None
     if content_model.root_id is not None:
         home_page = _course_home_page(content_model)
         if home_page is not None:
             home_href = _relative_href(page.output_path, home_page.output_path)
-            header_home_html = _render_rail_home_link(home_href)
+            header_home_html = _render_tooltip_control(
+                _render_rail_home_link(home_href),
+                "raya-course-map-home-tooltip",
+                "Back to course",
+            )
 
     def render_node(target: ContentPage, depth: int) -> str:
         child_ids = content_model.children_by_parent.get(target.id, [])
@@ -2113,7 +2243,7 @@ def _render_course_map(
         for root_id in root_ids
         if root_id in content_model.pages_by_id
     ]
-    position = html.escape(_page_position(page, content_model))
+    position = _page_position(page, content_model)
     direct_official_count = sum(official_counts.get(page.id, {}).values())
     direct_task_count = sum(
         1
@@ -2165,23 +2295,12 @@ def _render_course_map(
         if direct_task_count
         else "Open official tasks"
     )
-    # WCAG 2.5.3 Label in Name: the rail's visible caption for this control
-    # is "Plan" (shortened from "Schedule" to fit the four-column rail
-    # tile), so the accessible name must contain that exact word. The word
-    # is added, not substituted: "official" stays so the label keeps its
-    # symmetry with its siblings ("Open official practice", "Open official
-    # tasks") and with the contract's name for the workspace ("Official
-    # Schedule"). This aria-label is only consumed by the rail
-    # (_render_course_map_tools); the top command bar and discovery
-    # workspace bar keep their own "Open official schedule" labels
-    # alongside an unshortened "Schedule" caption, since those tiles are
-    # 120px+ wide and unaffected.
     schedule_aria = (
-        f"Open official schedule plan, {direct_dated_task_count} dated"
+        f"Open official schedule, {direct_dated_task_count} dated"
         if direct_dated_task_count
-        else "Open official schedule plan"
+        else "Open official schedule"
     )
-    tools_html = _render_course_map_tools(
+    actions_html = _render_course_actions(
         search_href=search_href,
         graph_href=graph_href,
         practice_href=practice_href,
@@ -2197,7 +2316,7 @@ def _render_course_map(
             '<div class="raya-course-map-drawer-chrome">',
             '<span class="raya-course-map-drawer-grip" aria-hidden="true"></span>',
             '<p class="raya-course-map-drawer-title">Course map</p>',
-            f'<p class="raya-course-map-drawer-position">{position}</p>'
+            f'<p class="raya-course-map-drawer-position">{html.escape(position)}</p>'
             if position
             else "",
             "</div>",
@@ -2208,9 +2327,10 @@ def _render_course_map(
         'data-raya-course-map-close aria-label="Close course map">'
         "Close</button>"
     )
-    body_html = "\n".join(
+    content_html = "\n".join(
         [
-            tools_html,
+            '<section class="raya-course-content" aria-labelledby="raya-course-content-title">',
+            '<h2 id="raya-course-content-title" class="raya-course-section-title">Content</h2>',
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '
@@ -2227,22 +2347,11 @@ def _render_course_map(
                 '<div class="raya-course-map-compact-preview" '
                 'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
             ),
+            "</section>",
         ]
     )
-    return _render_rail_chrome(
-        landmark_open_html=(
-            '<nav id="raya-course-map" class="raya-course-map" '
-            'aria-label="Course map" '
-            f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
-            f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">'
-        ),
-        landmark_close_html="</nav>",
-        header_class="raya-course-map-header",
-        header_prefix_html=drawer_chrome_html,
-        header_home_html=header_home_html,
-        region_title="Course map",
-        header_suffix_html=close_button_html,
-        collapse_button_html=_render_course_map_toggle(
+    collapse_button_html = _render_tooltip_control(
+        _render_course_map_toggle(
             "Hide map",
             class_name="raya-course-map-collapse",
             aria_label="Hide course map",
@@ -2251,21 +2360,50 @@ def _render_course_map(
             marker="data-raya-course-map-collapse",
             label_hidden=True,
         ),
-        body_open_html=(
-            '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">'
-        ),
-        body_html=body_html,
-        expand_button_html=_render_course_map_toggle(
-            "Map",
-            class_name="raya-course-map-expand",
-            aria_label="Expand course map",
-            controls="raya-course-map-body",
-            marker="data-raya-course-map-expand",
-        ),
-        backdrop_html=(
-            '<div class="raya-course-map-drawer-backdrop" '
-            'data-raya-course-map-drawer-backdrop hidden></div>'
-        ),
+        "raya-course-map-collapse-tooltip",
+        "Hide course map",
+    )
+    close_button_html = _render_tooltip_control(
+        close_button_html,
+        "raya-course-map-close-tooltip",
+        "Close course map",
+    )
+    title_tooltip_id = "raya-course-map-title-tooltip"
+    return "\n".join(
+        [
+            '<nav id="raya-course-map" class="raya-course-map" '
+            'aria-label="Course map" '
+            f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
+            f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">',
+            '<header class="raya-course-map-header">',
+            drawer_chrome_html,
+            header_home_html or "",
+            (
+                f'<p class="raya-region-title" aria-describedby="{title_tooltip_id}">'
+                f"{html.escape(course_title)}</p>"
+            ),
+            (
+                f'<span id="{title_tooltip_id}" class="raya-tooltip" '
+                'role="tooltip" hidden>'
+                f"{html.escape(course_title)}</span>"
+            ),
+            close_button_html,
+            collapse_button_html,
+            "</header>",
+            '<div id="raya-course-map-body" class="raya-course-map-body" aria-hidden="false">',
+            '<div class="raya-course-map-navigation" data-raya-course-map-navigation>',
+            actions_html,
+            content_html,
+            "</div>",
+            _render_course_map_footer(position),
+            "</div>",
+            _render_course_map_mini(home_href),
+            "</nav>",
+            (
+                '<div class="raya-course-map-drawer-backdrop" '
+                'data-raya-course-map-drawer-backdrop hidden></div>'
+            ),
+        ]
     )
 
 
