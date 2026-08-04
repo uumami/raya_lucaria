@@ -52,57 +52,44 @@ def _preview(tmp_path: Path, fixture: Path = RENDER_FIXTURE):
     return handle
 
 
-_ZONES = """() => {
-  const q = (s) => document.querySelector(s);
-  const centre = (el) => {
-    if (!el) return null;
-    const b = el.getBoundingClientRect();
-    if (b.height <= 2) return null;
-    return {x: b.left + b.width / 2, y: b.top + b.height / 2};
-  };
+_SCROLL_OWNER_STATE = """() => [
+  '.raya-course-map',
+  '.raya-course-map-body',
+  '.raya-course-map-navigation',
+  '.raya-course-actions',
+  '.raya-course-content',
+  '.raya-course-map-list'
+].map(selector => {
+  const node = document.querySelector(selector);
   return {
-    header: centre(q('.raya-course-map-header')),
-    tools: centre(q('.raya-course-rail-tools')),
-    filter: centre(q('.raya-course-map-filter')),
-    index: centre(q('.raya-course-map-list')),
+    selector,
+    overflowY: getComputedStyle(node).overflowY,
+    clientHeight: node.clientHeight,
+    scrollHeight: node.scrollHeight
   };
-}"""
-
-_SCROLL_STATE = """() => [
-  document.querySelector('.raya-course-map-list').scrollTop,
-  window.scrollY,
-  document.querySelector('.raya-course-map').scrollTop,
-]"""
+})"""
 
 
-@pytest.mark.parametrize(
-    "fixture",
-    [RENDER_FIXTURE, DENSITY_FIXTURE],
-    ids=["render-fixture", "density-fixture"],
-)
-def test_wheel_over_any_rail_region_moves_something(
-    tmp_path: Path, fixture: Path
+def _expand_course_map_branches(page) -> None:
+    toggles = page.locator(
+        '[data-raya-map-node-toggle][aria-expanded="false"]'
+    )
+    guard = 0
+    while toggles.count() > 0 and guard < 200:
+        toggles.first.evaluate("button => button.click()")
+        guard += 1
+    page.wait_for_timeout(200)
+    assert toggles.count() == 0, "guard exhausted before draining all toggles"
+
+
+@pytest.mark.parametrize("width", [1440, 894, 893, 640])
+def test_course_map_has_a_single_scroll_owner(
+    tmp_path: Path, width: int
 ) -> None:
-    """No region of the expanded course rail may swallow a wheel gesture.
-
-    Regression: .raya-course-map carried overflow:auto AND
-    overscroll-behavior:contain while never overflowing, so Chrome treated it
-    as a scroll container with nowhere to put the delta. Wheeling over the
-    header, the tools row, or the filter moved NOTHING -- not the rail, not
-    the page -- which reads as "scrolling is broken".
-
-    Parametrised over render-fixture (a six-page tree that, since Task 5
-    freed ~57.6px of fixed rail chrome, now fits the rail at a 900px
-    viewport without overflowing) and density-fixture (a 30+-page tree that
-    still overflows it once fully expanded). overscroll-behavior:contain was
-    removed from .raya-course-map-list for the same "swallowed by a
-    non-overflowing scroll container" reason -- this covers both a tree that
-    fits and one that overflows, so that removal cannot regress "scrolling
-    does nothing" on either course size.
-    """
+    """Only the central navigation may own expanded-rail vertical scroll."""
     from playwright.sync_api import sync_playwright
 
-    handle = _preview(tmp_path, fixture)
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -111,76 +98,28 @@ def test_wheel_over_any_rail_region_moves_something(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page = browser.new_page(viewport={"width": width, "height": 640})
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
+                _expand_course_map_branches(page)
 
-                if fixture is DENSITY_FIXTURE:
-                    # Expand every branch so the tree is fully realised and
-                    # genuinely overflows the rail. Re-query `.first` after
-                    # every click rather than indexing a count taken before
-                    # any clicks: see test_density_fixture_renders_a_deep_
-                    # wide_map for why a fixed range() loop goes stale.
-                    toggles = page.locator(
-                        '[data-raya-map-node-toggle][aria-expanded="false"]'
-                    )
-                    guard = 0
-                    while toggles.count() > 0 and guard < 200:
-                        toggles.first.click()
-                        guard += 1
-                    page.wait_for_timeout(200)
-                    assert toggles.count() == 0, (
-                        "guard exhausted before draining all node toggles"
-                    )
-
-                # Positive anchor: the rail is expanded and the tree rendered,
-                # so a "nothing moved" result below is a real dead zone and not
-                # an empty or collapsed rail where nothing could move anyway.
-                assert page.locator(".raya-course-map-list a").count() >= 3
-                assert page.locator("[data-raya-course-map-collapse]").count() == 1
-
-                zones = page.evaluate(_ZONES)
-                outcomes = {}
-                for name in ("header", "tools", "filter", "index"):
-                    point = zones[name]
-                    assert point is not None, f"{name} zone not rendered"
-                    page.evaluate(
-                        """() => {
-                          document.querySelector('.raya-course-map-list')
-                            .scrollTop = 0;
-                          document.querySelector('.raya-course-map')
-                            .scrollTop = 0;
-                          window.scrollTo(0, 0);
-                        }"""
-                    )
-                    page.wait_for_timeout(120)
-                    before = page.evaluate(_SCROLL_STATE)
-                    page.mouse.move(point["x"], point["y"])
-                    page.mouse.wheel(0, 400)
-                    page.wait_for_timeout(300)
-                    after = page.evaluate(_SCROLL_STATE)
-                    if after[0] > before[0]:
-                        outcomes[name] = "index"
-                    elif after[2] > before[2]:
-                        outcomes[name] = "frame"
-                    elif after[1] > before[1]:
-                        outcomes[name] = "page"
-                    else:
-                        outcomes[name] = "dead"
-
-                assert "dead" not in outcomes.values(), outcomes
-                if fixture is DENSITY_FIXTURE:
-                    # This tree overflows the rail, so the index must keep
-                    # its own scroll window rather than chain into the page.
-                    assert outcomes["index"] == "index", outcomes
-                else:
-                    # This tree fits the rail without overflowing, so either
-                    # the index scrolls itself (if it's borderline) or the
-                    # page scrolls cleanly underneath it -- either is fine,
-                    # "dead" is not.
-                    assert outcomes["index"] in {"index", "page"}, outcomes
+                owners = page.evaluate(_SCROLL_OWNER_STATE)
+                declared = [
+                    item["selector"]
+                    for item in owners
+                    if item["overflowY"] in {"auto", "scroll"}
+                ]
+                assert declared == [".raya-course-map-navigation"], owners
+                navigation = next(
+                    item
+                    for item in owners
+                    if item["selector"] == ".raya-course-map-navigation"
+                )
+                assert navigation["scrollHeight"] > navigation["clientHeight"], (
+                    navigation
+                )
                 page.close()
             finally:
                 browser.close()
@@ -188,39 +127,96 @@ def test_wheel_over_any_rail_region_moves_something(
         handle.close()
 
 
-_HEADER_BOXES = """() => {
-  const box = (sel) => {
-    const el = document.querySelector(sel);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return {
-      w: Math.round(r.width * 100) / 100,
-      h: Math.round(r.height * 100) / 100,
-      top: Math.round(r.top * 100) / 100,
-      left: Math.round(r.left * 100) / 100,
-      right: Math.round(r.right * 100) / 100,
-    };
-  };
-  return {
-    mapHeader: box('.raya-course-map-header'),
-    railHeader: box('.raya-learning-rail-header'),
-    map: box('.raya-course-map'),
-    rail: box('.raya-learning-rail'),
-  };
-}"""
+@pytest.mark.parametrize("width", [1440, 894, 893, 640])
+def test_course_map_header_footer_stay_fixed_while_navigation_scrolls(
+    tmp_path: Path, width: int
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": width, "height": 640})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.wait_for_timeout(400)
+                _expand_course_map_branches(page)
+
+                before = page.evaluate(
+                    """() => {
+                      const rect = selector => {
+                        const box = document.querySelector(selector)
+                          .getBoundingClientRect();
+                        return {
+                          top: box.top,
+                          right: box.right,
+                          bottom: box.bottom,
+                          left: box.left,
+                          width: box.width,
+                          height: box.height
+                        };
+                      };
+                      const navigation = document.querySelector(
+                        '.raya-course-map-navigation'
+                      );
+                      return {
+                        header: rect('.raya-course-map-header'),
+                        footer: rect('.raya-course-map-footer'),
+                        navigationScrollTop: navigation.scrollTop
+                      };
+                    }"""
+                )
+                after = page.evaluate(
+                    """() => {
+                      const rect = selector => {
+                        const box = document.querySelector(selector)
+                          .getBoundingClientRect();
+                        return {
+                          top: box.top,
+                          right: box.right,
+                          bottom: box.bottom,
+                          left: box.left,
+                          width: box.width,
+                          height: box.height
+                        };
+                      };
+                      const navigation = document.querySelector(
+                        '.raya-course-map-navigation'
+                      );
+                      navigation.scrollTop = (
+                        navigation.scrollHeight - navigation.clientHeight
+                      ) / 2;
+                      return {
+                        header: rect('.raya-course-map-header'),
+                        footer: rect('.raya-course-map-footer'),
+                        navigationScrollTop: navigation.scrollTop
+                      };
+                    }"""
+                )
+                assert after["header"] == before["header"]
+                assert after["footer"] == before["footer"]
+                assert (
+                    after["navigationScrollTop"]
+                    > before["navigationScrollTop"]
+                )
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
-def test_both_rails_gain_content_width_without_breaking_parity(
+def test_course_map_uses_256px_expanded_geometry(
     tmp_path: Path,
 ) -> None:
-    """The gutter is dropped from BOTH rail frames or neither.
-
-    scrollbar-gutter:stable reserves ~15px in each rail frame even when the
-    frame never scrolls. Dropping it widens the content box from 191px to
-    206px -- but dropping it from only one rail makes the two rail headers
-    206px vs 191px, breaking the width and inset halves of the pinned
-    outer-geometry parity contract.
-    """
+    """The left rail consumes its shared 256px token in every structural band."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path)
@@ -232,7 +228,7 @@ def test_both_rails_gain_content_width_without_breaking_parity(
                 args=["--no-sandbox"],
             )
             try:
-                for width in (894, 1279, 1280, 1440):
+                for width in (640, 893, 894, 1279, 1280, 1440):
                     page = browser.new_page(
                         viewport={"width": width, "height": 950}
                     )
@@ -241,32 +237,33 @@ def test_both_rails_gain_content_width_without_breaking_parity(
                         wait_until="networkidle",
                     )
                     page.wait_for_timeout(400)
-                    boxes = page.evaluate(_HEADER_BOXES)
-                    map_header = boxes["mapHeader"]
-                    rail_header = boxes["railHeader"]
-                    assert map_header is not None and rail_header is not None
-
-                    # Parity: width, height, top, and both insets.
-                    assert abs(map_header["w"] - rail_header["w"]) <= 1, (
-                        width,
-                        boxes,
+                    geometry = page.evaluate(
+                        """() => {
+                          const map = document.querySelector('.raya-course-map');
+                          const body = document.querySelector(
+                            '.raya-course-map-body'
+                          );
+                          const navigation = document.querySelector(
+                            '.raya-course-map-navigation'
+                          );
+                          const mapRect = map.getBoundingClientRect();
+                          const bodyRect = body.getBoundingClientRect();
+                          const navigationRect = navigation.getBoundingClientRect();
+                          return {
+                            mapWidth: mapRect.width,
+                            bodyLeft: bodyRect.left,
+                            bodyRight: bodyRect.right,
+                            navigationLeft: navigationRect.left,
+                            navigationRight: navigationRect.right,
+                            documentOverflow:
+                              document.documentElement.scrollWidth - innerWidth
+                          };
+                        }"""
                     )
-                    assert abs(map_header["h"] - rail_header["h"]) <= 1, (
-                        width,
-                        boxes,
-                    )
-                    assert abs(map_header["top"] - rail_header["top"]) <= 1, (
-                        width,
-                        boxes,
-                    )
-                    left_inset = map_header["left"] - boxes["map"]["left"]
-                    right_inset = boxes["rail"]["right"] - rail_header["right"]
-                    assert abs(left_inset - right_inset) <= 1, (width, boxes)
-
-                    # Outcome: the gutter is gone, so each header is wider
-                    # than the 191px it measured while the gutter was
-                    # reserved.
-                    assert map_header["w"] >= 200, (width, boxes)
+                    assert 255 <= geometry["mapWidth"] <= 257, (width, geometry)
+                    assert geometry["navigationLeft"] >= geometry["bodyLeft"] - 1
+                    assert geometry["navigationRight"] <= geometry["bodyRight"] + 1
+                    assert geometry["documentOverflow"] <= 1, (width, geometry)
                     page.close()
             finally:
                 browser.close()

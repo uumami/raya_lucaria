@@ -7,9 +7,8 @@ RAIL_MINI_PX = 48
 RAIL_DESKTOP_PX = 1280
 RAIL_COMPACT_PX = 768
 
-# defaultRailExpanded() (shell.py) drops its isDesktopShell() term because
-# desktop implies approved. That reduction is only valid while this holds,
-# and nothing else enforces it -- make it structural, not coincidental.
+# Desktop geometry assumes the approved structural band is already active.
+# Keep that relationship structural rather than coincidental.
 assert RAIL_DESKTOP_PX > RAIL_APPROVED_PX > RAIL_STRUCTURAL_PX
 
 # The one definition of the effective-state rule, embedded verbatim in BOTH

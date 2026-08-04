@@ -842,15 +842,10 @@ def test_collapsed_rail_never_exceeds_viewport_height(tmp_path):
         handle.close()
 
 
-def test_course_map_tree_keeps_usable_height_on_short_viewports(tmp_path):
-    # The course map's chrome (header, search + command tiles, page position,
-    # filter label, filter) is ~398px of FIXED height. The section tree is the
-    # only flex:1 1 auto item with min-height:0, so it absorbed the entire
-    # squeeze and collapsed to 5px at a 520px-tall viewport -- making the
-    # primary navigation unscrollable and giving the impression that the page
-    # scrolls instead of the rail. The tree must keep a usable window; the
-    # rail (already overflow:auto, max-height:calc(100vh - 2rem)) takes the
-    # overflow instead.
+def test_course_map_navigation_keeps_usable_height_on_short_viewports(tmp_path):
+    # The central navigation must retain a useful viewport between the fixed
+    # header and footer. It is the only vertical scroll owner; the tree remains
+    # ordinary content inside it.
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -868,32 +863,24 @@ def test_course_map_tree_keeps_usable_height_on_short_viewports(tmp_path):
                     page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
                     page.wait_for_timeout(300)
                     geo = page.evaluate("""() => {
+                      const navigation = document.querySelector(
+                        '.raya-course-map-navigation'
+                      );
                       const list = document.querySelector('.raya-course-map-list');
-                      const cs = getComputedStyle(list);
+                      const navigationStyle = getComputedStyle(navigation);
                       return {
-                        h: Math.round(list.getBoundingClientRect().height),
-                        overflowY: cs.overflowY,
-                        overscroll: cs.overscrollBehaviorY,
+                        h: Math.round(navigation.getBoundingClientRect().height),
+                        navigationOverflowY: navigationStyle.overflowY,
+                        navigationOverscroll: navigationStyle.overscrollBehaviorY,
+                        listOverflowY: getComputedStyle(list).overflowY,
                       };
                     }""")
-                    # A tree window smaller than this cannot show even a few
-                    # rows and reads as "scrolling does nothing".
+                    # A navigation window smaller than this cannot show even a
+                    # few rows and reads as "scrolling does nothing".
                     assert geo["h"] >= 160, (height, geo)
-                    # The tree keeps its own scroll window at every height.
-                    assert geo["overflowY"] == "auto", (height, geo)
-                    # overscroll-behavior:contain was deliberately removed
-                    # from .raya-course-map-list (2026-07-29
-                    # reader-rail-density, Task 5): once the rail's fixed
-                    # chrome got short enough, a short course's tree could
-                    # fit without overflowing, and a non-overflowing
-                    # overflow:auto + overscroll-behavior:contain element
-                    # still gets swallowed by Chrome on wheel -- reintroducing
-                    # exactly "scrolling does nothing", the failure mode this
-                    # test exists to guard against. The real, user-facing
-                    # property (no dead wheel zones, on both a tree that
-                    # fits and one that overflows) is now enforced by
-                    # tests/e2e/test_rail_density.py::
-                    # test_wheel_over_any_rail_region_moves_something.
+                    assert geo["navigationOverflowY"] == "auto", (height, geo)
+                    assert geo["navigationOverscroll"] == "auto", (height, geo)
+                    assert geo["listOverflowY"] == "visible", (height, geo)
                     page.close()
             finally:
                 browser.close()

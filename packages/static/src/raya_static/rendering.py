@@ -4003,18 +4003,10 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
 .raya-course-map {
   align-self: start;
   grid-area: course-map;
-  max-height: calc(100vh - 2rem);
-  /* No overscroll-behavior here. The frame declares overflow:auto as a
-     relief valve for enlarged root fonts, but normally scrollHeight ==
-     clientHeight. Chrome still treats it as a scroll container, so
-     `contain` swallowed every wheel gesture over the header, tools row and
-     filter -- 41% of the rail where nothing moved. Containment belongs on
-     .raya-course-map-list, which actually scrolls. */
-  /* No scrollbar-gutter either: it reserved ~15px in a frame that almost
-     never scrolls, costing 15px of label column. It is kept on
-     .raya-course-map-list, the real scroller, so the tree's scrollbar does
-     not shift labels. Must stay symmetric with .raya-learning-rail. */
-  overflow: auto;
+  --raya-shell-block-offset: 2rem;
+  inline-size: calc(__RAYA_RAIL_EXPANDED_PX__ * 1px);
+  max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
+  overflow: clip;
 }
 html[data-raya-shell-ready="true"] .raya-course-map {
   transition: border-color 180ms ease, box-shadow 180ms ease, max-height 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
@@ -4092,9 +4084,33 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-height: 3.625rem;
   padding-bottom: 0.75rem;
 }
+.raya-course-map-header {
+  block-size: 48px;
+  min-block-size: 48px;
+}
 .raya-course-map-body {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 48px;
+  min-block-size: 0;
+  overflow: clip;
+}
+.raya-course-map-navigation {
+  min-block-size: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+}
+.raya-course-map-footer {
+  block-size: 48px;
+  min-block-size: 48px;
+}
+.raya-course-actions,
+.raya-course-content,
+.raya-course-map-list {
+  max-block-size: none;
+  overflow: visible;
+}
+html[data-raya-course-map="expanded"] .raya-course-map-mini {
+  display: none;
 }
 .raya-course-map-expand {
   display: none;
@@ -4125,7 +4141,6 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   word-break: normal;
 }
 @media (min-width: __RAYA_APPROVED_PX__px) {
-  .raya-course-map-header,
   .raya-learning-rail-header {
     min-height: 3.9375rem;
   }
@@ -4206,22 +4221,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-height: 0;
   display: grid;
   gap: 0.15rem;
-  /* No overscroll-behavior here either. Containment is only safe on an
-     element guaranteed to overflow, and this list is not guaranteed to:
-     once the rail's fixed chrome is short enough (Task 5,
-     2026-07-29-reader-rail-density, freed ~57.6px by dropping the
-     duplicated page-position paragraph), a short course's tree can fit
-     without scrolling. A non-overflowing overflow:auto element with
-     overscroll-behavior:contain still gets treated as a scroll container
-     by Chrome, so `contain` swallows the wheel gesture over it entirely --
-     the same mechanism .raya-course-map itself was fixed for above. What
-     we give up: scroll chaining is no longer blocked at the end of a long
-     index, so the page keeps scrolling once the tree bottoms out. That is
-     standard behaviour on most sites and strictly better than a dead
-     control. */
-  overflow: auto;
   padding-right: 0.2rem;
-  scrollbar-gutter: stable;
 }
 .raya-course-rail-tools {
   border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 72%, transparent);
@@ -5349,7 +5349,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
      __RAYA_DESKTOP_PX__ layer below) — reusing it here is the overflow
      trap this layer exists to avoid. */
   html[data-raya-course-map="expanded"] {
-    --raya-map-col: 15rem;
+    --raya-map-col: calc(__RAYA_RAIL_EXPANDED_PX__ * 1px);
     --raya-map-gap: 1.5rem;
   }
   html[data-raya-course-map="collapsed"] {
@@ -6258,10 +6258,8 @@ mjx-container[display="true"] {
   .raya-course-map,
   .raya-learning-rail {
     margin-bottom: 1rem;
-    overflow: auto;
     position: static;
   }
-  .raya-course-map,
   .raya-learning-rail {
     max-height: none;
   }
@@ -6278,28 +6276,32 @@ mjx-container[display="true"] {
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map {
     all: revert;
+    --raya-shell-block-offset: 0px;
     background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-page));
     border: 1px solid color-mix(in srgb, var(--raya-color-border) 62%, var(--raya-color-page));
     border-radius: 0 0.875rem 0.875rem 0;
     box-sizing: border-box;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
     color: var(--raya-color-text);
-    display: block;
+    display: grid;
     font-family: var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 1rem;
     line-height: 1.6;
     left: 0;
     margin: 0;
-    max-height: 100vh;
+    grid-template-rows: 48px minmax(0, 1fr);
+    block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
+    max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
     max-width: calc(100vw - 1rem);
-    overflow: auto;
-    overscroll-behavior: contain;
+    overflow: clip;
     padding: 0;
     position: fixed;
     right: auto;
-    scrollbar-gutter: stable;
     top: 0;
-    width: min(17.25rem, calc(100vw - 1rem));
+    width: min(
+      calc(__RAYA_RAIL_EXPANDED_PX__ * 1px),
+      calc(100vw - 1rem)
+    );
     z-index: 80;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-header,
@@ -6369,9 +6371,6 @@ mjx-container[display="true"] {
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
   html[data-raya-course-map-drawer="open"] .raya-map-filter-empty {
     display: none;
-  }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-list {
-    max-height: min(18rem, calc(100vh - 8rem));
   }
   html[data-raya-course-map-drawer="open"] .raya-course-rail-command-list {
     gap: 0.3125rem;
@@ -6506,14 +6505,14 @@ mjx-container[display="true"] {
   .raya-course-map {
     clip: auto;
     clip-path: none;
-    display: flex;
-    flex-direction: column;
+    --raya-shell-block-offset: 1.5rem;
+    display: grid;
+    grid-template-rows: 48px minmax(0, 1fr);
     grid-area: auto;
     height: calc(100vh - 1.5rem);
     left: 0.75rem;
     margin: 0;
-    max-height: none;
-    overflow: auto;
+    overflow: clip;
     padding: var(--raya-space-panel);
     position: fixed;
     top: 0.75rem;
@@ -6552,10 +6551,6 @@ mjx-container[display="true"] {
   html[data-raya-course-map-drawer="closed"] .raya-course-rail-tools,
   .raya-course-rail-tools {
     display: grid;
-  }
-  .raya-course-map-list {
-    flex: 1 1 auto;
-    max-height: none;
   }
   .raya-course-map,
   .raya-learning-rail {
@@ -6725,8 +6720,8 @@ mjx-container[display="true"] {
 @media (min-width: __RAYA_STRUCTURAL_PX__px) {
   html[data-raya-course-map-drawer="closed"] .raya-course-map,
   .raya-course-map {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: 48px minmax(0, 1fr);
     padding-inline: 0;
   }
   .raya-learning-rail {
@@ -6754,20 +6749,10 @@ mjx-container[display="true"] {
     scrollbar-gutter: stable;
   }
   .raya-course-map-body {
-    flex: 1 1 auto;
     min-height: 0;
   }
   .raya-course-map-list {
-    flex: 1 1 auto;
-    /* The rail's chrome (header, tools, page position, filter) is ~398px of
-       FIXED height, and the tree is the only flexible item -- so without a
-       floor it absorbs the entire squeeze and collapses (measured 5px at a
-       520px-tall viewport), making the primary navigation unusable. The
-       floor pushes the overflow up to .raya-course-map, which already
-       declares overflow:auto and max-height:calc(100vh - 2rem) but never
-       reached them because the tree swallowed every pixel first. Tall
-       viewports are unaffected: flex grow still sizes the tree above this. */
-    min-height: 12rem;
+    min-height: 0;
   }
   .raya-course-map-list a {
     /* Scoped to >=640: below that, the course-map drawer is a full-width
@@ -6928,8 +6913,16 @@ mjx-container[display="true"] {
   .raya-learning-rail {
     width: min(15.75rem, calc(100vw - 3rem));
   }
+  .raya-course-map {
+    width: min(
+      calc(__RAYA_RAIL_EXPANDED_PX__ * 1px),
+      calc(100vw - 3rem)
+    );
+  }
   html[data-raya-course-map="expanded"] .raya-learning-shell {
-    padding-left: calc(min(15.75rem, calc(100vw - 3rem)) + 1rem);
+    padding-left: calc(
+      min(calc(__RAYA_RAIL_EXPANDED_PX__ * 1px), calc(100vw - 3rem)) + 1rem
+    );
   }
   html[data-raya-learning-rail="expanded"] .raya-learning-shell {
     padding-right: calc(min(15.75rem, calc(100vw - 3rem)) + 1rem);

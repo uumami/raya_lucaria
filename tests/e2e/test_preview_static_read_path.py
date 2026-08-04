@@ -11900,9 +11900,15 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                             f"{handle.base_url}/reader-ux/index.html",
                             wait_until="networkidle",
                         )
-                        page.click("#raya-course-map .raya-text-size-toggle")
-                        page.click("#raya-course-map .raya-text-size-toggle")
-                        page.click("#raya-course-map .raya-font-toggle")
+                        text_size = page.locator(
+                            ".raya-course-map-footer .raya-text-size-toggle"
+                        )
+                        open_dyslexic = page.locator(
+                            ".raya-course-map-footer .raya-font-toggle"
+                        )
+                        text_size.evaluate("button => button.click()")
+                        text_size.evaluate("button => button.click()")
+                        open_dyslexic.evaluate("button => button.click()")
                         page.wait_for_function(
                             """() => document.documentElement
                               .getAttribute('data-raya-text-size') === 'x-large'
@@ -11966,7 +11972,7 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                                         rail: box('#raya-learning-rail'),
                                         commandWritingModes: Array.from(
                                           document.querySelectorAll(
-                                            '.raya-course-rail-command .raya-command-label'
+                                            '.raya-course-action .raya-command-label'
                                           )
                                         ).map((label) => getComputedStyle(label).writingMode),
                                         overflow: Math.ceil(
@@ -11975,26 +11981,25 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
                                       };
                                     }"""
                                 )
-                                assert abs(
-                                    state["map"]["width"] - state["rail"]["width"]
-                                ) <= 1
+                                assert 255 <= state["map"]["width"] <= 257
+                                assert 239 <= state["rail"]["width"] <= 241
                                 assert state["map"]["right"] <= (
                                     state["article"]["left"] + 1
                                 )
                                 assert state["article"]["right"] <= (
                                     state["rail"]["left"] + 1
                                 )
-                                # At exactly 894 both rails still cost their full
-                                # 15rem + 1.5rem gutter tracks, squeezing the
-                                # article to its real settled floor (~334px =
-                                # 894 - 32 padding - 240 map - 24 gap - 240 rail
-                                # - 24 gap); 320 allows minor sub-pixel/font
+                                # At exactly 894 the 256px course rail and 240px
+                                # learning rail still cost their full 1.5rem
+                                # gutter tracks, squeezing the article to its
+                                # real settled floor (~318px). 300 allows minor
+                                # sub-pixel/font
                                 # variance. 1279 already has generous room and
                                 # 1280 reintroduces the 42rem comfort floor.
                                 assert state["article"]["width"] >= (
                                     672
                                     if width == 1280
-                                    else 320
+                                    else 300
                                     if width == 894
                                     else 380
                                 )
