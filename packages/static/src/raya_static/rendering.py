@@ -6886,8 +6886,8 @@ mjx-container[display="true"] {
   }
   .raya-course-map-mini > a:focus-visible,
   .raya-course-map-mini > button:focus-visible {
-    outline: 2px solid var(--raya-color-accent);
-    outline-offset: -2px;
+    outline: 3px solid var(--raya-color-accent);
+    outline-offset: -3px;
   }
   .raya-course-map-mini .raya-command-icon {
     background: transparent;

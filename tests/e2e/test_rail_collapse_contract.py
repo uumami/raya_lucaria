@@ -607,6 +607,76 @@ def test_collapsed_course_map_is_a_structural_mini_rail(tmp_path):
         handle.close()
 
 
+def test_mini_controls_have_unclipped_three_pixel_focus_indicators(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 640, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.click("[data-raya-course-map-collapse]")
+                page.wait_for_timeout(320)
+                controls = page.locator(
+                    ".raya-course-map-mini > a, .raya-course-map-mini > button"
+                )
+                assert controls.count() == 4
+                # Collapse moves focus to Expand. Enter keyboard modality and
+                # move backward once so all four controls are exercised in DOM order.
+                page.keyboard.press("Shift+Tab")
+                for index in range(controls.count()):
+                    control = controls.nth(index)
+                    before = control.bounding_box()
+                    state = control.evaluate(
+                        """control => {
+                          const style = getComputedStyle(control);
+                          const box = control.getBoundingClientRect();
+                          const mini = control.closest('.raya-course-map-mini')
+                            .getBoundingClientRect();
+                          return {
+                            outlineStyle: style.outlineStyle,
+                            outlineWidth: parseFloat(style.outlineWidth),
+                            outlineOffset: parseFloat(style.outlineOffset),
+                            focused: document.activeElement === control,
+                            box: {
+                              x: box.x,
+                              y: box.y,
+                              width: box.width,
+                              height: box.height,
+                            },
+                            contained:
+                              box.left >= mini.left && box.right <= mini.right
+                              && box.top >= mini.top && box.bottom <= mini.bottom,
+                          };
+                        }"""
+                    )
+                    assert state["focused"] is True, (index, state)
+                    assert state["outlineStyle"] != "none", (index, state)
+                    assert state["outlineWidth"] >= 3, (index, state)
+                    assert state["outlineOffset"] <= -state["outlineWidth"], (
+                        index,
+                        state,
+                    )
+                    assert state["contained"] is True, (index, state)
+                    assert before == state["box"], (index, before, state)
+                    page.keyboard.press("Tab")
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_mini_and_footer_comfort_controls_stay_synchronized(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
