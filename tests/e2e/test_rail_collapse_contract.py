@@ -493,7 +493,43 @@ def _collapsed_chip(page, rail_sel):
     )
 
 
-def test_collapsed_rails_are_single_clean_chips(tmp_path):
+def _collapsed_course_map_state(page):
+    return page.evaluate(
+        """() => {
+          const rail = document.querySelector('#raya-course-map');
+          const mini = rail.querySelector('[data-raya-course-map-mini]');
+          const header = rail.querySelector('.raya-course-map-header');
+          const body = rail.querySelector('#raya-course-map-body');
+          const article = document.querySelector('#raya-article');
+          const railBox = rail.getBoundingClientRect();
+          const miniBox = mini.getBoundingClientRect();
+          const articleBox = article.getBoundingClientRect();
+          const visibleControls = Array.from(mini.querySelectorAll('a,button')).filter(
+            (control) => control.checkVisibility()
+          );
+          const tabbables = Array.from(
+            body.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]')
+          ).filter((element) => element.tabIndex >= 0 && !element.disabled);
+          return {
+            railWidth: railBox.width,
+            miniVisible: mini.checkVisibility(),
+            miniWidth: miniBox.width,
+            miniLabels: visibleControls.map(
+              (control) => control.getAttribute('aria-label') || control.textContent.trim()
+            ),
+            bodyHidden: body.getAttribute('aria-hidden'),
+            bodyInert: body.inert && body.hasAttribute('inert'),
+            bodyTabbables: tabbables.length,
+            headerHidden: header.getAttribute('aria-hidden'),
+            headerInert: header.inert && header.hasAttribute('inert'),
+            articleDoesNotIntersectMini:
+              articleBox.left >= miniBox.right || articleBox.right <= miniBox.left,
+          };
+        }"""
+    )
+
+
+def test_collapsed_course_map_is_a_structural_mini_rail(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -506,46 +542,72 @@ def test_collapsed_rails_are_single_clean_chips(tmp_path):
             browser = p.chromium.launch(executable_path=str(_browser_executable()),
                                         headless=True, args=["--no-sandbox"])
             try:
-                tops_left = []
-                tops_right = []
-                for width in (768, 894, 1280, 1440):
+                for width in (640, 768, 894, 1280, 1440):
                     page = browser.new_page(viewport={"width": width, "height": 900})
                     page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
-                    # Drive both rails collapsed via their html state.
-                    page.evaluate("""() => {
-                      const r = document.documentElement;
-                      r.dataset.rayaCourseMap = 'collapsed';
-                      r.dataset.rayaLearningRail = 'collapsed';
-                    }""")
+                    expanded = page.evaluate(
+                        """() => {
+                          const mini = document.querySelector('[data-raya-course-map-mini]');
+                          return {
+                            display: getComputedStyle(mini).display,
+                            ariaHidden: mini.getAttribute('aria-hidden'),
+                            inert: mini.inert && mini.hasAttribute('inert'),
+                          };
+                        }"""
+                    )
+                    assert expanded == {
+                        "display": "none",
+                        "ariaHidden": "true",
+                        "inert": True,
+                    }, (width, expanded)
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap
+                          === 'collapsed'"""
+                    )
                     page.wait_for_timeout(320)
-                    left = _collapsed_chip(page, "#raya-course-map")
-                    right = _collapsed_chip(page, "#raya-learning-rail")
-                    for side in (left, right):
-                        assert side["controlCount"] == 1, (width, side)
-                        assert 36 <= side["w"] <= 48 and 36 <= side["h"] <= 48, (width, side)
-                        assert side["headerShown"] is False, (width, side)
-                        assert side["bodyShown"] is False, (width, side)
-                    assert left["w"] == right["w"] and left["h"] == right["h"], (width, left, right)
-                    tops_left.append(left["top"])
-                    tops_right.append(right["top"])
+                    state = _collapsed_course_map_state(page)
+                    assert 47 <= state["railWidth"] <= 49, (width, state)
+                    assert 47 <= state["miniWidth"] <= 49, (width, state)
+                    assert state["miniVisible"] is True, (width, state)
+                    assert state["miniLabels"] == [
+                        "Back to course",
+                        "Expand course map",
+                        "Text size: normal",
+                        "Toggle OpenDyslexic font",
+                    ], (width, state)
+                    assert state["bodyHidden"] == "true", (width, state)
+                    assert state["bodyInert"] is True, (width, state)
+                    assert state["bodyTabbables"] == 0, (width, state)
+                    assert state["headerHidden"] == "true", (width, state)
+                    assert state["headerInert"] is True, (width, state)
+                    assert state["articleDoesNotIntersectMini"] is True, (width, state)
+
+                    mini_snapshot = page.locator(
+                        "[data-raya-course-map-mini]"
+                    ).aria_snapshot()
+                    body_snapshot = page.locator("#raya-course-map-body").aria_snapshot()
+                    for label in state["miniLabels"]:
+                        assert label in mini_snapshot, (width, mini_snapshot)
+                    assert body_snapshot == "", (width, body_snapshot)
                     overflow = page.evaluate(
                         "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
                     assert overflow <= 1, (width, overflow)
                     page.close()
-                # Chip vertical placement is width-invariant across the whole
-                # >=640 band — no per-band top offset (guards against
-                # reintroducing e.g. a vertically-centered desktop band).
-                assert len(set(tops_left)) == 1, tops_left
-                assert len(set(tops_right)) == 1, tops_right
+
+                page = browser.new_page(viewport={"width": 639, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                assert page.locator("[data-raya-course-map-mini]").evaluate(
+                    "mini => getComputedStyle(mini).display"
+                ) == "none"
+                page.close()
             finally:
                 browser.close()
     finally:
         handle.close()
 
 
-def test_collapse_via_real_clicks_produces_clean_chips(tmp_path):
-    # The dataset-driven test bypasses every toggle handler. This drives the
-    # real interaction path: handler -> state -> persistence -> appearance.
+def test_mini_and_footer_comfort_controls_stay_synchronized(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -557,35 +619,41 @@ def test_collapse_via_real_clicks_produces_clean_chips(tmp_path):
             browser = p.chromium.launch(executable_path=str(_browser_executable()),
                                         headless=True, args=["--no-sandbox"])
             try:
-                for width in (894, 1280, 1440):
-                    page = browser.new_page(viewport={"width": width, "height": 900})
-                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
-                    # [data-raya-course-map-toggle] matches three elements (the
-                    # mobile-open button, the desktop "Hide map" collapse
-                    # button, and the collapsed-state expand chip); the
-                    # legacy page.click(selector) API picks the first DOM
-                    # match regardless of visibility, which is the
-                    # mobile-only button hidden at these widths. Target the
-                    # unique, always-present desktop collapse control
-                    # instead, mirroring [data-raya-learning-rail-collapse].
-                    page.click("[data-raya-course-map-collapse]")
-                    page.click("[data-raya-learning-rail-collapse]")
-                    page.wait_for_timeout(320)  # past the 240ms transition
-                    state = page.evaluate("""() => {
-                      const r = document.documentElement;
-                      return { map: r.dataset.rayaCourseMap,
-                               rail: r.dataset.rayaLearningRail };
-                    }""")
-                    assert state == {"map": "collapsed", "rail": "collapsed"}, (width, state)
-                    for sel in ("#raya-course-map", "#raya-learning-rail"):
-                        side = _collapsed_chip(page, sel)
-                        assert side["controlCount"] == 1, (width, sel, side)
-                        assert side["headerShown"] is False, (width, sel, side)
-                        assert side["bodyShown"] is False, (width, sel, side)
-                    overflow = page.evaluate(
-                        "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)")
-                    assert overflow <= 1, (width, overflow)
-                    page.close()
+                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.evaluate("() => localStorage.clear()")
+                page.click("[data-raya-course-map-collapse]")
+                page.wait_for_timeout(320)
+                page.click(".raya-course-map-mini .raya-text-size-toggle")
+                page.click(".raya-course-map-mini .raya-font-toggle")
+                state = page.evaluate("""() => {
+                  const attrs = (selector) => Array.from(
+                    document.querySelectorAll(selector),
+                    (button) => ({
+                      label: button.getAttribute('aria-label'),
+                      pressed: button.getAttribute('aria-pressed'),
+                    })
+                  );
+                  return {
+                    size: attrs('#raya-course-map .raya-text-size-toggle'),
+                    font: attrs('#raya-course-map .raya-font-toggle'),
+                    storage: Object.keys(localStorage).sort(),
+                    textSize: localStorage.getItem('raya:text-size'),
+                    dyslexic: localStorage.getItem('raya:open-dyslexic'),
+                  };
+                }""")
+                assert state["size"] == [
+                    {"label": "Text size: large", "pressed": "true"},
+                    {"label": "Text size: large", "pressed": "true"},
+                ]
+                assert state["font"] == [
+                    {"label": "Toggle OpenDyslexic font", "pressed": "true"},
+                    {"label": "Toggle OpenDyslexic font", "pressed": "true"},
+                ]
+                assert state["storage"] == ["raya:open-dyslexic", "raya:text-size"]
+                assert state["textSize"] == "large"
+                assert state["dyslexic"] == "true"
+                page.close()
             finally:
                 browser.close()
     finally:

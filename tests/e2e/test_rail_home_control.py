@@ -408,7 +408,7 @@ def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
         handle.close()
 
 
-def test_collapsed_rail_exposes_one_visible_control(tmp_path):
+def test_collapsed_rail_exposes_only_mini_controls(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -452,19 +452,31 @@ def test_collapsed_rail_exposes_one_visible_control(tmp_path):
                           const home = document.querySelector(
                             '.raya-course-map-header a.raya-course-map-home'
                           );
-                          const expand = document.querySelector(
-                            '[data-raya-course-map-expand]'
+                          const mini = document.querySelector(
+                            '[data-raya-course-map-mini]'
+                          );
+                          const labels = Array.from(
+                            mini.querySelectorAll('a,button')
+                          ).filter((control) => control.checkVisibility()).map(
+                            (control) => control.getAttribute('aria-label')
                           );
                           return {
                             headerVisible: header.checkVisibility(),
                             homeVisible: home.checkVisibility(),
-                            expandVisible: expand.checkVisibility(),
+                            miniVisible: mini.checkVisibility(),
+                            labels,
                           };
                         }"""
                     )
                     assert state["headerVisible"] is False
                     assert state["homeVisible"] is False
-                    assert state["expandVisible"] is True
+                    assert state["miniVisible"] is True
+                    assert state["labels"] == [
+                        "Back to course",
+                        "Expand course map",
+                        "Text size: normal",
+                        "Toggle OpenDyslexic font",
+                    ]
                 finally:
                     page.close()
             finally:
@@ -501,7 +513,7 @@ def _serve_directory(directory: Path):
         thread.join(timeout=5)
 
 
-def test_home_control_omitted_when_no_index_root(tmp_path):
+def test_rootless_course_omits_only_the_mini_home_control(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_schema import validate_course
     from raya_static import build_course
@@ -554,6 +566,19 @@ def test_home_control_omitted_when_no_index_root(tmp_path):
                         ).count()
                         == 0
                     )
+                    page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_timeout(320)
+                    assert page.locator(
+                        ".raya-course-map-mini a, .raya-course-map-mini button"
+                    ).evaluate_all(
+                        """controls => controls
+                          .filter((control) => control.checkVisibility())
+                          .map((control) => control.getAttribute('aria-label'))"""
+                    ) == [
+                        "Expand course map",
+                        "Text size: normal",
+                        "Toggle OpenDyslexic font",
+                    ]
                 finally:
                     page.close()
             finally:

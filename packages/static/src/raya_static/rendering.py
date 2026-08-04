@@ -4087,6 +4087,10 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   block-size: 48px;
   min-block-size: 48px;
 }
+.raya-learning-rail-header {
+  block-size: 48px;
+  min-block-size: 48px;
+}
 .raya-course-map-body {
   display: grid;
   grid-template-rows: minmax(0, 1fr) 48px;
@@ -4115,7 +4119,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   max-block-size: none;
   overflow: visible;
 }
-html[data-raya-course-map="expanded"] .raya-course-map-mini {
+.raya-course-map-mini {
   display: none;
 }
 .raya-course-map-expand {
@@ -4145,11 +4149,6 @@ html[data-raya-course-map="expanded"] .raya-course-map-mini {
   min-width: 0;
   overflow-wrap: normal;
   word-break: normal;
-}
-@media (min-width: __RAYA_APPROVED_PX__px) {
-  .raya-learning-rail-header {
-    min-height: 3.9375rem;
-  }
 }
 .raya-learning-rail-body {
   display: grid;
@@ -5447,8 +5446,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     --raya-map-gap: 1.5rem;
   }
   html[data-raya-course-map="collapsed"] {
-    --raya-map-col: 0;
-    --raya-map-gap: 0;
+    --raya-map-col: calc(__RAYA_RAIL_MINI_PX__ * 1px);
+    --raya-map-gap: 1.5rem;
   }
   html[data-raya-learning-rail="expanded"] {
     --raya-rail-col: 15rem;
@@ -5464,9 +5463,6 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     grid-template-columns:
       var(--raya-map-col) var(--raya-map-gap) minmax(0, 1fr)
       var(--raya-rail-gap) var(--raya-rail-col);
-  }
-  html[data-raya-course-map="collapsed"] .raya-learning-shell {
-    padding-left: 3.75rem;
   }
   html[data-raya-learning-rail="collapsed"] .raya-learning-shell {
     padding-right: 3.75rem;
@@ -6648,7 +6644,9 @@ mjx-container[display="true"] {
     padding-right: calc(min(15rem, calc(100vw - 3rem)) + 1rem);
   }
   html[data-raya-course-map="collapsed"] .raya-learning-shell {
-    padding-left: 3.75rem;
+    padding-left: calc(
+      0.75rem + calc(__RAYA_RAIL_MINI_PX__ * 1px) + 1rem
+    );
   }
   html[data-raya-learning-rail="collapsed"] .raya-learning-shell {
     padding-right: 3.75rem;
@@ -6836,21 +6834,77 @@ mjx-container[display="true"] {
     min-height: 0;
   }
   /* --- rail collapse: appearance (single source) --- */
-  /* Collapsed = the header and body are fully removed (display:none, which
-     also drops them from the a11y tree) and the rail container becomes a
-     fixed 2.75rem chip strip holding exactly one visible/interactive
-     control: the 2.5rem chevron expand chip (`>` on the left/course-map,
-     `<` on the right/learning-rail). One vertical placement (top: 0.75rem)
-     applies across the whole >=640 band — no per-band offset. This is the
-     only place collapsed-appearance rules for either rail live; do not
-     reintroduce band-scoped fragments elsewhere. */
   html[data-raya-course-map="collapsed"] .raya-course-map-header,
   html[data-raya-course-map="collapsed"] .raya-course-map-body,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-header,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-body {
     display: none;
   }
-  html[data-raya-course-map="collapsed"] .raya-course-map,
+  html[data-raya-course-map="collapsed"] .raya-course-map {
+    background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
+    border: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
+    box-shadow: 0 0.35rem 0.9rem rgba(31, 35, 40, 0.06);
+    box-sizing: border-box;
+    grid-template-rows: minmax(0, 1fr);
+    inline-size: calc(__RAYA_RAIL_MINI_PX__ * 1px);
+    max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
+    overflow: clip;
+    padding: 0;
+    pointer-events: auto;
+    width: calc(__RAYA_RAIL_MINI_PX__ * 1px);
+  }
+  html[data-raya-course-map="collapsed"] .raya-course-map-mini {
+    align-items: center;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    inline-size: calc(__RAYA_RAIL_MINI_PX__ * 1px);
+    min-block-size: 0;
+    padding-block: 0.25rem;
+  }
+  .raya-course-map-mini > a,
+  .raya-course-map-mini > button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: var(--raya-color-text);
+    cursor: pointer;
+    display: inline-flex;
+    flex: 0 0 40px;
+    font: inherit;
+    inline-size: 40px;
+    justify-content: center;
+    min-block-size: 40px;
+    min-inline-size: 40px;
+    padding: 0;
+  }
+  .raya-course-map-mini > a:hover,
+  .raya-course-map-mini > button:hover {
+    background: color-mix(in srgb, var(--raya-color-accent-soft) 52%, var(--raya-color-surface));
+  }
+  .raya-course-map-mini > a:focus-visible,
+  .raya-course-map-mini > button:focus-visible {
+    outline: 2px solid var(--raya-color-accent);
+    outline-offset: -2px;
+  }
+  .raya-course-map-mini .raya-command-icon {
+    background: transparent;
+    border: 0;
+    block-size: 1rem;
+    inline-size: 1rem;
+    padding: 0;
+  }
+  @media (any-pointer: coarse) {
+    .raya-course-map-mini > a,
+    .raya-course-map-mini > button {
+      flex-basis: 44px;
+      inline-size: 44px;
+      min-block-size: 44px;
+      min-inline-size: 44px;
+    }
+  }
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail {
     align-items: start;
     background: transparent;
@@ -6870,13 +6924,9 @@ mjx-container[display="true"] {
     width: 2.75rem;
     z-index: 45;
   }
-  html[data-raya-course-map="collapsed"] .raya-course-map {
-    left: 0.35rem;
-  }
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail {
     right: 0.35rem;
   }
-  html[data-raya-course-map="collapsed"] .raya-course-map-expand,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand {
     align-items: center;
     background: rgba(255, 255, 255, 0.44);
@@ -6895,8 +6945,6 @@ mjx-container[display="true"] {
     pointer-events: auto;
     width: 2.5rem;
   }
-  html[data-raya-course-map="collapsed"] .raya-course-map-expand:hover,
-  html[data-raya-course-map="collapsed"] .raya-course-map-expand:focus-visible,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:hover,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand:focus-visible {
     background: rgba(255, 255, 255, 0.72);
@@ -6904,12 +6952,6 @@ mjx-container[display="true"] {
     box-shadow: 0 0.55rem 1.1rem rgba(31, 35, 40, 0.14);
     color: var(--raya-color-text);
     opacity: 1;
-  }
-  html[data-raya-course-map="collapsed"] .raya-course-map-expand::after {
-    content: ">";
-    font-size: 1.35rem;
-    font-weight: 900;
-    line-height: 1;
   }
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail-expand::after {
     content: "<";
@@ -6954,6 +6996,9 @@ mjx-container[display="true"] {
   }
   html[data-raya-course-map="collapsed"] .raya-learning-shell {
     grid-template-columns: minmax(0, 1fr);
+    padding-left: calc(
+      0.75rem + calc(__RAYA_RAIL_MINI_PX__ * 1px) + 1rem
+    );
   }
   html[data-raya-course-map="collapsed"][data-raya-learning-rail="expanded"] .raya-learning-shell {
     grid-template-columns: minmax(0, 1fr);

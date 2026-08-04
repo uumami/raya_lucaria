@@ -5044,6 +5044,19 @@ def test_course_map_dynamic_toggle_labels_sync_described_tooltips() -> None:
     assert "tooltip.textContent = label" in shell_js
 
 
+def test_course_map_mini_uses_structural_geometry_and_runtime_inertness() -> None:
+    css = rich_render_css()
+    shell_js = shell_resources().javascript
+
+    assert (
+        'html[data-raya-course-map="collapsed"] .raya-course-map-mini {' in css
+    )
+    assert "inline-size: calc(48 * 1px);" in css
+    assert 'document.querySelector("[data-raya-course-map-mini]")' in shell_js
+    assert "setElementInert(mapMini, !collapsed)" in shell_js
+    assert "setFocusableDescendantsEnabled(mapMini, collapsed)" in shell_js
+
+
 def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

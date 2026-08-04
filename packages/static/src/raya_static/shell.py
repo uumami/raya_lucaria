@@ -24,7 +24,9 @@ _SHELL_JAVASCRIPT = r"""
   __RAYA_RAIL_DERIVATION__
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
+  const mapHeader = document.querySelector(".raya-course-map-header");
   const mapBody = document.querySelector("#raya-course-map-body");
+  const mapMini = document.querySelector("[data-raya-course-map-mini]");
   const mapNavigation = document.querySelector("[data-raya-course-map-navigation]");
   const mapCollapseButton = document.querySelector("[data-raya-course-map-collapse]");
   const mapExpandButton = document.querySelector("[data-raya-course-map-expand]");
@@ -91,7 +93,9 @@ _SHELL_JAVASCRIPT = r"""
   if (
     !shell ||
     !map ||
+    !mapHeader ||
     !mapBody ||
+    !mapMini ||
     !mapNavigation ||
     !mapCollapseButton ||
     !mapExpandButton ||
@@ -118,7 +122,14 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function updateMapLinkTabOrder(nextExpanded) {
+    const collapsed = isStructuralRailShell() && !nextExpanded;
     applyRailBodyInert(mapBody, !nextExpanded);
+    mapHeader.setAttribute("aria-hidden", collapsed ? "true" : "false");
+    setElementInert(mapHeader, collapsed);
+    setFocusableDescendantsEnabled(mapHeader, !collapsed);
+    mapMini.setAttribute("aria-hidden", collapsed ? "false" : "true");
+    setElementInert(mapMini, !collapsed);
+    setFocusableDescendantsEnabled(mapMini, collapsed);
     if (desktopMapQuery.matches) {
       map.removeAttribute("tabindex");
     } else {
@@ -164,12 +175,30 @@ _SHELL_JAVASCRIPT = r"""
     const triggerRect = trigger.getBoundingClientRect();
     const tooltipRect = tooltip.getBoundingClientRect();
     const footer = trigger.closest(".raya-course-map-footer");
+    const mini = trigger.closest(".raya-course-map-mini");
     const anchorTop = footer ? footer.getBoundingClientRect().top : triggerRect.top;
     const viewportGap = 8;
     const triggerGap = 6;
+    const viewportWidth = document.documentElement.clientWidth;
+    if (mini) {
+      const left = Math.min(
+        triggerRect.right + triggerGap,
+        viewportWidth - tooltipRect.width - viewportGap
+      );
+      const top = Math.max(
+        viewportGap,
+        Math.min(
+          triggerRect.top + ((triggerRect.height - tooltipRect.height) / 2),
+          window.innerHeight - tooltipRect.height - viewportGap
+        )
+      );
+      tooltip.style.left = `${Math.round(Math.max(viewportGap, left))}px`;
+      tooltip.style.top = `${Math.round(top)}px`;
+      return;
+    }
     const left = Math.max(
       viewportGap,
-      Math.min(triggerRect.left, window.innerWidth - tooltipRect.width - viewportGap)
+      Math.min(triggerRect.left, viewportWidth - tooltipRect.width - viewportGap)
     );
     const above = anchorTop - tooltipRect.height - triggerGap;
     const below = triggerRect.bottom + triggerGap;
