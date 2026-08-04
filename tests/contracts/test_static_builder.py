@@ -26,8 +26,9 @@ from raya_schema import (
 )
 from raya_static import build_course
 from raya_static import builder as static_builder
+from raya_static.accessibility import open_dyslexic_resources
 from raya_static.math_renderer import MathRenderResult
-from raya_static.rendering import render_markdown_body
+from raya_static.rendering import render_markdown_body, rich_render_css
 from raya_static.shell import shell_resources
 
 
@@ -4990,6 +4991,30 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "colapsar juntos el mapa" not in text
 
 
+def test_course_map_compact_control_resources_replace_legacy_tiles() -> None:
+    rich_css = rich_render_css()
+    accessibility_css = open_dyslexic_resources().css
+    shell_js = shell_resources().javascript
+
+    assert (
+        ".raya-course-actions-list {\n"
+        "  display: grid;\n"
+        "  grid-template-columns: repeat(2, minmax(0, 1fr));"
+    ) in rich_css
+    assert ".raya-course-action {" in rich_css
+    assert "min-block-size: 30px;" in rich_css
+    assert ".raya-course-map-footer {\n  block-size: 48px;" in rich_css
+    assert "grid-template-columns: 1fr 1fr auto;" in rich_css
+    assert ".raya-tooltip {" in rich_css
+    assert ".raya-course-rail-command-list" not in rich_css
+    assert ".raya-course-rail-search.raya-command-search-form" not in rich_css
+    assert "Four columns" not in rich_css
+    assert "Plan" not in rich_css
+    assert rich_css.count("var(--raya-reader-text-scale") == 1
+    assert ".raya-font-toggle:not(.raya-course-rail-command)" not in accessibility_css
+    assert "data-raya-tooltip-dismissed" in shell_js
+
+
 def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
@@ -5120,6 +5145,7 @@ def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None
     assert 'aria-label="Open course graph, 2 links, 0 from this page, 2 links here"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
+
     assert 'data-raya-course-map-close' in html
     assert 'data-raya-course-map-drawer-backdrop hidden' in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
@@ -5909,10 +5935,11 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         encoding="utf-8"
     )
     for selector in (
-        ".raya-course-rail-tools",
-        ".raya-course-rail-search",
-        ".raya-course-rail-command-list",
-        ".raya-course-rail-command",
+        ".raya-course-actions-list",
+        ".raya-course-action",
+        ".raya-course-map-footer",
+        ".raya-course-map-comfort",
+        ".raya-tooltip",
         ".raya-mobile-course-map-open",
         ".raya-command",
         ".raya-command-icon",
@@ -5936,30 +5963,15 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         '[data-raya-learning-rail="collapsed"]',
     ):
         assert selector in css
-    assert ".raya-course-rail-tools" in css
-    assert ".raya-course-rail-command-list" in css
-    assert ".raya-course-rail-command {" in css
+    assert ".raya-course-rail-tools" not in css
+    assert ".raya-course-rail-command-list" not in css
+    assert ".raya-course-rail-command {" not in css
     assert ".raya-course-map-tool-grid" not in css
-    # Scoped, not substring: the bare literal also appears in four unrelated
-    # rules, so the old assertion passed regardless of the rail's layout.
-    # Two .raya-course-rail-command-list blocks exist: the base rule (two
-    # columns, for the <640px mobile drawer, which keeps the row layout
-    # where four narrow columns would wrap labels across many lines) and
-    # the >=640px override next to the caption-under-glyph layout (four
-    # columns, the density change this task makes).
-    rail_blocks = re.findall(
-        r"\.raya-course-rail-command-list \{[^}]*\}", css, re.S
-    )
-    assert rail_blocks
-    assert any(
-        "grid-template-columns: repeat(4, minmax(0, 1fr))" in block
-        for block in rail_blocks
-    ), rail_blocks
-    assert any(
-        "grid-template-columns: repeat(2, minmax(0, 1fr))" in block
-        for block in rail_blocks
-    ), rail_blocks
-    assert "grid-template-columns: repeat(3" not in css
+    action_blocks = re.findall(r"\.raya-course-actions-list \{[^}]*\}", css, re.S)
+    assert len(action_blocks) == 1
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in action_blocks[0]
+    assert "grid-template-columns: repeat(4" not in action_blocks[0]
+    assert "grid-template-columns: repeat(3" not in action_blocks[0]
     assert "height: calc(100vh - 1.5rem)" in css
     assert ".raya-learning-rail" in css
     assert "min-width: 2.75rem" in css

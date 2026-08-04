@@ -12018,6 +12018,220 @@ def test_reader_shell_geometry_survives_large_text_and_open_dyslexic(
         handle.close()
 
 
+def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        url = f"{handle.base_url}/reader-ux/index.html"
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (1440, 894, 893, 390):
+                    page = browser.new_page(viewport={"width": width, "height": 844})
+                    try:
+                        page.goto(url, wait_until="networkidle")
+                        if width == 390:
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                            )
+                        page.wait_for_selector(".raya-course-action", state="visible")
+                        geometry = page.evaluate(
+                            """() => {
+                              const actions = Array.from(
+                                document.querySelectorAll('.raya-course-action')
+                              ).map((action) => {
+                                const rect = action.getBoundingClientRect();
+                                const style = getComputedStyle(action);
+                                return {
+                                  label: action.querySelector('.raya-command-label')
+                                    ?.textContent.trim(),
+                                  left: rect.left,
+                                  top: rect.top,
+                                  right: rect.right,
+                                  bottom: rect.bottom,
+                                  height: rect.height,
+                                  borderedCard: parseFloat(style.borderTopWidth) > 0,
+                                };
+                              });
+                              const footer = document.querySelector(
+                                '.raya-course-map-footer'
+                              ).getBoundingClientRect();
+                              return { actions, footerHeight: footer.height };
+                            }"""
+                        )
+                        assert [item["label"] for item in geometry["actions"]] == [
+                            "Search",
+                            "Graph",
+                            "Practice",
+                            "Tasks",
+                            "Schedule",
+                            "Context",
+                        ]
+                        first_left = geometry["actions"][0]["left"]
+                        second_left = geometry["actions"][1]["left"]
+                        columns = [
+                            0 if abs(item["left"] - first_left) <= 1 else 1
+                            for item in geometry["actions"]
+                        ]
+                        assert second_left > first_left
+                        assert columns == [0, 1, 0, 1, 0, 1]
+                        assert all(
+                            30 <= item["height"] <= 32
+                            for item in geometry["actions"]
+                        )
+                        assert all(
+                            not item["borderedCard"] for item in geometry["actions"]
+                        )
+                        assert geometry["footerHeight"] == 48
+                        assert "Page 5 of 6" in page.locator(
+                            ".raya-course-map-position"
+                        ).aria_snapshot()
+                    finally:
+                        page.close()
+
+                coarse = browser.new_context(
+                    viewport={"width": 390, "height": 844}, has_touch=True
+                )
+                try:
+                    page = coarse.new_page()
+                    page.goto(url, wait_until="networkidle")
+                    assert page.evaluate(
+                        "() => matchMedia('(any-pointer: coarse)').matches"
+                    )
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_selector(".raya-course-action", state="visible")
+                    targets = page.locator(
+                        ".raya-course-action, .raya-course-map-footer button"
+                    )
+                    boxes = [
+                        targets.nth(index).bounding_box()
+                        for index in range(targets.count())
+                    ]
+                    assert all(box is not None and box["height"] >= 44 for box in boxes)
+                    for index, first in enumerate(boxes):
+                        assert first is not None
+                        for second in boxes[index + 1 :]:
+                            assert second is not None
+                            assert not _boxes_overlap(first, second)
+                finally:
+                    coarse.close()
+
+                page = browser.new_page(viewport={"width": 1440, "height": 844})
+                try:
+                    page.goto(url, wait_until="networkidle")
+
+                    def scaled_state() -> dict:
+                        return page.evaluate(
+                            """() => {
+                              const measure = (selector) => {
+                                const element = document.querySelector(selector);
+                                const rect = element.getBoundingClientRect();
+                                return {
+                                  font: getComputedStyle(element).fontSize,
+                                  width: rect.width,
+                                  height: rect.height,
+                                };
+                              };
+                              return {
+                                articleFont: getComputedStyle(
+                                  document.querySelector('.raya-main-article')
+                                ).fontSize,
+                                map: measure('#raya-course-map'),
+                                rightRail: measure('#raya-learning-rail'),
+                                action: measure('.raya-course-action'),
+                                filter: measure('.raya-course-map-filter'),
+                                tree: measure('.raya-course-map-list a'),
+                                footer: measure('.raya-course-map-footer'),
+                                mini: measure('.raya-course-map-mini'),
+                              };
+                            }"""
+                        )
+
+                    before = scaled_state()
+                    toggle = page.locator(
+                        ".raya-course-map-footer .raya-text-size-toggle"
+                    )
+                    toggle.click()
+                    toggle.click()
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaTextSize === 'x-large'"
+                    )
+                    after = scaled_state()
+                    assert float(after["articleFont"][:-2]) > float(
+                        before["articleFont"][:-2]
+                    )
+                    for key in (
+                        "map",
+                        "rightRail",
+                        "action",
+                        "filter",
+                        "tree",
+                        "footer",
+                        "mini",
+                    ):
+                        assert after[key] == before[key], key
+
+                    trigger = page.locator(".raya-course-action.raya-command-search")
+                    tooltip = page.locator("#raya-course-action-search-tooltip")
+                    described_controls = page.locator(
+                        "#raya-course-map a[aria-describedby], "
+                        "#raya-course-map button[aria-describedby]"
+                    )
+                    assert described_controls.count() > 0
+                    assert all(
+                        described_controls.nth(index).get_attribute("aria-label")
+                        for index in range(described_controls.count())
+                    )
+                    assert trigger.get_attribute("aria-label") == "Open course search"
+                    assert (
+                        trigger.get_attribute("aria-describedby")
+                        == "raya-course-action-search-tooltip"
+                    )
+                    trigger.hover()
+                    assert tooltip.is_visible()
+                    page.evaluate(
+                        "() => { window.__rayaTooltipFocus = document.activeElement; }"
+                    )
+                    page.keyboard.press("Escape")
+                    assert not tooltip.is_visible()
+                    assert page.evaluate(
+                        "() => document.activeElement === window.__rayaTooltipFocus"
+                    )
+                    page.locator(".raya-main-article").hover(position={"x": 20, "y": 20})
+                    trigger.hover()
+                    assert tooltip.is_visible()
+                    tooltip.hover()
+                    assert tooltip.is_visible()
+                    page.locator(".raya-main-article").hover(position={"x": 20, "y": 20})
+                    tooltip.wait_for(state="hidden")
+                    trigger.focus()
+                    assert tooltip.is_visible()
+                    page.keyboard.press("Escape")
+                    assert not tooltip.is_visible()
+                    assert trigger.evaluate("node => document.activeElement === node")
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_mobile_course_map_drawer_is_modal_and_volatile(
     tmp_path: Path,
 ) -> None:

@@ -4022,7 +4022,6 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   align-content: start;
   align-self: start;
   grid-area: learning-rail;
-  font-size: calc(1rem * var(--raya-reader-text-scale, 1));
   max-height: calc(100vh - 2rem);
   /* No scrollbar-gutter: symmetric with .raya-course-map. Both rail
      headers are sized through one shared rule, so an asymmetric gutter
@@ -4101,7 +4100,14 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
 }
 .raya-course-map-footer {
   block-size: 48px;
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
   min-block-size: 48px;
+  overflow: clip;
+  padding-inline: 0.5rem;
+  position: relative;
 }
 .raya-course-actions,
 .raya-course-content,
@@ -4223,82 +4229,148 @@ html[data-raya-course-map="expanded"] .raya-course-map-mini {
   gap: 0.15rem;
   padding-right: 0.2rem;
 }
-.raya-course-rail-tools {
-  border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 72%, transparent);
-  display: grid;
-  gap: 0.3125rem;
+.raya-course-actions,
+.raya-course-content {
   padding: 0.5rem 0.75rem;
 }
-.raya-course-rail-search.raya-command-search-form {
-  display: flex;
-  gap: 0.375rem;
-  min-width: 0;
-  width: 100%;
+.raya-course-actions {
+  border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 72%, transparent);
 }
-/* The rail's search controls are NOT shrunk here. .raya-command-search-input
-   sets an explicit `height: 2.5rem`, and .raya-command-search-submit sets
-   both `height: 2.5rem` and `min-height: 2.5rem` (see the base rules above).
-   An explicit `height` only defers to `min-height` when `min-height` is
-   *larger* than it -- min-height raises a floor, it never caps -- so a
-   smaller `min-height` here has no visible effect; both controls render at
-   a constant 40px regardless. Actually shrinking them would mean touching
-   those shared base classes, which .raya-top-command-bar also uses, so
-   that is deliberately out of scope for this task. */
-.raya-course-rail-command-list {
+.raya-course-section-title {
+  color: var(--raya-color-muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 0.25rem;
+  text-transform: uppercase;
+}
+.raya-course-actions-list {
   display: grid;
-  gap: 0.3125rem;
-  /* Base (mobile/drawer, <__RAYA_STRUCTURAL_PX__px): stays two columns.
-     Below that width .raya-course-rail-command keeps its row layout (icon
-     beside label, not the caption-under-glyph column layout the
-     >=__RAYA_STRUCTURAL_PX__px override below switches to), so four narrow
-     columns there would force the label to wrap across many lines instead
-     of measuring wider. Four columns is a desktop/tablet density change,
-     not a mobile drawer one -- see the override next to the caption layout
-     further down this file. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.125rem 0.25rem;
+  position: relative;
 }
-.raya-course-rail-command {
+.raya-course-action {
   align-items: center;
-  background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
-  border: 1px solid color-mix(in srgb, var(--raya-color-border) 84%, transparent);
-  border-radius: 0.4375rem;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
   color: var(--raya-color-text);
+  cursor: pointer;
   display: inline-flex;
+  font: inherit;
+  font-size: 0.8125rem;
   gap: 0.375rem;
-  justify-content: flex-start;
-  min-height: 1.75rem;
-  padding: 0.25rem 0.4375rem;
+  line-height: 1;
+  min-block-size: 30px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.25rem 0.375rem;
   text-align: left;
   text-decoration: none;
   width: 100%;
 }
-.raya-course-rail-command[aria-current="page"],
-.raya-course-rail-command[aria-pressed="true"] {
+.raya-course-action[aria-current="page"],
+.raya-course-action[aria-pressed="true"],
+.raya-course-map-comfort[aria-pressed="true"] {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 38%, var(--raya-color-surface));
-  border-color: color-mix(in srgb, var(--raya-color-accent) 34%, var(--raya-color-border));
 }
-.raya-course-rail-command:hover {
+.raya-course-action:hover,
+.raya-course-map-comfort:hover {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 52%, var(--raya-color-surface));
 }
-.raya-course-rail-command:focus-visible {
+.raya-course-action:focus-visible,
+.raya-course-map-comfort:focus-visible {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 58%, var(--raya-color-surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--raya-color-accent) 26%, transparent);
+  outline: 2px solid var(--raya-color-accent);
+  outline-offset: -2px;
 }
-.raya-course-rail-command .raya-command-icon {
-  background: color-mix(in srgb, currentColor 12%, transparent);
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+.raya-course-action .raya-command-icon,
+.raya-course-map-comfort .raya-command-icon {
+  background: transparent;
+  border: 0;
   flex: 0 0 auto;
-  height: 1.25rem;
-  padding: 0.1rem;
-  width: 1.25rem;
+  height: 1rem;
+  padding: 0;
+  width: 1rem;
 }
-.raya-course-rail-command .raya-command-label {
-  display: inline;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.2;
+.raya-course-action .raya-command-label {
+  font-size: inherit;
+  font-weight: 600;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.raya-course-map-comfort {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  justify-content: center;
+  min-block-size: 30px;
+  min-inline-size: 0;
+  overflow: hidden;
+  padding: 0.25rem;
+}
+.raya-course-map-comfort .raya-command-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.raya-course-map-position {
+  color: var(--raya-color-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.raya-tooltip {
+  background: var(--raya-color-text);
+  border-radius: 4px;
+  color: var(--raya-color-surface);
+  display: block;
+  font-size: 0.75rem;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-start: 0;
+  line-height: 1.25;
+  max-inline-size: min(15rem, calc(100vw - 2rem));
+  opacity: 0;
+  padding: 0.3rem 0.45rem;
+  pointer-events: none;
+  position: absolute;
+  visibility: hidden;
+  z-index: 100;
+}
+[aria-describedby]:hover + .raya-tooltip:not([data-raya-tooltip-dismissed="true"]),
+[aria-describedby]:focus + .raya-tooltip:not([data-raya-tooltip-dismissed="true"]),
+.raya-tooltip:hover:not([data-raya-tooltip-dismissed="true"]) {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+.raya-tooltip[data-raya-tooltip-dismissed="true"] {
+  display: none;
+}
+.raya-course-map-header,
+.raya-course-map-footer {
+  position: relative;
+}
+.raya-course-map-footer .raya-tooltip {
+  inset-block: auto calc(100% + 4px);
+}
+@media (any-pointer: coarse) {
+  .raya-course-action,
+  .raya-course-map-footer button {
+    min-block-size: 44px;
+  }
 }
 .raya-course-map-close {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
@@ -5303,15 +5375,6 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     outline: 3px solid var(--raya-color-accent);
     outline-offset: 3px;
   }
-  html[data-raya-course-map-drawer="closed"] .raya-course-rail-tools {
-    display: none;
-  }
-  html[data-raya-course-map-drawer="open"] .raya-course-rail-tools {
-    display: grid;
-  }
-  .raya-course-rail-command-list .raya-command-context {
-    display: none;
-  }
   .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {
     display: none;
   }
@@ -6305,7 +6368,6 @@ mjx-container[display="true"] {
     z-index: 80;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-header,
-  html[data-raya-course-map-drawer="open"] .raya-course-rail-tools,
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter-label,
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
   html[data-raya-course-map-drawer="open"] .raya-map-filter-empty,
@@ -6363,17 +6425,10 @@ mjx-container[display="true"] {
     font-weight: 800;
     line-height: 1.2;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-rail-tools {
-    gap: 0.375rem;
-    padding: 0.5rem 0.65rem;
-  }
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter-label,
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
   html[data-raya-course-map-drawer="open"] .raya-map-filter-empty {
     display: none;
-  }
-  html[data-raya-course-map-drawer="open"] .raya-course-rail-command-list {
-    gap: 0.3125rem;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-backdrop {
     background: rgba(0, 0, 0, 0.42);
@@ -6548,10 +6603,6 @@ mjx-container[display="true"] {
   .raya-learning-rail-collapse {
     display: inline-flex;
   }
-  html[data-raya-course-map-drawer="closed"] .raya-course-rail-tools,
-  .raya-course-rail-tools {
-    display: grid;
-  }
   .raya-course-map,
   .raya-learning-rail {
     height: calc(100vh - 1.5rem);
@@ -6658,7 +6709,6 @@ mjx-container[display="true"] {
     width: 2.75rem;
     z-index: 45;
   }
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-rail-tools,
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-filter-label,
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map-filter,
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-map-filter-empty,
@@ -6794,35 +6844,6 @@ mjx-container[display="true"] {
   .raya-course-map-list a:focus-visible,
   .raya-course-map-list a[aria-current="page"] {
     -webkit-line-clamp: unset;
-  }
-  .raya-course-rail-tools {
-    padding: 0.5rem 0;
-  }
-  .raya-course-rail-command-list {
-    min-width: 0;
-    /* Four per row instead of two: this is the block of fixed rail chrome
-       the tools row costs, and the caption-under-glyph layout below has
-       room to go denser once labels sit under, not beside, the glyph. */
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .raya-course-rail-command {
-    box-sizing: border-box;
-    flex-direction: column;
-    gap: 0.125rem;
-    justify-content: center;
-    /* WCAG 2.5.8 Target Size (Minimum, 24x24) with margin: four columns in
-       a ~238px content box leaves each tile ~56px wide, so the floor only
-       needs to guarantee the vertical axis. */
-    min-height: 2.5rem;
-    min-width: 0;
-    overflow: hidden;
-    padding: 0.25rem 0;
-    text-align: center;
-  }
-  .raya-course-rail-command .raya-command-label {
-    hyphens: none;
-    overflow-wrap: normal;
-    word-break: normal;
   }
   /* --- rail collapse: appearance (single source) --- */
   /* Collapsed = the header and body are fully removed (display:none, which

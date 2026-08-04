@@ -135,6 +135,73 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function describedTooltip(trigger) {
+    if (!(trigger instanceof Element)) return null;
+    const describedTrigger = trigger.closest("[aria-describedby]");
+    if (!describedTrigger) return null;
+    const describedBy = (describedTrigger.getAttribute("aria-describedby") || "")
+      .split(/\s+/)
+      .filter(Boolean);
+    return describedBy
+      .map((id) => document.getElementById(id))
+      .find((candidate) => candidate?.getAttribute("role") === "tooltip") || null;
+  }
+
+  function restoreTooltip(event) {
+    const tooltip = event.target?.getAttribute?.("role") === "tooltip"
+      ? event.target
+      : describedTooltip(event.target);
+    if (tooltip) {
+      tooltip.removeAttribute("data-raya-tooltip-dismissed");
+      tooltip.hidden = false;
+    }
+  }
+
+  function hideTooltipWhenIdle(event) {
+    const tooltip = event.target?.getAttribute?.("role") === "tooltip"
+      ? event.target
+      : describedTooltip(event.target);
+    if (!tooltip) return;
+    window.setTimeout(() => {
+      const trigger = Array.from(document.querySelectorAll("[aria-describedby]"))
+        .find((candidate) => describedTooltip(candidate) === tooltip);
+      const triggerActive = trigger
+        && (trigger.matches(":hover") || trigger === document.activeElement);
+      if (!triggerActive && !tooltip.matches(":hover")) {
+        tooltip.hidden = true;
+      }
+    }, 0);
+  }
+
+  function dismissActiveTooltip() {
+    const focusedTooltip = describedTooltip(document.activeElement);
+    const tooltipIsVisible = (candidate) => {
+      if (!candidate) return false;
+      const candidateStyle = getComputedStyle(candidate);
+      return candidateStyle.display !== "none"
+        && candidateStyle.visibility !== "hidden";
+    };
+    const hoveredTooltip = Array.from(
+      document.querySelectorAll("[aria-describedby]")
+    ).filter((trigger) => trigger.matches(":hover"))
+      .map(describedTooltip)
+      .find(tooltipIsVisible);
+    const tooltip = hoveredTooltip || (
+      tooltipIsVisible(focusedTooltip) ? focusedTooltip : Array.from(
+        document.querySelectorAll('[role="tooltip"]')
+      ).find(tooltipIsVisible)
+    );
+    if (!tooltip) return false;
+    tooltip.hidden = true;
+    tooltip.setAttribute("data-raya-tooltip-dismissed", "true");
+    return true;
+  }
+
+  document.addEventListener("focusin", restoreTooltip);
+  document.addEventListener("pointerover", restoreTooltip);
+  document.addEventListener("focusout", hideTooltipWhenIdle);
+  document.addEventListener("pointerout", hideTooltipWhenIdle);
+
   function syncCourseMapToggleButtons(nextExpanded) {
     toggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
@@ -1763,6 +1830,10 @@ _SHELL_JAVASCRIPT = r"""
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && dismissActiveTooltip()) {
+      event.preventDefault();
+      return;
+    }
     if (assetInspectorIsOpen()) {
       if (event.key === "Escape") {
         event.preventDefault();

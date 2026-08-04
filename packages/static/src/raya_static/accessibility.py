@@ -78,30 +78,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
   --raya-reader-text-scale: 1.25;
 }}
 
-/* Both bare .raya-font-toggle rules below are scoped away from rail tiles
-   with :not(.raya-course-rail-command). They target the standalone
-   top-command-bar toggle (.raya-command.raya-command-font.raya-font-toggle)
-   but, unscoped, also match the rail tile (both share .raya-font-toggle)
-   and win regardless of source order or state:
-   - The unpressed rule (padding + background) was previously silently
-     overriding the rail's own 0.25rem 0 padding with 0.45rem 0.65rem
-     (starving the rail label of width), and later, patched with a
-     compound override, outranked .raya-course-rail-command:hover and
-     killed pointer hover feedback on that one tile.
-   - The [aria-pressed="true"] rule is (0,2,0), exactly equal to
-     .raya-course-rail-command[aria-pressed="true"] in rendering.py, so
-     source order decides -- this stylesheet links after rich.css, so the
-     bare rule won, leaving the rail's Font tile permanently rendering a
-     solid accent-colour "on" state (rgb(217, 35, 35), white text) instead
-     of the shared soft accent-soft-38% pressed style every other rail
-     tile (Context, Text size, ...) uses. Since raya:open-dyslexic persists
-     in localStorage, a reader who turns OpenDyslexic on sees this
-     permanently mismatched tile every visit.
-   Scoping the source instead of compounding a patch on top avoids all of
-   the above without any override rule: the rail tile falls through
-   cleanly to the shared .raya-course-rail-command padding/background/
-   hover/pressed rules its seven siblings already use. */
-.raya-font-toggle:not(.raya-course-rail-command) {{
+.raya-command.raya-font-toggle {{
   align-items: center;
   background: var(--raya-color-accent-soft);
   border: 1px solid var(--raya-color-border);
@@ -116,7 +93,7 @@ def open_dyslexic_resources() -> AccessibilityResources:
   padding: 0.45rem 0.65rem;
 }}
 
-.raya-font-toggle[aria-pressed="true"]:not(.raya-course-rail-command) {{
+.raya-command.raya-font-toggle[aria-pressed="true"] {{
   background: var(--raya-color-accent);
   border-color: var(--raya-color-accent);
   color: var(--raya-color-surface);
