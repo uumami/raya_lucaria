@@ -337,6 +337,133 @@ def test_runtime_intermediate_reconciliation_preserves_focus_for_valid_pair(tmp_
         handle.close()
 
 
+def test_intermediate_handoff_has_one_atomic_pair_application_path():
+    javascript = shell_resources().javascript
+    assert "function applyStructuralRailPair(" in javascript
+    assert "const next = reconcileRailPair(" in javascript
+    assert "applyStructuralRailPair(" in javascript
+
+
+def test_intermediate_handoff_transition_table(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    storage_key = "raya:reader-shell:v1:render-fixture"
+    cases = (
+        (None, None, ("expanded", "collapsed")),
+        (("collapsed", "collapsed"), None, ("collapsed", "collapsed")),
+        (("expanded", "collapsed"), None, ("expanded", "collapsed")),
+        (("collapsed", "expanded"), None, ("collapsed", "expanded")),
+        (("expanded", "expanded"), None, ("expanded", "collapsed")),
+        (("expanded", "expanded"), "left", ("expanded", "collapsed")),
+        (("expanded", "expanded"), "right", ("collapsed", "expanded")),
+    )
+    try:
+        assert handle.report.ok
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (893, 640):
+                    for saved_pair, focus_owner, expected in cases:
+                        initial_width = 894 if focus_owner else width
+                        page = browser.new_page(
+                            viewport={"width": initial_width, "height": 900}
+                        )
+                        if saved_pair is not None:
+                            serialized = json.dumps(
+                                {
+                                    "courseMap": saved_pair[0],
+                                    "learningRail": saved_pair[1],
+                                },
+                                separators=(",", ":"),
+                            )
+                            page.add_init_script(
+                                "sessionStorage.setItem("
+                                f"{json.dumps(storage_key)}, {json.dumps(serialized)}"
+                                ");"
+                            )
+                        try:
+                            page.goto(
+                                f"{handle.base_url}/reader-ux/index.html",
+                                wait_until="networkidle",
+                            )
+                            if focus_owner == "left":
+                                page.focus("[data-raya-course-map-collapse]")
+                            elif focus_owner == "right":
+                                page.focus("[data-raya-learning-rail-collapse]")
+                            if focus_owner:
+                                page.set_viewport_size({"width": width, "height": 900})
+                            page.wait_for_function(
+                                "([courseMap, learningRail]) => "
+                                "document.documentElement.dataset.rayaCourseMap === courseMap "
+                                "&& document.documentElement.dataset.rayaLearningRail === learningRail",
+                                arg=list(expected),
+                            )
+                            page.wait_for_timeout(320)
+                            state = page.evaluate(
+                                """() => {
+                                  const root = document.documentElement;
+                                  const map = document.querySelector('#raya-course-map');
+                                  const rail = document.querySelector('#raya-learning-rail');
+                                  const article = document.querySelector('#raya-article');
+                                  const mapBody = document.querySelector('#raya-course-map-body');
+                                  const railBody = document.querySelector('#raya-learning-rail-body');
+                                  const horizontalIntersection = (left, right) => {
+                                    const a = left.getBoundingClientRect();
+                                    const b = right.getBoundingClientRect();
+                                    return a.left < b.right && a.right > b.left;
+                                  };
+                                  const active = document.activeElement;
+                                  return {
+                                    pair: [
+                                      root.dataset.rayaCourseMap,
+                                      root.dataset.rayaLearningRail,
+                                    ],
+                                    fullRails: [
+                                      root.dataset.rayaCourseMap,
+                                      root.dataset.rayaLearningRail,
+                                    ].filter((value) => value === 'expanded').length,
+                                    mapIntersectsArticle: horizontalIntersection(map, article),
+                                    railIntersectsArticle: horizontalIntersection(rail, article),
+                                    mapBodyInert: mapBody.inert,
+                                    railBodyInert: railBody.inert,
+                                    focusInInert: !!active?.closest('[inert]'),
+                                    focusVisible: !active || active === document.body
+                                      || active.checkVisibility(),
+                                  };
+                                }"""
+                            )
+                            assert state["pair"] == list(expected), (
+                                width,
+                                saved_pair,
+                                focus_owner,
+                                state,
+                            )
+                            assert state["fullRails"] <= 1, state
+                            case_state = (width, saved_pair, focus_owner, state)
+                            assert state["mapIntersectsArticle"] is False, case_state
+                            assert state["railIntersectsArticle"] is False, case_state
+                            assert state["mapBodyInert"] is (expected[0] == "collapsed"), state
+                            assert state["railBodyInert"] is (
+                                expected[1] == "collapsed"
+                            ), state
+                            assert state["focusInInert"] is False, state
+                            assert state["focusVisible"] is True, state
+                        finally:
+                            page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_css_and_js_share_the_same_rail_boundaries():
     # The approved-geometry complement token must exist in the single source
     # of truth (guards against the CSS boundary being re-hardcoded instead
