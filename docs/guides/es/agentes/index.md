@@ -220,13 +220,13 @@ foco mientras esta abierto, estado cerrado con `aria-hidden`/`inert`, scroll
 lock de fondo solo mientras esta abierto, limpieza del scroll lock al cerrar o
 al volver a desktop, sin escrituras de storage, sin requests externos y
 disponibilidad del articulo y riel derecho despues de cerrar.
-Cuando cambien los rieles lectores colapsados, verifica que las pestanas
-desktop Map y Context usen labels visuales horizontales estables, sigan siendo
-operables por teclado mediante sus controles existentes, aumenten el ancho del
-articulo, permanezcan ocultas cuando sus controles no estan visibles, y no
-agreguen storage fuera del par aceptado de estado visual de los rieles
-estructurales en la misma pestana, fetch, progreso, recomendacion ni estado del
-estudiante. En
+Cuando cambien los rieles lectores colapsados, verifica que el control Map de
+desktop exponga el mini riel reservado de 48px y que el control Context siga
+siendo operable por teclado mediante su control existente. Verifica que el mini
+riel permanezca oculto en layouts de telefono cuando sus controles estan
+ocultos, y que no agregue storage fuera del par aceptado de estado visual de los
+rieles estructurales en la misma pestana, fetch, progreso, recomendacion ni
+estado del estudiante. En
 layouts de telefono, el riel derecho debe seguir disponible
 cuando el control `Context` esta oculto. Cuando cambien controles de comodidad
 del shell, verifica que

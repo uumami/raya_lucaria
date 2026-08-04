@@ -401,3 +401,10 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
         assert "48px" in text[name]
     assert "exactly eight compact icon-labeled command tiles" not in text["foundation"]
     assert "minimal floating Map edge opener" not in text["foundation"]
+
+    for name in ("contributor_en", "professor_en", "student_en", "agent_en"):
+        assert "floating Map edge opener" not in text[name]
+        assert "floating Map opener" not in text[name]
+    for name in ("contributor_es", "professor_es", "student_es", "agent_es"):
+        assert "opener minimo flotante Map" not in text[name]
+    assert "pestanas\ndesktop Map y Context" not in text["agent_es"]
