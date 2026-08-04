@@ -631,12 +631,33 @@ def test_mini_controls_have_unclipped_three_pixel_focus_indicators(tmp_path):
                     ".raya-course-map-mini > a, .raya-course-map-mini > button"
                 )
                 assert controls.count() == 4
-                # Collapse moves focus to Expand. Enter keyboard modality and
-                # move backward once so all four controls are exercised in DOM order.
+                page.evaluate(
+                    """() => {
+                      if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                      }
+                    }"""
+                )
+                unfocused_boxes = controls.evaluate_all(
+                    """controls => controls.map((control) => {
+                      if (control === document.activeElement) {
+                        throw new Error('mini control remained focused before baseline');
+                      }
+                      const box = control.getBoundingClientRect();
+                      return {
+                        x: box.x,
+                        y: box.y,
+                        width: box.width,
+                        height: box.height,
+                      };
+                    })"""
+                )
+                # Seed focus on Expand without focus-visible, then enter keyboard
+                # modality and move backward so traversal starts at Home.
+                controls.nth(1).focus()
                 page.keyboard.press("Shift+Tab")
                 for index in range(controls.count()):
                     control = controls.nth(index)
-                    before = control.bounding_box()
                     state = control.evaluate(
                         """control => {
                           const style = getComputedStyle(control);
@@ -668,7 +689,11 @@ def test_mini_controls_have_unclipped_three_pixel_focus_indicators(tmp_path):
                         state,
                     )
                     assert state["contained"] is True, (index, state)
-                    assert before == state["box"], (index, before, state)
+                    assert unfocused_boxes[index] == state["box"], (
+                        index,
+                        unfocused_boxes[index],
+                        state,
+                    )
                     page.keyboard.press("Tab")
                 page.close()
             finally:
