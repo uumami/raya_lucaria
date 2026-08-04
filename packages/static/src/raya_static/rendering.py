@@ -4338,14 +4338,13 @@ html[data-raya-course-map="expanded"] .raya-course-map-mini {
   color: var(--raya-color-surface);
   display: block;
   font-size: 0.75rem;
-  inset-block-start: calc(100% + 4px);
-  inset-inline-start: 0;
+  inset: auto;
   line-height: 1.25;
   max-inline-size: min(15rem, calc(100vw - 2rem));
   opacity: 0;
   padding: 0.3rem 0.45rem;
   pointer-events: none;
-  position: absolute;
+  position: fixed;
   visibility: hidden;
   z-index: 100;
 }
@@ -4358,13 +4357,6 @@ html[data-raya-course-map="expanded"] .raya-course-map-mini {
 }
 .raya-tooltip[data-raya-tooltip-dismissed="true"] {
   display: none;
-}
-.raya-course-map-header,
-.raya-course-map-footer {
-  position: relative;
-}
-.raya-course-map-footer .raya-tooltip {
-  inset-block: auto calc(100% + 4px);
 }
 @media (any-pointer: coarse) {
   .raya-course-action,

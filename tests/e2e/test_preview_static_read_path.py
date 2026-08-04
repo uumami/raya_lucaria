@@ -12101,6 +12101,19 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                         assert "Page 5 of 6" in page.locator(
                             ".raya-course-map-position"
                         ).aria_snapshot()
+                        context_action = page.locator(
+                            ".raya-course-action.raya-command-context"
+                        )
+                        context_tooltip = page.locator(
+                            "#raya-course-action-context-tooltip"
+                        )
+                        assert context_tooltip.text_content() == context_action.get_attribute(
+                            "aria-label"
+                        )
+                        if width == 390:
+                            assert context_action.get_attribute("aria-label") == (
+                                "Open learning context"
+                            )
                     finally:
                         page.close()
 
@@ -12186,6 +12199,51 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                     ):
                         assert after[key] == before[key], key
 
+                    footer_trigger = page.locator(
+                        ".raya-course-map-footer .raya-text-size-toggle"
+                    )
+                    footer_tooltip = page.locator("#raya-course-map-text-size-tooltip")
+                    footer_trigger.hover()
+                    assert footer_tooltip.is_visible()
+                    footer_box = footer_tooltip.bounding_box()
+                    footer_rect = page.locator(
+                        ".raya-course-map-footer"
+                    ).bounding_box()
+                    assert footer_box is not None and footer_rect is not None
+                    assert footer_box["y"] + footer_box["height"] <= footer_rect["y"]
+                    assert page.evaluate(
+                        """([x, y, id]) => document
+                          .elementFromPoint(x, y)
+                          ?.closest(`#${id}`)?.id === id""",
+                        [
+                            footer_box["x"] + footer_box["width"] / 2,
+                            footer_box["y"] + footer_box["height"] / 2,
+                            "raya-course-map-text-size-tooltip",
+                        ],
+                    )
+                    page.locator(".raya-main-article").hover(position={"x": 20, "y": 20})
+
+                    context_trigger = page.locator(
+                        ".raya-course-action.raya-command-context"
+                    )
+                    context_tooltip = page.locator(
+                        "#raya-course-action-context-tooltip"
+                    )
+                    assert context_trigger.get_attribute("aria-label") == (
+                        "Hide learning context"
+                    )
+                    assert context_tooltip.text_content() == "Hide learning context"
+                    context_trigger.click()
+                    assert context_trigger.get_attribute("aria-label") == (
+                        "Show learning context"
+                    )
+                    assert context_tooltip.text_content() == "Show learning context"
+                    context_trigger.click()
+                    assert context_trigger.get_attribute("aria-label") == (
+                        "Hide learning context"
+                    )
+                    assert context_tooltip.text_content() == "Hide learning context"
+
                     trigger = page.locator(".raya-course-action.raya-command-search")
                     tooltip = page.locator("#raya-course-action-search-tooltip")
                     described_controls = page.locator(
@@ -12202,7 +12260,7 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                         trigger.get_attribute("aria-describedby")
                         == "raya-course-action-search-tooltip"
                     )
-                    trigger.hover()
+                    trigger.locator(".raya-command-icon").hover()
                     assert tooltip.is_visible()
                     page.evaluate(
                         "() => { window.__rayaTooltipFocus = document.activeElement; }"
@@ -12212,6 +12270,8 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                     assert page.evaluate(
                         "() => document.activeElement === window.__rayaTooltipFocus"
                     )
+                    trigger.locator(".raya-command-label").hover()
+                    assert not tooltip.is_visible()
                     page.locator(".raya-main-article").hover(position={"x": 20, "y": 20})
                     trigger.hover()
                     assert tooltip.is_visible()

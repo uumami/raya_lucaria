@@ -5015,6 +5015,27 @@ def test_course_map_compact_control_resources_replace_legacy_tiles() -> None:
     assert "data-raya-tooltip-dismissed" in shell_js
 
 
+def test_course_map_tooltips_escape_clipped_footer_geometry() -> None:
+    css = rich_render_css()
+    tooltip_block = re.search(r"\.raya-tooltip \{[^}]*\}", css, re.S)
+
+    assert tooltip_block is not None
+    assert "position: fixed;" in tooltip_block.group(0)
+
+
+def test_course_map_tooltip_dismissal_ignores_internal_pointer_movement() -> None:
+    shell_js = shell_resources().javascript
+
+    assert "event.relatedTarget" in shell_js
+    assert "currentTrigger === previousTrigger" in shell_js
+
+
+def test_course_map_dynamic_toggle_labels_sync_described_tooltips() -> None:
+    shell_js = shell_resources().javascript
+
+    assert "tooltip.textContent = label" in shell_js
+
+
 def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 

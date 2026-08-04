@@ -135,11 +135,14 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
-  function describedTooltip(trigger) {
-    if (!(trigger instanceof Element)) return null;
-    const describedTrigger = trigger.closest("[aria-describedby]");
-    if (!describedTrigger) return null;
-    const describedBy = (describedTrigger.getAttribute("aria-describedby") || "")
+  function describedControl(target) {
+    return target instanceof Element ? target.closest("[aria-describedby]") : null;
+  }
+
+  function describedTooltip(target) {
+    const trigger = describedControl(target);
+    if (!trigger) return null;
+    const describedBy = (trigger.getAttribute("aria-describedby") || "")
       .split(/\s+/)
       .filter(Boolean);
     return describedBy
@@ -147,13 +150,54 @@ _SHELL_JAVASCRIPT = r"""
       .find((candidate) => candidate?.getAttribute("role") === "tooltip") || null;
   }
 
+  function syncTooltipDescription(trigger, label) {
+    const tooltip = describedTooltip(trigger);
+    if (tooltip) {
+      tooltip.textContent = label;
+    }
+  }
+
+  function positionTooltip(trigger, tooltip) {
+    if (!trigger || !tooltip) return;
+    const triggerRect = trigger.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const footer = trigger.closest(".raya-course-map-footer");
+    const anchorTop = footer ? footer.getBoundingClientRect().top : triggerRect.top;
+    const viewportGap = 8;
+    const triggerGap = 6;
+    const left = Math.max(
+      viewportGap,
+      Math.min(triggerRect.left, window.innerWidth - tooltipRect.width - viewportGap)
+    );
+    const above = anchorTop - tooltipRect.height - triggerGap;
+    const below = triggerRect.bottom + triggerGap;
+    const top = above >= viewportGap
+      ? above
+      : Math.min(below, window.innerHeight - tooltipRect.height - viewportGap);
+    tooltip.style.left = `${Math.round(left)}px`;
+    tooltip.style.top = `${Math.round(Math.max(viewportGap, top))}px`;
+  }
+
   function restoreTooltip(event) {
+    const currentTrigger = describedControl(event.target);
+    const previousTrigger = describedControl(event.relatedTarget);
+    if (
+      event.type === "pointerover"
+      && currentTrigger
+      && currentTrigger === previousTrigger
+    ) {
+      return;
+    }
     const tooltip = event.target?.getAttribute?.("role") === "tooltip"
       ? event.target
       : describedTooltip(event.target);
     if (tooltip) {
       tooltip.removeAttribute("data-raya-tooltip-dismissed");
       tooltip.hidden = false;
+      const trigger = currentTrigger || Array.from(
+        document.querySelectorAll("[aria-describedby]")
+      ).find((candidate) => describedTooltip(candidate) === tooltip);
+      positionTooltip(trigger, tooltip);
     }
   }
 
@@ -217,6 +261,7 @@ _SHELL_JAVASCRIPT = r"""
           nextExpanded ? "Collapse course map" : "Expand course map"
         );
       }
+      syncTooltipDescription(button, button.getAttribute("aria-label") || "");
     });
   }
 
@@ -504,16 +549,15 @@ _SHELL_JAVASCRIPT = r"""
       .filter((button) => button.classList.contains("raya-command-map"))
       .forEach((button) => {
         button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
-        button.setAttribute(
-          "aria-label",
-          !structuralShell
+        const label = !structuralShell
             ? commandExpanded
               ? "Close course map"
               : "Open course map"
             : commandExpanded
               ? "Collapse course map"
-              : "Expand course map"
-        );
+              : "Expand course map";
+        button.setAttribute("aria-label", label);
+        syncTooltipDescription(button, label);
     });
     if (mapDrawerBackdrop) {
       mapDrawerBackdrop.hidden = !modalDrawerOpen;
@@ -1079,16 +1123,15 @@ _SHELL_JAVASCRIPT = r"""
     const commandExpanded = !structuralShell ? drawerOpen : nextExpanded;
     learningRailToggleButtons.forEach((button) => {
       button.setAttribute("aria-expanded", commandExpanded ? "true" : "false");
-      button.setAttribute(
-        "aria-label",
-        !structuralShell
+      const label = !structuralShell
           ? commandExpanded
             ? "Close learning context"
             : "Open learning context"
           : nextExpanded
             ? "Hide learning context"
-            : "Show learning context"
-      );
+            : "Show learning context";
+      button.setAttribute("aria-label", label);
+      syncTooltipDescription(button, label);
     });
   }
 
