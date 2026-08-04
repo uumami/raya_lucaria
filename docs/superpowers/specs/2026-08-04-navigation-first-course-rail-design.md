@@ -1,7 +1,7 @@
 # Navigation-First Course Rail Design
 
 Date: 2026-08-04
-Status: awaiting final approval after adversarial review
+Status: approved after adversarial review
 Scope: the reader's left course rail at all reader widths
 
 ## Relationship To Prior Work
