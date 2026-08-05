@@ -875,7 +875,7 @@ _SHELL_JAVASCRIPT = r"""
     return visible;
   }
 
-  function applyCourseMapFilter() {
+  function applyCourseMapFilter(options = {}) {
     if (!mapFilter) {
       return;
     }
@@ -891,6 +891,9 @@ _SHELL_JAVASCRIPT = r"""
     });
     if (mapFilterEmpty) {
       mapFilterEmpty.hidden = visibleCount !== 0;
+    }
+    if (!query && options.exposeCurrentPath !== false) {
+      expandCurrentCourseMapPath({ clearFilter: false });
     }
   }
 
@@ -1081,8 +1084,10 @@ _SHELL_JAVASCRIPT = r"""
     return nodes;
   }
 
-  function expandCurrentCourseMapPath() {
-    clearCourseMapFilter();
+  function expandCurrentCourseMapPath(options = {}) {
+    if (options.clearFilter !== false) {
+      clearCourseMapFilter();
+    }
     const currentNodes = currentCourseMapNodes();
     mapNodeToggles.forEach((button) => {
       const node = button.closest("[data-raya-map-node]");
@@ -1799,8 +1804,9 @@ _SHELL_JAVASCRIPT = r"""
       if (mapFilter) {
         mapFilter.value = "";
       }
+      const togglesCurrentPath = currentCourseMapNodes().has(node);
       setMapNodeExpanded(node, button.getAttribute("aria-expanded") !== "true");
-      applyCourseMapFilter();
+      applyCourseMapFilter({ exposeCurrentPath: !togglesCurrentPath });
     });
   });
   if (mapFilter) {
@@ -1808,8 +1814,9 @@ _SHELL_JAVASCRIPT = r"""
       applyCourseMapFilter();
     });
     applyCourseMapFilter();
+  } else {
+    expandCurrentCourseMapPath();
   }
-  expandCurrentCourseMapPath();
 
   map.addEventListener("keydown", handleCourseMapKeyboardNavigation);
 

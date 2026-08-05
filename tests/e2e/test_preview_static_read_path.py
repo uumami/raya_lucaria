@@ -12605,6 +12605,58 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                         "storage": '["saved-branch-a","saved-branch-b"]',
                     }
 
+                    page.fill("#raya-course-map-filter", "saved branch b")
+                    page.fill("#raya-course-map-filter", "")
+                    after_filter_clear = page.evaluate(
+                        """key => ({
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          unrelatedExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
+                    )
+                    assert after_filter_clear == {
+                        "activeExpanded": "true",
+                        "unrelatedExpanded": "false",
+                        "currentVisible": True,
+                        "storage": '["saved-branch-a","saved-branch-b"]',
+                    }
+
+                    unrelated_toggle = page.locator(
+                        '[data-raya-map-node="saved-branch-b"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+                    unrelated_toggle.click()
+                    unrelated_toggle.click()
+                    after_branch_toggles = page.evaluate(
+                        """key => ({
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          unrelatedExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
+                    )
+                    assert after_branch_toggles == {
+                        "activeExpanded": "true",
+                        "unrelatedExpanded": "false",
+                        "currentVisible": True,
+                        "storage": '["saved-branch-a","saved-branch-b"]',
+                    }
+
                     page.goto(
                         f"{handle.base_url}/saved-branch-b/child/index.html",
                         wait_until="networkidle",
