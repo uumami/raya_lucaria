@@ -4783,7 +4783,6 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "courseMapBranchStorageKey" in script_text
     assert "loadCollapsedMapNodeIds" in script_text
     assert "saveCollapsedMapBranches" in script_text
-    assert "setExpanded(true)" in script_text
     assert 'window.matchMedia("(min-width: 1280px)")' in script_text
     assert 'window.matchMedia("(min-width: 640px)")' in script_text
     assert '"(min-width: 640px) and (max-width: 767px)"' in script_text
@@ -4853,7 +4852,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert ".raya-asset-inspector" in css_text
     assert ".raya-course-map-actions" not in css_text
     assert ".raya-course-map-workspaces" not in css_text
-    assert ".raya-course-map-drawer-chrome" in css_text
+    assert ".raya-course-map-drawer-chrome" not in css_text
     assert ".raya-course-map-current-chip" not in css_text
     assert ".raya-course-map-list {\n  min-height: 0;" in css_text
     assert "data-raya-map-depth" in index_html

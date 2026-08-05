@@ -1317,15 +1317,13 @@ def test_rail_state_derives_from_media_queries_not_inner_width():
     # renders a collapsed rail leaking its full body.
     runtime = shell_resources().javascript
     prepaint = shell_prepaint_javascript()
-    for script, allowed_inner_width in ((runtime, 2), (prepaint, 0)):
+    for script in (runtime, prepaint):
         assert "function rayaRailBands()" in script
         assert "rayaRailBands())" in script
         # Substring assertions like `", innerWidth)" not in script` are a
         # false-pass hole: they do not match `, window.innerWidth)`, which is
-        # the spelling used elsewhere in this file. Count instead. The only
-        # permitted innerWidth reads are the two compact-preview geometry
-        # calculations at shell.py:864,868 -- neither is a band decision.
-        assert script.count("innerWidth") == allowed_inner_width, script
+        # the spelling used elsewhere in this file. Count instead.
+        assert script.count("innerWidth") == 0, script
 
 
 def test_rail_state_does_not_flip_after_first_paint(tmp_path):

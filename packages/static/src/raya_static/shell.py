@@ -50,7 +50,6 @@ _SHELL_JAVASCRIPT = r"""
   const mapDrawerBackdrop = document.querySelector("[data-raya-course-map-drawer-backdrop]");
   const mapFilter = document.querySelector("[data-raya-course-map-filter]");
   const mapFilterEmpty = document.querySelector("[data-raya-map-filter-empty]");
-  const mapCompactPreview = document.querySelector("[data-raya-course-map-compact-preview]");
   const assetInspectButtons = Array.from(document.querySelectorAll("[data-raya-asset-inspect]"));
   const desktopMapQuery = window.matchMedia("(min-width: __RAYA_DESKTOP_PX__px)");
   const structuralRailQuery = window.matchMedia("(min-width: __RAYA_STRUCTURAL_PX__px)");
@@ -104,9 +103,6 @@ _SHELL_JAVASCRIPT = r"""
     return;
   }
   let courseMapDrawerOpener = null;
-  let activeCompactPreviewLink = null;
-  let focusedCompactPreviewLink = null;
-  let hoveredCompactPreviewLink = null;
   let assetInspector = null;
   let assetInspectorOpener = null;
   let learningRailDrawerOpener = null;
@@ -707,8 +703,6 @@ _SHELL_JAVASCRIPT = r"""
     const desktopExpanding = desktopTransition && nextExpanded;
     if (!nextExpanded) {
       clearCourseMapFilter();
-    } else {
-      hideCourseMapCompactPreview();
     }
     if (desktopTransition) {
       window.clearTimeout(courseMapTransitionTimer);
@@ -1048,75 +1042,6 @@ _SHELL_JAVASCRIPT = r"""
     return true;
   }
 
-  function compactPreviewLabel(link) {
-    return link ? link.getAttribute("data-raya-map-label") || link.textContent || "" : "";
-  }
-
-  function positionCourseMapCompactPreview(link) {
-    if (!mapCompactPreview || !link || root.dataset.rayaCourseMap !== "collapsed") {
-      hideCourseMapCompactPreview();
-      return;
-    }
-    const label = compactPreviewLabel(link).trim();
-    if (!label || !isDesktopShell()) {
-      hideCourseMapCompactPreview();
-      return;
-    }
-    const linkBox = link.getBoundingClientRect();
-    const mapBox = map.getBoundingClientRect();
-    const previewWidth = Math.min(288, Math.max(168, window.innerWidth - mapBox.right - 24));
-    mapCompactPreview.textContent = label;
-    mapCompactPreview.hidden = false;
-    mapCompactPreview.style.width = `${previewWidth}px`;
-    mapCompactPreview.style.left = `${Math.min(mapBox.right + 8, window.innerWidth - previewWidth - 8)}px`;
-    mapCompactPreview.style.top = "0px";
-    const previewHeight = mapCompactPreview.getBoundingClientRect().height;
-    const idealTop = linkBox.top + linkBox.height / 2 - previewHeight / 2;
-    const maxTop = Math.max(8, window.innerHeight - previewHeight - 8);
-    const clampedTop = Math.max(8, Math.min(idealTop, maxTop));
-    mapCompactPreview.style.top = `${clampedTop}px`;
-  }
-
-  function activeCourseMapCompactPreviewLink() {
-    return hoveredCompactPreviewLink || focusedCompactPreviewLink;
-  }
-
-  function updateCourseMapCompactPreview() {
-    const link = activeCourseMapCompactPreviewLink();
-    if (
-      !mapCompactPreview ||
-      !link ||
-      !map.contains(link) ||
-      root.dataset.rayaCourseMap !== "collapsed" ||
-      !isDesktopShell()
-    ) {
-      hideCourseMapCompactPreviewSurface();
-      return;
-    }
-    activeCompactPreviewLink = link;
-    positionCourseMapCompactPreview(link);
-  }
-
-  function hideCourseMapCompactPreviewSurface() {
-    if (!mapCompactPreview) {
-      return;
-    }
-    activeCompactPreviewLink = null;
-    mapCompactPreview.hidden = true;
-    mapCompactPreview.textContent = "";
-    mapCompactPreview.removeAttribute("style");
-  }
-
-  function hideCourseMapCompactPreview() {
-    focusedCompactPreviewLink = null;
-    hoveredCompactPreviewLink = null;
-    hideCourseMapCompactPreviewSurface();
-  }
-
-  function refreshCourseMapCompactPreview() {
-    updateCourseMapCompactPreview();
-  }
-
   function currentCourseMapNodes() {
     const currentLink = map.querySelector("#raya-course-map-list a[aria-current='page']");
     if (!currentLink) {
@@ -1173,7 +1098,6 @@ _SHELL_JAVASCRIPT = r"""
   function closeCourseMapDrawer(options = {}) {
     root.dataset.rayaCourseMapDrawer = "closed";
     clearCourseMapFilter();
-    hideCourseMapCompactPreview();
     syncCourseMapDrawerState();
     if (options.restoreFocus && courseMapDrawerOpener) {
       courseMapDrawerOpener.focus();
@@ -1695,7 +1619,6 @@ _SHELL_JAVASCRIPT = r"""
         ? mapCollapseButton || mapExpandButton || article
         : learningRailCollapse || learningRailExpand || article;
     }
-    hideCourseMapCompactPreview();
     applyStructuralRailPair(next.courseMap, next.learningRail, {
       immediate: true,
       persist: false,
@@ -1809,9 +1732,6 @@ _SHELL_JAVASCRIPT = r"""
             : null,
         }
       );
-      if (root.dataset.rayaCourseMap !== "collapsed") {
-        hideCourseMapCompactPreview();
-      }
     });
   });
 
@@ -1865,32 +1785,6 @@ _SHELL_JAVASCRIPT = r"""
     });
     applyCourseMapFilter();
   }
-
-  map.querySelectorAll("#raya-course-map-list a[href]").forEach((link) => {
-    link.addEventListener("focus", () => {
-      focusedCompactPreviewLink = root.dataset.rayaCourseMap === "collapsed" ? link : null;
-      updateCourseMapCompactPreview();
-    });
-    link.addEventListener("blur", () => {
-      if (focusedCompactPreviewLink === link) {
-        focusedCompactPreviewLink = null;
-      }
-      updateCourseMapCompactPreview();
-    });
-    link.addEventListener("pointerenter", () => {
-      hoveredCompactPreviewLink = root.dataset.rayaCourseMap === "collapsed" ? link : null;
-      updateCourseMapCompactPreview();
-    });
-    link.addEventListener("pointerleave", () => {
-      if (hoveredCompactPreviewLink === link) {
-        hoveredCompactPreviewLink = null;
-      }
-      updateCourseMapCompactPreview();
-    });
-  });
-
-  map.addEventListener("scroll", refreshCourseMapCompactPreview, { passive: true });
-  window.addEventListener("resize", refreshCourseMapCompactPreview);
 
   map.addEventListener("keydown", handleCourseMapKeyboardNavigation);
 

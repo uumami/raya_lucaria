@@ -2332,10 +2332,6 @@ def _render_course_map(
             "\n".join(nav_items),
             "</ol>",
             "</div>",
-            (
-                '<div class="raya-course-map-compact-preview" '
-                'data-raya-course-map-compact-preview aria-hidden="true" hidden></div>'
-            ),
             "</section>",
         ]
     )
