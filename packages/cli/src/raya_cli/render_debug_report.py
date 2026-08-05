@@ -1034,6 +1034,16 @@ class _ElementMarkerParser(HTMLParser):
                 failures.append(
                     "course map direct children must be ordered header, body, mini rail"
                 )
+        if body is not None and navigation is not None and footer is not None:
+            if self.nodes[body]["children"] != [navigation, footer]:
+                failures.append(
+                    "course map body direct children must be ordered navigation, footer"
+                )
+        if navigation is not None and actions is not None and content is not None:
+            if self.nodes[navigation]["children"] != [actions, content]:
+                failures.append(
+                    "course map navigation direct children must be ordered actions, content"
+                )
 
         for selector, owned_node, owner, owner_label in (
             (
@@ -1066,8 +1076,8 @@ class _ElementMarkerParser(HTMLParser):
                     lambda node: "data-raya-course-map-filter"
                     in node["attributes"]
                 ),
-                navigation,
-                "course map navigation",
+                content,
+                "course map content",
             ),
             (
                 "#raya-course-map-list",
@@ -1075,8 +1085,8 @@ class _ElementMarkerParser(HTMLParser):
                     lambda node: node["attributes"].get("id")
                     == "raya-course-map-list"
                 ),
-                navigation,
-                "course map navigation",
+                content,
+                "course map content",
             ),
             (
                 "[data-raya-course-map-expand]",

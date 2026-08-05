@@ -532,6 +532,30 @@ def test_render_debug_report_requires_each_dedicated_course_map_region(
             "content-outside-navigation",
             "course map navigation must own .raya-course-content",
         ),
+        (
+            "navigation-wrapped",
+            "course map body direct children must be ordered navigation, footer",
+        ),
+        (
+            "wrong-body-order",
+            "course map body direct children must be ordered navigation, footer",
+        ),
+        (
+            "wrong-navigation-order",
+            "course map navigation direct children must be ordered actions, content",
+        ),
+        (
+            "filter-inside-actions",
+            "course map content must own [data-raya-course-map-filter]",
+        ),
+        (
+            "tree-inside-actions",
+            "course map content must own #raya-course-map-list",
+        ),
+        (
+            "footer-inside-actions",
+            "course map body direct children must be ordered navigation, footer",
+        ),
     ),
 )
 def test_render_debug_report_rejects_invalid_course_map_ownership(
@@ -1620,11 +1644,7 @@ def _course_map_markup(layout: str) -> str:
       <button class="raya-course-map-expand" type="button"
         data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
     """
-    actions = """
-      <section class="raya-course-actions" aria-label="Course actions"></section>
-    """
-    content = """
-      <section class="raya-course-content" aria-label="Course content">
+    filter_control = """
       <label class="raya-course-map-filter-label"
         for="raya-course-map-filter">Filter map</label>
       <input id="raya-course-map-filter" class="raya-course-map-filter"
@@ -1632,23 +1652,56 @@ def _course_map_markup(layout: str) -> str:
       <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
         No map matches.
       </p>
+    """
+    tree = """
       <div id="raya-course-map-list" class="raya-course-map-list"></div>
+    """
+    footer = '<footer class="raya-course-map-footer"></footer>'
+    actions = (
+        '<section class="raya-course-actions" aria-label="Course actions">'
+        f"{filter_control if layout == 'filter-inside-actions' else ''}"
+        f"{tree if layout == 'tree-inside-actions' else ''}"
+        f"{footer if layout == 'footer-inside-actions' else ''}"
+        "</section>"
+    )
+    content = f"""
+      <section class="raya-course-content" aria-label="Course content">
+      {'' if layout == 'filter-inside-actions' else filter_control}
+      {'' if layout == 'tree-inside-actions' else tree}
       </section>
     """
+    navigation_children = (
+        f"{content}{actions}"
+        if layout == "wrong-navigation-order"
+        else (
+            f"{'' if layout == 'actions-outside-navigation' else actions}"
+            f"{'' if layout == 'content-outside-navigation' else content}"
+        )
+    )
     navigation = (
         '<div class="raya-course-map-navigation" '
         'data-raya-course-map-navigation>'
-        f"{'' if layout == 'actions-outside-navigation' else actions}"
-        f"{'' if layout == 'content-outside-navigation' else content}"
+        f"{navigation_children}"
         "</div>"
     )
-    footer = '<footer class="raya-course-map-footer"></footer>'
+    body_navigation = (
+        f'<div class="course-map-navigation-wrapper">{navigation}</div>'
+        if layout == "navigation-wrapped"
+        else navigation
+    )
+    body_children = (
+        f"{footer}{body_navigation}"
+        if layout == "wrong-body-order"
+        else (
+            f"{'' if layout == 'navigation-outside-body' else body_navigation}"
+            f"{actions if layout == 'actions-outside-navigation' else ''}"
+            f"{content if layout == 'content-outside-navigation' else ''}"
+            f"{'' if layout in {'footer-outside-body', 'footer-inside-actions'} else footer}"
+        )
+    )
     body = (
         '<div id="raya-course-map-body" class="raya-course-map-body">'
-        f"{'' if layout == 'navigation-outside-body' else navigation}"
-        f"{actions if layout == 'actions-outside-navigation' else ''}"
-        f"{content if layout == 'content-outside-navigation' else ''}"
-        f"{'' if layout == 'footer-outside-body' else footer}"
+        f"{body_children}"
         "</div>"
     )
     mini = (
@@ -1672,6 +1725,12 @@ def _course_map_markup(layout: str) -> str:
         "footer-outside-body",
         "actions-outside-navigation",
         "content-outside-navigation",
+        "navigation-wrapped",
+        "wrong-body-order",
+        "wrong-navigation-order",
+        "filter-inside-actions",
+        "tree-inside-actions",
+        "footer-inside-actions",
     }:
         direct_children = (
             f"{header}{body}"
