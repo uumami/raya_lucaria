@@ -333,9 +333,20 @@ def test_native_wheel_keeps_document_locked_at_modal_boundaries(
                       const spacer = document.createElement('div');
                       spacer.style.height = '2400px';
                       document.body.append(spacer);
+                      window.scrollTo(0, 800);
                     }"""
                 )
-                _open_course_map_drawer(page)
+                before_drawer = page.evaluate("() => window.scrollY")
+                assert before_drawer > 0
+                page.locator(".raya-mobile-course-map-open").evaluate(
+                    "button => button.click()"
+                )
+                page.wait_for_function(
+                    """() => document.documentElement.dataset
+                      .rayaCourseMapDrawer === 'open'"""
+                )
+                locked_page_y = page.evaluate("() => window.scrollY")
+                assert locked_page_y == before_drawer
                 _expand_course_map_branches(page)
                 navigation = page.locator(
                     "[data-raya-course-map-navigation]"
@@ -368,7 +379,7 @@ def test_native_wheel_keeps_document_locked_at_modal_boundaries(
                     - bottom["navigation"]["clientHeight"]
                 )
                 assert abs(bottom["navigation"]["scrollTop"] - maximum) <= 1
-                assert bottom["pageY"] == 0
+                assert bottom["pageY"] == locked_page_y
 
                 navigation.evaluate(
                     "node => node.scrollTo({top: 0, behavior: 'instant'})"
@@ -377,7 +388,7 @@ def test_native_wheel_keeps_document_locked_at_modal_boundaries(
                 page.wait_for_timeout(250)
                 top = _rail_scroll_state(page)
                 assert top["navigation"]["scrollTop"] == 0
-                assert top["pageY"] == 0
+                assert top["pageY"] == locked_page_y
                 page.close()
             finally:
                 browser.close()
