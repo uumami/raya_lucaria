@@ -56,8 +56,10 @@ navigation surface.
 
 ## Non-Goals
 
-- Redesigning the course action grid, content filter, footer commands, mini
-  rail, right learning rail, article, or discovery workspaces.
+- Redesigning the course action grid, content filter, footer commands, mini-rail
+  contents, right learning rail, article, or discovery workspaces. The mini
+  rail's outer height and edge alignment are in scope because the same course
+  rail container owns expanded and collapsed structural states.
 - Making phone presentation a new visual priority. Phone behavior must remain
   functional, accessible, and regression-free, but desktop and tablet are the
   primary design targets for this correction.
@@ -72,16 +74,24 @@ navigation surface.
 
 ### Disclosure And Navigation Ownership
 
-Every node with visible child pages renders:
+Every node with visible child pages renders one row with:
 
 1. a dedicated disclosure button;
-2. an optional structural number in its own inline area;
-3. a title link.
+2. one navigation anchor containing an optional structural-number span and a
+   title span.
 
 The disclosure button is the only pointer control that changes branch display.
-The title always navigates to the node's generated page. Row whitespace has no
-hidden action. A leaf renders a stable disclosure spacer but no button,
-`aria-expanded`, or false affordance.
+Clicking either the number or title inside the anchor navigates to the node's
+generated page. Row whitespace has no hidden action. A leaf renders an
+equal-size disclosure spacer but no button, `aria-expanded`, or false
+affordance.
+
+Fine-pointer rows use `30px minmax(0, 1fr)`. Coarse/no-hover rows use
+`44px minmax(0, 1fr)`. Column one is exactly the disclosure button or its
+equal-size leaf spacer. Column two is the single navigation anchor. Inside that
+anchor, the structural-number span is nonshrinking and the title span owns all
+remaining width with `min-width: 0`. The current marker decorates the anchor's
+inline-start edge and never occupies the disclosure, number, or title gap.
 
 The disclosure uses a real chevron icon from the established icon system. It
 points right when collapsed and rotates 90 degrees when expanded. The visible
@@ -89,6 +99,12 @@ icon remains 12-14px. Its target is at least 30px on fine-pointer desktop and
 tablet layouts and at least 44px when `any-pointer: coarse` or `hover: none`
 matches. Hover, pressed, and focus-visible states expose the control boundary
 without styling every row as a card.
+
+Each branch disclosure has stable `aria-controls`, synchronized
+`aria-expanded`, and a state-specific accessible name containing the full
+branch title: `Expand <title>` or `Collapse <title>`. The chevron is decorative
+and hidden from the accessibility tree. Focus-visible treatment is at least
+3px, remains inside the target, and is not clipped by the scroll owner.
 
 ### Accordion
 
@@ -106,9 +122,23 @@ not overwrite the stored preference. Existing page-local explicit-collapse
 bookkeeping remains valid, but pointer and keyboard disclosure paths must use
 the same accordion transition function.
 
+A user disclosure action is one persistence transaction. It applies the direct
+node change, collapses eligible same-parent siblings, and writes the final
+collapsed-ID preference set once. Accordion side effects are therefore part of
+the direct action and are persisted. Filter exposure, load-time current-path
+exposure, and effective-state normalization never write storage.
+
+If a non-empty local filter is active, any direct branch action first clears the
+volatile query and empty state, restores preference, deterministic accordion,
+current-path, and explicit-collapse effective state without writing, and only
+then applies and persists the one user accordion transaction. This order is
+identical for disclosure click, disclosure `Enter`/`Space`, and title-anchor
+`ArrowLeft`/`ArrowRight`; temporary filter exposure can never immediately undo
+the requested branch result.
+
 ### Keyboard
 
-The existing tree-link keyboard model remains:
+The existing tree-link keyboard model remains when a title anchor owns focus:
 
 - `ArrowDown` and `ArrowUp` move through visible page links;
 - `Home` and `End` move to visible boundaries;
@@ -117,14 +147,20 @@ The existing tree-link keyboard model remains:
 - `ArrowLeft` collapses an expanded branch, then moves to its parent when
   already collapsed.
 
-Keyboard expansion and collapse produce the same accordion, storage, active
-path, `aria-expanded`, `hidden`, `aria-hidden`, and focus results as pointer
-activation.
+Native `Enter` or `Space` on a focused disclosure invokes the centralized user
+transition and keeps focus on that disclosure when it remains visible. Arrow
+keys are owned by title anchors and are not intercepted while a disclosure
+button owns focus. Pointer and keyboard activation must produce the same
+accordion, storage, active-path, `aria-expanded`, `hidden`, and `aria-hidden`
+results; they are not required to focus the same element. No direct, accordion,
+filter, or restoration collapse may leave focus inside a hidden subtree. If a
+collapse would do so, focus moves to the disclosure of the branch being hidden.
 
 ## Tree Appearance
 
-Fine-pointer tree text uses a stable 14px interface size with approximately
-20px line height. Ordinary rows target a compact 27-30px rhythm. Long titles
+Fine-pointer tree text uses a stable 14px interface size with 19-21px line
+height. Ordinary title anchors target a compact 27-30px rhythm while the fine
+disclosure/spacer column remains exactly 30px. Long titles
 wrap in normal flow and may increase only their own row; no overlay, hover-only
 text reveal, clipping, or label overlap is permitted.
 
@@ -135,28 +171,45 @@ Each expanded child group follows the FDD/IA spatial model:
 - one subtle one-pixel vertical border;
 - no horizontal elbows.
 
-Structural numbers are plain compact text in a dedicated flex/grid area before
-the title. The current pill treatment is removed from the tree because its
-minimum width plus padding overlaps labels in the available column. Current
-state uses `aria-current="page"`, stronger text, an accent color, and a two- or
-three-pixel inline-start marker. Ancestors receive moderate weight or surface
-emphasis without competing with the current page.
+The number span is derived only from `ContentPage.display_label` already
+generated by the content model. Appendix entries prepend their established
+`hierarchy_label` to that generated display label. It must not use global page
+position, `sequence_index`, CSS counters, raw filename-prefix parsing, or title
+parsing to invent hierarchy. When the display label is empty, the span is
+omitted without changing disclosure or title ownership.
+
+The structural number and title live inside the same navigation anchor, so the
+link's accessible name contains the number exactly once followed by the title.
+The builder displays `nav_title` unchanged. For de-duplication only, when the
+normalized `nav_title` already begins with the exact generated structural label
+followed by whitespace or punctuation, the separate number span is omitted.
+The renderer never removes text from `nav_title` and never derives hierarchy
+from that comparison. Fixture coverage must include this already-numbered case
+and prove there is one visual and spoken prefix. The current pill treatment is
+removed from the tree because its minimum width plus padding overlaps labels in
+the available column.
+
+Current state uses `aria-current="page"`, stronger text, an accent color, and a
+two- or three-pixel inline-start marker on the anchor. Ancestors receive
+moderate weight or surface emphasis without competing with the current page.
 
 Skins may supply colors, but geometry, contrast, disclosure recognition, and
 current/ancestor distinction remain renderer contracts.
 
 ## Full-Height Rail Geometry
 
-At structural desktop and tablet widths, the expanded course rail is a
-viewport-pinned navigation surface rather than a short card:
+At every structural width (`640px+`), the course rail is a fixed,
+viewport-pinned navigation surface in both expanded and collapsed states:
 
-- block size: `100dvh`, with a `100vh` compatibility fallback where needed;
-- inset block start: zero;
+- `position: fixed` with logical block insets of zero and inline-start zero;
+- ordered fallback declarations `height: 100vh; height: 100dvh` and
+  `box-sizing: border-box`;
 - no outer margin, rounded card corners, bottom gap, or floating-card shadow;
 - a restrained inline-end divider separates navigation from the article;
-- the shell continues to reserve the accepted 256px expanded width.
+- the shell continues to reserve the accepted 256px expanded width or 48px
+  collapsed width even though the aside itself is fixed.
 
-The rail remains a three-row layout:
+The expanded surface remains a three-row layout:
 
 1. fixed 48px header;
 2. `minmax(0, 1fr)` central navigation;
@@ -165,9 +218,9 @@ The rail remains a three-row layout:
 Only the central navigation owns `overflow-y: auto`. It contains the course
 actions, filter, and tree. The outer aside clips layout overflow and must not
 become a second vertical scroller. The article keeps normal document scrolling.
-Desktop may use sticky positioning inside the reserving shell and intermediate
-tablet geometry may use the existing fixed-edge implementation; both must keep
-the rail aligned to the viewport's top and bottom during document scroll.
+The collapsed state keeps the existing 48px mini contents inside the same
+full-height, square-corner, edge-aligned outer rail. It does not retain the
+short card, outer inset, radius, shadow, or max-height behavior.
 
 Phone presentation remains the existing full-height modal drawer with safe-area
 handling, scroll lock, focus trap/restore, inert background, overlay, and Close
@@ -180,30 +233,51 @@ control. This correction must not copy FDD/IA's incomplete mobile behavior.
 The builder owns recursive tree structure and initial static state. It emits:
 
 - branch-only disclosure buttons;
-- a separate number element when structural numbering exists;
-- a separate title link;
+- one number span plus title span inside a single navigation anchor;
 - child groups with stable IDs and semantic grouping;
 - the current path expanded in initial HTML so static/no-script reading retains
   orientation.
 
 The builder must not infer new hierarchy or progress. It consumes only current
-generated navigation data.
+generated navigation data. Branch controls render with an enhancement-pending
+marker so no-script CSS can remove them from display and tab order rather than
+advertise inert buttons.
 
 ### Shell
 
-The shell owns volatile and session-scoped display behavior. A centralized user
-branch transition applies:
+The shell owns volatile and session-scoped display behavior. It maintains two
+explicit layers:
+
+1. preference state in each branch's `data-raya-map-expanded`, derived from the
+   validated collapsed-ID payload and changed only by user transactions;
+2. effective state in `aria-expanded`, `hidden`, and `aria-hidden`, which may
+   add temporary filter/current-path exposure without changing preference.
+
+A centralized user branch transition applies:
 
 - direct node expansion or collapse;
 - same-parent/same-depth accordion collapse;
 - current-path protection and explicit-current-path exceptions;
-- storage writes only for direct non-temporary preferences;
-- identical pointer and keyboard results.
+- one atomic storage write for the final direct/accordion preference set;
+- equivalent pointer and keyboard state results with the focus rules above.
 
-Filter matches may temporarily open ancestors. Clearing the filter restores
-the stored accordion state, exposes the current path when no explicit page-local
-collapse prevents it, and does not rewrite preferences. Invalid or unavailable
-session storage is ignored without disabling disclosure behavior.
+The retained v1 payload stores collapsed branch IDs and may encode several
+expanded siblings from pre-accordion sessions. Initialization parses that
+preference without rewriting it, then derives deterministic effective
+accordion state per sibling group: preserve the protected current-path branch
+and at most the first additional eligible expanded sibling in document order;
+effectively collapse later eligible siblings. The first subsequent user
+disclosure transaction persists the complete normalized final collapsed-ID set
+once. No storage version change is required because the payload meaning remains
+"collapsed branch IDs."
+
+Filter matches may temporarily open ancestors. Clearing the filter applies this
+precedence without writing: persisted preference, deterministic accordion
+normalization, current-path exposure, then page-local explicit current-ancestor
+collapses. Page-local explicit-collapse bookkeeping survives BFCache restoration
+of the same document and resets on a new document load or page navigation.
+Invalid or unavailable session storage is ignored without disabling disclosure
+behavior.
 
 The accepted storage key remains
 `raya:course-map-branches:v1:<course_id>` in `sessionStorage`. Filter text,
@@ -217,12 +291,34 @@ number columns, chevron rotation, guide lines, row density, long-label flow,
 and active states. Breakpoint rules must not change semantic DOM or interaction
 ownership.
 
+### Static And No-Script Presentation
+
+When enhancement does not run, branch disclosure buttons are hidden and removed
+from keyboard traversal. No-script CSS also hides and removes from traversal all
+other enhancement-only rail controls and their tooltips or empty states: the
+local filter, Context, Hide/Close/Expand map controls, Text size, OpenDyslexic,
+drawer opener, and drawer backdrop. Static Search, Graph, Practice, Tasks, and
+Schedule links, course home, structural position, branch/title anchors, article,
+and right-rail static content remain available. At every width, no-script CSS
+exposes the course rail as an in-flow static navigation surface before the
+article rather than leaving a closed drawer or mini opener that cannot run. The
+builder-rendered current path remains expanded; navigating a branch title loads
+that branch's page and exposes its current subtree, so every course page remains
+reachable without an inert advertised control.
+
+At `640px+`, no-script presentation may retain the 256px column only when the
+complete current-path navigation is visible. Below `640px`, it must neutralize
+drawer transform, inert-looking overlay chrome, and body scroll lock and render
+the same current-path navigation inline. This fallback needs no accordion,
+filter, rail-collapse, or drawer behavior because those require enhancement.
+
 ## Failure And Fallback Behavior
 
 - Nodes without children remain ordinary links even when JavaScript fails.
 - Branch children on the current path are visible in initial HTML.
-- A missing child container makes its disclosure inert without affecting the
-  title link; generated contracts should prevent this mismatch.
+- A branch whose controlled child container is missing or invalid must not be
+  enhanced into an operable disclosure; its title link remains available and a
+  generated contract reports the mismatch.
 - Invalid storage data is discarded logically and never copied into markup.
 - Filtering to zero results keeps the existing concise empty state in the one
   central navigation scroller.
@@ -238,33 +334,81 @@ one branch. Browser coverage must include or extend a fixture with:
 - at least three hierarchy levels;
 - a current page below one branch;
 - a long branch label and long leaf label;
-- structural numbering with multi-digit values;
-- enough content to overflow the central navigation.
+- generated structural display labels `1`, `1.2`, and `12.10`, an appendix
+  label, an unnumbered root, and an authored already-numbered nav label that is
+  normalized to one visual/spoken number;
+- enough direct leaves inside one valid accordion branch to overflow the
+  central navigation at a short viewport without expanding sibling branches.
 
-Chromium checks at 1440px and a representative tablet width must verify:
+This verification supplements rather than replaces the responsive/static
+matrix in the prior navigation-first design. Chromium checks cover 1440, 1024,
+894, 893, 768, 640, 639, and 390px, normal and short heights, fine and
+coarse/hybrid input, expanded/collapsed structural states, and open/closed
+drawer states. They must verify:
 
-1. the rail touches viewport top and bottom before and after article scroll;
+1. expanded and collapsed structural rail rects have top zero and bottom equal
+   to `innerHeight` before and after article scroll and dynamic viewport change;
 2. header/footer remain fixed while only central navigation scrolls;
 3. disclosure hit testing targets the button, not the link or blank row;
 4. branch labels navigate and leaves expose no disclosure semantics;
-5. pointer and keyboard expansion change `aria-expanded`, `hidden`, and
-   `aria-hidden` consistently;
+5. disclosure accessible name, `aria-controls`, `aria-expanded`, decorative
+   icon, focus indicator, `hidden`, and `aria-hidden` remain synchronized after
+   pointer, Enter/Space, title-link arrows, filter, and storage restoration;
 6. expanding a branch collapses eligible same-level siblings;
 7. the current path is not collapsed as an accordion side effect;
 8. direct current-ancestor collapse survives unrelated interaction during the
    page lifetime and load-time exposure does not overwrite stored preference;
 9. filter expansion/restoration preserves accordion and current-path rules;
-10. every expanded hierarchy level has a visible vertical guide;
-11. plain numbers, titles, chevrons, and current markers never overlap;
+10. every expanded hierarchy level measures 16px logical margin, 8px logical
+    padding, and a visible one-pixel vertical guide with no horizontal elbow;
+11. in fine-pointer, hover-capable contexts at 1440, 893, 768, and 640px,
+    computed tree text is 14px, line height is 19-21px, ordinary title anchors
+    are 27-30px, disclosure/spacer columns are exactly 30px, and numbers,
+    titles, chevrons, and markers never overlap;
 12. long labels remain inside the rail without horizontal overflow;
-13. fine targets are at least 30px and coarse targets at least 44px;
-14. the same DOM remains functional in the phone drawer without modal,
-    overflow, or safe-area regressions.
+13. in coarse or no-hover contexts at those widths and in the phone matrix,
+    disclosure/spacer columns and title-link targets are at least 44px while
+    wrapped rows may grow;
+14. phone tests prove the same DOM plus Close, Escape, backdrop, focus trap,
+    opener focus restoration, inert background, scroll lock, safe-area
+    containment, branch semantics, and no hidden focusable descendants;
+15. JS-disabled Chromium at 1440, 893, 640, 639, and 390px shows reachable
+    current-path navigation; sequentially follows branch-title links through
+    three levels to a deep leaf; and exposes no visible or focusable
+    enhancement-only button, input, tooltip, empty state, backdrop, disclosure,
+    or opener-only trap;
+16. scroll/orientation tests use deterministic path expansion and a valid
+    overflowing accordion state; the old expand-all helper is removed rather
+    than allowed to loop against accordion behavior;
+17. with a non-empty descendant-match filter, disclosure click, disclosure
+    `Enter`/`Space`, and title-anchor arrows all clear the filter first and end
+    with equivalent effective, preference, accordion, and stored branch state.
+
+Capture expanded current-path, peer-expanded accordion, long-label,
+full-height collapsed-rail, and phone-drawer screenshots. Visual comparison
+asserts element bounds and interaction state, not color similarity alone.
 
 Adversarial Chromium reviewers must compare the completed desktop/tablet tree
 against both FDD and IA reference screenshots and independently exercise every
 visible disclosure. The comparison should confirm the selected option A model,
 not merely static visual similarity.
+
+## Truth-Surface Changes
+
+Implementation must update the smallest affected current truth surfaces:
+
+- `docs/foundation/20_learning_renderer_contract.md` gains the full-height
+  expanded/mini structural container, FDD-style separate disclosure/link,
+  same-parent accordion with current-path/direct-intent rules, and no-script
+  fallback;
+- affected English and Spanish contributor, professor, student, and agent role
+  guides describe the corrected branch action and full-height navigation only
+  where they currently document the course rail;
+- static builder, renderer, shell, storage, accessibility, and browser contracts
+  replace assertions/comments for ASCII toggles, pills, tight indentation,
+  short-card geometry, and expand-all behavior;
+- render-debug captures and inspection checks add the valid accordion/full-height
+  states without treating generated screenshots as source truth.
 
 ## Acceptance Criteria
 
