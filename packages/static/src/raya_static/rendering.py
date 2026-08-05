@@ -7304,6 +7304,7 @@ mjx-container[display="true"] {
   .raya-course-map,
   .raya-course-map-mini,
   .raya-course-map-drawer-backdrop,
+  .raya-learning-rail-drawer-backdrop,
   .raya-learning-rail,
   .raya-graph-controls,
   .raya-graph-groups,

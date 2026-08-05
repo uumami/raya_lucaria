@@ -68,19 +68,21 @@ def test_reader_comfort_resources_keep_local_packaged_identity() -> None:
         "open-dyslexic-toggle.js",
         "open-dyslexic-toggle-volatile.js",
     )
-    combined_javascript = "\n".join(
+    combined_resources = "\n".join(
         (
+            resources.css,
             resources.prepaint_javascript,
             resources.javascript,
             resources.volatile_javascript,
         )
     )
-    assert set(re.findall(r'"(raya:[^"]+)"', combined_javascript)) == {
+    assert set(re.findall(r'''["'](raya:[^"'\\\s]+)["']''', combined_resources)) == {
         "raya:open-dyslexic",
         "raya:text-size",
     }
-    for forbidden in ("fetch(", "XMLHttpRequest", "https://", "http://"):
-        assert forbidden not in combined_javascript
+    assert re.search(r"\bfetch\s*\(", combined_resources) is None
+    assert re.search(r"\bXMLHttpRequest\b", combined_resources) is None
+    assert re.search(r"https?://", combined_resources) is None
 
 
 def run_npm_renderer(

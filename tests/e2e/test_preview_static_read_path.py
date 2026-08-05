@@ -12743,8 +12743,7 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                     assert state["miniDisplay"] != "none"
                     page.click("[data-raya-learning-rail-collapse]")
                     rail_state = page.evaluate(
-                        """async () => {
-                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                        """() => {
                           const rail = document.querySelector('#raya-learning-rail');
                           const body = document.querySelector(
                             '#raya-learning-rail-body'
@@ -12761,6 +12760,7 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                             bodyDisplay: getComputedStyle(body).display,
                             bodyAriaHidden: body.getAttribute('aria-hidden'),
                             bodyInert: body.inert,
+                            railWidth: rail.getBoundingClientRect().width,
                           };
                         }"""
                     )
@@ -12770,11 +12770,14 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                     assert rail_state["bodyDisplay"] == "none"
                     assert rail_state["bodyAriaHidden"] == "true"
                     assert rail_state["bodyInert"] is True
+                    assert rail_state["railWidth"] == 44
                     page.click("[data-raya-learning-rail-expand]")
                     reduced_expansion = page.evaluate(
-                        """async () => {
-                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                        """() => {
                           const rail = document.querySelector('#raya-learning-rail');
+                          const body = document.querySelector(
+                            '#raya-learning-rail-body'
+                          );
                           const collapse = document.querySelector(
                             '[data-raya-learning-rail-collapse]'
                           );
@@ -12786,6 +12789,9 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                             activeIsRailCollapse:
                               document.activeElement === collapse,
                             collapseVisible: collapse?.checkVisibility() ?? false,
+                            bodyAriaHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            railWidth: rail.getBoundingClientRect().width,
                           };
                         }"""
                     )
@@ -12794,6 +12800,9 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                         "railTransitionMarker": None,
                         "activeIsRailCollapse": True,
                         "collapseVisible": True,
+                        "bodyAriaHidden": "false",
+                        "bodyInert": False,
+                        "railWidth": 240,
                     }
                 finally:
                     page.close()
@@ -23023,6 +23032,24 @@ def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
                     )
                     requested_urls.clear()
                     page.set_viewport_size({"width": 390, "height": 844})
+                    page.click(".raya-mobile-course-map-open")
+                    page.wait_for_function(
+                        "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                    )
+                    assert page.locator(
+                        ".raya-course-map-drawer-backdrop"
+                    ).is_visible()
+                    page.evaluate(
+                        """() => {
+                          document.documentElement.dataset.rayaLearningRailDrawer = 'open';
+                          document.querySelector(
+                            '.raya-learning-rail-drawer-backdrop'
+                          ).hidden = false;
+                        }"""
+                    )
+                    assert page.locator(
+                        ".raya-learning-rail-drawer-backdrop"
+                    ).is_visible()
                     page.emulate_media(media="print")
                     assert page.locator(".raya-main-article").is_visible()
                     article_style = page.locator(".raya-main-article").evaluate(
@@ -23053,6 +23080,12 @@ def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
                     )
                     assert (
                         page.locator(".raya-course-map-drawer-backdrop").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-learning-rail-drawer-backdrop").evaluate(
                             "node => getComputedStyle(node).display"
                         )
                         == "none"
