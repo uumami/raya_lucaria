@@ -108,6 +108,7 @@ _SHELL_JAVASCRIPT = r"""
   let learningRailDrawerOpener = null;
   let courseMapTransitionTimer = 0;
   let learningRailTransitionTimer = 0;
+  const explicitlyCollapsedCurrentMapNodes = new WeakSet();
   const SHELL_TRANSITION_MS = 240;
 
   function applyRailBodyInert(body, collapsed) {
@@ -1091,7 +1092,11 @@ _SHELL_JAVASCRIPT = r"""
     const currentNodes = currentCourseMapNodes();
     mapNodeToggles.forEach((button) => {
       const node = button.closest("[data-raya-map-node]");
-      if (node && currentNodes.has(node)) {
+      if (
+        node
+        && currentNodes.has(node)
+        && !explicitlyCollapsedCurrentMapNodes.has(node)
+      ) {
         setMapNodeExpanded(node, true, {
           temporary: true,
           skipPersist: true,
@@ -1805,7 +1810,15 @@ _SHELL_JAVASCRIPT = r"""
         mapFilter.value = "";
       }
       const togglesCurrentPath = currentCourseMapNodes().has(node);
-      setMapNodeExpanded(node, button.getAttribute("aria-expanded") !== "true");
+      const nextExpanded = button.getAttribute("aria-expanded") !== "true";
+      if (togglesCurrentPath) {
+        if (nextExpanded) {
+          explicitlyCollapsedCurrentMapNodes.delete(node);
+        } else {
+          explicitlyCollapsedCurrentMapNodes.add(node);
+        }
+      }
+      setMapNodeExpanded(node, nextExpanded);
       applyCourseMapFilter({ exposeCurrentPath: !togglesCurrentPath });
     });
   });
