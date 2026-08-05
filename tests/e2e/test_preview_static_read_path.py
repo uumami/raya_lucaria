@@ -8128,7 +8128,7 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         assert "1 visible result" in search_focus_notice.inner_text()
                         exact_card.locator("a").first.focus()
-                        page.click("[data-raya-course-map-close]")
+                        page.keyboard.press("Escape")
                         page.wait_for_function(
                             """() => document.activeElement?.id === 'raya-search-input'
                               && document
