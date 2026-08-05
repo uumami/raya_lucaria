@@ -394,15 +394,49 @@ def test_drawer_reuses_course_map_and_traps_focus_from_home(tmp_path):
 
                         page.keyboard.press("Shift+Tab")
                         after_shift_tab = page.evaluate(
-                            """() => ({
-                              activeIsLast: document.activeElement === Array.from(
-                                document.querySelector('#raya-course-map').querySelectorAll(
-                                  'a[href], button, input, [tabindex]'
-                                )
-                              ).filter((el) => el.tabIndex >= 0 && el.checkVisibility()).at(-1)
-                            })"""
+                            """() => {
+                              const map = document.querySelector('#raya-course-map');
+                              const focusable = Array.from(map.querySelectorAll(
+                                'a[href], button, input, [tabindex]'
+                              )).filter((el) => el.tabIndex >= 0 && el.checkVisibility());
+                              return {
+                                activeIsLast: document.activeElement === focusable.at(-1),
+                                focusInsideMap: map.contains(document.activeElement),
+                              };
+                            }"""
                         )
                         assert after_shift_tab["activeIsLast"] is True
+                        assert after_shift_tab["focusInsideMap"] is True
+
+                        forward_tabs = []
+                        for _ in range(12):
+                            page.keyboard.press("Tab")
+                            forward_tabs.append(
+                                page.evaluate(
+                                    """() => {
+                                      const map = document.querySelector('#raya-course-map');
+                                      const focusable = Array.from(map.querySelectorAll(
+                                        'a[href], button, input, [tabindex]'
+                                      )).filter(
+                                        (el) => el.tabIndex >= 0 && el.checkVisibility()
+                                      );
+                                      return {
+                                        focusInsideMap: map.contains(document.activeElement),
+                                        focusVisible: document.activeElement?.checkVisibility(),
+                                        focusInert: !!document.activeElement?.closest('[inert]'),
+                                        activeIsFirst:
+                                          document.activeElement === focusable[0],
+                                      };
+                                    }"""
+                                )
+                            )
+                        assert forward_tabs[0]["activeIsFirst"] is True
+                        assert all(
+                            state["focusInsideMap"]
+                            and state["focusVisible"]
+                            and not state["focusInert"]
+                            for state in forward_tabs
+                        )
 
                         page.keyboard.press("Escape")
                         page.wait_for_function(

@@ -17406,6 +17406,151 @@ def test_render_fixture_learning_rail_content_starts_in_first_viewport(
         assert expected_href in probe["keyObjectHrefs"]
 
 
+def test_render_fixture_current_section_links_track_active_heading_without_churn(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for viewport in (
+                    {"width": 1280, "height": 900},
+                    {"width": 390, "height": 844},
+                ):
+                    page = browser.new_page(viewport=viewport)
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/reader-ux/index.html",
+                            wait_until="networkidle",
+                        )
+                        page.wait_for_function(
+                            """() => document.documentElement.dataset.rayaShellReady
+                              === 'true'"""
+                        )
+                        page.locator("#worked-example").scroll_into_view_if_needed()
+                        page.evaluate("() => window.dispatchEvent(new Event('scroll'))")
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('.raya-page-toc a[aria-current="location"]')
+                              ?.getAttribute('href') === '#worked-example'"""
+                        )
+                        current_sections = page.evaluate(
+                            """() => {
+                              const article = document.querySelector('#worked-example');
+                              const rail = document.querySelector(
+                                '#raya-learning-rail .raya-current-section-link'
+                              );
+                              return {
+                                count: document.querySelectorAll(
+                                  '[data-raya-current-section-link]'
+                                ).length,
+                                article: {
+                                  id: article?.id,
+                                  text: article?.textContent.trim(),
+                                },
+                                rail: {
+                                  href: rail?.getAttribute('href'),
+                                  text: rail?.textContent.trim(),
+                                  label: rail?.getAttribute('aria-label'),
+                                },
+                              };
+                            }"""
+                        )
+                        assert current_sections == {
+                            "count": 1,
+                            "article": {
+                                "id": "worked-example",
+                                "text": "Worked Example",
+                            },
+                            "rail": {
+                                "href": "#worked-example",
+                                "text": "Worked Example",
+                                "label": "Worked Example",
+                            },
+                        }
+
+                        redundant_href_mutations = page.evaluate(
+                            """async () => {
+                              const links = Array.from(document.querySelectorAll(
+                                '[data-raya-current-section-link]'
+                              ));
+                              let mutations = 0;
+                              const observer = new MutationObserver((records) => {
+                                mutations += records.filter(
+                                  (record) => record.attributeName === 'href'
+                                ).length;
+                              });
+                              links.forEach((link) => observer.observe(link, {
+                                attributes: true,
+                                attributeFilter: ['href'],
+                              }));
+                              window.dispatchEvent(new Event('scroll'));
+                              window.dispatchEvent(new Event('resize'));
+                              window.dispatchEvent(new Event('scroll'));
+                              await new Promise(
+                                (resolve) => window.requestAnimationFrame(resolve)
+                              );
+                              observer.disconnect();
+                              return mutations;
+                            }"""
+                        )
+                        assert redundant_href_mutations == 0
+
+                        page.evaluate(
+                            """() => {
+                              document.getElementById('1-numeric-heading')
+                                ?.scrollIntoView({ block: 'start' });
+                              window.dispatchEvent(new Event('scroll'));
+                            }"""
+                        )
+                        page.wait_for_function(
+                            """() => document
+                              .querySelector('.raya-page-toc a[aria-current="location"]')
+                              ?.getAttribute('href') === '#1-numeric-heading'
+                              && Array.from(document.querySelectorAll(
+                                '[data-raya-current-section-link]'
+                              )).every((link) =>
+                                link.getAttribute('href') === '#1-numeric-heading'
+                              )"""
+                        )
+                        numeric_sections = page.evaluate(
+                            """() => ({
+                              article: document.getElementById(
+                                '1-numeric-heading'
+                              )?.textContent.trim(),
+                              rail: document.querySelector(
+                                '#raya-learning-rail .raya-current-section-link'
+                              )?.textContent.trim(),
+                            })"""
+                        )
+                        assert numeric_sections == {
+                            "article": "1 Numeric Heading",
+                            "rail": "1 Numeric Heading",
+                        }
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_key_object_links_track_visible_object(
     tmp_path: Path,
 ) -> None:
