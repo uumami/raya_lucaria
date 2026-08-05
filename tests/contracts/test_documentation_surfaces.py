@@ -437,21 +437,15 @@ def test_role_guides_require_flat_reader_rail_actions() -> None:
         "student_en": (
             "expanded course map may also show static links",
             "shortcut cards",
-            "structural badges",
         ),
         "student_es": (
             "mapa del curso expandido tambien puede mostrar enlaces estaticos",
             "cards de atajo",
-            "badges estructurales",
         ),
-        "agent_en": (
-            "course workspace shortcut cards",
-            "dated-task badges",
-        ),
+        "agent_en": ("course workspace shortcut cards",),
         "agent_es": (
             "mosaicos compactos de comandos",
             "cards de atajo course workspace",
-            "badges de tareas fechadas",
         ),
     }
     for name, phrases in stale_phrases.items():
