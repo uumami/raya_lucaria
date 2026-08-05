@@ -12499,6 +12499,33 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
 
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    for order, branch_id, branch_title in (
+        (6, "saved-branch-a", "Saved Branch A"),
+        (7, "saved-branch-b", "Saved Branch B"),
+    ):
+        branch = course / "course" / f"{order}_{branch_id}"
+        child = branch / "1_child"
+        child.mkdir(parents=True)
+        (branch / "0_index.md").write_text(
+            "---\n"
+            f"id: {branch_id}\n"
+            f"title: {branch_title}\n"
+            "summary: Branch persistence fixture.\n"
+            "status: ready\n"
+            "---\n\n"
+            f"# {branch_title}\n",
+            encoding="utf-8",
+        )
+        (child / "0_index.md").write_text(
+            "---\n"
+            f"id: {branch_id}-child\n"
+            f"title: {branch_title} Child\n"
+            "summary: Active-path persistence fixture.\n"
+            "status: ready\n"
+            "---\n\n"
+            f"# {branch_title} Child\n",
+            encoding="utf-8",
+        )
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
@@ -12542,47 +12569,71 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                         item["linkLeft"] >= item["rowLeft"] for item in hierarchy
                     )
 
-                    page.click(
-                        '[data-raya-map-node="render-root"] [data-raya-map-node-toggle]'
-                    )
-                    page.wait_for_function(
-                        """() => document
-                          .querySelector('[data-raya-map-node="render-root"] [data-raya-map-node-toggle]')
-                          ?.getAttribute('aria-expanded') === 'false'"""
-                    )
-                    collapsed = page.evaluate(
-                        """() => ({
-                          expanded: document
-                            .querySelector('[data-raya-map-node="render-root"] [data-raya-map-node-toggle]')
-                            ?.getAttribute('aria-expanded'),
-                          childHidden: document
-                            .querySelector('[data-raya-map-node="render-root"] > [data-raya-map-children]')
-                            ?.hidden,
-                          storage: sessionStorage.getItem(
-                            'raya:course-map-branches:v1:render-fixture'
-                          ),
-                        })"""
-                    )
-                    assert collapsed["expanded"] == "false"
-                    assert collapsed["childHidden"] is True
-                    assert collapsed["storage"] == '["render-root"]'
-
-                    page.reload(wait_until="networkidle")
-                    page.wait_for_function(
-                        """() => document
-                          .querySelector('[data-raya-map-node="render-root"] [data-raya-map-node-toggle]')
-                          ?.getAttribute('aria-expanded') === 'false'"""
+                    branch_key = "raya:course-map-branches:v1:render-fixture"
+                    page.evaluate(
+                        """([key, value]) => sessionStorage.setItem(key, value)""",
+                        [branch_key, '["saved-branch-a","saved-branch-b"]'],
                     )
 
                     page.goto(
-                        f"{handle.base_url}/static-path/index.html",
+                        f"{handle.base_url}/saved-branch-a/child/index.html",
                         wait_until="networkidle",
                     )
-                    page.wait_for_function(
-                        """() => document
-                          .querySelector('[data-raya-map-node="render-root"] [data-raya-map-node-toggle]')
-                          ?.getAttribute('aria-expanded') === 'false'"""
+                    active_a = page.evaluate(
+                        """key => ({
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          unrelatedExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          oriented: document
+                            .querySelector('[data-raya-course-map-navigation]')
+                            ?.dataset.rayaCourseMapOriented,
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
                     )
+                    assert active_a == {
+                        "activeExpanded": "true",
+                        "unrelatedExpanded": "false",
+                        "currentVisible": True,
+                        "oriented": "true",
+                        "storage": '["saved-branch-a","saved-branch-b"]',
+                    }
+
+                    page.goto(
+                        f"{handle.base_url}/saved-branch-b/child/index.html",
+                        wait_until="networkidle",
+                    )
+                    active_b = page.evaluate(
+                        """key => ({
+                          unrelatedExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          oriented: document
+                            .querySelector('[data-raya-course-map-navigation]')
+                            ?.dataset.rayaCourseMapOriented,
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
+                    )
+                    assert active_b == {
+                        "unrelatedExpanded": "false",
+                        "activeExpanded": "true",
+                        "currentVisible": True,
+                        "oriented": "true",
+                        "storage": '["saved-branch-a","saved-branch-b"]',
+                    }
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
@@ -12651,7 +12702,7 @@ def test_course_map_branch_state_uses_course_id_and_validates_payload(
         ],
         "known-deduplicated": [
             {"id": "course-root", "expanded": "true"},
-            {"id": "unit-node", "expanded": "false"},
+            {"id": "unit-node", "expanded": "true"},
         ],
     }
     key_a = "raya:course-map-branches:v1:branch-course-a"
@@ -17090,13 +17141,15 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     page.wait_for_function(
                         "() => !document.querySelector('#raya-course-map')?.dataset.rayaCourseMapTransition"
                     )
-                    page.click("[data-raya-course-map-expand]")
+                    page.focus("[data-raya-course-map-expand]")
+                    page.keyboard.press("Enter")
                     expanding = page.evaluate(
                         """async () => {
                           await new Promise((resolve) => requestAnimationFrame(resolve));
                           const map = document.querySelector('#raya-course-map');
                           const body = document.querySelector('#raya-course-map-body');
                           const list = document.querySelector('#raya-course-map-list');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
                           return {
                             rootState: document.documentElement.dataset.rayaCourseMap,
                             transition: map?.dataset.rayaCourseMapTransition,
@@ -17105,6 +17158,8 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                             listVisibility: list ? getComputedStyle(list).visibility : null,
                             bodyHidden: body?.getAttribute('aria-hidden'),
                             bodyInert: body?.inert,
+                            activeIsCollapse: document.activeElement === collapse,
+                            collapseInert: !!collapse?.closest('[inert]'),
                             overflow: Math.ceil(
                               document.documentElement.scrollWidth - window.innerWidth
                             ),
@@ -17122,6 +17177,8 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     assert expanding["listVisibility"] == "hidden"
                     assert expanding["bodyHidden"] == "true"
                     assert expanding["bodyInert"] is True
+                    assert expanding["collapseInert"] is True
+                    assert expanding["activeIsCollapse"] is False
                     assert expanding["overflow"] <= 1
                     assert expanding["storage"] == {
                         "local": {},
@@ -17143,6 +17200,7 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                           const list = document.querySelector('#raya-course-map-list');
                           const firstLink = list?.querySelector('a[href]');
                           const firstToggle = list?.querySelector('.raya-course-map-node-toggle');
+                          const collapse = document.querySelector('[data-raya-course-map-collapse]');
                           return {
                             width: map?.getBoundingClientRect().width,
                             listVisibility: list ? getComputedStyle(list).visibility : null,
@@ -17150,6 +17208,7 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                             bodyInert: body?.inert,
                             firstLinkTabIndex: firstLink?.getAttribute('tabindex'),
                             firstToggleTabIndex: firstToggle?.getAttribute('tabindex'),
+                            activeIsCollapse: document.activeElement === collapse,
                           };
                         }"""
                     )
@@ -17159,6 +17218,7 @@ def test_render_fixture_desktop_course_map_expansion_hides_full_list_until_trans
                     assert expanded["bodyInert"] is False
                     assert expanded["firstLinkTabIndex"] is None
                     assert expanded["firstToggleTabIndex"] is None
+                    assert expanded["activeIsCollapse"] is True
                 finally:
                     page.close()
             finally:

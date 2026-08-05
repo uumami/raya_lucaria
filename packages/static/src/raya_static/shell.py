@@ -701,6 +701,9 @@ _SHELL_JAVASCRIPT = r"""
       && options.immediate !== true
       && !reducedMotionQuery.matches;
     const desktopExpanding = desktopTransition && nextExpanded;
+    const focusAfterExpansion = Boolean(
+      nextExpanded && options.focusCourseMapAfterExpansion
+    );
     if (!nextExpanded) {
       clearCourseMapFilter();
     }
@@ -711,9 +714,21 @@ _SHELL_JAVASCRIPT = r"""
         updateMapLinkTabOrder(false);
       }
       courseMapTransitionTimer = window.setTimeout(() => {
+        const shouldTransferFocus =
+          desktopExpanding
+          && focusAfterExpansion
+          && root.dataset.rayaCourseMap === "expanded"
+          && map.dataset.rayaCourseMapTransition === "expanding"
+          && (
+            document.activeElement === mapExpandButton
+            || document.activeElement === document.body
+          );
         delete map.dataset.rayaCourseMapTransition;
         if (desktopExpanding && root.dataset.rayaCourseMap === "expanded") {
           updateMapLinkTabOrder(true);
+        }
+        if (shouldTransferFocus) {
+          mapCollapseButton.focus();
         }
       }, SHELL_TRANSITION_MS);
     } else {
@@ -727,6 +742,11 @@ _SHELL_JAVASCRIPT = r"""
     syncCourseMapDrawerState();
     if (desktopExpanding) {
       updateMapLinkTabOrder(false);
+    }
+    if (focusAfterExpansion) {
+      if (!desktopExpanding) {
+        mapCollapseButton.focus();
+      }
     }
   }
 
@@ -1049,7 +1069,9 @@ _SHELL_JAVASCRIPT = r"""
     }
     const currentNode = currentLink.closest("[data-raya-map-node]");
     const nodes = new Set();
-    let node = currentNode;
+    let node = currentNode && currentNode.parentElement
+      ? currentNode.parentElement.closest("[data-raya-map-node]")
+      : null;
     while (node && map.contains(node)) {
       if (node.matches("[data-raya-map-node]")) {
         nodes.add(node);
@@ -1064,8 +1086,9 @@ _SHELL_JAVASCRIPT = r"""
     const currentNodes = currentCourseMapNodes();
     mapNodeToggles.forEach((button) => {
       const node = button.closest("[data-raya-map-node]");
-      if (node) {
-        setMapNodeExpanded(node, currentNodes.has(node), {
+      if (node && currentNodes.has(node)) {
+        setMapNodeExpanded(node, true, {
+          temporary: true,
           skipPersist: true,
         });
       }
@@ -1727,9 +1750,11 @@ _SHELL_JAVASCRIPT = r"""
         nextExpanded ? "expanded" : "collapsed",
         nextLearningRail,
         {
-          focusTarget: map.contains(button)
+          restoreFocus: !(nextExpanded && button === mapExpandButton),
+          focusTarget: map.contains(button) && !nextExpanded
             ? courseMapFocusTarget(nextExpanded ? "expanded" : "collapsed")
             : null,
+          focusCourseMapAfterExpansion: nextExpanded && button === mapExpandButton,
         }
       );
     });
@@ -1778,13 +1803,13 @@ _SHELL_JAVASCRIPT = r"""
       applyCourseMapFilter();
     });
   });
-
   if (mapFilter) {
     mapFilter.addEventListener("input", () => {
       applyCourseMapFilter();
     });
     applyCourseMapFilter();
   }
+  expandCurrentCourseMapPath();
 
   map.addEventListener("keydown", handleCourseMapKeyboardNavigation);
 
