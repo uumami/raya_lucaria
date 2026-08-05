@@ -5,6 +5,7 @@ assertions added by docs/superpowers/plans/2026-07-29-reader-rail-density.md.
 """
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -80,6 +81,382 @@ def _expand_course_map_branches(page) -> None:
         guard += 1
     page.wait_for_timeout(200)
     assert toggles.count() == 0, "guard exhausted before draining all toggles"
+
+
+def _open_course_map_drawer(page) -> None:
+    page.click(".raya-mobile-course-map-open")
+    page.wait_for_function(
+        """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+    )
+
+
+def _rail_scroll_state(page) -> dict:
+    return page.evaluate(
+        """() => {
+          const state = (selector) => {
+            const node = document.querySelector(selector);
+            return {
+              clientHeight: node.clientHeight,
+              scrollHeight: node.scrollHeight,
+              scrollTop: node.scrollTop,
+            };
+          };
+          return {
+            navigation: state('[data-raya-course-map-navigation]'),
+            map: state('.raya-course-map'),
+            list: state('.raya-course-map-list'),
+            pageY: window.scrollY,
+          };
+        }"""
+    )
+
+
+def _visible_center(page, selector: str) -> tuple[float, float]:
+    box = page.locator(selector).first.bounding_box()
+    assert box is not None, selector
+    viewport = page.locator(
+        "[data-raya-course-map-navigation]"
+    ).bounding_box()
+    assert viewport is not None
+    left = max(box["x"], viewport["x"])
+    right = min(box["x"] + box["width"], viewport["x"] + viewport["width"])
+    top = max(box["y"], viewport["y"])
+    bottom = min(
+        box["y"] + box["height"], viewport["y"] + viewport["height"]
+    )
+    assert right - left > 2 and bottom - top > 2, (selector, box, viewport)
+    return ((left + right) / 2, (top + bottom) / 2)
+
+
+_SCROLL_ZONES = (
+    ".raya-course-actions",
+    ".raya-course-map-filter",
+    ".raya-course-map-list .raya-course-map-node-row",
+)
+
+
+def test_course_rail_forbids_wheel_touch_forwarding_and_containment() -> None:
+    from raya_static.rendering import rich_render_css
+    from raya_static.shell import shell_resources
+
+    javascript = shell_resources().javascript
+    for forbidden in (
+        'addEventListener("wheel"',
+        "addEventListener('wheel'",
+        'addEventListener("touchmove"',
+        "addEventListener('touchmove'",
+        ".onwheel =",
+        ".ontouchmove =",
+    ):
+        assert forbidden not in javascript
+
+    stylesheet = rich_render_css()
+    rail_selectors = (
+        ".raya-course-map",
+        ".raya-course-map-navigation",
+        ".raya-course-map-list",
+    )
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", stylesheet):
+        selectors, declarations = match.groups()
+        if "overscroll-behavior: contain" not in declarations:
+            continue
+        assert not any(selector in selectors for selector in rail_selectors), (
+            selectors,
+            declarations,
+        )
+
+
+@pytest.mark.parametrize(
+    ("width", "drawer"),
+    [(1440, False), (894, False), (893, False), (640, False), (639, True), (390, True)],
+)
+def test_native_wheel_scrolls_only_central_owner_across_bands_and_zones(
+    tmp_path: Path, width: int, drawer: bool
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": width, "height": 640})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                if drawer:
+                    _open_course_map_drawer(page)
+                _expand_course_map_branches(page)
+
+                for selector in _SCROLL_ZONES:
+                    page.locator(
+                        "[data-raya-course-map-navigation]"
+                    ).evaluate("node => node.scrollTo({top: 0, behavior: 'instant'})")
+                    page.evaluate("() => window.scrollTo(0, 0)")
+                    before = _rail_scroll_state(page)
+                    assert before["navigation"]["scrollHeight"] > (
+                        before["navigation"]["clientHeight"] + 100
+                    )
+                    x, y = _visible_center(page, selector)
+                    page.mouse.move(x, y)
+                    page.mouse.wheel(0, 240)
+                    page.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-raya-course-map-navigation]').scrollTop > 0"""
+                    )
+                    after = _rail_scroll_state(page)
+                    assert after["navigation"]["scrollTop"] > 0, (
+                        width,
+                        selector,
+                        before,
+                        after,
+                    )
+                    assert after["map"]["scrollTop"] == before["map"]["scrollTop"]
+                    assert after["list"]["scrollTop"] == before["list"]["scrollTop"]
+                    assert after["pageY"] == before["pageY"]
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize("width", [1440, 894, 893, 640])
+def test_native_wheel_chains_page_at_structural_scroll_boundaries(
+    tmp_path: Path, width: int
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": width, "height": 640})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                _expand_course_map_branches(page)
+                page.evaluate(
+                    """() => {
+                      const spacer = document.createElement('div');
+                      spacer.style.height = '2400px';
+                      document.body.append(spacer);
+                    }"""
+                )
+                navigation = page.locator(
+                    "[data-raya-course-map-navigation]"
+                )
+                page.evaluate("() => window.scrollTo(0, 0)")
+                x, y = _visible_center(
+                    page, "[data-raya-course-map-navigation]"
+                )
+                page.mouse.move(x, y)
+                page.wait_for_timeout(100)
+                navigation.evaluate(
+                    """node => new Promise((resolve) => {
+                      requestAnimationFrame(() => {
+                        node.scrollTo({top: node.scrollHeight, behavior: 'instant'});
+                        requestAnimationFrame(() => {
+                          node.scrollTo({top: node.scrollHeight, behavior: 'instant'});
+                          resolve();
+                        });
+                      });
+                    })"""
+                )
+                boundary = _rail_scroll_state(page)["navigation"]
+                assert boundary["scrollTop"] == (
+                    boundary["scrollHeight"] - boundary["clientHeight"]
+                )
+                page.mouse.wheel(0, 360)
+                page.wait_for_function("() => window.scrollY > 0")
+                bottom = _rail_scroll_state(page)
+                maximum = (
+                    bottom["navigation"]["scrollHeight"]
+                    - bottom["navigation"]["clientHeight"]
+                )
+                assert abs(bottom["navigation"]["scrollTop"] - maximum) <= 1
+                assert bottom["pageY"] > 0
+
+                navigation.evaluate(
+                    "node => node.scrollTo({top: 0, behavior: 'instant'})"
+                )
+                page.evaluate("() => window.scrollTo(0, 800)")
+                before_top = page.evaluate("() => window.scrollY")
+                x, y = _visible_center(
+                    page, "[data-raya-course-map-navigation]"
+                )
+                page.mouse.move(x, y)
+                page.mouse.wheel(0, -360)
+                page.wait_for_function(
+                    "before => window.scrollY < before", arg=before_top
+                )
+                top = _rail_scroll_state(page)
+                assert top["navigation"]["scrollTop"] == 0
+                assert top["pageY"] < before_top
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize("width", [639, 390])
+def test_native_wheel_keeps_document_locked_at_modal_boundaries(
+    tmp_path: Path, width: int
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": width, "height": 640})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.evaluate(
+                    """() => {
+                      const spacer = document.createElement('div');
+                      spacer.style.height = '2400px';
+                      document.body.append(spacer);
+                    }"""
+                )
+                _open_course_map_drawer(page)
+                _expand_course_map_branches(page)
+                navigation = page.locator(
+                    "[data-raya-course-map-navigation]"
+                )
+                x, y = _visible_center(
+                    page, "[data-raya-course-map-navigation]"
+                )
+                page.mouse.move(x, y)
+                page.wait_for_timeout(100)
+                navigation.evaluate(
+                    """node => new Promise((resolve) => {
+                      requestAnimationFrame(() => {
+                        node.scrollTo({top: node.scrollHeight, behavior: 'instant'});
+                        requestAnimationFrame(() => {
+                          node.scrollTo({top: node.scrollHeight, behavior: 'instant'});
+                          resolve();
+                        });
+                      });
+                    })"""
+                )
+                boundary = _rail_scroll_state(page)["navigation"]
+                assert boundary["scrollTop"] == (
+                    boundary["scrollHeight"] - boundary["clientHeight"]
+                )
+                page.mouse.wheel(0, 360)
+                page.wait_for_timeout(250)
+                bottom = _rail_scroll_state(page)
+                maximum = (
+                    bottom["navigation"]["scrollHeight"]
+                    - bottom["navigation"]["clientHeight"]
+                )
+                assert abs(bottom["navigation"]["scrollTop"] - maximum) <= 1
+                assert bottom["pageY"] == 0
+
+                navigation.evaluate(
+                    "node => node.scrollTo({top: 0, behavior: 'instant'})"
+                )
+                page.mouse.wheel(0, -360)
+                page.wait_for_timeout(250)
+                top = _rail_scroll_state(page)
+                assert top["navigation"]["scrollTop"] == 0
+                assert top["pageY"] == 0
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize(("width", "drawer"), [(640, False), (390, True)])
+def test_native_touch_swipes_scroll_central_owner_for_all_zones(
+    tmp_path: Path, width: int, drawer: bool
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(
+                    viewport={"width": width, "height": 640},
+                    has_touch=True,
+                    device_scale_factor=2,
+                )
+                page = context.new_page()
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                if drawer:
+                    _open_course_map_drawer(page)
+                _expand_course_map_branches(page)
+                session = context.new_cdp_session(page)
+
+                for selector in _SCROLL_ZONES:
+                    page.locator(
+                        "[data-raya-course-map-navigation]"
+                    ).evaluate("node => node.scrollTo({top: 0, behavior: 'instant'})")
+                    before = _rail_scroll_state(page)
+                    x, y = _visible_center(page, selector)
+                    session.send(
+                        "Input.dispatchTouchEvent",
+                        {
+                            "type": "touchStart",
+                            "touchPoints": [{"x": x, "y": y}],
+                        },
+                    )
+                    for delta in (20, 40, 60, 80, 100):
+                        session.send(
+                            "Input.dispatchTouchEvent",
+                            {
+                                "type": "touchMove",
+                                "touchPoints": [{"x": x, "y": y - delta}],
+                            },
+                        )
+                        page.wait_for_timeout(20)
+                    session.send(
+                        "Input.dispatchTouchEvent",
+                        {"type": "touchEnd", "touchPoints": []},
+                    )
+                    page.wait_for_function(
+                        """() => document.querySelector(
+                          '[data-raya-course-map-navigation]').scrollTop > 0"""
+                    )
+                    after = _rail_scroll_state(page)
+                    assert after["navigation"]["scrollTop"] > (
+                        before["navigation"]["scrollTop"]
+                    ), (width, selector, before, after)
+                    assert after["map"]["scrollTop"] == before["map"]["scrollTop"]
+                    assert after["list"]["scrollTop"] == before["list"]["scrollTop"]
+                    assert after["pageY"] == before["pageY"]
+                page.close()
+                context.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
 
 
 @pytest.mark.parametrize("width", [1440, 894, 893, 640])
