@@ -1151,6 +1151,161 @@ def test_coarse_pointer_labels_are_full_height_and_targets_do_not_overlap(
         handle.close()
 
 
+def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
+    tmp_path: Path,
+) -> None:
+    """Rail controls stay operable without clipped or overlapping focus UI."""
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                fine = browser.new_page(viewport={"width": 1440, "height": 900})
+                fine.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                fine.wait_for_timeout(400)
+                fine_header = fine.evaluate(
+                    """() => [...document.querySelectorAll(
+                      '.raya-course-map-home, [data-raya-course-map-collapse]')]
+                      .filter((control) => control.checkVisibility())
+                      .map((control) => {
+                        const rect = control.getBoundingClientRect();
+                        return {width: rect.width, height: rect.height};
+                      })"""
+                )
+                assert len(fine_header) == 2, fine_header
+                assert all(
+                    30 <= item[axis] <= 32
+                    for item in fine_header
+                    for axis in ("width", "height")
+                ), fine_header
+
+                focus_selectors = (
+                    ".raya-course-map-home",
+                    "[data-raya-course-map-collapse]",
+                    ".raya-course-action",
+                    ".raya-course-map-comfort",
+                    ".raya-course-map-filter",
+                    ".raya-course-map-node-toggle",
+                )
+                for selector in focus_selectors:
+                    control = fine.locator(selector).first
+                    assert control.count() == 1, selector
+                    control.focus()
+                    focus = control.evaluate(
+                        """(node) => {
+                          const style = getComputedStyle(node);
+                          return {
+                            width: parseFloat(style.outlineWidth),
+                            offset: parseFloat(style.outlineOffset),
+                          };
+                        }"""
+                    )
+                    assert focus["width"] >= 3, (selector, focus)
+                    assert focus["offset"] <= -3, (selector, focus)
+                fine.close()
+
+                coarse = browser.new_context(
+                    viewport={"width": 1440, "height": 900}, has_touch=True
+                )
+                coarse_page = coarse.new_page()
+                coarse_page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                coarse_page.wait_for_timeout(400)
+                coarse_state = coarse_page.evaluate(
+                    """() => {
+                      const selectors = [
+                        '.raya-course-map-home',
+                        '[data-raya-course-map-collapse]',
+                        '.raya-course-action',
+                        '.raya-course-map-comfort',
+                        '.raya-course-map-filter',
+                        '.raya-course-map-node-toggle',
+                        '.raya-course-map-list a'
+                      ];
+                      const controls = selectors.flatMap((selector) =>
+                        [...document.querySelectorAll(selector)])
+                        .filter((control) => control.checkVisibility());
+                      const rects = controls.map((control) => {
+                        const rect = control.getBoundingClientRect();
+                        return {
+                          label: control.getAttribute('aria-label')
+                            || control.textContent.trim(),
+                          left: rect.left,
+                          right: rect.right,
+                          top: rect.top,
+                          bottom: rect.bottom,
+                          width: rect.width,
+                          height: rect.height,
+                        };
+                      });
+                      const overlaps = rects.flatMap((left, index) =>
+                        rects.slice(index + 1).filter((right) =>
+                          left.left < right.right - 1
+                          && left.right > right.left + 1
+                          && left.top < right.bottom - 1
+                          && left.bottom > right.top + 1)
+                          .map((right) => [left.label, right.label]));
+                      return {
+                        coarse: matchMedia('(any-pointer: coarse)').matches,
+                        controls: rects,
+                        overlaps,
+                      };
+                    }"""
+                )
+                assert coarse_state["coarse"] is True, coarse_state
+                assert coarse_state["controls"], coarse_state
+                assert all(
+                    control["width"] >= 44 and control["height"] >= 44
+                    for control in coarse_state["controls"]
+                ), coarse_state
+                assert coarse_state["overlaps"] == [], coarse_state
+                coarse.close()
+
+                phone = browser.new_context(
+                    viewport={"width": 390, "height": 844}, has_touch=True
+                )
+                phone_page = phone.new_page()
+                phone_page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                _open_course_map_drawer(phone_page)
+                close = phone_page.locator("[data-raya-course-map-close]")
+                assert close.get_attribute("aria-label") == "Close course map"
+                assert close.inner_text().strip() == ""
+                assert (
+                    close.locator('[data-raya-command-icon="close"]').count() == 1
+                )
+                close_box = close.bounding_box()
+                assert close_box is not None
+                assert close_box["width"] >= 44 and close_box["height"] >= 44
+                close.focus()
+                phone_page.keyboard.press("Tab")
+                phone_page.keyboard.press("Shift+Tab")
+                close_focus = close.evaluate(
+                    """(node) => {
+                      const style = getComputedStyle(node);
+                      return {
+                        width: parseFloat(style.outlineWidth),
+                        offset: parseFloat(style.outlineOffset),
+                      };
+                    }"""
+                )
+                assert close_focus["width"] >= 3, close_focus
+                assert close_focus["offset"] <= -3, close_focus
+                phone.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
     """The current sequence badge remains contained in the label grid."""
     from playwright.sync_api import sync_playwright

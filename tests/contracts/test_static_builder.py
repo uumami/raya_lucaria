@@ -5011,7 +5011,7 @@ def test_course_map_compact_control_resources_replace_legacy_tiles() -> None:
     assert ".raya-course-action {" in rich_css
     assert "min-block-size: 30px;" in rich_css
     assert ".raya-course-map-footer {\n  block-size: 48px;" in rich_css
-    assert "grid-template-columns: 1fr 1fr auto;" in rich_css
+    assert "grid-template-columns: 32px 32px minmax(0, 1fr);" in rich_css
     assert ".raya-tooltip {" in rich_css
     assert ".raya-course-rail-command-list" not in rich_css
     assert ".raya-course-rail-search.raya-command-search-form" not in rich_css
@@ -5963,6 +5963,24 @@ def test_render_fixture_authoring_page_shows_explicit_graph_context(
     assert "recommended" not in visible
     assert "progress" not in visible
     assert "mastery" not in visible
+
+
+def test_phone_course_drawer_reserves_all_safe_area_edges() -> None:
+    from raya_static.rendering import rich_render_css
+
+    css = rich_render_css()
+    drawer_block = re.search(
+        r'html\[data-raya-course-map-drawer="open"\] \.raya-course-map '
+        r"\{(?P<body>.*?)\n  \}",
+        css,
+        re.S,
+    )
+    assert drawer_block is not None
+    declarations = drawer_block.group("body")
+    assert "padding-block-start: env(safe-area-inset-top);" in declarations
+    assert "padding-block-end: env(safe-area-inset-bottom);" in declarations
+    assert "padding-inline-start: env(safe-area-inset-left);" in declarations
+    assert "padding-inline-end: env(safe-area-inset-right);" in declarations
 
 
 def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:

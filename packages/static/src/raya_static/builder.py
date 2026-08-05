@@ -2314,7 +2314,7 @@ def _render_course_map(
     close_button_html = (
         '<button class="raya-course-map-close" type="button" '
         'data-raya-course-map-close aria-label="Close course map">'
-        "Close</button>"
+        f'{_command_icon("close")}</button>'
     )
     content_html = "\n".join(
         [
@@ -3400,6 +3400,7 @@ _COMMAND_ICON_BODIES = {
         '<path d="M13 7l-5 5 5 5"/>'
         '<path d="M18 7v10"/>'
     ),
+    "close": '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>',
     "search": '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
     "graph": (
         '<circle cx="6.5" cy="7" r="2.3"/>'

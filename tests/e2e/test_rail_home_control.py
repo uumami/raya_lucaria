@@ -115,6 +115,139 @@ def test_rail_header_height_parity_across_widths(tmp_path):
         handle.close()
 
 
+def test_long_course_title_stays_single_line_inside_fixed_structural_header(
+    tmp_path,
+):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "long-title-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    manifest = course / "raya.yaml"
+    original = manifest.read_text(encoding="utf-8")
+    long_title = (
+        "Navigation Architecture for Comparative Evidence, Practice, Tasks, "
+        "Schedule, Reading Context, and Extended Course Materials"
+    )
+    manifest.write_text(
+        original.replace("title: Render Fixture", f"title: {long_title}"),
+        encoding="utf-8",
+    )
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (1440, 894, 893, 640):
+                    page = browser.new_page(viewport={"width": width, "height": 900})
+                    page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                    page.wait_for_timeout(400)
+                    state = page.evaluate(
+                        """() => {
+                          const header = document.querySelector(
+                            '.raya-course-map-header');
+                          const title = header.querySelector(':scope > .raya-region-title');
+                          const headerRect = header.getBoundingClientRect();
+                          const titleRect = title.getBoundingClientRect();
+                          const style = getComputedStyle(title);
+                          return {
+                            headerHeight: headerRect.height,
+                            titleTop: titleRect.top,
+                            titleBottom: titleRect.bottom,
+                            headerTop: headerRect.top,
+                            headerBottom: headerRect.bottom,
+                            clientWidth: title.clientWidth,
+                            scrollWidth: title.scrollWidth,
+                            whiteSpace: style.whiteSpace,
+                            textOverflow: style.textOverflow,
+                            overflow: style.overflow,
+                          };
+                        }"""
+                    )
+                    assert state["headerHeight"] == 48, (width, state)
+                    assert state["whiteSpace"] == "nowrap", (width, state)
+                    assert state["textOverflow"] == "ellipsis", (width, state)
+                    assert state["overflow"] == "hidden", (width, state)
+                    assert state["scrollWidth"] > state["clientWidth"], (width, state)
+                    assert state["titleTop"] >= state["headerTop"], (width, state)
+                    assert state["titleBottom"] <= state["headerBottom"], (width, state)
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_expanded_footer_comfort_controls_are_icon_only_and_accessibly_named(
+    tmp_path,
+):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.wait_for_timeout(400)
+                controls = page.evaluate(
+                    """() => [...document.querySelectorAll(
+                      '.raya-course-map-footer .raya-course-map-comfort')]
+                      .map((button) => {
+                        const label = button.querySelector('.raya-command-label');
+                        const labelRect = label.getBoundingClientRect();
+                        const tooltip = document.getElementById(
+                          button.getAttribute('aria-describedby'));
+                        return {
+                          aria: button.getAttribute('aria-label'),
+                          icon: !!button.querySelector('.raya-command-icon'),
+                          labelWidth: labelRect.width,
+                          labelHeight: labelRect.height,
+                          tooltip: tooltip?.textContent.trim(),
+                        };
+                      })"""
+                )
+                assert len(controls) == 2, controls
+                assert {item["aria"] for item in controls} == {
+                    "Text size: normal",
+                    "Toggle OpenDyslexic font",
+                }
+                assert {item["tooltip"] for item in controls} == {
+                    "Text size",
+                    "OpenDyslexic",
+                }
+                assert all(item["icon"] is True for item in controls), controls
+                assert all(
+                    item["labelWidth"] <= 1 and item["labelHeight"] <= 1
+                    for item in controls
+                ), controls
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_rail_home_link_present_and_resolves_from_nested_page(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview

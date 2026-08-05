@@ -4081,12 +4081,15 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 .raya-learning-rail-header {
   align-items: center;
   border-bottom: 1px solid var(--raya-color-border);
+  box-sizing: border-box;
   display: flex;
-  gap: 0.75rem;
+  gap: 0.25rem;
   justify-content: space-between;
   margin-bottom: 0.25rem;
   min-height: 3.625rem;
-  padding-bottom: 0.75rem;
+  min-inline-size: 0;
+  padding-block: 0;
+  width: auto;
 }
 .raya-course-map-header {
   block-size: 48px;
@@ -4111,7 +4114,7 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
   block-size: 48px;
   display: grid;
   gap: 0.25rem;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 32px 32px minmax(0, 1fr);
   align-items: center;
   min-block-size: 48px;
   overflow: clip;
@@ -4146,10 +4149,14 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 }
 .raya-course-map-header .raya-region-title,
 .raya-learning-rail-header .raya-region-title {
+  flex: 1 1 auto;
   hyphens: none;
   margin-bottom: 0;
   min-width: 0;
+  overflow: hidden;
   overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   word-break: normal;
 }
 .raya-learning-rail-body {
@@ -4174,6 +4181,37 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
   line-height: 1;
   padding: 0.45rem 0.65rem;
   white-space: nowrap;
+}
+.raya-course-map-home,
+.raya-course-map-header .raya-course-map-collapse {
+  align-items: center;
+  block-size: 32px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 32px;
+  inline-size: 32px;
+  justify-content: center;
+  min-block-size: 32px;
+  min-inline-size: 32px;
+  padding: 0;
+}
+.raya-course-map-home {
+  background: transparent;
+  border: 0;
+  color: var(--raya-color-text);
+  text-decoration: none;
+}
+.raya-course-map-home:hover {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 52%, var(--raya-color-surface));
+}
+.raya-course-map-home .raya-command-icon,
+.raya-course-map-close .raya-command-icon {
+  background: transparent;
+  border: 0;
+  block-size: 1rem;
+  inline-size: 1rem;
+  padding: 0;
 }
 .raya-learning-rail-expand {
   display: none;
@@ -4220,9 +4258,10 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 .raya-course-map-collapse:focus-visible,
 .raya-course-map-expand:focus-visible,
 .raya-learning-rail-collapse:focus-visible,
-.raya-learning-rail-expand:focus-visible {
+.raya-learning-rail-expand:focus-visible,
+.raya-course-map-home:focus-visible {
   outline: 3px solid var(--raya-color-accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 .raya-course-map-list {
   min-height: 0;
@@ -4284,8 +4323,8 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 .raya-course-map-comfort:focus-visible {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 58%, var(--raya-color-surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--raya-color-accent) 26%, transparent);
-  outline: 2px solid var(--raya-color-accent);
-  outline-offset: -2px;
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: -3px;
 }
 .raya-course-action .raya-command-icon,
 .raya-course-map-comfort .raya-command-icon {
@@ -4322,15 +4361,20 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
   padding: 0.25rem;
 }
 .raya-course-map-comfort .raya-command-label {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  position: absolute;
   white-space: nowrap;
+  width: 1px;
 }
 .raya-course-map-position {
   color: var(--raya-color-muted);
   font-size: 0.6875rem;
   font-weight: 700;
+  justify-self: end;
   white-space: nowrap;
 }
 .raya-tooltip {
@@ -4361,8 +4405,22 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 }
 @media (any-pointer: coarse) {
   .raya-course-action,
-  .raya-course-map-footer button {
+  .raya-course-map-footer button,
+  .raya-course-map-filter,
+  .raya-rail-toggle {
     min-block-size: 44px;
+  }
+  .raya-course-map-footer {
+    grid-template-columns: 44px 44px minmax(0, 1fr);
+  }
+  .raya-course-map-home,
+  .raya-course-map-header .raya-course-map-collapse,
+  .raya-course-map-close {
+    block-size: 44px;
+    flex-basis: 44px;
+    inline-size: 44px;
+    min-block-size: 44px;
+    min-inline-size: 44px;
   }
 }
 .raya-course-map-close {
@@ -4379,7 +4437,7 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 }
 .raya-course-map-close:focus-visible {
   outline: 3px solid var(--raya-color-accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 .raya-course-map-close,
 .raya-course-map-drawer-backdrop,
@@ -4482,7 +4540,7 @@ html[data-raya-shell-ready="true"] .raya-learning-rail-expand {
 }
 .raya-rail-toggle:focus-visible {
   outline: 3px solid var(--raya-color-accent);
-  outline-offset: 3px;
+  outline-offset: -3px;
 }
 .raya-rail-panel-body {
   display: grid;
@@ -5159,8 +5217,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 .raya-course-map-node-toggle:focus-visible,
 .raya-course-map-filter:focus-visible {
-  outline: 2px solid var(--raya-color-accent);
-  outline-offset: 2px;
+  outline: 3px solid var(--raya-color-accent);
+  outline-offset: -3px;
 }
 .raya-course-map-filter-label {
   color: var(--raya-color-muted);
@@ -5259,6 +5317,9 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   font-weight: 700;
 }
 @media (any-pointer: coarse), (hover: none) {
+  .raya-course-map-filter {
+    min-block-size: 44px;
+  }
   .raya-course-map-node-row {
     grid-template-columns: 44px minmax(0, 1fr);
     min-block-size: 44px;
@@ -6381,7 +6442,10 @@ mjx-container[display="true"] {
     max-block-size: 100dvh;
     margin: 0;
     overflow: clip;
-    padding: 0 0 env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding-block-start: env(safe-area-inset-top);
+    padding-block-end: env(safe-area-inset-bottom);
+    padding-inline-start: env(safe-area-inset-left);
+    padding-inline-end: env(safe-area-inset-right);
     position: fixed;
     transition: none;
     white-space: normal;
@@ -6398,7 +6462,8 @@ mjx-container[display="true"] {
     grid-template-columns: auto minmax(0, 1fr) auto;
     margin: 0;
     min-block-size: 48px;
-    padding: 0.375rem 0.5rem;
+    padding-block: 0;
+    padding-inline: 0.125rem;
     position: relative;
     z-index: 2;
   }
