@@ -354,8 +354,8 @@ def test_render_debug_report_requires_collapsible_shell_controls(
           <body data-raya-skin="warm-academic">
             <main id="raya-content" class="raya-learning-shell">
               <nav id="raya-course-map" class="raya-course-map" aria-label="Course map">
-                <section class="raya-course-rail-tools" aria-label="Course tools"
-                  data-raya-course-map-tools></section>
+                <section class="raya-course-actions" aria-label="Course actions">
+                </section>
               </nav>
               <article id="raya-article" class="raya-main-article"></article>
               <aside id="raya-learning-rail" class="raya-learning-rail"
@@ -374,6 +374,18 @@ def test_render_debug_report_requires_collapsible_shell_controls(
     assert report["ok"] is False
     assert shell_check["status"] == "fail"
     assert "div#raya-course-map-body.raya-course-map-body" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "div.raya-course-map-navigation" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "section.raya-course-content" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "footer.raya-course-map-footer" in shell_check["details"][
+        "missing_selectors"
+    ]
+    assert "div.raya-course-map-mini" in shell_check["details"][
         "missing_selectors"
     ]
     assert "button.raya-course-map-collapse" in shell_check["details"][
@@ -397,9 +409,49 @@ def test_render_debug_report_requires_collapsible_shell_controls(
     ("old", "new", "missing_selector"),
     (
         (
+            'class="raya-course-map-header"',
+            'class="missing-course-map-header"',
+            "header.raya-course-map-header",
+        ),
+        (
             'id="raya-course-map-body" class="raya-course-map-body"',
             'class="missing-course-map-body"',
             "div#raya-course-map-body.raya-course-map-body",
+        ),
+        (
+            'class="raya-course-map-navigation"',
+            'class="missing-course-map-navigation"',
+            "div.raya-course-map-navigation",
+        ),
+        (
+            "data-raya-course-map-navigation",
+            "data-missing-course-map-navigation",
+            "[data-raya-course-map-navigation]",
+        ),
+        (
+            'class="raya-course-actions"',
+            'class="missing-course-actions"',
+            "section.raya-course-actions",
+        ),
+        (
+            'class="raya-course-content"',
+            'class="missing-course-content"',
+            "section.raya-course-content",
+        ),
+        (
+            'class="raya-course-map-footer"',
+            'class="missing-course-map-footer"',
+            "footer.raya-course-map-footer",
+        ),
+        (
+            'class="raya-course-map-mini"',
+            'class="missing-course-map-mini"',
+            "div.raya-course-map-mini",
+        ),
+        (
+            "data-raya-course-map-mini",
+            "data-missing-course-map-mini",
+            "[data-raya-course-map-mini]",
         ),
         (
             'class="raya-course-map-collapse"',
@@ -449,8 +501,8 @@ def test_render_debug_report_requires_each_dedicated_course_map_region(
     ("layout", "expected_failure"),
     (
         (
-            "expand-inside-body",
-            "course map expand opener must be a direct child",
+            "expand-outside-mini",
+            "course map mini rail must own [data-raya-course-map-expand]",
         ),
         (
             "collapse-outside-header",
@@ -463,6 +515,22 @@ def test_render_debug_report_requires_each_dedicated_course_map_region(
         (
             "wrong-direct-order",
             "course map direct children must be ordered",
+        ),
+        (
+            "navigation-outside-body",
+            "course map body must own [data-raya-course-map-navigation]",
+        ),
+        (
+            "footer-outside-body",
+            "course map body must own .raya-course-map-footer",
+        ),
+        (
+            "actions-outside-navigation",
+            "course map navigation must own .raya-course-actions",
+        ),
+        (
+            "content-outside-navigation",
+            "course map navigation must own .raya-course-content",
         ),
     ),
 )
@@ -494,33 +562,12 @@ def test_render_debug_report_rejects_invalid_course_map_ownership(
 def test_render_debug_report_fails_when_learning_shell_ids_are_missing(
     tmp_path: Path,
 ) -> None:
+    html = _learning_shell_html("<p>Reader shell fixture.</p>")
     site_dir, debug_dir = _write_debug_fixture(
         tmp_path,
-        """
-        <!doctype html>
-        <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
-          <body data-raya-skin="warm-academic">
-            <main class="raya-learning-shell">
-              <nav class="raya-course-map" aria-label="Course map">
-                <header class="raya-course-map-header">
-                  <button class="raya-course-map-collapse" type="button"
-                    data-raya-course-map-toggle data-raya-course-map-collapse>
-                    Hide map
-                  </button>
-                </header>
-                <div id="raya-course-map-body" class="raya-course-map-body">
-                  <section class="raya-course-rail-tools" aria-label="Course tools"
-                    data-raya-course-map-tools></section>
-                </div>
-                <button class="raya-course-map-expand" type="button"
-                  data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
-              </nav>
-              <aside class="raya-learning-rail" aria-label="Learning context"></aside>
-              <article class="raya-main-article"></article>
-            </main>
-          </body>
-        </html>
-        """,
+        html.replace('id="raya-content"', "", 1).replace(
+            'id="raya-article"', "", 1
+        ),
         skin="warm-academic",
     )
 
@@ -567,9 +614,15 @@ def test_render_debug_report_fails_when_learning_shell_landmarks_are_malformed(
         "main#raya-content.raya-learning-shell",
         "nav#raya-course-map.raya-course-map",
         "nav.raya-course-map",
-        ".raya-course-rail-tools",
-        "[data-raya-course-map-tools]",
+        "header.raya-course-map-header",
         "div#raya-course-map-body.raya-course-map-body",
+        "div.raya-course-map-navigation",
+        "[data-raya-course-map-navigation]",
+        "section.raya-course-actions",
+        "section.raya-course-content",
+        "footer.raya-course-map-footer",
+        "div.raya-course-map-mini",
+        "[data-raya-course-map-mini]",
         "button.raya-course-map-collapse",
         "[data-raya-course-map-collapse]",
         "button.raya-course-map-expand",
@@ -589,10 +642,12 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
         <!doctype html>
         <html><head><link rel="stylesheet" href="_raya/render/skin.css"></head>
           <body data-raya-skin="warm-academic">
-            <!-- raya-learning-shell raya-course-map raya-course-rail-tools -->
+            <!-- raya-learning-shell raya-course-map raya-course-actions -->
             <main class="raya-learning-shell">
               <article>
-                <p>raya-main-article raya-learning-rail appear only in prose.</p>
+                <p>raya-main-article raya-learning-rail raya-course-map-header
+                  raya-course-map-navigation raya-course-content
+                  raya-course-map-footer raya-course-map-mini appear only in prose.</p>
                 <code>raya-course-map</code>
                 <script>const ignored = "raya-learning-shell";</script>
               </article>
@@ -610,7 +665,12 @@ def test_render_debug_report_rejects_learning_shell_regions_outside_elements(
     assert shell_check["status"] == "fail"
     assert set(shell_check["details"]["missing_classes"]) == {
         "raya-course-map",
-        "raya-course-rail-tools",
+        "raya-course-map-header",
+        "raya-course-map-navigation",
+        "raya-course-actions",
+        "raya-course-content",
+        "raya-course-map-footer",
+        "raya-course-map-mini",
         "raya-main-article",
         "raya-learning-rail",
     }
@@ -1560,9 +1620,11 @@ def _course_map_markup(layout: str) -> str:
       <button class="raya-course-map-expand" type="button"
         data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
     """
-    body_contents = """
-      <section class="raya-course-rail-tools" aria-label="Course tools"
-        data-raya-course-map-tools></section>
+    actions = """
+      <section class="raya-course-actions" aria-label="Course actions"></section>
+    """
+    content = """
+      <section class="raya-course-content" aria-label="Course content">
       <label class="raya-course-map-filter-label"
         for="raya-course-map-filter">Filter map</label>
       <input id="raya-course-map-filter" class="raya-course-map-filter"
@@ -1571,25 +1633,52 @@ def _course_map_markup(layout: str) -> str:
         No map matches.
       </p>
       <div id="raya-course-map-list" class="raya-course-map-list"></div>
+      </section>
     """
+    navigation = (
+        '<div class="raya-course-map-navigation" '
+        'data-raya-course-map-navigation>'
+        f"{'' if layout == 'actions-outside-navigation' else actions}"
+        f"{'' if layout == 'content-outside-navigation' else content}"
+        "</div>"
+    )
+    footer = '<footer class="raya-course-map-footer"></footer>'
     body = (
         '<div id="raya-course-map-body" class="raya-course-map-body">'
-        f"{body_contents}"
-        f"{expand if layout == 'expand-inside-body' else ''}"
+        f"{'' if layout == 'navigation-outside-body' else navigation}"
+        f"{actions if layout == 'actions-outside-navigation' else ''}"
+        f"{content if layout == 'content-outside-navigation' else ''}"
+        f"{'' if layout == 'footer-outside-body' else footer}"
+        "</div>"
+    )
+    mini = (
+        '<div class="raya-course-map-mini" data-raya-course-map-mini>'
+        f"{'' if layout == 'expand-outside-mini' else expand}"
         "</div>"
     )
     if layout == "collapse-outside-header":
-        direct_children = f"{empty_header}{collapse}{body}{expand}"
+        direct_children = f"{empty_header}{collapse}{body}{mini}"
     elif layout == "wrong-direct-order":
-        direct_children = f"{header}{expand}{body}"
+        direct_children = f"{header}{mini}{body}"
     elif layout == "body-outside-map":
         return (
             '<nav id="raya-course-map" class="raya-course-map" '
-            f'aria-label="Course map">{header}{expand}</nav>{body}'
+            f'aria-label="Course map">{header}{mini}</nav>{body}'
         )
-    elif layout in {"valid", "expand-inside-body"}:
+    elif layout in {
+        "valid",
+        "expand-outside-mini",
+        "navigation-outside-body",
+        "footer-outside-body",
+        "actions-outside-navigation",
+        "content-outside-navigation",
+    }:
         direct_children = (
-            f"{header}{body}{'' if layout == 'expand-inside-body' else expand}"
+            f"{header}{body}"
+            f"{navigation if layout == 'navigation-outside-body' else ''}"
+            f"{footer if layout == 'footer-outside-body' else ''}"
+            f"{expand if layout == 'expand-outside-mini' else ''}"
+            f"{mini}"
         )
     else:
         raise ValueError(f"unsupported course map layout: {layout}")

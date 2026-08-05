@@ -10040,7 +10040,12 @@ def test_render_fixture_reader_focus_command_is_removed_and_rails_collapse_indep
 
                     page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
-                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                        """() => document.documentElement.dataset.rayaCourseMap
+                            === 'collapsed'
+                          && !document.querySelector('#raya-course-map')
+                            ?.dataset.rayaCourseMapTransition
+                          && document.querySelector('#raya-course-map')
+                            ?.getBoundingClientRect().width <= 49"""
                     )
                     assert (
                         page.evaluate(
@@ -11360,17 +11365,22 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     initial_orientation = page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
+                          const navigation = document.querySelector(
+                            '[data-raya-course-map-navigation]'
+                          );
                           const list = document.querySelector('#raya-course-map-list');
                           const current = list?.querySelector('a[aria-current="page"]');
                           const header = document.querySelector('.raya-course-map-header');
-                          if (!map || !list || !current || !header) return null;
+                          if (!map || !navigation || !list || !current || !header) {
+                            return null;
+                          }
                           const mapRect = map.getBoundingClientRect();
                           const listRect = list.getBoundingClientRect();
                           const currentRect = current.getBoundingClientRect();
                           const headerRect = header.getBoundingClientRect();
                           return {
-                            oriented: list.dataset.rayaCourseMapOriented,
-                            listScrollTop: list.scrollTop,
+                            oriented: navigation.dataset.rayaCourseMapOriented,
+                            navigationScrollTop: navigation.scrollTop,
                             outerScrollTop: map.scrollTop,
                             currentTop: currentRect.top,
                             currentBottom: currentRect.bottom,
@@ -11390,13 +11400,15 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     # render-fixture is a flat 6-page tree. Since the rail
                     # density work cut ~444.6px of fixed chrome and tightened
                     # the tree indent/font, this fixture's whole map now fits
-                    # its window without overflowing, so `listScrollTop` is
+                    # its window without overflowing, so the central
+                    # navigation owner's scrollTop is
                     # pinned at 0 -- "short course, no scrollbar" is correct
                     # behaviour here, not a bug. The "orientation scrolls the
                     # current page into view" contract is covered on a tree
                     # that genuinely overflows in
                     # tests/e2e/test_rail_density.py::
                     # test_density_fixture_course_map_orientation_scrolls_current_page_into_view.
+                    assert initial_orientation["navigationScrollTop"] == 0
                     assert initial_orientation["outerScrollTop"] == 0
                     assert initial_orientation["headerTop"] >= (
                         initial_orientation["mapTop"] - 1
@@ -11417,18 +11429,20 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
+                          const navigation = document.querySelector(
+                            '[data-raya-course-map-navigation]'
+                          );
                           const list = document.querySelector('#raya-course-map-list');
                           const filter = document.querySelector('#raya-course-map-filter');
-                          if (!map || !list || !filter) {
+                          if (!map || !navigation || !list || !filter) {
                             throw new Error('missing course map controls');
                           }
-                          list.scrollTop = 0;
+                          navigation.scrollTop = 0;
                           map.scrollTop = 0;
-                          delete list.dataset.rayaCourseMapOriented;
-                          delete map.dataset.rayaCourseMapOriented;
+                          delete navigation.dataset.rayaCourseMapOriented;
                           filter.value = 'matrix';
                           window.rayaOrientCourseMapToCurrentPageAutomatic?.();
-                          if (list.scrollTop !== 0 || map.scrollTop !== 0) {
+                          if (navigation.scrollTop !== 0 || map.scrollTop !== 0) {
                             throw new Error('filtered automatic orientation scrolled');
                           }
                           filter.value = '';
@@ -11438,14 +11452,17 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     orientation = page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
+                          const navigation = document.querySelector(
+                            '[data-raya-course-map-navigation]'
+                          );
                           const list = document.querySelector('#raya-course-map-list');
                           const current = list?.querySelector('a[aria-current="page"]');
-                          if (!map || !list || !current) return null;
+                          if (!map || !navigation || !list || !current) return null;
                           const listRect = list.getBoundingClientRect();
                           const currentRect = current.getBoundingClientRect();
                           return {
-                            oriented: list.dataset.rayaCourseMapOriented,
-                            listScrollTop: list.scrollTop,
+                            oriented: navigation.dataset.rayaCourseMapOriented,
+                            navigationScrollTop: navigation.scrollTop,
                             outerScrollTop: map.scrollTop,
                             currentTop: currentRect.top,
                             currentBottom: currentRect.bottom,
@@ -11461,8 +11478,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert orientation is not None
                     assert orientation["oriented"] == "true"
                     # Same non-overflowing fixture as above -- see the
-                    # comment on `initial_orientation` for why `listScrollTop`
-                    # is not asserted here.
+                    # comment on `initial_orientation` for why the central
+                    # owner remains at its origin.
+                    assert orientation["navigationScrollTop"] == 0
                     assert orientation["outerScrollTop"] == 0
                     assert orientation["currentTop"] >= orientation["listTop"] - 1
                     if orientation["currentHeight"] <= orientation["listHeight"]:
@@ -11485,12 +11503,16 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
+                          const navigation = document.querySelector(
+                            '[data-raya-course-map-navigation]'
+                          );
                           const list = document.querySelector('#raya-course-map-list');
-                          if (!map || !list) throw new Error('missing course map');
-                          list.scrollTop = 0;
+                          if (!map || !navigation || !list) {
+                            throw new Error('missing course map');
+                          }
+                          navigation.scrollTop = 0;
                           map.scrollTop = 0;
-                          list.dataset.rayaCourseMapOriented = 'true';
-                          map.dataset.rayaCourseMapOriented = 'true';
+                          navigation.dataset.rayaCourseMapOriented = 'true';
                         }"""
                     )
                     page.click("[data-raya-course-map-expand]")
@@ -14883,6 +14905,12 @@ def test_reader_rail_pair_survives_reload_and_same_tab_navigation(
                     )
                     page.locator("#raya-course-map a").first.focus()
                     page.keyboard.press("Escape")
+                    assert page.locator("[role='tooltip']:visible").count() == 0
+                    assert (
+                        page.locator("html").get_attribute("data-raya-course-map")
+                        == "expanded"
+                    )
+                    page.keyboard.press("Escape")
                     page.wait_for_function(
                         "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
                     )
@@ -15068,6 +15096,16 @@ def test_reader_rail_escape_is_focus_scoped_and_persists_only_changes(
                         page.evaluate("window.__readerShellWrites = []")
                         page.locator(focus_selector).first.focus()
                         page.keyboard.press("Escape")
+                        if (
+                            page.locator("html").get_attribute(
+                                "data-raya-course-map"
+                            )
+                            == "expanded"
+                        ):
+                            assert (
+                                page.locator("[role='tooltip']:visible").count() == 0
+                            )
+                            page.keyboard.press("Escape")
                         page.wait_for_function(
                             """() => document.documentElement.dataset.rayaCourseMap
                                 === 'collapsed'
@@ -15993,13 +16031,13 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
     # grow past its layout column no matter what the content does, so this
     # passed even measured with overflow-wrap disabled entirely. The
     # test's real subject is that the 55-character unbroken token does not
-    # overflow ITS OWN box -- i.e. break-word is actually doing the work,
+    # overflow ITS OWN box -- i.e. emergency wrapping is actually doing the work,
     # not merely that a box that was never going to move stayed put.
     # Confirmed the failure mode: forcing overflow-wrap back to "normal" on
     # this element pushes scrollWidth to 549px against a 153px clientWidth.
     assert current_state["scrollWidth"] <= current_state["clientWidth"] + 1
     assert current_state["linkRight"] <= current_state["mapRight"]
-    assert current_state["overflowWrap"] == "break-word"
+    assert current_state["overflowWrap"] == "anywhere"
 
 
 def test_render_fixture_responsive_shell_state_remains_accessible(
@@ -16579,7 +16617,12 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
 
                     page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
-                        "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                        """() => document.documentElement.dataset.rayaCourseMap
+                            === 'collapsed'
+                          && !document.querySelector('#raya-course-map')
+                            ?.dataset.rayaCourseMapTransition
+                          && document.querySelector('#raya-course-map')
+                            ?.getBoundingClientRect().width <= 49"""
                     )
                     page.wait_for_function(
                         """(minimumWidth) => document.querySelector('#raya-article')
@@ -16595,7 +16638,7 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                           const mapButton = document
                             .querySelector('[data-raya-course-map-expand]');
                           const mapBody = document.querySelector('#raya-course-map-body');
-                          const mapLabel = getComputedStyle(mapButton, '::after');
+                          const mapIcon = mapButton.querySelector('.raya-command-icon');
                           const railExpand = document
                             .querySelector('[data-raya-learning-rail-expand]');
                           const railLabel = getComputedStyle(railExpand, '::after');
@@ -16624,8 +16667,10 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                             viewportWidth: document.documentElement.clientWidth,
                             mapBodyHidden: mapBody?.getAttribute('aria-hidden'),
                             mapBodyInert: mapBody?.inert,
-                            mapVisualLabel: mapLabel.content,
-                            mapVisualWritingMode: mapLabel.writingMode,
+                            mapExpandLabel: mapButton?.getAttribute('aria-label'),
+                            mapIconVisible: !!mapIcon
+                              && mapIcon.getBoundingClientRect().width > 0
+                              && mapIcon.getBoundingClientRect().height > 0,
                             railVisualLabel: railLabel.content,
                             railVisualWritingMode: railLabel.writingMode,
                           };
@@ -16648,14 +16693,16 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                     assert both_collapsed["articleRight"] <= both_collapsed[
                         "railExpandLeft"
                     ]
-                    assert both_collapsed["mapButtonRight"] <= 56
+                    assert both_collapsed["mapButtonRight"] <= (
+                        both_collapsed["mapRight"] + 1
+                    )
                     assert both_collapsed["railExpandLeft"] >= (
                         both_collapsed["viewportWidth"] - 56
                     )
                     assert both_collapsed["mapBodyHidden"] == "true"
                     assert both_collapsed["mapBodyInert"] is True
-                    assert both_collapsed["mapVisualLabel"] == '">"'
-                    assert both_collapsed["mapVisualWritingMode"] == "horizontal-tb"
+                    assert both_collapsed["mapExpandLabel"] == "Expand course map"
+                    assert both_collapsed["mapIconVisible"] is True
                     assert both_collapsed["railVisualLabel"] == '"<"'
                     assert both_collapsed["railVisualWritingMode"] == "horizontal-tb"
                     _assert_no_horizontal_overflow(page)
@@ -16672,9 +16719,6 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                     )
                     mobile = page.evaluate(
                         """() => ({
-                          commandVisible: !!document
-                            .querySelector('[data-raya-learning-rail-toggle]')
-                            ?.getClientRects().length,
                           railHidden: document.querySelector('#raya-learning-rail')
                             ?.getAttribute('aria-hidden'),
                           railInert: document.querySelector('#raya-learning-rail')?.inert,
@@ -16684,7 +16728,6 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                         })"""
                     )
                     assert mobile == {
-                        "commandVisible": False,
                         "railHidden": "false",
                         "railInert": False,
                         "bodyHidden": "false",
@@ -16720,7 +16763,7 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                 args=["--no-sandbox"],
             )
             try:
-                def assert_expanded_header_parity(
+                def assert_expanded_header_alignment(
                     map_state: dict, rail_state: dict
                 ) -> None:
                     assert map_state["mapCollapse"]["visible"] is True
@@ -16735,10 +16778,18 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                         map_state["mapHeader"]["top"]
                         - rail_state["railHeader"]["top"]
                     ) <= 1
-                    assert abs(
-                        map_state["mapHeader"]["width"]
-                        - rail_state["railHeader"]["width"]
-                    ) <= 1
+                    assert map_state["mapHeader"]["left"] >= (
+                        map_state["map"]["left"] - 1
+                    )
+                    assert map_state["mapHeader"]["right"] <= (
+                        map_state["map"]["right"] + 1
+                    )
+                    assert rail_state["railHeader"]["left"] >= (
+                        rail_state["rail"]["left"] - 1
+                    )
+                    assert rail_state["railHeader"]["right"] <= (
+                        rail_state["rail"]["right"] + 1
+                    )
                     assert abs(
                         map_state["mapHeader"]["height"]
                         - rail_state["railHeader"]["height"]
@@ -16790,7 +16841,6 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                             wait_until="networkidle",
                         )
                         if rail is not None:
-                            page.click(f"[data-raya-{rail}-expand]")
                             state_name = (
                                 "rayaCourseMap"
                                 if rail == "course-map"
@@ -16806,6 +16856,10 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                                 if rail == "course-map"
                                 else "#raya-learning-rail"
                             )
+                            if page.locator("html").get_attribute(
+                                f"data-raya-{rail}"
+                            ) != "expanded":
+                                page.click(f"[data-raya-{rail}-expand]:visible")
                             page.wait_for_function(
                                 """([stateName, selector, transitionName]) =>
                                   document.documentElement.dataset[stateName] === 'expanded'
@@ -16831,14 +16885,11 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
 
                     assert map_state["mapCollapseText"] == "Hide map"
                     assert rail_state["railCollapseText"] == "Hide context"
-                    assert abs(
-                        map_state["map"]["width"] - rail_state["rail"]["width"]
-                    ) <= 1
-                    assert_expanded_header_parity(map_state, rail_state)
+                    assert_expanded_header_alignment(map_state, rail_state)
                     assert map_state["mapStyle"] == rail_state["railStyle"]
                     assert map_state["overflow"] <= 1
                     assert rail_state["overflow"] <= 1
-                    assert map_state["map"]["width"] in range(251, 254)
+                    assert map_state["map"]["width"] in range(255, 258)
                     assert rail_state["rail"]["width"] in range(251, 254)
 
                 for width in (894, 1279, 1280, 1440):
@@ -16846,16 +16897,15 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
 
                     assert state["mapCollapseText"] == "Hide map"
                     assert state["railCollapseText"] == "Hide context"
-                    assert abs(state["map"]["width"] - state["rail"]["width"]) <= 1
-                    assert_expanded_header_parity(state, state)
+                    assert_expanded_header_alignment(state, state)
                     assert state["mapStyle"] == state["railStyle"]
                     assert state["overflow"] <= 1
-                    assert state["map"]["width"] in range(239, 242)
+                    assert state["map"]["width"] in range(255, 258)
+                    assert state["rail"]["width"] in range(239, 242)
                     if width == 894:
-                        # Real settled floor at exactly 894 with both rails
-                        # expanded: 894 - 32 padding - 240 map - 24 gap -
-                        # 240 rail - 24 gap = 334px. 320 allows minor variance.
-                        assert state["article"]["width"] >= 320
+                        # The 256px map, 240px context rail, their gutters,
+                        # borders, and shell padding settle near 318px.
+                        assert state["article"]["width"] >= 300
                     if width == 1280:
                         assert state["article"]["width"] >= 672
             finally:
@@ -16936,10 +16986,8 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                       top: rect.top,
                                       bottom: rect.bottom,
                                     }));
-                                  const linkStyle = getComputedStyle(link);
-                                  const renderedLines = Math.round(
-                                    link.clientHeight
-                                      / parseFloat(linkStyle.lineHeight)
+                                  const textLineCount = new Set(
+                                    textRects.map((rect) => Math.round(rect.top))
                                   );
                                   return {
                                     label: link.getAttribute('data-raya-map-label'),
@@ -16949,7 +16997,7 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     rowRight: rowBox.right,
                                     disclosureRight: disclosureBox.right,
                                     textRects,
-                                    renderedLines,
+                                    textLineCount: textLineCount.size,
                                   };
                                 });
                               return {
@@ -16993,10 +17041,10 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                         # test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels
                         # instead.
                         problems[viewport["width"]] = clipped
-                        # Design inverts this: the column is wide enough that fixture labels no
-                        # longer need to wrap. Assert none exceeds the two-line clamp instead.
+                        # Count actual text-line rects rather than padded link height.
+                        # Every authored fixture label fits within the two-line rail cap.
                         for link in tree["links"]:
-                            assert link["renderedLines"] <= 2, link
+                            assert link["textLineCount"] <= 2, link
                     finally:
                         page.close()
                 assert problems == {1440: [], 894: []}

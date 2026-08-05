@@ -483,19 +483,27 @@ def _learning_shell_html(content: str) -> str:
               </button>
             </header>
             <div id="raya-course-map-body" class="raya-course-map-body">
-              <section class="raya-course-rail-tools" aria-label="Course tools"
-                data-raya-course-map-tools></section>
-              <label class="raya-course-map-filter-label"
-                for="raya-course-map-filter">Filter map</label>
-              <input id="raya-course-map-filter" class="raya-course-map-filter"
-                data-raya-course-map-filter>
-              <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
-                No map matches.
-              </p>
-              <div id="raya-course-map-list" class="raya-course-map-list"></div>
+              <div class="raya-course-map-navigation"
+                data-raya-course-map-navigation>
+                <section class="raya-course-actions" aria-label="Course actions">
+                </section>
+                <section class="raya-course-content" aria-label="Course content">
+                  <label class="raya-course-map-filter-label"
+                    for="raya-course-map-filter">Filter map</label>
+                  <input id="raya-course-map-filter" class="raya-course-map-filter"
+                    data-raya-course-map-filter>
+                  <p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>
+                    No map matches.
+                  </p>
+                  <div id="raya-course-map-list" class="raya-course-map-list"></div>
+                </section>
+              </div>
+              <footer class="raya-course-map-footer"></footer>
             </div>
-            <button class="raya-course-map-expand" type="button"
-              data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
+            <div class="raya-course-map-mini" data-raya-course-map-mini>
+              <button class="raya-course-map-expand" type="button"
+                data-raya-course-map-toggle data-raya-course-map-expand>Map</button>
+            </div>
           </nav>
           <article id="raya-article" class="raya-main-article">
             {content}

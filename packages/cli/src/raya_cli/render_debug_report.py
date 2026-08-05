@@ -82,7 +82,12 @@ READER_UX_STATIC_ENVIRONMENTS = {
 LEARNING_SHELL_REGIONS = (
     "raya-learning-shell",
     "raya-course-map",
-    "raya-course-rail-tools",
+    "raya-course-map-header",
+    "raya-course-map-navigation",
+    "raya-course-actions",
+    "raya-course-content",
+    "raya-course-map-footer",
+    "raya-course-map-mini",
     "raya-main-article",
     "raya-learning-rail",
 )
@@ -94,9 +99,15 @@ LEARNING_SHELL_SELECTORS = (
     "main#raya-content.raya-learning-shell",
     "nav#raya-course-map.raya-course-map",
     "nav.raya-course-map",
-    ".raya-course-rail-tools",
-    "[data-raya-course-map-tools]",
+    "header.raya-course-map-header",
     "div#raya-course-map-body.raya-course-map-body",
+    "div.raya-course-map-navigation",
+    "[data-raya-course-map-navigation]",
+    "section.raya-course-actions",
+    "section.raya-course-content",
+    "footer.raya-course-map-footer",
+    "div.raya-course-map-mini",
+    "[data-raya-course-map-mini]",
     "button.raya-course-map-collapse",
     "[data-raya-course-map-collapse]",
     "button.raya-course-map-expand",
@@ -975,6 +986,22 @@ class _ElementMarkerParser(HTMLParser):
         body = self._first_node(
             lambda node: node["attributes"].get("id") == "raya-course-map-body"
         )
+        navigation = self._first_node(
+            lambda node: "data-raya-course-map-navigation"
+            in node["attributes"]
+        )
+        actions = self._first_node(
+            lambda node: "raya-course-actions" in node["classes"]
+        )
+        content = self._first_node(
+            lambda node: "raya-course-content" in node["classes"]
+        )
+        footer = self._first_node(
+            lambda node: "raya-course-map-footer" in node["classes"]
+        )
+        mini = self._first_node(
+            lambda node: "data-raya-course-map-mini" in node["attributes"]
+        )
         collapse = self._first_node(
             lambda node: "data-raya-course-map-collapse" in node["attributes"]
         )
@@ -991,9 +1018,9 @@ class _ElementMarkerParser(HTMLParser):
             failures.append(
                 "course map body must be a direct child of #raya-course-map"
             )
-        if expand is not None and self.nodes[expand]["parent"] != map_node:
+        if mini is not None and self.nodes[mini]["parent"] != map_node:
             failures.append(
-                "course map expand opener must be a direct child of #raya-course-map"
+                "course map mini rail must be a direct child of #raya-course-map"
             )
         if collapse is not None and (
             header is None or not self._is_descendant(collapse, header)
@@ -1002,19 +1029,36 @@ class _ElementMarkerParser(HTMLParser):
                 "course map collapse control must be inside the course map header"
             )
 
-        if header is not None and body is not None and expand is not None:
-            if self.nodes[map_node]["children"] != [header, body, expand]:
+        if header is not None and body is not None and mini is not None:
+            if self.nodes[map_node]["children"] != [header, body, mini]:
                 failures.append(
-                    "course map direct children must be ordered header, body, expand opener"
+                    "course map direct children must be ordered header, body, mini rail"
                 )
 
-        for selector, owned_node in (
+        for selector, owned_node, owner, owner_label in (
             (
-                "[data-raya-course-map-tools]",
-                self._first_node(
-                    lambda node: "data-raya-course-map-tools"
-                    in node["attributes"]
-                ),
+                "[data-raya-course-map-navigation]",
+                navigation,
+                body,
+                "course map body",
+            ),
+            (
+                ".raya-course-map-footer",
+                footer,
+                body,
+                "course map body",
+            ),
+            (
+                ".raya-course-actions",
+                actions,
+                navigation,
+                "course map navigation",
+            ),
+            (
+                ".raya-course-content",
+                content,
+                navigation,
+                "course map navigation",
             ),
             (
                 "[data-raya-course-map-filter]",
@@ -1022,6 +1066,8 @@ class _ElementMarkerParser(HTMLParser):
                     lambda node: "data-raya-course-map-filter"
                     in node["attributes"]
                 ),
+                navigation,
+                "course map navigation",
             ),
             (
                 "#raya-course-map-list",
@@ -1029,12 +1075,20 @@ class _ElementMarkerParser(HTMLParser):
                     lambda node: node["attributes"].get("id")
                     == "raya-course-map-list"
                 ),
+                navigation,
+                "course map navigation",
+            ),
+            (
+                "[data-raya-course-map-expand]",
+                expand,
+                mini,
+                "course map mini rail",
             ),
         ):
-            if body is None or owned_node is None or not self._is_descendant(
-                owned_node, body
+            if owner is None or owned_node is None or not self._is_descendant(
+                owned_node, owner
             ):
-                failures.append(f"course map body must own {selector}")
+                failures.append(f"{owner_label} must own {selector}")
         return failures
 
     def _first_node(self, predicate: Any) -> int | None:
