@@ -5164,10 +5164,9 @@ def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None
     assert 'class="raya-course-map-workspaces"' not in html
     assert 'class="raya-course-actions-list"' in html
     assert "data-raya-course-map-workspaces" not in html
-    assert 'class="raya-course-map-drawer-chrome"' in html
-    assert 'class="raya-course-map-drawer-chrome" aria-hidden="true"' not in html
-    assert 'class="raya-course-map-drawer-grip"' in html
-    assert 'class="raya-course-map-drawer-title">Course map</p>' in html
+    assert 'class="raya-course-map-drawer-chrome"' not in html
+    assert 'class="raya-course-map-drawer-grip"' not in html
+    assert 'class="raya-course-map-drawer-title"' not in html
     assert 'class="raya-course-map-current-chip"' not in html
     assert 'class="raya-course-map-actions"' not in html
     assert 'data-raya-course-map-action="current"' not in html

@@ -4144,9 +4144,6 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
     display: none;
   }
 }
-.raya-course-map-drawer-chrome {
-  grid-column: 1 / -1;
-}
 .raya-course-map-header .raya-region-title,
 .raya-learning-rail-header .raya-region-title {
   hyphens: none;
@@ -4387,9 +4384,6 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 .raya-course-map-close,
 .raya-course-map-drawer-backdrop,
 .raya-learning-rail-drawer-backdrop {
-  display: none;
-}
-.raya-course-map-drawer-chrome {
   display: none;
 }
 .raya-course-map-toggle {
@@ -6370,97 +6364,75 @@ mjx-container[display="true"] {
     width: 1px;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map {
-    all: revert;
     --raya-shell-block-offset: 0px;
     background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-page));
     border: 1px solid color-mix(in srgb, var(--raya-color-border) 62%, var(--raya-color-page));
-    border-radius: 0 0.875rem 0.875rem 0;
+    border-radius: 0 0.375rem 0.375rem 0;
     box-sizing: border-box;
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.28);
-    color: var(--raya-color-text);
     display: grid;
-    font-family: var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 1rem;
-    line-height: 1.6;
-    left: 0;
-    margin: 0;
     grid-template-rows: 48px minmax(0, 1fr);
-    block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
-    max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
-    max-width: calc(100vw - 1rem);
+    inset-block: 0;
+    inset-inline-start: 0;
+    inline-size: min(calc(__RAYA_RAIL_EXPANDED_PX__ * 1px), 100vw);
+    block-size: 100vh;
+    block-size: 100dvh;
+    max-block-size: 100vh;
+    max-block-size: 100dvh;
+    margin: 0;
     overflow: clip;
-    padding: 0;
+    padding: 0 0 env(safe-area-inset-bottom) env(safe-area-inset-left);
     position: fixed;
-    right: auto;
-    top: 0;
-    width: min(
-      calc(__RAYA_RAIL_EXPANDED_PX__ * 1px),
-      calc(100vw - 1rem)
-    );
+    transition: none;
+    white-space: normal;
+    width: min(calc(__RAYA_RAIL_EXPANDED_PX__ * 1px), 100vw);
     z-index: 80;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-header,
-  html[data-raya-course-map-drawer="open"] .raya-course-map-filter-label,
-  html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
-  html[data-raya-course-map-drawer="open"] .raya-map-filter-empty,
-  html[data-raya-course-map-drawer="open"] .raya-course-map-list {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem;
-  }
   html[data-raya-course-map-drawer="open"] .raya-course-map-header {
+    align-items: center;
     background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
     border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
-    display: flex;
-    gap: 0.5rem;
-    justify-content: space-between;
-    margin: 0 0 0.45rem;
-    padding: 0.55rem 0.65rem;
-    position: sticky;
-    top: 0;
+    box-sizing: border-box;
+    display: grid;
+    gap: 0.375rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    margin: 0;
+    min-block-size: 48px;
+    padding: 0.375rem 0.5rem;
+    position: relative;
     z-index: 2;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-header > .raya-region-title,
-  html[data-raya-course-map-drawer="open"] .raya-course-map-header > .raya-page-position,
+  html[data-raya-course-map-drawer="open"] .raya-course-map-header > .raya-region-title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   html[data-raya-course-map-drawer="open"] .raya-course-map-header > .raya-course-map-toggle,
   html[data-raya-course-map-drawer="open"] .raya-course-map-header > .raya-course-map-collapse {
     display: none;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-chrome {
+  html[data-raya-course-map-drawer="open"] .raya-course-map-close {
     align-items: center;
-    display: grid;
-    gap: 0.2rem;
-    flex: 1 1 auto;
-    grid-template-columns: auto minmax(0, 1fr);
-    min-width: 0;
+    display: inline-flex;
+    justify-content: center;
+    min-block-size: 30px;
+    min-inline-size: 30px;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-grip {
-    background: color-mix(in srgb, var(--raya-color-accent) 72%, var(--raya-color-text));
-    border-radius: 999px;
-    display: block;
-    height: 2rem;
-    grid-row: span 2;
-    width: 0.32rem;
+  html[data-raya-course-map-drawer="open"] .raya-course-map-body {
+    min-block-size: 0;
+    overflow: clip;
   }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-title,
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-position {
-    margin: 0;
-  }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-title {
-    font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 0.95rem;
-    font-weight: 900;
-    line-height: 1.1;
-  }
-  html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-position {
-    color: var(--raya-color-muted);
-    font-size: 0.78rem;
-    font-weight: 800;
-    line-height: 1.2;
+  html[data-raya-course-map-drawer="open"] .raya-course-map-navigation {
+    min-block-size: 0;
+    overflow-x: clip;
+    overflow-y: auto;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter-label,
   html[data-raya-course-map-drawer="open"] .raya-course-map-filter,
-  html[data-raya-course-map-drawer="open"] .raya-map-filter-empty {
-    display: none;
+  html[data-raya-course-map-drawer="open"] .raya-map-filter-empty,
+  html[data-raya-course-map-drawer="open"] .raya-course-map-list {
+    margin-inline: 0;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-drawer-backdrop {
     background: rgba(0, 0, 0, 0.42);
@@ -7014,26 +6986,6 @@ mjx-container[display="true"] {
   }
   .raya-course-map-filter {
     min-height: 2rem;
-  }
-}
-@media (max-width: 380px) {
-  html[data-raya-course-map-drawer="open"] .raya-course-map {
-    width: min(17.25rem, calc(100vw - 1rem));
-  }
-}
-@media (max-width: 340px) {
-  html[data-raya-course-map-drawer="open"] .raya-course-map {
-    width: 296px;
-  }
-}
-@media (max-width: 312px) {
-  html[data-raya-course-map-drawer="open"] .raya-course-map {
-    width: 280px;
-  }
-}
-@media (max-width: 290px) {
-  html[data-raya-course-map-drawer="open"] .raya-course-map {
-    width: 260px;
   }
 }
 @media (max-width: 520px) {

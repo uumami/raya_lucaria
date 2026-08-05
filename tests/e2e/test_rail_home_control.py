@@ -328,7 +328,7 @@ def test_single_aria_current_on_course_root_page(tmp_path):
         handle.close()
 
 
-def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
+def test_drawer_reuses_course_map_and_traps_focus_from_home(tmp_path):
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -355,6 +355,13 @@ def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
                             f"{handle.base_url}/authoring-matrix/index.html",
                             wait_until="networkidle",
                         )
+                        page.evaluate(
+                            """() => {
+                              window.__courseMapIdentity = document.querySelector(
+                                '#raya-course-map'
+                              );
+                            }"""
+                        )
                         page.click(".raya-mobile-course-map-open")
                         page.wait_for_function(
                             """() => document.documentElement
@@ -366,10 +373,6 @@ def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
                               .querySelector('#raya-course-map')
                               ?.contains(document.activeElement)"""
                         )
-                        # Initial drawer focus stays on the close button, and
-                        # the home link is the first focusable element inside
-                        # the trap (it precedes close in DOM: header_prefix,
-                        # then header_home, then the title, then close).
                         initial = page.evaluate(
                             """() => {
                               const map = document.querySelector('#raya-course-map');
@@ -377,8 +380,8 @@ def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
                                 map.querySelectorAll('a[href], button, input, [tabindex]')
                               ).filter((el) => el.tabIndex >= 0 && el.checkVisibility());
                               return {
-                                activeIsClose: document.activeElement?.matches(
-                                  '[data-raya-course-map-close]'
+                                activeIsHome: document.activeElement?.matches(
+                                  '.raya-course-map-home'
                                 ),
                                 firstFocusableIsHome: focusable[0]?.matches(
                                   '.raya-course-map-home'
@@ -386,18 +389,46 @@ def test_drawer_home_before_close_and_shift_tab_wrap(tmp_path):
                               };
                             }"""
                         )
-                        assert initial["activeIsClose"] is True
+                        assert initial["activeIsHome"] is True
                         assert initial["firstFocusableIsHome"] is True
 
                         page.keyboard.press("Shift+Tab")
                         after_shift_tab = page.evaluate(
                             """() => ({
-                              activeIsHome: document.activeElement?.matches(
-                                '.raya-course-map-home'
-                              ),
+                              activeIsLast: document.activeElement === Array.from(
+                                document.querySelector('#raya-course-map').querySelectorAll(
+                                  'a[href], button, input, [tabindex]'
+                                )
+                              ).filter((el) => el.tabIndex >= 0 && el.checkVisibility()).at(-1)
                             })"""
                         )
-                        assert after_shift_tab["activeIsHome"] is True
+                        assert after_shift_tab["activeIsLast"] is True
+
+                        page.keyboard.press("Escape")
+                        page.wait_for_function(
+                            """() => document.documentElement
+                              .dataset.rayaCourseMapDrawer === 'closed'"""
+                        )
+                        page.set_viewport_size({"width": 640, "height": 844})
+                        page.set_viewport_size({"width": 639, "height": 844})
+                        identity = page.evaluate(
+                            """() => ({
+                              sameMap: window.__courseMapIdentity === document.querySelector(
+                                '#raya-course-map'
+                              ),
+                              maps: document.querySelectorAll('#raya-course-map').length,
+                              trees: document.querySelectorAll('#raya-course-map-list').length,
+                              duplicateIds: Array.from(document.querySelectorAll('[id]'))
+                                .map((node) => node.id)
+                                .filter((id, index, ids) => ids.indexOf(id) !== index),
+                            })"""
+                        )
+                        assert identity == {
+                            "sameMap": True,
+                            "maps": 1,
+                            "trees": 1,
+                            "duplicateIds": [],
+                        }
                     finally:
                         page.close()
                 finally:

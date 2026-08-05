@@ -2311,17 +2311,6 @@ def _render_course_map(
         tasks_label=tasks_aria,
         schedule_label=schedule_aria,
     )
-    drawer_chrome_html = "\n".join(
-        [
-            '<div class="raya-course-map-drawer-chrome">',
-            '<span class="raya-course-map-drawer-grip" aria-hidden="true"></span>',
-            '<p class="raya-course-map-drawer-title">Course map</p>',
-            f'<p class="raya-course-map-drawer-position">{html.escape(position)}</p>'
-            if position
-            else "",
-            "</div>",
-        ]
-    )
     close_button_html = (
         '<button class="raya-course-map-close" type="button" '
         'data-raya-course-map-close aria-label="Close course map">'
@@ -2376,7 +2365,6 @@ def _render_course_map(
             f'data-raya-course-map-root="{html.escape(root_identity, quote=True)}" '
             f'data-raya-course-map-storage-key="{html.escape(storage_key, quote=True)}">',
             '<header class="raya-course-map-header">',
-            drawer_chrome_html,
             header_home_html or "",
             (
                 f'<p class="raya-region-title" aria-describedby="{title_tooltip_id}">'

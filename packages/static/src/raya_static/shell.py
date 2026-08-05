@@ -641,11 +641,6 @@ _SHELL_JAVASCRIPT = r"""
     const drawerOpen = root.dataset.rayaCourseMapDrawer === "open";
     const structuralShell = isStructuralRailShell();
     const modalDrawerOpen = drawerOpen && !structuralShell && isPhoneDrawerShell();
-    const hidesCourseMapFilter =
-      (!structuralShell && drawerOpen) || (structuralShell && !desktopMapQuery.matches);
-    if (hidesCourseMapFilter) {
-      clearCourseMapFilter();
-    }
     const structuralExpanded = root.dataset.rayaCourseMap === "expanded";
     const commandExpanded = !structuralShell ? drawerOpen : structuralExpanded;
     root.setAttribute(
@@ -671,19 +666,11 @@ _SHELL_JAVASCRIPT = r"""
     }
     if (!structuralShell) {
       if (modalDrawerOpen) {
-        const drawerTitle = map.querySelector(".raya-course-map-drawer-title");
-        if (drawerTitle && !drawerTitle.id) {
-          drawerTitle.id = "raya-course-map-drawer-title";
-        }
         map.setAttribute("role", "dialog");
         map.setAttribute("aria-modal", "true");
-        if (drawerTitle && drawerTitle.id) {
-          map.setAttribute("aria-labelledby", drawerTitle.id);
-        }
       } else {
         map.removeAttribute("role");
         map.removeAttribute("aria-modal");
-        map.removeAttribute("aria-labelledby");
       }
       syncCourseMapModalBackground(modalDrawerOpen);
       setElementInert(map, !drawerOpen);
@@ -694,7 +681,6 @@ _SHELL_JAVASCRIPT = r"""
     syncCourseMapModalBackground(false);
     map.removeAttribute("role");
     map.removeAttribute("aria-modal");
-    map.removeAttribute("aria-labelledby");
     setElementInert(map, false);
     setFocusableDescendantsEnabled(map, true);
     map.setAttribute("aria-hidden", "false");
@@ -1174,6 +1160,7 @@ _SHELL_JAVASCRIPT = r"""
     syncCourseMapDrawerState();
     window.requestAnimationFrame(() => {
       const focusTarget =
+        map.querySelector(".raya-course-map-home") ||
         map.querySelector("[data-raya-course-map-close]") ||
         map.querySelector("a, button");
       if (focusTarget) {
@@ -1185,6 +1172,7 @@ _SHELL_JAVASCRIPT = r"""
 
   function closeCourseMapDrawer(options = {}) {
     root.dataset.rayaCourseMapDrawer = "closed";
+    clearCourseMapFilter();
     hideCourseMapCompactPreview();
     syncCourseMapDrawerState();
     if (options.restoreFocus && courseMapDrawerOpener) {
@@ -1947,6 +1935,18 @@ _SHELL_JAVASCRIPT = r"""
         if (root.dataset.rayaCourseMapDrawer === "open") {
           closeCourseMapDrawer({ restoreFocus: false });
         }
+        applyStructuralRailPair("expanded", "expanded", {
+          immediate: true,
+          persist: false,
+          restoreFocus: false,
+        });
+        if (learningRail) {
+          learningRail.setAttribute("tabindex", "-1");
+          window.requestAnimationFrame(() => {
+            learningRail.scrollIntoView({ block: "start" });
+            learningRail.focus();
+          });
+        }
         return;
       }
       const nextExpanded = root.dataset.rayaLearningRail !== "expanded";
@@ -1966,6 +1966,11 @@ _SHELL_JAVASCRIPT = r"""
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && root.dataset.rayaCourseMapDrawer === "open") {
+      event.preventDefault();
+      closeCourseMapDrawer({ restoreFocus: true });
+      return;
+    }
     if (event.key === "Escape" && dismissActiveTooltip()) {
       event.preventDefault();
       return;
@@ -1987,10 +1992,6 @@ _SHELL_JAVASCRIPT = r"""
       return;
     }
     if (trapLearningRailDrawerFocus(event)) {
-      return;
-    }
-    if (event.key === "Escape" && root.dataset.rayaCourseMapDrawer === "open") {
-      closeCourseMapDrawer({ restoreFocus: true });
       return;
     }
     if (event.key === "Escape" && root.dataset.rayaLearningRailDrawer === "open") {
