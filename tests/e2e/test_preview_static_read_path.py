@@ -14926,7 +14926,7 @@ def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
                     page.reload(wait_until="networkidle")
                     assert page.evaluate("window.__readerStorageWrites") == []
                     assert page.evaluate(
-                        """() => ({
+                        """branchKey => ({
                           courseMap: document.documentElement.dataset.rayaCourseMap,
                           learningRail: document.documentElement.dataset.rayaLearningRail,
                           rootBranch: document
@@ -14935,11 +14935,18 @@ def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
                               + '> .raya-course-map-node-row '
                               + '[data-raya-map-node-toggle]'
                             )?.getAttribute('aria-expanded'),
-                        })"""
+                          rootPreference: document
+                            .querySelector('[data-raya-map-node="render-root"]')
+                            ?.dataset.rayaMapExpanded,
+                          branchStorage: sessionStorage.getItem(branchKey),
+                        })""",
+                        branch_key,
                     ) == {
                         "courseMap": "collapsed",
                         "learningRail": "collapsed",
-                        "rootBranch": "false",
+                        "rootBranch": "true",
+                        "rootPreference": "false",
+                        "branchStorage": '["render-root"]',
                     }
 
                     page.click("[data-raya-course-map-expand]")
@@ -14953,7 +14960,7 @@ def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
                             reader_key,
                             '{"courseMap":"expanded","learningRail":"collapsed"}',
                         ],
-                        [branch_key, "[]"],
+                        [branch_key, '["render-root"]'],
                     ]
                     assert page.evaluate(
                         "Object.fromEntries(Object.entries(sessionStorage))"
@@ -14963,7 +14970,7 @@ def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
                             '{"courseMap":"expanded",'
                             '"learningRail":"collapsed"}'
                         ),
-                        branch_key: "[]",
+                        branch_key: '["render-root"]',
                     }
                 finally:
                     page.close()
@@ -17078,7 +17085,10 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     rail_state = expanded_state(width, "learning-rail")
 
                     assert map_state["mapCollapseText"] == "Hide map"
-                    assert rail_state["railCollapseText"] == "Hide context"
+                    assert rail_state["railCollapseText"] == ""
+                    assert rail_state["railCollapseLabel"] == (
+                        "Hide learning context"
+                    )
                     assert_expanded_header_alignment(map_state, rail_state)
                     assert map_state["mapStyle"] == rail_state["railStyle"]
                     assert map_state["overflow"] <= 1
@@ -17090,7 +17100,8 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     state = expanded_state(width)
 
                     assert state["mapCollapseText"] == "Hide map"
-                    assert state["railCollapseText"] == "Hide context"
+                    assert state["railCollapseText"] == ""
+                    assert state["railCollapseLabel"] == "Hide learning context"
                     assert_expanded_header_alignment(state, state)
                     assert state["mapStyle"] == state["railStyle"]
                     assert state["overflow"] <= 1
@@ -21822,7 +21833,10 @@ def _reader_rail_outer_geometry(page) -> dict:
               .textContent.trim(),
             railCollapseText: document
               .querySelector('[data-raya-learning-rail-collapse]')
-              .textContent.trim(),
+              .innerText.trim(),
+            railCollapseLabel: document
+              .querySelector('[data-raya-learning-rail-collapse]')
+              .getAttribute('aria-label'),
             overflow: Math.ceil(document.documentElement.scrollWidth - innerWidth),
           };
         }"""

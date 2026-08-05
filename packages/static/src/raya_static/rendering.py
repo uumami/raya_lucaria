@@ -4184,7 +4184,7 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
 }
 .raya-course-map-home,
 .raya-course-map-header .raya-course-map-collapse,
-.raya-learning-rail-header .raya-learning-rail-collapse {
+.raya-learning-rail-collapse {
   align-items: center;
   block-size: 32px;
   border-radius: 4px;
@@ -4420,7 +4420,7 @@ html[data-raya-shell-reconciling="true"] .raya-learning-rail {
   }
   .raya-course-map-home,
   .raya-course-map-header .raya-course-map-collapse,
-  .raya-learning-rail-header .raya-learning-rail-collapse,
+  .raya-learning-rail-collapse,
   .raya-course-map-close {
     block-size: 44px;
     flex-basis: 44px;
