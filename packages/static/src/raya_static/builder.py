@@ -2428,7 +2428,8 @@ def _render_learning_rail(
             "data-raya-learning-rail-collapse "
             'aria-controls="raya-learning-rail-body" '
             'aria-expanded="true" '
-            'aria-label="Hide learning context">Hide context</button>'
+            'aria-label="Hide learning context">'
+            f'{_command_icon("collapse")}</button>'
         ),
         body_open_html=(
             '<div id="raya-learning-rail-body" class="raya-learning-rail-body" aria-hidden="false">'

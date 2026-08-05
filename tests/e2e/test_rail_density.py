@@ -1171,19 +1171,31 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
                 fine.wait_for_timeout(400)
                 fine_header = fine.evaluate(
                     """() => [...document.querySelectorAll(
-                      '.raya-course-map-home, [data-raya-course-map-collapse]')]
+                      '.raya-course-map-home, [data-raya-course-map-collapse], '
+                      + '[data-raya-learning-rail-collapse]')]
                       .filter((control) => control.checkVisibility())
                       .map((control) => {
                         const rect = control.getBoundingClientRect();
-                        return {width: rect.width, height: rect.height};
+                        return {
+                          width: rect.width,
+                          height: rect.height,
+                          text: control.innerText.trim(),
+                          icon: !!control.querySelector('.raya-command-icon'),
+                          learning: control.hasAttribute(
+                            'data-raya-learning-rail-collapse'),
+                        };
                       })"""
                 )
-                assert len(fine_header) == 2, fine_header
+                assert len(fine_header) == 3, fine_header
                 assert all(
                     30 <= item[axis] <= 32
                     for item in fine_header
                     for axis in ("width", "height")
                 ), fine_header
+                assert all(item["icon"] is True for item in fine_header), fine_header
+                learning_hide = [item for item in fine_header if item["learning"]]
+                assert len(learning_hide) == 1, fine_header
+                assert learning_hide[0]["text"] == "", fine_header
 
                 focus_selectors = (
                     ".raya-course-map-home",
@@ -1192,6 +1204,8 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
                     ".raya-course-map-comfort",
                     ".raya-course-map-filter",
                     ".raya-course-map-node-toggle",
+                    ".raya-learning-rail-collapse",
+                    ".raya-rail-toggle",
                 )
                 for selector in focus_selectors:
                     control = fine.locator(selector).first
@@ -1227,7 +1241,9 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
                         '.raya-course-map-comfort',
                         '.raya-course-map-filter',
                         '.raya-course-map-node-toggle',
-                        '.raya-course-map-list a'
+                        '.raya-course-map-list a',
+                        '.raya-learning-rail-collapse',
+                        '.raya-rail-toggle'
                       ];
                       const controls = selectors.flatMap((selector) =>
                         [...document.querySelectorAll(selector)])
