@@ -853,6 +853,19 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
+  function setMapNodeExpandedFromUser(node, nextExpanded) {
+    const togglesCurrentPath = currentCourseMapNodes().has(node);
+    if (togglesCurrentPath) {
+      if (nextExpanded) {
+        explicitlyCollapsedCurrentMapNodes.delete(node);
+      } else {
+        explicitlyCollapsedCurrentMapNodes.add(node);
+      }
+    }
+    setMapNodeExpanded(node, nextExpanded);
+    return togglesCurrentPath;
+  }
+
   function applyStoredMapExpansion(node) {
     setMapNodeExpanded(node, node.dataset.rayaMapExpanded === "true", {
       temporary: true,
@@ -1017,7 +1030,7 @@ _SHELL_JAVASCRIPT = r"""
     } else if (event.key === "ArrowRight") {
       const toggle = node.querySelector(":scope > .raya-course-map-node-row [data-raya-map-node-toggle]");
       if (toggle && toggle.getAttribute("aria-expanded") !== "true") {
-        setMapNodeExpanded(node, true);
+        setMapNodeExpandedFromUser(node, true);
         handled = true;
       } else {
         const childLink = firstVisibleChildCourseMapLink(node);
@@ -1029,7 +1042,7 @@ _SHELL_JAVASCRIPT = r"""
     } else if (event.key === "ArrowLeft") {
       const toggle = node.querySelector(":scope > .raya-course-map-node-row [data-raya-map-node-toggle]");
       if (toggle && toggle.getAttribute("aria-expanded") === "true") {
-        setMapNodeExpanded(node, false);
+        setMapNodeExpandedFromUser(node, false);
         handled = true;
       } else {
         const parentLink = parentCourseMapLink(node);
@@ -1809,16 +1822,8 @@ _SHELL_JAVASCRIPT = r"""
       if (mapFilter) {
         mapFilter.value = "";
       }
-      const togglesCurrentPath = currentCourseMapNodes().has(node);
       const nextExpanded = button.getAttribute("aria-expanded") !== "true";
-      if (togglesCurrentPath) {
-        if (nextExpanded) {
-          explicitlyCollapsedCurrentMapNodes.delete(node);
-        } else {
-          explicitlyCollapsedCurrentMapNodes.add(node);
-        }
-      }
-      setMapNodeExpanded(node, nextExpanded);
+      const togglesCurrentPath = setMapNodeExpandedFromUser(node, nextExpanded);
       applyCourseMapFilter({ exposeCurrentPath: !togglesCurrentPath });
     });
   });

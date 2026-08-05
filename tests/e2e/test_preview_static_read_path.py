@@ -12717,6 +12717,66 @@ def test_render_fixture_course_map_branch_state_survives_refresh_and_page_naviga
                         "oriented": "true",
                         "storage": '["saved-branch-a","saved-branch-b"]',
                     }
+
+                    page.focus(
+                        '[data-raya-map-node="saved-branch-b"] '
+                        "> .raya-course-map-node-row a"
+                    )
+                    page.keyboard.press("ArrowLeft")
+                    page.locator(
+                        '[data-raya-map-node="saved-branch-a"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    ).click()
+                    page.locator(
+                        '[data-raya-map-node="saved-branch-a"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    ).click()
+                    page.fill("#raya-course-map-filter", "saved branch a")
+                    page.fill("#raya-course-map-filter", "")
+                    after_keyboard_active_collapse = page.evaluate(
+                        """key => ({
+                          unrelatedExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-a"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
+                    )
+                    assert after_keyboard_active_collapse == {
+                        "unrelatedExpanded": "false",
+                        "activeExpanded": "false",
+                        "currentVisible": False,
+                        "storage": '["saved-branch-a","saved-branch-b"]',
+                    }
+
+                    page.focus(
+                        '[data-raya-map-node="saved-branch-b"] '
+                        "> .raya-course-map-node-row a"
+                    )
+                    page.keyboard.press("ArrowRight")
+                    after_keyboard_active_expand = page.evaluate(
+                        """key => ({
+                          activeExpanded: document
+                            .querySelector('[data-raya-map-node="saved-branch-b"] [data-raya-map-node-toggle]')
+                            ?.getAttribute('aria-expanded'),
+                          currentVisible: document
+                            .querySelector('a[aria-current="page"]')
+                            ?.checkVisibility(),
+                          storage: sessionStorage.getItem(key),
+                        })""",
+                        branch_key,
+                    )
+                    assert after_keyboard_active_expand == {
+                        "activeExpanded": "true",
+                        "currentVisible": True,
+                        "storage": '["saved-branch-a"]',
+                    }
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
