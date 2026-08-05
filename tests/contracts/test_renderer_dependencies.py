@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import zipfile
 from pathlib import Path
@@ -37,6 +38,49 @@ def test_static_wheel_includes_open_dyslexic_font_resource(tmp_path: Path) -> No
         "raya_static/assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff"
         in names
     )
+
+
+def test_reader_comfort_resources_keep_local_packaged_identity() -> None:
+    from raya_static.accessibility import (
+        COMFORT_PREPAINT_JS_NAME,
+        OPEN_DYSLEXIC_CSS_NAME,
+        OPEN_DYSLEXIC_FONT_NAME,
+        OPEN_DYSLEXIC_JS_NAME,
+        OPEN_DYSLEXIC_RESOURCE_PATH,
+        OPEN_DYSLEXIC_VOLATILE_JS_NAME,
+        open_dyslexic_resources,
+    )
+
+    resources = open_dyslexic_resources()
+
+    assert OPEN_DYSLEXIC_FONT_NAME == "OpenDyslexic-Regular.woff"
+    assert OPEN_DYSLEXIC_RESOURCE_PATH == (
+        "assets/accessibility/open-dyslexic/OpenDyslexic-Regular.woff"
+    )
+    assert (
+        COMFORT_PREPAINT_JS_NAME,
+        OPEN_DYSLEXIC_CSS_NAME,
+        OPEN_DYSLEXIC_JS_NAME,
+        OPEN_DYSLEXIC_VOLATILE_JS_NAME,
+    ) == (
+        "comfort-prepaint.js",
+        "open-dyslexic.css",
+        "open-dyslexic-toggle.js",
+        "open-dyslexic-toggle-volatile.js",
+    )
+    combined_javascript = "\n".join(
+        (
+            resources.prepaint_javascript,
+            resources.javascript,
+            resources.volatile_javascript,
+        )
+    )
+    assert set(re.findall(r'"(raya:[^"]+)"', combined_javascript)) == {
+        "raya:open-dyslexic",
+        "raya:text-size",
+    }
+    for forbidden in ("fetch(", "XMLHttpRequest", "https://", "http://"):
+        assert forbidden not in combined_javascript
 
 
 def run_npm_renderer(
@@ -342,67 +386,70 @@ def test_role_docs_cover_learning_science_course_shell() -> None:
 def test_docs_cover_collapsible_learning_shell() -> None:
     required = {
         "docs/foundation/20_learning_renderer_contract.md": [
-            "expanded course map",
-            "minimal floating Map edge opener",
+            "256px",
+            "48px",
+            "one central native vertical scroll owner",
             "non-persistent",
             "does not collapse on hover",
             "Page N of M",
             "no personal progress",
         ],
         "docs/guides/en/professors/index.md": [
-            "expanded course map",
-            "minimal floating Map edge opener",
+            "256px",
+            "48px",
             "non-persistent",
             "Page N of M",
             "not personal progress",
         ],
         "docs/guides/en/contributors/index.md": [
-            "expanded course map",
-            "minimal floating Map edge opener",
+            "256px",
+            "48px",
             "non-persistent",
             "explicit-click",
             "aria-expanded",
             "local renderer resources",
         ],
         "docs/guides/en/students/index.md": [
-            "expanded course map",
-            "minimal floating Map edge opener",
+            "256px",
+            "48px",
             "non-persistent",
             "Previous",
             "Next",
             "OpenDyslexic",
         ],
         "docs/guides/en/agents/index.md": [
-            "expanded course map",
+            "256px",
+            "48px",
             "non-persistent",
             "no external requests",
             "render-debug",
         ],
         "docs/guides/es/profesores/index.md": [
-            "mapa del curso expandido",
-            "opener minimo flotante Map",
+            "256px",
+            "48px",
             "no persistente",
             "Page N of M",
             "no es progreso personal",
         ],
         "docs/guides/es/colaboradores/index.md": [
-            "mapa del curso expandido",
-            "opener minimo flotante Map",
+            "256px",
+            "48px",
             "no persistente",
             "click explicito",
             "aria-expanded",
             "recursos locales del renderer",
         ],
         "docs/guides/es/estudiantes/index.md": [
-            "mapa del curso expandido",
-            "opener minimo flotante Map",
+            "256px",
+            "48px",
             "no persistente",
             "Anterior",
             "Siguiente",
             "OpenDyslexic",
         ],
         "docs/guides/es/agentes/index.md": [
-            "mapa del curso expandido",
+            "256px",
+            "48px",
             "no persistente",
             "sin solicitudes externas",
             "render-debug",

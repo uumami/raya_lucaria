@@ -9,7 +9,7 @@ import threading
 from html.parser import HTMLParser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from urllib.request import urlopen
 
 import pytest
@@ -30,6 +30,25 @@ REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 MINIMAL = ROOT / "examples" / "courses" / "minimal"
 EXAMPLES_GALLERY = ROOT / "examples" / "gallery"
+
+
+class _CourseActionHrefParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hrefs: list[str] = []
+
+    def handle_starttag(
+        self,
+        tag: str,
+        attrs: list[tuple[str, str | None]],
+    ) -> None:
+        if tag != "a":
+            return
+        attributes = dict(attrs)
+        classes = set((attributes.get("class") or "").split())
+        href = attributes.get("href")
+        if "raya-course-action" in classes and href is not None:
+            self.hrefs.append(href)
 
 
 def _viewbox_values(value: str | None) -> tuple[float, float, float, float]:
@@ -12564,6 +12583,74 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
         handle.close()
 
 
+def test_reader_rail_accessibility_snapshots_match_visible_state(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        url = f"{handle.base_url}/reader-ux/index.html"
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page.goto(url, wait_until="networkidle")
+                map_locator = page.locator("#raya-course-map")
+                expanded_snapshot = map_locator.aria_snapshot()
+                assert "Course map" in expanded_snapshot
+                assert "Search" in expanded_snapshot
+                assert "Content" in expanded_snapshot
+                assert "Expand course map" not in expanded_snapshot
+
+                page.click("[data-raya-course-map-collapse]")
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                )
+                mini_snapshot = map_locator.aria_snapshot()
+                assert "Expand course map" in mini_snapshot
+                assert "Text size" in mini_snapshot
+                assert "OpenDyslexic" in mini_snapshot
+                assert "Search" not in mini_snapshot
+                assert "Content" not in mini_snapshot
+
+                page.set_viewport_size({"width": 390, "height": 844})
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                )
+                assert map_locator.aria_snapshot().strip() == ""
+                assert page.locator("#raya-article").aria_snapshot().strip()
+                assert page.locator("#raya-learning-rail").aria_snapshot().strip()
+
+                page.click(".raya-mobile-course-map-open")
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                )
+                drawer_snapshot = map_locator.aria_snapshot()
+                assert "dialog \"Course map\"" in drawer_snapshot
+                assert "Search" in drawer_snapshot
+                assert "Content" in drawer_snapshot
+                assert page.locator("#raya-article").aria_snapshot().strip() == ""
+                assert page.locator("#raya-learning-rail").aria_snapshot().strip() == ""
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -12624,10 +12711,12 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                     }
                     page.click("[data-raya-course-map-collapse]")
                     state = page.evaluate(
-                        """async () => {
-                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                        """() => {
                           const map = document.querySelector('#raya-course-map');
                           const body = document.querySelector('#raya-course-map-body');
+                          const mini = document.querySelector(
+                            '[data-raya-course-map-mini]'
+                          );
                           const expand = document.querySelector(
                             '[data-raya-course-map-expand]'
                           );
@@ -12637,6 +12726,10 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                               map?.dataset.rayaCourseMapTransition ?? null,
                             activeIsMapExpand: document.activeElement === expand,
                             bodyDisplay: getComputedStyle(body).display,
+                            bodyAriaHidden: body.getAttribute('aria-hidden'),
+                            bodyInert: body.inert,
+                            mapWidth: map.getBoundingClientRect().width,
+                            miniDisplay: getComputedStyle(mini).display,
                           };
                         }"""
                     )
@@ -12644,6 +12737,10 @@ def test_render_fixture_shell_respects_reduced_motion(tmp_path: Path) -> None:
                     assert state["mapTransitionMarker"] is None
                     assert state["activeIsMapExpand"] is True
                     assert state["bodyDisplay"] == "none"
+                    assert state["bodyAriaHidden"] == "true"
+                    assert state["bodyInert"] is True
+                    assert state["mapWidth"] == 48
+                    assert state["miniDisplay"] != "none"
                     page.click("[data-raya-learning-rail-collapse]")
                     rail_state = page.evaluate(
                         """async () => {
@@ -16482,6 +16579,86 @@ def test_reader_shell_ignores_and_preserves_legacy_storage_keys(
                     }
                 finally:
                     page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_reader_storage_is_limited_to_shell_branches_and_comfort(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+    course_id = "render-fixture"
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 700})
+                page.add_init_script(
+                    "window.sessionStorage.clear(); window.localStorage.clear();"
+                )
+                page.goto(
+                    f"{handle.base_url}/reader-ux/index.html",
+                    wait_until="networkidle",
+                )
+                page.click("[data-raya-course-map-collapse]")
+                page.click("[data-raya-course-map-expand]")
+                page.click(
+                    '[data-raya-map-node="render-root"] '
+                    '> .raya-course-map-node-row [data-raya-map-node-toggle]'
+                )
+                page.locator("#raya-course-map-filter").fill("projection")
+                page.locator(".raya-course-map-navigation").evaluate(
+                    "node => { node.scrollTop = Math.min(40, node.scrollHeight); }"
+                )
+                page.locator("#raya-article").focus()
+                page.click(".raya-course-action.raya-command-context")
+                page.click(".raya-course-map-footer .raya-text-size-toggle")
+                page.click(".raya-course-map-footer .raya-font-toggle")
+
+                page.set_viewport_size({"width": 390, "height": 844})
+                page.click(".raya-mobile-course-map-open")
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                )
+                page.keyboard.press("Escape")
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'"
+                )
+                storage = page.evaluate(
+                    """() => ({
+                      session: Object.fromEntries(Object.entries(sessionStorage)),
+                      local: Object.fromEntries(Object.entries(localStorage)),
+                    })"""
+                )
+                session_keys = sorted(storage["session"])
+                local_keys = sorted(storage["local"])
+                serialized_storage = json.dumps(storage, sort_keys=True).lower()
+                assert session_keys == [
+                    f"raya:course-map-branches:v1:{course_id}",
+                    f"raya:reader-shell:v1:{course_id}",
+                ]
+                assert local_keys == ["raya:open-dyslexic", "raya:text-size"]
+                assert "filter" not in serialized_storage
+                assert "scroll" not in serialized_storage
+                assert "focus" not in serialized_storage
+                assert "drawer" not in serialized_storage
             finally:
                 browser.close()
     finally:
@@ -22779,6 +22956,42 @@ def test_compact_skin_makes_discovery_cards_dense_without_shrinking_article_text
     assert external_requests == []
 
 
+def test_nested_reader_workspace_actions_resolve_to_generated_files(
+    tmp_path: Path,
+) -> None:
+    from raya_static import build_course
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    site_dir = (course / "artifact" / "site").resolve()
+    nested_page = site_dir / "reader-ux" / "index.html"
+    assert nested_page.is_file()
+    parser = _CourseActionHrefParser()
+    parser.feed(nested_page.read_text(encoding="utf-8"))
+    assert len(parser.hrefs) == 5
+
+    resolved_targets: list[Path] = []
+    for href in parser.hrefs:
+        parsed = urlsplit(href)
+        assert parsed.scheme == ""
+        assert parsed.netloc == ""
+        assert not parsed.path.startswith("/")
+        assert not parsed.path.startswith("data/")
+        assert not any(
+            part in {"_official", "_reviewed", "_source", "data"}
+            for part in Path(parsed.path).parts
+        )
+        target = (nested_page.parent / parsed.path).resolve()
+        target.relative_to(site_dir)
+        assert target.is_file(), f"Missing generated workspace target for {href}"
+        resolved_targets.append(target)
+
+    assert len(set(resolved_targets)) == 5
+
+
 def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
@@ -22809,12 +23022,37 @@ def test_preview_reader_print_view_is_static_handout(tmp_path: Path) -> None:
                         wait_until="networkidle",
                     )
                     requested_urls.clear()
+                    page.set_viewport_size({"width": 390, "height": 844})
                     page.emulate_media(media="print")
                     assert page.locator(".raya-main-article").is_visible()
+                    article_style = page.locator(".raya-main-article").evaluate(
+                        """node => ({
+                          display: getComputedStyle(node).display,
+                          visibility: getComputedStyle(node).visibility,
+                          color: getComputedStyle(node).color,
+                          fontSize: parseFloat(getComputedStyle(node).fontSize),
+                        })"""
+                    )
+                    assert article_style["display"] != "none"
+                    assert article_style["visibility"] == "visible"
+                    assert article_style["color"] == "rgb(0, 0, 0)"
+                    assert article_style["fontSize"] >= 11
                     assert page.locator(".raya-page-brief").is_visible()
                     assert page.locator(".raya-top-command-bar").count() == 0
                     assert (
                         page.locator(".raya-mobile-course-map-open").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-course-map-mini").evaluate(
+                            "node => getComputedStyle(node).display"
+                        )
+                        == "none"
+                    )
+                    assert (
+                        page.locator(".raya-course-map-drawer-backdrop").evaluate(
                             "node => getComputedStyle(node).display"
                         )
                         == "none"

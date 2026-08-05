@@ -7300,7 +7300,10 @@ mjx-container[display="true"] {
   }
   .raya-skip-link,
   .raya-top-command-bar,
+  .raya-mobile-course-map-open,
   .raya-course-map,
+  .raya-course-map-mini,
+  .raya-course-map-drawer-backdrop,
   .raya-learning-rail,
   .raya-graph-controls,
   .raya-graph-groups,
