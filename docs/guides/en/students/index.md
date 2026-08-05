@@ -49,8 +49,9 @@ an external service.
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
 rail. At structural widths, it is a 256px expanded course rail with a fixed
-header, one central native vertical scroll owner, and a fixed footer. Its six
-two-column course actions are Search, Graph, Practice, Tasks, Schedule, and Context. Search opens the generated Course Search workspace; the local Content
+header, one central native vertical scroll owner, and a fixed footer. It presents
+six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context.
+Search opens the generated Course Search workspace; the local Content
 filter only narrows visible map labels. The footer holds page position and Text size and OpenDyslexic comfort controls. At 640px and wider, collapsing it uses
 a reserved 48px structural mini rail with `Expand course map` and the same
 comfort controls.
@@ -104,14 +105,10 @@ current static hierarchy. Use Previous and Next in the article or end-of-page
 cards to move through the ordered material, and use Text size or OpenDyslexic
 when those settings are more comfortable. End-of-page cards are course-order
 links; they are not recommendations or progress markers.
-The expanded course map may also show static links to Course Search, Course
-Graph, Official Practice, Official Tasks, and Official Schedule. They are
-shortcuts to generated workspaces, not progress, ranking, or personalized guidance. Some shortcut
-cards include small structural badges such as course scope, explicit link
-counts, accepted official-object counts, accepted task counts, or dated
-official-task counts for the current
-page. Those badges describe authored static course structure; they are not
-completion, importance, grade, or recommendation signals.
+The six rail actions remain present as one flat navigation set. Search, Graph,
+Practice, Tasks, and Schedule open their generated workspaces; Context controls
+the learning rail. They do not represent progress, ranking, completion,
+importance, grades, recommendations, or personalized guidance.
 
 Use the Course graph to inspect generated page relationships. Its search,
 filters, selected-page details, Zoom in, Zoom out, Fit, Reset view, and expanded

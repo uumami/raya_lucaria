@@ -51,8 +51,9 @@ La estructura actual del curso es una ayuda de lectura estatica. Las paginas
 lectoras no tienen una franja de comandos lectora sobre el articulo; los
 comandos lectores viven en el riel izquierdo del curso. En anchos estructurales
 es un riel expandido de 256px con header fijo, un solo propietario central de
-scroll vertical nativo y footer fijo. Sus seis acciones de curso en dos
-columnas son Search, Graph, Practice, Tasks, Schedule y Context. Search abre el workspace generado Course Search; el filtro local Content solo limita labels
+scroll vertical nativo y footer fijo. Presenta seis acciones planas obligatorias:
+Search, Graph, Practice, Tasks, Schedule y Context. Search abre el workspace
+generado Course Search; el filtro local Content solo limita labels
 visibles del mapa. El footer contiene posicion de pagina y controles de comodidad Text size y OpenDyslexic. Desde 640px, al colapsarlo usa un mini riel
 estructural reservado de 48px con `Expand course map` y los mismos controles.
 Cuando esta activa la geometria
@@ -109,14 +110,11 @@ cards al final de pagina para moverte por el material ordenado, y usa Text size
 u OpenDyslexic cuando esos ajustes sean mas comodos. Las cards al final de
 pagina son enlaces del orden del curso; no son recomendaciones ni marcadores de
 progreso.
-El mapa del curso expandido tambien puede mostrar enlaces estaticos a Course
-Search, Course Graph, Official Practice, Official Tasks y Official Schedule. Son atajos a
-workspaces generados, no progreso, ranking ni guia personalizada. Algunas cards
-de atajo incluyen badges estructurales pequenos como alcance de curso, conteos
-de enlaces explicitos, conteos de objetos oficiales aceptados o conteos de
-tareas aceptadas o tareas oficiales fechadas para la pagina actual. Esos badges describen estructura
-estatica autorada del curso; no son senales de finalizacion, importancia, nota
-ni recomendacion.
+Las seis acciones del riel permanecen presentes como un solo conjunto plano de
+navegacion. Search, Graph, Practice, Tasks y Schedule abren sus workspaces
+generados; Context controla el riel de aprendizaje. No representan progreso,
+ranking, finalizacion, importancia, notas, recomendaciones ni guia
+personalizada.
 
 Usa el Course graph para inspeccionar relaciones generadas entre paginas. Su
 busqueda, filtros, detalles de pagina seleccionada, Zoom in, Zoom out, Fit,

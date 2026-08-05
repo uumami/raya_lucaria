@@ -155,7 +155,7 @@ renderizando `.raya-discovery-command-bar` como barra de comandos de
 descubrimiento. Verifica que el riel expandido de 256px tenga header fijo, un
 solo propietario central de scroll vertical nativo y footer fijo. El header
 presenta course-home solo cuando existe un index root. Verifica que la
-navegacion contenga las acciones de curso en dos columnas Search, Graph, Practice, Tasks, Schedule y Context, seguidas por el filtro local Content y el
+navegacion contenga seis acciones planas obligatorias: Search, Graph, Practice, Tasks, Schedule y Context, seguidas por el filtro local Content y el
 arbol. Search debe abrir el workspace generado; Content solo filtra labels del
 mapa. Verifica que el footer contenga posicion estructural, Text size y OpenDyslexic. Desde 640px, verifica que el mini riel reservado de 48px ofrezca
 course-home cuando exista, `Expand course map` y controles de comodidad
@@ -182,9 +182,9 @@ contenidos de pagina y anchors de heading, que se actualice con el heading activ
 en tests de browser, que siga siendo un enlace local normal, que no escriba
 storage del browser y que no use lenguaje de porcentaje leido, finalizacion,
 dominio, recomendacion o progreso.
-Las paginas de lectura usan el riel izquierdo del curso para course search,
-mosaicos compactos de comandos dos por fila, y despues el mapa del curso con
-scroll. El mapa admite ramas plegables del mapa del curso para estructuras
+Las paginas de lectura usan el riel izquierdo del curso para las seis acciones
+planas obligatorias y despues el mapa del curso con scroll. El mapa admite ramas
+plegables del mapa del curso para estructuras
 anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de
 actualizar o navegar. Esa memoria es solo orientacion, no progreso ni
 personalizacion.
@@ -233,14 +233,13 @@ del shell, verifica que
 reduced-motion desactive transiciones no esenciales y que las regiones
 colapsadas de escritorio salgan de la navegacion por teclado y asistiva como se
 especifica.
-Al cambiar las cards de atajo Course workspace, verifica etiquetas, badges
-estructurales, hrefs neutrales al despliegue, hrefs de Practice enfocados en
-pagina solo cuando haya propiedad directa de objetos oficiales, hrefs de
-Schedule y badges de tareas fechadas solo desde tasks oficiales fechadas
-directas, ocultamiento en
-mapa colapsado, comportamiento desktop/movil sin overflow, y ausencia de
-storage, fetch, progreso, ranking, recomendacion o lenguaje de estado del
-estudiante.
+Al cambiar las seis acciones del riel, verifica su orden, etiquetas, hrefs
+neutrales al despliegue y presencia incondicional como un solo conjunto plano de
+navegacion. Practice puede usar un href enfocado en pagina solo cuando haya
+propiedad directa de objetos oficiales, y Schedule solo cuando haya tasks
+oficiales fechadas directas. Verifica ocultamiento en mapa colapsado,
+comportamiento desktop/movil sin overflow, y ausencia de storage, fetch,
+progreso, ranking, recomendacion o lenguaje de estado del estudiante.
 
 El Page brief es parte de la shell lectora. Verifica que aparezca antes del
 contenido autorado cuando exista metadata publica, que use resumen/status/tags

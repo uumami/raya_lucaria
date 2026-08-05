@@ -144,7 +144,7 @@ and discovery workspaces still render `.raya-discovery-command-bar` as a
 discovery command bar. Verify the 256px expanded course rail has a fixed header,
 one central native vertical scroll owner, and a fixed footer. The header presents
 the course-home control only when an index root exists. Verify the navigation
-owns the ordered two-column Search, Graph, Practice, Tasks, Schedule, and Context course actions, followed by the local Content filter and tree. Search must open
+owns six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context, followed by the local Content filter and tree. Search must open
 the generated workspace rather than filter the rail; Content only filters map
 labels. Verify the footer holds structural position plus Text size and OpenDyslexic. At 640px and wider, verify the reserved 48px mini rail provides
 course home when available, `Expand course map`, and synchronized comfort
@@ -213,11 +213,12 @@ fetch, progress,
 recommendation, or learner-state behavior. When shell comfort controls change,
 verify that reduced-motion disables nonessential transitions and that collapsed
 desktop regions are removed from keyboard and assistive navigation as specified.
-When changing Course workspace shortcut cards, verify labels, structural badges,
-deployment-neutral hrefs, page-focused Practice hrefs only for direct official
-ownership, Schedule hrefs and dated-task badges only from direct dated official
-tasks, collapsed-map hiding, desktop/mobile no-overflow behavior, and no
-storage, fetch, progress, ranking, recommendation, or learner-state language.
+When changing the six rail actions, verify their order, labels,
+deployment-neutral hrefs, and unconditional presence as one flat navigation set.
+Practice may use a page-focused href only for direct official ownership, and
+Schedule may use one only for direct dated official tasks. Verify collapsed-map
+hiding, desktop/mobile no-overflow behavior, and no storage, fetch, progress,
+ranking, recommendation, or learner-state language.
 
 The Page brief is part of the reader shell. Verify it appears before authored
 content when public metadata exists, uses escaped summary/status/tags, resolved

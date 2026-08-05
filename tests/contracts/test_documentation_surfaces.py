@@ -408,3 +408,52 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     for name in ("contributor_es", "professor_es", "student_es", "agent_es"):
         assert "opener minimo flotante Map" not in text[name]
     assert "pestanas\ndesktop Map y Context" not in text["agent_es"]
+
+
+def test_role_guides_require_flat_reader_rail_actions() -> None:
+    paths = {
+        "student_en": ROOT / "docs/guides/en/students/index.md",
+        "student_es": ROOT / "docs/guides/es/estudiantes/index.md",
+        "agent_en": ROOT / "docs/guides/en/agents/index.md",
+        "agent_es": ROOT / "docs/guides/es/agentes/index.md",
+    }
+    text = {
+        name: " ".join(path.read_text(encoding="utf-8").lower().split())
+        for name, path in paths.items()
+    }
+
+    for name in ("student_en", "agent_en"):
+        assert (
+            "six mandatory flat actions: search, graph, practice, tasks, schedule, "
+            "and context"
+        ) in text[name]
+    for name in ("student_es", "agent_es"):
+        assert (
+            "seis acciones planas obligatorias: search, graph, practice, tasks, "
+            "schedule y context"
+        ) in text[name]
+
+    stale_phrases = {
+        "student_en": (
+            "expanded course map may also show static links",
+            "shortcut cards",
+            "structural badges",
+        ),
+        "student_es": (
+            "mapa del curso expandido tambien puede mostrar enlaces estaticos",
+            "cards de atajo",
+            "badges estructurales",
+        ),
+        "agent_en": (
+            "course workspace shortcut cards",
+            "dated-task badges",
+        ),
+        "agent_es": (
+            "mosaicos compactos de comandos",
+            "cards de atajo course workspace",
+            "badges de tareas fechadas",
+        ),
+    }
+    for name, phrases in stale_phrases.items():
+        for phrase in phrases:
+            assert phrase not in text[name]
