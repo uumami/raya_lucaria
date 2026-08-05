@@ -10776,6 +10776,20 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                         "Hide learning context"
                     )
                     assert context_tooltip.text_content() == "Hide learning context"
+                    page.wait_for_function(
+                        """() => {
+                          const root = document.documentElement;
+                          const rail = document.querySelector('#raya-learning-rail');
+                          return root.dataset.rayaLearningRail === 'expanded'
+                            && !rail?.dataset.rayaLearningRailTransition;
+                        }"""
+                    )
+                    stable_hover_focus = page.locator(
+                        "[data-raya-learning-rail-collapse]"
+                    )
+                    assert stable_hover_focus.evaluate(
+                        "node => document.activeElement === node"
+                    )
 
                     trigger = page.locator(".raya-course-action.raya-command-search")
                     tooltip = page.locator("#raya-course-action-search-tooltip")
@@ -10802,6 +10816,9 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                     assert not tooltip.is_visible()
                     assert page.evaluate(
                         "() => document.activeElement === window.__rayaTooltipFocus"
+                    )
+                    assert stable_hover_focus.evaluate(
+                        "node => document.activeElement === node"
                     )
                     trigger.locator(".raya-command-label").hover()
                     assert not tooltip.is_visible()
