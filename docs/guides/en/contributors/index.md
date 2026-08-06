@@ -145,6 +145,16 @@ Article-end Previous/Next cards are generated from the same course order as the
 compact sequence links. Keep them static, keyboard reachable, responsive, and
 free of progress, mastery, recommendation, or personal next-step wording.
 
+Treat authored course navigation as the source of the tree title and structural
+order. Each branch has a separate disclosure control: the chevron changes only
+that branch, while the title is the deployment-neutral page link. The protected
+same-parent accordion keeps the current path visible and records direct reader
+collapse/expand intent without changing authored order or creating learner
+state. At structural widths the expanded and mini rails use full viewport
+height around their one central scroller. Verify no-script navigation keeps the
+static links and current path usable in normal flow while enhancement controls
+are absent.
+
 Review the Page brief as first-screen static orientation over already accepted
 metadata. It may show summary, status, structural page position, authored
 estimated time or computed estimated read time, tags, resolved prerequisites,

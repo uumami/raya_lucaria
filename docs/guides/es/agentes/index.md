@@ -188,6 +188,17 @@ plegables del mapa del curso para estructuras
 anidadas, y la misma pestana puede recordar que ramas estan plegadas despues de
 actualizar o navegar. Esa memoria es solo orientacion, no progreso ni
 personalizacion.
+Verifica la propiedad separada de chevron y enlace: cada chevron de rama es un
+control de despliegue separado y cada titulo sigue siendo un anchor normal de
+pagina. Los checks de browser deben cubrir el acordeon entre ramas hermanas
+protegido, la visibilidad de ruta actual, la intencion directa de plegar o
+desplegar y la reubicacion de foco antes de ocultar un descendiente. En anchos
+estructurales, afirma altura completa del viewport para el riel de 256px y el
+mini riel de 48px, geometria fija de header/footer y un solo scroller central.
+Con JavaScript desactivado, afirma que la navegacion sin JavaScript conserva
+enlaces estaticos y la ruta actual renderizada por servidor en flujo normal,
+con controles solo de enhancement ocultos y fuera del orden de tabulacion.
+
 Si una pagina no tiene `estimated_time` escrito, verifica que cualquier
 `Estimated read time` mostrado en el Page brief o riel derecho se calcule
 durante build desde texto publico del articulo, no use storage del browser ni

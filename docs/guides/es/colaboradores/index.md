@@ -154,6 +154,16 @@ curso que los links compactos de secuencia. Mantenlas estaticas, accesibles con
 teclado, responsivas, y sin lenguaje de progreso, dominio, recomendacion o
 siguiente paso personal.
 
+Trata la navegacion autorada del curso como fuente del titulo del arbol y de su
+orden estructural. Cada rama tiene un control de despliegue separado: el
+chevron cambia solo esa rama, mientras el titulo conserva el enlace estatico de
+pagina. El acordeon entre ramas hermanas protegido mantiene visible la ruta
+actual y conserva la intencion directa de plegar o desplegar sin cambiar el
+orden autorado ni crear estado del estudiante. En anchos estructurales, los
+rieles expandido y mini usan altura completa del viewport alrededor de un solo
+scroller central. Verifica que la navegacion sin JavaScript conserve enlaces
+estaticos y ruta actual en flujo normal, sin controles solo de enhancement.
+
 Revisa el Page brief como orientacion estatica inicial sobre metadata ya
 aceptada. Puede mostrar resumen, status, posicion estructural de pagina, tiempo
 estimado escrito por el curso o estimacion aproximada de lectura, tags,

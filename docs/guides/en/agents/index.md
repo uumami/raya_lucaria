@@ -175,6 +175,16 @@ the local Content filter, and then the scrollable course map. The map supports c
 course-map branches for nested structure, and the same tab may remember which
 branches are collapsed after refresh or page navigation. That memory is
 orientation only, not progress or personalization.
+Verify separate chevron/link ownership: each branch chevron is a separate
+disclosure control and each title remains a normal page anchor. Browser checks
+must cover the protected same-parent accordion, current-path visibility, direct
+collapse/expand intent, and focus relocation before a hidden descendant is
+removed. At structural widths, assert full viewport height for both the 256px
+rail and 48px mini rail, fixed header/footer geometry, and one central scroller.
+With JavaScript disabled, assert no-script navigation keeps static course links
+and the server-rendered current path reachable in normal flow, with
+enhancement-only controls hidden and absent from the tab order.
+
 If a page lacks authored `estimated_time`, verify any `Estimated read time`
 shown in the Page brief or right rail is computed during build from public
 article text, uses no browser storage or runtime fetch, and remains approximate

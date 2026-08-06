@@ -82,6 +82,15 @@ the local Content filter, and the course map. The map supports collapsible cours
 branches for nested structure, and the same tab may remember which branches are
 collapsed after refresh or page navigation. That memory is orientation only,
 not progress or personalization.
+
+Use a branch chevron as a separate disclosure control to show or hide its
+children; use the branch title to open that page. The protected same-parent
+accordion keeps your current path available while allowing your direct
+collapse/expand intent for nearby branches. The expanded 256px rail and the
+48px mini rail use full viewport height, with one central scroller for the map.
+If JavaScript is unavailable, no-script navigation still shows the static links
+and current path before the lesson; it does not save a reading state.
+
 Same-tab sessionStorage may restore only course-scoped collapsed course-map
 branch identifiers and the explicit left/right structural rail display pair.
 Drawer, filter, focus, scroll, active-context, progress, mastery,

@@ -298,6 +298,16 @@ Pages may also end with larger Previous/Next cards generated from the authored
 course order. You do not author these cards separately; keep the page order and
 titles clear, and treat the cards as static navigation, not recommendations.
 
+Author page titles and ordered source paths so the generated tree can present
+structural numbers without rewriting a title that already includes its number.
+For a branch, the chevron is a separate disclosure control and the title is the
+page link. The protected same-parent accordion preserves the current path while
+honoring direct reader collapse/expand intent; it does not alter authored order
+or express progress. The 256px and 48px structural rail states use full viewport
+height with one central scroller. In no-script navigation, static links and the
+current path remain available before the article; do not rely on a disclosure or
+filter to make authored pages reachable.
+
 The generated Course graph can help students inspect explicit page
 relationships through local fuzzy search, selected-page details, and an expanded
 graph workspace. Students may also use Zoom in, Zoom out, Fit, and Reset view to

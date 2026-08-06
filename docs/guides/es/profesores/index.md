@@ -305,6 +305,17 @@ Las paginas tambien pueden terminar con cards Previous/Next generadas desde el
 orden autorado del curso. No las escribas por separado; manten claro el orden y
 los titulos de pagina, y tratalas como navegacion estatica, no recomendaciones.
 
+Escribe titulos y rutas ordenadas para que el arbol generado pueda mostrar
+numeros estructurales sin reescribir un titulo que ya los contiene. En una rama,
+el chevron es un control de despliegue separado y el titulo es el enlace de
+pagina. El acordeon entre ramas hermanas protegido conserva la ruta actual y
+respeta la intencion directa de plegar o desplegar; no altera el orden autorado
+ni expresa progreso. Los estados de riel estructural de 256px y 48px usan
+altura completa del viewport con un solo scroller central. En navegacion sin
+JavaScript, los enlaces estaticos y la ruta actual siguen disponibles antes del
+articulo; no dependas de un control de despliegue ni del filtro para alcanzar
+paginas autoradas.
+
 El Course graph generado puede ayudar a estudiantes a inspeccionar relaciones
 explicitas entre paginas mediante busqueda local aproximada, detalles de pagina
 seleccionada y workspace expandido del grafo. Los detalles de pagina seleccionada

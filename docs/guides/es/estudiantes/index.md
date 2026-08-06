@@ -83,6 +83,16 @@ curso en dos columnas, el filtro local Content y el mapa del curso. El mapa
 admite ramas plegables del mapa del curso para estructuras anidadas, y la misma
 pestana puede recordar que ramas estan plegadas despues de actualizar o
 navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
+
+Usa el chevron de una rama como control de despliegue separado para mostrar u
+ocultar sus hijas; usa el titulo de la rama para abrir esa pagina. El acordeon
+entre ramas hermanas protegido mantiene disponible tu ruta actual y permite tu
+intencion directa de plegar o desplegar ramas cercanas. El riel expandido de
+256px y el mini riel de 48px usan altura completa del viewport, con un solo
+scroller central para el mapa. Si JavaScript no esta disponible, la navegacion
+sin JavaScript sigue mostrando enlaces estaticos y la ruta actual antes de la
+leccion; no guarda estado de lectura.
+
 sessionStorage en la misma pestana puede restaurar solo identificadores de ramas
 plegadas con scope de curso y el par explicito de estado visual de los rieles
 estructurales izquierdo/derecho. El estado del drawer, filtro, foco, scroll,

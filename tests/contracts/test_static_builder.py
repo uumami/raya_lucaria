@@ -5036,6 +5036,8 @@ def test_course_map_resources_use_fdd_tree_geometry() -> None:
     assert ".raya-course-map-node-toggle::before" not in rich_css
     assert ".raya-course-map-list a::before" not in rich_css
     assert "content: attr(data-raya-map-index);" not in rich_css
+    assert ".raya-course-map-sequence-pill" not in rich_css
+    assert 'content: ">"' not in rich_css
 
 
 def test_course_map_tooltips_escape_clipped_footer_geometry() -> None:
@@ -5057,6 +5059,7 @@ def test_course_map_dynamic_toggle_labels_sync_described_tooltips() -> None:
     shell_js = shell_resources().javascript
 
     assert "tooltip.textContent = label" in shell_js
+    assert 'label = "Toggle"' not in shell_js
 
 
 def test_course_map_mini_uses_structural_geometry_and_runtime_inertness() -> None:
@@ -5195,7 +5198,10 @@ def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None
     assert '".raya-course-map-tools"' not in shell_js
     assert 'data-raya-course-map-storage-key=' in html
     assert 'data-raya-course-map-root=' in html
-    assert 'class="raya-tooltip" role="tooltip" hidden' in html
+    assert (
+        'class="raya-tooltip" role="tooltip" '
+        'data-raya-enhancement-control hidden'
+    ) in html
     assert 'aria-describedby="raya-course-map-title-tooltip"' in html
     assert 'aria-describedby="raya-course-map-collapse-tooltip"' in html
     assert 'aria-label="Open course graph, 2 links, 0 from this page, 2 links here"' in html
@@ -5203,7 +5209,10 @@ def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None
     assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
 
     assert 'data-raya-course-map-close' in html
-    assert 'data-raya-course-map-drawer-backdrop hidden' in html
+    assert (
+        'data-raya-course-map-drawer-backdrop '
+        'data-raya-enhancement-control hidden'
+    ) in html
     assert 'href="../_raya/search/index.html?q=Projection%20Residuals"' in html
     assert 'href="../_raya/graph/index.html?page=reader-ux"' in html
     assert 'href="../_raya/practice/index.html?page=reader-ux"' in html
@@ -5708,7 +5717,10 @@ def test_static_builder_renders_collapsible_shell_controls(
     assert 'data-raya-course-map-action="scan"' not in html
     assert 'data-raya-course-map-action="less"' not in html
     assert 'data-raya-course-map-close' in html
-    assert 'data-raya-course-map-drawer-backdrop hidden' in html
+    assert (
+        'data-raya-course-map-drawer-backdrop '
+        'data-raya-enhancement-control hidden'
+    ) in html
     assert "_raya/search/index.html?q=" in html
     assert "_raya/graph/index.html?page=" in html
     assert "_raya/practice/index.html" in html

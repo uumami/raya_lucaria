@@ -387,7 +387,10 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
         "contributor_es": ROOT / "docs/guides/es/colaboradores/index.md",
         "professor_es": ROOT / "docs/guides/es/profesores/index.md",
     }
-    text = {name: path.read_text(encoding="utf-8") for name, path in paths.items()}
+    text = {
+        name: " ".join(path.read_text(encoding="utf-8").split())
+        for name, path in paths.items()
+    }
 
     for name in ("foundation", "student_en", "agent_en"):
         assert "Search, Graph, Practice, Tasks, Schedule, and Context" in text[name]
@@ -399,8 +402,33 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     for name in paths:
         assert "256px" in text[name]
         assert "48px" in text[name]
+
+    for name in (
+        "foundation",
+        "contributor_en",
+        "professor_en",
+        "student_en",
+        "agent_en",
+    ):
+        assert "separate disclosure control" in text[name]
+        assert "same-parent accordion" in text[name]
+        assert "full viewport height" in text[name]
+        assert "no-script navigation" in text[name]
+
+    for name in ("contributor_es", "professor_es", "student_es", "agent_es"):
+        assert "control de despliegue separado" in text[name]
+        assert "acordeon entre ramas hermanas" in text[name]
+        assert "altura completa del viewport" in text[name]
+        assert "navegacion sin JavaScript" in text[name]
+
     assert "exactly eight compact icon-labeled command tiles" not in text["foundation"]
     assert "minimal floating Map edge opener" not in text["foundation"]
+    for name, surface in text.items():
+        lowered = surface.lower()
+        assert "sequence badge" not in lowered, name
+        assert "ascii" not in lowered, name
+        assert "expand every branch" not in lowered, name
+        assert "short floating-card" not in lowered, name
 
     for name in ("contributor_en", "professor_en", "student_en", "agent_en"):
         assert "floating Map edge opener" not in text[name]
