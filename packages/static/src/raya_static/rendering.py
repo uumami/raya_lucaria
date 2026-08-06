@@ -6809,9 +6809,23 @@ mjx-container[display="true"] {
 @media (min-width: __RAYA_STRUCTURAL_PX__px) {
   html[data-raya-course-map-drawer="closed"] .raya-course-map,
   .raya-course-map {
+    border: 0;
+    border-inline-end: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
     display: grid;
     grid-template-rows: 48px minmax(0, 1fr);
+    height: 100vh;
+    height: 100dvh;
+    inset-block: 0;
+    inset-inline-start: 0;
+    margin: 0;
+    max-block-size: none;
+    overflow: clip;
     padding-inline: 0;
+    position: fixed;
+    z-index: 44;
   }
   .raya-learning-rail {
     display: flex;
@@ -6852,12 +6866,8 @@ mjx-container[display="true"] {
   }
   html[data-raya-course-map="collapsed"] .raya-course-map {
     background: color-mix(in srgb, var(--raya-color-surface) 94%, var(--raya-color-page));
-    border: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
-    box-shadow: 0 0.35rem 0.9rem rgba(31, 35, 40, 0.06);
-    box-sizing: border-box;
     grid-template-rows: minmax(0, 1fr);
     inline-size: calc(__RAYA_RAIL_MINI_PX__ * 1px);
-    max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
     overflow: clip;
     padding: 0;
     pointer-events: auto;

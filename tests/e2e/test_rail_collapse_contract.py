@@ -22,6 +22,7 @@ from raya_static.shell_geometry import (
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
+DENSITY_FIXTURE = ROOT / "examples" / "courses" / "rail-density-fixture"
 
 _MIRROR_ATTR = re.compile(r"\[data-raya-(?:course-map|learning-rail)=")
 
@@ -1070,6 +1071,175 @@ def test_collapsed_course_map_is_a_structural_mini_rail(tmp_path):
                 assert page.locator("[data-raya-course-map-mini]").evaluate(
                     "mini => getComputedStyle(mini).display"
                 ) == "none"
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+@pytest.mark.parametrize("width", [1440, 1024, 894, 893, 768, 640])
+@pytest.mark.parametrize("height", [900, 520])
+def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
+    tmp_path, width, height
+):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "rail-density-fixture"
+    shutil.copytree(DENSITY_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+
+    def state(page):
+        return page.evaluate(
+            """() => {
+              const rect = (selector) => {
+                const box = document.querySelector(selector).getBoundingClientRect();
+                return {
+                  top: box.top,
+                  right: box.right,
+                  bottom: box.bottom,
+                  left: box.left,
+                  width: box.width,
+                  height: box.height,
+                };
+              };
+              const rail = document.querySelector('.raya-course-map');
+              const shell = document.querySelector('.raya-learning-shell');
+              const article = document.querySelector('.raya-main-article');
+              const navigation = document.querySelector(
+                '.raya-course-map-navigation'
+              );
+              const list = document.querySelector('.raya-course-map-list');
+              const railRect = rail.getBoundingClientRect();
+              const articleRect = article.getBoundingClientRect();
+              const shellRect = shell.getBoundingClientRect();
+              const railStyle = getComputedStyle(rail);
+              const shellStyle = getComputedStyle(shell);
+              const columns = shellStyle.gridTemplateColumns
+                .split(' ')
+                .map(value => Number.parseFloat(value))
+                .filter(Number.isFinite);
+              const reservedByLayout = columns.length > 1
+                ? columns[0]
+                : Math.min(
+                    railRect.width,
+                    Math.max(0, articleRect.left - shellRect.left)
+                  );
+              return {
+                rect: {
+                  top: railRect.top,
+                  right: railRect.right,
+                  bottom: railRect.bottom,
+                  left: railRect.left,
+                  width: railRect.width,
+                  height: railRect.height,
+                },
+                style: {
+                  position: railStyle.position,
+                  borderRadius: railStyle.borderRadius,
+                  boxShadow: railStyle.boxShadow,
+                  borderInlineEndWidth: railStyle.borderInlineEndWidth,
+                  overflowY: railStyle.overflowY,
+                },
+                innerHeight,
+                shellReservedWidth: Math.round(reservedByLayout),
+                articleClearsRail: articleRect.left >= railRect.right - 1,
+                header: rect('.raya-course-map-header'),
+                footer: rect('.raya-course-map-footer'),
+                bodyOverflowY: getComputedStyle(
+                  document.querySelector('.raya-course-map-body')
+                ).overflowY,
+                navigationOverflowY: getComputedStyle(navigation).overflowY,
+                navigationScrollTop: navigation.scrollTop,
+                navigationScrollHeight: navigation.scrollHeight,
+                navigationClientHeight: navigation.clientHeight,
+                listOverflowY: getComputedStyle(list).overflowY,
+              };
+            }"""
+        )
+
+    def assert_pinned(snapshot, expected_width):
+        rect = snapshot["rect"]
+        style = snapshot["style"]
+        assert abs(rect["top"]) <= 1, snapshot
+        assert abs(rect["bottom"] - snapshot["innerHeight"]) <= 1, snapshot
+        assert rect["height"] <= snapshot["innerHeight"] + 1, snapshot
+        assert style["position"] == "fixed", snapshot
+        assert style["borderRadius"] == "0px", snapshot
+        assert style["boxShadow"] == "none", snapshot
+        assert style["borderInlineEndWidth"] == "1px", snapshot
+        assert style["overflowY"] not in {"auto", "scroll"}, snapshot
+        assert snapshot["shellReservedWidth"] == expected_width, snapshot
+        assert snapshot["articleClearsRail"] is True, snapshot
+
+    try:
+        assert handle.report.ok
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": width, "height": height})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.wait_for_timeout(320)
+
+                expanded = state(page)
+                assert_pinned(expanded, RAIL_EXPANDED_PX)
+                assert expanded["bodyOverflowY"] not in {"auto", "scroll"}, expanded
+                assert expanded["navigationOverflowY"] == "auto", expanded
+                assert expanded["listOverflowY"] not in {"auto", "scroll"}, expanded
+                if expanded["navigationScrollHeight"] > expanded[
+                    "navigationClientHeight"
+                ]:
+                    page.evaluate(
+                        """() => {
+                          const navigation = document.querySelector(
+                            '.raya-course-map-navigation'
+                          );
+                          navigation.scrollTop = navigation.scrollHeight;
+                        }"""
+                    )
+                    navigation_scrolled = state(page)
+                    assert navigation_scrolled["navigationScrollTop"] > 0, (
+                        width,
+                        height,
+                        navigation_scrolled,
+                    )
+                    assert navigation_scrolled["header"] == expanded["header"]
+                    assert navigation_scrolled["footer"] == expanded["footer"]
+
+                page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
+                article_scrolled = state(page)
+                assert page.evaluate("() => window.scrollY") > 0
+                assert_pinned(article_scrolled, RAIL_EXPANDED_PX)
+                assert article_scrolled["header"] == expanded["header"]
+                assert article_scrolled["footer"] == expanded["footer"]
+
+                resized_height = height - 80 if height > 600 else height + 80
+                page.set_viewport_size({"width": width, "height": resized_height})
+                resized = state(page)
+                assert_pinned(resized, RAIL_EXPANDED_PX)
+
+                page.set_viewport_size({"width": width, "height": height})
+                page.click("[data-raya-course-map-collapse]")
+                page.wait_for_function(
+                    """() => document.documentElement.dataset.rayaCourseMap
+                      === 'collapsed'"""
+                )
+                page.wait_for_timeout(320)
+                mini = state(page)
+                assert_pinned(mini, RAIL_MINI_PX)
+
+                page.evaluate("() => window.scrollTo(0, 0)")
+                mini_after_article_scroll = state(page)
+                assert_pinned(mini_after_article_scroll, RAIL_MINI_PX)
+
+                page.set_viewport_size({"width": width, "height": resized_height})
+                resized_mini = state(page)
+                assert_pinned(resized_mini, RAIL_MINI_PX)
                 page.close()
             finally:
                 browser.close()
