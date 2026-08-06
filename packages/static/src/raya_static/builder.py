@@ -2070,6 +2070,11 @@ def _safe_map_fragment_id(value: str) -> str:
     return fragment or "course-map-node"
 
 
+def _course_map_child_group_id(page_id: str) -> str:
+    digest = hashlib.sha256(page_id.encode("utf-8")).hexdigest()[:10]
+    return f"raya-map-children-{digest}-{_safe_map_fragment_id(page_id)}"
+
+
 def _render_rail_chrome(
     *,
     landmark_open_html: str,
@@ -2134,9 +2139,6 @@ def _render_course_map(
 ) -> str:
     active_path = {crumb.id for crumb in _breadcrumb_pages(page, content_model)}
     active_path.add(page.id)
-    sequence_index = {
-        target.id: index for index, target in enumerate(content_model.pages, start=1)
-    }
     root_identity = content_model.root_id or course_title
     storage_key = f"raya:course-map-branches:v1:{course_id}"
     home_href: str | None = None
@@ -2159,7 +2161,16 @@ def _render_course_map(
             if child_id in content_model.pages_by_id
         ]
         href = _relative_href(page.output_path, target.output_path)
-        label = _navigation_label(target)
+        structural_label = _course_map_structural_label(target)
+        nav_title = target.nav_title
+        show_structural_label = bool(structural_label) and not (
+            _nav_title_begins_with_structural_label(nav_title, structural_label)
+        )
+        label = (
+            f"{structural_label} {nav_title}"
+            if show_structural_label
+            else nav_title
+        )
         active_state = (
             "current"
             if target.id == page.id
@@ -2168,10 +2179,6 @@ def _render_course_map(
             else "inactive"
         )
         expanded = bool(child_pages) and target.id in active_path
-        node_id = (
-            f"raya-map-children-{sequence_index[target.id]}-"
-            f"{_safe_map_fragment_id(target.id)}"
-        )
         current = (
             ' aria-current="page"' if target.output_path == page.output_path else ""
         )
@@ -2183,15 +2190,8 @@ def _render_course_map(
         toggle = ""
         children = ""
         if child_pages:
-            toggle = (
-                '<button class="raya-course-map-node-toggle" type="button" '
-                "data-raya-map-node-toggle "
-                f'aria-controls="{html.escape(node_id, quote=True)}" '
-                f'aria-expanded="{"true" if expanded else "false"}" '
-                f'aria-label="Toggle {html.escape(label, quote=True)}">'
-                "</button>"
-            )
             children = "\n".join(render_node(child, depth + 1) for child in child_pages)
+            node_id = _course_map_child_group_id(target.id)
             children = (
                 f'<ol id="{html.escape(node_id, quote=True)}" '
                 "data-raya-map-children "
@@ -2200,10 +2200,27 @@ def _render_course_map(
                 f"{children}"
                 "</ol>"
             )
+            toggle = (
+                '<button class="raya-course-map-node-toggle" type="button" '
+                "data-raya-map-node-toggle data-raya-map-enhancement-control "
+                f'aria-controls="{html.escape(node_id, quote=True)}" '
+                f'aria-expanded="{"true" if expanded else "false"}" '
+                f'aria-label="{"Collapse" if expanded else "Expand"} '
+                f'{html.escape(label, quote=True)}">'
+                f'{_command_icon("chevron-right")}'
+                "</button>"
+            )
         else:
             toggle = (
                 '<span class="raya-course-map-node-spacer" aria-hidden="true"></span>'
             )
+        number_markup = (
+            '<span class="raya-course-map-node-number">'
+            f"{html.escape(structural_label)}"
+            "</span> "
+            if show_structural_label
+            else ""
+        )
         return "\n".join(
             [
                 (
@@ -2222,9 +2239,11 @@ def _render_course_map(
                 (
                     "<a "
                     f'href="{html.escape(href)}"{current} '
-                    f'data-raya-map-index="{sequence_index[target.id]}" '
                     f'data-raya-map-label="{html.escape(label, quote=True)}">'
-                    f"{html.escape(label)}"
+                    f"{number_markup}"
+                    '<span class="raya-course-map-node-title">'
+                    f"{html.escape(nav_title)}"
+                    "</span>"
                     "</a>"
                 ),
                 "</div>",
@@ -3401,6 +3420,7 @@ _COMMAND_ICON_BODIES = {
         '<path d="M13 7l-5 5 5 5"/>'
         '<path d="M18 7v10"/>'
     ),
+    "chevron-right": '<path d="m9 6 6 6-6 6"/>',
     "close": '<path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>',
     "search": '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
     "graph": (
@@ -4249,6 +4269,16 @@ def _render_generated_index(
         for child_id in child_ids:
             child = content_model.pages_by_id[child_id]
             href = _relative_href(page.output_path, child.output_path)
+            structural_label = _course_map_structural_label(child)
+            navigation_label = (
+                child.nav_title
+                if _nav_title_begins_with_structural_label(
+                    child.nav_title, structural_label
+                )
+                else " ".join(
+                    part for part in (structural_label, child.nav_title) if part
+                )
+            )
             child_counts = _aggregate_study_counts(
                 child.id,
                 content_model,
@@ -4263,7 +4293,7 @@ def _render_generated_index(
             parts.append(
                 f'<a class="raya-section-card-link" href="{html.escape(href)}">'
                 f'<span class="raya-section-card-title">'
-                f"{html.escape(_navigation_label(child))}"
+                f"{html.escape(navigation_label)}"
                 "</span>"
             )
             if child.summary:
@@ -4636,14 +4666,22 @@ def _index_entry(
     }
 
 
-def _navigation_label(page: ContentPage) -> str:
-    parts: list[str] = []
-    if page.hierarchy_key == "appendix":
-        parts.append(page.hierarchy_label)
-    if page.display_label:
-        parts.append(page.display_label)
-    parts.append(page.nav_title)
-    return " ".join(part for part in parts if part).strip()
+def _course_map_structural_label(page: ContentPage) -> str:
+    parts = [page.display_label] if page.display_label else []
+    if page.hierarchy_key == "appendix" and page.hierarchy_label:
+        parts.insert(0, page.hierarchy_label)
+    return " ".join(parts)
+
+
+def _nav_title_begins_with_structural_label(title: str, label: str) -> bool:
+    if not label:
+        return False
+    normalized_title = " ".join(title.split())
+    normalized_label = " ".join(label.split())
+    remainder = normalized_title[len(normalized_label) :]
+    return normalized_title.startswith(normalized_label) and (
+        not remainder or remainder[0].isspace() or remainder[0] in ".:-)"
+    )
 
 
 def _target_content_page(

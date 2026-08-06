@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+from html.parser import HTMLParser
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -5710,21 +5711,24 @@ def test_static_builder_renders_collapsible_shell_controls(
     assert 'data-raya-map-parent="course-root"' in html
     assert 'data-raya-map-active="ancestor"' in middle_html
     assert "data-raya-map-children" in html
-    assert (
-        'id="raya-map-children-1-course-root" data-raya-map-children aria-hidden="false"'
-        in html
+    assert re.search(
+        r'id="raya-map-children-[^"]+-course-root" '
+        r'data-raya-map-children aria-hidden="false"',
+        html,
     )
-    assert (
-        'id="raya-map-children-2-first-unit" data-raya-map-children hidden aria-hidden="true"'
-        in html
+    assert re.search(
+        r'id="raya-map-children-[^"]+-first-unit" '
+        r'data-raya-map-children hidden aria-hidden="true"',
+        html,
     )
     assert (
         'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="inactive" data-raya-map-expanded="false"'
         in html
     )
-    assert (
-        'id="raya-map-children-2-first-unit" data-raya-map-children aria-hidden="false"'
-        in middle_html
+    assert re.search(
+        r'id="raya-map-children-[^"]+-first-unit" '
+        r'data-raya-map-children aria-hidden="false"',
+        middle_html,
     )
     assert (
         'data-raya-map-node="first-unit" data-raya-map-parent="course-root" data-raya-map-depth="1" data-raya-map-active="current" data-raya-map-expanded="true"'
@@ -5733,7 +5737,7 @@ def test_static_builder_renders_collapsible_shell_controls(
     assert "data-raya-map-node-toggle" in html
     assert "raya-map-filter-empty" in html
     assert 'data-raya-map-label="Raya Lucaria Render Fixture"' in render_html
-    assert 'data-raya-map-index="1"' in render_html
+    assert "data-raya-map-index" not in render_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
     assert 'tabindex="-1"' not in course_map_html
     assert '<li class="raya-page-brief-fact raya-page-brief-position">' in html
@@ -5887,6 +5891,98 @@ def test_static_builder_course_map_child_ids_do_not_collide_after_sanitizing(
     assert len(child_list_ids) == len(set(child_list_ids))
     assert any(item.endswith("-map-a") for item in child_list_ids)
     assert "raya-map-children-map-a" not in child_list_ids
+
+
+def test_course_map_emits_fdd_style_disclosure_and_link_ownership(
+    tmp_path: Path,
+) -> None:
+    course = tmp_path / "rail-density-fixture"
+    shutil.copytree(DENSITY_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    pages = json.loads(
+        (course / "artifact" / "data" / "pages.json").read_text(encoding="utf-8")
+    )["pages"]
+    pages_by_id = {page["quantum_id"]: page for page in pages}
+    rendered = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    document = _ContractHtmlParser.parse(rendered)
+    course_map = _find_html_node(
+        document, tag="div", class_name="raya-course-map-list"
+    )
+    nodes = {
+        node.attrs["data-raya-map-node"]: node
+        for node in _find_all_html_nodes(
+            course_map, tag="li", class_name="raya-course-map-node"
+        )
+    }
+
+    assert nodes.keys() == pages_by_id.keys()
+    for page_id, node in nodes.items():
+        row = _find_direct_html_node(
+            node, tag="div", class_name="raya-course-map-node-row"
+        )
+        anchor = _find_direct_html_node(row, tag="a")
+        title = _find_html_node(
+            anchor, tag="span", class_name="raya-course-map-node-title"
+        )
+        assert _html_node_text(title) == pages_by_id[page_id]["nav_title"]
+        assert "data-raya-map-index" not in anchor.attrs
+
+        child_group = _find_direct_html_node(node, tag="ol", required=False)
+        button = _find_direct_html_node(row, tag="button", required=False)
+        if child_group is not None:
+            assert button is not None
+            state = "Collapse" if button.attrs["aria-expanded"] == "true" else "Expand"
+            assert button.attrs["aria-label"] == (
+                f"{state} {_html_node_text(anchor).strip()}"
+            )
+            assert button.attrs["aria-controls"] == child_group.attrs["id"]
+            assert "data-raya-map-enhancement-control" in button.attrs
+            icon = _find_html_node(
+                button,
+                tag="svg",
+                attr=("data-raya-command-icon", "chevron-right"),
+            )
+            assert icon.attrs["aria-hidden"] == "true"
+        else:
+            assert button is None
+            assert _find_direct_html_node(
+                row, tag="span", class_name="raya-course-map-node-spacer"
+            )
+
+    numbered_cases = {
+        "rail-density-foundations": "1",
+        "rail-density-foundations-structure": "1.2",
+        "rail-density-appendix": "Appendix A",
+    }
+    for page_id, expected_number in numbered_cases.items():
+        anchor = _course_map_node_anchor(nodes[page_id])
+        number = _find_html_node(
+            anchor, tag="span", class_name="raya-course-map-node-number"
+        )
+        assert _html_node_text(number) == expected_number
+        assert _html_node_text(anchor).count(expected_number) == 1
+
+    authored_number_anchor = _course_map_node_anchor(
+        nodes["rail-density-already-numbered"]
+    )
+    assert _find_html_node(
+        authored_number_anchor,
+        tag="span",
+        class_name="raya-course-map-node-number",
+        required=False,
+    ) is None
+    authored_title = _find_html_node(
+        authored_number_anchor,
+        tag="span",
+        class_name="raya-course-map-node-title",
+    )
+    assert _html_node_text(authored_title) == "12.10 Already numbered navigation title"
+    assert _html_node_text(authored_number_anchor).count("12.10") == 1
 
 
 def test_rail_density_fixture_covers_fdd_tree_contract(tmp_path: Path) -> None:
@@ -7110,6 +7206,136 @@ def _write_test_skin(path: Path, skin_id: str) -> None:
 
 def _visible_text(html_text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", html_text))
+
+
+class _ContractHtmlParser(HTMLParser):
+    _VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.root = SimpleNamespace(tag="document", attrs={}, children=[], content=[])
+        self._stack = [self.root]
+
+    @classmethod
+    def parse(cls, html_text: str) -> SimpleNamespace:
+        parser = cls()
+        parser.feed(html_text)
+        parser.close()
+        return parser.root
+
+    def handle_starttag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        node = SimpleNamespace(tag=tag, attrs=dict(attrs), children=[], content=[])
+        self._stack[-1].children.append(node)
+        self._stack[-1].content.append(node)
+        if tag not in self._VOID_TAGS:
+            self._stack.append(node)
+
+    def handle_startendtag(
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
+        node = SimpleNamespace(tag=tag, attrs=dict(attrs), children=[], content=[])
+        self._stack[-1].children.append(node)
+        self._stack[-1].content.append(node)
+
+    def handle_endtag(self, tag: str) -> None:
+        for index in range(len(self._stack) - 1, 0, -1):
+            if self._stack[index].tag == tag:
+                del self._stack[index:]
+                return
+
+    def handle_data(self, data: str) -> None:
+        self._stack[-1].content.append(data)
+
+
+def _html_node_has_class(node: SimpleNamespace, class_name: str) -> bool:
+    return class_name in (node.attrs.get("class") or "").split()
+
+
+def _find_all_html_nodes(
+    node: SimpleNamespace,
+    *,
+    tag: str | None = None,
+    class_name: str | None = None,
+    attr: tuple[str, str] | None = None,
+) -> list[SimpleNamespace]:
+    matches = []
+    for child in node.children:
+        if (
+            (tag is None or child.tag == tag)
+            and (class_name is None or _html_node_has_class(child, class_name))
+            and (attr is None or child.attrs.get(attr[0]) == attr[1])
+        ):
+            matches.append(child)
+        matches.extend(
+            _find_all_html_nodes(
+                child, tag=tag, class_name=class_name, attr=attr
+            )
+        )
+    return matches
+
+
+def _find_html_node(
+    node: SimpleNamespace,
+    *,
+    tag: str | None = None,
+    class_name: str | None = None,
+    attr: tuple[str, str] | None = None,
+    required: bool = True,
+) -> SimpleNamespace | None:
+    matches = _find_all_html_nodes(
+        node, tag=tag, class_name=class_name, attr=attr
+    )
+    if not matches:
+        assert not required, (tag, class_name, attr)
+        return None
+    return matches[0]
+
+
+def _find_direct_html_node(
+    node: SimpleNamespace,
+    *,
+    tag: str | None = None,
+    class_name: str | None = None,
+    required: bool = True,
+) -> SimpleNamespace | None:
+    for child in node.children:
+        if (tag is None or child.tag == tag) and (
+            class_name is None or _html_node_has_class(child, class_name)
+        ):
+            return child
+    assert not required, (tag, class_name)
+    return None
+
+
+def _html_node_text(node: SimpleNamespace) -> str:
+    return "".join(
+        item if isinstance(item, str) else _html_node_text(item)
+        for item in node.content
+    )
+
+
+def _course_map_node_anchor(node: SimpleNamespace) -> SimpleNamespace:
+    row = _find_direct_html_node(
+        node, tag="div", class_name="raya-course-map-node-row"
+    )
+    return _find_direct_html_node(row, tag="a")
 
 
 def _element_html(html_text: str, element_start: str, element_end: str) -> str:
