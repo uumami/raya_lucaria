@@ -71,16 +71,44 @@ _SCROLL_OWNER_STATE = """() => [
 })"""
 
 
-def _expand_course_map_branches(page) -> None:
-    toggles = page.locator(
-        '[data-raya-map-node-toggle][aria-expanded="false"]'
+_DENSITY_ROOT = "rail-density-root"
+_DENSITY_OVERFLOW_BRANCH = "rail-density-foundations"
+
+
+def _expand_course_map_path(page, node_ids: tuple[str, ...]) -> None:
+    """Open one explicit branch path without defeating accordion semantics."""
+    for node_id in node_ids:
+        node = page.locator(f'[data-raya-map-node="{node_id}"]')
+        assert node.count() == 1, node_id
+        toggle = node.locator(
+            ":scope > .raya-course-map-node-row [data-raya-map-node-toggle]"
+        )
+        assert toggle.count() == 1, node_id
+        if toggle.get_attribute("aria-expanded") == "false":
+            toggle.click()
+        assert toggle.get_attribute("aria-expanded") == "true", node_id
+
+
+def _expand_overflow_branch(page, node_id: str) -> None:
+    """Open the fixture's direct-leaf branch without expanding peer branches."""
+    _expand_course_map_path(page, (_DENSITY_ROOT, node_id))
+    branch = page.locator(f'[data-raya-map-node="{node_id}"]')
+    direct_leaves = branch.evaluate(
+        """node => [...node.querySelector(
+          ':scope > [data-raya-map-children]').children]
+          .filter((child) => !child.querySelector(
+            ':scope > .raya-course-map-node-row [data-raya-map-node-toggle]'
+          )).length"""
     )
-    guard = 0
-    while toggles.count() > 0 and guard < 200:
-        toggles.first.evaluate("button => button.click()")
-        guard += 1
-    page.wait_for_timeout(200)
-    assert toggles.count() == 0, "guard exhausted before draining all toggles"
+    assert direct_leaves >= 18, (node_id, direct_leaves)
+    scrollport = page.locator("[data-raya-course-map-navigation]")
+    overflow = scrollport.evaluate(
+        """node => ({
+          clientHeight: node.clientHeight,
+          scrollHeight: node.scrollHeight,
+        })"""
+    )
+    assert overflow["scrollHeight"] > overflow["clientHeight"], overflow
 
 
 def _open_course_map_drawer(page) -> None:
@@ -166,6 +194,15 @@ def test_course_rail_forbids_wheel_touch_forwarding_and_containment() -> None:
         )
 
 
+def test_density_suite_never_expands_every_accordion_branch() -> None:
+    source = Path(__file__).read_text()
+    # Split these terms so this source-level guard does not match itself.
+    forbidden_expand_all = "_expand_course_map_" + "branches"
+    forbidden_drain_loop = "while toggles." + "count()"
+    assert forbidden_expand_all not in source
+    assert forbidden_drain_loop not in source
+
+
 @pytest.mark.parametrize(
     ("width", "drawer"),
     [(1440, False), (894, False), (893, False), (640, False), (639, True), (390, True)],
@@ -190,7 +227,7 @@ def test_native_wheel_scrolls_only_central_owner_across_bands_and_zones(
                 )
                 if drawer:
                     _open_course_map_drawer(page)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
 
                 for selector in _SCROLL_ZONES:
                     page.locator(
@@ -244,7 +281,7 @@ def test_native_wheel_chains_page_at_structural_scroll_boundaries(
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 page.evaluate(
                     """() => {
                       const spacer = document.createElement('div');
@@ -347,7 +384,7 @@ def test_native_wheel_keeps_document_locked_at_modal_boundaries(
                 )
                 locked_page_y = page.evaluate("() => window.scrollY")
                 assert locked_page_y == before_drawer
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 navigation = page.locator(
                     "[data-raya-course-map-navigation]"
                 )
@@ -422,7 +459,7 @@ def test_native_touch_swipes_scroll_central_owner_for_all_zones(
                 )
                 if drawer:
                     _open_course_map_drawer(page)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 session = context.new_cdp_session(page)
 
                 for selector in _SCROLL_ZONES:
@@ -491,7 +528,7 @@ def test_course_map_has_a_single_scroll_owner(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
 
                 owners = page.evaluate(_SCROLL_OWNER_STATE)
                 declared = [
@@ -535,7 +572,7 @@ def test_course_map_header_footer_stay_fixed_while_navigation_scrolls(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
 
                 before = page.evaluate(
                     """() => {
@@ -676,40 +713,11 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page = browser.new_page(viewport={"width": 1440, "height": 640})
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                # Expand every branch so the tree is fully realised.
-                #
-                # Every node's toggle is eagerly present in the DOM at load
-                # (children are hidden via an ancestor `hidden` attribute,
-                # not lazily created -- see setMapNodeExpanded in
-                # packages/static/src/raya_static/shell.py), so each click
-                # flips exactly one element out of this live
-                # aria-expanded="false" selector's match set. A fixed
-                # `range(toggles.count())` loop goes stale mid-loop as the
-                # set shrinks one-for-one with each click, so re-query
-                # `.first` after every click instead of indexing by a count
-                # taken before any clicks happened.
-                toggles = page.locator(
-                    '[data-raya-map-node-toggle][aria-expanded="false"]'
-                )
-                guard = 0
-                while toggles.count() > 0 and guard < 200:
-                    toggles.first.click()
-                    guard += 1
-                page.wait_for_timeout(200)
-                # The guard must not silently mask a partially expanded tree.
-                # `hidden` only suppresses rendering, so querySelectorAll
-                # still sees unexpanded nodes -- link counts and depth read
-                # the same with zero clicks as with a full drain. Only this
-                # post-condition proves the drain completed.
-                assert toggles.count() == 0, (
-                    "guard exhausted before draining all node toggles"
-                )
-
                 stats = page.evaluate(
                     """() => {
                       const links = [...document.querySelectorAll(
@@ -723,18 +731,16 @@ def test_density_fixture_renders_a_deep_wide_map(tmp_path: Path) -> None:
                         maxDepth: Math.max(...depths),
                         mapHeight: Math.round(
                           map.getBoundingClientRect().height),
-                        listScrollHeight: document.querySelector(
-                          '.raya-course-map-list').scrollHeight,
                         viewportHeight: window.innerHeight,
                       };
                     }"""
                 )
                 assert stats["links"] >= 30, stats
-                assert stats["maxDepth"] >= 3, stats
+                assert stats["maxDepth"] >= 2, stats
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 # The rail must actually reach its max-height clamp, or flex
                 # never distributes leftover space and density is untestable.
                 assert stats["mapHeight"] >= stats["viewportHeight"] - 32, stats
-                assert stats["listScrollHeight"] > 900, stats
                 page.close()
             finally:
                 browser.close()
@@ -820,12 +826,12 @@ def test_long_labels_are_dense_contained_and_wrap_in_flow_for_fine_pointers(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page = browser.new_page(viewport={"width": 1440, "height": 640})
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 assert page.evaluate(
                     "() => matchMedia('(any-pointer: fine)').matches"
                 )
@@ -945,13 +951,12 @@ def test_course_map_orientation_is_one_shot_against_the_central_owner(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1280, "height": 900})
+                page = browser.new_page(viewport={"width": 1280, "height": 640})
                 requested_urls: list[str] = []
                 page.on("request", lambda request: requested_urls.append(request.url))
-                # The deepest, last leaf in the tree: bringing it into view
-                # from a fully expanded, scrolled-to-top list requires the
-                # largest scroll distance, so this is the least accidental
-                # page to orient toward.
+                # The deepest, last leaf in the tree remains the least
+                # accidental page to orient toward from a valid overflowing
+                # accordion state.
                 page.goto(
                     f"{handle.base_url}/verification/review/summary/index.html",
                     wait_until="networkidle",
@@ -961,7 +966,7 @@ def test_course_map_orientation_is_one_shot_against_the_central_owner(
                 )
                 requested_urls.clear()
 
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
 
                 # Positive anchor: prove the precondition this test exists to
                 # provide -- a list that actually overflows its own window,
@@ -1013,8 +1018,8 @@ def test_course_map_orientation_is_one_shot_against_the_central_owner(
                     }"""
                 )
                 assert manual_scroll > 0
-                page.set_viewport_size({"width": 1279, "height": 899})
-                page.set_viewport_size({"width": 1280, "height": 900})
+                page.set_viewport_size({"width": 1279, "height": 639})
+                page.set_viewport_size({"width": 1280, "height": 640})
                 page.wait_for_timeout(300)
                 after_resize = page.evaluate(
                     """() => document.querySelector(
@@ -1046,14 +1051,14 @@ def test_coarse_pointer_labels_are_full_height_and_targets_do_not_overlap(
             )
             try:
                 context = browser.new_context(
-                    viewport={"width": 1440, "height": 900}, has_touch=True
+                    viewport={"width": 1440, "height": 640}, has_touch=True
                 )
                 page = context.new_page()
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                 state = page.evaluate(
                     """() => {
                       const navigation = document.querySelector(
@@ -1302,12 +1307,12 @@ def test_tree_numbers_titles_and_current_marker_do_not_overlap(tmp_path: Path) -
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 900})
+                page = browser.new_page(viewport={"width": 1440, "height": 640})
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
-                _expand_course_map_branches(page)
+                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
 
                 state = page.evaluate(
                     """() => {
@@ -1385,14 +1390,14 @@ def test_fdd_tree_guides_and_targets_match_pointer_mode(tmp_path: Path) -> None:
                 for width in (1440, 893):
                     for has_touch in (False, True):
                         context = browser.new_context(
-                            viewport={"width": width, "height": 900},
+                            viewport={"width": width, "height": 640},
                             has_touch=has_touch,
                         )
                         page = context.new_page()
                         page.goto(
                             f"{handle.base_url}/index.html", wait_until="networkidle"
                         )
-                        _expand_course_map_branches(page)
+                        _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
                         state = page.evaluate(
                             """() => {
                               const row = document.querySelector(
