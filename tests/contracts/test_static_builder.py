@@ -5930,19 +5930,45 @@ def test_rail_density_fixture_covers_fdd_tree_contract(tmp_path: Path) -> None:
         )
         >= 18
     )
+    overflow_leaf_ids = [
+        child_id
+        for child_id in overflow_branch["children"]
+        if not items_by_id[child_id]["children"]
+    ]
+    assert len(overflow_leaf_ids) >= 18
+    pages_by_id = {page["quantum_id"]: page for page in manifest["pages"]}
+    overflow_rendered = (
+        course
+        / "artifact"
+        / "site"
+        / pages_by_id[overflow_leaf_ids[-1]]["url"]
+    ).read_text(encoding="utf-8")
     sibling_branches = [
         items_by_id[sibling_id]
         for sibling_id in items_by_id[overflow_branch["parent"]]["children"]
         if sibling_id != overflow_branch["id"] and items_by_id[sibling_id]["children"]
     ]
     assert sibling_branches
+    assert re.search(
+        rf'data-raya-map-node="{re.escape(overflow_branch["id"])}"[^>]*'
+        r'data-raya-map-expanded="true"',
+        overflow_rendered,
+    )
     assert all(
         re.search(
             rf'data-raya-map-node="{re.escape(sibling["id"])}"[^>]*'
             r'data-raya-map-expanded="false"',
-            rendered,
+            overflow_rendered,
         )
         for sibling in sibling_branches
+    )
+    assert all(
+        (
+            f'data-raya-map-node="{leaf_id}" '
+            f'data-raya-map-parent="{overflow_branch["id"]}"'
+        )
+        in overflow_rendered
+        for leaf_id in overflow_leaf_ids
     )
 
 
