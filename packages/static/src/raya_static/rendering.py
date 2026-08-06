@@ -7323,6 +7323,79 @@ mjx-container[display="true"] {
     border-right: 0;
   }
 }
+html:not([data-raya-shell-ready="true"]) [data-raya-enhancement-control] {
+  display: none !important;
+}
+html:not([data-raya-shell-ready="true"]),
+html:not([data-raya-shell-ready="true"]) body {
+  overflow: visible !important;
+}
+html:not([data-raya-shell-ready="true"]) .raya-learning-shell {
+  display: block !important;
+  padding-inline: clamp(1rem, 4vw, 3rem) !important;
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map {
+  background: var(--raya-color-surface) !important;
+  border: 1px solid var(--raya-color-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip: auto !important;
+  clip-path: none !important;
+  display: block !important;
+  height: auto !important;
+  inline-size: auto !important;
+  inset: auto !important;
+  margin: 0 0 var(--raya-space-section) !important;
+  max-block-size: none !important;
+  max-height: none !important;
+  max-inline-size: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  padding: var(--raya-space-panel) !important;
+  pointer-events: auto !important;
+  position: static !important;
+  transform: none !important;
+  white-space: normal !important;
+  width: auto !important;
+  z-index: auto !important;
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map-header {
+  position: static !important;
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map-body,
+html:not([data-raya-shell-ready="true"]) .raya-course-map-navigation,
+html:not([data-raya-shell-ready="true"]) .raya-course-map-list {
+  display: block !important;
+  height: auto !important;
+  max-block-size: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map-node-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map-node-spacer {
+  display: none;
+}
+html:not([data-raya-shell-ready="true"]) .raya-course-map-footer {
+  block-size: auto;
+  display: block;
+  min-block-size: 0;
+  padding-block: 0.5rem;
+}
+html:not([data-raya-shell-ready="true"]) .raya-learning-rail {
+  height: auto !important;
+  inset: auto !important;
+  margin-block: var(--raya-space-section) 0 !important;
+  max-block-size: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+  position: static !important;
+  transform: none !important;
+  width: auto !important;
+  z-index: auto !important;
+}
+
 @media print {
   *,
   *::before,

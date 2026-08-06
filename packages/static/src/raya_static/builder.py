@@ -1153,6 +1153,7 @@ def _render_top_command_bar(
                 aria_label="Hide learning context",
                 icon="context",
                 label="Context",
+                enhancement_control=True,
                 extra_attrs=(
                     " data-raya-learning-rail-toggle "
                     'aria-controls="raya-learning-rail-body" '
@@ -1172,6 +1173,7 @@ def _render_top_command_bar(
                 icon="text-size",
                 label="Text size",
                 aria_pressed="false",
+                enhancement_control=True,
             ),
             _render_command_button(
                 class_name="raya-command raya-command-font raya-font-toggle",
@@ -1179,6 +1181,7 @@ def _render_top_command_bar(
                 icon="font",
                 label="OpenDyslexic",
                 aria_pressed="false",
+                enhancement_control=True,
             ),
             "</div>",
             "</div>",
@@ -1219,7 +1222,7 @@ def _render_command_search_form(search_href: str) -> str:
 def _render_mobile_course_map_opener() -> str:
     return (
         '<button class="raya-mobile-course-map-open raya-command raya-command-map" '
-        'type="button" data-raya-course-map-toggle '
+        'type="button" data-raya-course-map-toggle data-raya-enhancement-control '
         'aria-controls="raya-course-map" aria-expanded="false" '
         'aria-label="Open course map">'
         f'{_command_icon("map")}'
@@ -1236,7 +1239,8 @@ def _render_tooltip_control(control_html: str, tooltip_id: str, tooltip: str) ->
     )
     tooltip_html = (
         f'<span id="{html.escape(tooltip_id, quote=True)}" '
-        f'class="raya-tooltip" role="tooltip" hidden>{html.escape(tooltip)}</span>'
+        'class="raya-tooltip" role="tooltip" data-raya-enhancement-control '
+        f'hidden>{html.escape(tooltip)}</span>'
     )
     return f"{described_control}{tooltip_html}"
 
@@ -1315,6 +1319,7 @@ def _render_course_actions(
                 aria_label="Hide learning context",
                 icon="context",
                 label="Context",
+                enhancement_control=True,
                 extra_attrs=(
                     ' data-raya-learning-rail-toggle '
                     'aria-controls="raya-learning-rail-body" aria-expanded="true"'
@@ -1354,6 +1359,7 @@ def _render_course_map_footer(position: str) -> str:
             icon="text-size",
             label="Text size",
             aria_pressed="false",
+            enhancement_control=True,
         ),
         "raya-course-map-text-size-tooltip",
         "Text size",
@@ -1365,6 +1371,7 @@ def _render_course_map_footer(position: str) -> str:
             icon="font",
             label="OpenDyslexic",
             aria_pressed="false",
+            enhancement_control=True,
         ),
         "raya-course-map-font-tooltip",
         "OpenDyslexic",
@@ -1413,6 +1420,7 @@ def _render_course_map_mini(home_href: str | None) -> str:
                     icon="text-size",
                     label="Text size",
                     aria_pressed="false",
+                    enhancement_control=True,
                 ).replace('class="raya-command-label"', 'class="raya-visually-hidden"'),
                 "raya-course-map-mini-text-size-tooltip",
                 "Text size",
@@ -1424,6 +1432,7 @@ def _render_course_map_mini(home_href: str | None) -> str:
                     icon="font",
                     label="OpenDyslexic",
                     aria_pressed="false",
+                    enhancement_control=True,
                 ).replace('class="raya-command-label"', 'class="raya-visually-hidden"'),
                 "raya-course-map-mini-font-tooltip",
                 "OpenDyslexic",
@@ -2041,7 +2050,7 @@ def _render_course_map_toggle(
         )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
-        f"data-raya-course-map-toggle{marker_attr} "
+        f"data-raya-course-map-toggle data-raya-enhancement-control{marker_attr} "
         f'aria-controls="{html.escape(controls, quote=True)}" '
         f'aria-expanded="{aria_expanded}"{aria_label_attr}>'
         f"{label_markup}"
@@ -2203,6 +2212,7 @@ def _render_course_map(
             toggle = (
                 '<button class="raya-course-map-node-toggle" type="button" '
                 "data-raya-map-node-toggle data-raya-map-enhancement-control "
+                "data-raya-enhancement-control "
                 f'aria-controls="{html.escape(node_id, quote=True)}" '
                 f'aria-expanded="{"true" if expanded else "false"}" '
                 f'aria-label="{"Collapse" if expanded else "Expand"} '
@@ -2332,20 +2342,28 @@ def _render_course_map(
     )
     close_button_html = (
         '<button class="raya-course-map-close" type="button" '
-        'data-raya-course-map-close aria-label="Close course map">'
+        'data-raya-course-map-close data-raya-enhancement-control '
+        'aria-label="Close course map">'
         f'{_command_icon("close")}</button>'
     )
     content_html = "\n".join(
         [
             '<section class="raya-course-content" aria-labelledby="raya-course-content-title">',
             '<h2 id="raya-course-content-title" class="raya-course-section-title">Content</h2>',
-            '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
+            (
+                '<label class="raya-course-map-filter-label" '
+                'data-raya-enhancement-control for="raya-course-map-filter">'
+                "Filter map</label>"
+            ),
             (
                 '<input id="raya-course-map-filter" '
                 'class="raya-course-map-filter" type="search" autocomplete="off" '
-                "data-raya-course-map-filter>"
+                "data-raya-course-map-filter data-raya-enhancement-control>"
             ),
-            '<p class="raya-map-filter-empty" data-raya-map-filter-empty hidden>No map matches.</p>',
+            (
+                '<p class="raya-map-filter-empty" data-raya-map-filter-empty '
+                'data-raya-enhancement-control hidden>No map matches.</p>'
+            ),
             '<div class="raya-course-map-list" id="raya-course-map-list" aria-hidden="false">',
             "<ol>",
             "\n".join(nav_items),
@@ -2387,7 +2405,7 @@ def _render_course_map(
             ),
             (
                 f'<span id="{title_tooltip_id}" class="raya-tooltip" '
-                'role="tooltip" hidden>'
+                'role="tooltip" data-raya-enhancement-control hidden>'
                 f"{html.escape(course_title)}</span>"
             ),
             close_button_html,
@@ -2404,7 +2422,8 @@ def _render_course_map(
             "</nav>",
             (
                 '<div class="raya-course-map-drawer-backdrop" '
-                'data-raya-course-map-drawer-backdrop hidden></div>'
+                'data-raya-course-map-drawer-backdrop '
+                'data-raya-enhancement-control hidden></div>'
             ),
         ]
     )
@@ -2444,7 +2463,7 @@ def _render_learning_rail(
         region_title="Learning context",
         collapse_button_html=(
             '<button class="raya-learning-rail-collapse" type="button" '
-            "data-raya-learning-rail-collapse "
+            "data-raya-learning-rail-collapse data-raya-enhancement-control "
             'aria-controls="raya-learning-rail-body" '
             'aria-expanded="true" '
             'aria-label="Hide learning context">'
@@ -2457,14 +2476,15 @@ def _render_learning_rail(
         body_suffix_html=context_chip,
         expand_button_html=(
             '<button class="raya-learning-rail-expand" type="button" '
-            "data-raya-learning-rail-expand "
+            "data-raya-learning-rail-expand data-raya-enhancement-control "
             'aria-controls="raya-learning-rail-body" '
             'aria-expanded="true" '
             'aria-label="Show learning context">Context</button>'
         ),
         backdrop_html=(
             '<div class="raya-learning-rail-drawer-backdrop" '
-            "data-raya-learning-rail-drawer-backdrop hidden></div>"
+            "data-raya-learning-rail-drawer-backdrop "
+            "data-raya-enhancement-control hidden></div>"
         ),
     )
 
@@ -2507,7 +2527,7 @@ def _render_rail_panel(
             '<h2 class="raya-rail-title">',
             (
                 '<button class="raya-rail-toggle" type="button" '
-                "data-raya-rail-toggle "
+                "data-raya-rail-toggle data-raya-enhancement-control "
                 f'aria-controls="{html.escape(body_id, quote=True)}" '
                 f'aria-expanded="{aria_expanded}">'
                 f"{html.escape(title)}"
@@ -3539,12 +3559,17 @@ def _render_command_button(
     icon: str,
     label: str,
     aria_pressed: str | None = None,
+    enhancement_control: bool = False,
     extra_attrs: str = "",
 ) -> str:
     pressed_attr = "" if aria_pressed is None else f' aria-pressed="{aria_pressed}"'
+    enhancement_attr = (
+        " data-raya-enhancement-control" if enhancement_control else ""
+    )
     return (
         f'<button class="{html.escape(class_name, quote=True)}" type="button" '
-        f'aria-label="{html.escape(aria_label, quote=True)}"{pressed_attr}{extra_attrs}>'
+        f'aria-label="{html.escape(aria_label, quote=True)}"{pressed_attr}'
+        f"{enhancement_attr}{extra_attrs}>"
         f"{_command_icon(icon)}"
         f'<span class="raya-command-label">{html.escape(label)}</span>'
         "</button>"

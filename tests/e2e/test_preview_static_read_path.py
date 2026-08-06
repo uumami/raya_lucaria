@@ -18967,6 +18967,153 @@ def test_render_fixture_study_object_families_are_visually_distinct(
     assert all(url.startswith(f"{base_url}/") for url in requested_urls)
 
 
+@pytest.mark.parametrize("viewport_width", [1440, 893, 640, 639, 390])
+def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
+    tmp_path: Path,
+    viewport_width: int,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "minimal"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    deep_leaf = course / "course" / "1_unit" / "1_topic" / "1_deep_leaf"
+    deep_leaf.mkdir()
+    (deep_leaf / "0_index.md").write_text(
+        "---\n"
+        "id: no-script-deep-leaf\n"
+        "title: No-script Deep Leaf\n"
+        "summary: Deep navigation target for the no-script course rail.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# No-script Deep Leaf\n\n"
+        "This page proves the server-rendered current path remains reachable.\n",
+        encoding="utf-8",
+    )
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            context = browser.new_context(
+                java_script_enabled=False,
+                viewport={"width": viewport_width, "height": 900},
+            )
+            page = context.new_page()
+            try:
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+
+                def assert_static_fallback() -> None:
+                    enhancement_selector = ", ".join(
+                        (
+                            "[data-raya-course-map-toggle]",
+                            "[data-raya-learning-rail-toggle]",
+                            "[data-raya-learning-rail-collapse]",
+                            "[data-raya-learning-rail-expand]",
+                            "[data-raya-rail-toggle]",
+                            "[data-raya-map-node-toggle]",
+                            "[data-raya-course-map-close]",
+                            "[data-raya-course-map-filter]",
+                            "[data-raya-map-filter-empty]",
+                            "[data-raya-course-map-drawer-backdrop]",
+                            "[data-raya-learning-rail-drawer-backdrop]",
+                            ".raya-course-map-filter-label",
+                            ".raya-text-size-toggle",
+                            ".raya-font-toggle",
+                            ".raya-tooltip",
+                        )
+                    )
+                    rail = page.locator("#raya-course-map")
+                    article = page.locator("#raya-article")
+                    assert rail.evaluate("e => getComputedStyle(e).position") == "static"
+                    rail_box = rail.bounding_box()
+                    article_box = article.bounding_box()
+                    assert rail_box is not None
+                    assert article_box is not None
+                    assert rail_box["y"] + rail_box["height"] <= article_box["y"]
+
+                    static_links = page.locator(
+                        "#raya-course-map .raya-course-action[href]:visible"
+                    ).all_inner_texts()
+                    assert static_links == [
+                        "Search",
+                        "Graph",
+                        "Practice",
+                        "Tasks",
+                        "Schedule",
+                    ]
+                    enhancement_controls = page.locator(enhancement_selector)
+                    assert enhancement_controls.count() >= 1
+                    assert all(
+                        control.get_attribute("data-raya-enhancement-control")
+                        is not None
+                        for control in enhancement_controls.all()
+                    )
+                    enhancement_controls_visible = [
+                        control
+                        for control in enhancement_controls.all()
+                        if control.is_visible()
+                    ]
+                    assert enhancement_controls_visible == []
+                    enhancement_controls_in_tab_order = enhancement_controls.evaluate_all(
+                        """elements => elements.filter((element) => {
+                          const style = getComputedStyle(element);
+                          return element.tabIndex >= 0
+                            && style.display !== 'none'
+                            && style.visibility !== 'hidden';
+                        })"""
+                    )
+                    assert enhancement_controls_in_tab_order == []
+
+                    current_path_links = page.locator(
+                        '#raya-course-map [data-raya-map-active="ancestor"] > '
+                        '.raya-course-map-node-row a, '
+                        '#raya-course-map [data-raya-map-active="current"] > '
+                        '.raya-course-map-node-row a'
+                    )
+                    assert current_path_links.count() >= 1
+                    assert all(link.is_visible() for link in current_path_links.all())
+                    assert page.locator(".raya-course-map-home:visible").count() == 1
+                    assert page.locator(".raya-course-map-position:visible").count() == 1
+                    assert (
+                        page.locator(".raya-course-map-backdrop:visible").count() == 0
+                    )
+                    assert (
+                        page.locator(".raya-course-map-drawer-backdrop:visible").count()
+                        == 0
+                    )
+
+                assert_static_fallback()
+                for branch_title in (
+                    "First Unit",
+                    "First Topic",
+                    "No-script Deep Leaf",
+                ):
+                    page.locator(
+                        "#raya-course-map .raya-course-map-node-row a",
+                        has_text=branch_title,
+                    ).click()
+                    page.wait_for_load_state("networkidle")
+                    assert_static_fallback()
+                assert page.locator(
+                    'a[aria-current="page"] .raya-course-map-node-title'
+                ).inner_text() == "No-script Deep Leaf"
+            finally:
+                context.close()
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_mobile_course_map_drawer_reuses_rail_geometry_at_narrow_sizes(
     tmp_path: Path,
 ) -> None:
