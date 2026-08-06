@@ -959,6 +959,31 @@ _SHELL_JAVASCRIPT = r"""
     return togglesCurrentPath;
   }
 
+  function applyDirectMapBranchAction(node, action) {
+    const toggle = node
+      ? node.querySelector(
+        ":scope > .raya-course-map-node-row [data-raya-map-node-toggle]"
+      )
+      : null;
+    if (!toggle) {
+      return false;
+    }
+    clearCourseMapFilter();
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    let nextExpanded;
+    if (action === "toggle") {
+      nextExpanded = !expanded;
+    } else if (action === "expand" && !expanded) {
+      nextExpanded = true;
+    } else if (action === "collapse" && expanded) {
+      nextExpanded = false;
+    } else {
+      return false;
+    }
+    applyMapUserTransition(node, nextExpanded);
+    return true;
+  }
+
   function applyStoredMapExpansion(node) {
     setMapNodeExpanded(node, node.dataset.rayaMapExpanded === "true", {
       temporary: true,
@@ -1131,9 +1156,7 @@ _SHELL_JAVASCRIPT = r"""
     } else if (event.key === "End") {
       handled = focusCourseMapBoundary("last");
     } else if (event.key === "ArrowRight") {
-      const toggle = node.querySelector(":scope > .raya-course-map-node-row [data-raya-map-node-toggle]");
-      if (toggle && toggle.getAttribute("aria-expanded") !== "true") {
-        applyMapUserTransition(node, true);
+      if (applyDirectMapBranchAction(node, "expand")) {
         handled = true;
       } else {
         const childLink = firstVisibleChildCourseMapLink(node);
@@ -1143,9 +1166,7 @@ _SHELL_JAVASCRIPT = r"""
         }
       }
     } else if (event.key === "ArrowLeft") {
-      const toggle = node.querySelector(":scope > .raya-course-map-node-row [data-raya-map-node-toggle]");
-      if (toggle && toggle.getAttribute("aria-expanded") === "true") {
-        applyMapUserTransition(node, false);
+      if (applyDirectMapBranchAction(node, "collapse")) {
         handled = true;
       } else {
         const parentLink = parentCourseMapLink(node);
@@ -1837,6 +1858,11 @@ _SHELL_JAVASCRIPT = r"""
       delete root.dataset.rayaLearningRailPreference;
     }
     reconcileReaderShellState({ restoreFocus: true, preferFocusedIntermediate: true });
+    if (mapFilter) {
+      applyCourseMapFilter();
+    } else {
+      applyEffectiveMapState();
+    }
   });
   [
     structuralRailQuery,
@@ -1918,20 +1944,7 @@ _SHELL_JAVASCRIPT = r"""
       : defaultExpanded;
     setMapNodePreference(node, restoredExpanded);
     button.addEventListener("click", () => {
-      const hadActiveFilter = mapFilter
-        ? Boolean(normalizeMapQuery(mapFilter.value))
-        : false;
-      if (mapFilter) {
-        mapFilter.value = "";
-      }
-      const nextExpanded = button.getAttribute("aria-expanded") !== "true";
-      const togglesCurrentPath = applyMapUserTransition(node, nextExpanded);
-      if (hadActiveFilter) {
-        applyCourseMapFilter({
-          exposeCurrentPath: !togglesCurrentPath,
-          normalizeEffective: false,
-        });
-      }
+      applyDirectMapBranchAction(node, "toggle");
     });
   });
   if (mapFilter) {
