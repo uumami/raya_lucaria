@@ -38,6 +38,7 @@ RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 REFERENCE_FIXTURE = ROOT / "examples" / "courses" / "reference-fixture"
 RUNTIME_FIXTURE = ROOT / "examples" / "courses" / "runtime-fixture"
 EXECUTION_FIXTURE = ROOT / "examples" / "courses" / "execution-fixture"
+DENSITY_FIXTURE = ROOT / "examples" / "courses" / "rail-density-fixture"
 
 
 def _assert_control_group(html: str, legend: str) -> None:
@@ -5886,6 +5887,63 @@ def test_static_builder_course_map_child_ids_do_not_collide_after_sanitizing(
     assert len(child_list_ids) == len(set(child_list_ids))
     assert any(item.endswith("-map-a") for item in child_list_ids)
     assert "raya-map-children-map-a" not in child_list_ids
+
+
+def test_rail_density_fixture_covers_fdd_tree_contract(tmp_path: Path) -> None:
+    course = tmp_path / "rail-density-fixture"
+    shutil.copytree(DENSITY_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    artifact_manifest = json.loads(
+        (course / "artifact" / "manifest.json").read_text(encoding="utf-8")
+    )
+    manifest = json.loads(
+        (course / "artifact" / artifact_manifest["data"]["pages"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    navigation = json.loads(
+        (course / "artifact" / artifact_manifest["data"]["navigation"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    rendered = (course / "artifact" / "site" / "index.html").read_text(
+        encoding="utf-8"
+    )
+
+    labels = {page["label"] for page in manifest["pages"]}
+    assert {"1", "1.2", "12.10"} <= labels
+    assert any(page["hierarchy_label"] == "Appendix" for page in manifest["pages"])
+    assert 'data-raya-map-depth="2"' in rendered
+    assert rendered.count('data-raya-map-depth="1"') >= 3
+    assert "12.10 Already numbered navigation title" in rendered
+    assert "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007" in rendered
+
+    items_by_id = {item["id"]: item for item in navigation["items"]}
+    overflow_branch = next(
+        item
+        for item in navigation["items"]
+        if sum(
+            not items_by_id[child_id]["children"] for child_id in item["children"]
+        )
+        >= 18
+    )
+    sibling_branches = [
+        items_by_id[sibling_id]
+        for sibling_id in items_by_id[overflow_branch["parent"]]["children"]
+        if sibling_id != overflow_branch["id"] and items_by_id[sibling_id]["children"]
+    ]
+    assert sibling_branches
+    assert all(
+        re.search(
+            rf'data-raya-map-node="{re.escape(sibling["id"])}"[^>]*'
+            r'data-raya-map-expanded="false"',
+            rendered,
+        )
+        for sibling in sibling_branches
+    )
 
 
 def test_render_fixture_reader_page_exercises_learning_rail_metadata(

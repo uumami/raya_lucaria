@@ -4,6 +4,7 @@ description: Wide, deep tree for measuring course-map density.
 language: en
 source: course
 artifact: artifact
+appendix_label: Appendix
 hierarchy:
   levels:
     - key: unit
