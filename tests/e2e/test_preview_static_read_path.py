@@ -9777,7 +9777,12 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         in index_html
     )
     assert 'class="raya-course-map-list" id="raya-course-map-list"' in index_html
-    assert 'data-raya-map-label="1 Static Path">1 Static Path</a>' in index_html
+    assert re.search(
+        r'data-raya-map-label="1 Static Path">'
+        r'<span class="raya-course-map-node-number">1</span> '
+        r'<span class="raya-course-map-node-title">Static Path</span></a>',
+        index_html,
+    )
     assert "data-raya-rail-toggle" in reader_html
     assert 'data-raya-rail-panel-state="expanded"' in reader_html
     assert 'aria-hidden="false"' in reader_html
@@ -11699,17 +11704,17 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                         wait_until="networkidle",
                     )
                     requested_urls.clear()
+                    first_unit_toggle = page.locator(
+                        '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
+                    )
+                    first_unit_children_id = first_unit_toggle.get_attribute(
+                        "aria-controls"
+                    )
+                    assert first_unit_children_id
+                    first_unit_children = page.locator(f"#{first_unit_children_id}")
+                    first_topic = page.locator('[data-raya-map-node="first-topic"]')
                     initial = page.evaluate(
                         """() => ({
-                          firstUnitExpanded: document
-                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
-                            ?.getAttribute('aria-expanded'),
-                          firstUnitChildrenHidden: document
-                            .querySelector('#raya-map-children-2-first-unit')
-                            ?.hasAttribute('hidden'),
-                          firstTopicVisible: !!document
-                            .querySelector('[data-raya-map-node="first-topic"]')
-                            ?.checkVisibility(),
                           filterVisible: !!document
                             .querySelector('#raya-course-map-filter')
                             ?.checkVisibility(),
@@ -11747,9 +11752,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                             .length,
                         })"""
                     )
-                    assert initial["firstUnitExpanded"] == "true"
-                    assert initial["firstUnitChildrenHidden"] is False
-                    assert initial["firstTopicVisible"] is True
+                    assert first_unit_toggle.get_attribute("aria-expanded") == "true"
+                    assert first_unit_children.get_attribute("hidden") is None
+                    assert first_topic.is_visible()
                     assert initial["filterVisible"] is True
                     assert initial["toolLabels"] == [
                         "Search",
@@ -11794,22 +11799,18 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     page.click(
                         '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
                     )
-                    collapsed_unit = page.evaluate(
-                        """() => ({
-                          firstUnitExpanded: document
-                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
-                            ?.getAttribute('aria-expanded'),
-                          firstUnitChildrenHidden: document
-                            .querySelector('#raya-map-children-2-first-unit')
-                            ?.hasAttribute('hidden'),
-                          firstUnitChildrenAria: document
-                            .querySelector('#raya-map-children-2-first-unit')
-                            ?.getAttribute('aria-hidden'),
-                          firstTopicVisible: !!document
-                            .querySelector('[data-raya-map-node="first-topic"]')
-                            ?.checkVisibility(),
-                        })"""
-                    )
+                    collapsed_unit = {
+                        "firstUnitExpanded": first_unit_toggle.get_attribute(
+                            "aria-expanded"
+                        ),
+                        "firstUnitChildrenHidden": (
+                            first_unit_children.get_attribute("hidden") is not None
+                        ),
+                        "firstUnitChildrenAria": first_unit_children.get_attribute(
+                            "aria-hidden"
+                        ),
+                        "firstTopicVisible": first_topic.is_visible(),
+                    }
                     assert collapsed_unit == {
                         "firstUnitExpanded": "false",
                         "firstUnitChildrenHidden": True,
@@ -11820,19 +11821,15 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     page.click(
                         '[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]'
                     )
-                    expanded_all = page.evaluate(
-                        """() => ({
-                          firstUnitExpanded: document
-                            .querySelector('[data-raya-map-node="first-unit"] [data-raya-map-node-toggle]')
-                            ?.getAttribute('aria-expanded'),
-                          firstUnitChildrenHidden: document
-                            .querySelector('#raya-map-children-2-first-unit')
-                            ?.hasAttribute('hidden'),
-                          firstTopicVisible: !!document
-                            .querySelector('[data-raya-map-node="first-topic"]')
-                            ?.checkVisibility(),
-                        })"""
-                    )
+                    expanded_all = {
+                        "firstUnitExpanded": first_unit_toggle.get_attribute(
+                            "aria-expanded"
+                        ),
+                        "firstUnitChildrenHidden": (
+                            first_unit_children.get_attribute("hidden") is not None
+                        ),
+                        "firstTopicVisible": first_topic.is_visible(),
+                    }
                     assert expanded_all == {
                         "firstUnitExpanded": "true",
                         "firstUnitChildrenHidden": False,
