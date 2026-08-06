@@ -805,10 +805,10 @@ def test_filter_and_search_action_stay_present_and_focusable_at_every_height(
         handle.close()
 
 
-def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
+def test_long_labels_are_dense_contained_and_wrap_in_flow_for_fine_pointers(
     tmp_path: Path,
 ) -> None:
-    """Fine pointers get compact rows without making long labels unreadable."""
+    """Fine pointers keep compact one-line rows and let long labels wrap."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path, DENSITY_FIXTURE)
@@ -857,12 +857,10 @@ def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
                         return Math.round(
                           contentHeight / parseFloat(style.lineHeight));
                       });
-                      const clamped = [...nonCurrent].reverse().find(
-                        (link) => link.scrollHeight > link.clientHeight + 1);
                       const identifier = links.find((link) =>
                         link.textContent.includes(
                           'ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007'));
-                      if (!navigation || !clamped || !identifier) return null;
+                      if (!navigation || !identifier) return null;
                       const navigationRect = navigation.getBoundingClientRect();
                       const identifierRow = identifier.closest(
                         '.raya-course-map-node-row');
@@ -873,14 +871,13 @@ def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
                           (link) => parseFloat(getComputedStyle(link).fontSize)))],
                         lineCounts,
                         oneLineRows,
-                        clampedText: clamped.textContent.trim(),
-                        currentReleased: links
-                          .filter((link) => link.getAttribute('aria-current') === 'page')
-                          .every((link) => {
-                            const style = getComputedStyle(link);
-                            return style.display === 'block'
-                              && style.webkitLineClamp === 'none';
-                          }),
+                        fullLabels: links.every((link) =>
+                          link.scrollHeight <= link.clientHeight + 1),
+                        normalFlow: links.every((link) => {
+                          const style = getComputedStyle(link);
+                          return style.display === 'flex'
+                            && style.webkitLineClamp === 'none';
+                        }),
                         identifier: {
                           right: identifierRect.right,
                           scrollWidth: identifierRow.scrollWidth,
@@ -894,11 +891,12 @@ def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
                     }"""
                 )
                 assert state is not None
-                assert all(12 <= size <= 13 for size in state["fontSizes"]), state
+                assert state["fontSizes"] == [14], state
                 assert state["oneLineRows"], state
                 assert all(27 <= height <= 30 for height in state["oneLineRows"]), state
-                assert max(state["lineCounts"]) <= 2, state
-                assert state["currentReleased"] is True, state
+                assert max(state["lineCounts"]) > 1, state
+                assert state["fullLabels"] is True, state
+                assert state["normalFlow"] is True, state
                 assert state["identifier"]["right"] <= (
                     state["scrollport"]["right"] + 1
                 ), state
@@ -906,37 +904,6 @@ def test_long_labels_are_dense_contained_and_release_in_flow_for_fine_pointers(
                     state["scrollport"]["clientWidth"] + 1
                 ), state
                 assert state["identifier"]["writingMode"] == "horizontal-tb", state
-
-                page.keyboard.press("Tab")
-                released = page.evaluate(
-                    """(text) => {
-                      const navigation = document.querySelector(
-                        '[data-raya-course-map-navigation]');
-                      const link = [...document.querySelectorAll(
-                        '.raya-course-map-node-row a')]
-                        .find((candidate) => candidate.textContent.trim() === text);
-                      link.focus();
-                      link.scrollIntoView({block: 'nearest'});
-                      const navigationRect = navigation.getBoundingClientRect();
-                      const rowRect = link.closest(
-                        '.raya-course-map-node-row').getBoundingClientRect();
-                      return {
-                        active: document.activeElement === link,
-                        fits: link.scrollHeight <= link.clientHeight + 1,
-                        rowTop: rowRect.top,
-                        rowBottom: rowRect.bottom,
-                        navigationTop: navigationRect.top,
-                        navigationBottom: navigationRect.bottom,
-                      };
-                    }""",
-                    state["clampedText"],
-                )
-                assert released["active"] is True, released
-                assert released["fits"] is True, released
-                assert released["rowTop"] >= released["navigationTop"] - 1, released
-                assert released["rowBottom"] <= (
-                    released["navigationBottom"] + 1
-                ), released
                 page.close()
             finally:
                 browser.close()
@@ -1322,11 +1289,11 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
         handle.close()
 
 
-def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
-    """The current sequence badge remains contained in the label grid."""
+def test_tree_numbers_titles_and_current_marker_do_not_overlap(tmp_path: Path) -> None:
+    """Structural labels and the current marker stay out of title flow."""
     from playwright.sync_api import sync_playwright
 
-    handle = _preview(tmp_path)
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -1340,8 +1307,9 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(400)
+                _expand_course_map_branches(page)
 
-                badges = page.evaluate(
+                state = page.evaluate(
                     """() => {
                       const links = [...document.querySelectorAll(
                         '.raya-course-map-node-row a')]
@@ -1349,41 +1317,135 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                       const navigation = document.querySelector(
                         '[data-raya-course-map-navigation]');
                       const navigationRect = navigation.getBoundingClientRect();
-                      return links.map((a) => ({
-                        current: a.getAttribute('aria-current') === 'page',
-                        display: getComputedStyle(a, '::before').display,
-                        content: getComputedStyle(a, '::before').content,
-                        rowRight: a.closest(
-                          '.raya-course-map-node-row').getBoundingClientRect().right,
-                        rowScrollWidth: a.closest(
-                          '.raya-course-map-node-row').scrollWidth,
+                      return {
+                        links: links.map((link) => {
+                          const row = link.closest('.raya-course-map-node-row');
+                          const number = link.querySelector(
+                            '.raya-course-map-node-number');
+                          const title = link.querySelector(
+                            '.raya-course-map-node-title');
+                          const linkRect = link.getBoundingClientRect();
+                          const numberRect = number?.getBoundingClientRect() ?? null;
+                          const titleRect = title.getBoundingClientRect();
+                          return {
+                            current: link.getAttribute('aria-current') === 'page',
+                            pseudo: getComputedStyle(link, '::before').content,
+                            borderWidth: parseFloat(
+                              getComputedStyle(link).borderInlineStartWidth),
+                            linkLeft: linkRect.left,
+                            linkRight: linkRect.right,
+                            numberLeft: numberRect?.left ?? null,
+                            numberRight: numberRect?.right ?? null,
+                            titleLeft: titleRect.left,
+                            titleRight: titleRect.right,
+                            rowRight: row.getBoundingClientRect().right,
+                            rowScrollWidth: row.scrollWidth,
+                          };
+                        }),
                         navigationRight: navigationRect.right,
                         navigationClientWidth: navigation.clientWidth,
-                      }));
+                      };
                     }"""
                 )
-                assert badges, "no visible map links"
-                current = [b for b in badges if b["current"]]
-                assert len(current) == 1, badges
-                # Blockification (CSS Display Module Level 3): an
-                # absolutely-positioned "inline-flex" box computes to "flex",
-                # not "inline-flex" -- position:absolute is mandatory here
-                # (see rendering.py) so the badge cannot become a block child
-                # inside Task 8's -webkit-box clamp. Assert "flex" only, not
-                # {"inline-flex", "flex"}: accepting "inline-flex" would also
-                # accept the in-flow regression this task exists to prevent
-                # (in-flow computes "inline-flex"; only out-of-flow
-                # computes "flex"), which defeats the point of the check.
-                assert current[0]["display"] == "flex", current[0]
-                assert current[0]["content"] not in {"none", "normal"}, current[0]
-                assert current[0]["rowRight"] <= current[0]["navigationRight"] + 1
-                assert current[0]["rowScrollWidth"] <= (
-                    current[0]["navigationClientWidth"] + 1
-                )
-                for badge in badges:
-                    if not badge["current"]:
-                        assert badge["display"] == "none", badge
+                assert state["links"], "no visible map links"
+                current = [link for link in state["links"] if link["current"]]
+                assert len(current) == 1, state
+                assert 2 <= current[0]["borderWidth"] <= 3, current[0]
+                for link in state["links"]:
+                    assert link["pseudo"] in {"none", "normal"}, link
+                    assert link["linkLeft"] <= link["titleLeft"], link
+                    assert link["titleRight"] <= link["linkRight"] + 1, link
+                    if link["numberRight"] is not None:
+                        assert link["linkLeft"] <= link["numberLeft"], link
+                        assert link["numberRight"] <= link["titleLeft"] + 1, link
+                    assert link["rowRight"] <= state["navigationRight"] + 1, link
+                    assert link["rowScrollWidth"] <= (
+                        state["navigationClientWidth"] + 1
+                    ), link
                 page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_fdd_tree_guides_and_targets_match_pointer_mode(tmp_path: Path) -> None:
+    """Tree indentation and targets follow the fine/coarse FDD contract."""
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (1440, 893):
+                    for has_touch in (False, True):
+                        context = browser.new_context(
+                            viewport={"width": width, "height": 900},
+                            has_touch=has_touch,
+                        )
+                        page = context.new_page()
+                        page.goto(
+                            f"{handle.base_url}/index.html", wait_until="networkidle"
+                        )
+                        _expand_course_map_branches(page)
+                        state = page.evaluate(
+                            """() => {
+                              const row = document.querySelector(
+                                '.raya-course-map-node-row');
+                              const group = document.querySelector(
+                                '[data-raya-map-children]:not([hidden])');
+                              const toggle = row.querySelector(
+                                '[data-raya-map-node-toggle]');
+                              const link = row.querySelector('a');
+                              const icon = toggle.querySelector(
+                                '.raya-command-icon');
+                              const rowStyle = getComputedStyle(row);
+                              const linkStyle = getComputedStyle(link);
+                              const groupStyle = getComputedStyle(group);
+                              const iconStyle = getComputedStyle(icon);
+                              return {
+                                coarse: matchMedia(
+                                  '(any-pointer: coarse), (hover: none)').matches,
+                                columns: rowStyle.gridTemplateColumns,
+                                fontSize: linkStyle.fontSize,
+                                lineHeight: linkStyle.lineHeight,
+                                linkHeight: link.getBoundingClientRect().height,
+                                toggleWidth: toggle.getBoundingClientRect().width,
+                                toggleHeight: toggle.getBoundingClientRect().height,
+                                groupMargin: groupStyle.marginInlineStart,
+                                groupPadding: groupStyle.paddingInlineStart,
+                                groupBorder: groupStyle.borderInlineStartWidth,
+                                pseudo: getComputedStyle(
+                                  link, '::before').content,
+                                iconWidth: icon.getBoundingClientRect().width,
+                                iconTransform: iconStyle.transform,
+                              };
+                            }"""
+                        )
+                        expected_target = 44 if has_touch else 30
+                        assert state["coarse"] is has_touch, state
+                        assert state["columns"].split()[0] == (
+                            f"{expected_target}px"
+                        ), state
+                        assert state["fontSize"] == "14px", state
+                        assert 19 <= float(state["lineHeight"].removesuffix("px")) <= 21
+                        assert state["toggleWidth"] == expected_target, state
+                        assert state["toggleHeight"] >= expected_target, state
+                        assert state["groupMargin"] == "16px", state
+                        assert state["groupPadding"] == "8px", state
+                        assert state["groupBorder"] == "1px", state
+                        assert state["pseudo"] in {"none", "normal"}, state
+                        assert 12 <= state["iconWidth"] <= 14, state
+                        assert state["iconTransform"] != "none", state
+                        if has_touch:
+                            assert state["linkHeight"] >= 44, state
+                        page.close()
+                        context.close()
             finally:
                 browser.close()
     finally:

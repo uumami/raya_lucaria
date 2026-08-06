@@ -5175,16 +5175,12 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 .raya-course-map ol {
   list-style: none;
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 .raya-course-map [data-raya-map-children] {
-  /* 8px per level, not 22.6px. At depth 3 the old margin+padding+border
-     consumed 67.8px of a 191px column, which is why every label wrapped.
-     The 1px guide border stays -- it is the only visual hierarchy cue left
-     after the indent shrinks. */
-  border-left: 1px solid var(--raya-color-border);
-  margin-left: 0.375rem;
-  padding-left: 0;
+  border-inline-start: 1px solid var(--raya-color-border);
+  margin-inline-start: 16px;
+  padding-inline-start: 8px;
 }
 .raya-course-map-node[hidden],
 .raya-course-map [data-raya-map-children][hidden],
@@ -5195,36 +5191,44 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   align-items: start;
   display: grid;
   gap: 0.125rem;
-  grid-template-columns: 24px minmax(0, 1fr);
-  min-block-size: 27px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  min-block-size: 30px;
   min-inline-size: 0;
 }
 .raya-course-map-node-toggle,
 .raya-course-map-node-spacer {
-  aspect-ratio: 1;
+  block-size: 30px;
+  display: grid;
+  inline-size: 30px;
+  min-block-size: 30px;
+  min-inline-size: 30px;
+  place-items: center;
+}
+.raya-course-map-node-toggle {
   background: transparent;
   border: 1px solid transparent;
   border-radius: 0.25rem;
   color: var(--raya-color-muted);
-  display: grid;
-  font: inherit;
-  min-block-size: 24px;
-  min-inline-size: 24px;
-  min-width: 0;
-  padding: 0;
-  place-items: center;
-  width: 24px;
-}
-.raya-course-map-node-toggle {
   cursor: pointer;
+  font: inherit;
+  padding: 0;
 }
-.raya-course-map-node-toggle::before {
-  content: ">";
-  font-size: 0.8rem;
-  line-height: 1;
+.raya-course-map-node-toggle:hover,
+.raya-course-map-node-toggle:active {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 58%, var(--raya-color-surface));
+  border-color: color-mix(in srgb, var(--raya-color-accent) 42%, var(--raya-color-border));
+  color: var(--raya-color-accent);
 }
-.raya-course-map-node-toggle[aria-expanded="true"]::before {
-  content: "v";
+.raya-course-map-node-toggle .raya-command-icon {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  block-size: 13px;
+  inline-size: 13px;
+  padding: 0;
+}
+.raya-course-map-node-toggle[aria-expanded="true"] .raya-command-icon {
+  transform: rotate(90deg);
 }
 .raya-course-map-node-toggle:focus-visible,
 .raya-course-map-filter:focus-visible {
@@ -5267,65 +5271,40 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   overflow-wrap: break-word;
 }
 .raya-course-map-list a {
-  border-left: 3px solid transparent;
-  display: -webkit-box;
-  font-size: 0.8125rem;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-height: 1.3;
-  min-block-size: 27px;
+  align-items: flex-start;
+  border-inline-start: 3px solid transparent;
+  display: flex;
+  font-size: 14px;
+  gap: 0.375rem;
+  line-height: 20px;
+  min-block-size: 28px;
   max-inline-size: 100%;
   min-width: 0;
-  overflow: hidden;
   overflow-wrap: anywhere;
-  padding: 5px 0 5px 0.375rem;
+  padding: 4px 0 4px 0.375rem;
   text-decoration: none;
   writing-mode: horizontal-tb;
 }
-.raya-course-map-node-row:is(:hover, :focus-within) a,
-.raya-course-map-node-row a[aria-current="page"] {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
-}
-.raya-course-map-list a::before {
-  align-items: center;
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 74%, var(--raya-color-surface));
-  border: 1px solid color-mix(in srgb, var(--raya-color-accent) 42%, var(--raya-color-border));
-  border-radius: 999px;
+.raya-course-map-node-number {
   color: var(--raya-color-muted);
-  content: attr(data-raya-map-index);
-  /* Hidden at rest: 42px per row of a ~150px column, on 30+ rows, for the
-     reading-order ordinal. Shown on the current row only -- always, never
-     on hover, because a hover reveal reflows the row being read. */
-  display: none;
   flex: 0 0 auto;
-  font-size: 0.7rem;
-  font-weight: 900;
-  justify-content: center;
-  line-height: 1;
-  min-width: 1.45rem;
-  padding: 0.22rem 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
 }
-.raya-course-map-list a[aria-current="page"] {
-  padding-left: 1.625rem;
-  position: relative;
-}
-.raya-course-map-list a[aria-current="page"]::before {
-  display: inline-flex;
-  left: 0;
-  margin-right: 0;
-  position: absolute;
-  top: 0.25rem;
+.raya-course-map-node-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .raya-course-map [data-raya-map-active="ancestor"] > .raya-course-map-node-row a {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 24%, transparent);
   color: var(--raya-color-text);
   font-weight: 700;
 }
 .raya-course-map a[aria-current="page"] {
-  border-left-color: var(--raya-color-success);
-  color: var(--raya-color-success);
-  font-weight: 700;
+  border-inline-start-color: var(--raya-color-accent);
+  color: var(--raya-color-accent);
+  font-weight: 800;
 }
 @media (any-pointer: coarse), (hover: none) {
   .raya-course-map-filter {
@@ -5337,18 +5316,14 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
   .raya-course-map-node-toggle,
   .raya-course-map-node-spacer {
+    block-size: 44px;
+    inline-size: 44px;
     min-block-size: 44px;
     min-inline-size: 44px;
-    width: 44px;
   }
-  .raya-course-map-list a,
-  .raya-course-map-node-row:is(:hover, :focus-within) a,
-  .raya-course-map-node-row a[aria-current="page"] {
-    display: block;
-    -webkit-line-clamp: unset;
+  .raya-course-map-list a {
     min-block-size: 44px;
-    overflow: visible;
-    padding-block: 0.65rem;
+    padding-block: 12px;
   }
 }
 @media (max-width: 1500px) {
@@ -6722,24 +6697,6 @@ mjx-container[display="true"] {
   html[data-raya-course-map="collapsed"] .raya-course-map[data-raya-course-map-transition="collapsing"] .raya-course-map-list,
   html[data-raya-learning-rail="collapsed"] .raya-learning-rail[data-raya-learning-rail-transition="collapsing"] .raya-learning-rail-body {
     display: none;
-  }
-  .raya-course-map ol {
-    padding-left: 0.75rem;
-  }
-  /* .raya-course-map-list a is deliberately not re-declared in this band.
-     The unconditional `@media (min-width: __RAYA_STRUCTURAL_PX__px)` rule
-     below (search for the next `.raya-course-map-list a` block) already
-     matches every width in this 640-893 band and comes later in source
-     order, so at equal specificity it wins every property it declares here
-     -- font-size, line-height, AND padding, not just the two that happen to
-     carry the same values. A rule here would be fully shadowed at every
-     width from 640 to 893px; verified inert by measuring computed
-     font-size/line-height/padding at 640, 700, 800, 893, 894, and 1440px
-     before and after removing it -- identical at every width. */
-  .raya-course-map-list a::before {
-    font-size: 0.64rem;
-    min-width: 1.3rem;
-    padding: 0.18rem 0.3rem;
   }
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-shell {
     padding-left: 3.75rem;

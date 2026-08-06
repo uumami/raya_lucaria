@@ -5024,6 +5024,20 @@ def test_course_map_compact_control_resources_replace_legacy_tiles() -> None:
     assert "data-raya-tooltip-dismissed" in shell_js
 
 
+def test_course_map_resources_use_fdd_tree_geometry() -> None:
+    rich_css = rich_render_css()
+
+    assert "grid-template-columns: 30px minmax(0, 1fr);" in rich_css
+    assert "margin-inline-start: 16px;" in rich_css
+    assert "padding-inline-start: 8px;" in rich_css
+    assert "border-inline-start: 1px solid var(--raya-color-border);" in rich_css
+    assert ".raya-course-map-node-number {" in rich_css
+    assert ".raya-course-map-node-title {" in rich_css
+    assert ".raya-course-map-node-toggle::before" not in rich_css
+    assert ".raya-course-map-list a::before" not in rich_css
+    assert "content: attr(data-raya-map-index);" not in rich_css
+
+
 def test_course_map_tooltips_escape_clipped_footer_geometry() -> None:
     css = rich_render_css()
     tooltip_block = re.search(r"\.raya-tooltip \{[^}]*\}", css, re.S)
@@ -6183,7 +6197,6 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
         ".raya-command-icon",
         ".raya-command-icon-text",
         ".raya-command-map .raya-command-icon",
-        ".raya-course-map-list a::before",
         ".raya-learning-shell",
         ".raya-course-map",
         ".raya-main-article",
