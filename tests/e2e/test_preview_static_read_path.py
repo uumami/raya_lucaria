@@ -13290,6 +13290,140 @@ def test_course_map_direct_actions_share_one_protected_accordion_transaction(
                 browser.close()
 
 
+@pytest.mark.parametrize(
+    "collapse_action",
+    ("click", "disclosure-enter", "disclosure-space", "anchor-left"),
+)
+def test_course_map_deep_current_path_actions_preserve_stored_collapsed_ancestors(
+    tmp_path: Path,
+    collapse_action: str,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    course = tmp_path / "deep-current-path-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    (course / "course" / "1_unit" / "1_topic" / "1_deep_leaf.md").write_text(
+        "---\n"
+        "id: deep-current-leaf\n"
+        "title: Deep Current Leaf\n"
+        "summary: Current page with two collapsible ancestors.\n"
+        "status: ready\n"
+        "---\n\n"
+        "# Deep Current Leaf\n",
+        encoding="utf-8",
+    )
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    storage_key = "raya:course-map-branches:v1:minimal-course"
+    browser_executable = _browser_executable()
+    with _serve(course / "artifact") as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    f"""sessionStorage.setItem(
+                      {json.dumps(storage_key)}, '["first-unit","first-topic"]'
+                    );
+                    window.__rayaDeepPathWrites = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {{
+                      if (this === window.sessionStorage
+                          && key === {json.dumps(storage_key)}) {{
+                        window.__rayaDeepPathWrites.push(value);
+                      }}
+                      return set.call(this, key, value);
+                    }};"""
+                )
+                try:
+                    page.goto(
+                        f"{base_url}/site/unit/topic/deep-leaf/index.html",
+                        wait_until="networkidle",
+                    )
+                    target = page.locator(
+                        '[data-raya-map-node="first-topic"] '
+                        "> .raya-course-map-node-row"
+                    )
+                    if collapse_action == "click":
+                        target.locator("[data-raya-map-node-toggle]").click()
+                    elif collapse_action == "disclosure-enter":
+                        target.locator("[data-raya-map-node-toggle]").focus()
+                        page.keyboard.press("Enter")
+                    elif collapse_action == "disclosure-space":
+                        target.locator("[data-raya-map-node-toggle]").focus()
+                        page.keyboard.press("Space")
+                    else:
+                        target.locator("a[href]").focus()
+                        page.keyboard.press("ArrowLeft")
+
+                    collapsed = page.evaluate(
+                        """key => {
+                          const ids = ['first-unit', 'first-topic'];
+                          const nodes = ids.map((id) => document.querySelector(
+                            `[data-raya-map-node="${id}"]`
+                          ));
+                          return {
+                            expanded: nodes.filter((node) => node
+                              .querySelector(':scope > .raya-course-map-node-row '
+                                + '[data-raya-map-node-toggle]')
+                              .getAttribute('aria-expanded') === 'true')
+                              .map((node) => node.dataset.rayaMapNode),
+                            preferences: Object.fromEntries(nodes.map((node) => [
+                              node.dataset.rayaMapNode,
+                              node.dataset.rayaMapExpanded,
+                            ])),
+                            stored: JSON.parse(sessionStorage.getItem(key)),
+                            writes: window.__rayaDeepPathWrites.length,
+                          };
+                        }""",
+                        storage_key,
+                    )
+                    assert collapsed == {
+                        "expanded": ["first-unit"],
+                        "preferences": {
+                            "first-unit": "false",
+                            "first-topic": "false",
+                        },
+                        "stored": ["first-unit", "first-topic"],
+                        "writes": 1,
+                    }
+
+                    page.evaluate("() => { window.__rayaDeepPathWrites = []; }")
+                    target.locator("a[href]").focus()
+                    page.keyboard.press("ArrowRight")
+                    expanded = page.evaluate(
+                        """key => ({
+                          outer: document.querySelector(
+                            '[data-raya-map-node="first-unit"] '
+                              + '> .raya-course-map-node-row [data-raya-map-node-toggle]'
+                          ).getAttribute('aria-expanded'),
+                          direct: document.querySelector(
+                            '[data-raya-map-node="first-topic"] '
+                              + '> .raya-course-map-node-row [data-raya-map-node-toggle]'
+                          ).getAttribute('aria-expanded'),
+                          stored: JSON.parse(sessionStorage.getItem(key)),
+                          writes: window.__rayaDeepPathWrites.length,
+                        })""",
+                        storage_key,
+                    )
+                    assert expanded == {
+                        "outer": "true",
+                        "direct": "true",
+                        "stored": ["first-unit"],
+                        "writes": 1,
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+
+
 def test_course_map_direct_current_collapse_survives_later_protected_accordion_transaction(
     tmp_path: Path,
 ) -> None:

@@ -1918,15 +1918,20 @@ _SHELL_JAVASCRIPT = r"""
       : defaultExpanded;
     setMapNodePreference(node, restoredExpanded);
     button.addEventListener("click", () => {
+      const hadActiveFilter = mapFilter
+        ? Boolean(normalizeMapQuery(mapFilter.value))
+        : false;
       if (mapFilter) {
         mapFilter.value = "";
       }
       const nextExpanded = button.getAttribute("aria-expanded") !== "true";
       const togglesCurrentPath = applyMapUserTransition(node, nextExpanded);
-      applyCourseMapFilter({
-        exposeCurrentPath: !togglesCurrentPath,
-        normalizeEffective: false,
-      });
+      if (hadActiveFilter) {
+        applyCourseMapFilter({
+          exposeCurrentPath: !togglesCurrentPath,
+          normalizeEffective: false,
+        });
+      }
     });
   });
   if (mapFilter) {
