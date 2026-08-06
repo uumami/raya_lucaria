@@ -12976,6 +12976,173 @@ def test_course_map_branch_state_uses_course_id_and_validates_payload(
                 browser.close()
 
 
+def test_course_map_restores_preference_and_normalizes_effective_accordion_without_write(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_static.builder import build_course
+
+    course = tmp_path / "restoration-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    for order, branch_id, branch_title in (
+        (2, "first-extra", "First Extra"),
+        (3, "later-extra", "Later Extra"),
+    ):
+        branch = course / "course" / f"{order}_{branch_id}"
+        branch.mkdir()
+        (branch / "0_index.md").write_text(
+            "---\n"
+            f"id: {branch_id}\n"
+            f"title: {branch_title}\n"
+            "summary: Restored sibling branch.\n"
+            "status: ready\n"
+            "---\n\n"
+            f"# {branch_title}\n",
+            encoding="utf-8",
+        )
+        (branch / "1_leaf.md").write_text(
+            "---\n"
+            f"id: {branch_id}-leaf\n"
+            f"title: {branch_title} Leaf\n"
+            "summary: Child that makes the sibling a branch.\n"
+            "status: ready\n"
+            "---\n\n"
+            f"# {branch_title} Leaf\n",
+            encoding="utf-8",
+        )
+
+    report = build_course(course)
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+
+    storage_key = "raya:course-map-branches:v1:minimal-course"
+    browser_executable = _browser_executable()
+    with _serve(course / "artifact") as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    f"""sessionStorage.setItem(
+                      {json.dumps(storage_key)}, '["first-unit"]'
+                    );
+                    window.__rayaMapRestorationWrites = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {{
+                      if (this === window.sessionStorage) {{
+                        window.__rayaMapRestorationWrites.push([key, value]);
+                      }}
+                      return set.call(this, key, value);
+                    }};"""
+                )
+                try:
+                    page.goto(
+                        f"{base_url}/site/unit/topic/index.html",
+                        wait_until="networkidle",
+                    )
+
+                    current_path_node = page.locator(
+                        '[data-raya-map-node="first-unit"]'
+                    )
+                    current_path_toggle = current_path_node.locator(
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+                    later_sibling_node = page.locator(
+                        '[data-raya-map-node="later-extra"]'
+                    )
+                    later_sibling_toggle = later_sibling_node.locator(
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+                    effective_expanded_ids = page.evaluate(
+                        """() => Array.from(document.querySelectorAll(
+                          '[data-raya-map-node="course-root"] '
+                          + '> [data-raya-map-children] '
+                          + '> [data-raya-map-node] '
+                          + '> .raya-course-map-node-row '
+                          + '[data-raya-map-node-toggle]'
+                        )).filter((toggle) => toggle.getAttribute('aria-expanded') === 'true')
+                          .map((toggle) => toggle.closest('[data-raya-map-node]')
+                            ?.dataset.rayaMapNode)"""
+                    )
+                    synchronized = page.evaluate(
+                        """() => Array.from(
+                          document.querySelectorAll(
+                            '[data-raya-map-node="first-unit"] '
+                            + '> .raya-course-map-node-row '
+                            + '[data-raya-map-node-toggle], '
+                            + '[data-raya-map-node="first-extra"] '
+                            + '> .raya-course-map-node-row '
+                            + '[data-raya-map-node-toggle], '
+                            + '[data-raya-map-node="later-extra"] '
+                            + '> .raya-course-map-node-row '
+                            + '[data-raya-map-node-toggle]'
+                          )
+                        ).map((toggle) => {
+                          const children = document.getElementById(
+                            toggle.getAttribute('aria-controls')
+                          );
+                          return {
+                            id: toggle.closest('[data-raya-map-node]')
+                              ?.dataset.rayaMapNode,
+                            label: toggle.getAttribute('aria-label'),
+                            expanded: toggle.getAttribute('aria-expanded'),
+                            hidden: children?.hidden,
+                            ariaHidden: children?.getAttribute('aria-hidden'),
+                          };
+                        })"""
+                    )
+
+                    assert page.evaluate("window.__rayaMapRestorationWrites") == []
+                    assert (
+                        current_path_toggle.get_attribute("aria-expanded") == "true"
+                    )
+                    assert (
+                        current_path_node.get_attribute("data-raya-map-expanded")
+                        == "false"
+                    )
+                    assert effective_expanded_ids == ["first-unit", "first-extra"]
+                    assert (
+                        later_sibling_toggle.get_attribute("aria-expanded") == "false"
+                    )
+                    assert (
+                        later_sibling_node.get_attribute("data-raya-map-expanded")
+                        == "true"
+                    )
+                    assert synchronized == [
+                        {
+                            "id": "first-unit",
+                            "label": "Collapse 1 First Unit",
+                            "expanded": "true",
+                            "hidden": False,
+                            "ariaHidden": "false",
+                        },
+                        {
+                            "id": "first-extra",
+                            "label": "Collapse 2 First Extra",
+                            "expanded": "true",
+                            "hidden": False,
+                            "ariaHidden": "false",
+                        },
+                        {
+                            "id": "later-extra",
+                            "label": "Expand 3 Later Extra",
+                            "expanded": "false",
+                            "hidden": True,
+                            "ariaHidden": "true",
+                        },
+                    ]
+                    assert page.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) == '["first-unit"]'
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+
+
 def test_render_fixture_learning_rail_panels_collapse_without_focus_leaks(
     tmp_path: Path,
 ) -> None:

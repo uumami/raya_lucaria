@@ -835,19 +835,89 @@ _SHELL_JAVASCRIPT = r"""
     }
   }
 
-  function setMapNodeExpanded(node, nextExpanded, options = {}) {
-    const toggle = node.querySelector(":scope > .raya-course-map-node-row [data-raya-map-node-toggle]");
+  function setMapNodePreference(node, expanded) {
+    if (!node || !node.dataset) {
+      return;
+    }
+    node.dataset.rayaMapExpanded = expanded ? "true" : "false";
+  }
+
+  function setMapNodeEffective(node, expanded) {
+    const row = node
+      ? node.querySelector(":scope > .raya-course-map-node-row")
+      : null;
+    const toggle = row
+      ? row.querySelector("[data-raya-map-node-toggle]")
+      : null;
     const childrenId = toggle ? toggle.getAttribute("aria-controls") : "";
     const children = childrenId ? document.getElementById(childrenId) : null;
     if (!toggle || !children) {
       return;
     }
-    if (!options.temporary) {
-      node.dataset.rayaMapExpanded = nextExpanded ? "true" : "false";
+    const label = row.getAttribute("data-raya-map-label") || "";
+    toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    toggle.setAttribute(
+      "aria-label",
+      `${expanded ? "Collapse" : "Expand"}${label ? ` ${label}` : ""}`
+    );
+    children.hidden = !expanded;
+    children.setAttribute("aria-hidden", expanded ? "false" : "true");
+  }
+
+  function normalizedPreferenceExpansion(nodes, protectedPath) {
+    const expanded = new Set();
+    const groupsWithEligibleExpansion = new Set();
+    nodes.forEach((node) => {
+      if (node.dataset.rayaMapExpanded !== "true") {
+        return;
+      }
+      if (protectedPath.has(node)) {
+        expanded.add(node);
+        return;
+      }
+      const siblingGroup = node.parentElement;
+      if (!siblingGroup || groupsWithEligibleExpansion.has(siblingGroup)) {
+        return;
+      }
+      groupsWithEligibleExpansion.add(siblingGroup);
+      expanded.add(node);
+    });
+    return expanded;
+  }
+
+  function applyEffectiveMapState({ filterQuery = "" } = {}) {
+    const nodes = mapNodeToggles
+      .map((toggle) => toggle.closest("[data-raya-map-node]"))
+      .filter(Boolean);
+    const protectedPath = currentCourseMapNodes();
+    const expanded = normalizedPreferenceExpansion(nodes, protectedPath);
+
+    protectedPath.forEach((node) => expanded.add(node));
+    nodes.forEach((node) => {
+      if (explicitlyCollapsedCurrentMapNodes.has(node)) {
+        expanded.delete(node);
+      }
+    });
+
+    if (filterQuery) {
+      nodes.forEach((node) => {
+        const visibleDescendant = Array.from(
+          node.querySelectorAll("[data-raya-map-children] [data-raya-map-node]")
+        ).some((descendant) => !descendant.hidden);
+        if (visibleDescendant) {
+          expanded.add(node);
+        }
+      });
     }
-    toggle.setAttribute("aria-expanded", nextExpanded ? "true" : "false");
-    children.hidden = !nextExpanded;
-    children.setAttribute("aria-hidden", nextExpanded ? "false" : "true");
+
+    nodes.forEach((node) => setMapNodeEffective(node, expanded.has(node)));
+  }
+
+  function setMapNodeExpanded(node, nextExpanded, options = {}) {
+    if (!options.temporary) {
+      setMapNodePreference(node, nextExpanded);
+    }
+    setMapNodeEffective(node, nextExpanded);
     if (!options.temporary && !options.skipPersist) {
       saveCollapsedMapBranches();
     }
@@ -906,7 +976,9 @@ _SHELL_JAVASCRIPT = r"""
     if (mapFilterEmpty) {
       mapFilterEmpty.hidden = visibleCount !== 0;
     }
-    if (!query && options.exposeCurrentPath !== false) {
+    if (options.normalizeEffective !== false) {
+      applyEffectiveMapState({ filterQuery: query });
+    } else if (!query && options.exposeCurrentPath !== false) {
       expandCurrentCourseMapPath({ clearFilter: false });
     }
   }
@@ -1813,18 +1885,17 @@ _SHELL_JAVASCRIPT = r"""
     const restoredExpanded = hasStoredMapBranchState
       ? !storedCollapsedMapBranches.has(nodeId)
       : defaultExpanded;
-    node.dataset.rayaMapExpanded = restoredExpanded ? "true" : "false";
-    setMapNodeExpanded(node, restoredExpanded, {
-      temporary: true,
-      skipPersist: true,
-    });
+    setMapNodePreference(node, restoredExpanded);
     button.addEventListener("click", () => {
       if (mapFilter) {
         mapFilter.value = "";
       }
       const nextExpanded = button.getAttribute("aria-expanded") !== "true";
       const togglesCurrentPath = setMapNodeExpandedFromUser(node, nextExpanded);
-      applyCourseMapFilter({ exposeCurrentPath: !togglesCurrentPath });
+      applyCourseMapFilter({
+        exposeCurrentPath: !togglesCurrentPath,
+        normalizeEffective: false,
+      });
     });
   });
   if (mapFilter) {
@@ -1833,6 +1904,7 @@ _SHELL_JAVASCRIPT = r"""
     });
     applyCourseMapFilter();
   } else {
+    applyEffectiveMapState();
     expandCurrentCourseMapPath();
   }
 
