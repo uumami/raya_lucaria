@@ -13545,16 +13545,27 @@ def test_filtered_branch_actions_clear_then_apply_one_equivalent_transaction(
                         }""",
                         storage_key,
                     )
+                    later_extra_expanded = action != "ArrowLeft"
                     assert snapshot == {
                         "filterValue": "",
                         "emptyHidden": True,
-                        "expanded": ["first-unit", "later-extra"],
+                        "expanded": (
+                            ["first-unit", "later-extra"]
+                            if later_extra_expanded
+                            else ["first-unit"]
+                        ),
                         "preferences": {
                             "first-unit": "true",
                             "first-extra": "false",
-                            "later-extra": "true",
+                            "later-extra": (
+                                "true" if later_extra_expanded else "false"
+                            ),
                         },
-                        "stored": ["course-root", "first-extra"],
+                        "stored": (
+                            ["course-root", "first-extra"]
+                            if later_extra_expanded
+                            else ["course-root", "first-extra", "later-extra"]
+                        ),
                         "writes": 1,
                         "activeInsideHidden": False,
                     }
