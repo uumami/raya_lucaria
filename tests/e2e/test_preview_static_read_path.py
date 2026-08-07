@@ -17217,7 +17217,9 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
                           const mapBox = document
                             .querySelector('#raya-course-map')
                             .getBoundingClientRect();
-                          const style = getComputedStyle(node);
+                          const style = getComputedStyle(node.querySelector(
+                            '.raya-course-map-node-title'
+                          ));
                           return {
                             text: node.textContent.trim(),
                             linkRight: nodeBox.right,
@@ -17247,7 +17249,7 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
     # this element pushes scrollWidth to 549px against a 153px clientWidth.
     assert current_state["scrollWidth"] <= current_state["clientWidth"] + 1
     assert current_state["linkRight"] <= current_state["mapRight"]
-    assert current_state["overflowWrap"] == "anywhere"
+    assert current_state["overflowWrap"] == "break-word"
 
 
 def test_render_fixture_responsive_shell_state_remains_accessible(
@@ -19164,6 +19166,29 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
     shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
     deep_leaf = course / "course" / "1_unit" / "1_topic" / "1_deep_leaf"
     deep_leaf.mkdir()
+    root_page = course / "course" / "0_index.md"
+    root_page.write_text(
+        root_page.read_text(encoding="utf-8").replace(
+            "title: Minimal Course", "title: Rail Density Fixture"
+        ),
+        encoding="utf-8",
+    )
+    unit_page = course / "course" / "1_unit" / "0_index.md"
+    unit_page.write_text(
+        unit_page.read_text(encoding="utf-8").replace(
+            "title: First Unit",
+            "title: Detailed Requirements And Registration Constraints",
+        ),
+        encoding="utf-8",
+    )
+    topic_page = course / "course" / "1_unit" / "1_topic" / "0_index.md"
+    topic_page.write_text(
+        topic_page.read_text(encoding="utf-8").replace(
+            "title: First Topic",
+            "title: ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
+        ),
+        encoding="utf-8",
+    )
     (deep_leaf / "0_index.md").write_text(
         "---\n"
         "id: no-script-deep-leaf\n"
@@ -19276,11 +19301,100 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                         page.locator(".raya-course-map-drawer-backdrop:visible").count()
                         == 0
                     )
+                    if (
+                        viewport_width == 390
+                        and page.locator(
+                            'a[aria-current="page"] .raya-course-map-node-title'
+                        ).inner_text()
+                        == "No-script Deep Leaf"
+                    ):
+                        title_state = page.evaluate(
+                            r"""() => {
+                              const list = document.querySelector(
+                                '#raya-course-map-list');
+                              const titleState = (nodeId) => {
+                                const node = document.querySelector(
+                                  `[data-raya-map-node="${nodeId}"]`);
+                                const link = node.querySelector(
+                                  ':scope > .raya-course-map-node-row a');
+                                const title = link.querySelector(
+                                  '.raya-course-map-node-title');
+                                const number = link.querySelector(
+                                  '.raya-course-map-node-number');
+                                const text = title.firstChild;
+                                const titleBox = title.getBoundingClientRect();
+                                const linkBox = link.getBoundingClientRect();
+                                const listBox = list.getBoundingClientRect();
+                                const fragmentsFor = (start, end) => {
+                                  const range = document.createRange();
+                                  range.setStart(text, start);
+                                  range.setEnd(text, end);
+                                  return Array.from(range.getClientRects())
+                                    .filter((rect) => rect.width > 0 && rect.height > 0)
+                                    .map((rect) => ({
+                                      left: rect.left,
+                                      right: rect.right,
+                                      top: rect.top,
+                                      bottom: rect.bottom,
+                                    }));
+                                };
+                                const fragments = fragmentsFor(
+                                  0, text.textContent.length);
+                                const words = [...text.textContent.matchAll(/\S+/g)]
+                                  .map((match) => fragmentsFor(
+                                    match.index, match.index + match[0].length));
+                                return {
+                                  text: text.textContent,
+                                  hasNumber: number !== null,
+                                  overflowWrap: getComputedStyle(title).overflowWrap,
+                                  wordBreak: getComputedStyle(title).wordBreak,
+                                  fragments: fragments.length,
+                                  lineTops: new Set(fragments.map(
+                                    (rect) => Math.round(rect.top))).size,
+                                  eachWordHasOneRect: words.every(
+                                    (rects) => rects.length === 1),
+                                  contained: fragments.every((rect) =>
+                                    rect.left >= titleBox.left - 1
+                                    && rect.right <= titleBox.right + 1
+                                    && rect.left >= linkBox.left - 1
+                                    && rect.right <= linkBox.right + 1
+                                    && rect.left >= listBox.left - 1
+                                    && rect.right <= listBox.right + 1
+                                    && rect.top >= linkBox.top - 1
+                                    && rect.bottom <= linkBox.bottom + 1),
+                                };
+                              };
+                              const root = titleState('course-root');
+                              const ordinary = titleState('first-unit');
+                              const identifier = titleState('first-topic');
+                              return {
+                                root,
+                                ordinary,
+                                identifier,
+                                allFragmentsContained: root.contained
+                                  && ordinary.contained && identifier.contained,
+                              };
+                            }"""
+                        )
+                        assert title_state["root"]["text"] == "Rail Density Fixture"
+                        assert title_state["root"]["hasNumber"] is False
+                        assert title_state["ordinary"]["text"] == (
+                            "Detailed Requirements And Registration Constraints"
+                        )
+                        assert title_state["ordinary"]["wordBreak"] == "normal"
+                        assert title_state["ordinary"]["overflowWrap"] == "break-word"
+                        assert title_state["ordinary"]["lineTops"] >= 2
+                        assert title_state["ordinary"]["eachWordHasOneRect"] is True
+                        assert title_state["identifier"]["text"] == (
+                            "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
+                        )
+                        assert title_state["identifier"]["fragments"] >= 2
+                        assert title_state["allFragmentsContained"] is True
 
                 assert_static_fallback()
                 for branch_title in (
-                    "First Unit",
-                    "First Topic",
+                    "Detailed Requirements And Registration Constraints",
+                    "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
                     "No-script Deep Leaf",
                 ):
                     page.locator(

@@ -53,6 +53,30 @@ def _preview(tmp_path: Path, fixture: Path = RENDER_FIXTURE):
     return handle
 
 
+def _title_wrap_preview(tmp_path: Path):
+    """Serve the density fixture with a root-level natural-wrap exemplar."""
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / DENSITY_FIXTURE.name
+    shutil.copytree(
+        DENSITY_FIXTURE, course, ignore=shutil.ignore_patterns("artifact")
+    )
+    exemplar = course / "course" / "12_structural_labels" / "0_index.md"
+    exemplar.write_text(
+        exemplar.read_text(encoding="utf-8").replace(
+            "title: Structural Labels",
+            "title: Detailed Requirements And Registration Constraints",
+        ),
+        encoding="utf-8",
+    )
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    assert handle.report.ok, [
+        diagnostic.format() for diagnostic in handle.report.diagnostics
+    ]
+    assert handle.base_url is not None
+    return handle
+
+
 _SCROLL_OWNER_STATE = """() => [
   '.raya-course-map',
   '.raya-course-map-body',
@@ -116,6 +140,90 @@ def _open_course_map_drawer(page) -> None:
     page.wait_for_function(
         """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
     )
+
+
+_TITLE_WRAP_STATE = r"""() => {
+  const list = document.querySelector('#raya-course-map-list');
+  const navigation = document.querySelector('[data-raya-course-map-navigation]');
+  const titleState = (nodeId) => {
+    const node = document.querySelector(`[data-raya-map-node="${nodeId}"]`);
+    const link = node.querySelector(':scope > .raya-course-map-node-row a');
+    const title = link.querySelector('.raya-course-map-node-title');
+    const number = link.querySelector('.raya-course-map-node-number');
+    const style = getComputedStyle(title);
+    const titleBox = title.getBoundingClientRect();
+    const linkBox = link.getBoundingClientRect();
+    const listBox = list.getBoundingClientRect();
+    const text = title.firstChild;
+    const fragmentRects = (start, end) => {
+      const range = document.createRange();
+      range.setStart(text, start);
+      range.setEnd(text, end);
+      return Array.from(range.getClientRects())
+        .filter((rect) => rect.width > 0 && rect.height > 0)
+        .map((rect) => ({
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+        }));
+    };
+    const fragments = fragmentRects(0, text.textContent.length);
+    const words = [...text.textContent.matchAll(/\S+/g)].map((match) => ({
+      text: match[0],
+      rects: fragmentRects(match.index, match.index + match[0].length),
+    }));
+    const contained = fragments.every((rect) =>
+      rect.left >= titleBox.left - 1
+      && rect.right <= titleBox.right + 1
+      && rect.left >= linkBox.left - 1
+      && rect.right <= linkBox.right + 1
+      && rect.left >= listBox.left - 1
+      && rect.right <= listBox.right + 1
+      && rect.top >= linkBox.top - 1
+      && rect.bottom <= linkBox.bottom + 1
+    );
+    return {
+      text: text.textContent,
+      hasNumber: number !== null,
+      overflowWrap: style.overflowWrap,
+      wordBreak: style.wordBreak,
+      fragments: fragments.length,
+      lineTops: new Set(fragments.map((rect) => Math.round(rect.top))).size,
+      eachWordHasOneRect: words.every((word) => word.rects.length === 1),
+      contained,
+    };
+  };
+  const root = titleState('rail-density-root');
+  const ordinary = titleState('rail-density-structural-labels');
+  const identifier = titleState('rail-density-identifier');
+  return {
+    root,
+    ordinary,
+    identifier,
+    allFragmentsContained:
+      root.contained && ordinary.contained && identifier.contained,
+    navigationOverflow:
+      navigation.scrollWidth - navigation.clientWidth,
+  };
+}"""
+
+
+def _assert_natural_title_wrap(state: dict) -> None:
+    assert state["root"]["text"] == "Rail Density Fixture", state
+    assert state["root"]["hasNumber"] is False, state
+    assert state["ordinary"]["text"] == (
+        "Detailed Requirements And Registration Constraints"
+    ), state
+    assert state["ordinary"]["wordBreak"] == "normal", state
+    assert state["ordinary"]["overflowWrap"] == "break-word", state
+    assert state["ordinary"]["lineTops"] >= 2, state
+    assert state["ordinary"]["eachWordHasOneRect"] is True, state
+    assert state["identifier"]["text"] == (
+        "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
+    ), state
+    assert state["identifier"]["fragments"] >= 2, state
+    assert state["allFragmentsContained"] is True, state
 
 
 def _rail_scroll_state(page) -> dict:
@@ -822,13 +930,15 @@ def test_filter_and_search_action_stay_present_and_focusable_at_every_height(
         handle.close()
 
 
+@pytest.mark.parametrize("viewport_width", [1280, 1312])
 def test_long_labels_are_dense_contained_and_wrap_in_flow_for_fine_pointers(
     tmp_path: Path,
+    viewport_width: int,
 ) -> None:
     """Fine pointers keep compact one-line rows and let long labels wrap."""
     from playwright.sync_api import sync_playwright
 
-    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    handle = _title_wrap_preview(tmp_path)
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -837,15 +947,39 @@ def test_long_labels_are_dense_contained_and_wrap_in_flow_for_fine_pointers(
                 args=["--no-sandbox"],
             )
             try:
-                page = browser.new_page(viewport={"width": 1440, "height": 640})
+                page = browser.new_page(
+                    viewport={"width": viewport_width, "height": 640}
+                )
                 page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
                 page.wait_for_timeout(500)
-                _expand_overflow_branch(page, _DENSITY_OVERFLOW_BRANCH)
+                _expand_course_map_path(
+                    page,
+                    (
+                        _DENSITY_ROOT,
+                        _DENSITY_OVERFLOW_BRANCH,
+                        "rail-density-foundations-structure",
+                    ),
+                )
                 assert page.evaluate(
                     "() => matchMedia('(any-pointer: fine)').matches"
                 )
+
+                wrap_state = page.evaluate(_TITLE_WRAP_STATE)
+                _assert_natural_title_wrap(wrap_state)
+                wrapped_link = page.locator(
+                    '[data-raya-map-node="rail-density-structural-labels"] '
+                    '> .raya-course-map-node-row a'
+                )
+                wrapped_link.focus()
+                assert wrapped_link.evaluate("node => document.activeElement === node")
+                page.keyboard.press("ArrowDown")
+                assert page.evaluate(
+                    """() => document.activeElement
+                      ?.closest('[data-raya-map-node]')
+                      ?.getAttribute('data-raya-map-node')"""
+                ) == "rail-density-appendix"
 
                 state = page.evaluate(
                     """() => {
@@ -922,6 +1056,62 @@ def test_long_labels_are_dense_contained_and_wrap_in_flow_for_fine_pointers(
                 ), state
                 assert state["identifier"]["writingMode"] == "horizontal-tb", state
                 page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_mobile_course_map_drawer_wraps_titles_naturally_for_coarse_pointers(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _title_wrap_preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                context = browser.new_context(
+                    viewport={"width": 390, "height": 844}, has_touch=True
+                )
+                page = context.new_page()
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                _open_course_map_drawer(page)
+                _expand_course_map_path(
+                    page,
+                    (
+                        _DENSITY_ROOT,
+                        _DENSITY_OVERFLOW_BRANCH,
+                        "rail-density-foundations-structure",
+                    ),
+                )
+                assert page.evaluate(
+                    "() => matchMedia('(any-pointer: coarse)').matches"
+                )
+                wrap_state = page.evaluate(_TITLE_WRAP_STATE)
+                _assert_natural_title_wrap(wrap_state)
+
+                wrapped_link = page.locator(
+                    '[data-raya-map-node="rail-density-structural-labels"] '
+                    '> .raya-course-map-node-row a'
+                )
+                wrapped_link.focus()
+                assert wrapped_link.evaluate("node => document.activeElement === node")
+                page.keyboard.press("ArrowDown")
+                assert page.evaluate(
+                    """() => document.activeElement
+                      ?.closest('[data-raya-map-node]')
+                      ?.getAttribute('data-raya-map-node')"""
+                ) == "rail-density-appendix"
+                page.close()
+                context.close()
             finally:
                 browser.close()
     finally:

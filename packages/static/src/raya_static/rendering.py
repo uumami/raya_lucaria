@@ -5304,7 +5304,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-node-title {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 .raya-course-map [data-raya-map-active="ancestor"] > .raya-course-map-node-row a {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 24%, transparent);
