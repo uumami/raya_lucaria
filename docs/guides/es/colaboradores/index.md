@@ -137,13 +137,13 @@ rutas privadas, sin `fetch` en runtime, sin browser storage y sin lenguaje de
 grading, entregas, progreso, dominio o recomendaciones.
 
 Revisa los controles de la shell como superficies de accesibilidad. El lector
-actual usa un riel expandido de 256px con header fijo, un solo propietario
+actual usa un riel expandido de 256px through 1311px y 288px from 1312px, con header fijo, un solo propietario
 central de scroll vertical nativo y footer fijo. Sus acciones en dos columnas
 son Search, Graph, Practice, Tasks, Schedule y Context; Search abre el
 workspace generado, mientras el filtro local Content solo limita etiquetas
 renderizadas del mapa. El footer contiene Text size y OpenDyslexic. Desde
 640px, el colapso explicito usa un mini riel estructural reservado de 48px. El
-drawer de telefono y otros
+drawer de telefono de 256px phone drawer y otros
 estados transitorios de la shell siguen siendo no persistentes; el par explicito
 de estado visual de los rieles estructurales puede persistir en sessionStorage
 en la misma pestana bajo el contrato con scope de curso anterior. El mapa del

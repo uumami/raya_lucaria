@@ -50,7 +50,7 @@ no estima dominio ni contacta servicios externos.
 La estructura actual del curso es una ayuda de lectura estatica. Las paginas
 lectoras no tienen una franja de comandos lectora sobre el articulo; los
 comandos lectores viven en el riel izquierdo del curso. En anchos estructurales
-es un riel expandido de 256px con header fijo, un solo propietario central de
+es un riel expandido de 256px through 1311px y 288px from 1312px, con header fijo, un solo propietario central de
 scroll vertical nativo y footer fijo. Presenta seis acciones planas obligatorias:
 Search, Graph, Practice, Tasks, Schedule y Context. Search abre el workspace
 generado Course Search; el filtro local Content solo limita labels
@@ -66,7 +66,7 @@ esa eleccion de riel estructural puede conservarse en la misma pestana
 y no guarda ni muestra progreso personal. En estados colapsados de desktop y ancho medio, el mapa y el contexto
 ocultos dejan de reservar columnas de lectura, quedan inertes, y salen de la
 navegacion de teclado y de asistencia hasta que los restaures. En layouts de
-telefono, el mapa del curso puede abrirse como un drawer temporal mientras el
+telefono, el mapa del curso puede abrirse como un 256px phone drawer mientras el
 riel de aprendizaje sigue legible y alcanzable por tecnologias asistivas. Los
 controles del riel pueden ampliar el articulo, restaurar el contexto alrededor
 o pasar a workspaces generados sin guardar un estado personal de avance.
@@ -87,8 +87,7 @@ navegar. Esa memoria es solo orientacion, no progreso ni personalizacion.
 Usa el chevron de una rama como control de despliegue separado para mostrar u
 ocultar sus hijas; usa el titulo de la rama para abrir esa pagina. El acordeon
 entre ramas hermanas protegido mantiene disponible tu ruta actual y permite tu
-intencion directa de plegar o desplegar ramas cercanas. El riel expandido de
-256px y el mini riel de 48px usan altura completa del viewport, con un solo
+intencion directa de plegar o desplegar ramas cercanas. El riel expandido de 256px through 1311px y 288px from 1312px, y el mini riel de 48px usan altura completa del viewport, con un solo
 scroller central para el mapa. Si JavaScript no esta disponible, la navegacion
 sin JavaScript sigue mostrando enlaces estaticos y la ruta actual antes de la
 leccion; no guarda estado de lectura.

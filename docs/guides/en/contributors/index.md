@@ -128,14 +128,13 @@ filtering, owning page anchors, graph focus links, no private paths, no
 runtime fetch, no browser storage, and no grading, submission, progress,
 mastery, or recommendation language.
 
-Review shell controls as accessibility surfaces. The current reader uses a 256px
-expanded course rail with a fixed header, one central native vertical scroll
+Review shell controls as accessibility surfaces. The current reader uses an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed header, one central native vertical scroll
 owner, and a fixed footer. Its six two-column actions are Search, Graph,
 Practice, Tasks, Schedule, and Context; Search opens the generated workspace,
 while the local Content filter narrows only rendered map labels. The footer
 contains Text size and OpenDyslexic. At 640px and wider, explicit collapse uses
 a reserved 48px structural mini rail. Phone-sized layouts may open the course
-map as a temporary drawer. The phone drawer and other transient
+map as a 256px phone drawer. The phone drawer and other transient
 shell state remain non-persistent; the explicit structural rail display pair may
 persist in same-tab sessionStorage under the course-scoped contract above. The
 course-map behavior is

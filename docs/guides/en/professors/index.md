@@ -280,13 +280,13 @@ Clear/Escape reset to all visible dated items. It is not a separate calendar
 source, personal calendar sync, reminder system, submission system, gradebook,
 progress tracker, or recommendation engine.
 
-Rendered pages now use a 256px expanded course rail with a fixed header, one
+Rendered pages now use an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed header, one
 central native vertical scroll owner, and a fixed footer. Its two-column course
 actions are Search, Graph, Practice, Tasks, Schedule, and Context; Search opens
 the generated workspace, while the local Content filter narrows visible page
 labels. The footer holds Text size and OpenDyslexic. From 640px, collapse uses a
 reserved 48px structural mini rail for more reading space.
-Phone-sized layouts may open the course map as a temporary drawer, while the
+Phone-sized layouts may open the course map as a 256px phone drawer, while the
 right learning rail remains readable when collapse controls are hidden.
 Same-tab sessionStorage may restore only course-scoped collapsed course-map
 branch identifiers and the explicit left/right structural rail display pair.
@@ -303,7 +303,7 @@ structural numbers without rewriting a title that already includes its number.
 For a branch, the chevron is a separate disclosure control and the title is the
 page link. The protected same-parent accordion preserves the current path while
 honoring direct reader collapse/expand intent; it does not alter authored order
-or express progress. The 256px and 48px structural rail states use full viewport
+or express progress. The expanded rail uses 256px through 1311px and 288px from 1312px, while the 48px structural mini rail uses full viewport
 height with one central scroller. In no-script navigation, static links and the
 current path remain available before the article; do not rely on a disclosure or
 filter to make authored pages reachable.

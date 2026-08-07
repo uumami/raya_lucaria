@@ -141,14 +141,14 @@ learner-state language.
 
 When changing the shell, verify reader pages render no `.raya-top-command-bar`
 and discovery workspaces still render `.raya-discovery-command-bar` as a
-discovery command bar. Verify the 256px expanded course rail has a fixed header,
+discovery command bar. Verify the expanded course rail is 256px through 1311px and 288px from 1312px, with a fixed header,
 one central native vertical scroll owner, and a fixed footer. The header presents
 the course-home control only when an index root exists. Verify the navigation
 owns six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context, followed by the local Content filter and tree. Search must open
 the generated workspace rather than filter the rail; Content only filters map
 labels. Verify the footer holds structural position plus Text size and OpenDyslexic. At 640px and wider, verify the reserved 48px mini rail provides
 course home when available, `Expand course map`, and synchronized comfort
-controls while the expanded content is hidden and inert.
+controls while the expanded content is hidden and inert. Verify a 256px phone drawer is used for the course map on phone-sized layouts.
 Also verify the expanded course map default, including the expanded hierarchical
 course map structure, generated structural map numbers, current-page map
 orientation, map filter behavior, reader breadcrumbs, compact previous/next
@@ -179,8 +179,7 @@ Verify separate chevron/link ownership: each branch chevron is a separate
 disclosure control and each title remains a normal page anchor. Browser checks
 must cover the protected same-parent accordion, current-path visibility, direct
 collapse/expand intent, and focus relocation before a hidden descendant is
-removed. At structural widths, assert full viewport height for both the 256px
-rail and 48px mini rail, fixed header/footer geometry, and one central scroller.
+removed. At structural widths, assert full viewport height for both the expanded rail at 256px through 1311px and 288px from 1312px, and the 48px mini rail, fixed header/footer geometry, and one central scroller.
 With JavaScript disabled, assert no-script navigation keeps static course links
 and the server-rendered current path reachable in normal flow, with
 enhancement-only controls hidden and absent from the tab order.

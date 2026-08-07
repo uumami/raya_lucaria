@@ -48,7 +48,7 @@ an external service.
 
 The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
-rail. At structural widths, it is a 256px expanded course rail with a fixed
+rail. At structural widths, it is an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed
 header, one central native vertical scroll owner, and a fixed footer. It presents
 six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context.
 Search opens the generated Course Search workspace; the local Content
@@ -66,7 +66,7 @@ personal progress. In
 collapsed desktop and medium-width states, hidden map and context content stops
 reserving reading columns, becomes inert, and is removed from keyboard and
 assistive navigation until restored. On phone-sized layouts, the course map may
-open as a temporary drawer while the learning rail remains readable and
+open as a 256px phone drawer while the learning rail remains readable and
 assistive-technology reachable. The rail controls can widen the article,
 restore surrounding context, or hand off to generated workspaces without
 saving a personal progress state.
@@ -86,7 +86,7 @@ not progress or personalization.
 Use a branch chevron as a separate disclosure control to show or hide its
 children; use the branch title to open that page. The protected same-parent
 accordion keeps your current path available while allowing your direct
-collapse/expand intent for nearby branches. The expanded 256px rail and the
+collapse/expand intent for nearby branches. The expanded rail at 256px through 1311px and 288px from 1312px, and the
 48px mini rail use full viewport height, with one central scroller for the map.
 If JavaScript is unavailable, no-script navigation still shows the static links
 and current path before the lesson; it does not save a reading state.
