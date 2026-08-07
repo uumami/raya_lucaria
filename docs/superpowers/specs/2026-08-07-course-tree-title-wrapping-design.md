@@ -39,12 +39,14 @@ it receives no special compact or single-line treatment.
 - Assert ordinary titles use `word-break: normal` and `overflow-wrap:
   break-word`, while unbroken identifiers retain emergency containment.
 - At real 256px and 288px rail geometry, assert the unnumbered root and the
-  depth-three `Detailed Requirements And Registration Constraints` title wrap
-  naturally when needed, remain fully visible, and never use a line clamp or
-  ellipsis.
+  depth-three `Detailed Requirements And Registration Constraints` title
+  remain fully visible and never use a line clamp or ellipsis. Ordinary titles
+  with sufficient width must wrap at word boundaries; a depth-three word wider
+  than its available title column may emergency-wrap while remaining contained.
 - Assert per-title Range rectangles and title/link/row/navigation bounds, not
   only document overflow, for containment.
 - Assert the same behavior in a 390px coarse-pointer open drawer and in the
   JavaScript-disabled static fallback; wrapped links retain focus visibility,
-  44px touch targets where required, and Arrow navigation to the next visible
-  node.
+  44px touch targets where required, and keyboard reachability. Arrow
+  navigation is enhanced-runtime behavior; the static fallback uses ordinary
+  link/Tab navigation.

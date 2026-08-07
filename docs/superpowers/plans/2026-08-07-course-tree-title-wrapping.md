@@ -40,11 +40,14 @@ assert state["identifier"]["fragments"] >= 2
 assert state["allFragmentsContained"] is True
 ```
 
-Use the unnumbered root, `Detailed Requirements And Registration Constraints`,
-and the existing unbroken identifier. Run this evidence at 1280px and 1312px,
-in the open 390px coarse drawer, and in JS-disabled static flow; assert a
-wrapped focusable title stays the active element and ArrowDown reaches the
-next visible link.
+Use the unnumbered root, an ordinary multiword title with sufficient width for
+word-boundary wrapping, `Detailed Requirements And Registration Constraints`,
+and the existing unbroken identifier. The depth-three title must prove full
+visibility/containment and may emergency-wrap a word wider than its available
+column. Run this evidence at 1280px and 1312px, in the open 390px coarse
+drawer, and in JS-disabled static flow; assert a wrapped focusable title stays
+the active element and ArrowDown reaches the next visible link in enhanced
+mode, while static fallback proves ordinary link/Tab reachability.
 
 - [ ] **Step 2: Run the focused tests and verify RED**
 
