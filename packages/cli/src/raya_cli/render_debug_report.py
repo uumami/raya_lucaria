@@ -125,6 +125,8 @@ COURSE_TREE_SCENARIO_IDS = {
     "course-tree-current-path-expanded",
     "course-tree-peer-accordion-expanded",
     "course-tree-long-label",
+    "course-tree-long-label-1280",
+    "course-tree-long-label-1312",
     "course-rail-mini-full-height",
     "course-tree-phone-drawer",
 }

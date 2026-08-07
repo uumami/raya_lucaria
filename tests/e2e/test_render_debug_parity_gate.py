@@ -17,9 +17,16 @@ COURSE_TREE_SCENARIO_IDS = {
     "course-tree-current-path-expanded",
     "course-tree-peer-accordion-expanded",
     "course-tree-long-label",
+    "course-tree-long-label-1280",
+    "course-tree-long-label-1312",
     "course-rail-mini-full-height",
     "course-tree-phone-drawer",
 }
+COURSE_TREE_WIDTH_BOUNDARIES = {
+    "course-tree-long-label-1280": {"viewport": 1280, "rail": 256},
+    "course-tree-long-label-1312": {"viewport": 1312, "rail": 288},
+}
+LONG_CURRENT_TITLE = "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
 
 
 def run_gate(
@@ -92,6 +99,19 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
         assert isinstance(scenario["focus_owner"], str)
         assert isinstance(scenario["overflow_owners"], list)
         assert (debug_dir / scenario["screenshot"]).stat().st_size > 0
+    for scenario_id, expected in COURSE_TREE_WIDTH_BOUNDARIES.items():
+        scenario = report_json["scenarios"][scenario_id]
+        containment = scenario["title_containment"]
+
+        assert scenario["viewport"]["width"] == expected["viewport"]
+        assert scenario["rail_rect"]["width"] == expected["rail"]
+        assert scenario["article_rect"]["width"] >= 672
+        assert scenario["document_overflow"] <= 1
+        assert containment["aria_current"] == "page"
+        assert containment["text"] == LONG_CURRENT_TITLE
+        assert containment["contained"] is True
+        assert containment["right"] <= containment["scrollport_right"] + 1
+        assert containment["scroll_width"] <= containment["scrollport_width"] + 1
     assert report_json["copied_site_dir"] is not None
     copied_site_dir = Path(report_json["copied_site_dir"]).resolve()
     original_site_dir = (course / "artifact" / "site").resolve()

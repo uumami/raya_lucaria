@@ -17,25 +17,35 @@ COURSE_TREE_SCENARIO_IDS = {
     "course-tree-current-path-expanded",
     "course-tree-peer-accordion-expanded",
     "course-tree-long-label",
+    "course-tree-long-label-1280",
+    "course-tree-long-label-1312",
     "course-rail-mini-full-height",
     "course-tree-phone-drawer",
 }
+COURSE_TREE_WIDTH_BOUNDARIES = {
+    "course-tree-long-label-1280": {"viewport": 1280, "rail": 256},
+    "course-tree-long-label-1312": {"viewport": 1312, "rail": 288},
+}
+LONG_CURRENT_TITLE = "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
 
 
 def _course_tree_scenarios(debug_dir: Path) -> dict[str, dict[str, object]]:
     scenarios: dict[str, dict[str, object]] = {}
     for scenario_id in COURSE_TREE_SCENARIO_IDS:
+        boundary = COURSE_TREE_WIDTH_BOUNDARIES.get(scenario_id)
+        viewport_width = boundary["viewport"] if boundary else 1280
+        rail_width = boundary["rail"] if boundary else 256
         screenshot = debug_dir / f"{scenario_id}.png"
         screenshot.write_bytes(b"png")
         scenarios[scenario_id] = {
-            "viewport": {"width": 1280, "height": 900},
+            "viewport": {"width": viewport_width, "height": 900},
             "input_modality": "fine",
             "rail_rect": {
                 "top": 0,
-                "right": 256,
+                "right": rail_width,
                 "bottom": 900,
                 "left": 0,
-                "width": 256,
+                "width": rail_width,
                 "height": 900,
             },
             "tree_rect": {
@@ -51,6 +61,29 @@ def _course_tree_scenarios(debug_dir: Path) -> dict[str, dict[str, object]]:
             "overflow_owners": ["raya-course-map-navigation"],
             "screenshot": screenshot.name,
         }
+        if boundary:
+            scenarios[scenario_id].update(
+                {
+                    "article_rect": {
+                        "top": 72,
+                        "right": 1000,
+                        "bottom": 900,
+                        "left": rail_width + 24,
+                        "width": 672,
+                        "height": 828,
+                    },
+                    "document_overflow": 0,
+                    "title_containment": {
+                        "aria_current": "page",
+                        "text": LONG_CURRENT_TITLE,
+                        "contained": True,
+                        "right": rail_width - 16,
+                        "scrollport_right": rail_width,
+                        "scroll_width": rail_width - 24,
+                        "scrollport_width": rail_width - 16,
+                    },
+                }
+            )
     return scenarios
 
 
@@ -238,6 +271,15 @@ def test_render_debug_report_preserves_valid_course_tree_scenarios(
         assert scenario["screenshot"] == f"{scenario_id}.png"
         assert scenario["overflow_owners"] == ["raya-course-map-navigation"]
         assert scenario["focus_owner"] == "body"
+    for scenario_id, expected in COURSE_TREE_WIDTH_BOUNDARIES.items():
+        scenario = report["scenarios"][scenario_id]
+        assert scenario["viewport"]["width"] == expected["viewport"]
+        assert scenario["rail_rect"]["width"] == expected["rail"]
+        assert scenario["article_rect"]["width"] == 672
+        assert scenario["document_overflow"] == 0
+        assert scenario["title_containment"]["aria_current"] == "page"
+        assert scenario["title_containment"]["text"] == LONG_CURRENT_TITLE
+        assert scenario["title_containment"]["contained"] is True
 
 
 def test_merge_course_tree_scenarios_copies_evidence_into_primary_debug_dir(

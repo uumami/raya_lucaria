@@ -342,6 +342,20 @@ def _capture_course_tree_scenarios(
             "action": "long-label",
         },
         {
+            "id": "course-tree-long-label-1280",
+            "path": "/identifier/index.html",
+            "viewport": {"width": 1280, "height": 900},
+            "input_modality": "fine",
+            "action": "long-label",
+        },
+        {
+            "id": "course-tree-long-label-1312",
+            "path": "/identifier/index.html",
+            "viewport": {"width": 1312, "height": 900},
+            "input_modality": "fine",
+            "action": "long-label",
+        },
+        {
             "id": "course-rail-mini-full-height",
             "path": "/foundations/overflow-17/index.html",
             "viewport": {"width": 640, "height": 420},
@@ -456,9 +470,37 @@ def _course_tree_scenario_evidence(page: Any) -> dict[str, object]:
             document.querySelector('[data-raya-course-map-navigation]'),
             document.querySelector('#raya-course-map-list'),
           ].filter(Boolean);
+          const navigation = document.querySelector(
+            '[data-raya-course-map-navigation]'
+          );
+          const currentTitle = navigation?.querySelector('a[aria-current="page"]');
+          const currentRow = currentTitle?.closest('.raya-course-map-node-row');
+          const navigationRect = navigation?.getBoundingClientRect();
+          const currentRowRect = currentRow?.getBoundingClientRect();
+          const titleContainment = currentTitle && currentRow && navigation
+            && navigationRect && currentRowRect
+            ? {
+                aria_current: currentTitle.getAttribute('aria-current'),
+                text: currentTitle.querySelector('.raya-course-map-node-title')
+                  ?.textContent.trim() || currentTitle.textContent.trim(),
+                contained: currentRowRect.left >= navigationRect.left - 1
+                  && currentRowRect.right <= navigationRect.right + 1
+                  && currentRow.scrollWidth <= navigation.clientWidth + 1,
+                right: currentRowRect.right,
+                scrollport_right: navigationRect.right,
+                scroll_width: currentRow.scrollWidth,
+                scrollport_width: navigation.clientWidth,
+              }
+            : null;
           return {
             rail_rect: rect(document.querySelector('#raya-course-map')),
             tree_rect: rect(document.querySelector('#raya-course-map-list')),
+            article_rect: rect(document.querySelector('#raya-article')),
+            document_overflow: Math.max(
+              0,
+              Math.ceil(document.documentElement.scrollWidth - window.innerWidth),
+            ),
+            title_containment: titleContainment,
             active_branch_ids: Array.from(document.querySelectorAll(
               '[data-raya-map-node-toggle][aria-expanded="true"]'
             )).map((toggle) => {
