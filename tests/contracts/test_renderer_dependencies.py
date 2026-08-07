@@ -390,7 +390,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/foundation/20_learning_renderer_contract.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "48px structural mini rail",
             "256px phone drawer",
             "one central native vertical scroll owner",
             "non-persistent",
@@ -401,7 +401,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/en/professors/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "48px structural mini rail",
             "256px phone drawer",
             "non-persistent",
             "Page N of M",
@@ -410,7 +410,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/en/contributors/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "48px structural mini rail",
             "256px phone drawer",
             "non-persistent",
             "explicit-click",
@@ -420,7 +420,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/en/students/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "48px structural mini rail",
             "256px phone drawer",
             "non-persistent",
             "Previous",
@@ -430,7 +430,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/en/agents/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "48px mini rail",
             "256px phone drawer",
             "non-persistent",
             "no external requests",
@@ -439,7 +439,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/es/profesores/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "mini riel estructural reservado de\n48px",
             "256px phone drawer",
             "no persistente",
             "Page N of M",
@@ -448,7 +448,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/es/colaboradores/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "mini riel estructural reservado de 48px",
             "256px phone drawer",
             "no persistente",
             "click explicito",
@@ -458,7 +458,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/es/estudiantes/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "mini riel\nestructural reservado de 48px",
             "256px phone drawer",
             "no persistente",
             "Anterior",
@@ -468,7 +468,7 @@ def test_docs_cover_collapsible_learning_rail() -> None:
         "docs/guides/es/agentes/index.md": [
             "256px through 1311px",
             "288px from 1312px",
-            "48px",
+            "mini riel reservado de 48px",
             "256px phone drawer",
             "no persistente",
             "sin solicitudes externas",
