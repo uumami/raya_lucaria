@@ -288,13 +288,13 @@ separada, sincronizacion de calendario personal, sistema de recordatorios,
 sistema de entregas, gradebook, registro de progreso ni motor de
 recomendaciones.
 
-Las paginas renderizadas usan un riel expandido de 256px through 1311px y 288px from 1312px, con header fijo, un
+Las paginas renderizadas usan un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un
 solo propietario central de scroll vertical nativo y footer fijo. Sus acciones
 de curso en dos columnas son Search, Graph, Practice, Tasks, Schedule y
 Context; Search abre el workspace generado, mientras el filtro local Content
 limita etiquetas visibles de paginas. El footer contiene Text size y
 OpenDyslexic. Desde 640px, el colapso usa un mini riel estructural reservado de
-48px para dar mas espacio de lectura. Los layouts de telefono abren el mapa del curso como un 256px phone drawer. sessionStorage en la misma pestana
+48px para dar mas espacio de lectura. Los layouts de telefono abren el mapa del curso como un drawer de telefono de 256px. sessionStorage en la misma pestana
 puede restaurar solo identificadores de ramas plegadas con scope de curso y el
 par explicito de estado visual de los rieles estructurales izquierdo/derecho. El
 estado del drawer, filtro, foco, scroll, contexto activo, progreso, dominio,
@@ -310,7 +310,7 @@ numeros estructurales sin reescribir un titulo que ya los contiene. En una rama,
 el chevron es un control de despliegue separado y el titulo es el enlace de
 pagina. El acordeon entre ramas hermanas protegido conserva la ruta actual y
 respeta la intencion directa de plegar o desplegar; no altera el orden autorado
-ni expresa progreso. Los estados de riel estructural expandido de 256px through 1311px o 288px from 1312px, y el mini riel de 48px, usan
+ni expresa progreso. Los estados de riel estructural expandido de 256px hasta 1311px o 288px a partir de 1312px, y el mini riel de 48px, usan
 altura completa del viewport con un solo scroller central. En navegacion sin
 JavaScript, los enlaces estaticos y la ruta actual siguen disponibles antes del
 articulo; no dependas de un control de despliegue ni del filtro para alcanzar

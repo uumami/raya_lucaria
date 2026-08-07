@@ -152,13 +152,13 @@ estudiante.
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
 `.raya-top-command-bar` y que los workspaces de descubrimiento sigan
 renderizando `.raya-discovery-command-bar` como barra de comandos de
-descubrimiento. Verifica que el riel expandido sea de 256px through 1311px y 288px from 1312px, con header fijo, un
+descubrimiento. Verifica que el riel expandido sea de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un
 solo propietario central de scroll vertical nativo y footer fijo. El header
 presenta course-home solo cuando existe un index root. Verifica que la
 navegacion contenga seis acciones planas obligatorias: Search, Graph, Practice, Tasks, Schedule y Context, seguidas por el filtro local Content y el
 arbol. Search debe abrir el workspace generado; Content solo filtra labels del
 mapa. Verifica que el footer contenga posicion estructural, Text size y OpenDyslexic. Desde 640px, verifica que el mini riel reservado de 48px ofrezca course-home cuando exista, `Expand course map` y controles de comodidad
-sincronizados mientras el contenido expandido esta oculto e inerte. Verifica que el mapa del curso use un 256px phone drawer en layouts de telefono. Tambien verifica el mapa del curso expandido
+sincronizados mientras el contenido expandido esta oculto e inerte. Verifica que el mapa del curso use un drawer de telefono de 256px en layouts de telefono. Tambien verifica el mapa del curso expandido
 por defecto, incluida la estructura de mapa jerarquico del curso
 expandido, los numeros estructurales generados del mapa, la orientacion de
 pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links
@@ -192,7 +192,7 @@ control de despliegue separado y cada titulo sigue siendo un anchor normal de
 pagina. Los checks de browser deben cubrir el acordeon entre ramas hermanas
 protegido, la visibilidad de ruta actual, la intencion directa de plegar o
 desplegar y la reubicacion de foco antes de ocultar un descendiente. En anchos
-estructurales, afirma altura completa del viewport para el riel expandido de 256px through 1311px y 288px from 1312px, y el
+estructurales, afirma altura completa del viewport para el riel expandido de 256px hasta 1311px y 288px a partir de 1312px, y el
 mini riel de 48px, geometria fija de header/footer y un solo scroller central.
 Con JavaScript desactivado, afirma que la navegacion sin JavaScript conserva
 enlaces estaticos y la ruta actual renderizada por servidor en flujo normal,
