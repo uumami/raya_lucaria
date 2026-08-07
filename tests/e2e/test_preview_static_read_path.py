@@ -17739,7 +17739,10 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
                     )
                     assert initial["mapState"] == "expanded"
                     assert initial["railState"] == "expanded"
-                    assert initial["articleWidth"] >= 860
+                    # The wide structural map is 288px, so at this viewport
+                    # the article receives 32px less width than the prior
+                    # 256px-wide map geometry.
+                    assert initial["articleWidth"] >= 828
                     assert initial["mapWidth"] >= 210
                     assert initial["railWidth"] >= 220
 
@@ -18093,7 +18096,7 @@ def test_render_fixture_reader_rail_headers_keep_shared_height(tmp_path: Path) -
                     assert map_state["map"]["width"] in range(255, 258)
                     assert rail_state["rail"]["width"] in range(251, 254)
 
-                for width in (894, 1279, 1280, 1440):
+                for width in (894, 1279, 1280, 1311, 1312, 1440):
                     state = expanded_state(width)
 
                     assert state["mapCollapseText"] == "Hide map"
@@ -18105,14 +18108,17 @@ def test_render_fixture_reader_rail_headers_keep_shared_height(tmp_path: Path) -
                         == state["railStyle"]["backgroundColor"]
                     )
                     assert state["overflow"] <= 1
-                    assert state["map"]["width"] in range(255, 258)
+                    expected_map_width = 288 if width >= 1312 else 256
+                    assert abs(state["map"]["width"] - expected_map_width) <= 1
                     assert state["rail"]["width"] in range(239, 242)
                     if width == 894:
                         # The 256px map, 240px context rail, their gutters,
                         # borders, and shell padding settle near 318px.
                         assert state["article"]["width"] >= 300
+                        assert state["overflow"] == 0
                     if width == 1280:
                         assert state["article"]["width"] >= 672
+                        assert state["overflow"] == 0
             finally:
                 browser.close()
     finally:

@@ -14,9 +14,12 @@ from raya_static.shell_prepaint import shell_prepaint_javascript
 from raya_static.shell_geometry import (
     _TOKENS,
     RAIL_APPROVED_PX,
+    RAIL_DRAWER_PX,
     RAIL_EXPANDED_PX,
     RAIL_MINI_PX,
     RAIL_STRUCTURAL_PX,
+    RAIL_WIDE_EXPANDED_PX,
+    RAIL_WIDE_PX,
     RAIL_EFFECTIVE_DERIVATION_JS,
 )
 
@@ -72,7 +75,18 @@ def test_no_hardcoded_rail_boundaries_in_templates():
     import raya_static.shell as shell_module
     import raya_static.shell_prepaint as prepaint_module
 
-    boundaries = ("640", "639", "894", "893", "1280", "1279", "768", "767")
+    boundaries = (
+        "640",
+        "639",
+        "894",
+        "893",
+        "1280",
+        "1279",
+        "1312",
+        "1311",
+        "768",
+        "767",
+    )
     sources = {
         "rendering.py": Path(rendering_module.__file__).read_text(encoding="utf-8"),
         "shell.py": Path(shell_module.__file__).read_text(encoding="utf-8"),
@@ -110,15 +124,21 @@ def test_rail_geometry_is_single_sourced_across_scripts():
 
 
 def test_navigation_rail_geometry_tokens_are_single_sourced():
+    assert RAIL_DRAWER_PX == 256
     assert RAIL_EXPANDED_PX == 256
     assert RAIL_MINI_PX == 48
+    assert RAIL_WIDE_PX == 1312
+    assert RAIL_WIDE_EXPANDED_PX == 288
     for resource in (
         rich_render_css(),
         shell_resources().javascript,
         shell_prepaint_javascript(),
     ):
+        assert "__RAYA_RAIL_DRAWER_PX__" not in resource
         assert "__RAYA_RAIL_EXPANDED_PX__" not in resource
         assert "__RAYA_RAIL_MINI_PX__" not in resource
+        assert "__RAYA_RAIL_WIDE_EXPANDED_PX__" not in resource
+        assert "__RAYA_WIDE_PX__" not in resource
 
 
 def _evaluate_intermediate_derivation(course_map: str, learning_rail: str):
@@ -813,6 +833,7 @@ def test_css_and_js_share_the_same_rail_boundaries():
     # of truth (guards against the CSS boundary being re-hardcoded instead
     # of derived from RAIL_APPROVED_PX).
     assert _TOKENS["__RAYA_APPROVED_MINUS_PX__"] == str(RAIL_APPROVED_PX - 1)
+    assert _TOKENS["__RAYA_WIDE_MINUS_PX__"] == str(RAIL_WIDE_PX - 1)
 
     # Assert against the UN-SUBSTITUTED template source, not the substituted
     # output. rich_render_css() resolves tokens before returning, so checking
@@ -825,14 +846,19 @@ def test_css_and_js_share_the_same_rail_boundaries():
     source = Path(rendering_module.__file__).read_text(encoding="utf-8")
     assert "(min-width: __RAYA_STRUCTURAL_PX__px)" in source
     assert "(min-width: __RAYA_APPROVED_PX__px)" in source
+    assert "(min-width: __RAYA_WIDE_PX__px)" in source
     assert "(max-width: __RAYA_APPROVED_MINUS_PX__px)" in source
+    assert "(max-width: __RAYA_WIDE_MINUS_PX__px)" in source
 
     # And the substituted output is still the final, token-free CSS with the
     # expected resolved boundaries (belt-and-suspenders on top of the
     # source-level check above).
     css = rich_render_css()
     for token in ("__RAYA_STRUCTURAL_PX__", "__RAYA_APPROVED_PX__",
-                  "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__"):
+                  "__RAYA_DESKTOP_PX__", "__RAYA_APPROVED_MINUS_PX__",
+                  "__RAYA_WIDE_PX__", "__RAYA_WIDE_MINUS_PX__",
+                  "__RAYA_RAIL_WIDE_EXPANDED_PX__",
+                  "__RAYA_RAIL_DRAWER_PX__"):
         assert token not in css, token
     # The approved-geometry boundary appears in CSS exactly as in JS.
     assert f"(min-width: {RAIL_APPROVED_PX}px)" in css
@@ -840,6 +866,8 @@ def test_css_and_js_share_the_same_rail_boundaries():
     assert f"(max-width: {RAIL_APPROVED_PX - 1}px)" in css
     # The structural boundary is shared too.
     assert f"(min-width: {RAIL_STRUCTURAL_PX}px)" in css
+    assert f"(min-width: {RAIL_WIDE_PX}px)" in css
+    assert f"(max-width: {RAIL_WIDE_PX - 1}px)" in css
 
 
 def test_collapse_selectors_key_off_html_only():
@@ -1176,7 +1204,7 @@ def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
         assert style["overflowY"] not in {"auto", "scroll"}, snapshot
         assert snapshot["shellReservedWidth"] == expected_width, snapshot
         assert snapshot["articleClearsRail"] is True, snapshot
-        if expected_width == RAIL_EXPANDED_PX:
+        if expected_width in {RAIL_EXPANDED_PX, RAIL_WIDE_EXPANDED_PX}:
             assert 47 <= snapshot["header"]["height"] <= 49, snapshot
             assert 47 <= snapshot["footer"]["height"] <= 49, snapshot
 
@@ -1193,8 +1221,13 @@ def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
                 page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
                 page.wait_for_timeout(320)
 
+                expanded_width = (
+                    RAIL_WIDE_EXPANDED_PX
+                    if width >= RAIL_WIDE_PX
+                    else RAIL_EXPANDED_PX
+                )
                 expanded = state(page)
-                assert_pinned(expanded, RAIL_EXPANDED_PX)
+                assert_pinned(expanded, expanded_width)
                 assert expanded["bodyOverflowY"] not in {"auto", "scroll"}, expanded
                 assert expanded["navigationOverflowY"] == "auto", expanded
                 assert expanded["listOverflowY"] not in {"auto", "scroll"}, expanded
@@ -1221,14 +1254,14 @@ def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
                 page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
                 article_scrolled = state(page)
                 assert page.evaluate("() => window.scrollY") > 0
-                assert_pinned(article_scrolled, RAIL_EXPANDED_PX)
+                assert_pinned(article_scrolled, expanded_width)
                 assert article_scrolled["header"] == expanded["header"]
                 assert article_scrolled["footer"] == expanded["footer"]
 
                 resized_height = height - 80 if height > 600 else height + 80
                 page.set_viewport_size({"width": width, "height": resized_height})
                 resized = state(page)
-                assert_pinned(resized, RAIL_EXPANDED_PX)
+                assert_pinned(resized, expanded_width)
 
                 page.set_viewport_size({"width": width, "height": height})
                 page.click("[data-raya-course-map-collapse]")

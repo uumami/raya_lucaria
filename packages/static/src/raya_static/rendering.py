@@ -4008,6 +4008,16 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
   max-block-size: calc(100dvh - var(--raya-shell-block-offset, 0px));
   overflow: clip;
 }
+@media (min-width: __RAYA_STRUCTURAL_PX__px) and (max-width: __RAYA_WIDE_MINUS_PX__px) {
+  html[data-raya-course-map="expanded"] .raya-course-map {
+    inline-size: calc(__RAYA_RAIL_EXPANDED_PX__ * 1px);
+  }
+}
+@media (min-width: __RAYA_WIDE_PX__px) {
+  html[data-raya-course-map="expanded"] .raya-course-map {
+    inline-size: calc(__RAYA_RAIL_WIDE_EXPANDED_PX__ * 1px);
+  }
+}
 html[data-raya-shell-ready="true"] .raya-course-map {
   transition: border-color 180ms ease, box-shadow 180ms ease, max-height 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
 }
@@ -5179,8 +5189,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 }
 .raya-course-map [data-raya-map-children] {
   border-inline-start: 1px solid var(--raya-color-border);
-  margin-inline-start: 16px;
-  padding-inline-start: 8px;
+  margin-inline-start: 8px;
+  padding-inline-start: 4px;
 }
 .raya-course-map-node[hidden],
 .raya-course-map [data-raya-map-children][hidden],
@@ -5474,6 +5484,11 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     flex: 1 1 auto;
   }
 }
+@media (min-width: __RAYA_APPROVED_PX__px) and (max-width: __RAYA_WIDE_MINUS_PX__px) {
+  html[data-raya-course-map="expanded"] {
+    --raya-map-col: calc(__RAYA_RAIL_EXPANDED_PX__ * 1px);
+  }
+}
 @media (min-width: __RAYA_APPROVED_PX__px) {
   /* In-flow token grid (single 894 boundary). Rail tracks are driven by
      CSS custom properties keyed off the html[data-raya-*] state, not by
@@ -5488,7 +5503,6 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
      __RAYA_DESKTOP_PX__ layer below) — reusing it here is the overflow
      trap this layer exists to avoid. */
   html[data-raya-course-map="expanded"] {
-    --raya-map-col: calc(__RAYA_RAIL_EXPANDED_PX__ * 1px);
     --raya-map-gap: 1.5rem;
   }
   html[data-raya-course-map="collapsed"] {
@@ -5540,6 +5554,11 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     border: 1px solid color-mix(in srgb, var(--raya-color-border) 58%, transparent);
     border-radius: 0.5rem;
     padding: clamp(1.75rem, 1vw + 1rem, 2rem);
+  }
+}
+@media (min-width: __RAYA_WIDE_PX__px) {
+  html[data-raya-course-map="expanded"] {
+    --raya-map-col: calc(__RAYA_RAIL_WIDE_EXPANDED_PX__ * 1px);
   }
 }
 .raya-breadcrumbs {
@@ -6421,7 +6440,7 @@ mjx-container[display="true"] {
     grid-template-rows: 48px minmax(0, 1fr);
     inset-block: 0;
     inset-inline-start: 0;
-    inline-size: min(calc(__RAYA_RAIL_EXPANDED_PX__ * 1px), 100vw);
+    inline-size: min(calc(__RAYA_RAIL_DRAWER_PX__ * 1px), 100vw);
     block-size: 100vh;
     block-size: 100dvh;
     max-block-size: 100vh;
@@ -6435,7 +6454,7 @@ mjx-container[display="true"] {
     position: fixed;
     transition: none;
     white-space: normal;
-    width: min(calc(__RAYA_RAIL_EXPANDED_PX__ * 1px), 100vw);
+    width: min(calc(__RAYA_RAIL_DRAWER_PX__ * 1px), 100vw);
     z-index: 80;
   }
   html[data-raya-course-map-drawer="open"] .raya-course-map-header {

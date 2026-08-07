@@ -641,7 +641,7 @@ def test_course_map_header_footer_stay_fixed_while_navigation_scrolls(
 def test_course_map_uses_256px_expanded_geometry(
     tmp_path: Path,
 ) -> None:
-    """The left rail consumes its shared 256px token in every structural band."""
+    """The expanded left rail widens only in the wide structural band."""
     from playwright.sync_api import sync_playwright
 
     handle = _preview(tmp_path)
@@ -653,7 +653,15 @@ def test_course_map_uses_256px_expanded_geometry(
                 args=["--no-sandbox"],
             )
             try:
-                for width in (640, 893, 894, 1279, 1280, 1440):
+                expected_widths = {
+                    640: 256,
+                    894: 256,
+                    1280: 256,
+                    1311: 256,
+                    1312: 288,
+                    1440: 288,
+                }
+                for width, expected in expected_widths.items():
                     page = browser.new_page(
                         viewport={"width": width, "height": 950}
                     )
@@ -685,7 +693,10 @@ def test_course_map_uses_256px_expanded_geometry(
                           };
                         }"""
                     )
-                    assert 255 <= geometry["mapWidth"] <= 257, (width, geometry)
+                    assert abs(geometry["mapWidth"] - expected) <= 1, (
+                        width,
+                        geometry,
+                    )
                     assert geometry["navigationLeft"] >= geometry["bodyLeft"] - 1
                     assert geometry["navigationRight"] <= geometry["bodyRight"] + 1
                     assert geometry["documentOverflow"] <= 1, (width, geometry)
@@ -1463,6 +1474,10 @@ def test_fdd_tree_guides_and_targets_match_pointer_mode(tmp_path: Path) -> None:
                                 toggleHeight: toggle.getBoundingClientRect().height,
                                 groupMargin: groupStyle.marginInlineStart,
                                 groupPadding: groupStyle.paddingInlineStart,
+                                titleOffset: Math.round(
+                                  parseFloat(groupStyle.marginInlineStart)
+                                  + parseFloat(groupStyle.paddingInlineStart)
+                                ),
                                 groupBorder: groupStyle.borderInlineStartWidth,
                                 pseudo: getComputedStyle(
                                   link, '::before').content,
@@ -1480,8 +1495,9 @@ def test_fdd_tree_guides_and_targets_match_pointer_mode(tmp_path: Path) -> None:
                         assert 19 <= float(state["lineHeight"].removesuffix("px")) <= 21
                         assert state["toggleWidth"] == expected_target, state
                         assert state["toggleHeight"] >= expected_target, state
-                        assert state["groupMargin"] == "16px", state
-                        assert state["groupPadding"] == "8px", state
+                        assert state["groupMargin"] == "8px", state
+                        assert state["groupPadding"] == "4px", state
+                        assert state["titleOffset"] == 12, state
                         assert state["groupBorder"] == "1px", state
                         assert state["pseudo"] in {"none", "normal"}, state
                         assert 12 <= state["iconWidth"] <= 14, state

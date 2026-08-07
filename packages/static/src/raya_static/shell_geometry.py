@@ -3,13 +3,16 @@ from __future__ import annotations
 RAIL_STRUCTURAL_PX = 640
 RAIL_APPROVED_PX = 894
 RAIL_EXPANDED_PX = 256
+RAIL_DRAWER_PX = 256
 RAIL_MINI_PX = 48
 RAIL_DESKTOP_PX = 1280
+RAIL_WIDE_PX = 1312
+RAIL_WIDE_EXPANDED_PX = 288
 RAIL_COMPACT_PX = 768
 
 # Desktop geometry assumes the approved structural band is already active.
 # Keep that relationship structural rather than coincidental.
-assert RAIL_DESKTOP_PX > RAIL_APPROVED_PX > RAIL_STRUCTURAL_PX
+assert RAIL_WIDE_PX > RAIL_DESKTOP_PX > RAIL_APPROVED_PX > RAIL_STRUCTURAL_PX
 
 # The one definition of the effective-state rule, embedded verbatim in BOTH
 # the prepaint and runtime scripts. Pure function of (preference, bands):
@@ -69,10 +72,14 @@ _TOKENS = {
     "__RAYA_STRUCTURAL_PX__": str(RAIL_STRUCTURAL_PX),
     "__RAYA_APPROVED_PX__": str(RAIL_APPROVED_PX),
     "__RAYA_RAIL_EXPANDED_PX__": str(RAIL_EXPANDED_PX),
+    "__RAYA_RAIL_DRAWER_PX__": str(RAIL_DRAWER_PX),
     "__RAYA_RAIL_MINI_PX__": str(RAIL_MINI_PX),
     "__RAYA_DESKTOP_PX__": str(RAIL_DESKTOP_PX),
+    "__RAYA_WIDE_PX__": str(RAIL_WIDE_PX),
+    "__RAYA_RAIL_WIDE_EXPANDED_PX__": str(RAIL_WIDE_EXPANDED_PX),
     "__RAYA_STRUCTURAL_MINUS_PX__": str(RAIL_STRUCTURAL_PX - 1),
     "__RAYA_APPROVED_MINUS_PX__": str(RAIL_APPROVED_PX - 1),
+    "__RAYA_WIDE_MINUS_PX__": str(RAIL_WIDE_PX - 1),
     "__RAYA_COMPACT_MINUS_PX__": str(RAIL_COMPACT_PX - 1),
 }
 
