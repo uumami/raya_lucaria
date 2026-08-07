@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shutil
+import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -4705,7 +4706,9 @@ def _nav_title_begins_with_structural_label(title: str, label: str) -> bool:
     normalized_label = " ".join(label.split())
     remainder = normalized_title[len(normalized_label) :]
     return normalized_title.startswith(normalized_label) and (
-        not remainder or remainder[0].isspace() or remainder[0] in ".:-)"
+        not remainder
+        or remainder[0].isspace()
+        or unicodedata.category(remainder[0]).startswith("P")
     )
 
 

@@ -220,6 +220,23 @@ _SHELL_JAVASCRIPT = r"""
       ? event.target
       : describedTooltip(event.target);
     if (tooltip) {
+      const focusedTooltip = describedTooltip(document.activeElement);
+      if (
+        event.type === "pointerover"
+        && focusedTooltip
+        && focusedTooltip !== tooltip
+      ) {
+        tooltip.hidden = true;
+        tooltip.setAttribute("data-raya-tooltip-dismissed", "true");
+        return;
+      }
+      if (event.type === "focusin") {
+        document.querySelectorAll('[role="tooltip"]').forEach((candidate) => {
+          if (candidate === tooltip) return;
+          candidate.hidden = true;
+          candidate.setAttribute("data-raya-tooltip-dismissed", "true");
+        });
+      }
       tooltip.removeAttribute("data-raya-tooltip-dismissed");
       tooltip.hidden = false;
       const trigger = currentTrigger || Array.from(
@@ -815,6 +832,25 @@ _SHELL_JAVASCRIPT = r"""
     return node && node.dataset ? node.dataset.rayaMapNode || "" : "";
   }
 
+  function controlledMapNodeChildren(node, toggle) {
+    const childrenId = toggle ? toggle.getAttribute("aria-controls") : "";
+    const children = childrenId ? document.getElementById(childrenId) : null;
+    return (
+      node
+      && children
+      && children.parentElement === node
+      && children.matches("[data-raya-map-children]")
+    ) ? children : null;
+  }
+
+  function replaceInvalidMapNodeToggle(node, toggle) {
+    console.error(`Invalid course map disclosure target: ${mapNodeId(node)}`);
+    const spacer = document.createElement("span");
+    spacer.className = "raya-course-map-node-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+    toggle.replaceWith(spacer);
+  }
+
   function saveCollapsedMapBranches() {
     const key = courseMapBranchStorageKey();
     if (!key) {
@@ -849,8 +885,7 @@ _SHELL_JAVASCRIPT = r"""
     const toggle = row
       ? row.querySelector("[data-raya-map-node-toggle]")
       : null;
-    const childrenId = toggle ? toggle.getAttribute("aria-controls") : "";
-    const children = childrenId ? document.getElementById(childrenId) : null;
+    const children = controlledMapNodeChildren(node, toggle);
     if (!toggle || !children) {
       return;
     }
@@ -928,6 +963,18 @@ _SHELL_JAVASCRIPT = r"""
 
   function applyMapUserTransition(node, nextExpanded) {
     const protectedPath = currentCourseMapNodes();
+    const nodes = mapNodeToggles
+      .map((toggle) => toggle.closest("[data-raya-map-node]"))
+      .filter(Boolean);
+    const normalizedExpansion = normalizedPreferenceExpansion(nodes, protectedPath);
+    nodes.forEach((candidate) => {
+      if (
+        candidate.dataset.rayaMapExpanded === "true"
+        && !normalizedExpansion.has(candidate)
+      ) {
+        setMapNodePreference(candidate, false);
+      }
+    });
     const togglesCurrentPath = protectedPath.has(node);
     setMapNodePreference(node, nextExpanded);
     if (nextExpanded && node.parentElement) {
@@ -1935,6 +1982,10 @@ _SHELL_JAVASCRIPT = r"""
   mapNodeToggles.forEach((button) => {
     const node = button.closest("[data-raya-map-node]");
     if (!node) {
+      return;
+    }
+    if (!controlledMapNodeChildren(node, button)) {
+      replaceInvalidMapNodeToggle(node, button);
       return;
     }
     const nodeId = mapNodeId(node);

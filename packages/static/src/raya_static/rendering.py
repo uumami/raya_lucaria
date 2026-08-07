@@ -5442,7 +5442,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     display: inline-flex;
     gap: 0.35rem;
     margin: 0.75rem 0 1rem 0.75rem;
-    min-height: 2.35rem;
+    min-height: 44px;
     padding: 0.42rem 0.6rem;
     position: static;
     z-index: 7;

@@ -13142,6 +13142,158 @@ def test_course_map_restores_preference_and_normalizes_effective_accordion_witho
                 browser.close()
 
 
+def test_first_course_map_transaction_persists_complete_legacy_normalization(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    course = _build_protected_accordion_course(
+        tmp_path, "legacy-normalization-course"
+    )
+    storage_key = "raya:course-map-branches:v1:minimal-course"
+    browser_executable = _browser_executable()
+    with _serve(course / "artifact") as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                page.add_init_script(
+                    f"""sessionStorage.setItem(
+                      {json.dumps(storage_key)}, '[]'
+                    );
+                    window.__rayaLegacyNormalizationWrites = [];
+                    const set = Storage.prototype.setItem;
+                    Storage.prototype.setItem = function(key, value) {{
+                      if (this === window.sessionStorage
+                          && key === {json.dumps(storage_key)}) {{
+                        window.__rayaLegacyNormalizationWrites.push(value);
+                      }}
+                      return set.call(this, key, value);
+                    }};"""
+                )
+                try:
+                    page.goto(
+                        f"{base_url}/site/unit/topic/index.html",
+                        wait_until="networkidle",
+                    )
+                    later_toggle = page.locator(
+                        '[data-raya-map-node="later-extra"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    )
+                    assert later_toggle.get_attribute("aria-expanded") == "false"
+                    assert page.locator(
+                        '[data-raya-map-node="later-extra"]'
+                    ).get_attribute("data-raya-map-expanded") == "true"
+
+                    page.locator(
+                        '[data-raya-map-node="first-extra"] '
+                        "> .raya-course-map-node-row [data-raya-map-node-toggle]"
+                    ).click()
+                    result = page.evaluate(
+                        """key => {
+                          const siblingIds = [
+                            'first-unit', 'first-extra', 'later-extra'
+                          ];
+                          const nodes = siblingIds.map((id) => document.querySelector(
+                            `[data-raya-map-node="${id}"]`
+                          ));
+                          return {
+                            expanded: nodes.filter((node) => node
+                              ?.querySelector(':scope > .raya-course-map-node-row '
+                                + '[data-raya-map-node-toggle]')
+                              ?.getAttribute('aria-expanded') === 'true')
+                              .map((node) => node.dataset.rayaMapNode),
+                            preferences: Object.fromEntries(nodes.map((node) => [
+                              node.dataset.rayaMapNode,
+                              node.dataset.rayaMapExpanded,
+                            ])),
+                            stored: JSON.parse(sessionStorage.getItem(key)),
+                            writes: window.__rayaLegacyNormalizationWrites.length,
+                          };
+                        }""",
+                        storage_key,
+                    )
+                    assert result == {
+                        "expanded": ["first-unit"],
+                        "preferences": {
+                            "first-unit": "true",
+                            "first-extra": "false",
+                            "later-extra": "false",
+                        },
+                        "stored": ["first-extra", "later-extra"],
+                        "writes": 1,
+                    }
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+
+
+def test_course_map_invalid_disclosure_target_falls_back_to_link(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    course = _build_protected_accordion_course(
+        tmp_path, "invalid-disclosure-target-course"
+    )
+    storage_key = "raya:course-map-branches:v1:minimal-course"
+    browser_executable = _browser_executable()
+    with _serve(course / "artifact") as base_url:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                contract_messages: list[str] = []
+                page.on(
+                    "console",
+                    lambda message: contract_messages.append(message.text),
+                )
+                page.add_init_script(
+                    f"""sessionStorage.removeItem({json.dumps(storage_key)});
+                    new MutationObserver(() => {{
+                      const node = document.querySelector(
+                        '[data-raya-map-node="later-extra"]'
+                      );
+                      node?.querySelector(':scope > [data-raya-map-children]')
+                        ?.remove();
+                    }}).observe(document, {{ childList: true, subtree: true }});"""
+                )
+                try:
+                    page.goto(
+                        f"{base_url}/site/unit/topic/index.html",
+                        wait_until="networkidle",
+                    )
+                    node = page.locator('[data-raya-map-node="later-extra"]')
+                    assert node.locator("[data-raya-map-node-toggle]").count() == 0
+                    spacer = node.locator(
+                        "> .raya-course-map-node-row .raya-course-map-node-spacer"
+                    )
+                    assert spacer.count() == 1
+                    assert node.locator(
+                        "> .raya-course-map-node-row a[href]"
+                    ).is_visible()
+                    assert page.evaluate(
+                        "key => sessionStorage.getItem(key)", storage_key
+                    ) is None
+                    assert any(
+                        "Invalid course map disclosure target: later-extra" in message
+                        for message in contract_messages
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+
+
 def _build_protected_accordion_course(tmp_path: Path, course_name: str) -> Path:
     from raya_static.builder import build_course
 
@@ -13273,13 +13425,24 @@ def test_course_map_direct_actions_share_one_protected_accordion_transaction(
                         }""",
                         storage_key,
                     )
-                    assert result["expanded"] == ["first-unit", "later-extra"]
+                    expected_later_expanded = action != "anchor-left"
+                    assert result["expanded"] == (
+                        ["first-unit", "later-extra"]
+                        if expected_later_expanded
+                        else ["first-unit"]
+                    )
                     assert result["preferences"] == {
                         "first-unit": "true",
                         "first-extra": "false",
-                        "later-extra": "true",
+                        "later-extra": (
+                            "true" if expected_later_expanded else "false"
+                        ),
                     }
-                    assert result["stored"] == ["first-extra"]
+                    assert result["stored"] == (
+                        ["first-extra"]
+                        if expected_later_expanded
+                        else ["first-extra", "later-extra"]
+                    )
                     assert result["writes"] == 1
                     assert result["hiddenAriaMismatch"] == []
                 finally:

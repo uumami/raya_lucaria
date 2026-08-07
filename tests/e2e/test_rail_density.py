@@ -1263,6 +1263,10 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
                 phone_page.goto(
                     f"{handle.base_url}/index.html", wait_until="networkidle"
                 )
+                opener = phone_page.locator(".raya-mobile-course-map-open")
+                opener_box = opener.bounding_box()
+                assert opener_box is not None
+                assert opener_box["width"] >= 44 and opener_box["height"] >= 44
                 _open_course_map_drawer(phone_page)
                 close = phone_page.locator("[data-raya-course-map-close]")
                 assert close.get_attribute("aria-label") == "Close course map"
@@ -1288,6 +1292,41 @@ def test_course_rail_controls_match_pointer_targets_and_keep_focus_inside(
                 assert close_focus["width"] >= 3, close_focus
                 assert close_focus["offset"] <= -3, close_focus
                 phone.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_phone_drawer_focus_dismisses_tooltip_hovered_during_open(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path, DENSITY_FIXTURE)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(f"{handle.base_url}/index.html", wait_until="networkidle")
+                page.locator(".raya-mobile-course-map-open").click()
+                page.wait_for_function(
+                    """() => document.activeElement
+                      ?.matches('.raya-course-map-home')"""
+                )
+                home_tooltip_id = page.evaluate(
+                    "() => document.activeElement?.getAttribute('aria-describedby')"
+                )
+                assert home_tooltip_id is not None
+                visible_tooltip_ids = page.locator("[role='tooltip']:visible").evaluate_all(
+                    "tooltips => tooltips.map((tooltip) => tooltip.id)"
+                )
+                assert visible_tooltip_ids == [home_tooltip_id]
             finally:
                 browser.close()
     finally:

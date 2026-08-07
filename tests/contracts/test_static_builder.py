@@ -6011,6 +6011,16 @@ def test_course_map_emits_fdd_style_disclosure_and_link_ownership(
     assert _html_node_text(authored_number_anchor).count("12.10") == 1
 
 
+def test_course_map_structural_label_dedup_accepts_punctuation_boundaries() -> None:
+    punctuation = (",", ";", "/", "[", "\N{EM DASH}")
+
+    for boundary in punctuation:
+        assert static_builder._nav_title_begins_with_structural_label(
+            f"12.10{boundary} Already numbered navigation title",
+            "12.10",
+        )
+
+
 def test_rail_density_fixture_covers_fdd_tree_contract(tmp_path: Path) -> None:
     course = tmp_path / "rail-density-fixture"
     shutil.copytree(DENSITY_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
