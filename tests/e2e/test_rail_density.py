@@ -69,6 +69,14 @@ def _title_wrap_preview(tmp_path: Path):
         ),
         encoding="utf-8",
     )
+    root_page = course / "course" / "0_index.md"
+    root_page.write_text(
+        root_page.read_text(encoding="utf-8").replace(
+            "title: Rail Density Fixture",
+            "title: Rail Density Fixture With Natural Multiline Course Navigation",
+        ),
+        encoding="utf-8",
+    )
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
     assert handle.report.ok, [
         diagnostic.format() for diagnostic in handle.report.diagnostics
@@ -143,8 +151,10 @@ def _open_course_map_drawer(page) -> None:
 
 
 _TITLE_WRAP_STATE = r"""() => {
-  const list = document.querySelector('#raya-course-map-list');
   const navigation = document.querySelector('[data-raya-course-map-navigation]');
+  const navigationBox = navigation.getBoundingClientRect();
+  const navigationLeft = navigationBox.left + navigation.clientLeft;
+  const navigationRight = navigationBox.left + navigation.offsetWidth;
   const titleState = (nodeId) => {
     const node = document.querySelector(`[data-raya-map-node="${nodeId}"]`);
     const link = node.querySelector(':scope > .raya-course-map-node-row a');
@@ -153,7 +163,8 @@ _TITLE_WRAP_STATE = r"""() => {
     const style = getComputedStyle(title);
     const titleBox = title.getBoundingClientRect();
     const linkBox = link.getBoundingClientRect();
-    const listBox = list.getBoundingClientRect();
+    const row = link.closest('.raya-course-map-node-row');
+    const rowBox = row.getBoundingClientRect();
     const text = title.firstChild;
     const fragmentRects = (start, end) => {
       const range = document.createRange();
@@ -178,10 +189,14 @@ _TITLE_WRAP_STATE = r"""() => {
       && rect.right <= titleBox.right + 1
       && rect.left >= linkBox.left - 1
       && rect.right <= linkBox.right + 1
-      && rect.left >= listBox.left - 1
-      && rect.right <= listBox.right + 1
       && rect.top >= linkBox.top - 1
       && rect.bottom <= linkBox.bottom + 1
+      && rect.left >= rowBox.left - 1
+      && rect.right <= rowBox.right + 1
+      && rect.top >= rowBox.top - 1
+      && rect.bottom <= rowBox.bottom + 1
+      && rect.left >= navigationLeft - 1
+      && rect.right <= navigationRight + 1
     );
     return {
       text: text.textContent,
@@ -191,27 +206,56 @@ _TITLE_WRAP_STATE = r"""() => {
       fragments: fragments.length,
       lineTops: new Set(fragments.map((rect) => Math.round(rect.top))).size,
       eachWordHasOneRect: words.every((word) => word.rects.length === 1),
+      fullyVisible:
+        title.scrollWidth <= title.clientWidth + 1
+        && title.scrollHeight <= title.clientHeight + 1
+        && link.scrollWidth <= link.clientWidth + 1
+        && link.scrollHeight <= link.clientHeight + 1,
+      lineClamp: style.webkitLineClamp,
+      textOverflow: style.textOverflow,
+      navigationOverflow: Math.max(
+        0,
+        ...fragments.flatMap((rect) => [
+          navigationLeft - rect.left,
+          rect.right - navigationRight,
+        ])
+      ),
       contained,
     };
   };
   const root = titleState('rail-density-root');
   const ordinary = titleState('rail-density-structural-labels');
+  const deep = titleState('rail-density-foundations-structure-details');
   const identifier = titleState('rail-density-identifier');
   return {
     root,
     ordinary,
+    deep,
     identifier,
     allFragmentsContained:
-      root.contained && ordinary.contained && identifier.contained,
-    navigationOverflow:
-      navigation.scrollWidth - navigation.clientWidth,
+      root.contained && ordinary.contained
+      && deep.contained && identifier.contained,
+    navigationOverflow: Math.max(
+      root.navigationOverflow,
+      ordinary.navigationOverflow,
+      deep.navigationOverflow,
+      identifier.navigationOverflow
+    ),
   };
 }"""
 
 
 def _assert_natural_title_wrap(state: dict) -> None:
-    assert state["root"]["text"] == "Rail Density Fixture", state
+    assert state["root"]["text"] == (
+        "Rail Density Fixture With Natural Multiline Course Navigation"
+    ), state
     assert state["root"]["hasNumber"] is False, state
+    assert state["root"]["wordBreak"] == "normal", state
+    assert state["root"]["overflowWrap"] == "break-word", state
+    assert state["root"]["lineTops"] >= 2, state
+    assert state["root"]["fullyVisible"] is True, state
+    assert state["root"]["lineClamp"] == "none", state
+    assert state["root"]["textOverflow"] != "ellipsis", state
     assert state["ordinary"]["text"] == (
         "Detailed Requirements And Registration Constraints"
     ), state
@@ -219,11 +263,25 @@ def _assert_natural_title_wrap(state: dict) -> None:
     assert state["ordinary"]["overflowWrap"] == "break-word", state
     assert state["ordinary"]["lineTops"] >= 2, state
     assert state["ordinary"]["eachWordHasOneRect"] is True, state
+    assert state["ordinary"]["fullyVisible"] is True, state
+    assert state["ordinary"]["lineClamp"] == "none", state
+    assert state["ordinary"]["textOverflow"] != "ellipsis", state
+    assert state["deep"]["text"] == (
+        "Detailed Requirements And Registration Constraints"
+    ), state
+    assert state["deep"]["wordBreak"] == "normal", state
+    assert state["deep"]["overflowWrap"] == "break-word", state
+    assert state["deep"]["lineTops"] >= 2, state
+    assert state["deep"]["fullyVisible"] is True, state
+    assert state["deep"]["lineClamp"] == "none", state
+    assert state["deep"]["textOverflow"] != "ellipsis", state
     assert state["identifier"]["text"] == (
         "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
     ), state
     assert state["identifier"]["fragments"] >= 2, state
+    assert state["identifier"]["fullyVisible"] is True, state
     assert state["allFragmentsContained"] is True, state
+    assert state["navigationOverflow"] <= 1, state
 
 
 def _rail_scroll_state(page) -> dict:

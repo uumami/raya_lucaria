@@ -19169,7 +19169,8 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
     root_page = course / "course" / "0_index.md"
     root_page.write_text(
         root_page.read_text(encoding="utf-8").replace(
-            "title: Minimal Course", "title: Rail Density Fixture"
+            "title: Minimal Course",
+            "title: Rail Density Fixture With Natural Multiline Course Navigation",
         ),
         encoding="utf-8",
     )
@@ -19177,7 +19178,7 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
     unit_page.write_text(
         unit_page.read_text(encoding="utf-8").replace(
             "title: First Unit",
-            "title: Detailed Requirements And Registration Constraints",
+            "title: Ordinary Multiword Navigation Title",
         ),
         encoding="utf-8",
     )
@@ -19192,7 +19193,7 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
     (deep_leaf / "0_index.md").write_text(
         "---\n"
         "id: no-script-deep-leaf\n"
-        "title: No-script Deep Leaf\n"
+        "title: Detailed Requirements And Registration Constraints\n"
         "summary: Deep navigation target for the no-script course rail.\n"
         "status: ready\n"
         "---\n\n"
@@ -19306,12 +19307,18 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                         and page.locator(
                             'a[aria-current="page"] .raya-course-map-node-title'
                         ).inner_text()
-                        == "No-script Deep Leaf"
+                        == "Detailed Requirements And Registration Constraints"
                     ):
                         title_state = page.evaluate(
                             r"""() => {
-                              const list = document.querySelector(
-                                '#raya-course-map-list');
+                              const navigation = document.querySelector(
+                                '[data-raya-course-map-navigation]');
+                              const navigationBox = navigation
+                                .getBoundingClientRect();
+                              const navigationLeft = navigationBox.left
+                                + navigation.clientLeft;
+                              const navigationRight = navigationBox.left
+                                + navigation.offsetWidth;
                               const titleState = (nodeId) => {
                                 const node = document.querySelector(
                                   `[data-raya-map-node="${nodeId}"]`);
@@ -19324,7 +19331,9 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                                 const text = title.firstChild;
                                 const titleBox = title.getBoundingClientRect();
                                 const linkBox = link.getBoundingClientRect();
-                                const listBox = list.getBoundingClientRect();
+                                const row = link.closest(
+                                  '.raya-course-map-node-row');
+                                const rowBox = row.getBoundingClientRect();
                                 const fragmentsFor = (start, end) => {
                                   const range = document.createRange();
                                   range.setStart(text, start);
@@ -19358,44 +19367,111 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                                     && rect.right <= titleBox.right + 1
                                     && rect.left >= linkBox.left - 1
                                     && rect.right <= linkBox.right + 1
-                                    && rect.left >= listBox.left - 1
-                                    && rect.right <= listBox.right + 1
                                     && rect.top >= linkBox.top - 1
-                                    && rect.bottom <= linkBox.bottom + 1),
+                                    && rect.bottom <= linkBox.bottom + 1
+                                    && rect.left >= rowBox.left - 1
+                                    && rect.right <= rowBox.right + 1
+                                    && rect.top >= rowBox.top - 1
+                                    && rect.bottom <= rowBox.bottom + 1
+                                    && rect.left >= navigationLeft - 1
+                                    && rect.right <= navigationRight + 1),
+                                  fullyVisible:
+                                    title.scrollWidth <= title.clientWidth + 1
+                                    && title.scrollHeight <= title.clientHeight + 1
+                                    && link.scrollWidth <= link.clientWidth + 1
+                                    && link.scrollHeight <= link.clientHeight + 1,
+                                  lineClamp: getComputedStyle(title).webkitLineClamp,
+                                  textOverflow: getComputedStyle(title).textOverflow,
+                                  navigationOverflow: Math.max(
+                                    0,
+                                    ...fragments.flatMap((rect) => [
+                                      navigationLeft - rect.left,
+                                      rect.right - navigationRight,
+                                    ])
+                                  ),
                                 };
                               };
                               const root = titleState('course-root');
                               const ordinary = titleState('first-unit');
                               const identifier = titleState('first-topic');
+                              const deep = titleState('no-script-deep-leaf');
                               return {
                                 root,
                                 ordinary,
                                 identifier,
+                                deep,
                                 allFragmentsContained: root.contained
-                                  && ordinary.contained && identifier.contained,
+                                  && ordinary.contained && identifier.contained
+                                  && deep.contained,
+                                navigationOverflow: Math.max(
+                                  root.navigationOverflow,
+                                  ordinary.navigationOverflow,
+                                  identifier.navigationOverflow,
+                                  deep.navigationOverflow
+                                ),
                               };
                             }"""
                         )
-                        assert title_state["root"]["text"] == "Rail Density Fixture"
+                        assert title_state["root"]["text"] == (
+                            "Rail Density Fixture With Natural Multiline "
+                            "Course Navigation"
+                        )
                         assert title_state["root"]["hasNumber"] is False
+                        assert title_state["root"]["wordBreak"] == "normal"
+                        assert title_state["root"]["overflowWrap"] == "break-word"
+                        assert title_state["root"]["lineTops"] >= 2
+                        assert title_state["root"]["fullyVisible"] is True
+                        assert title_state["root"]["lineClamp"] == "none"
+                        assert title_state["root"]["textOverflow"] != "ellipsis"
                         assert title_state["ordinary"]["text"] == (
-                            "Detailed Requirements And Registration Constraints"
+                            "Ordinary Multiword Navigation Title"
                         )
                         assert title_state["ordinary"]["wordBreak"] == "normal"
                         assert title_state["ordinary"]["overflowWrap"] == "break-word"
                         assert title_state["ordinary"]["lineTops"] >= 2
                         assert title_state["ordinary"]["eachWordHasOneRect"] is True
+                        assert title_state["ordinary"]["fullyVisible"] is True
+                        assert title_state["deep"]["text"] == (
+                            "Detailed Requirements And Registration Constraints"
+                        )
+                        assert title_state["deep"]["wordBreak"] == "normal"
+                        assert title_state["deep"]["overflowWrap"] == "break-word"
+                        assert title_state["deep"]["lineTops"] >= 2
+                        assert title_state["deep"]["fullyVisible"] is True
+                        assert title_state["deep"]["lineClamp"] == "none"
+                        assert title_state["deep"]["textOverflow"] != "ellipsis"
                         assert title_state["identifier"]["text"] == (
                             "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
                         )
                         assert title_state["identifier"]["fragments"] >= 2
                         assert title_state["allFragmentsContained"] is True
+                        assert title_state["navigationOverflow"] <= 1
+
+                        root_link = page.locator(
+                            '[data-raya-map-node="course-root"] '
+                            '> .raya-course-map-node-row a'
+                        )
+                        ordinary_link = page.locator(
+                            '[data-raya-map-node="first-unit"] '
+                            '> .raya-course-map-node-row a'
+                        )
+                        assert root_link.is_visible()
+                        assert ordinary_link.is_visible()
+                        assert ordinary_link.get_attribute("href")
+                        root_link.focus()
+                        assert root_link.evaluate(
+                            "node => document.activeElement === node"
+                        )
+                        page.keyboard.press("Tab")
+                        assert ordinary_link.evaluate(
+                            "node => document.activeElement === node"
+                        )
 
                 assert_static_fallback()
                 for branch_title in (
-                    "Detailed Requirements And Registration Constraints",
+                    "Ordinary Multiword Navigation Title",
                     "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
-                    "No-script Deep Leaf",
+                    "Detailed Requirements And Registration Constraints",
                 ):
                     page.locator(
                         "#raya-course-map .raya-course-map-node-row a",
@@ -19405,7 +19481,7 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                     assert_static_fallback()
                 assert page.locator(
                     'a[aria-current="page"] .raya-course-map-node-title'
-                ).inner_text() == "No-script Deep Leaf"
+                ).inner_text() == "Detailed Requirements And Registration Constraints"
             finally:
                 context.close()
                 browser.close()
