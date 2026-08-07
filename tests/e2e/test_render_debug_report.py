@@ -282,6 +282,80 @@ def test_render_debug_report_preserves_valid_course_tree_scenarios(
         assert scenario["title_containment"]["contained"] is True
 
 
+@pytest.mark.parametrize(
+    ("scenario_id", "mutation", "expected_failure"),
+    [
+        (
+            "course-tree-long-label-1280",
+            lambda scenario: scenario.pop("article_rect"),
+            "missing fields ['article_rect']",
+        ),
+        (
+            "course-tree-long-label-1280",
+            lambda scenario: scenario.pop("document_overflow"),
+            "missing fields ['document_overflow']",
+        ),
+        (
+            "course-tree-long-label-1280",
+            lambda scenario: scenario.pop("title_containment"),
+            "missing fields ['title_containment']",
+        ),
+        (
+            "course-tree-long-label-1280",
+            lambda scenario: scenario["rail_rect"].update(width=255),
+            "must have rail width 256",
+        ),
+        (
+            "course-tree-long-label-1312",
+            lambda scenario: scenario["rail_rect"].update(width=287),
+            "must have rail width 288",
+        ),
+        (
+            "course-tree-long-label-1280",
+            lambda scenario: scenario["article_rect"].update(width=671),
+            "article width must be at least 672",
+        ),
+        (
+            "course-tree-long-label-1312",
+            lambda scenario: scenario.update(document_overflow=2),
+            "document overflow must be at most 1",
+        ),
+        (
+            "course-tree-long-label-1312",
+            lambda scenario: scenario["title_containment"].update(contained=False),
+            "current title must be contained",
+        ),
+    ],
+)
+def test_render_debug_report_validates_responsive_course_rail_boundaries(
+    tmp_path: Path,
+    scenario_id: str,
+    mutation: object,
+    expected_failure: str,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        _learning_shell_html("<p>Responsive course rail scenario fixture.</p>"),
+    )
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    scenarios = _course_tree_scenarios(debug_dir)
+    mutation(scenarios[scenario_id])
+    summary["scenarios"] = scenarios
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    scenario_check = next(
+        check
+        for check in report["checks"]
+        if check["id"] == f"course-tree-scenario:{scenario_id}"
+    )
+    assert report["ok"] is False
+    assert scenario_check["status"] == "fail"
+    assert expected_failure in scenario_check["message"]
+
+
 def test_merge_course_tree_scenarios_copies_evidence_into_primary_debug_dir(
     tmp_path: Path,
 ) -> None:

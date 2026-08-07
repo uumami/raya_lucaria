@@ -140,6 +140,24 @@ COURSE_TREE_SCENARIO_FIELDS = {
     "overflow_owners",
     "screenshot",
 }
+COURSE_TREE_RESPONSIVE_RAIL_BOUNDARIES = {
+    "course-tree-long-label-1280": {"viewport": 1280, "rail": 256},
+    "course-tree-long-label-1312": {"viewport": 1312, "rail": 288},
+}
+COURSE_TREE_RESPONSIVE_RAIL_FIELDS = {
+    "article_rect",
+    "document_overflow",
+    "title_containment",
+}
+TITLE_CONTAINMENT_FIELDS = {
+    "aria_current",
+    "text",
+    "contained",
+    "right",
+    "scrollport_right",
+    "scroll_width",
+    "scrollport_width",
+}
 RECT_FIELDS = {"top", "right", "bottom", "left", "width", "height"}
 
 
@@ -399,7 +417,12 @@ def _inspect_course_tree_scenarios(
             scenario: dict[str, Any] = {}
         else:
             scenario = dict(raw_scenario)
-            missing_fields = sorted(COURSE_TREE_SCENARIO_FIELDS - set(scenario))
+            required_fields = COURSE_TREE_SCENARIO_FIELDS
+            if scenario_id in COURSE_TREE_RESPONSIVE_RAIL_BOUNDARIES:
+                required_fields = (
+                    required_fields | COURSE_TREE_RESPONSIVE_RAIL_FIELDS
+                )
+            missing_fields = sorted(required_fields - set(scenario))
             if missing_fields:
                 failures.append(
                     f"scenario {scenario_id!r} is missing fields {missing_fields}"
@@ -419,6 +442,14 @@ def _inspect_course_tree_scenarios(
                 isinstance(rect.get(name), (int, float)) for name in RECT_FIELDS
             ):
                 failures.append(f"scenario {scenario_id!r} has an invalid {field}")
+        responsive_boundary = COURSE_TREE_RESPONSIVE_RAIL_BOUNDARIES.get(scenario_id)
+        if responsive_boundary is not None:
+            _validate_responsive_course_rail_scenario(
+                scenario_id,
+                scenario,
+                responsive_boundary,
+                failures,
+            )
         for field in ("active_branch_ids", "overflow_owners"):
             values = scenario.get(field)
             if not isinstance(values, list) or not all(
@@ -476,6 +507,79 @@ def _inspect_course_tree_scenarios(
                 "failures": failures,
             },
         )
+
+
+def _validate_responsive_course_rail_scenario(
+    scenario_id: str,
+    scenario: dict[str, Any],
+    boundary: dict[str, int],
+    failures: list[str],
+) -> None:
+    viewport = scenario.get("viewport")
+    if not isinstance(viewport, dict) or viewport.get("width") != boundary["viewport"]:
+        failures.append(
+            f"scenario {scenario_id!r} must use viewport width "
+            f"{boundary['viewport']}"
+        )
+
+    rail_rect = scenario.get("rail_rect")
+    if not isinstance(rail_rect, dict) or rail_rect.get("width") != boundary["rail"]:
+        failures.append(
+            f"scenario {scenario_id!r} must have rail width {boundary['rail']}"
+        )
+
+    article_rect = scenario.get("article_rect")
+    if not isinstance(article_rect, dict) or not all(
+        isinstance(article_rect.get(name), (int, float)) for name in RECT_FIELDS
+    ):
+        failures.append(f"scenario {scenario_id!r} has an invalid article_rect")
+    elif article_rect["width"] < 672:
+        failures.append(
+            f"scenario {scenario_id!r} article width must be at least 672"
+        )
+
+    document_overflow = scenario.get("document_overflow")
+    if not isinstance(document_overflow, (int, float)):
+        failures.append(f"scenario {scenario_id!r} has an invalid document_overflow")
+    elif document_overflow > 1:
+        failures.append(
+            f"scenario {scenario_id!r} document overflow must be at most 1"
+        )
+
+    title_containment = scenario.get("title_containment")
+    if not isinstance(title_containment, dict):
+        failures.append(f"scenario {scenario_id!r} has an invalid title_containment")
+        return
+    missing_fields = sorted(TITLE_CONTAINMENT_FIELDS - set(title_containment))
+    if missing_fields:
+        failures.append(
+            f"scenario {scenario_id!r} title_containment is missing fields "
+            f"{missing_fields}"
+        )
+        return
+    if title_containment["aria_current"] != "page":
+        failures.append(
+            f"scenario {scenario_id!r} title_containment must describe the current page"
+        )
+    if not isinstance(title_containment["text"], str) or not title_containment["text"]:
+        failures.append(f"scenario {scenario_id!r} has an invalid current title text")
+    if title_containment["contained"] is not True:
+        failures.append(f"scenario {scenario_id!r} current title must be contained")
+    for field in (
+        "right",
+        "scrollport_right",
+        "scroll_width",
+        "scrollport_width",
+    ):
+        if not isinstance(title_containment[field], (int, float)):
+            failures.append(
+                f"scenario {scenario_id!r} has an invalid title_containment {field}"
+            )
+            return
+    if title_containment["right"] > title_containment["scrollport_right"] + 1:
+        failures.append(f"scenario {scenario_id!r} current title exceeds its scrollport")
+    if title_containment["scroll_width"] > title_containment["scrollport_width"] + 1:
+        failures.append(f"scenario {scenario_id!r} current title row overflows its scrollport")
 
 
 def _inspect_captures(
