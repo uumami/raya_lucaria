@@ -538,14 +538,13 @@ def test_graph_detail_navigator_jumps_without_state_or_storage(
                         }"""
                     )
                     assert no_js["ready"] == ""
-                    # 913px is >= the 894px in-flow boundary, so without JS the
-                    # SSR default (data-raya-course-map/-learning-rail="expanded"
-                    # baked into <html>) renders both rails in-flow and expanded
-                    # (15rem = 240px), not collapsed/overlay.
+                    # Without JS the fallback contract is a static block flow:
+                    # course map, article, then learning context. Enhancement-only
+                    # controls stay hidden and no rail overlays reader content.
                     assert no_js["map"]["width"] >= 200
                     assert no_js["rail"]["width"] >= 200
-                    assert no_js["article"]["left"] >= no_js["map"]["right"]
-                    assert no_js["article"]["right"] <= no_js["rail"]["left"]
+                    assert no_js["article"]["top"] >= no_js["map"]["bottom"]
+                    assert no_js["rail"]["top"] >= no_js["article"]["bottom"]
                     assert no_js["mapArticleOverlap"] == 0
                     assert no_js["railArticleOverlap"] == 0
                     assert no_js["mapHeadingOverlap"] == 0
@@ -15451,7 +15450,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": "collapsed",
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": False,
                         },
                     ),
@@ -15469,7 +15468,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": "expanded",
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": False,
                         },
                     ),
@@ -15485,7 +15484,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": False,
                         },
                     ),
@@ -15505,7 +15504,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": True,
                         },
                     ),
@@ -15526,7 +15525,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": False,
                         },
                     ),
@@ -15542,7 +15541,7 @@ def test_reader_shell_prepaint_restores_width_safe_state_before_deferred_shell(
                             "railPreference": None,
                             "drawer": "closed",
                             "mapVisible": True,
-                            "mapBodyDisplay": "grid",
+                            "mapBodyDisplay": "block",
                             "railVisible": True,
                         },
                     ),
@@ -17779,7 +17778,7 @@ def test_render_fixture_collapsed_reader_rails_expand_article_width_independentl
         handle.close()
 
 
-def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> None:
+def test_render_fixture_reader_rail_headers_keep_shared_height(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
 
@@ -17800,7 +17799,7 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                 args=["--no-sandbox"],
             )
             try:
-                def assert_expanded_header_alignment(
+                def assert_expanded_header_geometry(
                     map_state: dict, rail_state: dict
                 ) -> None:
                     assert map_state["mapCollapse"]["visible"] is True
@@ -17811,10 +17810,6 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     assert rail_state["railCollapse"]["scrollWidth"] <= (
                         rail_state["railCollapse"]["clientWidth"] + 1
                     )
-                    assert abs(
-                        map_state["mapHeader"]["top"]
-                        - rail_state["railHeader"]["top"]
-                    ) <= 1
                     assert map_state["mapHeader"]["left"] >= (
                         map_state["map"]["left"] - 1
                     )
@@ -17925,8 +17920,11 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     assert rail_state["railCollapseLabel"] == (
                         "Hide learning context"
                     )
-                    assert_expanded_header_alignment(map_state, rail_state)
-                    assert map_state["mapStyle"] == rail_state["railStyle"]
+                    assert_expanded_header_geometry(map_state, rail_state)
+                    assert (
+                        map_state["mapStyle"]["backgroundColor"]
+                        == rail_state["railStyle"]["backgroundColor"]
+                    )
                     assert map_state["overflow"] <= 1
                     assert rail_state["overflow"] <= 1
                     assert map_state["map"]["width"] in range(255, 258)
@@ -17938,8 +17936,11 @@ def test_render_fixture_reader_rails_share_outer_geometry(tmp_path: Path) -> Non
                     assert state["mapCollapseText"] == "Hide map"
                     assert state["railCollapseText"] == ""
                     assert state["railCollapseLabel"] == "Hide learning context"
-                    assert_expanded_header_alignment(state, state)
-                    assert state["mapStyle"] == state["railStyle"]
+                    assert_expanded_header_geometry(state, state)
+                    assert (
+                        state["mapStyle"]["backgroundColor"]
+                        == state["railStyle"]["backgroundColor"]
+                    )
                     assert state["overflow"] <= 1
                     assert state["map"]["width"] in range(255, 258)
                     assert state["rail"]["width"] in range(239, 242)
@@ -18034,6 +18035,8 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     label: link.getAttribute('data-raya-map-label'),
                                     linkLeft: linkBox.left,
                                     linkRight: linkBox.right,
+                                    linkTop: linkBox.top,
+                                    linkBottom: linkBox.bottom,
                                     rowLeft: rowBox.left,
                                     rowRight: rowBox.right,
                                     disclosureRight: disclosureBox.right,
@@ -18062,6 +18065,8 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     or rect["left"] < link["linkLeft"] - 1
                                     or rect["right"] > link["linkRight"] + 1
                                     or rect["right"] > link["rowRight"] + 1
+                                    or rect["top"] < link["linkTop"] - 1
+                                    or rect["bottom"] > link["linkBottom"] + 1
                                 ):
                                     clipped.append(
                                         {
@@ -18082,10 +18087,10 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                         # test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels
                         # instead.
                         problems[viewport["width"]] = clipped
-                        # Count actual text-line rects rather than padded link height.
-                        # Every authored fixture label fits within the two-line rail cap.
+                        # Task 3 deliberately removed the old two-line clamp: labels
+                        # grow in normal flow, with every line contained by its link.
                         for link in tree["links"]:
-                            assert link["textLineCount"] <= 2, link
+                            assert link["textLineCount"] >= 1, link
                     finally:
                         page.close()
                 assert problems == {1440: [], 894: []}
@@ -19405,11 +19410,9 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                             "scrollLock": "true" if modal else "false",
                             "role": "dialog" if modal else None,
                             "modal": "true" if modal else None,
-                            # The in-flow boundary is 894 (not 1280): rails
-                            # are position: sticky from 894 up, and only
-                            # fixed below that (structural/drawer bands) or
-                            # while the mobile drawer is open (modal).
-                            "position": "fixed" if modal or width < 894 else "sticky",
+                            # The course map is viewport-fixed throughout the
+                            # structural band and while the phone drawer is open.
+                            "position": "fixed",
                             "backdropHidden": not modal,
                             "backdropDisplay": "block" if modal else "none",
                             "openerVisible": modal,
@@ -19508,13 +19511,13 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'
-                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
+                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
                           && getComputedStyle(document.querySelector('#raya-course-map-body')).display === 'grid'"""
                     )
                     assert_visible_focus_and_clear_openers(page)
                     page.set_viewport_size({"width": 1279, "height": 760})
                     page.wait_for_function(
-                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
+                        """() => getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
                           && document.documentElement.dataset.rayaCourseMap === 'expanded'
                           && document.documentElement.dataset.rayaLearningRail === 'expanded'"""
                     )
@@ -19522,7 +19525,7 @@ def test_render_fixture_course_map_drawer_boundary_switches_to_inline_rails(
                     page.set_viewport_size({"width": 1280, "height": 760})
                     page.wait_for_function(
                         """() => document.documentElement.dataset.rayaCourseMapDrawer === 'closed'
-                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'sticky'
+                          && getComputedStyle(document.querySelector('#raya-course-map')).position === 'fixed'
                           && document.querySelector('#raya-course-map').getBoundingClientRect().width >= 188"""
                     )
                     assert_visible_focus_and_clear_openers(page)

@@ -123,6 +123,23 @@ def capture_render_debug(
                             page.close()
                         except Exception:
                             pass
+            if _has_course_tree_scenario_fixture(site_root):
+                try:
+                    scenarios = _capture_course_tree_scenarios(
+                        browser,
+                        base_url=base_url,
+                        debug_dir=debug_dir,
+                    )
+                    _append_scenarios(debug_dir / "summary.json", scenarios)
+                except Exception as exc:
+                    report.add_error(
+                        "Course-tree render debug scenario capture failed",
+                        path=debug_dir,
+                        next_action=(
+                            "Inspect the density fixture and deterministic node IDs "
+                            f"used by render debug ({exc})"
+                        ),
+                    )
         finally:
             browser.close()
 
@@ -287,6 +304,181 @@ def _capture_desktop_shell_state_screenshots(
     }
 
 
+def _has_course_tree_scenario_fixture(site_root: Path) -> bool:
+    identifier_page = site_root / "identifier" / "index.html"
+    return identifier_page.is_file() and (
+        "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"
+        in identifier_page.read_text(encoding="utf-8")
+    )
+
+
+def _capture_course_tree_scenarios(
+    browser: Any,
+    *,
+    base_url: str,
+    debug_dir: Path,
+) -> dict[str, dict[str, object]]:
+    scenarios: dict[str, dict[str, object]] = {}
+    definitions = (
+        {
+            "id": "course-tree-current-path-expanded",
+            "path": "/foundations/orientation/overview/index.html",
+            "viewport": {"width": 1024, "height": 900},
+            "input_modality": "fine",
+            "action": "current-path",
+        },
+        {
+            "id": "course-tree-peer-accordion-expanded",
+            "path": "/foundations/orientation/overview/index.html",
+            "viewport": {"width": 1024, "height": 900},
+            "input_modality": "fine",
+            "action": "peer",
+        },
+        {
+            "id": "course-tree-long-label",
+            "path": "/identifier/index.html",
+            "viewport": {"width": 768, "height": 900},
+            "input_modality": "fine",
+            "action": "long-label",
+        },
+        {
+            "id": "course-rail-mini-full-height",
+            "path": "/foundations/overflow-17/index.html",
+            "viewport": {"width": 640, "height": 420},
+            "input_modality": "fine",
+            "action": "mini",
+        },
+        {
+            "id": "course-tree-phone-drawer",
+            "path": "/foundations/orientation/overview/index.html",
+            "viewport": {"width": 390, "height": 844},
+            "input_modality": "coarse",
+            "action": "phone-drawer",
+        },
+    )
+    for definition in definitions:
+        scenario_id = str(definition["id"])
+        viewport = definition["viewport"]
+        context = browser.new_context(
+            viewport=viewport,
+            has_touch=definition["input_modality"] == "coarse",
+            is_mobile=definition["input_modality"] == "coarse",
+        )
+        page = context.new_page()
+        try:
+            page.emulate_media(reduced_motion="reduce")
+            page.goto(
+                f"{base_url.rstrip('/')}{definition['path']}",
+                wait_until="networkidle",
+            )
+            page.wait_for_function(
+                "() => document.documentElement.dataset.rayaShellReady === 'true'"
+            )
+            action = definition["action"]
+            if action == "peer":
+                peer = page.locator(
+                    '[data-raya-map-node-toggle][aria-controls$="-rail-density-foundations-structure"]'
+                )
+                peer.click()
+                page.wait_for_function(
+                    """() => document.querySelector(
+                      '[data-raya-map-node-toggle][aria-controls$="-rail-density-foundations-structure"]'
+                    )?.getAttribute('aria-expanded') === 'true'"""
+                )
+                page.evaluate("() => window.scrollTo(0, 0)")
+            elif action == "long-label":
+                page.locator(
+                    '[data-raya-map-label*="ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007"]'
+                ).first.scroll_into_view_if_needed()
+            elif action == "mini":
+                page.locator("[data-raya-course-map-collapse]:visible").click()
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMap === 'collapsed'"
+                )
+            elif action == "phone-drawer":
+                page.locator(".raya-mobile-course-map-open:visible").click()
+                page.wait_for_function(
+                    "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                )
+            page.wait_for_timeout(100)
+            screenshot_path = debug_dir / f"{scenario_id}.png"
+            page.screenshot(path=str(screenshot_path), full_page=False)
+            evidence = _course_tree_scenario_evidence(page)
+            evidence.update(
+                {
+                    "viewport": viewport,
+                    "input_modality": definition["input_modality"],
+                    "screenshot": screenshot_path.name,
+                }
+            )
+            scenarios[scenario_id] = evidence
+        finally:
+            context.close()
+    return scenarios
+
+
+def _course_tree_scenario_evidence(page: Any) -> dict[str, object]:
+    return page.evaluate(
+        """() => {
+          const rect = (element) => {
+            const box = element.getBoundingClientRect();
+            return {
+              top: box.top,
+              right: box.right,
+              bottom: box.bottom,
+              left: box.left,
+              width: box.width,
+              height: box.height,
+            };
+          };
+          const ownerName = (element) => {
+            if (element.id) return element.id;
+            if (element.hasAttribute('data-raya-course-map-navigation')) {
+              return 'raya-course-map-navigation';
+            }
+            return element.classList[0] || element.tagName.toLowerCase();
+          };
+          const focus = document.activeElement;
+          const focusOwner = focus === document.body
+            ? 'body'
+            : focus?.id
+              ? `#${focus.id}`
+              : focus?.getAttribute('data-raya-course-map-close') !== null
+                ? '[data-raya-course-map-close]'
+                : focus?.getAttribute('data-raya-course-map-expand') !== null
+                  ? '[data-raya-course-map-expand]'
+                  : focus?.getAttribute('data-raya-map-node-toggle') !== null
+                    ? `[aria-controls="${focus.getAttribute('aria-controls')}"]`
+                    : focus?.tagName.toLowerCase() || 'none';
+          const overflowCandidates = [
+            document.querySelector('#raya-course-map'),
+            document.querySelector('#raya-course-map-body'),
+            document.querySelector('[data-raya-course-map-navigation]'),
+            document.querySelector('#raya-course-map-list'),
+          ].filter(Boolean);
+          return {
+            rail_rect: rect(document.querySelector('#raya-course-map')),
+            tree_rect: rect(document.querySelector('#raya-course-map-list')),
+            active_branch_ids: Array.from(document.querySelectorAll(
+              '[data-raya-map-node-toggle][aria-expanded="true"]'
+            )).map((toggle) => {
+              const controls = toggle.getAttribute('aria-controls') || '';
+              const match = controls.match(/^raya-map-children-[0-9a-f]+-(.+)$/);
+              return match ? match[1] : controls;
+            }),
+            focus_owner: focusOwner,
+            overflow_owners: overflowCandidates
+              .filter((element) => {
+                const overflowY = getComputedStyle(element).overflowY;
+                return ['auto', 'scroll'].includes(overflowY)
+                  && element.scrollHeight > element.clientHeight + 1;
+              })
+              .map(ownerName),
+          };
+        }"""
+    )
+
+
 def _visible_non_code_text(page: Any) -> str:
     return page.evaluate(
         """() => {
@@ -360,6 +552,18 @@ def _append_summary(summary_path: Path, capture: dict[str, object]) -> None:
     else:
         summary = {"captures": []}
     summary["captures"].append(capture)
+    summary_path.write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _append_scenarios(
+    summary_path: Path,
+    scenarios: dict[str, dict[str, object]],
+) -> None:
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["scenarios"] = scenarios
     summary_path.write_text(
         json.dumps(summary, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",

@@ -1137,6 +1137,8 @@ def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
                 },
                 style: {
                   position: railStyle.position,
+                  insetInlineStart: railStyle.insetInlineStart,
+                  boxSizing: railStyle.boxSizing,
                   borderRadius: railStyle.borderRadius,
                   boxShadow: railStyle.boxShadow,
                   borderInlineEndWidth: railStyle.borderInlineEndWidth,
@@ -1166,12 +1168,17 @@ def test_structural_course_rail_is_viewport_pinned_in_expanded_and_mini_states(
         assert abs(rect["bottom"] - snapshot["innerHeight"]) <= 1, snapshot
         assert rect["height"] <= snapshot["innerHeight"] + 1, snapshot
         assert style["position"] == "fixed", snapshot
+        assert style["insetInlineStart"] == "0px", snapshot
+        assert style["boxSizing"] == "border-box", snapshot
         assert style["borderRadius"] == "0px", snapshot
         assert style["boxShadow"] == "none", snapshot
         assert style["borderInlineEndWidth"] == "1px", snapshot
         assert style["overflowY"] not in {"auto", "scroll"}, snapshot
         assert snapshot["shellReservedWidth"] == expected_width, snapshot
         assert snapshot["articleClearsRail"] is True, snapshot
+        if expected_width == RAIL_EXPANDED_PX:
+            assert 47 <= snapshot["header"]["height"] <= 49, snapshot
+            assert 47 <= snapshot["footer"]["height"] <= 49, snapshot
 
     try:
         assert handle.report.ok

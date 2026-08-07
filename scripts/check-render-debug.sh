@@ -58,6 +58,8 @@ export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-.venv-local}"
 COURSE="${RAYA_RENDER_DEBUG_COURSE:-examples/courses/render-fixture}"
 CLEANUP_DEBUG=0
 CLEANUP_COPIED_SITE=0
+CLEANUP_DENSITY_COURSE=0
+CLEANUP_SCENARIO_DEBUG=0
 
 cleanup() {
   if [[ "${CLEANUP_DEBUG:-0}" == "1" && -n "${DEBUG_DIR:-}" ]]; then
@@ -65,6 +67,12 @@ cleanup() {
   fi
   if [[ "${CLEANUP_COPIED_SITE:-0}" == "1" && -n "${COPIED_SITE_DIR:-}" ]]; then
     rm -rf "$COPIED_SITE_DIR"
+  fi
+  if [[ "${CLEANUP_DENSITY_COURSE:-0}" == "1" && -n "${DENSITY_ROOT:-}" ]]; then
+    rm -rf "$DENSITY_ROOT"
+  fi
+  if [[ "${CLEANUP_SCENARIO_DEBUG:-0}" == "1" && -n "${SCENARIO_DEBUG_DIR:-}" ]]; then
+    rm -rf "$SCENARIO_DEBUG_DIR"
   fi
 }
 trap cleanup EXIT
@@ -97,6 +105,16 @@ else
   echo "check-render-debug: uv run raya preview $COURSE --port 0 --render-debug $DEBUG_DIR"
   uv run raya preview "$COURSE" --port 0 --render-debug "$DEBUG_DIR"
 
+  DENSITY_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/raya-density-course.XXXXXX")"
+  CLEANUP_DENSITY_COURSE=1
+  DENSITY_COURSE="$DENSITY_ROOT/rail-density-fixture"
+  cp -R examples/courses/rail-density-fixture "$DENSITY_COURSE"
+  rm -rf "$DENSITY_COURSE/artifact"
+  SCENARIO_DEBUG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/raya-course-tree-debug.XXXXXX")"
+  CLEANUP_SCENARIO_DEBUG=1
+  echo "check-render-debug: capturing course-tree scenarios from rail-density-fixture"
+  uv run raya preview "$DENSITY_COURSE" --port 0 --render-debug "$SCENARIO_DEBUG_DIR"
+
   COPIED_SITE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/raya-render-site-copy.XXXXXX")"
   CLEANUP_COPIED_SITE=1
   cp -R "$SITE_DIR"/. "$COPIED_SITE_DIR"/
@@ -105,14 +123,18 @@ else
   fi
 fi
 
+REPORT_ARGS=("$SITE_DIR" "$DEBUG_DIR")
 if [[ -n "${COPIED_SITE_DIR:-}" ]]; then
-  if ! uv run python -m raya_cli.render_debug_report "$SITE_DIR" "$DEBUG_DIR" "$COPIED_SITE_DIR"; then
-    fail_with_report
-  fi
-else
-  if ! uv run python -m raya_cli.render_debug_report "$SITE_DIR" "$DEBUG_DIR"; then
-    fail_with_report
-  fi
+  REPORT_ARGS+=("$COPIED_SITE_DIR")
+fi
+if [[ -n "${SCENARIO_DEBUG_DIR:-}" ]]; then
+  REPORT_ARGS+=("--scenario-debug-dir" "$SCENARIO_DEBUG_DIR")
+fi
+if ! uv run python -m raya_cli.render_debug_report "${REPORT_ARGS[@]}"; then
+  fail_with_report
 fi
 
 echo "check-render-debug: passed"
+if [[ "${RAYA_RENDER_DEBUG_KEEP:-0}" == "1" || -n "${RAYA_RENDER_DEBUG_OUTPUT_DIR:-}" ]]; then
+  echo "check-render-debug: retained report $DEBUG_DIR/index.html"
+fi

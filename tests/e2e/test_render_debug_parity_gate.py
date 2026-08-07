@@ -13,6 +13,13 @@ RENDER_FIXTURE = ROOT / "examples" / "courses" / "render-fixture"
 SCRIPT = ROOT / "scripts" / "check-render-debug.sh"
 RENDER_DEBUG_SOURCE = ROOT / "packages" / "cli" / "src" / "raya_cli" / "render_debug.py"
 GATE_TIMEOUT_SECONDS = int(os.environ.get("RAYA_RENDER_DEBUG_TEST_TIMEOUT", "180"))
+COURSE_TREE_SCENARIO_IDS = {
+    "course-tree-current-path-expanded",
+    "course-tree-peer-accordion-expanded",
+    "course-tree-long-label",
+    "course-rail-mini-full-height",
+    "course-tree-phone-drawer",
+}
 
 
 def run_gate(
@@ -59,6 +66,32 @@ def test_render_debug_parity_gate_passes_on_render_fixture_copy(tmp_path: Path) 
     report_html = (debug_dir / "index.html").read_text(encoding="utf-8")
 
     assert report_json["ok"] is True
+    assert COURSE_TREE_SCENARIO_IDS <= set(report_json["scenarios"])
+    for scenario_id in COURSE_TREE_SCENARIO_IDS:
+        scenario = report_json["scenarios"][scenario_id]
+        assert scenario["viewport"]["width"] > 0
+        assert scenario["viewport"]["height"] > 0
+        assert scenario["input_modality"] in {"fine", "coarse", "hybrid"}
+        assert set(scenario["rail_rect"]) >= {
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "width",
+            "height",
+        }
+        assert set(scenario["tree_rect"]) >= {
+            "top",
+            "right",
+            "bottom",
+            "left",
+            "width",
+            "height",
+        }
+        assert isinstance(scenario["active_branch_ids"], list)
+        assert isinstance(scenario["focus_owner"], str)
+        assert isinstance(scenario["overflow_owners"], list)
+        assert (debug_dir / scenario["screenshot"]).stat().st_size > 0
     assert report_json["copied_site_dir"] is not None
     copied_site_dir = Path(report_json["copied_site_dir"]).resolve()
     original_site_dir = (course / "artifact" / "site").resolve()

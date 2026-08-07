@@ -5,10 +5,53 @@ from pathlib import Path
 
 import pytest
 
-from raya_cli.render_debug_report import copy_static_site, inspect_render_debug
+from raya_cli.render_debug_report import (
+    copy_static_site,
+    inspect_render_debug,
+    merge_course_tree_scenarios,
+)
 
 
 SOLUTION_BODY_EVIDENCE = "Scaling the direction vector changes the projection coefficient"
+COURSE_TREE_SCENARIO_IDS = {
+    "course-tree-current-path-expanded",
+    "course-tree-peer-accordion-expanded",
+    "course-tree-long-label",
+    "course-rail-mini-full-height",
+    "course-tree-phone-drawer",
+}
+
+
+def _course_tree_scenarios(debug_dir: Path) -> dict[str, dict[str, object]]:
+    scenarios: dict[str, dict[str, object]] = {}
+    for scenario_id in COURSE_TREE_SCENARIO_IDS:
+        screenshot = debug_dir / f"{scenario_id}.png"
+        screenshot.write_bytes(b"png")
+        scenarios[scenario_id] = {
+            "viewport": {"width": 1280, "height": 900},
+            "input_modality": "fine",
+            "rail_rect": {
+                "top": 0,
+                "right": 256,
+                "bottom": 900,
+                "left": 0,
+                "width": 256,
+                "height": 900,
+            },
+            "tree_rect": {
+                "top": 96,
+                "right": 256,
+                "bottom": 852,
+                "left": 0,
+                "width": 256,
+                "height": 756,
+            },
+            "active_branch_ids": ["rail-density-root"],
+            "focus_owner": "body",
+            "overflow_owners": ["raya-course-map-navigation"],
+            "screenshot": screenshot.name,
+        }
+    return scenarios
 
 
 def _reader_static_environments(*, solution_text: str | None = None) -> list[dict[str, str]]:
@@ -172,6 +215,57 @@ def test_render_debug_report_passes_when_skin_css_and_capture_skin_exist(
         "capture-skin:index:desktop": "pass",
         "capture-skin:index:mobile": "pass",
     }
+
+
+def test_render_debug_report_preserves_valid_course_tree_scenarios(
+    tmp_path: Path,
+) -> None:
+    site_dir, debug_dir = _write_debug_fixture(
+        tmp_path,
+        _learning_shell_html("<p>Course tree scenario fixture.</p>"),
+    )
+    summary_path = debug_dir / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["scenarios"] = _course_tree_scenarios(debug_dir)
+    summary_path.write_text(json.dumps(summary), encoding="utf-8")
+
+    report = inspect_render_debug(site_dir=site_dir, debug_dir=debug_dir)
+
+    assert report["ok"] is True, report["diagnostics"]
+    assert COURSE_TREE_SCENARIO_IDS <= set(report["scenarios"])
+    for scenario_id in COURSE_TREE_SCENARIO_IDS:
+        scenario = report["scenarios"][scenario_id]
+        assert scenario["screenshot"] == f"{scenario_id}.png"
+        assert scenario["overflow_owners"] == ["raya-course-map-navigation"]
+        assert scenario["focus_owner"] == "body"
+
+
+def test_merge_course_tree_scenarios_copies_evidence_into_primary_debug_dir(
+    tmp_path: Path,
+) -> None:
+    debug_dir = tmp_path / "debug"
+    scenario_debug_dir = tmp_path / "scenario-debug"
+    debug_dir.mkdir()
+    scenario_debug_dir.mkdir()
+    (debug_dir / "summary.json").write_text(
+        json.dumps({"captures": [{"page": "index"}]}),
+        encoding="utf-8",
+    )
+    scenarios = _course_tree_scenarios(scenario_debug_dir)
+    (scenario_debug_dir / "summary.json").write_text(
+        json.dumps({"captures": [], "scenarios": scenarios}),
+        encoding="utf-8",
+    )
+
+    summary_path = merge_course_tree_scenarios(debug_dir, scenario_debug_dir)
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["captures"] == [{"page": "index"}]
+    assert set(summary["scenarios"]) == COURSE_TREE_SCENARIO_IDS
+    for scenario_id in COURSE_TREE_SCENARIO_IDS:
+        screenshot = f"{scenario_id}.png"
+        assert summary["scenarios"][scenario_id]["screenshot"] == screenshot
+        assert (debug_dir / screenshot).read_bytes() == b"png"
 
 
 def test_render_debug_report_fails_when_capture_skin_selector_is_missing(

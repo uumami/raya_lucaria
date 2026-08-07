@@ -121,6 +121,24 @@ FORBIDDEN_READER_TOP_BAR_CLASS = "raya-top-command-bar"
 FORBIDDEN_READER_TOP_BAR_DIAGNOSTIC = (
     "reader page must not render .raya-top-command-bar"
 )
+COURSE_TREE_SCENARIO_IDS = {
+    "course-tree-current-path-expanded",
+    "course-tree-peer-accordion-expanded",
+    "course-tree-long-label",
+    "course-rail-mini-full-height",
+    "course-tree-phone-drawer",
+}
+COURSE_TREE_SCENARIO_FIELDS = {
+    "viewport",
+    "input_modality",
+    "rail_rect",
+    "tree_rect",
+    "active_branch_ids",
+    "focus_owner",
+    "overflow_owners",
+    "screenshot",
+}
+RECT_FIELDS = {"top", "right", "bottom", "left", "width", "height"}
 
 
 def inspect_render_debug(
@@ -141,10 +159,12 @@ def inspect_render_debug(
         "html_report_path": str(html_report_path),
         "checks": [],
         "diagnostics": [],
+        "scenarios": {},
     }
 
     summary = _read_summary(summary_path, report)
     captures = _capture_items(summary, summary_path, report)
+    _inspect_course_tree_scenarios(summary, summary_path, debug_root, report)
     _inspect_captures(site_root, debug_root, captures, report)
     _inspect_capture_skins(site_root, captures, report, context="site")
     numbered_index = _read_numbered_index(
@@ -203,6 +223,46 @@ def copy_static_site(site_dir: str | Path, destination: str | Path) -> Path:
         shutil.rmtree(target)
     shutil.copytree(source, target)
     return target
+
+
+def merge_course_tree_scenarios(
+    debug_dir: str | Path,
+    scenario_debug_dir: str | Path,
+) -> Path:
+    debug_root = Path(debug_dir)
+    scenario_debug_root = Path(scenario_debug_dir)
+    summary_path = debug_root / "summary.json"
+    scenario_summary_path = scenario_debug_root / "summary.json"
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    scenario_summary = json.loads(scenario_summary_path.read_text(encoding="utf-8"))
+    if not isinstance(summary, dict) or not isinstance(scenario_summary, dict):
+        raise ValueError("render debug summaries must contain objects")
+    scenarios = scenario_summary.get("scenarios")
+    if not isinstance(scenarios, dict):
+        raise ValueError("scenario render debug summary must contain a scenarios object")
+
+    normalized: dict[str, dict[str, Any]] = {}
+    for scenario_id, raw_scenario in scenarios.items():
+        if not isinstance(scenario_id, str) or not isinstance(raw_scenario, dict):
+            raise ValueError("course-tree scenarios must map string ids to objects")
+        screenshot = raw_scenario.get("screenshot")
+        if not isinstance(screenshot, str) or not screenshot:
+            raise ValueError(f"course-tree scenario {scenario_id!r} needs a screenshot")
+        screenshot_name = Path(screenshot).name
+        screenshot_source = scenario_debug_root / screenshot_name
+        if not screenshot_source.is_file():
+            raise ValueError(
+                f"course-tree scenario screenshot does not exist: {screenshot_source}"
+            )
+        shutil.copy2(screenshot_source, debug_root / screenshot_name)
+        normalized[scenario_id] = {**raw_scenario, "screenshot": screenshot_name}
+
+    summary["scenarios"] = normalized
+    summary_path.write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return summary_path
 
 
 def write_render_debug_report(debug_dir: str | Path, report: dict[str, Any]) -> None:
@@ -289,6 +349,131 @@ def _capture_items(
         message=f"summary.json contains {len(valid_captures)} capture(s)",
     )
     return valid_captures
+
+
+def _inspect_course_tree_scenarios(
+    summary: dict[str, Any],
+    summary_path: Path,
+    debug_dir: Path,
+    report: dict[str, Any],
+) -> None:
+    raw_scenarios = summary.get("scenarios")
+    if raw_scenarios is None:
+        return
+    if not isinstance(raw_scenarios, dict):
+        _add_check(
+            report,
+            check_id="summary:course-tree-scenarios",
+            status="fail",
+            path=summary_path,
+            message="summary.json scenarios must be an object",
+            next_action="Regenerate the course-tree render-debug scenarios.",
+        )
+        return
+
+    missing = sorted(COURSE_TREE_SCENARIO_IDS - set(raw_scenarios))
+    _add_check(
+        report,
+        check_id="summary:course-tree-scenarios",
+        status="fail" if missing else "pass",
+        path=summary_path,
+        message=(
+            f"course-tree scenario evidence contains {len(raw_scenarios)} state(s)"
+            if not missing
+            else f"course-tree scenario evidence is missing {missing}"
+        ),
+        next_action=(
+            "Regenerate the course-tree render-debug scenarios."
+            if missing
+            else None
+        ),
+        details={"required": sorted(COURSE_TREE_SCENARIO_IDS), "missing": missing},
+    )
+
+    for scenario_id, raw_scenario in sorted(raw_scenarios.items()):
+        failures: list[str] = []
+        if not isinstance(raw_scenario, dict):
+            failures.append(f"scenario {scenario_id!r} must be an object")
+            scenario: dict[str, Any] = {}
+        else:
+            scenario = dict(raw_scenario)
+            missing_fields = sorted(COURSE_TREE_SCENARIO_FIELDS - set(scenario))
+            if missing_fields:
+                failures.append(
+                    f"scenario {scenario_id!r} is missing fields {missing_fields}"
+                )
+
+        viewport = scenario.get("viewport")
+        if not isinstance(viewport, dict) or not all(
+            isinstance(viewport.get(name), (int, float)) and viewport[name] > 0
+            for name in ("width", "height")
+        ):
+            failures.append(f"scenario {scenario_id!r} has an invalid viewport")
+        if scenario.get("input_modality") not in {"fine", "coarse", "hybrid"}:
+            failures.append(f"scenario {scenario_id!r} has an invalid input modality")
+        for field in ("rail_rect", "tree_rect"):
+            rect = scenario.get(field)
+            if not isinstance(rect, dict) or not all(
+                isinstance(rect.get(name), (int, float)) for name in RECT_FIELDS
+            ):
+                failures.append(f"scenario {scenario_id!r} has an invalid {field}")
+        for field in ("active_branch_ids", "overflow_owners"):
+            values = scenario.get(field)
+            if not isinstance(values, list) or not all(
+                isinstance(value, str) for value in values
+            ):
+                failures.append(f"scenario {scenario_id!r} has an invalid {field}")
+        if not isinstance(scenario.get("focus_owner"), str):
+            failures.append(f"scenario {scenario_id!r} has an invalid focus owner")
+
+        screenshot_value = scenario.get("screenshot")
+        screenshot = debug_dir / f"{scenario_id}.png"
+        if isinstance(screenshot_value, str):
+            declared = Path(screenshot_value)
+            if not declared.is_absolute():
+                declared = debug_dir / declared
+            declared = declared.resolve()
+            try:
+                declared.relative_to(debug_dir.resolve())
+            except ValueError:
+                failures.append(
+                    f"scenario {scenario_id!r} screenshot is outside debug directory"
+                )
+            else:
+                screenshot = declared
+                scenario["screenshot"] = declared.name
+        else:
+            failures.append(f"scenario {scenario_id!r} has an invalid screenshot")
+        if not screenshot.is_file() or screenshot.stat().st_size <= 0:
+            failures.append(
+                f"scenario {scenario_id!r} screenshot is missing or empty: {screenshot}"
+            )
+
+        report["scenarios"][str(scenario_id)] = scenario
+        _add_check(
+            report,
+            check_id=f"course-tree-scenario:{scenario_id}",
+            status="fail" if failures else "pass",
+            path=screenshot,
+            message=(
+                f"course-tree scenario {scenario_id!r} captured"
+                if not failures
+                else "; ".join(failures)
+            ),
+            next_action=(
+                "Regenerate the course-tree render-debug scenarios."
+                if failures
+                else None
+            ),
+            details={
+                "page": scenario_id,
+                "viewport": (
+                    viewport.get("width") if isinstance(viewport, dict) else ""
+                ),
+                "screenshot": screenshot.name,
+                "failures": failures,
+            },
+        )
 
 
 def _inspect_captures(
@@ -1531,7 +1716,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("site_dir")
     parser.add_argument("debug_dir")
     parser.add_argument("copied_site_dir", nargs="?")
+    parser.add_argument("--scenario-debug-dir")
     args = parser.parse_args(argv)
+    if args.scenario_debug_dir is not None:
+        merge_course_tree_scenarios(args.debug_dir, args.scenario_debug_dir)
     report = inspect_render_debug(
         site_dir=args.site_dir,
         debug_dir=args.debug_dir,
