@@ -325,6 +325,11 @@ def test_render_debug_report_preserves_valid_course_tree_scenarios(
             lambda scenario: scenario["title_containment"].update(contained=False),
             "current title must be contained",
         ),
+        (
+            "course-tree-long-label-1312",
+            lambda scenario: scenario["title_containment"].update(text="Wrong title"),
+            "must have expected current title",
+        ),
     ],
 )
 def test_render_debug_report_validates_responsive_course_rail_boundaries(

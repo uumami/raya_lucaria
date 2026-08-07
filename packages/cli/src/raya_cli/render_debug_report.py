@@ -141,8 +141,16 @@ COURSE_TREE_SCENARIO_FIELDS = {
     "screenshot",
 }
 COURSE_TREE_RESPONSIVE_RAIL_BOUNDARIES = {
-    "course-tree-long-label-1280": {"viewport": 1280, "rail": 256},
-    "course-tree-long-label-1312": {"viewport": 1312, "rail": 288},
+    "course-tree-long-label-1280": {
+        "viewport": 1280,
+        "rail": 256,
+        "title": "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
+    },
+    "course-tree-long-label-1312": {
+        "viewport": 1312,
+        "rail": 288,
+        "title": "ProjectionResidualsWithAnUnbrokenAuthorIdentifierXYZ007",
+    },
 }
 COURSE_TREE_RESPONSIVE_RAIL_FIELDS = {
     "article_rect",
@@ -512,7 +520,7 @@ def _inspect_course_tree_scenarios(
 def _validate_responsive_course_rail_scenario(
     scenario_id: str,
     scenario: dict[str, Any],
-    boundary: dict[str, int],
+    boundary: dict[str, int | str],
     failures: list[str],
 ) -> None:
     viewport = scenario.get("viewport")
@@ -561,8 +569,11 @@ def _validate_responsive_course_rail_scenario(
         failures.append(
             f"scenario {scenario_id!r} title_containment must describe the current page"
         )
-    if not isinstance(title_containment["text"], str) or not title_containment["text"]:
-        failures.append(f"scenario {scenario_id!r} has an invalid current title text")
+    if title_containment["text"] != boundary["title"]:
+        failures.append(
+            f"scenario {scenario_id!r} must have expected current title "
+            f"{boundary['title']!r}"
+        )
     if title_containment["contained"] is not True:
         failures.append(f"scenario {scenario_id!r} current title must be contained")
     for field in (
