@@ -401,3 +401,24 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     # Rail home control is part of the amended header enumeration.
     assert "course-home action" in text["foundation"]
     assert "ten reader actions" in text["foundation"]
+
+
+def test_workspace_course_map_contract_is_documented() -> None:
+    foundation = (
+        ROOT / "docs/foundation/20_learning_renderer_contract.md"
+    ).read_text(encoding="utf-8")
+    assert "persistent Course map" in foundation
+    assert "reader-only Context is absent" in foundation
+    assert "must not fetch external resources" in foundation
+
+    for role in ("contributors", "professors", "students", "agents"):
+        guide = (ROOT / "docs/guides/en" / role / "index.md").read_text(
+            encoding="utf-8"
+        )
+        assert "persistent Course map" in guide, role
+
+    for role in ("colaboradores", "profesores", "estudiantes", "agentes"):
+        guide = (ROOT / "docs/guides/es" / role / "index.md").read_text(
+            encoding="utf-8"
+        )
+        assert "mapa de curso persistente" in guide, role

@@ -358,3 +358,10 @@ Usa `raya preview <course>` para revisar localmente el sitio estatico generado a
 Las specs OpenSpec describen contratos aceptados. La documentacion de rol explica como trabajar con esos contratos, pero no tiene mas autoridad que foundation docs ni specs aceptadas.
 
 La documentacion renderizada del repositorio es guia, no canon de curso. Se construye desde `docs/raya.yaml` y permanece separada del material de clase y de los artifacts oficiales de curso.
+
+Los workspaces generados Search, Graph, Practice, Tasks y Schedule conservan el
+mapa de curso persistente para mantener estable la navegacion del curso. Sus
+links relativos generados marcan como actual solo el mosaico del workspace
+activo; el Context lector no aparece. Los filtros, resultados y franjas de
+pagina enfocada son temporales, no requieren fetch externo y no deben cambiar
+fuente, artifacts ni estado de estudiante.

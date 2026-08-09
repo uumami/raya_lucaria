@@ -150,9 +150,15 @@ grading, entregas, progreso, dominio, recomendacion o lenguaje de estado del
 estudiante.
 
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
-`.raya-top-command-bar` y que los workspaces de descubrimiento sigan
-renderizando `.raya-discovery-command-bar` como barra de comandos de
-descubrimiento. Verifica la accion Map `Hide map` del header estructural por separado de los ocho comandos lectores bajo `[data-raya-course-map-tools]`. El header tambien presenta el control course-home junto a la accion icono `Hide map`. Verifica que `.raya-course-map-body` contenga search, los mosaicos ordenados Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic, posicion, filtro y arbol, mientras `[data-raya-course-map-expand]` permanece fuera de ese body oculto e inerte y usa el nombre accesible `Expand course map`. Trata la accion Map del header como un control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido
+`.raya-top-command-bar` y que cada workspace de descubrimiento renderice el
+mapa de curso persistente con `shell.js` local, no `.raya-discovery-command-bar`.
+Verifica la accion Map `Hide map` del header estructural por separado de los ocho
+comandos lectores bajo `[data-raya-course-map-tools]`. El header tambien presenta
+el control course-home junto a la accion icono `Hide map`. Los mapas lectores contienen los mosaicos Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic; los mapas de workspace conservan la navegacion compartida,
+pero no exponen el Context lector. Verifica que
+`[data-raya-course-map-expand]` permanece fuera del body oculto e inerte y usa
+el nombre accesible `Expand course map`. Trata la accion Map del header como un
+control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido
 por defecto, incluida la estructura de mapa jerarquico del curso
 expandido, los numeros estructurales generados del mapa, la orientacion de
 pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links
@@ -362,10 +368,12 @@ cuando el foco esta en un link de resultado visible o una accion de contexto en
 vez del input de busqueda. Los enlaces
 graph-focus de resultados de busqueda deben venir de stable IDs y URLs locales
 generadas del grafo, preservar Enter para abrir la pagina, y evitar lenguaje de
-recomendacion o progreso. Las paginas de descubrimiento Search, Graph, Practice
-y Tasks pueden cargar recursos locales de accesibilidad para Text size y
-`OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
-assets externos de workspace ni estado persistente de graph/search/practice/tasks.
+recomendacion o progreso. Los workspaces Search, Graph, Practice, Tasks y
+Schedule deben cargar el mapa de curso persistente y su `shell.js` local,
+manteniendo filtros y foco como estado volatil; no deben cargar assets externos,
+persistir estado de graph/search/practice/tasks, hacer fetch de recursos
+externos ni escribir estado de estudiante, fuente, artifact o preferencias no
+relacionadas.
 Cuando cambie Course Search, verifica subresultados de seccion ademas de
 resultados de pagina. Los records generados pueden apuntar a anchors publicos de
 headings u objetos numerados renderizados, pero no deben incluir TeX crudo,

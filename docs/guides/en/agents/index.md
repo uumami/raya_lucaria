@@ -140,8 +140,14 @@ reminder, grading, submission, progress, mastery, recommendation, or
 learner-state language.
 
 When changing the shell, verify reader pages render no `.raya-top-command-bar`
-and discovery workspaces still render `.raya-discovery-command-bar` as a
-discovery command bar. Verify the structural `Hide map` header Map action separately from the eight reader commands under `[data-raya-course-map-tools]`. The header also presents the course-home control alongside the `Hide map` icon action. Verify `.raya-course-map-body` owns search, the ordered Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic command tiles, position, filter, and tree, while `[data-raya-course-map-expand]` remains outside that hidden/inert body and uses the accessible name `Expand course map`.
+and every discovery workspace renders the persistent Course map with local
+`shell.js`, not `.raya-discovery-command-bar`. Verify the structural `Hide map`
+header Map action separately from the eight reader commands under
+`[data-raya-course-map-tools]`. The header also presents the course-home control
+alongside the `Hide map` icon action. Reader maps own the ordered Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic command tiles;
+workspace maps preserve the shared navigation but reader-only Context is absent.
+Verify `[data-raya-course-map-expand]` remains outside the hidden/inert body and
+uses the accessible name `Expand course map`.
 Also verify the expanded course map default, including the expanded hierarchical
 course map structure, generated structural map numbers, current-page map
 orientation, map filter behavior, reader breadcrumbs, compact previous/next
@@ -325,10 +331,11 @@ writing browser storage or changing source authority, including when focus is
 on a visible result link or context action instead of the query input.
 Search result graph-focus links must come from stable page IDs and generated
 local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
-or progress language. Search, Graph, Practice, and Tasks discovery pages may load
-local accessibility resources for Text size and `OpenDyslexic`, but must not
-load `shell.js`, a course-map toggle, external workspace assets, or persisted
-graph/search/practice/tasks state.
+or progress language. Search, Graph, Practice, Tasks, and Schedule workspaces
+must load the persistent Course map's local `shell.js` and map controls while
+keeping filtering and focus volatile; they must not load external workspace
+assets, persist graph/search/practice/tasks state, fetch external resources, or
+write learner, source, artifact, or unrelated preference state.
 
 When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
 Search or Graph. The destination workspace may initially narrow visible public
