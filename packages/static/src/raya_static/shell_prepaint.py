@@ -14,13 +14,22 @@ _SHELL_PREPAINT_JAVASCRIPT = r"""
 (() => {
   const root = document.documentElement;
   const courseId = root.dataset.rayaCourseId || "";
+  const workspaceShell = root.dataset.rayaShellMode === "workspace";
   __RAYA_RAIL_DERIVATION__
   const applyEffective = (courseMap, learningRail, bands) => {
+    if (workspaceShell) {
+      root.dataset.rayaCourseMap = courseMap;
+      return;
+    }
     const result = rayaEffectiveRailState(courseMap, learningRail, bands || rayaRailBands());
     root.dataset.rayaCourseMap = result.courseMap;
     root.dataset.rayaLearningRail = result.learningRail;
   };
   const applyDefaults = () => {
+    if (workspaceShell) {
+      applyEffective("expanded", "collapsed");
+      return;
+    }
     const bands = rayaRailBands();
     const expanded = !bands.structural || bands.approved;
     const state = expanded ? "expanded" : "collapsed";
@@ -29,6 +38,11 @@ _SHELL_PREPAINT_JAVASCRIPT = r"""
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(courseId)) {
     applyDefaults();
     root.dataset.rayaShellPrepaint = "invalid";
+    return;
+  }
+  if (workspaceShell) {
+    applyDefaults();
+    root.dataset.rayaShellPrepaint = "workspace";
     return;
   }
   let raw;

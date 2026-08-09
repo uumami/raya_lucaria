@@ -1144,7 +1144,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert (
         '<button class="raya-course-rail-command raya-font-toggle"' in graph_html
     )
-    assert "shell.js" not in graph_html
+    assert 'src="../render/shell.js" defer' in graph_html
     assert "localStorage" not in graph_html
     assert '<script type="application/json" id="raya-graph-data">' in graph_html
     assert 'src="../render/graph.js"' in graph_html
@@ -2070,12 +2070,11 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert (
         '<button class="raya-course-rail-command raya-font-toggle"' in search_html
     )
-    assert "shell.js" not in search_html
+    assert 'src="../render/shell.js" defer' in search_html
     assert "localStorage" not in search_html
     assert (
-        '<main id="raya-search-main" class="raya-search-page" '
+        '<main id="raya-search-main" class="raya-search-page raya-workspace-main" '
         'data-raya-search-page data-raya-discovery-page '
-        'data-raya-discovery-rail-state="expanded" '
         'data-raya-discovery-controls-state="expanded" '
         'data-raya-discovery-context-state="expanded" tabindex="-1">'
     ) in search_html
@@ -2121,10 +2120,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "raya-discovery-overview-meta" in search_html
     assert ".raya-discovery-quick-guide" in rich_css
     assert ".raya-discovery-guide-card" in rich_css
-    assert (
-        '.raya-discovery-command-bar .raya-command[aria-current="page"]'
-        in rich_css
-    )
+    assert '.raya-discovery-command-bar .raya-command[aria-current="page"]' not in rich_css
     assert "data-raya-current-workspace" in search_html
     _assert_discovery_workspace_switcher(search_html, current="search")
     _assert_discovery_focus_strip_shell(search_html, current="search")
@@ -2422,7 +2418,7 @@ def test_discovery_workspaces_keep_course_maps(tmp_path: Path) -> None:
         )
         assert 'id="raya-course-map"' in html
         assert "raya-discovery-command-bar" not in html
-        assert "shell.js" not in html
+        assert 'src="../render/shell.js" defer' in html
 
 
 def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None:
@@ -2452,7 +2448,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert '<span class="raya-command-label">Search</span>' in practice_html
     assert '<span class="raya-command-label">Graph</span>' in practice_html
     assert '<span class="raya-command-label">Tasks</span>' in practice_html
-    assert "shell.js" not in practice_html
+    assert 'src="../render/shell.js" defer' in practice_html
     assert "localStorage" not in practice_html
     assert '<script type="application/json" id="raya-practice-data">' in practice_html
     assert 'src="../render/practice.js"' in practice_html
@@ -2673,7 +2669,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in tasks_html
     assert 'href="../render/rich.css"' in tasks_html
     assert 'href="../render/skin.css"' in tasks_html
-    assert "shell.js" not in tasks_html
+    assert 'src="../render/shell.js" defer' in tasks_html
     assert "https://" not in tasks_html
     assert "http://" not in tasks_html
     assert "fetch(" not in tasks_script
@@ -2852,7 +2848,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in schedule_html
     assert 'href="../render/rich.css"' in schedule_html
     assert 'href="../render/skin.css"' in schedule_html
-    assert "shell.js" not in schedule_html
+    assert 'src="../render/shell.js" defer' in schedule_html
     assert "https://" not in schedule_html
     assert "http://" not in schedule_html
     assert "fetch(" not in schedule_script
@@ -3050,6 +3046,69 @@ def test_workspace_course_map_uses_workspace_relative_links(
 
     if workspace == "schedule":
         assert 'href="../search/index.html"' in html
+
+
+def test_workspace_course_map_resources_support_the_shared_shell(tmp_path: Path) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    for workspace in ("search", "graph", "practice", "tasks", "schedule"):
+        html = (site / "_raya" / workspace / "index.html").read_text(
+            encoding="utf-8"
+        )
+        root_tag = html.splitlines()[1]
+        assert 'data-raya-course-id="render-fixture"' in root_tag
+        assert 'data-raya-shell-mode="workspace"' in root_tag
+        assert 'data-raya-shell-prepaint="pending"' in root_tag
+        assert 'data-raya-course-map="expanded"' in root_tag
+        assert 'data-raya-course-map-drawer="closed"' in root_tag
+        assert 'src="../render/accessibility/comfort-prepaint.js"' in html
+        assert 'src="../render/shell-prepaint.js"' in html
+        assert 'src="../render/shell.js" defer' in html
+        assert (
+            'class="raya-mobile-course-map-open raya-command raya-command-map"'
+            in html
+        )
+        assert 'class="raya-learning-shell raya-workspace-learning-shell"' in html
+
+
+def test_workspace_course_map_focus_uses_the_tree_without_current_page_state(
+    tmp_path: Path,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    site = course / "artifact" / "site"
+    html = (site / "_raya" / "search" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    map_list_start = html.index(
+        '<div class="raya-course-map-list" id="raya-course-map-list"'
+    )
+    map_list_end = html.index(
+        '<div class="raya-course-map-compact-preview"', map_list_start
+    )
+    map_list_html = html[map_list_start:map_list_end]
+    shell_script = (site / "_raya" / "render" / "shell.js").read_text(
+        encoding="utf-8"
+    )
+    discovery_script = (site / "_raya" / "render" / "discovery.js").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'data-raya-map-node="reader-ux"' in map_list_html
+    assert 'aria-current="page"' not in map_list_html
+    assert "URLSearchParams" in shell_script
+    assert 'params.get("page")' in shell_script
+    assert 'data-raya-map-page-focus' in shell_script
+    assert '[data-raya-map-page-focus="true"]' in discovery_script
+    assert "data-raya-discovery-rail-page-focus" not in html
+    assert "data-raya-discovery-rail-page-focus" not in discovery_script
 
 
 def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
@@ -4829,7 +4888,7 @@ def test_static_build_writes_local_shell_resource(tmp_path: Path) -> None:
     assert "syncCourseMapModalBackground" in script_text
     assert "trapCourseMapDrawerFocus" in script_text
     assert "skipLink" in script_text
-    assert '.raya-skip-link[href="#raya-article"]' in script_text
+    assert 'document.querySelector(".raya-skip-link")' in script_text
     assert "data-raya-prev-page" in script_text
     assert "data-raya-next-page" in script_text
     assert "ArrowLeft" in script_text
@@ -4942,7 +5001,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     for required in (
         "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
-        "discovery workspaces may keep command bars",
+        "Search, Graph, Practice, Tasks, and Schedule use one persistent Course map",
         "course search, then exactly eight compact icon-labeled command tiles rendered two per row",
         "minimal floating Map edge opener",
         "collapsed course-map content is inert, removed from keyboard navigation",
@@ -4978,7 +5037,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     for text in english_guides[2:]:
         lowered = text.lower()
         assert "left course rail" in text
-        assert "discovery command bar" in text
+        assert "persistent Course map" in text
         assert "course search" in text
         assert "Hide map" in text
         assert (
@@ -5002,7 +5061,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     for text in spanish_guides[2:]:
         lowered = text.lower()
         assert "riel izquierdo del curso" in text
-        assert "barra de comandos de descubrimiento" in text
+        assert "mapa de curso persistente" in text
         assert "course search" in text
         assert "Hide map" in text
         assert (

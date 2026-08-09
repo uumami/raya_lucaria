@@ -673,41 +673,6 @@ img {
   top: 0;
   z-index: 5;
 }
-.raya-discovery-command-bar {
-  box-shadow: 0 0.75rem 2rem color-mix(in srgb, var(--raya-color-text) 18%, transparent);
-}
-.raya-discovery-command-bar .raya-command[aria-current="page"] {
-  background: var(--raya-color-surface);
-  border-color: var(--raya-color-accent);
-  box-shadow: inset 0 -0.18rem 0 var(--raya-color-accent), 0 0 0 1px var(--raya-color-accent);
-  color: var(--raya-color-text);
-}
-.raya-discovery-command-bar .raya-command[aria-current="page"] .raya-command-icon {
-  color: inherit;
-}
-.raya-discovery-command-bar .raya-course-tools {
-  min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-.raya-discovery-command-bar .raya-command {
-  flex: 0 0 auto;
-  overflow-wrap: normal;
-  white-space: nowrap;
-}
-.raya-discovery-command-bar .raya-command-label {
-  overflow-wrap: normal;
-  white-space: nowrap;
-}
-@media (max-width: 1100px) {
-  .raya-discovery-command-bar .raya-command-label {
-    clip: rect(0 0 0 0);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    width: 1px;
-  }
-}
 .raya-top-command-bar-inner,
 .raya-learning-shell,
 .raya-page-footer,
@@ -855,7 +820,7 @@ img {
   gap: 0.35rem;
   min-width: 10rem;
 }
-.raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form + .raya-command-search {
+.raya-top-command-bar .raya-command-search-form + .raya-command-search {
   display: none;
 }
 .raya-command-search-input {
@@ -1219,204 +1184,9 @@ img {
   align-items: start;
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   margin-top: var(--raya-space-block);
   min-width: 0;
-}
-.raya-discovery-course-rail {
-  background: var(--raya-color-surface);
-  border: 1px solid var(--raya-color-border);
-  border-radius: 0.5rem;
-  min-width: 0;
-  padding: 0.75rem;
-  position: sticky;
-  top: calc(var(--raya-topbar-height, 4rem) + 1rem);
-}
-.raya-discovery-course-tab {
-  align-items: center;
-  background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-accent-soft));
-  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-accent));
-  border-radius: 0.45rem;
-  color: var(--raya-color-text);
-  display: inline-flex;
-  font: inherit;
-  font-weight: 800;
-  justify-content: center;
-  margin-bottom: 0.65rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.55rem;
-  width: 100%;
-}
-.raya-discovery-course-tab:focus-visible,
-.raya-discovery-workspace-link:focus-visible,
-.raya-discovery-course-page-link:focus-visible,
-.raya-discovery-course-identity a:focus-visible {
-  outline: 3px solid var(--raya-color-accent);
-  outline-offset: 3px;
-}
-.raya-discovery-course-rail-body {
-  display: grid;
-  gap: 0.75rem;
-  min-width: 0;
-}
-.raya-discovery-course-identity {
-  display: grid;
-  gap: 0.35rem;
-  min-width: 0;
-}
-.raya-discovery-course-identity h2 {
-  font-size: 0.95rem;
-  line-height: 1.2;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.raya-discovery-course-identity a {
-  color: var(--raya-color-link);
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-.raya-discovery-workspace-links {
-  display: grid;
-  gap: 0.35rem;
-}
-.raya-discovery-workspace-link {
-  align-items: center;
-  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
-  border: 1px solid var(--raya-color-border);
-  border-radius: 0.45rem;
-  color: var(--raya-color-text);
-  display: grid;
-  gap: 0.2rem;
-  grid-template-columns: minmax(0, 1fr) auto;
-  min-height: 2.35rem;
-  padding: 0.45rem 0.55rem;
-  text-decoration: none;
-}
-.raya-discovery-workspace-link[data-raya-current-workspace-link="true"] {
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 78%, var(--raya-color-surface));
-  border-color: color-mix(in srgb, var(--raya-color-accent) 52%, var(--raya-color-border));
-  box-shadow: inset 0.22rem 0 0 var(--raya-color-accent);
-}
-.raya-discovery-workspace-link span {
-  font-size: 0.88rem;
-  font-weight: 850;
-  overflow-wrap: anywhere;
-}
-.raya-discovery-workspace-link em {
-  color: var(--raya-color-muted);
-  font-size: 0.68rem;
-  font-style: normal;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-.raya-discovery-course-pages {
-  border-top: 1px solid var(--raya-color-border);
-  display: grid;
-  gap: 0.45rem;
-  min-width: 0;
-  padding-top: 0.65rem;
-}
-.raya-discovery-rail-page-focus {
-  background: color-mix(in srgb, var(--raya-color-surface) 86%, var(--raya-color-accent-soft));
-  border: 1px solid color-mix(in srgb, var(--raya-color-border) 82%, var(--raya-color-accent));
-  border-radius: 0.45rem;
-  display: grid;
-  gap: 0.35rem;
-  min-width: 0;
-  padding: 0.55rem;
-}
-.raya-discovery-rail-page-focus[hidden] {
-  display: none;
-}
-.raya-discovery-rail-page-focus h3 {
-  color: var(--raya-color-muted);
-  font-size: 0.7rem;
-  letter-spacing: 0;
-  line-height: 1.1;
-  margin: 0;
-  text-transform: uppercase;
-}
-.raya-discovery-rail-page-focus p {
-  font-size: 0.82rem;
-  font-weight: 800;
-  line-height: 1.25;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.raya-discovery-rail-page-handoffs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-.raya-discovery-rail-page-handoffs a {
-  border: 1px solid var(--raya-color-border);
-  border-radius: 999px;
-  color: var(--raya-color-link);
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.16rem 0.38rem;
-  text-decoration: none;
-}
-.raya-discovery-course-pages h3 {
-  color: var(--raya-color-muted);
-  font-size: 0.74rem;
-  letter-spacing: 0;
-  line-height: 1.1;
-  margin: 0;
-  text-transform: uppercase;
-}
-.raya-discovery-course-pages ol {
-  display: grid;
-  gap: 0.2rem;
-  list-style: none;
-  margin: 0;
-  max-height: min(42rem, calc(100vh - 22rem));
-  overflow: auto;
-  padding: 0;
-}
-.raya-discovery-course-page-link {
-  align-items: baseline;
-  border-radius: 0.35rem;
-  color: var(--raya-color-text);
-  display: grid;
-  gap: 0.35rem;
-  grid-template-columns: 2.8rem minmax(0, 1fr);
-  padding: 0.35rem 0.4rem;
-  text-decoration: none;
-}
-.raya-discovery-course-page-link:hover {
-  background: color-mix(in srgb, var(--raya-color-surface) 82%, var(--raya-color-accent-soft));
-}
-.raya-discovery-course-page-link[data-raya-rail-page-focus="true"] {
-  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
-  box-shadow: inset 0.2rem 0 0 var(--raya-color-accent);
-}
-.raya-discovery-course-page-link span {
-  color: var(--raya-color-muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-}
-.raya-discovery-course-page-link strong {
-  font-size: 0.82rem;
-  line-height: 1.25;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-[data-raya-discovery-rail-state="collapsed"] .raya-discovery-workspace-shell {
-  grid-template-columns: minmax(4.5rem, 5.25rem) minmax(0, 1fr);
-}
-[data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-rail {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-}
-[data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-rail-body {
-  display: none;
-}
-[data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-tab {
-  display: inline-flex;
-  margin-bottom: 0;
-  writing-mode: vertical-rl;
 }
 .raya-discovery-quick-guide {
   background: color-mix(in srgb, var(--raya-color-surface) 90%, var(--raya-color-accent-soft));
@@ -3997,6 +3767,14 @@ img {
      scroll (mjx-container, pre, tables keep their own overflow-x: auto). */
   overflow-x: clip;
 }
+.raya-workspace-learning-shell {
+  grid-template-areas: "course-map main-article";
+  grid-template-columns: minmax(13.75rem, 16rem) minmax(0, 1fr);
+}
+.raya-workspace-main {
+  grid-area: main-article;
+  min-width: 0;
+}
 html[data-raya-shell-ready="true"] .raya-learning-shell {
   transition: grid-template-columns 220ms ease, gap 220ms ease;
 }
@@ -5166,6 +4944,10 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   padding-left: 2.5rem;
   position: relative;
 }
+.raya-course-map-node[data-raya-map-page-focus="true"] > .raya-course-map-node-row a {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
+  box-shadow: inset 0.2rem 0 0 var(--raya-color-accent);
+}
 .raya-course-map-list a[aria-current="page"]::before {
   display: inline-flex;
   left: 0;
@@ -5183,7 +4965,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   font-weight: 700;
 }
 @media (max-width: 1500px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+  .raya-top-command-bar .raya-command-label {
     clip: rect(0 0 0 0);
     height: 1px;
     overflow: hidden;
@@ -5193,59 +4975,59 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
 }
 @media (min-width: __RAYA_DESKTOP_PX__px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-top-command-bar-inner {
+  .raya-top-command-bar .raya-top-command-bar-inner {
     align-items: center;
     flex-wrap: nowrap;
     gap: 0.65rem;
     padding-block: 0.45rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context {
+  .raya-top-command-bar .raya-reading-context {
     flex: 1 1 24rem;
     flex-wrap: nowrap;
     max-width: min(38rem, 40vw);
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-course,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-page {
+  .raya-top-command-bar .raya-reading-context-course,
+  .raya-top-command-bar .raya-reading-context-page {
     flex: 0 1 auto;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-section {
+  .raya-top-command-bar .raya-reading-context-section {
     max-width: min(18rem, 22vw);
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+  .raya-top-command-bar .raya-course-tools {
     flex: 0 1 auto;
     flex-wrap: nowrap;
     max-width: calc(100% - 24rem);
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+  .raya-top-command-bar .raya-command-group {
     align-self: center;
     flex-wrap: nowrap;
     gap: 0.25rem;
     padding: 0.15rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-discovery {
+  .raya-top-command-bar .raya-command-group-discovery {
     flex: 0 1 auto;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+  .raya-top-command-bar .raya-command-search-form {
     flex: 0 1 12rem;
     min-width: 8.5rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-input,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-submit {
+  .raya-top-command-bar .raya-command-search-input,
+  .raya-top-command-bar .raya-command-search-submit {
     height: 2.2rem;
     min-height: 2.2rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+  .raya-top-command-bar .raya-command {
     gap: 0.25rem;
     min-height: 2.3rem;
     min-width: 2.5rem;
     padding: 0.35rem 0.45rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-icon {
+  .raya-top-command-bar .raya-command-icon {
     height: 1.25rem;
     padding: 0.14rem;
     width: 1.25rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+  .raya-top-command-bar .raya-command-label {
     clip: rect(0 0 0 0);
     height: 1px;
     overflow: hidden;
@@ -5253,8 +5035,8 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     white-space: nowrap;
     width: 1px;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-size .raya-command-label,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-font .raya-command-label {
+  .raya-top-command-bar .raya-command-size .raya-command-label,
+  .raya-top-command-bar .raya-command-font .raya-command-label {
     clip: auto;
     clip-path: none;
     height: auto;
@@ -5265,7 +5047,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   }
 }
 @media (min-width: 1800px) {
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
+  .raya-top-command-bar .raya-command-label {
     clip: auto;
     clip-path: none;
     height: auto;
@@ -5274,15 +5056,15 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     white-space: nowrap;
     width: auto;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+  .raya-top-command-bar .raya-command {
     gap: 0.38rem;
     min-width: 0;
     padding-inline: 0.55rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+  .raya-top-command-bar .raya-command-group {
     gap: 0.3rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+  .raya-top-command-bar .raya-command-search-form {
     flex-basis: 10rem;
     min-width: 10rem;
   }
@@ -5316,26 +5098,26 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   .raya-course-rail-command-list .raya-command-context {
     display: none;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-context {
+  .raya-top-command-bar .raya-command-context {
     display: none;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+  .raya-top-command-bar .raya-course-tools {
     align-items: stretch;
     flex-wrap: wrap;
     justify-content: flex-start;
     overflow-x: visible;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+  .raya-top-command-bar .raya-command-group {
     flex-wrap: wrap;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-discovery {
+  .raya-top-command-bar .raya-command-group-discovery {
     flex: 1 1 100%;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+  .raya-top-command-bar .raya-command-search-form {
     order: -1;
     width: 100%;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-input {
+  .raya-top-command-bar .raya-command-search-input {
     flex: 1 1 auto;
   }
 }
@@ -5375,6 +5157,11 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
       var(--raya-map-col) var(--raya-map-gap) minmax(0, 1fr)
       var(--raya-rail-gap) var(--raya-rail-col);
   }
+  .raya-workspace-learning-shell {
+    grid-template-areas: "course-map . main-article";
+    grid-template-columns:
+      var(--raya-map-col) var(--raya-map-gap) minmax(0, 1fr);
+  }
   html[data-raya-course-map="collapsed"] .raya-learning-shell {
     padding-left: 3.75rem;
   }
@@ -5403,6 +5190,10 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
     grid-template-columns:
       var(--raya-map-col) var(--raya-map-gap) minmax(42rem, 1fr)
       var(--raya-rail-gap) var(--raya-rail-col);
+  }
+  .raya-workspace-learning-shell {
+    grid-template-columns:
+      var(--raya-map-col) var(--raya-map-gap) minmax(42rem, 1fr);
   }
   .raya-main-article {
     border: 1px solid color-mix(in srgb, var(--raya-color-border) 58%, transparent);
@@ -6077,46 +5868,8 @@ mjx-container[display="true"] {
   white-space: pre-wrap;
 }
 @media (max-width: 1279px) {
-  .raya-discovery-workspace-shell,
-  [data-raya-discovery-rail-state="collapsed"] .raya-discovery-workspace-shell {
+  .raya-discovery-workspace-shell {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .raya-discovery-course-rail {
-    padding: 0.55rem;
-    position: static;
-  }
-  .raya-discovery-course-rail-body {
-    gap: 0.5rem;
-  }
-  .raya-discovery-workspace-links {
-    grid-template-columns: repeat(auto-fit, minmax(min(7rem, 100%), 1fr));
-  }
-  .raya-discovery-workspace-link {
-    min-height: 2rem;
-    padding: 0.32rem 0.45rem;
-  }
-  .raya-discovery-workspace-link span {
-    font-size: 0.82rem;
-  }
-  .raya-discovery-course-pages {
-    padding-top: 0.45rem;
-  }
-  .raya-discovery-course-tab,
-  [data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-tab {
-    display: none;
-  }
-  [data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-rail {
-    display: block;
-  }
-  [data-raya-discovery-rail-state="collapsed"] .raya-discovery-course-rail-body {
-    display: grid;
-  }
-  .raya-discovery-course-pages ol {
-    max-height: 6rem;
-    overflow: auto;
-  }
-  .raya-discovery-course-page-link {
-    padding: 0.22rem 0.3rem;
   }
   .raya-discovery-focus-actions {
     justify-content: flex-start;
@@ -6131,9 +5884,6 @@ mjx-container[display="true"] {
   .raya-graph-page .raya-discovery-workspace-shell {
     display: flex;
     flex-direction: column;
-  }
-  .raya-graph-page .raya-discovery-course-rail {
-    order: 2;
   }
   .raya-graph-page .raya-graph-legend,
   .raya-graph-page .raya-graph-help {
@@ -7009,7 +6759,7 @@ mjx-container[display="true"] {
     gap: 0.5rem;
     padding: 0.4rem 0.75rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-top-command-bar-inner {
+  .raya-top-command-bar .raya-top-command-bar-inner {
     gap: 0.35rem;
     padding: 0.3rem 0.65rem;
   }
@@ -7017,7 +6767,7 @@ mjx-container[display="true"] {
     display: grid;
     gap: 0.4rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context {
+  .raya-top-command-bar .raya-reading-context {
     align-items: center;
     display: flex;
     flex-wrap: nowrap;
@@ -7026,60 +6776,56 @@ mjx-container[display="true"] {
     overflow-x: auto;
     overflow-y: hidden;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-separator {
+  .raya-top-command-bar .raya-reading-context-separator {
     display: none;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-course,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-page {
+  .raya-top-command-bar .raya-reading-context-course,
+  .raya-top-command-bar .raya-reading-context-page {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-course {
+  .raya-top-command-bar .raya-reading-context-course {
     flex: 0 1 6.5rem;
     max-width: 6.5rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-page {
+  .raya-top-command-bar .raya-reading-context-page {
     flex: 0 1 8.5rem;
     max-width: 8.5rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-section {
+  .raya-top-command-bar .raya-reading-context-section {
     display: none;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-position {
+  .raya-top-command-bar .raya-reading-context-position {
     flex: 0 0 auto;
-    white-space: nowrap;
-  }
-  .raya-discovery-command-bar .raya-reading-context-course,
-  .raya-discovery-command-bar .raya-reading-context-page {
     white-space: nowrap;
   }
   .raya-reading-context-sequence {
     flex-wrap: wrap;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-reading-context-sequence {
+  .raya-top-command-bar .raya-reading-context-sequence {
     flex: 0 0 auto;
     flex-wrap: nowrap;
   }
   .raya-reading-context-section-label {
     display: none;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-course-tools {
+  .raya-top-command-bar .raya-course-tools {
     gap: 0.25rem;
     flex-wrap: wrap;
     justify-content: flex-start;
     overflow-x: visible;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group {
+  .raya-top-command-bar .raya-command-group {
     gap: 0.2rem;
     padding: 0.1rem;
     width: 100%;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-discovery {
+  .raya-top-command-bar .raya-command-group-discovery {
     display: grid;
     grid-template-columns: minmax(8.5rem, 1fr) repeat(5, minmax(2.25rem, auto));
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-form {
+  .raya-top-command-bar .raya-command-search-form {
     flex: none;
     min-width: 0;
     width: 100%;
@@ -7095,60 +6841,32 @@ mjx-container[display="true"] {
   .raya-main-article > .raya-breadcrumbs {
     margin-bottom: 0.45rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-layout,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-group-comfort {
+  .raya-top-command-bar .raya-command-group-layout,
+  .raya-top-command-bar .raya-command-group-comfort {
     flex: 1 1 auto;
     width: auto;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command {
+  .raya-top-command-bar .raya-command {
     min-height: 2.25rem;
     min-width: 2.25rem;
     padding: 0.35rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-icon {
+  .raya-top-command-bar .raya-command-icon {
     height: 1.35rem;
     width: 1.35rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-input,
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-search-submit {
+  .raya-top-command-bar .raya-command-search-input,
+  .raya-top-command-bar .raya-command-search-submit {
     height: 2.25rem;
     min-height: 2.25rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map {
+  .raya-top-command-bar .raya-command-map {
     font-size: 0;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-map .raya-command-icon {
+  .raya-top-command-bar .raya-command-map .raya-command-icon {
     font-size: 0.75rem;
   }
-  .raya-top-command-bar:not(.raya-discovery-command-bar) .raya-command-label {
-    clip: rect(0 0 0 0);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
-  }
-  .raya-discovery-command-bar .raya-top-command-bar-inner {
-    gap: 0.5rem;
-  }
-  .raya-discovery-command-bar .raya-reading-context {
-    display: flex;
-    flex-wrap: nowrap;
-  }
-  .raya-discovery-command-bar .raya-reading-context-course,
-  .raya-discovery-command-bar .raya-reading-context-page {
-    white-space: nowrap;
-  }
-  .raya-discovery-command-bar .raya-course-tools {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-  }
-  .raya-discovery-command-bar .raya-command {
-    min-width: 2.5rem;
-    padding: 0.45rem;
-  }
-  .raya-discovery-command-bar .raya-command-label {
+  .raya-top-command-bar .raya-command-label {
     clip: rect(0 0 0 0);
     height: 1px;
     overflow: hidden;
