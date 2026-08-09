@@ -23392,6 +23392,84 @@ def test_discovery_command_bar_marks_current_workspace_without_overflow(
         handle.close()
 
 
+def test_workspace_course_map_marks_runtime_page_focus(tmp_path: Path) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1366, "height": 900})
+                page.goto(
+                    f"{handle.base_url}/_raya/search/index.html?page=reader-ux",
+                    wait_until="networkidle",
+                )
+
+                focused = page.locator(
+                    '#raya-course-map-list [data-raya-map-page-focus="true"]'
+                )
+                assert focused.count() == 1
+                assert focused.get_attribute("data-raya-map-node") == "reader-ux"
+                assert focused.is_visible()
+                assert (
+                    page.locator(
+                        '#raya-course-map-list a[aria-current="page"]'
+                    ).count()
+                    == 0
+                )
+
+                ancestor_state = focused.evaluate(
+                    """(node) => {
+                      const ancestor = node.parentElement
+                        ?.closest("[data-raya-map-node]");
+                      const toggle = ancestor?.querySelector(
+                        ":scope > .raya-course-map-node-row "
+                        + "[data-raya-map-node-toggle]"
+                      );
+                      const children = toggle
+                        ? document.getElementById(toggle.getAttribute("aria-controls"))
+                        : null;
+                      return {
+                        id: ancestor?.getAttribute("data-raya-map-node"),
+                        expanded: toggle?.getAttribute("aria-expanded"),
+                        childrenHidden: children?.hidden,
+                        childrenAriaHidden: children?.getAttribute("aria-hidden"),
+                      };
+                    }"""
+                )
+                assert ancestor_state == {
+                    "id": "render-root",
+                    "expanded": "true",
+                    "childrenHidden": False,
+                    "childrenAriaHidden": "false",
+                }
+
+                focus_strip = page.locator("[data-raya-discovery-focus-strip]")
+                assert focus_strip.is_visible()
+                assert "Projection Residuals" in focus_strip.locator(
+                    "[data-raya-discovery-focus-title]"
+                ).inner_text()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_discovery_workspaces_show_shared_page_focus_strip(tmp_path: Path) -> None:
     from playwright.sync_api import sync_playwright
     from raya_cli.preview import create_preview
