@@ -991,7 +991,7 @@ img {
 .raya-graph-instructions {
   color: var(--raya-color-muted);
   font-size: 0.88rem;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 .raya-graph-orientation {
   background: color-mix(
@@ -3774,6 +3774,7 @@ img {
 .raya-workspace-main {
   grid-area: main-article;
   min-width: 0;
+  width: 100%;
 }
 html[data-raya-shell-ready="true"] .raya-learning-shell {
   transition: grid-template-columns 220ms ease, gap 220ms ease;
