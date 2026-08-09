@@ -224,3 +224,9 @@ Use `raya preview <course>` for local review of generated static pages. Preview 
 Current documentation is also a renderable docs course. Edit the readable pages under `docs/foundation/` and `docs/guides/`, keep `docs/render-content/` aligned for rendered order, and treat `docs/artifact/` as ignored generated output. Use `raya validate docs`, `raya build docs`, and static-read-path tests when changing documentation rendering behavior.
 
 For substantial changes, state the documentation impact for contributors/collaborators, professors, students, and agents. If role documentation changes, keep the English and Spanish pages separate.
+
+## Publishing independent courses
+
+Use [Publishing Independent Courses](raya:docs-guides-en-contributors-publishing-courses)
+when a course team wants optional GitHub Pages delivery without making the
+provider part of the course contract.
