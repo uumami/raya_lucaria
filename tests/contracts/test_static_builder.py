@@ -6,6 +6,8 @@ import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from raya_schema import (
     ValidationReport,
     inspect_artifact,
@@ -144,27 +146,20 @@ def _assert_discovery_quick_guide(
 
 
 def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
-    for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
-        assert f'<span class="raya-command-label">{label}</span>' in html
-    assert f'data-raya-current-workspace="{current}"' in html
-    command_bar_match = re.search(
-        r'<header class="[^"]*\braya-discovery-command-bar\b[^"]*"[^>]*>'
-        r"(.*?)</header>",
-        html,
-        re.DOTALL,
-    )
-    assert command_bar_match is not None
-    command_bar_html = command_bar_match.group(1)
-    assert command_bar_html.count('aria-current="page"') == 1
-    assert "https://" not in command_bar_html
-    assert "http://" not in command_bar_html
+    course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    for label in ("Search", "Graph", "Practice", "Tasks", "Plan"):
+        assert f'<span class="raya-command-label">{label}</span>' in course_map_html
+    assert f'data-raya-current-workspace="{current}"' in course_map_html
+    assert course_map_html.count('aria-current="page"') == 1
+    assert "https://" not in course_map_html
+    assert "http://" not in course_map_html
     current_link_match = re.search(
         rf'<a class="[^"]*\braya-command-{re.escape(current)}\b[^"]*" '
         r'href="index\.html" '
         r'aria-label="[^"]+" '
         r'aria-current="page" '
-        rf'data-raya-current-workspace="{re.escape(current)}">',
-        command_bar_html,
+        rf'data-raya-current-workspace="{re.escape(current)}"',
+        course_map_html,
     )
     assert current_link_match is not None
 
@@ -1135,8 +1130,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert graph_js.exists()
     assert 'href="_raya/graph/index.html?page=render-root"' in index_html
     assert 'data-raya-surface="graph"' in graph_html
-    assert "raya-discovery-command-bar" in graph_html
-    assert "Graph workspace" in graph_html
+    assert 'id="raya-course-map"' in graph_html
     _assert_discovery_workspace_switcher(graph_html, current="graph")
     _assert_discovery_focus_strip_shell(graph_html, current="graph")
     assert 'href="../search/index.html"' in graph_html
@@ -1144,11 +1138,11 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Search</span>' in graph_html
     assert '<span class="raya-command-label">Tasks</span>' in graph_html
     assert (
-        '<button class="raya-command raya-command-size raya-text-size-toggle"'
+        '<button class="raya-course-rail-command raya-text-size-toggle"'
         in graph_html
     )
     assert (
-        '<button class="raya-command raya-command-font raya-font-toggle"' in graph_html
+        '<button class="raya-course-rail-command raya-font-toggle"' in graph_html
     )
     assert "shell.js" not in graph_html
     assert "localStorage" not in graph_html
@@ -2063,18 +2057,18 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         in index_html
     )
     assert 'data-raya-surface="search"' in search_html
-    assert "raya-discovery-command-bar" in search_html
+    assert 'id="raya-course-map"' in search_html
     assert "Search workspace" in search_html
     assert 'href="../graph/index.html"' in search_html
     assert 'href="../tasks/index.html"' in search_html
     assert '<span class="raya-command-label">Graph</span>' in search_html
     assert '<span class="raya-command-label">Tasks</span>' in search_html
     assert (
-        '<button class="raya-command raya-command-size raya-text-size-toggle"'
+        '<button class="raya-course-rail-command raya-text-size-toggle"'
         in search_html
     )
     assert (
-        '<button class="raya-command raya-command-font raya-font-toggle"' in search_html
+        '<button class="raya-course-rail-command raya-font-toggle"' in search_html
     )
     assert "shell.js" not in search_html
     assert "localStorage" not in search_html
@@ -2415,7 +2409,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
         assert forbidden_runtime_token not in search_script
 
 
-def test_discovery_workspaces_keep_command_bars(tmp_path: Path) -> None:
+def test_discovery_workspaces_keep_course_maps(tmp_path: Path) -> None:
     course = _copy_render_fixture(tmp_path)
 
     report = build_course(course)
@@ -2426,8 +2420,8 @@ def test_discovery_workspaces_keep_command_bars(tmp_path: Path) -> None:
         html = (site / "_raya" / workspace / "index.html").read_text(
             encoding="utf-8"
         )
-        assert "raya-discovery-command-bar" in html
-        assert "raya-top-command-bar" in html
+        assert 'id="raya-course-map"' in html
+        assert "raya-discovery-command-bar" not in html
         assert "shell.js" not in html
 
 
@@ -2450,7 +2444,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert 'href="_raya/practice/index.html"' in index_html
     assert 'href="../../_raya/practice/index.html?page=first-topic"' in topic_html
     assert 'data-raya-surface="practice"' in practice_html
-    assert "raya-discovery-command-bar" in practice_html
+    assert 'id="raya-course-map"' in practice_html
     assert "Official practice workspace" in practice_html
     assert 'href="../search/index.html"' in practice_html
     assert 'href="../graph/index.html"' in practice_html
@@ -2665,7 +2659,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     )
     assert manifest["data"]["tasks"] == "data/tasks.json"
     assert 'data-raya-surface="tasks"' in tasks_html
-    assert "raya-discovery-command-bar" in tasks_html
+    assert 'id="raya-course-map"' in tasks_html
     assert "Official tasks workspace" in tasks_html
     assert 'href="../search/index.html"' in tasks_html
     assert 'href="../graph/index.html"' in tasks_html
@@ -2673,7 +2667,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Search</span>' in tasks_html
     assert '<span class="raya-command-label">Graph</span>' in tasks_html
     assert '<span class="raya-command-label">Practice</span>' in tasks_html
-    assert '<span class="raya-command-label">Schedule</span>' in tasks_html
+    assert '<span class="raya-command-label">Plan</span>' in tasks_html
     assert 'src="../render/tasks.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in tasks_html
@@ -2842,7 +2836,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     )
 
     assert 'data-raya-surface="schedule"' in schedule_html
-    assert "raya-discovery-command-bar" in schedule_html
+    assert 'id="raya-course-map"' in schedule_html
     assert "Official schedule workspace" in schedule_html
     assert 'href="../search/index.html"' in schedule_html
     assert 'href="../graph/index.html"' in schedule_html
@@ -2852,7 +2846,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Graph</span>' in schedule_html
     assert '<span class="raya-command-label">Practice</span>' in schedule_html
     assert '<span class="raya-command-label">Tasks</span>' in schedule_html
-    assert '<span class="raya-command-label">Schedule</span>' in schedule_html
+    assert '<span class="raya-command-label">Plan</span>' in schedule_html
     assert 'src="../render/schedule.js"' in schedule_html
     assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in schedule_html
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in schedule_html
@@ -3017,6 +3011,45 @@ def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_stat
         "calendar sync",
     ):
         assert forbidden_text not in visible_text
+
+
+@pytest.mark.parametrize(
+    ("workspace", "home_href"),
+    [
+        ("search", "../../index.html"),
+        ("graph", "../../index.html"),
+        ("practice", "../../index.html"),
+        ("tasks", "../../index.html"),
+        ("schedule", "../../index.html"),
+    ],
+)
+def test_workspace_course_map_uses_workspace_relative_links(
+    tmp_path: Path,
+    workspace: str,
+    home_href: str,
+) -> None:
+    course = _copy_render_fixture(tmp_path)
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (
+        course / "artifact" / "site" / "_raya" / workspace / "index.html"
+    ).read_text(encoding="utf-8")
+
+    assert html.count('id="raya-course-map"') == 1
+    assert 'class="raya-discovery-course-rail"' not in html
+    assert 'class="raya-discovery-command-bar"' not in html
+    assert f'href="{home_href}"' in html
+    assert f'data-raya-current-workspace="{workspace}"' in html
+    assert 'aria-current="page"' in _workspace_command_html(html, workspace)
+    assert (
+        'raya-command-context'
+        not in _element_html(html, '<nav id="raya-course-map"', "</nav>")
+    )
+
+    if workspace == "schedule":
+        assert 'href="../search/index.html"' in html
 
 
 def test_graph_index_schema_rejects_missing_nodes(tmp_path: Path) -> None:
@@ -6971,6 +7004,17 @@ def _element_html(html_text: str, element_start: str, element_end: str) -> str:
     start = html_text.index(element_start)
     end = html_text.index(element_end, start) + len(element_end)
     return html_text[start:end]
+
+
+def _workspace_command_html(html_text: str, workspace: str) -> str:
+    match = re.search(
+        rf'<a class="[^"]*\braya-command-{re.escape(workspace)}\b[^"]*"[^>]*>'
+        r".*?</a>",
+        html_text,
+        re.DOTALL,
+    )
+    assert match is not None
+    return match.group(0)
 
 
 def _section_html(html_text: str, class_name: str) -> str:
