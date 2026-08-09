@@ -156,6 +156,9 @@ Verifica la accion Map `Hide map` del header estructural por separado de los och
 comandos lectores bajo `[data-raya-course-map-tools]`. El header tambien presenta
 el control course-home junto a la accion icono `Hide map`. Los mapas lectores contienen los mosaicos Search, Graph, Practice, Tasks, Schedule, Context, Text size y OpenDyslexic; los mapas de workspace conservan la navegacion compartida,
 pero no exponen el Context lector. Verifica que
+los destinos course-home, arbol y workspace usen links relativos generados desde
+la ruta de salida del workspace; solo el mosaico del workspace activo es actual
+y ningun enlace del arbol del curso es actual.
 `[data-raya-course-map-expand]` permanece fuera del body oculto e inerte y usa
 el nombre accesible `Expand course map`. Trata la accion Map del header como un
 control estructural separado de los mosaicos del body. Tambien verifica el mapa del curso expandido

@@ -146,6 +146,9 @@ header Map action separately from the eight reader commands under
 `[data-raya-course-map-tools]`. The header also presents the course-home control
 alongside the `Hide map` icon action. Reader maps own the ordered Search, Graph, Practice, Tasks, Schedule, Context, Text size, and OpenDyslexic command tiles;
 workspace maps preserve the shared navigation but reader-only Context is absent.
+Verify that workspace course-home, tree, and workspace destinations use
+generated relative links from the workspace output path; only the active
+workspace tile is current, and no course-tree link is current.
 Verify `[data-raya-course-map-expand]` remains outside the hidden/inert body and
 uses the accessible name `Expand course map`.
 Also verify the expanded course map default, including the expanded hierarchical
