@@ -13,7 +13,7 @@
 - Course source uses `source: course`; generated `artifact/` is ignored.
 - The caller uses an exact full framework commit SHA, never a branch or mutable tag.
 - The reusable workflow checks out its own `job.workflow_repository` at `job.workflow_sha`; callers do not supply a second framework ref.
-- Pull requests verify only; only default-branch pushes deploy.
+- Pull requests and tags verify only; only a full `refs/heads/<default branch>` push uploads/deploys.
 - Verify jobs explicitly use `contents: read`; only the protected deployment job receives `pages: write` and `id-token: write`.
 - Every third-party action is pinned to a reviewed full commit SHA; organization-level SHA enforcement is enabled only after existing framework workflows are migrated.
 - GitHub Pages is an optional adapter; `artifact/site` must also pass neutral local static-serving verification.
@@ -45,7 +45,7 @@
 
 - [ ] **Step 1: Write the failing workflow contract test**
 
-Create a test that reads `.github/workflows/reusable-course-pages.yml` and asserts: `on.workflow_call`; `course_path`; checkout of `${{ job.workflow_repository }}` at `${{ job.workflow_sha }}`; `uv sync --locked`; validation/build/inspection commands; a read-only `verify` job; `upload-pages-artifact` inside `verify` with path `${{ github.workspace }}/${{ inputs.course_path }}/artifact/site`; a separate `deploy` job with `needs: verify`, `github-pages` environment, Pages-only permissions, and the default-branch-push condition; and all external `uses:` references match a full 40-character SHA rather than a tag.
+Create a test that reads `.github/workflows/reusable-course-pages.yml` and asserts: `on.workflow_call`; `course_path`; checkout of `${{ job.workflow_repository }}` at `${{ job.workflow_sha }}`; `uv sync --locked`; validation/build/inspection commands; a read-only `verify` job; `upload-pages-artifact` inside `verify` with path `${{ github.workspace }}/${{ inputs.course_path }}/artifact/site`; a separate `deploy` job with `needs: verify`, `github-pages` environment, Pages-only permissions, and the exact full-ref guard `github.ref == format('refs/heads/{0}', github.event.repository.default_branch)` on both upload and deploy; and all external `uses:` references match a full 40-character SHA rather than a tag.
 
 - [ ] **Step 2: Prove the test fails**
 
@@ -68,7 +68,7 @@ uv run --directory .raya-framework raya build "$course_root"
 uv run --directory .raya-framework raya artifacts inspect "$course_root/artifact"
 ```
 
-In `verify`, conditionally upload only `${{ github.workspace }}/${{ inputs.course_path }}/artifact/site` with `actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b` when the caller event is a default-branch push. The separate `deploy` job needs `verify`, has the same condition, has only `pages: write` and `id-token: write`, targets `environment: {name: github-pages, url: ${{ steps.deployment.outputs.page_url }}}`, and runs `actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e`.
+In `verify`, conditionally upload only `${{ github.workspace }}/${{ inputs.course_path }}/artifact/site` with `actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b` when `github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)`. The separate `deploy` job needs `verify`, has the same condition, has only `pages: write` and `id-token: write`, targets `environment: {name: github-pages, url: ${{ steps.deployment.outputs.page_url }}}`, and runs `actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e`.
 
 - [ ] **Step 4: Verify and commit**
 
@@ -119,7 +119,7 @@ Expected: the last command prints the exact 40-character `FRAMEWORK_SHA` contain
 
 - [ ] **Step 1: Write the English and Spanish guides**
 
-Document GitHub Actions/Pages as optional CI/static-hosting/TLS adapters; source/artifact ownership; GitHub Pages public-hosting limits and plan dependency; migration by building the same `artifact/site` for another host; local/self-hosted serving with `raya build` plus a standard static file server; that `artifact/` is rebuildable/non-canonical; and the `rayalucaria.org` shared-origin rule forbidding authenticated cookies/tokens and requiring protected default branches.
+Document GitHub Actions/Pages as optional CI/static-hosting/TLS adapters; that GitHub stores workflow logs and serves/uploads public generated artifacts while course teams own canonical source; that Pages limits and pricing are external/changeable; migration by building the same `artifact/site` for another host; local/self-hosted serving with `raya build` plus a standard static file server; that `artifact/` is rebuildable/non-canonical; and the `rayalucaria.org` shared-origin rule forbidding authenticated cookies/tokens and requiring protected default branches.
 
 - [ ] **Step 2: Link guides from language indexes and verify**
 
@@ -165,9 +165,17 @@ Run:
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya validate "$course_root"
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya build "$course_root"
 UV_PROJECT_ENVIRONMENT=.venv-local uv run raya artifacts inspect "$course_root/artifact"
-python3 -m http.server 8765 --directory "$course_root/artifact/site" >/tmp/ia_o26_static_server.log 2>&1 &
+static_mount=$(mktemp -d)
+mkdir "$static_mount/course"
+cp -R "$course_root/artifact/site"/. "$static_mount/course/"
+python3 -m http.server 8765 --directory "$static_mount" >/tmp/ia_o26_static_server.log 2>&1 &
 static_server_pid=$!
-curl --fail http://127.0.0.1:8765/
+curl --fail http://127.0.0.1:8765/course/
+curl --fail http://127.0.0.1:8765/course/_raya/inspect/
+static_asset=$(find "$course_root/artifact/site" -type f \( -name '*.css' -o -name '*.js' \) | head -n 1)
+test -n "$static_asset"
+static_relative=${static_asset#"$course_root/artifact/site/"}
+curl --fail "http://127.0.0.1:8765/course/$static_relative"
 kill "$static_server_pid"
 rm -rf "$course_root/artifact"
 gh repo create raya-lucaria/ia_o26 --public --description "Inteligencia Artificial — Otoño 2026 (ITAM)"
@@ -233,4 +241,4 @@ Watch `Verify and publish course` to success. Verify its default Pages URL, then
 
 - Spec coverage: Task 1 centralizes CLI mechanics and tests the workflow contract; Task 2 emits the immutable version; Task 3 proves the real CLI outside the framework checkout; Task 4 creates the independent repository and deploys it.
 - Placeholder scan: the only dynamic value is produced explicitly by Task 2 before Task 4 uses it.
-- Consistency: the caller has one immutable `FRAMEWORK_SHA`; the reusable workflow checks out its own defining SHA; only the caller default branch deploys.
+- Consistency: the caller has one immutable `FRAMEWORK_SHA`; the reusable workflow checks out its own defining SHA; only an exact caller default-branch ref deploys.

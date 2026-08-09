@@ -73,8 +73,9 @@ verify job explicitly narrows itself to `contents: read`, so untrusted pull
 request source cannot receive a Pages write token or OIDC token. Only the
 protected deployment job receives `pages: write` and `id-token: write`. The
 workflow validates/builds for `pull_request` and `push`; it uploads/deploys
-only when the caller event is a `push` to the caller repository's default
-branch. Pull requests must never publish course material.
+only when the caller event is a `push` whose full ref equals
+`refs/heads/<default branch>`. Pull requests and tags must never publish course
+material.
 
 Course Pages visibility is public. The GitHub organization root custom domain
 supplies the eventual `rayalucaria.org/ia_o26/` path; `ia_o26` does not set a
@@ -97,7 +98,9 @@ cookie- or token-bearing authenticated application.
 - The framework adds workflow-contract tests proving job permissions, action
   SHA pinning, toolchain identity, `artifact/site` upload placement, and the
   pull-request/default-branch boundary. It also proves the artifact through a
-  neutral local static read path before adapter-level Pages verification.
+  neutral local static read path mounted under a non-root prefix before
+  adapter-level Pages verification. That proof retrieves the course root,
+  inspection page, and a generated local CSS/JavaScript resource.
 - After `ia_o26` deploys, verification covers both its default Pages URL and
   `https://rayalucaria.org/ia_o26/`, including relative static links.
 
@@ -105,12 +108,13 @@ cookie- or token-bearing authenticated application.
 
 GitHub Actions and GitHub Pages are optional managed-provider adapters, not a
 Raya contract. Contributor documentation must state that GitHub supplies CI,
-public static hosting, and TLS subject to its current Pages plan limits; that
-course source stays course-team owned and `artifact/site` is rebuildable; that
-migration is `raya build` followed by uploading the same static read path to
-another host; and that the local/self-hosted equivalent is `raya build` plus a
-standard static file server. The guide must also state the shared-origin trust
-boundary above.
+workflow logs, uploaded/deployed public artifacts, static hosting, and TLS;
+that its plan limits and pricing are external and changeable; that canonical
+course source remains course-team owned while generated artifacts are
+rebuildable; that migration is `raya build` followed by uploading the same
+static read path to another host; and that the local/self-hosted equivalent is
+`raya build` plus a standard static file server. The guide must also state the
+shared-origin trust boundary above.
 
 ## Scope
 
