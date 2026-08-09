@@ -5159,7 +5159,11 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   padding: 0.22rem 0.35rem;
 }
 .raya-course-map-list a[aria-current="page"] {
-  padding-left: 1.625rem;
+  /* The absolutely positioned sequence badge has a 2.275rem outer footprint
+     once its minimum width, horizontal padding, and borders are included.
+     Reserve that width plus a small reading gap so it never covers the first
+     glyph of the current label, including in the phone drawer. */
+  padding-left: 2.5rem;
   position: relative;
 }
 .raya-course-map-list a[aria-current="page"]::before {

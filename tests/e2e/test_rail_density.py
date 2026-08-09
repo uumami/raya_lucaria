@@ -1117,3 +1117,55 @@ def test_sequence_badge_shows_only_on_the_current_row(tmp_path: Path) -> None:
                 browser.close()
     finally:
         handle.close()
+
+
+def test_current_map_badge_does_not_cover_the_label_on_a_phone(tmp_path: Path) -> None:
+    """The current-page sequence badge must leave room for the first glyph."""
+    from playwright.sync_api import sync_playwright
+
+    handle = _preview(tmp_path)
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844})
+                page.goto(
+                    f"{handle.base_url}/index.html", wait_until="networkidle"
+                )
+                page.locator(".raya-mobile-course-map-open").click()
+                page.wait_for_timeout(200)
+                geometry = page.evaluate(
+                    """() => {
+                      const link = document.querySelector(
+                        '.raya-course-map-list a[aria-current="page"]');
+                      const text = link?.firstChild;
+                      if (!link || !text) return null;
+                      const range = document.createRange();
+                      range.setStart(text, 0);
+                      range.setEnd(text, 1);
+                      const glyph = range.getBoundingClientRect();
+                      const box = link.getBoundingClientRect();
+                      const badge = getComputedStyle(link, '::before');
+                      const badgeFootprint =
+                        parseFloat(badge.width)
+                        + parseFloat(badge.paddingLeft)
+                        + parseFloat(badge.paddingRight)
+                        + parseFloat(badge.borderLeftWidth)
+                        + parseFloat(badge.borderRightWidth);
+                      return {
+                        glyphLeft: glyph.left,
+                        badgeRight: box.left + badgeFootprint,
+                      };
+                    }"""
+                )
+                assert geometry is not None
+                assert geometry["glyphLeft"] >= geometry["badgeRight"], geometry
+                page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
