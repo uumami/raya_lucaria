@@ -2933,7 +2933,11 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert "2026-10-15" in schedule_html
     topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
     assert 'aria-label="Open official tasks, 4 tasks"' in topic_html
-    assert 'aria-label="Open official schedule, 3 dated"' in topic_html
+    # Task 4 requirements change: WCAG 2.5.3 Label in Name -- the rail's
+    # visible caption is "Plan", so the accessible name must contain it.
+    # "official" is kept (added, not substituted) for symmetry with
+    # "Open official practice"/"Open official tasks".
+    assert 'aria-label="Open official schedule plan, 3 dated"' in topic_html
     assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in schedule_html
     assert 'href="../graph/index.html?page=first-topic"' in schedule_html
 
@@ -5205,12 +5209,9 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
     )
     assert '<span class="raya-reading-context-position">Page 6 of 6</span>' in last_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
-    assert course_map_html.index('class="raya-course-rail-tools"') < (
-        course_map_html.index('class="raya-page-position"')
-    )
-    assert course_map_html.index('class="raya-page-position"') < (
-        course_map_html.index('id="raya-course-map-filter"')
-    )
+    # The rail body no longer emits a page-position paragraph (Page N of M
+    # lives only in the Page brief); the surviving ordering contract is
+    # that the filter still precedes the tree.
     assert course_map_html.index('id="raya-course-map-filter"') < (
         course_map_html.index('class="raya-course-map-list"')
     )
@@ -5549,7 +5550,7 @@ def test_page_connection_previews_escape_public_metadata(tmp_path: Path) -> None
     assert "localStorage" not in article_connections
 
 
-def test_static_builder_renders_collapsible_shell_controls_and_page_position(
+def test_static_builder_renders_collapsible_shell_controls(
     tmp_path: Path,
 ) -> None:
     from raya_static.builder import build_course
@@ -5677,7 +5678,8 @@ def test_static_builder_renders_collapsible_shell_controls_and_page_position(
     assert 'data-raya-map-index="1"' in render_html
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
     assert 'tabindex="-1"' not in course_map_html
-    assert '<p class="raya-page-position">Page 1 of 3</p>' in html
+    assert '<li class="raya-page-brief-fact raya-page-brief-position">' in html
+    assert '<span class="raya-page-brief-value">Page 1 of 3</span>' in html
     assert '<span class="raya-reading-context-position">Page 3 of 3</span>' in topic_html
     assert 'class="raya-course-map-current-chip-path"' not in topic_html
     assert 'class="raya-course-map-current-chip-separator"' not in topic_html
@@ -5947,7 +5949,25 @@ def test_rich_css_defines_learning_shell_regions(tmp_path: Path) -> None:
     assert ".raya-course-rail-command-list" in css
     assert ".raya-course-rail-command {" in css
     assert ".raya-course-map-tool-grid" not in css
-    assert "grid-template-columns: repeat(2, minmax(0, 1fr))" in css
+    # Scoped, not substring: the bare literal also appears in four unrelated
+    # rules, so the old assertion passed regardless of the rail's layout.
+    # Two .raya-course-rail-command-list blocks exist: the base rule (two
+    # columns, for the <640px mobile drawer, which keeps the row layout
+    # where four narrow columns would wrap labels across many lines) and
+    # the >=640px override next to the caption-under-glyph layout (four
+    # columns, the density change this task makes).
+    rail_blocks = re.findall(
+        r"\.raya-course-rail-command-list \{[^}]*\}", css, re.S
+    )
+    assert rail_blocks
+    assert any(
+        "grid-template-columns: repeat(4, minmax(0, 1fr))" in block
+        for block in rail_blocks
+    ), rail_blocks
+    assert any(
+        "grid-template-columns: repeat(2, minmax(0, 1fr))" in block
+        for block in rail_blocks
+    ), rail_blocks
     assert "grid-template-columns: repeat(3" not in css
     assert "height: calc(100vh - 1.5rem)" in css
     assert ".raya-learning-rail" in css

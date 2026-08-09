@@ -9932,7 +9932,12 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                         }"""
                     )
                     assert desktop["size"]["text"] == "Text size"
-                    assert desktop["font"]["text"] == "OpenDyslexic"
+                    # Task 4 requirements change: the rail caption was
+                    # shortened from "OpenDyslexic" to "Font" so it fits
+                    # the four-column tile on one line without shrinking
+                    # type; aria-label still says "Toggle OpenDyslexic
+                    # font".
+                    assert desktop["font"]["text"] == "Font"
                     assert desktop["size"]["width"] >= 24
                     assert desktop["font"]["width"] >= 24
                     assert desktop["size"]["height"] > 0
@@ -10731,8 +10736,10 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                         if viewport["width"] >= 1280:
                             assert state["toolVisible"] is True
                             assert state["visibleCount"] == 8
-                            assert state["visibleColumns"] == 2
-                            assert state["visibleRows"] == 4
+                            # Task 4: command tiles moved from two columns of
+                            # four rows to four columns of two rows.
+                            assert state["visibleColumns"] == 4
+                            assert state["visibleRows"] == 2
                             assert state["formVisible"] is True
                             assert state["formAction"] == "_raya/search/index.html"
                             assert state["formTop"] < state["firstCommandTop"]
@@ -10748,18 +10755,24 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                             assert state["railContextVisible"] is True
                             assert state["commandListWidth"] >= 140
                             assert " " in state["commandListGrid"]
+                            # Task 4 requirements change: rail captions
+                            # shortened so full words fit one line at
+                            # 0.75rem without wrapping/shrinking type.
                             assert state["visibleCommandTexts"] == [
                                 "Search",
                                 "Graph",
                                 "Practice",
                                 "Tasks",
-                                "Schedule",
+                                "Plan",
                                 "Context",
                                 "Text size",
-                                "OpenDyslexic",
+                                "Font",
                             ]
+                            # Task 4: four columns in the ~238px tools track
+                            # measure ~56px tiles, not the old ~64px+ that
+                            # fit two per row.
                             assert all(
-                                command["width"] >= 64
+                                command["width"] >= 40
                                 and command["height"] >= 28
                                 and command["labelWidth"] >= 24
                                 and 14 <= command["iconWidth"] <= 22
@@ -11021,6 +11034,12 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                     (button) => button.getClientRects().length > 0
                                   );
                                   const currentMapLink = document.querySelector('#raya-course-map a[aria-current="page"]');
+                                  const nonCurrentMapLink = Array.from(
+                                    document.querySelectorAll('#raya-course-map .raya-course-map-list a')
+                                  ).find(
+                                    (link) => link.getAttribute('aria-current') !== 'page'
+                                      && link.getBoundingClientRect().width > 0
+                                  );
                                   return {
                                     shellWidth: shell.getBoundingClientRect().width,
                                         commandListWidth: commandList.getBoundingClientRect().width,
@@ -11035,6 +11054,9 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                       : '',
                                     mapNumberDisplay: currentMapLink
                                       ? getComputedStyle(currentMapLink, '::before').display
+                                      : '',
+                                    nonCurrentMapNumberDisplay: nonCurrentMapLink
+                                      ? getComputedStyle(nonCurrentMapLink, '::before').display
                                       : '',
                                   };
                                 }"""
@@ -11052,15 +11074,29 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 24 <= height <= 96
                                 for height in metrics["commandHeights"]
                             )
+                            # Task 4: four columns measure ~56px tiles, not
+                            # the old ~64px+ that fit two per row.
                             assert all(
-                                width >= 64 for width in metrics["commandWidths"]
+                                width >= 40 for width in metrics["commandWidths"]
                             )
                             assert metrics["mapIndex"]
                             assert metrics["mapNumber"] == f'"{metrics["mapIndex"]}"'
-                            assert metrics["mapNumberDisplay"] in {
-                                "inline-flex",
-                                "flex",
-                            }
+                            # "flex" only, not {"inline-flex", "flex"}: the
+                            # current-row badge is position:absolute
+                            # (rendering.py), which blockifies a computed
+                            # "inline-flex" to "flex". Accepting "inline-flex"
+                            # here would also accept an in-flow regression
+                            # (the badge becoming a block child inside the
+                            # -webkit-box clamp) -- in-flow computes
+                            # "inline-flex", only out-of-flow computes "flex".
+                            assert metrics["mapNumberDisplay"] == "flex"
+                            # Companion: the badge is out of flow everywhere
+                            # except the current row (rendering.py). A
+                            # non-current link's ::before must compute
+                            # display:none -- content for a display:none
+                            # pseudo-element is engine-dependent, so only
+                            # display is checked here, not content.
+                            assert metrics["nonCurrentMapNumberDisplay"] == "none"
                             shell_state = page.evaluate(
                                 """() => {
                                   const root = document.documentElement;
@@ -11115,12 +11151,15 @@ def test_render_fixture_learning_shell_layout_and_accessibility(
                                 }"""
                             )
                             assert course_tools["visible"] is True
+                            # Task 4 requirements change: "Schedule" ->
+                            # "Plan" so the rail tile's caption fits one
+                            # line at 0.75rem.
                             assert course_tools["labels"] == [
                                 "Search",
                                 "Graph",
                                 "Practice",
                                 "Tasks",
-                                "Schedule",
+                                "Plan",
                             ]
                             assert (
                                 "Open course graph, 2 links, 0 from this page, 2 links here"
@@ -11531,7 +11570,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                 """() => Array.from(
                                   document.querySelectorAll('.raya-course-rail-command')
                                 )
-                                  .slice(0, 4)
+                                  .slice(0, 8)
                                   .map((command) => {
                                     const rect = command.getBoundingClientRect();
                                     return {
@@ -11542,21 +11581,27 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                                     };
                                   })"""
                             )
-                            assert len(command_boxes) == 4
+                            # Task 4: eight tiles, not four -- slice(0, 4)
+                            # only ever captured a single four-column row.
+                            assert len(command_boxes) == 8
                             row_tolerance = 4
                             assert (
                                 abs(command_boxes[0]["top"] - command_boxes[1]["top"])
                                 <= row_tolerance
                             )
+                            # Task 4: four columns put the second row's
+                            # first pair at index 4-5, not 2-3.
                             assert (
-                                abs(command_boxes[2]["top"] - command_boxes[3]["top"])
+                                abs(command_boxes[4]["top"] - command_boxes[5]["top"])
                                 <= row_tolerance
                             )
                             assert (
                                 command_boxes[1]["left"] > command_boxes[0]["right"] - 1
                             )
+                            # Task 4: four columns put the second row at
+                            # index 4, not 2.
                             assert (
-                                command_boxes[2]["top"] > command_boxes[0]["bottom"] - 1
+                                command_boxes[4]["top"] > command_boxes[0]["bottom"] - 1
                             )
                         else:
                             page.click("#raya-course-map [data-raya-course-map-toggle]")
@@ -11687,7 +11732,7 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                           const commandBoxes = Array.from(
                             document.querySelectorAll('.raya-course-rail-command')
                           )
-                            .slice(0, 4)
+                            .slice(0, 8)
                             .map((command) => {
                               const rect = command.getBoundingClientRect();
                               return {
@@ -11724,18 +11769,24 @@ def test_reader_shell_no_top_bar_geometry_across_desktop_viewports(
                     assert page.locator(".raya-course-rail-search").is_visible()
                     assert page.locator(".raya-course-rail-command").first.is_visible()
                     assert page.locator("#raya-course-map-list").is_visible()
-                    assert len(resized["commandBoxes"]) == 4
+                    # Task 4: eight tiles, not four -- slice(0, 4) only ever
+                    # captured a single four-column row.
+                    assert len(resized["commandBoxes"]) == 8
                     row_tolerance = 4
                     assert (
                         abs(resized["commandBoxes"][0]["top"] - resized["commandBoxes"][1]["top"])
                         <= row_tolerance
                     )
+                    # Task 4: four columns put the second row's first pair
+                    # at index 4-5, not 2-3.
                     assert (
-                        abs(resized["commandBoxes"][2]["top"] - resized["commandBoxes"][3]["top"])
+                        abs(resized["commandBoxes"][4]["top"] - resized["commandBoxes"][5]["top"])
                         <= row_tolerance
                     )
                     assert resized["commandBoxes"][1]["left"] > resized["commandBoxes"][0]["right"] - 1
-                    assert resized["commandBoxes"][2]["top"] > resized["commandBoxes"][0]["bottom"] - 1
+                    # Task 4: four columns put the second row at index 4,
+                    # not 2.
+                    assert resized["commandBoxes"][4]["top"] > resized["commandBoxes"][0]["bottom"] - 1
                     _assert_no_horizontal_overflow(page)
                 finally:
                     page.close()
@@ -12463,7 +12514,16 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     )
                     assert initial_orientation is not None
                     assert initial_orientation["oriented"] == "true"
-                    assert initial_orientation["listScrollTop"] > 0
+                    # render-fixture is a flat 6-page tree. Since the rail
+                    # density work cut ~444.6px of fixed chrome and tightened
+                    # the tree indent/font, this fixture's whole map now fits
+                    # its window without overflowing, so `listScrollTop` is
+                    # pinned at 0 -- "short course, no scrollbar" is correct
+                    # behaviour here, not a bug. The "orientation scrolls the
+                    # current page into view" contract is covered on a tree
+                    # that genuinely overflows in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_course_map_orientation_scrolls_current_page_into_view.
                     assert initial_orientation["outerScrollTop"] == 0
                     assert initial_orientation["headerTop"] >= (
                         initial_orientation["mapTop"] - 1
@@ -12527,7 +12587,9 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     )
                     assert orientation is not None
                     assert orientation["oriented"] == "true"
-                    assert orientation["listScrollTop"] > 0
+                    # Same non-overflowing fixture as above -- see the
+                    # comment on `initial_orientation` for why `listScrollTop`
+                    # is not asserted here.
                     assert orientation["outerScrollTop"] == 0
                     assert orientation["currentTop"] >= orientation["listTop"] - 1
                     if orientation["currentHeight"] <= orientation["listHeight"]:
@@ -12540,6 +12602,13 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                     assert orientation["localStorageKeys"] == []
                     assert orientation["sessionStorageKeys"] == []
                     page.click("[data-raya-course-map-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaCourseMap === 'collapsed'
+                          && !document
+                          .querySelector('.raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
+                    )
                     page.evaluate(
                         """() => {
                           const map = document.querySelector('.raya-course-map');
@@ -12552,11 +12621,19 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         }"""
                     )
                     page.click("[data-raya-course-map-expand]")
+                    # Do NOT wait on `list.scrollTop > 0` here: render-fixture
+                    # no longer overflows (see the comment on
+                    # `initial_orientation` above), so that condition would
+                    # never become true and this would hang for the full 30s
+                    # Playwright timeout instead of failing fast. Wait on the
+                    # transition marker clearing instead -- it always
+                    # resolves, overflow or not.
                     page.wait_for_function(
-                        """() => {
-                          const list = document.querySelector('#raya-course-map-list');
-                          return !!list && list.scrollTop > 0;
-                        }"""
+                        """() => document.documentElement.dataset.rayaCourseMap === 'expanded'
+                          && !document
+                          .querySelector('.raya-course-map')
+                          ?.dataset
+                          ?.rayaCourseMapTransition"""
                     )
                     reexpanded = page.evaluate(
                         """() => {
@@ -12586,7 +12663,8 @@ def test_render_fixture_course_map_hierarchy_filters_without_requests(
                         }"""
                     )
                     assert reexpanded is not None
-                    assert reexpanded["listScrollTop"] > 0
+                    # Same non-overflowing fixture as `initial_orientation`
+                    # above -- `listScrollTop` is not meaningful here.
                     assert reexpanded["outerScrollTop"] == 0
                     assert reexpanded["headerTop"] >= reexpanded["mapTop"] - 1
                     assert reexpanded["headerBottom"] <= reexpanded["mapBottom"] + 1
@@ -12743,7 +12821,9 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                             .querySelector('.raya-command-schedule')
                             ?.getAttribute('href'),
                           pagePosition: document
-                            .querySelector('.raya-page-position')
+                            .querySelector(
+                              '.raya-page-brief-position .raya-page-brief-value'
+                            )
                             ?.textContent
                             ?.trim(),
                           currentLinkText: document
@@ -12759,18 +12839,26 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                     assert initial["firstUnitChildrenHidden"] is False
                     assert initial["firstTopicVisible"] is True
                     assert initial["filterVisible"] is True
+                    # Task 4 requirements change: "Schedule" -> "Plan" so
+                    # the rail tile's caption fits one line at 0.75rem.
                     assert initial["toolLabels"] == [
                         "Search",
                         "Graph",
                         "Practice",
                         "Tasks",
-                        "Schedule",
+                        "Plan",
                     ]
                     assert "Open official practice, 8 official" in initial[
                         "toolAriaLabels"
                     ]
                     assert "Open official tasks, 4 tasks" in initial["toolAriaLabels"]
-                    assert "Open official schedule, 3 dated" in initial[
+                    # Task 4 requirements change: WCAG 2.5.3 Label in Name
+                    # -- the visible caption is "Plan", so the accessible
+                    # name must contain that word. "official" is kept (the
+                    # word is added, not substituted) for symmetry with its
+                    # siblings "Open official practice"/"Open official
+                    # tasks".
+                    assert "Open official schedule plan, 3 dated" in initial[
                         "toolAriaLabels"
                     ]
                     assert initial["practiceHref"].endswith(
@@ -15081,6 +15169,8 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                             ).map((link) => link.getAttribute('href')),
                             railPanels,
                             railText: textOf('#raya-learning-rail'),
+                            pageBriefText: textOf('.raya-page-brief'),
+                            articleSequenceTopText: textOf('.raya-article-sequence-top'),
                             localKeys: Object.keys(window.localStorage),
                             sessionKeys: Object.keys(window.sessionStorage),
                             privateLinks: Array.from(document.querySelectorAll('a[href]'))
@@ -15129,10 +15219,10 @@ def test_render_fixture_reader_navigation_spine_is_coherent(
                     assert all(
                         panel["hidden"] == "false" for panel in state["railPanels"]
                     )
-                    rail_text = state["railText"].lower()
-                    assert "page 5 of 6" in rail_text
-                    assert "previous" in rail_text
-                    assert "next" in rail_text
+                    assert "page 5 of 6" in state["pageBriefText"].lower()
+                    article_sequence_top_text = state["articleSequenceTopText"]
+                    assert "Previous" in article_sequence_top_text
+                    assert "Next" in article_sequence_top_text
                     assert state["localKeys"] == []
                     assert state["sessionKeys"] == []
                     assert state["privateLinks"] == []
@@ -17371,14 +17461,17 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert 28 <= header_collapse["height"] <= 44
     assert header_collapse["ariaLabel"] == "Hide course map"
     assert header_collapse["text"] == "Hide map"
+    # Task 4 requirements change: rail captions shortened ("Schedule" ->
+    # "Plan", "OpenDyslexic" -> "Font") so full words fit one line at
+    # 0.75rem in the four-column tile without shrinking type.
     expected_icons = {
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),
         "raya-command-tasks": ("tasks", "Tasks"),
-        "raya-command-schedule": ("schedule", "Schedule"),
+        "raya-command-schedule": ("schedule", "Plan"),
         "raya-text-size-toggle": ("text-size", "Text size"),
-        "raya-font-toggle": ("font", "OpenDyslexic"),
+        "raya-font-toggle": ("font", "Font"),
     }
     for command_class, (icon_name, label) in expected_icons.items():
         icon = icons[command_class]
@@ -17447,9 +17540,8 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
                     map_labels = page.evaluate(
                         """() => {
                           const lineCount = (node) => {
-                            const box = node.getBoundingClientRect();
                             const style = getComputedStyle(node);
-                            return box.height / parseFloat(style.lineHeight);
+                            return node.clientHeight / parseFloat(style.lineHeight);
                           };
                           const current = document
                             .querySelector('#raya-course-map a[aria-current="page"]');
@@ -17461,6 +17553,9 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
                           return {
                             currentText: current?.textContent?.trim(),
                             currentLines: lineCount(current),
+                            currentLineClamp: getComputedStyle(current).webkitLineClamp,
+                            currentFits:
+                              current.scrollHeight <= current.clientHeight + 1,
                             currentOverflowWrap: getComputedStyle(current).overflowWrap,
                             courseToolLines: courseTools.map(lineCount),
                             courseToolOverflowWrap: courseTools.map(
@@ -17477,7 +17572,26 @@ def test_render_fixture_desktop_course_map_labels_stay_scannable(
         handle.close()
 
     assert "Projection Residuals" in map_labels["currentText"]
+    # `currentLines <= 3.5` alone no longer says anything about the task-8
+    # two-line clamp: .raya-course-map-list a[aria-current="page"] releases
+    # -webkit-line-clamp unconditionally (rendering.py), specifically so the
+    # reader's own position is never truncated -- this link is the one
+    # link the clamp is designed to skip, so it can never show
+    # scrollHeight > clientHeight the way a genuinely clamped label does
+    # (verified: with the clamp CSS applied, this link measures
+    # scrollHeight == clientHeight == 41px, lineClamp "none"). Assert the
+    # exemption itself instead: no active line-clamp and full content
+    # shown, so dropping the aria-current selector from the release rule
+    # (leaving this row clamped like any other) would fail here.
+    # Task 9 (badge shown on the current row only): the current row now
+    # also carries the 1.625rem padding-left gutter for the absolutely
+    # positioned badge, narrowing its content column. Re-measured:
+    # scrollHeight == clientHeight == 42px (was 41px), currentLines == 2.485
+    # -- moved by ~0.06 line, not enough to make 3.5 meaninglessly loose, so
+    # the bound is left as-is.
     assert map_labels["currentLines"] <= 3.5
+    assert map_labels["currentLineClamp"] == "none", map_labels
+    assert map_labels["currentFits"] is True, map_labels
     assert map_labels["currentOverflowWrap"] != "anywhere"
     assert max(map_labels["courseToolLines"]) <= 3
     assert all(
@@ -17538,6 +17652,8 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
                             text: node.textContent.trim(),
                             linkRight: nodeBox.right,
                             mapRight: mapBox.right,
+                            scrollWidth: node.scrollWidth,
+                            clientWidth: node.clientWidth,
                             overflowWrap: style.overflowWrap,
                           };
                         }"""
@@ -17550,6 +17666,16 @@ def test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels(
         handle.close()
 
     assert "ProjectionResidualsWithAnUnbrokenAuthorIdentifier" in current_state["text"]
+    # linkRight <= mapRight alone is tautological: `overflow: hidden` on
+    # .raya-course-map-list a means the link's own border box can never
+    # grow past its layout column no matter what the content does, so this
+    # passed even measured with overflow-wrap disabled entirely. The
+    # test's real subject is that the 55-character unbroken token does not
+    # overflow ITS OWN box -- i.e. break-word is actually doing the work,
+    # not merely that a box that was never going to move stayed put.
+    # Confirmed the failure mode: forcing overflow-wrap back to "normal" on
+    # this element pushes scrollWidth to 549px against a 153px clientWidth.
+    assert current_state["scrollWidth"] <= current_state["clientWidth"] + 1
     assert current_state["linkRight"] <= current_state["mapRight"]
     assert current_state["overflowWrap"] == "break-word"
 
@@ -17885,7 +18011,8 @@ def test_render_fixture_reader_command_bar_is_compact_on_desktop(
                     assert metrics["articleTop"] <= 120
                     assert metrics["commandCount"] == 8
                     assert metrics["visibleCommandCount"] == 8
-                    assert metrics["visibleColumnCount"] == 2
+                    # Task 4: command tiles moved from two columns to four.
+                    assert metrics["visibleColumnCount"] == 4
                     assert " " in metrics["commandListGrid"]
                     assert metrics["searchVisible"] is True
                     assert metrics["searchWidth"] >= 80
@@ -18903,7 +19030,10 @@ def test_render_fixture_medium_reader_rails_are_overlay_controls(
                     assert expanded["mapBottom"] >= 925
                     assert expanded["mapBottom"] <= expanded["viewportHeight"]
                     assert expanded["linkWidth"] >= 140
-                    assert expanded["linkFontSize"] == "15px"
+                    # The density change (task 7, 2026-07-29-reader-rail-density)
+                    # applies to the 640-893 band too, deliberately, so the fix
+                    # is not desktop-only.
+                    assert expanded["linkFontSize"] == "13px"
                     assert expanded["toolsTop"] < expanded["listTop"]
                     assert expanded["mapH1Overlap"] == 0
                     assert expanded["mapBriefOverlap"] == 0
@@ -18983,15 +19113,18 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                 args=["--no-sandbox"],
             )
             try:
+                # Task 4 requirements change: rail captions shortened
+                # ("Schedule" -> "Plan", "OpenDyslexic" -> "Font") so full
+                # words fit one line at 0.75rem in the four-column tile.
                 expected_commands = [
                     "Search",
                     "Graph",
                     "Practice",
                     "Tasks",
-                    "Schedule",
+                    "Plan",
                     "Context",
                     "Text size",
-                    "OpenDyslexic",
+                    "Font",
                 ]
                 page = browser.new_page(viewport={"width": 1280, "height": 918})
                 try:
@@ -19038,9 +19171,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             '[data-raya-map-filter-empty]'
                           );
                           const header = document.querySelector('.raya-course-map-header');
-                          const position = document.querySelector(
-                            '#raya-course-map-body > .raya-page-position'
-                          );
                           const list = document.querySelector('#raya-course-map-list');
                           const mapBox = map.getBoundingClientRect();
                           const toolsBox = tools.getBoundingClientRect();
@@ -19048,7 +19178,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             '.raya-course-rail-command-list'
                           );
                           const headerBox = header.getBoundingClientRect();
-                          const positionBox = position?.getBoundingClientRect();
                           const filterLabelBox = filterLabel?.getBoundingClientRect();
                           const filterBox = filter?.getBoundingClientRect();
                           const listBox = list.getBoundingClientRect();
@@ -19142,12 +19271,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             commandsUnionWidth: Math.round(
                               commandsUnion.right - commandsUnion.left
                             ),
-                            positionTop: positionBox
-                              ? Math.round(positionBox.top)
-                              : null,
-                            positionBottom: positionBox
-                              ? Math.round(positionBox.bottom)
-                              : null,
                             filterLabelTop: filterLabelBox
                               ? Math.round(filterLabelBox.top)
                               : null,
@@ -19175,6 +19298,15 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             filterLabelVisible: !!filterLabel
                               && filterLabel.getClientRects().length > 0
                               && getComputedStyle(filterLabel).display !== 'none',
+                            filterLabelWidth: filterLabelBox
+                              ? Math.round(filterLabelBox.width)
+                              : null,
+                            filterLabelHeight: filterLabelBox
+                              ? Math.round(filterLabelBox.height)
+                              : null,
+                            filterLabelClipPath: filterLabel
+                              ? getComputedStyle(filterLabel).clipPath
+                              : null,
                             filterEmptyVisible: !!filterEmpty
                               && filterEmpty.checkVisibility(),
                             filterValue: filter?.value || '',
@@ -19190,13 +19322,20 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                     assert state["drawer"] == "closed"
                     assert state["mapLeft"] <= 16
                     assert 244 <= state["mapWidth"] <= 264
-                    assert state["mapHeight"] >= 890
+                    # Not "fills the column": .raya-course-map has
+                    # align-self:start and no height, so it renders at natural
+                    # content height under max-height:calc(100vh - 2rem). On
+                    # this 6-page fixture the pre-density 253px tools row was
+                    # only incidentally enough to reach that cap; a chrome cut
+                    # legitimately drops the rail below it. "The rail reaches
+                    # its cap" is asserted on the 41-page tree instead, in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_renders_a_deep_wide_map. This floor
+                    # only guards against a degenerate/collapsed rail.
+                    assert state["mapHeight"] >= 400
                     assert state["mapBottom"] <= state["viewportHeight"]
-                    assert state["positionTop"] is not None
-                    assert state["positionBottom"] is not None
                     assert state["headerBottom"] <= state["toolsTop"]
-                    assert state["toolsBottom"] <= state["positionTop"]
-                    assert state["positionBottom"] <= state["filterLabelTop"]
+                    assert state["toolsBottom"] <= state["filterLabelTop"]
                     assert state["filterLabelBottom"] <= state["filterTop"]
                     assert state["filterBottom"] <= state["listTop"]
                     assert state["visibleCommandCount"] == 8
@@ -19204,10 +19343,23 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         state["commandListScrollWidth"]
                         <= state["commandListClientWidth"]
                     )
-                    assert len(state["commandGridColumns"].split()) == 2
+                    # Task 4: command tiles moved from two columns to four.
+                    assert len(state["commandGridColumns"].split()) == 4
                     assert state["searchFormVisible"] is True
                     assert state["filterVisible"] is True
+                    # filterLabelVisible alone is a trap, not a check:
+                    # .raya-visually-hidden (position: absolute; width: 1px;
+                    # height: 1px; clip-path: inset(50%)) still satisfies
+                    # getClientRects().length > 0 and display != 'none', so
+                    # the old assertion would pass even for a hidden label.
+                    # Keep it as an explicit non-null/truthiness guard --
+                    # toolsBottom <= filterLabelTop below depends on
+                    # filterLabelTop being non-null -- and add real
+                    # painted-size checks alongside it.
                     assert state["filterLabelVisible"] is True
+                    assert state["filterLabelWidth"] >= 40, state
+                    assert state["filterLabelHeight"] >= 10, state
+                    assert state["filterLabelClipPath"] in {"none", ""}, state
                     assert state["filterEmptyVisible"] is False
                     assert state["filterValue"] == ""
                     assert state["visibleCommandTexts"] == expected_commands
@@ -19271,9 +19423,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                               const header = document.querySelector('.raya-course-map-header');
                               const body = document.querySelector('#raya-course-map-body');
                               const tools = document.querySelector('.raya-course-rail-tools');
-                              const position = document.querySelector(
-                                '#raya-course-map-body > .raya-page-position'
-                              );
                               const filterLabel = document.querySelector(
                                 '.raya-course-map-filter-label'
                               );
@@ -19294,7 +19443,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                               const bodyBox = body.getBoundingClientRect();
                               const headerBox = header.getBoundingClientRect();
                               const toolsBox = tools.getBoundingClientRect();
-                              const positionBox = position.getBoundingClientRect();
                               const filterLabelBox = filterLabel.getBoundingClientRect();
                               const filterBox = filter.getBoundingClientRect();
                               const listBox = list.getBoundingClientRect();
@@ -19360,8 +19508,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 headerBottom: Math.round(headerBox.bottom),
                                 toolsTop: Math.round(toolsBox.top),
                                 toolsBottom: Math.round(toolsBox.bottom),
-                                positionTop: Math.round(positionBox.top),
-                                positionBottom: Math.round(positionBox.bottom),
                                 filterLabelTop: Math.round(filterLabelBox.top),
                                 filterLabelBottom: Math.round(filterLabelBox.bottom),
                                 filterTop: Math.round(filterBox.top),
@@ -19370,6 +19516,9 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                                 filterRight: filterBox.right,
                                 filterVisible: visible(filter),
                                 filterLabelVisible: visible(filterLabel),
+                                filterLabelWidth: Math.round(filterLabelBox.width),
+                                filterLabelHeight: Math.round(filterLabelBox.height),
+                                filterLabelClipPath: getComputedStyle(filterLabel).clipPath,
                                 filterEmptyVisible: filterEmpty.checkVisibility(),
                                 listTop: Math.round(listBox.top),
                                 toolsHeight: Math.round(toolsBox.height),
@@ -19395,10 +19544,17 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert breakpoint_state["width"] == width
                         assert 239 <= breakpoint_state["mapWidth"] <= 253
-                        assert (
-                            breakpoint_state["mapHeight"]
-                            >= breakpoint_state["viewportHeight"] - 32
-                        )
+                        # Not "fills the column": .raya-course-map has
+                        # align-self:start and no height, so it renders at natural
+                        # content height under max-height:calc(100vh - 2rem). On
+                        # this 6-page fixture the pre-density 253px tools row was
+                        # only incidentally enough to reach that cap; a chrome cut
+                        # legitimately drops the rail below it. "The rail reaches
+                        # its cap" is asserted on the 41-page tree instead, in
+                        # tests/e2e/test_rail_density.py::
+                        # test_density_fixture_renders_a_deep_wide_map. This floor
+                        # only guards against a degenerate/collapsed rail.
+                        assert breakpoint_state["mapHeight"] >= 400
                         assert breakpoint_state["bodyDisplay"] == "flex"
                         assert breakpoint_state["bodyFlexGrow"] == "1"
                         assert breakpoint_state["mapScrollWidth"] <= (
@@ -19420,10 +19576,6 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                         )
                         assert (
                             breakpoint_state["toolsBottom"]
-                            <= breakpoint_state["positionTop"]
-                        )
-                        assert (
-                            breakpoint_state["positionBottom"]
                             <= breakpoint_state["filterLabelTop"]
                         )
                         assert (
@@ -19439,7 +19591,23 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             == expected_commands
                         )
                         assert breakpoint_state["searchFormVisible"] is True
+                        # filterLabelVisible alone is a trap, not a check: see
+                        # the comment above the equivalent assertion earlier
+                        # in this file. Keep it as an explicit non-null/
+                        # truthiness guard -- toolsBottom <= filterLabelTop
+                        # above depends on filterLabelTop being non-null --
+                        # and add real painted-size checks alongside it.
                         assert breakpoint_state["filterLabelVisible"] is True
+                        assert breakpoint_state["filterLabelWidth"] >= 40, (
+                            breakpoint_state
+                        )
+                        assert breakpoint_state["filterLabelHeight"] >= 10, (
+                            breakpoint_state
+                        )
+                        assert breakpoint_state["filterLabelClipPath"] in {
+                            "none",
+                            "",
+                        }, breakpoint_state
                         assert breakpoint_state["filterVisible"] is True
                         assert breakpoint_state["filterEmptyVisible"] is False
                         assert breakpoint_state["filterLeft"] >= (
@@ -19464,8 +19632,9 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             breakpoint_state["mapRight"] + 1
                         )
                         assert breakpoint_state["commandListMinWidth"] == "0px"
+                        # Task 4: command tiles moved from two columns to four.
                         assert (
-                            len(breakpoint_state["commandGridColumns"].split()) == 2
+                            len(breakpoint_state["commandGridColumns"].split()) == 4
                         )
                         assert all(
                             item["writingMode"] == "horizontal-tb"
@@ -19515,9 +19684,10 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                             and 14 <= command["iconHeight"] <= 22
                             for command in breakpoint_state["commands"]
                         )
+                        # Task 4 requirements change: "OpenDyslexic" -> "Font".
                         page.locator(
                             ".raya-course-rail-command",
-                            has_text="OpenDyslexic",
+                            has_text="Font",
                         ).focus()
                         focused_command_sizes = page.evaluate(
                             """() => Array.from(document.querySelectorAll(
@@ -19620,16 +19790,10 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                       bottom: rect.bottom,
                                     }));
                                   const linkStyle = getComputedStyle(link);
-                                  const badgeStyle = getComputedStyle(link, '::before');
-                                  const number = (value) => Number.parseFloat(value) || 0;
-                                  const badgeClearance = linkBox.left
-                                    + number(linkStyle.paddingLeft)
-                                    + number(badgeStyle.minWidth)
-                                    + number(badgeStyle.paddingLeft)
-                                    + number(badgeStyle.paddingRight)
-                                    + number(badgeStyle.borderLeftWidth)
-                                    + number(badgeStyle.borderRightWidth)
-                                    + number(badgeStyle.marginRight);
+                                  const renderedLines = Math.round(
+                                    link.clientHeight
+                                      / parseFloat(linkStyle.lineHeight)
+                                  );
                                   return {
                                     label: link.getAttribute('data-raya-map-label'),
                                     linkLeft: linkBox.left,
@@ -19637,14 +19801,12 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                     rowLeft: rowBox.left,
                                     rowRight: rowBox.right,
                                     disclosureRight: disclosureBox.right,
-                                    badgeClearance,
                                     textRects,
+                                    renderedLines,
                                   };
                                 });
                               return {
                                 viewportWidth: window.innerWidth,
-                                listClientWidth: list.clientWidth,
-                                listScrollWidth: list.scrollWidth,
                                 scrollLeft,
                                 scrollRight,
                                 links,
@@ -19657,17 +19819,12 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                         for link in tree["links"]:
                             assert link["textRects"]
                             assert link["disclosureRight"] <= link["linkLeft"] + 1
-                            for index, rect in enumerate(link["textRects"]):
+                            for rect in link["textRects"]:
                                 if (
                                     rect["left"] < tree["scrollLeft"] - 1
                                     or rect["right"] > tree["scrollRight"] + 1
                                     or rect["left"] < link["linkLeft"] - 1
                                     or rect["right"] > link["linkRight"] + 1
-                                    or (
-                                        index == 0
-                                        and rect["left"]
-                                        < link["badgeClearance"] - 1
-                                    )
                                     or rect["right"] > link["rowRight"] + 1
                                 ):
                                     clipped.append(
@@ -19676,29 +19833,26 @@ def test_render_fixture_structural_course_tree_labels_wrap_inside_scrollport(
                                             "linkLeft": link["linkLeft"],
                                             "linkRight": link["linkRight"],
                                             "rowRight": link["rowRight"],
-                                            "badgeClearance": link["badgeClearance"],
                                             "textRect": rect,
                                         }
                                     )
-                        overflow = {
-                            "clientWidth": tree["listClientWidth"],
-                            "scrollWidth": tree["listScrollWidth"],
-                        }
-                        problems[viewport["width"]] = {
-                            "clipped": clipped,
-                            "overflow": overflow
-                            if tree["listScrollWidth"] > tree["listClientWidth"] + 1
-                            else None,
-                        }
-                        assert any(
-                            len(link["textRects"]) > 1 for link in tree["links"]
-                        ), repr(tree["links"])
+                        # The "overflow" field this block used to derive from
+                        # listScrollWidth > listClientWidth + 1 is gone:
+                        # overflow-x: hidden on the list forces that
+                        # comparison to equality regardless of content, so it
+                        # was tautologically None. Horizontal containment of
+                        # an unbroken token is covered by the scrollWidth <=
+                        # clientWidth assertion in
+                        # test_render_fixture_course_map_keeps_emergency_breaks_for_long_labels
+                        # instead.
+                        problems[viewport["width"]] = clipped
+                        # Design inverts this: the column is wide enough that fixture labels no
+                        # longer need to wrap. Assert none exceeds the two-line clamp instead.
+                        for link in tree["links"]:
+                            assert link["renderedLines"] <= 2, link
                     finally:
                         page.close()
-                assert problems == {
-                    1440: {"clipped": [], "overflow": None},
-                    894: {"clipped": [], "overflow": None},
-                }
+                assert problems == {1440: [], 894: []}
             finally:
                 browser.close()
     finally:
@@ -21029,6 +21183,8 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                               height: Math.round(buttonBox.height),
                               labelClientWidth: label?.clientWidth || 0,
                               labelScrollWidth: label?.scrollWidth || 0,
+                              buttonScrollWidth: button.scrollWidth,
+                              buttonClientWidth: button.clientWidth,
                             };
                           });
                           return {
@@ -21042,22 +21198,42 @@ def test_render_fixture_tablet_keeps_course_map_and_learning_rail_inline(
                               document.querySelector('#raya-course-map')
                                 .getBoundingClientRect().bottom
                             ),
+                            viewportHeight: window.innerHeight,
                             labelsWithoutTextRoom: labels.filter(
                               (item) => item.labelClientWidth < 20
+                            ),
+                            labelsClipped: labels.filter(
+                              (item) => item.buttonScrollWidth
+                                > item.buttonClientWidth + 1
                             ),
                           };
                         }"""
                     )
                     assert tools["visibleCount"] >= 7
                     assert tools["minWidth"] >= 28
-                    assert tools["mapHeight"] >= 736
-                    # At >= 894 the expanded map uses the base position:
-                    # sticky rule (top: 1rem, max-height: calc(100vh - 2rem))
-                    # instead of the old fixed/top:0.75rem chrome, so the
-                    # settled bottom edge moved from 756 to 752 (16 top +
-                    # 736 height). 748 allows minor sub-pixel variance.
-                    assert tools["mapBottom"] >= 748
+                    # Not "fills the column": .raya-course-map has
+                    # align-self:start and no height, so it renders at natural
+                    # content height under max-height:calc(100vh - 2rem). On
+                    # this 6-page fixture the pre-density chrome and indent
+                    # were only incidentally enough to reach that cap; the
+                    # density work legitimately drops the rail below it. "The
+                    # rail reaches its cap" is asserted on the 41-page tree in
+                    # tests/e2e/test_rail_density.py::
+                    # test_density_fixture_renders_a_deep_wide_map. This floor
+                    # only guards against a degenerate/collapsed rail.
+                    assert tools["mapHeight"] >= 400
+                    assert tools["mapBottom"] <= tools["viewportHeight"]
                     assert tools["labelsWithoutTextRoom"] == []
+                    # Task 4: a narrow-but-unclipped label must not read as
+                    # passing. The label itself is a shrink-to-fit flex item
+                    # that grows past the tile rather than being clamped, so
+                    # when a caption doesn't fit it's the BUTTON
+                    # (.raya-course-rail-command) whose scrollWidth exceeds
+                    # its clientWidth, not the label's -- comparing the
+                    # label's own scrollWidth/clientWidth was vacuous
+                    # (always equal). Measure the button so a truncated
+                    # caption fails distinctly from a merely narrow one.
+                    assert tools["labelsClipped"] == []
 
                     page.click("[data-raya-course-map-collapse]")
                     page.wait_for_function(
@@ -21576,9 +21752,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                           const regionTitle = document.querySelector(
                             '#raya-course-map > .raya-course-map-header > .raya-region-title'
                           );
-                          const position = document.querySelector(
-                            '#raya-course-map > .raya-course-map-header > .raya-page-position'
-                          );
                           const tools = document.querySelector('.raya-course-rail-tools');
                           const searchForm = document.querySelector(
                             '.raya-course-rail-tools .raya-command-search-form'
@@ -21651,9 +21824,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                             regionTitleVisible: !!regionTitle
                               && regionTitle.getClientRects().length > 0
                               && getComputedStyle(regionTitle).display !== 'none',
-                            positionVisible: !!position
-                              && position.getClientRects().length > 0
-                              && getComputedStyle(position).display !== 'none',
                             toolsHeight: Math.round(toolsBox?.height || 0),
                             searchFormVisible: !!searchForm
                               && searchForm.getClientRects().length > 0
@@ -21696,7 +21866,6 @@ def test_render_fixture_mobile_course_map_drawer_has_comfort_chrome(
                     assert state["gripVisible"] is True
                     assert state["closeLabel"] == "Close course map"
                     assert state["regionTitleVisible"] is False
-                    assert state["positionVisible"] is False
                     assert state["toolsHeight"] <= 220
                     assert state["searchFormVisible"] is True
                     assert state["visibleMapToolCount"] == 0

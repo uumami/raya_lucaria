@@ -1285,7 +1285,7 @@ def _render_course_map_tools(
                 href=schedule_href,
                 aria_label=schedule_label,
                 icon="schedule",
-                label="Schedule",
+                label="Plan",
                 tooltip=schedule_label,
             ),
             _render_command_button(
@@ -1306,7 +1306,7 @@ def _render_course_map_tools(
                 class_name="raya-course-rail-command raya-font-toggle",
                 aria_label="Toggle OpenDyslexic font",
                 icon="font",
-                label="OpenDyslexic",
+                label="Font",
                 aria_pressed="false",
             ),
             "</div>",
@@ -2165,10 +2165,21 @@ def _render_course_map(
         if direct_task_count
         else "Open official tasks"
     )
+    # WCAG 2.5.3 Label in Name: the rail's visible caption for this control
+    # is "Plan" (shortened from "Schedule" to fit the four-column rail
+    # tile), so the accessible name must contain that exact word. The word
+    # is added, not substituted: "official" stays so the label keeps its
+    # symmetry with its siblings ("Open official practice", "Open official
+    # tasks") and with the contract's name for the workspace ("Official
+    # Schedule"). This aria-label is only consumed by the rail
+    # (_render_course_map_tools); the top command bar and discovery
+    # workspace bar keep their own "Open official schedule" labels
+    # alongside an unshortened "Schedule" caption, since those tiles are
+    # 120px+ wide and unaffected.
     schedule_aria = (
-        f"Open official schedule, {direct_dated_task_count} dated"
+        f"Open official schedule plan, {direct_dated_task_count} dated"
         if direct_dated_task_count
-        else "Open official schedule"
+        else "Open official schedule plan"
     )
     tools_html = _render_course_map_tools(
         search_href=search_href,
@@ -2200,7 +2211,6 @@ def _render_course_map(
     body_html = "\n".join(
         [
             tools_html,
-            f'<p class="raya-page-position">{position}</p>' if position else "",
             '<label class="raya-course-map-filter-label" for="raya-course-map-filter">Filter map</label>',
             (
                 '<input id="raya-course-map-filter" '

@@ -646,9 +646,21 @@ def test_course_map_tree_keeps_usable_height_on_short_viewports(tmp_path):
                     # A tree window smaller than this cannot show even a few
                     # rows and reads as "scrolling does nothing".
                     assert geo["h"] >= 160, (height, geo)
-                    # The tree keeps its own contained scroll at every height.
+                    # The tree keeps its own scroll window at every height.
                     assert geo["overflowY"] == "auto", (height, geo)
-                    assert geo["overscroll"] == "contain", (height, geo)
+                    # overscroll-behavior:contain was deliberately removed
+                    # from .raya-course-map-list (2026-07-29
+                    # reader-rail-density, Task 5): once the rail's fixed
+                    # chrome got short enough, a short course's tree could
+                    # fit without overflowing, and a non-overflowing
+                    # overflow:auto + overscroll-behavior:contain element
+                    # still gets swallowed by Chrome on wheel -- reintroducing
+                    # exactly "scrolling does nothing", the failure mode this
+                    # test exists to guard against. The real, user-facing
+                    # property (no dead wheel zones, on both a tree that
+                    # fits and one that overflows) is now enforced by
+                    # tests/e2e/test_rail_density.py::
+                    # test_wheel_over_any_rail_region_moves_something.
                     page.close()
             finally:
                 browser.close()

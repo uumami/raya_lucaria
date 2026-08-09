@@ -240,3 +240,9 @@ Usa `raya preview <course>` para revisar localmente paginas estaticas generadas.
 La documentacion actual tambien es un curso de docs renderizable. Edita las paginas legibles en `docs/foundation/` y `docs/guides/`, manten alineado `docs/render-content/` para el orden renderizado, y trata `docs/artifact/` como output generado e ignorado. Usa `raya validate docs`, `raya build docs` y tests static-read-path cuando cambies el rendering de documentacion.
 
 Para cambios sustanciales, declara el impacto de documentacion para colaboradores, profesores, estudiantes y agentes. Si cambia la documentacion de rol, manten separadas las paginas en ingles y espanol.
+
+## Publicar cursos independientes
+
+Usa [Publicar Cursos Independientes](raya:docs-guides-es-colaboradores-publicar-cursos)
+cuando un equipo de curso quiera entrega opcional con GitHub Pages sin volver al
+proveedor parte del contrato del curso.

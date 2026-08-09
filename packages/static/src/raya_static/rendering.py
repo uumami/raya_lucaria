@@ -4004,9 +4004,17 @@ html[data-raya-shell-ready="true"] .raya-learning-shell {
   align-self: start;
   grid-area: course-map;
   max-height: calc(100vh - 2rem);
+  /* No overscroll-behavior here. The frame declares overflow:auto as a
+     relief valve for enlarged root fonts, but normally scrollHeight ==
+     clientHeight. Chrome still treats it as a scroll container, so
+     `contain` swallowed every wheel gesture over the header, tools row and
+     filter -- 41% of the rail where nothing moved. Containment belongs on
+     .raya-course-map-list, which actually scrolls. */
+  /* No scrollbar-gutter either: it reserved ~15px in a frame that almost
+     never scrolls, costing 15px of label column. It is kept on
+     .raya-course-map-list, the real scroller, so the tree's scrollbar does
+     not shift labels. Must stay symmetric with .raya-learning-rail. */
   overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-course-map {
   transition: border-color 180ms ease, box-shadow 180ms ease, max-height 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
@@ -4024,9 +4032,11 @@ html[data-raya-shell-ready="true"] .raya-course-map {
   grid-area: learning-rail;
   font-size: calc(1rem * var(--raya-reader-text-scale, 1));
   max-height: calc(100vh - 2rem);
+  /* No scrollbar-gutter: symmetric with .raya-course-map. Both rail
+     headers are sized through one shared rule, so an asymmetric gutter
+     breaks header width parity by 15px. */
   overflow: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 html[data-raya-shell-ready="true"] .raya-learning-rail {
   transition: border-color 180ms ease, box-shadow 180ms ease, opacity 180ms ease, transform 220ms ease, width 220ms ease;
@@ -4120,13 +4130,6 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
     min-height: 3.9375rem;
   }
 }
-.raya-course-map > .raya-page-position {
-  color: var(--raya-color-muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 0.35rem;
-}
 .raya-learning-rail-body {
   display: grid;
   gap: 0;
@@ -4203,8 +4206,20 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-height: 0;
   display: grid;
   gap: 0.15rem;
+  /* No overscroll-behavior here either. Containment is only safe on an
+     element guaranteed to overflow, and this list is not guaranteed to:
+     once the rail's fixed chrome is short enough (Task 5,
+     2026-07-29-reader-rail-density, freed ~57.6px by dropping the
+     duplicated page-position paragraph), a short course's tree can fit
+     without scrolling. A non-overflowing overflow:auto element with
+     overscroll-behavior:contain still gets treated as a scroll container
+     by Chrome, so `contain` swallows the wheel gesture over it entirely --
+     the same mechanism .raya-course-map itself was fixed for above. What
+     we give up: scroll chaining is no longer blocked at the end of a long
+     index, so the page keeps scrolling once the tree bottoms out. That is
+     standard behaviour on most sites and strictly better than a dead
+     control. */
   overflow: auto;
-  overscroll-behavior: contain;
   padding-right: 0.2rem;
   scrollbar-gutter: stable;
 }
@@ -4220,13 +4235,26 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   min-width: 0;
   width: 100%;
 }
-.raya-course-rail-search .raya-command-search-input,
-.raya-course-rail-search .raya-command-search-submit {
-  min-height: 2.25rem;
-}
+/* The rail's search controls are NOT shrunk here. .raya-command-search-input
+   sets an explicit `height: 2.5rem`, and .raya-command-search-submit sets
+   both `height: 2.5rem` and `min-height: 2.5rem` (see the base rules above).
+   An explicit `height` only defers to `min-height` when `min-height` is
+   *larger* than it -- min-height raises a floor, it never caps -- so a
+   smaller `min-height` here has no visible effect; both controls render at
+   a constant 40px regardless. Actually shrinking them would mean touching
+   those shared base classes, which .raya-top-command-bar also uses, so
+   that is deliberately out of scope for this task. */
 .raya-course-rail-command-list {
   display: grid;
   gap: 0.3125rem;
+  /* Base (mobile/drawer, <__RAYA_STRUCTURAL_PX__px): stays two columns.
+     Below that width .raya-course-rail-command keeps its row layout (icon
+     beside label, not the caption-under-glyph column layout the
+     >=__RAYA_STRUCTURAL_PX__px override below switches to), so four narrow
+     columns there would force the label to wrap across many lines instead
+     of measuring wider. Four columns is a desktop/tablet density change,
+     not a mobile drawer one -- see the override next to the caption layout
+     further down this file. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .raya-course-rail-command {
@@ -4260,9 +4288,9 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   background: color-mix(in srgb, currentColor 12%, transparent);
   border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   flex: 0 0 auto;
-  height: 0.9375rem;
+  height: 1.25rem;
   padding: 0.1rem;
-  width: 0.9375rem;
+  width: 1.25rem;
 }
 .raya-course-rail-command .raya-command-label {
   display: inline;
@@ -4271,30 +4299,6 @@ html[data-raya-shell-ready="true"] .raya-learning-rail {
   line-height: 1.2;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-.raya-course-rail-command.raya-command-search {
-  color: var(--raya-color-accent);
-}
-.raya-course-rail-command.raya-command-graph {
-  color: color-mix(in srgb, var(--raya-color-accent) 78%, var(--raya-color-text));
-}
-.raya-course-rail-command.raya-command-practice {
-  color: var(--raya-color-success);
-}
-.raya-course-rail-command.raya-command-tasks {
-  color: var(--raya-color-warning);
-}
-.raya-course-rail-command.raya-command-schedule {
-  color: color-mix(in srgb, var(--raya-color-warning) 56%, var(--raya-color-text));
-}
-.raya-course-rail-command.raya-command-context {
-  color: color-mix(in srgb, var(--raya-color-success) 72%, var(--raya-color-accent));
-}
-.raya-course-rail-command.raya-text-size-toggle {
-  color: var(--raya-color-text);
-}
-.raya-course-rail-command.raya-font-toggle {
-  color: color-mix(in srgb, var(--raya-color-accent) 54%, var(--raya-color-text));
 }
 .raya-course-map-close {
   background: color-mix(in srgb, var(--raya-color-accent-soft) 72%, var(--raya-color-surface));
@@ -5043,9 +5047,13 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   padding-left: 0;
 }
 .raya-course-map [data-raya-map-children] {
+  /* 8px per level, not 22.6px. At depth 3 the old margin+padding+border
+     consumed 67.8px of a 191px column, which is why every label wrapped.
+     The 1px guide border stays -- it is the only visual hierarchy cue left
+     after the indent shrinks. */
   border-left: 1px solid var(--raya-color-border);
-  margin-left: 0.7rem;
-  padding-left: 0.65rem;
+  margin-left: 0.375rem;
+  padding-left: 0;
 }
 .raya-course-map-node[hidden],
 .raya-course-map [data-raya-map-children][hidden],
@@ -5091,9 +5099,9 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-course-map-filter-label {
   color: var(--raya-color-muted);
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
 }
 .raya-course-map-filter {
   background: var(--raya-color-surface);
@@ -5101,9 +5109,18 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   border-radius: 0.375rem;
   color: var(--raya-color-text);
   font: inherit;
-  margin-bottom: 0.65rem;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.55rem;
+  /* `font: inherit` pulls in body's line-height: 1.6 (25.6px at 16px), which
+     inflates the unconstrained content height to ~35.6px -- taller than the
+     1.75rem/28px min-height floor below. At tall viewports the flex column
+     has slack, so nothing forces a shrink and the box renders at that
+     natural 35.6px, busting the rail's fixed-chrome budget. Setting
+     line-height explicitly makes the box's own content height match its
+     min-height (28px) so it is exactly 28px regardless of how much slack
+     the surrounding flex layout has, not just under space pressure. */
+  line-height: 1.125;
+  margin-bottom: 0.25rem;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.5rem;
   width: 100%;
 }
 .raya-map-filter-empty {
@@ -5129,15 +5146,28 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   border-radius: 999px;
   color: var(--raya-color-muted);
   content: attr(data-raya-map-index);
-  display: inline-flex;
+  /* Hidden at rest: 42px per row of a ~150px column, on 30+ rows, for the
+     reading-order ordinal. Shown on the current row only -- always, never
+     on hover, because a hover reveal reflows the row being read. */
+  display: none;
   flex: 0 0 auto;
   font-size: 0.7rem;
   font-weight: 900;
   justify-content: center;
   line-height: 1;
-  margin-right: 0.45rem;
   min-width: 1.45rem;
   padding: 0.22rem 0.35rem;
+}
+.raya-course-map-list a[aria-current="page"] {
+  padding-left: 1.625rem;
+  position: relative;
+}
+.raya-course-map-list a[aria-current="page"]::before {
+  display: inline-flex;
+  left: 0;
+  margin-right: 0;
+  position: absolute;
+  top: 0.25rem;
 }
 .raya-course-map [data-raya-map-active="ancestor"] > .raya-course-map-node-row a {
   color: var(--raya-color-text);
@@ -6568,17 +6598,20 @@ mjx-container[display="true"] {
   .raya-course-map ol {
     padding-left: 0.75rem;
   }
-  .raya-course-map-list a {
-    font-size: 0.9375rem;
-    line-height: 1.35;
-    padding: 0.24rem 0.28rem 0.24rem 0.35rem;
-  }
+  /* .raya-course-map-list a is deliberately not re-declared in this band.
+     The unconditional `@media (min-width: __RAYA_STRUCTURAL_PX__px)` rule
+     below (search for the next `.raya-course-map-list a` block) already
+     matches every width in this 640-893 band and comes later in source
+     order, so at equal specificity it wins every property it declares here
+     -- font-size, line-height, AND padding, not just the two that happen to
+     carry the same values. A rule here would be fully shadowed at every
+     width from 640 to 893px; verified inert by measuring computed
+     font-size/line-height/padding at 640, 700, 800, 893, 894, and 1440px
+     before and after removing it -- identical at every width. */
   .raya-course-map-list a::before {
     font-size: 0.64rem;
-    margin-right: 0.35rem;
     min-width: 1.3rem;
     padding: 0.18rem 0.3rem;
-    transform: translateY(0.05rem);
   }
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-shell {
     padding-left: 3.75rem;
@@ -6639,8 +6672,7 @@ mjx-container[display="true"] {
   html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-learning-rail-body {
     display: none;
   }
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title,
-  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-page-position {
+  html[data-raya-shell-prepaint="pending"]:not([data-raya-shell-ready="true"]) .raya-course-map .raya-region-title {
     clip: rect(0 0 0 0);
     clip-path: inset(50%);
     height: 1px;
@@ -6696,7 +6728,6 @@ mjx-container[display="true"] {
     display: flex;
     flex-direction: column;
     padding-inline: 0;
-    scrollbar-gutter: stable;
   }
   .raya-learning-rail {
     display: flex;
@@ -6704,7 +6735,6 @@ mjx-container[display="true"] {
     padding-inline: 0;
   }
   .raya-course-map-header,
-  .raya-course-map-body > .raya-page-position,
   .raya-course-map-filter-label,
   .raya-course-map-filter,
   .raya-map-filter-empty,
@@ -6721,6 +6751,7 @@ mjx-container[display="true"] {
     overflow: auto;
     overscroll-behavior: contain;
     padding-inline: var(--raya-space-panel);
+    scrollbar-gutter: stable;
   }
   .raya-course-map-body {
     flex: 1 1 auto;
@@ -6738,17 +6769,66 @@ mjx-container[display="true"] {
        viewports are unaffected: flex grow still sizes the tree above this. */
     min-height: 12rem;
   }
+  .raya-course-map-list a {
+    /* Scoped to >=640: below that, the course-map drawer is a full-width
+       overlay with no horizontal pressure, so labels stay at their larger
+       default size there -- shrinking them would be a readability
+       regression on a touch surface bought for nothing. The two-line clamp
+       below is scoped here for the same reason: below 640 the drawer has
+       room to show the full label, so clamping there would truncate text
+       that would otherwise fit entirely, for no benefit. */
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    /* Restored to 0.25rem (was trimmed to 0.125rem for the in-flow badge:
+       see git history). That trim compensated for the ::before badge's own
+       box (~20.2px) being taller than the 16.9px text line-height, which
+       pushed a genuinely 2-line label's clientHeight over the rounding
+       threshold before padding was even added. The badge is display:none on
+       32 of 33 rows now and contributes no height at all on the current row
+       (absolutely positioned, out of flow), so that no longer happens --
+       measured: with 0.25rem restored, the longest fixture label still
+       renders clientHeight 42px / 2.485 lines (rounds to 2, matches
+       scrollHeight, no clamp truncation) and every rendered row in the
+       41-link density fixture still measures 1 or 2 lines, never 3. */
+    padding: 0.25rem 0 0.25rem 0.5rem;
+    /* Clamp beyond two lines with an ellipsis. `overflow-wrap: break-word`
+       on the unmedia'd base rule above stays -- it is the emergency path
+       keeping a 55-character unbroken identifier inside the rail; the
+       clamp below is orthogonal (line count, not word breaking). */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  /* Nothing is permanently unreadable: the clamp releases on pointer, on
+     keyboard focus, and on the current page. A title attribute was
+     rejected -- not exposed on touch, unreliable for keyboard-only users,
+     and it would add a redundant description announcement on every one of
+     30+ links. */
+  .raya-course-map-list a:hover,
+  .raya-course-map-list a:focus-visible,
+  .raya-course-map-list a[aria-current="page"] {
+    -webkit-line-clamp: unset;
+  }
   .raya-course-rail-tools {
     padding: 0.5rem 0;
   }
   .raya-course-rail-command-list {
     min-width: 0;
+    /* Four per row instead of two: this is the block of fixed rail chrome
+       the tools row costs, and the caption-under-glyph layout below has
+       room to go denser once labels sit under, not beside, the glyph. */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .raya-course-rail-command {
     box-sizing: border-box;
     flex-direction: column;
     gap: 0.125rem;
     justify-content: center;
+    /* WCAG 2.5.8 Target Size (Minimum, 24x24) with margin: four columns in
+       a ~238px content box leaves each tile ~56px wide, so the floor only
+       needs to guarantee the vertical axis. */
+    min-height: 2.5rem;
     min-width: 0;
     overflow: hidden;
     padding: 0.25rem 0;
@@ -6758,9 +6838,6 @@ mjx-container[display="true"] {
     hyphens: none;
     overflow-wrap: normal;
     word-break: normal;
-  }
-  .raya-course-rail-command.raya-font-toggle .raya-command-label {
-    font-size: 0.725rem;
   }
   /* --- rail collapse: appearance (single source) --- */
   /* Collapsed = the header and body are fully removed (display:none, which
