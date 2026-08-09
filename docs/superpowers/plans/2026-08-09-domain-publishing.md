@@ -33,7 +33,7 @@
 
 **Interfaces:** Consumes Namecheap ownership and GitHub user `uumami`. Produces a secure `raya-lucaria` organization and an undelegated Cloudflare zone.
 
-- [ ] **Step 1: Create the GitHub organization**
+- [x] **Step 1: Create the GitHub organization**
 
 The `raya-lucaria` organization already exists at `https://github.com/raya-lucaria` and `uumami` is an owner. Do not create a second organization.
 
@@ -61,7 +61,7 @@ Confirm the GitHub organization exists, Cloudflare reports the zone is awaiting 
 
 **Interfaces:** Consumes the new organization and `uumami/raya_lucaria`. Produces `raya-lucaria/raya-lucaria.github.io`, the organization Pages repository.
 
-- [ ] **Step 1: Inspect the workflow and repository**
+- [x] **Step 1: Inspect the workflow and repository**
 
 Run:
 
@@ -72,7 +72,7 @@ sed -n '1,140p' .github/workflows/deploy.yml
 
 Expected: the repository is public and the existing workflow deploys `docs/artifact/site` with GitHub Pages actions.
 
-- [ ] **Step 2: Transfer the repository**
+- [x] **Step 2: Transfer the repository**
 
 Run with the authenticated `uumami` GitHub CLI session:
 
@@ -87,7 +87,7 @@ git remote set-url origin https://github.com/raya-lucaria/raya_lucaria.git
 git fetch origin --prune
 ```
 
-- [ ] **Step 3: Rename it into the organization Pages repository**
+- [x] **Step 3: Rename it into the organization Pages repository**
 
 In GitHub repository Settings → General → Repository name, rename `raya_lucaria` to `raya-lucaria.github.io`. Then run:
 
@@ -99,7 +99,7 @@ gh repo view raya-lucaria/raya-lucaria.github.io --json nameWithOwner,url,isPriv
 
 Expected: the remote resolves and GitHub reports a public `raya-lucaria/raya-lucaria.github.io` repository.
 
-- [ ] **Step 4: Enable and verify root Pages deployment**
+- [x] **Step 4: Enable and verify root Pages deployment**
 
 In repository Settings → Pages, select GitHub Actions as source. Manually run `Deploy Docs to GitHub Pages`; wait for success. Open `https://raya-lucaria.github.io/` in a private browser window and confirm documentation navigation and static assets load.
 
