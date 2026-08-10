@@ -519,6 +519,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_graph_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_id=course_id,
         course_title=str(config["title"]),
         language=str(config["language"]),
         graph_index=graph_index,
@@ -531,6 +532,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_search_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_id=course_id,
         course_title=str(config["title"]),
         language=str(config["language"]),
         graph_index=graph_index,
@@ -543,6 +545,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_practice_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_id=course_id,
         official_by_page=official_by_page,
         course_title=str(config["title"]),
         language=str(config["language"]),
@@ -552,6 +555,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_tasks_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_id=course_id,
         official_by_page=official_by_page,
         course_title=str(config["title"]),
         language=str(config["language"]),
@@ -561,6 +565,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_schedule_surface(
         site_dir=site_dir,
         content_model=content_model,
+        course_id=course_id,
         official_by_page=official_by_page,
         course_title=str(config["title"]),
         language=str(config["language"]),
@@ -904,10 +909,6 @@ def _render_page(
         page.output_path,
         Path(SHELL_RESOURCE_PATH) / SHELL_PREPAINT_SCRIPT_NAME,
     )
-    search_href = _href_with_query(
-        _relative_href(page.output_path, STATIC_SEARCH_PATH.as_posix()),
-        {"q": page.title},
-    )
     graph_href = _href_with_query(
         _relative_href(page.output_path, STATIC_GRAPH_PATH.as_posix()),
         {"page": page.id},
@@ -920,8 +921,6 @@ def _render_page(
             course_map_practice_href,
             {"page": page.id},
         )
-    tasks_href = _relative_href(page.output_path, STATIC_TASKS_PATH.as_posix())
-    schedule_href = _relative_href(page.output_path, STATIC_SCHEDULE_PATH.as_posix())
     math_stylesheet_href = _relative_href(
         page.output_path,
         MATH_STYLESHEET_PATH.as_posix(),
@@ -1036,14 +1035,10 @@ def _render_page(
             '<main id="raya-content" class="raya-learning-shell">',
             _render_course_map(
                 course_title,
-                page,
                 content_model,
                 course_id=course_id,
-                search_href=search_href,
-                graph_href=graph_href,
-                practice_href=course_map_practice_href,
-                tasks_href=tasks_href,
-                schedule_href=schedule_href,
+                from_output_path=page.output_path,
+                current_page=page,
                 official_counts=official_counts,
                 official_objects=official_objects,
                 page_graph_context=page_graph_context,
@@ -1257,7 +1252,16 @@ def _render_course_actions(
     practice_label: str,
     tasks_label: str,
     schedule_label: str,
+    current_workspace: str | None = None,
 ) -> str:
+    def workspace_attrs(kind: str) -> dict[str, str] | None:
+        if current_workspace != kind:
+            return None
+        return {
+            "aria-current": "page",
+            "data-raya-current-workspace": kind,
+        }
+
     actions = [
         _render_tooltip_control(
             _render_command_link(
@@ -1266,6 +1270,7 @@ def _render_course_actions(
                 aria_label="Open course search",
                 icon="search",
                 label="Search",
+                attrs=workspace_attrs("search"),
             ),
             "raya-course-action-search-tooltip",
             "Open course search",
@@ -1277,6 +1282,7 @@ def _render_course_actions(
                 aria_label=graph_label,
                 icon="graph",
                 label="Graph",
+                attrs=workspace_attrs("graph"),
             ),
             "raya-course-action-graph-tooltip",
             graph_label,
@@ -1288,6 +1294,7 @@ def _render_course_actions(
                 aria_label=practice_label,
                 icon="practice",
                 label="Practice",
+                attrs=workspace_attrs("practice"),
             ),
             "raya-course-action-practice-tooltip",
             practice_label,
@@ -1299,6 +1306,7 @@ def _render_course_actions(
                 aria_label=tasks_label,
                 icon="tasks",
                 label="Tasks",
+                attrs=workspace_attrs("tasks"),
             ),
             "raya-course-action-tasks-tooltip",
             tasks_label,
@@ -1310,11 +1318,14 @@ def _render_course_actions(
                 aria_label=schedule_label,
                 icon="schedule",
                 label="Schedule",
+                attrs=workspace_attrs("schedule"),
             ),
             "raya-course-action-schedule-tooltip",
             schedule_label,
         ),
-        _render_tooltip_control(
+    ]
+    if current_workspace is None:
+        actions.append(_render_tooltip_control(
             _render_command_button(
                 class_name="raya-course-action raya-command-context",
                 aria_label="Hide learning context",
@@ -1328,11 +1339,11 @@ def _render_course_actions(
             ),
             "raya-course-action-context-tooltip",
             "Hide learning context",
-        ),
-    ]
+        ))
     return "\n".join(
         [
-            '<section class="raya-course-actions" aria-labelledby="raya-course-actions-title">',
+            '<section class="raya-course-actions" aria-labelledby="raya-course-actions-title" '
+            'data-raya-course-map-tools>',
             '<h2 id="raya-course-actions-title" class="raya-course-section-title">Course</h2>',
             '<div class="raya-course-actions-list">',
             *actions,
@@ -1655,145 +1666,6 @@ def _render_discovery_focus_strip(
             ),
             "</nav>",
             "</section>",
-        ]
-    )
-
-
-def _render_discovery_course_rail(
-    *,
-    content_model: ContentModel,
-    course_title: str,
-    current_workspace: str,
-    from_path: str,
-    graph_index: dict[str, Any] | None = None,
-    official_by_page: dict[str, list[dict[str, Any]]] | None = None,
-) -> str:
-    official_pages = official_by_page or {}
-    official_objects = [
-        item for page_items in official_pages.values() for item in page_items
-    ]
-    task_family = {"assignment", "exam", "project", "task"}
-    task_objects = [
-        item for item in official_objects if str(item.get("type") or "") in task_family
-    ]
-    dated_count = 0
-    for item in task_objects:
-        content = item.get("content")
-        if isinstance(content, dict) and (content.get("due") or content.get("available")):
-            dated_count += 1
-    page_focus_handoffs = "\n".join(
-        [
-            (
-            '<a data-raya-discovery-rail-page-handoff="search" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_SEARCH_PATH.as_posix()), quote=True)}" '
-            'href="#">Search</a>'
-            ),
-            (
-            '<a data-raya-discovery-rail-page-handoff="graph" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_GRAPH_PATH.as_posix()), quote=True)}" '
-            'href="#">Graph</a>'
-            ),
-            (
-            '<a data-raya-discovery-rail-page-handoff="practice" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_PRACTICE_PATH.as_posix()), quote=True)}" '
-            'href="#">Practice</a>'
-            ),
-            (
-            '<a data-raya-discovery-rail-page-handoff="tasks" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_TASKS_PATH.as_posix()), quote=True)}" '
-            'href="#">Tasks</a>'
-            ),
-            (
-            '<a data-raya-discovery-rail-page-handoff="schedule" '
-            f'data-raya-handoff-base="{html.escape(_relative_href(from_path, STATIC_SCHEDULE_PATH.as_posix()), quote=True)}" '
-            'href="#">Schedule</a>'
-            ),
-        ]
-    )
-    page_links = "\n".join(
-        (
-            "<li>"
-            '<a class="raya-discovery-course-page-link" '
-            f'data-raya-discovery-course-page="{html.escape(page.id, quote=True)}" '
-            f'href="{html.escape(_relative_href(from_path, page.output_path), quote=True)}">'
-            f"<span>{html.escape(page.display_label or '')}</span>"
-            f"<strong>{html.escape(page.title)}</strong>"
-            "</a>"
-            "</li>"
-        )
-        for page in content_model.pages[:18]
-    )
-    workspace_links = "\n".join(
-        (
-            '<a class="raya-discovery-workspace-link" '
-            f'data-raya-workspace-link="{html.escape(entry["kind"], quote=True)}" '
-            f'href="{html.escape(_relative_href(from_path, entry["href"]), quote=True)}"'
-            + (
-                ' aria-current="page" data-raya-current-workspace-link="true"'
-                if current_workspace == entry["kind"]
-                else ""
-            )
-            + ">"
-            f"<span>{html.escape(entry['label'])}</span>"
-            f"<em>{html.escape(entry['badge'])}</em>"
-            "</a>"
-        )
-        for entry in _discovery_workspace_entries(
-            current_workspace=current_workspace,
-            page_count=len(content_model.pages),
-            graph_link_count=len((graph_index or {}).get("edges", [])),
-            official_count=len(official_objects),
-            task_count=len(task_objects),
-            dated_count=dated_count,
-        )
-    )
-    return "\n".join(
-        [
-            (
-                '<aside class="raya-discovery-course-rail" '
-                'data-raya-discovery-course-rail aria-label="Course workspace">'
-            ),
-            (
-                '<button class="raya-discovery-course-tab" type="button" '
-                'data-raya-discovery-toggle-rail '
-                'aria-controls="raya-discovery-course-rail-body" '
-                'aria-expanded="true" '
-                'aria-label="Collapse course workspace">Course</button>'
-            ),
-            (
-                '<div id="raya-discovery-course-rail-body" '
-                'class="raya-discovery-course-rail-body" '
-                'data-raya-discovery-course-rail-body aria-hidden="false">'
-            ),
-            '<div class="raya-discovery-course-identity">',
-            f"<h2>{html.escape(course_title)}</h2>",
-            (
-                f'<a href="{html.escape(_relative_href(from_path, "index.html"), quote=True)}">'
-                "Back to course</a>"
-            ),
-            "</div>",
-            '<nav class="raya-discovery-workspace-links" aria-label="Discovery workspaces">',
-            workspace_links,
-            "</nav>",
-            (
-                '<section class="raya-discovery-rail-page-focus" '
-                'data-raya-discovery-rail-page-focus hidden aria-live="polite">'
-            ),
-            "<h3>Focused page</h3>",
-            "<p data-raya-discovery-rail-page-focus-title></p>",
-            (
-                '<p class="raya-discovery-rail-page-handoffs" '
-                'data-raya-discovery-rail-page-handoffs>'
-            ),
-            page_focus_handoffs,
-            "</p>",
-            "</section>",
-            '<nav class="raya-discovery-course-pages" aria-label="Course pages">',
-            "<h3>Course pages</h3>",
-            f"<ol>{page_links}</ol>",
-            "</nav>",
-            "</div>",
-            "</aside>",
         ]
     )
 
@@ -2134,21 +2006,26 @@ def _render_rail_chrome(
 
 def _render_course_map(
     course_title: str,
-    page: ContentPage,
     content_model: ContentModel,
     *,
     course_id: str,
-    search_href: str,
-    graph_href: str,
-    practice_href: str,
-    tasks_href: str,
-    schedule_href: str,
-    official_counts: dict[str, dict[str, int]],
-    official_objects: list[dict[str, Any]],
-    page_graph_context: dict[str, list[dict[str, str]]],
+    from_output_path: str,
+    current_page: ContentPage | None,
+    current_workspace: str | None = None,
+    official_counts: dict[str, dict[str, int]] | None = None,
+    official_objects: list[dict[str, Any]] | None = None,
+    page_graph_context: dict[str, list[dict[str, str]]] | None = None,
 ) -> str:
-    active_path = {crumb.id for crumb in _breadcrumb_pages(page, content_model)}
-    active_path.add(page.id)
+    official_counts = official_counts or {}
+    official_objects = official_objects or []
+    page_graph_context = page_graph_context or {}
+    active_path = (
+        {crumb.id for crumb in _breadcrumb_pages(current_page, content_model)}
+        if current_page is not None
+        else set()
+    )
+    if current_page is not None:
+        active_path.add(current_page.id)
     root_identity = content_model.root_id or course_title
     storage_key = f"raya:course-map-branches:v1:{course_id}"
     home_href: str | None = None
@@ -2156,7 +2033,7 @@ def _render_course_map(
     if content_model.root_id is not None:
         home_page = _course_home_page(content_model)
         if home_page is not None:
-            home_href = _relative_href(page.output_path, home_page.output_path)
+            home_href = _relative_href(from_output_path, home_page.output_path)
             header_home_html = _render_tooltip_control(
                 _render_rail_home_link(home_href),
                 "raya-course-map-home-tooltip",
@@ -2170,7 +2047,7 @@ def _render_course_map(
             for child_id in child_ids
             if child_id in content_model.pages_by_id
         ]
-        href = _relative_href(page.output_path, target.output_path)
+        href = _relative_href(from_output_path, target.output_path)
         structural_label = _course_map_structural_label(target)
         nav_title = target.nav_title
         show_structural_label = bool(structural_label) and not (
@@ -2183,14 +2060,17 @@ def _render_course_map(
         )
         active_state = (
             "current"
-            if target.id == page.id
+            if current_page is not None and target.id == current_page.id
             else "ancestor"
             if target.id in active_path
             else "inactive"
         )
         expanded = bool(child_pages) and target.id in active_path
         current = (
-            ' aria-current="page"' if target.output_path == page.output_path else ""
+            ' aria-current="page"'
+            if current_page is not None
+            and target.output_path == current_page.output_path
+            else ""
         )
         parent = (
             f'data-raya-map-parent="{html.escape(target.parent_id, quote=True)}" '
@@ -2250,7 +2130,8 @@ def _render_course_map(
                 (
                     "<a "
                     f'href="{html.escape(href)}"{current} '
-                    f'data-raya-map-label="{html.escape(label, quote=True)}">'
+                    f'data-raya-map-label="{html.escape(label, quote=True)}" '
+                    f'data-raya-map-title="{html.escape(target.nav_title, quote=True)}">'
                     f"{number_markup}"
                     '<span class="raya-course-map-node-title">'
                     f"{html.escape(nav_title)}"
@@ -2273,8 +2154,16 @@ def _render_course_map(
         for root_id in root_ids
         if root_id in content_model.pages_by_id
     ]
-    position = _page_position(page, content_model)
-    direct_official_count = sum(official_counts.get(page.id, {}).values())
+    position = (
+        _page_position(current_page, content_model)
+        if current_page is not None
+        else ""
+    )
+    direct_official_count = (
+        sum(official_counts.get(current_page.id, {}).values())
+        if current_page is not None
+        else 0
+    )
     direct_task_count = sum(
         1
         for item in official_objects
@@ -2299,21 +2188,33 @@ def _render_course_map(
             f'{_relationship_count_label(incoming_link_count, "links here", "link here")}'
         ),
     ]
-    course_map_tasks_href = tasks_href
+    search_href = _relative_href(from_output_path, STATIC_SEARCH_PATH.as_posix())
+    graph_href = _relative_href(from_output_path, STATIC_GRAPH_PATH.as_posix())
+    practice_href = _relative_href(from_output_path, STATIC_PRACTICE_PATH.as_posix())
+    if current_page is not None:
+        search_href = _href_with_query(search_href, {"q": current_page.title})
+        graph_href = _href_with_query(graph_href, {"page": current_page.id})
+        if direct_official_count:
+            practice_href = _href_with_query(practice_href, {"page": current_page.id})
+    course_map_tasks_href = _relative_href(from_output_path, STATIC_TASKS_PATH.as_posix())
     if direct_task_count:
         course_map_tasks_href = _href_with_query(
             course_map_tasks_href,
-            {"page": page.id},
+            {"page": current_page.id},
         )
-    course_map_schedule_href = schedule_href
+    course_map_schedule_href = _relative_href(
+        from_output_path, STATIC_SCHEDULE_PATH.as_posix()
+    )
     if direct_dated_task_count:
         course_map_schedule_href = _href_with_query(
             course_map_schedule_href,
-            {"page": page.id},
+            {"page": current_page.id},
         )
     graph_aria = (
         "Open course graph, "
         + ", ".join([_count_label(direct_link_count, "link"), *graph_detail_badges])
+        if current_page is not None
+        else "Open course graph"
     )
     practice_aria = (
         f"Open official practice, {direct_official_count} official"
@@ -2340,6 +2241,7 @@ def _render_course_map(
         practice_label=practice_aria,
         tasks_label=tasks_aria,
         schedule_label=schedule_aria,
+        current_workspace=current_workspace,
     )
     close_button_html = (
         '<button class="raya-course-map-close" type="button" '
@@ -3539,6 +3441,7 @@ def _render_compact_command_link(
     icon: str,
     label: str,
     tooltip: str,
+    attrs: dict[str, str] | None = None,
 ) -> str:
     return _render_command_link(
         class_name=class_name,
@@ -3546,6 +3449,7 @@ def _render_compact_command_link(
         aria_label=aria_label,
         icon=icon,
         label=label,
+        attrs=attrs,
     ).replace(
         ">",
         f' data-raya-command-tooltip="{html.escape(tooltip, quote=True)}">',
@@ -5322,10 +5226,28 @@ def _graph_link_counts(page_id: str, graph_index: dict[str, Any]) -> dict[str, i
     }
 
 
+def _workspace_shell_resource_hrefs(from_output_path: str) -> tuple[str, str, str]:
+    return (
+        _relative_href(
+            from_output_path,
+            f"{ACCESSIBILITY_RESOURCE_PATH}/{COMFORT_PREPAINT_JS_NAME}",
+        ),
+        _relative_href(
+            from_output_path,
+            Path(SHELL_RESOURCE_PATH) / SHELL_PREPAINT_SCRIPT_NAME,
+        ),
+        _relative_href(
+            from_output_path,
+            Path(SHELL_RESOURCE_PATH) / SHELL_SCRIPT_NAME,
+        ),
+    )
+
+
 def _write_graph_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
+    course_id: str,
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
@@ -5341,6 +5263,7 @@ def _write_graph_surface(
     graph_path.write_text(
         _render_graph_surface(
             content_model=content_model,
+            course_id=course_id,
             course_title=course_title,
             language=language,
             graph_index=graph_index,
@@ -5357,6 +5280,7 @@ def _write_graph_surface(
 def _render_graph_surface(
     *,
     content_model: ContentModel,
+    course_id: str,
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
@@ -5380,6 +5304,11 @@ def _render_graph_surface(
         STATIC_GRAPH_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    (
+        comfort_prepaint_js_href,
+        shell_prepaint_js_href,
+        shell_js_href,
+    ) = _workspace_shell_resource_hrefs(STATIC_GRAPH_PATH.as_posix())
     discovery_js_href = _relative_href(
         STATIC_GRAPH_PATH.as_posix(),
         Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
@@ -5428,11 +5357,20 @@ def _render_graph_surface(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-mode="workspace" '
+                'data-raya-shell-prepaint="pending" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Course Graph - {html.escape(course_title)}</title>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -5442,21 +5380,19 @@ def _render_graph_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-graph-main">Skip to graph</a>',
-            _render_discovery_command_bar(
-                course_title=course_title,
-                workspace_label="Graph workspace",
+            _render_mobile_course_map_opener(),
+            '<div class="raya-learning-shell raya-workspace-learning-shell">',
+            _render_course_map(
+                course_title,
+                content_model,
+                course_id=course_id,
+                from_output_path=STATIC_GRAPH_PATH.as_posix(),
+                current_page=None,
                 current_workspace="graph",
-                home_href="../../index.html",
-                search_href="../search/index.html",
-                graph_href="index.html",
-                practice_href="../practice/index.html",
-                tasks_href="../tasks/index.html",
-                schedule_href="../schedule/index.html",
             ),
             (
-                '<main id="raya-graph-main" class="raya-graph-page" '
-                'data-raya-graph-page data-raya-discovery-page '
-                'data-raya-discovery-rail-state="expanded">'
+                '<main id="raya-graph-main" class="raya-graph-page raya-workspace-main" '
+                'data-raya-graph-page data-raya-discovery-page>'
             ),
             '<header class="raya-graph-header raya-discovery-header">',
             "<h1>Course Graph</h1>",
@@ -5594,14 +5530,6 @@ def _render_graph_surface(
                 from_path=STATIC_GRAPH_PATH.as_posix(),
             ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            _render_discovery_course_rail(
-                content_model=content_model,
-                course_title=course_title,
-                current_workspace="graph",
-                from_path=STATIC_GRAPH_PATH.as_posix(),
-                graph_index=graph_index,
-                official_by_page=official_by_page,
-            ),
             (
                 '<section class="raya-graph-workspace" '
                 'aria-label="Graph inspection workspace">'
@@ -6156,7 +6084,9 @@ def _render_graph_surface(
             graph_payload,
             "</script>",
             "</main>",
+            "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(graph_js_href)}" defer></script>',
             "</body>",
@@ -6359,6 +6289,7 @@ def _write_search_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
+    course_id: str,
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
@@ -6374,6 +6305,7 @@ def _write_search_surface(
     search_path.write_text(
         _render_search_surface(
             content_model=content_model,
+            course_id=course_id,
             course_title=course_title,
             language=language,
             graph_index=graph_index,
@@ -6390,6 +6322,7 @@ def _write_search_surface(
 def _render_search_surface(
     *,
     content_model: ContentModel,
+    course_id: str,
     course_title: str,
     language: str,
     graph_index: dict[str, Any],
@@ -6413,6 +6346,11 @@ def _render_search_surface(
         STATIC_SEARCH_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    (
+        comfort_prepaint_js_href,
+        shell_prepaint_js_href,
+        shell_js_href,
+    ) = _workspace_shell_resource_hrefs(STATIC_SEARCH_PATH.as_posix())
     discovery_js_href = _relative_href(
         STATIC_SEARCH_PATH.as_posix(),
         Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
@@ -6523,11 +6461,20 @@ def _render_search_surface(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-mode="workspace" '
+                'data-raya-shell-prepaint="pending" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Course Search - {html.escape(course_title)}</title>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -6537,21 +6484,19 @@ def _render_search_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-search-main">Skip to search</a>',
-            _render_discovery_command_bar(
-                course_title=course_title,
-                workspace_label="Search workspace",
+            _render_mobile_course_map_opener(),
+            '<div class="raya-learning-shell raya-workspace-learning-shell">',
+            _render_course_map(
+                course_title,
+                content_model,
+                course_id=course_id,
+                from_output_path=STATIC_SEARCH_PATH.as_posix(),
+                current_page=None,
                 current_workspace="search",
-                home_href="../../index.html",
-                search_href="index.html",
-                graph_href="../graph/index.html",
-                practice_href="../practice/index.html",
-                tasks_href="../tasks/index.html",
-                schedule_href="../schedule/index.html",
             ),
             (
-                '<main id="raya-search-main" class="raya-search-page" '
+                '<main id="raya-search-main" class="raya-search-page raya-workspace-main" '
                 'data-raya-search-page data-raya-discovery-page '
-                'data-raya-discovery-rail-state="expanded" '
                 'data-raya-discovery-controls-state="expanded" '
                 'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
@@ -6564,14 +6509,6 @@ def _render_search_surface(
                 from_path=STATIC_SEARCH_PATH.as_posix(),
             ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            _render_discovery_course_rail(
-                content_model=content_model,
-                course_title=course_title,
-                current_workspace="search",
-                from_path=STATIC_SEARCH_PATH.as_posix(),
-                graph_index=graph_index,
-                official_by_page=official_by_page,
-            ),
             '<section class="raya-search-workspace" aria-label="Search workspace">',
             '<aside class="raya-search-control-panel" aria-label="Search controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -6705,7 +6642,9 @@ def _render_search_surface(
             search_payload,
             "</script>",
             "</main>",
+            "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(search_js_href)}" defer></script>',
             "</body>",
@@ -6828,6 +6767,7 @@ def _write_practice_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -6840,6 +6780,7 @@ def _write_practice_surface(
     practice_path.write_text(
         _render_practice_surface(
             content_model=content_model,
+            course_id=course_id,
             official_by_page=official_by_page,
             course_title=course_title,
             language=language,
@@ -6853,6 +6794,7 @@ def _write_practice_surface(
 def _render_practice_surface(
     *,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -6873,6 +6815,11 @@ def _render_practice_surface(
         STATIC_PRACTICE_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    (
+        comfort_prepaint_js_href,
+        shell_prepaint_js_href,
+        shell_js_href,
+    ) = _workspace_shell_resource_hrefs(STATIC_PRACTICE_PATH.as_posix())
     discovery_js_href = _relative_href(
         STATIC_PRACTICE_PATH.as_posix(),
         Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
@@ -6978,11 +6925,20 @@ def _render_practice_surface(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-mode="workspace" '
+                'data-raya-shell-prepaint="pending" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Official Practice - {html.escape(course_title)}</title>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -6992,21 +6948,19 @@ def _render_practice_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-practice-main">Skip to practice</a>',
-            _render_discovery_command_bar(
-                course_title=course_title,
-                workspace_label="Official practice workspace",
+            _render_mobile_course_map_opener(),
+            '<div class="raya-learning-shell raya-workspace-learning-shell">',
+            _render_course_map(
+                course_title,
+                content_model,
+                course_id=course_id,
+                from_output_path=STATIC_PRACTICE_PATH.as_posix(),
+                current_page=None,
                 current_workspace="practice",
-                home_href="../../index.html",
-                search_href="../search/index.html",
-                graph_href="../graph/index.html",
-                practice_href="index.html",
-                tasks_href="../tasks/index.html",
-                schedule_href="../schedule/index.html",
             ),
             (
-                '<main id="raya-practice-main" class="raya-practice-page" '
+                '<main id="raya-practice-main" class="raya-practice-page raya-workspace-main" '
                 'data-raya-practice-page data-raya-discovery-page '
-                'data-raya-discovery-rail-state="expanded" '
                 'data-raya-discovery-controls-state="expanded" '
                 'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
@@ -7022,13 +6976,6 @@ def _render_practice_surface(
                 from_path=STATIC_PRACTICE_PATH.as_posix(),
             ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            _render_discovery_course_rail(
-                content_model=content_model,
-                course_title=course_title,
-                current_workspace="practice",
-                from_path=STATIC_PRACTICE_PATH.as_posix(),
-                official_by_page=official_by_page,
-            ),
             '<section class="raya-practice-workspace" aria-label="Official practice workspace">',
             '<aside class="raya-practice-control-panel" aria-label="Practice controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -7165,7 +7112,9 @@ def _render_practice_surface(
             practice_payload,
             "</script>",
             "</main>",
+            "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(practice_js_href)}" defer></script>',
             "</body>",
@@ -7252,6 +7201,7 @@ def _write_tasks_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -7264,6 +7214,7 @@ def _write_tasks_surface(
     tasks_path.write_text(
         _render_tasks_surface(
             content_model=content_model,
+            course_id=course_id,
             official_by_page=official_by_page,
             course_title=course_title,
             language=language,
@@ -7277,6 +7228,7 @@ def _write_tasks_surface(
 def _render_tasks_surface(
     *,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -7295,6 +7247,11 @@ def _render_tasks_surface(
         STATIC_TASKS_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    (
+        comfort_prepaint_js_href,
+        shell_prepaint_js_href,
+        shell_js_href,
+    ) = _workspace_shell_resource_hrefs(STATIC_TASKS_PATH.as_posix())
     discovery_js_href = _relative_href(
         STATIC_TASKS_PATH.as_posix(),
         Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
@@ -7400,11 +7357,20 @@ def _render_tasks_surface(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-mode="workspace" '
+                'data-raya-shell-prepaint="pending" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Official Tasks - {html.escape(course_title)}</title>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -7414,21 +7380,19 @@ def _render_tasks_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-tasks-main">Skip to tasks</a>',
-            _render_discovery_command_bar(
-                course_title=course_title,
-                workspace_label="Official tasks workspace",
+            _render_mobile_course_map_opener(),
+            '<div class="raya-learning-shell raya-workspace-learning-shell">',
+            _render_course_map(
+                course_title,
+                content_model,
+                course_id=course_id,
+                from_output_path=STATIC_TASKS_PATH.as_posix(),
+                current_page=None,
                 current_workspace="tasks",
-                home_href="../../index.html",
-                search_href="../search/index.html",
-                graph_href="../graph/index.html",
-                practice_href="../practice/index.html",
-                tasks_href="index.html",
-                schedule_href="../schedule/index.html",
             ),
             (
-                '<main id="raya-tasks-main" class="raya-tasks-page" '
+                '<main id="raya-tasks-main" class="raya-tasks-page raya-workspace-main" '
                 'data-raya-tasks-page data-raya-discovery-page '
-                'data-raya-discovery-rail-state="expanded" '
                 'data-raya-discovery-controls-state="expanded" '
                 'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
@@ -7444,13 +7408,6 @@ def _render_tasks_surface(
                 from_path=STATIC_TASKS_PATH.as_posix(),
             ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            _render_discovery_course_rail(
-                content_model=content_model,
-                course_title=course_title,
-                current_workspace="tasks",
-                from_path=STATIC_TASKS_PATH.as_posix(),
-                official_by_page=official_by_page,
-            ),
             '<section class="raya-tasks-workspace" aria-label="Official tasks workspace">',
             '<aside class="raya-tasks-control-panel" aria-label="Tasks controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -7602,7 +7559,9 @@ def _render_tasks_surface(
             tasks_payload,
             "</script>",
             "</main>",
+            "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(tasks_js_href)}" defer></script>',
             "</body>",
@@ -7616,6 +7575,7 @@ def _write_schedule_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -7628,6 +7588,7 @@ def _write_schedule_surface(
     schedule_path.write_text(
         _render_schedule_surface(
             content_model=content_model,
+            course_id=course_id,
             official_by_page=official_by_page,
             course_title=course_title,
             language=language,
@@ -7641,6 +7602,7 @@ def _write_schedule_surface(
 def _render_schedule_surface(
     *,
     content_model: ContentModel,
+    course_id: str,
     official_by_page: dict[str, list[dict[str, Any]]],
     course_title: str,
     language: str,
@@ -7661,6 +7623,11 @@ def _render_schedule_surface(
         STATIC_SCHEDULE_PATH.as_posix(),
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    (
+        comfort_prepaint_js_href,
+        shell_prepaint_js_href,
+        shell_js_href,
+    ) = _workspace_shell_resource_hrefs(STATIC_SCHEDULE_PATH.as_posix())
     discovery_js_href = _relative_href(
         STATIC_SCHEDULE_PATH.as_posix(),
         Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
@@ -7789,11 +7756,20 @@ def _render_schedule_surface(
     return "\n".join(
         [
             "<!doctype html>",
-            f'<html lang="{html.escape(language)}">',
+            (
+                f'<html lang="{html.escape(language)}" '
+                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                'data-raya-shell-mode="workspace" '
+                'data-raya-shell-prepaint="pending" '
+                'data-raya-course-map="expanded" '
+                'data-raya-course-map-drawer="closed">'
+            ),
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
             f"<title>Official Schedule - {html.escape(course_title)}</title>",
+            f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
+            f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(skin_stylesheet_href)}">',
             f'<link rel="stylesheet" href="{html.escape(accessibility_css_href)}">',
@@ -7803,21 +7779,19 @@ def _render_schedule_surface(
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
             '<a class="raya-skip-link" href="#raya-schedule-main">Skip to schedule</a>',
-            _render_discovery_command_bar(
-                course_title=course_title,
-                workspace_label="Official schedule workspace",
+            _render_mobile_course_map_opener(),
+            '<div class="raya-learning-shell raya-workspace-learning-shell">',
+            _render_course_map(
+                course_title,
+                content_model,
+                course_id=course_id,
+                from_output_path=STATIC_SCHEDULE_PATH.as_posix(),
+                current_page=None,
                 current_workspace="schedule",
-                home_href="../../index.html",
-                search_href="../search/index.html",
-                graph_href="../graph/index.html",
-                practice_href="../practice/index.html",
-                tasks_href="../tasks/index.html",
-                schedule_href="index.html",
             ),
             (
-                '<main id="raya-schedule-main" class="raya-schedule-page" '
+                '<main id="raya-schedule-main" class="raya-schedule-page raya-workspace-main" '
                 'data-raya-schedule-page data-raya-discovery-page '
-                'data-raya-discovery-rail-state="expanded" '
                 'data-raya-discovery-controls-state="expanded" '
                 'data-raya-discovery-context-state="expanded" tabindex="-1">'
             ),
@@ -7833,13 +7807,6 @@ def _render_schedule_surface(
                 from_path=STATIC_SCHEDULE_PATH.as_posix(),
             ),
             '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            _render_discovery_course_rail(
-                content_model=content_model,
-                course_title=course_title,
-                current_workspace="schedule",
-                from_path=STATIC_SCHEDULE_PATH.as_posix(),
-                official_by_page=official_by_page,
-            ),
             '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
             '<aside class="raya-schedule-control-panel" aria-label="Schedule controls panel">',
             '<div class="raya-discovery-panel-header">',
@@ -7991,7 +7958,9 @@ def _render_schedule_surface(
             schedule_payload_text,
             "</script>",
             "</main>",
+            "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
+            f'<script src="{html.escape(shell_js_href)}" defer></script>',
             f'<script src="{html.escape(discovery_js_href)}" defer></script>',
             f'<script src="{html.escape(schedule_js_href)}" defer></script>',
             "</body>",

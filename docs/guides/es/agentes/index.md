@@ -150,15 +150,27 @@ grading, entregas, progreso, dominio, recomendacion o lenguaje de estado del
 estudiante.
 
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
-`.raya-top-command-bar` y que los workspaces de descubrimiento sigan
-renderizando `.raya-discovery-command-bar` como barra de comandos de
-descubrimiento. Verifica que el riel expandido sea de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un
-solo propietario central de scroll vertical nativo y footer fijo. El header
-presenta course-home solo cuando existe un index root. Verifica que la
-navegacion contenga seis acciones planas obligatorias: Search, Graph, Practice, Tasks, Schedule y Context, seguidas por el filtro local Content y el
-arbol. Search debe abrir el workspace generado; Content solo filtra labels del
-mapa. Verifica que el footer contenga posicion estructural, Text size y OpenDyslexic. Desde 640px, verifica que el mini riel reservado de 48px ofrezca course-home cuando exista, `Expand course map` y controles de comodidad
-sincronizados mientras el contenido expandido esta oculto e inerte. Verifica que el mapa del curso use un drawer de telefono de 256px en layouts de telefono. Tambien verifica el mapa del curso expandido
+`.raya-top-command-bar` y que cada workspace de descubrimiento renderice el
+mapa de curso persistente con `shell.js` local, no `.raya-discovery-command-bar`.
+Verifica la accion Map `Hide map` del header estructural por separado de las
+acciones centrales del curso. El header tambien presenta el control course-home
+junto a la accion icono `Hide map`. Los mapas lectores contienen seis acciones
+planas obligatorias: Search, Graph, Practice, Tasks, Schedule y Context; los
+mapas de workspace conservan la navegacion compartida, pero no exponen el
+Context lector. El footer fijo contiene posicion estructural, Text size y
+OpenDyslexic. Verifica que
+los destinos course-home, arbol y workspace usen links relativos generados desde
+la ruta de salida del workspace; solo el mosaico del workspace activo es actual
+y ningun enlace del arbol del curso es actual.
+`[data-raya-course-map-expand]` permanece fuera del body oculto e inerte y usa
+el nombre accesible `Expand course map`. Trata la accion Map del header como un
+control estructural separado de las acciones del body. Verifica que el riel
+expandido sea de 256px hasta 1311px y 288px a partir de 1312px, con header fijo,
+un solo propietario central de scroll vertical nativo y footer fijo. Desde
+640px, el mini riel reservado de 48px ofrece course-home cuando exista,
+`Expand course map` y controles de comodidad mientras el contenido expandido
+esta oculto e inerte. El mapa usa un drawer de telefono de 256px. Tambien
+verifica el mapa del curso expandido
 por defecto, incluida la estructura de mapa jerarquico del curso
 expandido, los numeros estructurales generados del mapa, la orientacion de
 pagina actual dentro del mapa, el comportamiento del filtro del mapa, los links
@@ -378,10 +390,12 @@ cuando el foco esta en un link de resultado visible o una accion de contexto en
 vez del input de busqueda. Los enlaces
 graph-focus de resultados de busqueda deben venir de stable IDs y URLs locales
 generadas del grafo, preservar Enter para abrir la pagina, y evitar lenguaje de
-recomendacion o progreso. Las paginas de descubrimiento Search, Graph, Practice
-y Tasks pueden cargar recursos locales de accesibilidad para Text size y
-`OpenDyslexic`, pero no deben cargar `shell.js`, un toggle de mapa del curso,
-assets externos de workspace ni estado persistente de graph/search/practice/tasks.
+recomendacion o progreso. Los workspaces Search, Graph, Practice, Tasks y
+Schedule deben cargar el mapa de curso persistente y su `shell.js` local,
+manteniendo filtros y foco como estado volatil; no deben cargar assets externos,
+persistir estado de graph/search/practice/tasks, hacer fetch de recursos
+externos ni escribir estado de estudiante, fuente, artifact o preferencias no
+relacionadas.
 Cuando cambie Course Search, verifica subresultados de seccion ademas de
 resultados de pagina. Los records generados pueden apuntar a anchors publicos de
 headings u objetos numerados renderizados, pero no deben incluir TeX crudo,

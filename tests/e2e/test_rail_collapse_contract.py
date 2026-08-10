@@ -1727,3 +1727,69 @@ def test_course_map_navigation_keeps_usable_height_on_short_viewports(tmp_path):
                 browser.close()
     finally:
         handle.close()
+
+
+def test_workspace_course_map_has_one_usable_tree_scroll_region(tmp_path):
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                for width in (1366, 390):
+                    page = browser.new_page(viewport={"width": width, "height": 844})
+                    try:
+                        page.goto(
+                            f"{handle.base_url}/_raya/search/index.html",
+                            wait_until="networkidle",
+                        )
+                        if width == 390:
+                            page.locator(".raya-mobile-course-map-open").focus()
+                            page.keyboard.press("Enter")
+                            page.wait_for_function(
+                                "() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"
+                            )
+                        page.locator(
+                            "#raya-course-map [data-raya-map-node-toggle]"
+                        ).first.click()
+                        regions = page.evaluate(
+                            """() => Array.from(document.querySelectorAll(
+                              '#raya-course-map [data-raya-course-map-navigation]'
+                            ))
+                              .filter((region) => region.checkVisibility())
+                              .map((region) => ({
+                                clientHeight: region.clientHeight,
+                                scrollHeight: region.scrollHeight,
+                                overflowY: getComputedStyle(region).overflowY,
+                              }))"""
+                        )
+                        assert len(regions) == 1, (width, regions)
+                        assert regions[0]["clientHeight"] >= 80, (width, regions)
+                        assert regions[0]["overflowY"] == "auto", (width, regions)
+                        if regions[0]["scrollHeight"] > regions[0]["clientHeight"]:
+                            scroll_top = page.locator(
+                                "#raya-course-map [data-raya-course-map-navigation]"
+                            ).evaluate(
+                                "region => { region.scrollTop = region.scrollHeight; "
+                                "return region.scrollTop; }"
+                            )
+                            assert scroll_top > 0, (width, regions)
+                        overflow = page.evaluate(
+                            "() => Math.ceil(document.documentElement.scrollWidth - innerWidth)"
+                        )
+                        assert overflow <= 1, (width, overflow)
+                    finally:
+                        page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()

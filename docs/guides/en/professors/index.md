@@ -364,3 +364,10 @@ Use `raya preview <course>` to review the generated static site locally before s
 OpenSpec specs describe accepted contracts. Role documentation explains how to work with those contracts, but it does not outrank foundation docs or accepted specs.
 
 Rendered repository documentation is guidance, not course canon. It is built from `docs/raya.yaml` and remains separate from class material and official course artifacts.
+
+Generated Search, Graph, Practice, Tasks, and Schedule workspaces retain the
+persistent Course map so their course navigation stays stable. Its generated
+relative links identify only the active workspace tile as current; reader-only
+Context is absent. Workspace-local filters, results, and focused-page strips
+are temporary, require no external fetch, and must not change course source,
+artifacts, or learner state.

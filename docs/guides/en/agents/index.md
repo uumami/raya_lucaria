@@ -140,15 +140,25 @@ reminder, grading, submission, progress, mastery, recommendation, or
 learner-state language.
 
 When changing the shell, verify reader pages render no `.raya-top-command-bar`
-and discovery workspaces still render `.raya-discovery-command-bar` as a
-discovery command bar. Verify the expanded course rail is 256px through 1311px and 288px from 1312px, with a fixed header,
-one central native vertical scroll owner, and a fixed footer. The header presents
-the course-home control only when an index root exists. Verify the navigation
-owns six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context, followed by the local Content filter and tree. Search must open
-the generated workspace rather than filter the rail; Content only filters map
-labels. Verify the footer holds structural position plus Text size and OpenDyslexic. At 640px and wider, verify the reserved 48px mini rail provides
-course home when available, `Expand course map`, and synchronized comfort
-controls while the expanded content is hidden and inert. Verify a 256px phone drawer is used for the course map on phone-sized layouts.
+and every discovery workspace renders the persistent Course map with local
+`shell.js`, not `.raya-discovery-command-bar`. Verify the structural `Hide map`
+header Map action separately from the central course actions. The header also
+presents the course-home control alongside the `Hide map` icon action. Reader
+maps own six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule,
+and Context; workspace maps preserve the shared navigation but reader-only
+Context is absent. The fixed footer holds structural position plus Text size
+and OpenDyslexic.
+Verify that workspace course-home, tree, and workspace destinations use
+generated relative links from the workspace output path; only the active
+workspace tile is current, and no course-tree link is current.
+Verify `[data-raya-course-map-expand]` remains outside the hidden/inert body and
+uses the accessible name `Expand course map`.
+Verify the expanded course rail is 256px through 1311px and 288px from 1312px,
+with a fixed header, one central native vertical scroll owner, and a fixed
+footer. At 640px and wider, verify the reserved 48px mini rail provides course
+home when available, `Expand course map`, and synchronized comfort controls
+while expanded content is hidden and inert. Verify a 256px phone drawer on
+phone-sized layouts.
 Also verify the expanded course map default, including the expanded hierarchical
 course map structure, generated structural map numbers, current-page map
 orientation, map filter behavior, reader breadcrumbs, compact previous/next
@@ -342,10 +352,11 @@ writing browser storage or changing source authority, including when focus is
 on a visible result link or context action instead of the query input.
 Search result graph-focus links must come from stable page IDs and generated
 local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
-or progress language. Search, Graph, Practice, and Tasks discovery pages may load
-local accessibility resources for Text size and `OpenDyslexic`, but must not
-load `shell.js`, a course-map toggle, external workspace assets, or persisted
-graph/search/practice/tasks state.
+or progress language. Search, Graph, Practice, Tasks, and Schedule workspaces
+must load the persistent Course map's local `shell.js` and map controls while
+keeping filtering and focus volatile; they must not load external workspace
+assets, persist graph/search/practice/tasks state, fetch external resources, or
+write learner, source, artifact, or unrelated preference state.
 
 When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
 Search or Graph. The destination workspace may initially narrow visible public

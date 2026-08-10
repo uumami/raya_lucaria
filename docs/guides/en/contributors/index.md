@@ -237,3 +237,10 @@ Use `raya preview <course>` for local review of generated static pages. Preview 
 Current documentation is also a renderable docs course. Edit the readable pages under `docs/foundation/` and `docs/guides/`, keep `docs/render-content/` aligned for rendered order, and treat `docs/artifact/` as ignored generated output. Use `raya validate docs`, `raya build docs`, and static-read-path tests when changing documentation rendering behavior.
 
 For substantial changes, state the documentation impact for contributors/collaborators, professors, students, and agents. If role documentation changes, keep the English and Spanish pages separate.
+
+Search, Graph, Practice, Tasks, and Schedule use the persistent Course map with
+generated relative links and local shell resources. Review the active workspace
+tile, no current course-tree link, and absent reader-only Context alongside the
+workspace-local filters, results, and focused-page strip. These interactions are
+volatile: they must not fetch external resources or write learner, source,
+artifact, or unrelated preference state.

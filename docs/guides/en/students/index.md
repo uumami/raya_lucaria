@@ -171,13 +171,11 @@ counts when the course has that metadata. They may also label relationship kind
 and direction, such as `Content` and `From this page`, using explicit generated
 graph context only. Use them as a reading map after finishing the page; they are
 not a progress tracker, ranking, or recommendation engine.
-Search, Graph, Practice, Tasks, and Schedule pages use the same static discovery command bar so
-you can return to the course, switch between those workspaces, and adjust page
-comfort without changing reader shell state. Search, Practice, Tasks, and
+Search, Graph, Practice, Tasks, and Schedule pages keep the persistent Course map, so you can return to the course or switch workspaces from the same course navigation. The active workspace tile is current, no course-tree page is current, and reader-only Context is absent. Search, Practice, Tasks, and
 Schedule may also show controls, results, and a context panel on wider screens.
-Those controls are for reading and scanning comfort; the workspaces do not
-store your query, selected node, graph layout, practice filters, or task
-filters as study state.
+Those controls, filters, and page focus are temporary reading and scanning
+state; the workspaces do not store your query, selected node, graph layout,
+practice filters, or task filters as study state or fetch external resources.
 Text filters may tolerate small spelling mistakes when matching public titles,
 tags, summaries, labels, and visible object text. That matching is local page
 behavior, not ranking, personalization, or recommendation.

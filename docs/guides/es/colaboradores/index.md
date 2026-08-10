@@ -253,3 +253,10 @@ Usa `raya preview <course>` para revisar localmente paginas estaticas generadas.
 La documentacion actual tambien es un curso de docs renderizable. Edita las paginas legibles en `docs/foundation/` y `docs/guides/`, manten alineado `docs/render-content/` para el orden renderizado, y trata `docs/artifact/` como output generado e ignorado. Usa `raya validate docs`, `raya build docs` y tests static-read-path cuando cambies el rendering de documentacion.
 
 Para cambios sustanciales, declara el impacto de documentacion para colaboradores, profesores, estudiantes y agentes. Si cambia la documentacion de rol, manten separadas las paginas en ingles y espanol.
+
+Search, Graph, Practice, Tasks y Schedule usan el mapa de curso persistente con
+links relativos generados y recursos locales de shell. Revisa el mosaico del
+workspace activo, ningun enlace actual del arbol del curso y la ausencia del
+Context lector junto con filtros, resultados y la franja de pagina enfocada.
+Estas interacciones son volatiles: no deben hacer fetch de recursos externos ni
+escribir estado de estudiante, fuente, artifact o preferencias no relacionadas.

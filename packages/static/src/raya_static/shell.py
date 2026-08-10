@@ -21,6 +21,7 @@ def shell_resources() -> ShellResources:
 _SHELL_JAVASCRIPT = r"""
 (() => {
   const root = document.documentElement;
+  const workspaceShell = root.dataset.rayaShellMode === "workspace";
   __RAYA_RAIL_DERIVATION__
   const shell = document.querySelector(".raya-learning-shell");
   const map = document.querySelector("#raya-course-map");
@@ -30,8 +31,8 @@ _SHELL_JAVASCRIPT = r"""
   const mapNavigation = document.querySelector("[data-raya-course-map-navigation]");
   const mapCollapseButton = document.querySelector("[data-raya-course-map-collapse]");
   const mapExpandButton = document.querySelector("[data-raya-course-map-expand]");
-  const article = document.querySelector("#raya-article");
-  const skipLink = document.querySelector('.raya-skip-link[href="#raya-article"]');
+  const article = document.querySelector("#raya-article, .raya-workspace-main");
+  const skipLink = document.querySelector(".raya-skip-link");
   const mobileMapOpener = document.querySelector(".raya-mobile-course-map-open");
   const toggleButtons = Array.from(document.querySelectorAll("[data-raya-course-map-toggle]"));
   const learningRail = document.querySelector("#raya-learning-rail");
@@ -345,6 +346,7 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function readerShellStorageKey() {
+    if (workspaceShell) return "";
     const courseId = validCourseId();
     return courseId ? `raya:reader-shell:v1:${courseId}` : "";
   }
@@ -373,6 +375,15 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function effectiveReaderShellState(preference = savedReaderShellPreference()) {
+    if (workspaceShell) {
+      return {
+        courseMap: root.dataset.rayaCourseMap === "collapsed" ? "collapsed" : "expanded",
+        learningRail: "collapsed",
+      };
+    }
+    if (!isStructuralRailShell()) {
+      return { courseMap: "expanded", learningRail: "expanded" };
+    }
     const bands = rayaRailBands();
     const next = preference || {
       courseMap: "expanded",
@@ -787,6 +798,9 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function courseMapBranchStorageKey() {
+    if (workspaceShell) {
+      return "";
+    }
     const courseId = validCourseId();
     const expected = courseId ? `raya:course-map-branches:v1:${courseId}` : "";
     return map.getAttribute("data-raya-course-map-storage-key") === expected
@@ -1076,6 +1090,9 @@ _SHELL_JAVASCRIPT = r"""
     } else if (!query && options.exposeCurrentPath !== false) {
       expandCurrentCourseMapPath({ clearFilter: false });
     }
+    if (!query) {
+      applyWorkspaceCourseMapPageFocus();
+    }
   }
 
   function isVisibleCourseMapElement(element) {
@@ -1230,10 +1247,12 @@ _SHELL_JAVASCRIPT = r"""
 
   function orientCourseMapToCurrentPage(options = {}) {
     const mapList = map.querySelector("#raya-course-map-list");
-    const currentLink = mapList
-      ? mapList.querySelector('a[aria-current="page"]')
+    const orientationLink = mapList
+      ? mapList.querySelector('[data-raya-map-page-focus="true"] a[href]')
+        || mapList.querySelector('a[aria-current="page"]')
       : null;
-    if (!mapList || !currentLink) {
+    const scrollContainer = mapNavigation;
+    if (!mapList || !orientationLink || !scrollContainer) {
       return false;
     }
     if (mapFilter && mapFilter.value && !options.force) {
@@ -1245,9 +1264,77 @@ _SHELL_JAVASCRIPT = r"""
     ) {
       return false;
     }
-    currentLink.scrollIntoView({ block: "nearest", inline: "nearest" });
-    mapNavigation.dataset.rayaCourseMapOriented = "true";
+    const orientWithin = (container) => {
+      const containerRect = container.getBoundingClientRect();
+      const linkRect = orientationLink.getBoundingClientRect();
+      const isVisible =
+        linkRect.top >= containerRect.top && linkRect.bottom <= containerRect.bottom;
+      if (isVisible) {
+        return;
+      }
+      const offset =
+        container.scrollTop +
+        linkRect.top -
+        containerRect.top -
+        container.clientHeight / 2 +
+        orientationLink.offsetHeight / 2;
+      container.scrollTop = Math.max(0, offset);
+      const adjustedContainerRect = container.getBoundingClientRect();
+      const adjustedLinkRect = orientationLink.getBoundingClientRect();
+      if (adjustedLinkRect.top < adjustedContainerRect.top) {
+        container.scrollTop = Math.max(
+          0,
+          container.scrollTop + adjustedLinkRect.top - adjustedContainerRect.top
+        );
+      } else if (adjustedLinkRect.bottom > adjustedContainerRect.bottom) {
+        container.scrollTop = Math.max(
+          0,
+          container.scrollTop + adjustedLinkRect.bottom - adjustedContainerRect.bottom
+        );
+      }
+    };
+    orientWithin(scrollContainer);
+    scrollContainer.dataset.rayaCourseMapOriented = "true";
+    map.dataset.rayaCourseMapOriented = "true";
     return true;
+  }
+
+  function applyWorkspaceCourseMapPageFocus() {
+    map.querySelectorAll('[data-raya-map-page-focus="true"]').forEach((node) => {
+      node.removeAttribute("data-raya-map-page-focus");
+    });
+    delete root.dataset.rayaCourseMapPageFocus;
+    if (!workspaceShell) {
+      return null;
+    }
+    let pageId = "";
+    try {
+      const params = new URLSearchParams(window.location.search || "");
+      pageId = params.get("page") || "";
+    } catch (_error) {
+      pageId = "";
+    }
+    if (!pageId) {
+      return null;
+    }
+    const focusedNode = Array.from(
+      map.querySelectorAll("#raya-course-map-list [data-raya-map-node]")
+    ).find((node) => node.getAttribute("data-raya-map-node") === pageId);
+    if (!focusedNode) {
+      return null;
+    }
+    focusedNode.setAttribute("data-raya-map-page-focus", "true");
+    root.dataset.rayaCourseMapPageFocus = pageId;
+    let ancestor = focusedNode.parentElement
+      ? focusedNode.parentElement.closest("[data-raya-map-node]")
+      : null;
+    while (ancestor && map.contains(ancestor)) {
+      setMapNodeExpanded(ancestor, true, { temporary: true });
+      ancestor = ancestor.parentElement
+        ? ancestor.parentElement.closest("[data-raya-map-node]")
+        : null;
+    }
+    return focusedNode;
   }
 
   function currentCourseMapNodes() {
@@ -1472,6 +1559,9 @@ _SHELL_JAVASCRIPT = r"""
   }
 
   function closeLearningRailDrawer(options = {}) {
+    if (!learningRail || !learningRailBody) {
+      return;
+    }
     root.dataset.rayaLearningRailDrawer = "closed";
     syncLearningRailDrawerState();
     if (options.restoreFocus && learningRailDrawerOpener) {

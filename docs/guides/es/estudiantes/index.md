@@ -188,7 +188,13 @@ enlazada cuando el curso tiene esos metadatos. Tambien pueden etiquetar tipo y
 direccion de relacion, como `Content` y `From this page`, usando solo contexto
 explicito generado del grafo. Usalos como mapa de lectura despues de terminar
 la pagina; no son un registro de avance, ranking ni motor de recomendaciones.
-Las paginas Search, Graph, Practice, Tasks y Schedule usan la misma barra de comandos de descubrimiento para volver al curso, cambiar entre esos workspaces y ajustar comodidad de pagina sin cambiar el estado de la shell lectora. Search, Practice, Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de contexto en pantallas anchas. Esos controles son de comodidad de lectura y escaneo; los workspaces no guardan tu consulta, nodo seleccionado, layout del grafo, filtros de practica, filtros de tareas ni filtros de Schedule como estado de estudio.
+Las paginas Search, Graph, Practice, Tasks y Schedule conservan el mapa de curso persistente para volver al curso o cambiar de workspace desde la misma navegacion. El mosaico del workspace activo es el unico actual, ningun enlace
+del arbol del curso es actual y el Context lector no aparece. Search, Practice,
+Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de
+contexto en pantallas anchas. Esos controles, filtros y foco de pagina son
+temporales: los workspaces no guardan tu consulta, nodo seleccionado, layout del
+grafo, filtros de practica, filtros de tareas ni filtros de Schedule como estado
+de estudio, ni hacen fetch de recursos externos.
 Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
 coincidencia es comportamiento local de la pagina, no ranking, personalizacion

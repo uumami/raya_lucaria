@@ -120,28 +120,12 @@ _DISCOVERY_JAVASCRIPT = r"""
   }
 
   roots.forEach((root) => {
-    const railBody = root.querySelector("[data-raya-discovery-course-rail-body]");
-    const railToggle = root.querySelector("[data-raya-discovery-toggle-rail]");
-    const railPageLinks = Array.from(
-      root.querySelectorAll("[data-raya-discovery-course-page]")
-    );
-    const railPageFocus = root.querySelector("[data-raya-discovery-rail-page-focus]");
-    const railPageFocusTitle = root.querySelector(
-      "[data-raya-discovery-rail-page-focus-title]"
-    );
-    const railPageHandoffs = Array.from(
-      root.querySelectorAll("[data-raya-discovery-rail-page-handoff]")
-    );
     const focusStrip = root.querySelector("[data-raya-discovery-focus-strip]");
     const focusTitle = root.querySelector("[data-raya-discovery-focus-title]");
     const focusPageLink = root.querySelector("[data-raya-discovery-focus-page-link]");
     const focusHandoffs = Array.from(
       root.querySelectorAll("[data-raya-discovery-focus-handoff]")
     );
-    const desktopRailQuery = window.matchMedia
-      ? window.matchMedia("(min-width: 1280px)")
-      : null;
-    let activeRailPage = "";
     function hideFocusStrip() {
       if (!focusStrip) {
         return;
@@ -157,78 +141,30 @@ _DISCOVERY_JAVASCRIPT = r"""
         link.setAttribute("href", "#");
       });
     }
-    function setRailExpanded(expanded) {
-      root.setAttribute(
-        "data-raya-discovery-rail-state",
-        expanded ? "expanded" : "collapsed"
+    const focusedNode = document.querySelector(
+      '#raya-course-map-list [data-raya-map-page-focus="true"]'
+    );
+    if (focusedNode) {
+      const activePage = focusedNode.getAttribute("data-raya-map-node") || "";
+      const focusedLink = focusedNode.querySelector(
+        ":scope > .raya-course-map-node-row a[href]"
       );
-      if (railBody) {
-        railBody.setAttribute("aria-hidden", expanded ? "false" : "true");
-        setPanelFocusable(railBody, expanded);
-      }
-      if (railToggle) {
-        railToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-        railToggle.setAttribute(
-          "aria-label",
-          expanded ? "Collapse course workspace" : "Expand course workspace"
-        );
-      }
-    }
-    function syncRailViewport() {
-      if (desktopRailQuery && !desktopRailQuery.matches) {
-        setRailExpanded(true);
-      }
-    }
-    if (railBody && railToggle) {
-      setRailExpanded(true);
-      railToggle.addEventListener("click", () => {
-        setRailExpanded(
-          root.getAttribute("data-raya-discovery-rail-state") === "collapsed"
-        );
-      });
-      syncRailViewport();
-      if (desktopRailQuery) {
-        if (typeof desktopRailQuery.addEventListener === "function") {
-          desktopRailQuery.addEventListener("change", syncRailViewport);
-        } else if (typeof desktopRailQuery.addListener === "function") {
-          desktopRailQuery.addListener(syncRailViewport);
-        }
-      }
-    }
-    try {
-      activeRailPage = new URLSearchParams(window.location.search || "").get("page") || "";
-    } catch {
-      activeRailPage = "";
-    }
-    if (activeRailPage && railPageLinks.length > 0) {
-      const focused = railPageLinks.find(
-        (link) => link.getAttribute("data-raya-discovery-course-page") === activeRailPage
-      );
-      if (focused) {
-        focused.setAttribute("data-raya-rail-page-focus", "true");
-        const title = focused.querySelector("strong")?.textContent?.trim() || activeRailPage;
-        if (railPageFocusTitle) {
-          railPageFocusTitle.textContent = title;
-        }
-        if (railPageFocus) {
-          railPageFocus.hidden = false;
-        }
-        railPageHandoffs.forEach((link) => {
-          const base = link.getAttribute("data-raya-handoff-base") || "";
-          if (!base) return;
-          link.setAttribute("href", `${base}?page=${encodeURIComponent(activeRailPage)}`);
-        });
-        const pageHref = focused.getAttribute("href") || "#";
+      const title = focusedLink
+        ? focusedLink.getAttribute("data-raya-map-title")
+          || focusedLink.getAttribute("data-raya-map-label")
+          || focusedLink.textContent.trim()
+        : activePage;
+      if (activePage && focusedLink) {
         if (focusTitle) {
           focusTitle.textContent = title;
         }
         if (focusPageLink) {
-          focusPageLink.setAttribute("href", pageHref);
+          focusPageLink.setAttribute("href", focusedLink.getAttribute("href") || "#");
         }
         focusHandoffs.forEach((link) => {
           const base = link.getAttribute("data-raya-handoff-base") || "";
           if (!base) return;
-          link.setAttribute("href", `${base}?page=${encodeURIComponent(activeRailPage)}`);
+          link.setAttribute("href", `${base}?page=${encodeURIComponent(activePage)}`);
         });
         if (focusStrip) {
           focusStrip.hidden = false;

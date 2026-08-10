@@ -479,3 +479,25 @@ def test_role_guides_require_flat_reader_rail_actions() -> None:
     for name, phrases in stale_phrases.items():
         for phrase in phrases:
             assert phrase not in text[name]
+
+    assert "header map action" in text["agent_en"]
+    assert "accion map" in text["agent_es"]
+def test_workspace_course_map_contract_is_documented() -> None:
+    foundation = (
+        ROOT / "docs/foundation/20_learning_renderer_contract.md"
+    ).read_text(encoding="utf-8")
+    assert "persistent Course map" in foundation
+    assert "reader-only Context is absent" in foundation
+    assert "must not fetch external resources" in foundation
+
+    for role in ("contributors", "professors", "students", "agents"):
+        guide = (ROOT / "docs/guides/en" / role / "index.md").read_text(
+            encoding="utf-8"
+        )
+        assert "persistent Course map" in guide, role
+
+    for role in ("colaboradores", "profesores", "estudiantes", "agentes"):
+        guide = (ROOT / "docs/guides/es" / role / "index.md").read_text(
+            encoding="utf-8"
+        )
+        assert "mapa de curso persistente" in guide, role
