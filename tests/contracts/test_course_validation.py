@@ -90,6 +90,32 @@ def test_calendar_rejects_unordered_document_filename(tmp_path: Path) -> None:
     assert any("Unordered calendar document file" == item.message for item in report.diagnostics)
 
 
+@pytest.mark.parametrize(
+    "filename",
+    ["nested/1_term.yaml", "1_term.yml"],
+)
+def test_calendar_rejects_unsupported_document_location_or_suffix(
+    tmp_path: Path,
+    filename: str,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    calendar_path = _write_calendar_document(
+        course,
+        filename,
+        events=[_session_event()],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(
+        item.message == "Calendar documents must be direct .yaml files"
+        and item.path == calendar_path
+        for item in report.diagnostics
+    )
+
+
 def test_calendar_rejects_duplicate_document_ids(tmp_path: Path) -> None:
     course = _copy_minimal_course(tmp_path)
     _set_calendar_timezone(course, "America/Mexico_City")

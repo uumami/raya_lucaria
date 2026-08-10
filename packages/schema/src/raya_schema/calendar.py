@@ -76,7 +76,17 @@ def _read_calendar_documents(
     documents: list[dict[str, Any]] = []
     valid_page_ids = set(content_model.pages_by_id) | set(content_model.pages_by_alias)
 
-    for document_path in sorted(calendar_dir.glob("*.yaml")):
+    for document_path in sorted(path for path in calendar_dir.rglob("*") if path.is_file()):
+        if document_path.parent != calendar_dir or document_path.suffix != ".yaml":
+            report.add_error(
+                "Calendar documents must be direct .yaml files",
+                path=document_path,
+                next_action=(
+                    "Move the document to course/_official/calendar/ "
+                    "and use a .yaml filename"
+                ),
+            )
+            continue
         report.read_file(document_path)
         ordered = parse_ordered_name(document_path.stem)
         source_order = ordered.order if ordered is not None else None
