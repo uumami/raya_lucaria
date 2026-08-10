@@ -138,15 +138,16 @@ def _read_calendar_documents(
 
         document_id = data.get("id")
         if isinstance(document_id, str):
-            if _validate_nonblank_string(
+            normalized_document_id = _validate_identifier(
                 document_id,
-                message="Calendar document ID must not be blank",
+                label="Calendar document ID",
                 path=document_path,
                 field="id",
                 report=report,
-            ):
+            )
+            if normalized_document_id is not None:
                 _report_duplicate(
-                    value=document_id,
+                    value=normalized_document_id,
                     seen=seen_document_ids,
                     message="Duplicate calendar document ID",
                     path=document_path,
@@ -179,25 +180,31 @@ def _read_calendar_documents(
                 )
                 event_id = event.get("id")
                 if isinstance(event_id, str):
-                    event_id_is_valid = _validate_nonblank_string(
+                    normalized_event_id = _validate_identifier(
                         event_id,
-                        message="Calendar event ID must not be blank",
+                        label="Calendar event ID",
                         path=document_path,
                         field=f"events.{index}.id",
                         report=report,
                     )
-                    if event_id_is_valid:
+                    if normalized_event_id is not None:
                         _report_duplicate(
-                            value=event_id,
+                            value=normalized_event_id,
                             seen=seen_event_ids,
                             message="Duplicate calendar event ID",
                             path=document_path,
                             field=f"events.{index}.id",
                             report=report,
                         )
-                        if isinstance(document_id, str) and document_id.strip():
+                        if (
+                            isinstance(document_id, str)
+                            and (normalized_document_id := document_id.strip())
+                        ):
                             _report_duplicate(
-                                value=f"calendar:{document_id}:{event_id}",
+                                value=(
+                                    f"calendar:{normalized_document_id}:"
+                                    f"{normalized_event_id}"
+                                ),
                                 seen=seen_occurrence_ids,
                                 message="Duplicate calendar occurrence ID",
                                 path=document_path,
@@ -384,6 +391,33 @@ def _validate_nonblank_string(
         next_action="Use a non-whitespace value",
     )
     return False
+
+
+def _validate_identifier(
+    value: str,
+    *,
+    label: str,
+    path: Path,
+    field: str,
+    report: ValidationReport,
+) -> str | None:
+    normalized = value.strip()
+    if not normalized:
+        report.add_error(
+            f"{label} must not be blank",
+            path=path,
+            field=field,
+            next_action="Use a non-whitespace value",
+        )
+        return None
+    if normalized != value:
+        report.add_error(
+            f"{label} must not have surrounding whitespace",
+            path=path,
+            field=field,
+            next_action="Remove leading and trailing whitespace",
+        )
+    return normalized
 
 
 def _schema_error_key(error: ValidationError) -> tuple[str, str]:

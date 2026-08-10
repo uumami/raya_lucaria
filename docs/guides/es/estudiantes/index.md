@@ -189,9 +189,10 @@ direccion de relacion, como `Content` y `From this page`, usando solo contexto
 explicito generado del grafo. Usalos como mapa de lectura despues de terminar
 la pagina; no son un registro de avance, ranking ni motor de recomendaciones.
 Las paginas Search, Graph, Practice, Tasks y Calendar conservan el mapa de curso persistente para volver al curso o cambiar de workspace desde la misma navegacion. El mosaico del workspace activo es el unico actual, ningun enlace
-del arbol del curso es actual y el Context lector no aparece. Search, Practice,
-Tasks y Calendar tambien pueden mostrar controles, resultados y un panel de
-contexto en pantallas anchas. Esos controles, filtros y foco de pagina son
+del arbol del curso es actual y el Context lector no aparece. Search, Practice y
+Tasks tambien pueden mostrar controles, resultados y un panel de contexto en
+pantallas anchas. Calendar usa su agenda, grid mensual, filtros y aviso compacto
+de foco de pagina dedicados. Esos controles, filtros y foco de pagina son
 temporales: los workspaces no guardan tu consulta, nodo seleccionado, layout del
 grafo, filtros de practica, filtros de tareas ni filtros de Calendar como estado
 de estudio, ni hacen fetch de recursos externos.
@@ -199,7 +200,7 @@ Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
 coincidencia es comportamiento local de la pagina, no ranking, personalizacion
 ni recomendacion.
-Cuando uno de esos workspaces abre enfocado en una pagina, muestra una franja
+Cuando Search, Graph, Practice o Tasks abre enfocado en una pagina, muestra una franja
 de pagina de curso enfocada cerca de arriba con `Open page`, links a Search,
 Graph, Practice, Tasks y Calendar enfocados en la misma pagina, y `Clear focus`.
 Search, Practice, Tasks y Calendar tambien pueden mostrar un aviso compacto con
@@ -209,7 +210,7 @@ de teclado esta en un resultado visible o una accion de contexto en vez del
 campo de busqueda. La franja y el aviso no son progreso guardado ni una
 recomendacion.
 Los paneles de contexto tambien pueden mostrar links estaticos directos para el
-resultado, objeto, task o item de Calendar activo, como Open page, View graph u
+resultado, objeto o task activo, como Open page, View graph u
 otro workspace enfocado en la misma pagina. Son atajos de navegacion sobre datos
 publicos generados del curso, no recomendaciones ni estado de estudio guardado.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden

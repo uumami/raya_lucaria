@@ -598,3 +598,35 @@ def test_contributor_calendar_guidance_is_explicitly_non_personal_in_en_and_es()
 
     assert "Calendar remains a non-personal-state surface" in contributor_en
     assert "Calendar sigue siendo una superficie sin estado personal" in contributor_es
+
+
+def test_calendar_role_guidance_describes_dedicated_focus_ui() -> None:
+    english_phrase = (
+        "Calendar uses its dedicated agenda, month grid, filters, and compact "
+        "page-focus notice"
+    )
+    spanish_phrase = (
+        "Calendar usa su agenda, grid mensual, filtros y aviso compacto de foco "
+        "de pagina dedicados"
+    )
+    for role in ("contributors", "students", "agents"):
+        guide = (GUIDES / "en" / role / "index.md").read_text(encoding="utf-8")
+        assert english_phrase in " ".join(guide.split()), role
+    for role in ("colaboradores", "estudiantes", "agentes"):
+        guide = (GUIDES / "es" / role / "index.md").read_text(encoding="utf-8")
+        assert spanish_phrase in " ".join(guide.split()), role
+
+    all_english = "\n".join(
+        (GUIDES / "en" / role / "index.md").read_text(encoding="utf-8")
+        for role in ("contributors", "students", "agents")
+    )
+    all_spanish = "\n".join(
+        (GUIDES / "es" / role / "index.md").read_text(encoding="utf-8")
+        for role in ("colaboradores", "estudiantes", "agentes")
+    )
+    assert "Calendar may show a shared focused course page strip" not in all_english
+    assert "Calendar may also show controls, results, and a context panel" not in (
+        all_english
+    )
+    assert "Calendar pueden mostrar una franja compartida" not in all_spanish
+    assert "Tasks y Calendar tambien pueden mostrar controles" not in all_spanish

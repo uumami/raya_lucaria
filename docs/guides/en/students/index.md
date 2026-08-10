@@ -171,15 +171,14 @@ counts when the course has that metadata. They may also label relationship kind
 and direction, such as `Content` and `From this page`, using explicit generated
 graph context only. Use them as a reading map after finishing the page; they are
 not a progress tracker, ranking, or recommendation engine.
-Search, Graph, Practice, Tasks, and Calendar pages keep the persistent Course map, so you can return to the course or switch workspaces from the same course navigation. The active workspace tile is current, no course-tree page is current, and reader-only Context is absent. Search, Practice, Tasks, and
-Calendar may also show controls, results, and a context panel on wider screens.
+Search, Graph, Practice, Tasks, and Calendar pages keep the persistent Course map, so you can return to the course or switch workspaces from the same course navigation. The active workspace tile is current, no course-tree page is current, and reader-only Context is absent. Search, Practice, and Tasks may also show controls, results, and a context panel on wider screens. Calendar uses its dedicated agenda, month grid, filters, and compact page-focus notice.
 Those controls, filters, and page focus are temporary reading and scanning
 state; the workspaces do not store your query, selected node, graph layout,
 practice filters, or task filters as study state or fetch external resources.
 Text filters may tolerate small spelling mistakes when matching public titles,
 tags, summaries, labels, and visible object text. That matching is local page
 behavior, not ranking, personalization, or recommendation.
-When one of those workspaces opens focused on a page, it shows a focused course
+When Search, Graph, Practice, or Tasks opens focused on a page, it shows a focused course
 page strip near the top with `Open page`, same-page links to Search, Graph,
 Practice, Tasks, and Calendar, and `Clear focus`. Search, Practice, Tasks, and
 Calendar may also show a compact notice naming that page and the number of
@@ -188,7 +187,7 @@ static workspace, even when keyboard focus is on a visible result or context
 action instead of the search field. The strip and notice are not saved progress
 or recommendations.
 Context panels may also show direct static links for the active result, object,
-task, or schedule item, such as Open page, View graph, or another workspace
+or task, such as Open page, View graph, or another workspace
 focused on the same page. These are navigation shortcuts over public generated
 course data, not recommendations or saved study state.
 When a page is selected in the graph, connected pages may be highlighted and

@@ -406,12 +406,13 @@ MathJax CHTML, rutas privadas, texto de respuestas/soporte, internos de artifact
 ni lenguaje de estado del estudiante.
 
 Al cambiar Tasks o Calendar, verifica handoffs solo por URL
-`?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
-inicialmente los objetos publicos de la familia task a la pagina solicitada,
-mostrar una franja de pagina de curso enfocada con link de vuelta a la pagina,
-links a Search, Graph, Practice, Tasks y Calendar enfocados en la misma pagina,
-y `Clear focus`; tambien puede mostrar un aviso compacto con el titulo publico
-de la pagina y el conteo visible. Clear y Escape deben ocultar ese aviso y
+`?page=<page-id>` desde Search o Graph. Tasks puede reducir inicialmente los
+objetos publicos de la familia task a la pagina solicitada, mostrar una franja
+de pagina de curso enfocada con link de vuelta a la pagina, links a Search,
+Graph, Practice, Tasks y Calendar enfocados en la misma pagina, y `Clear focus`.
+Calendar usa su agenda, grid mensual, filtros y aviso compacto de foco de pagina
+dedicados; no exijas ahi la franja compartida. Ambos pueden mostrar un aviso
+compacto con el titulo publico de la pagina y el conteo visible. Clear y Escape deben ocultar ese aviso y
 restaurar el workspace estatico completo sin escribir storage del navegador ni
 cambiar la autoridad de fuente. Escape debe funcionar desde links de resultados
 o acciones de contexto enfocados, no solo desde el input de busqueda. Trata el

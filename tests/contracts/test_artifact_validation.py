@@ -193,6 +193,7 @@ def test_calendar_index_validation_rejects_invalid_calendar_semantics(
     ("fault", "expected_field"),
     [
         ("invalid_timezone", "timezone"),
+        ("path_like_timezone", "timezone"),
         ("duplicate_id", "events.1.id"),
         ("inconsistent_kinds", "kinds"),
     ],
@@ -206,6 +207,8 @@ def test_calendar_index_validation_rejects_cross_record_semantic_faults(
     payload = _valid_calendar_payload()
     if fault == "invalid_timezone":
         payload["timezone"] = "Mexico/Imaginary"
+    elif fault == "path_like_timezone":
+        payload["timezone"] = "/usr/share/zoneinfo/UTC"
     elif fault == "duplicate_id":
         payload["events"].append(
             {

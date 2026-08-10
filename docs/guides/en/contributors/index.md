@@ -199,12 +199,13 @@ than recommendations or alternate authority. Search
 result graph-focus links must be generated from stable page IDs and local graph
 URLs only; keep their wording structural, such as `View in graph`. Search and
 Practice discovery workspaces may use control, results, and context regions on
-desktop. Search, Practice, Tasks, and Calendar may show a shared focused course
-page strip for a valid `?page=<page-id>` handoff, with same-page links across
-Search, Graph, Practice, Tasks, and Calendar. Search, Practice, Tasks, and
-Calendar may also show compact page-focus notices in their control regions. The
-strip and notices must hide for missing or invalid page focus and after
-Clear/Escape restores the full workspace. Those regions must stay public,
+desktop. Search, Practice, and Tasks may show a shared focused course page strip
+for a valid `?page=<page-id>` handoff, with same-page links across Search,
+Graph, Practice, Tasks, and Calendar. Calendar uses its dedicated agenda, month
+grid, filters, and compact page-focus notice. Search, Practice, Tasks, and
+Calendar may show compact page-focus notices in their control regions. The
+implemented strip and notices must hide for missing or invalid page focus and
+after Clear/Escape restores the full workspace. Those regions must stay public,
 responsive, and free of stored discovery state.
 
 ```markdown

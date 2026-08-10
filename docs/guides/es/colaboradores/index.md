@@ -217,15 +217,16 @@ sanitizadas para escanear, no recomendaciones ni autoridad alterna. Los
 enlaces graph-focus de resultados de busqueda deben generarse solo desde stable
 IDs y URLs locales del grafo; conserva lenguaje estructural como `View in
 graph`. Los workspaces de descubrimiento Search y Practice pueden usar regiones
-de controles, resultados y contexto en desktop. Search, Practice, Tasks y
-Calendar pueden mostrar una franja compartida de pagina de curso enfocada para
-un handoff valido `?page=<page-id>`, con links a Search, Graph, Practice, Tasks
-y Calendar enfocados en la misma pagina. Search, Practice, Tasks y Calendar
+de controles, resultados y contexto en desktop. Search, Practice y Tasks pueden
+mostrar una franja compartida de pagina de curso enfocada para un handoff valido
+`?page=<page-id>`, con links a Search, Graph, Practice, Tasks y Calendar
+enfocados en la misma pagina. Calendar usa su agenda, grid mensual, filtros y
+aviso compacto de foco de pagina dedicados. Search, Practice, Tasks y Calendar
 tambien pueden mostrar avisos compactos de foco de pagina en sus regiones de
-control. La franja y los avisos deben ocultarse cuando el foco falta o no es
-valido y despues de que Clear/Escape restaura el workspace completo. Esas
-regiones deben quedarse publicas, ser responsivas y no guardar estado de
-descubrimiento.
+control. La franja implementada y los avisos deben ocultarse cuando el foco
+falta o no es valido y despues de que Clear/Escape restaura el workspace
+completo. Esas regiones deben quedarse publicas, ser responsivas y no guardar
+estado de descubrimiento.
 
 ```markdown
 ::: theorem {#main-theorem title="Teorema de ejemplo"}
@@ -266,7 +267,7 @@ Para cambios sustanciales, declara el impacto de documentacion para colaboradore
 Search, Graph, Practice, Tasks y Calendar usan el mapa de curso persistente con
 links relativos generados y recursos locales de shell. Revisa el mosaico del
 workspace activo, ningun enlace actual del arbol del curso y la ausencia del
-Context lector junto con filtros, resultados y la franja de pagina enfocada.
+Context lector junto con los controles implementados de cada workspace.
 Estas interacciones son volatiles: no deben hacer fetch de recursos externos ni
 escribir estado de estudiante, fuente, artifact o preferencias no relacionadas.
 

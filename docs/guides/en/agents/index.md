@@ -406,11 +406,13 @@ fixture. `hint`, `solution`, and `answer` should be native closed `details`
 disclosures by default; they must not require storage, fetch, scoring, external
 assets, or browser-side MathJax.
 
-For discovery workspace page-focus failures, open Search, Practice, Tasks, and
-Calendar with a valid `?page=<page-id>` handoff and verify the first-viewport
+For discovery workspace page-focus failures, open Search, Practice, and Tasks
+with a valid `?page=<page-id>` handoff and verify the first-viewport
 focused course page strip names the public page, links back to the page, links
 to the same page focus across Search, Graph, Practice, Tasks, and Calendar, and
-offers `Clear focus`. Also verify the control region shows a compact page-focus
+offers `Clear focus`. Calendar uses its dedicated agenda, month grid, filters,
+and compact page-focus notice; do not require the shared focus strip there.
+Also verify the control region shows a compact page-focus
 notice with the public page title and visible count where that workspace has one.
 Then verify Clear and Escape hide the notice and restore all visible results or
 objects. Missing or invalid page focus must keep the strip and notice hidden.

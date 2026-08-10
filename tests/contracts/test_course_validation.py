@@ -217,6 +217,34 @@ def test_calendar_rejects_whitespace_only_identifiers_and_titles(
 
 
 @pytest.mark.parametrize(
+    ("document_id", "event_id", "expected_field"),
+    [
+        ("' term '", "session-01", "id"),
+        ("term", " session-01 ", "events.0.id"),
+    ],
+)
+def test_calendar_rejects_identifiers_with_surrounding_whitespace(
+    tmp_path: Path,
+    document_id: str,
+    event_id: str,
+    expected_field: str,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        document_id=document_id,
+        events=[{**_session_event(), "id": event_id}],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == expected_field for item in report.diagnostics)
+
+
+@pytest.mark.parametrize(
     "event",
     [
         {"id": "x", "kind": "meeting", "date": "2026-08-10", "title": "Bad"},

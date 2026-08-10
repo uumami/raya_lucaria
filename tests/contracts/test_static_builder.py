@@ -472,6 +472,36 @@ def test_calendar_no_js_agenda_preserves_source_order_for_equal_times(
     assert agenda.index("First in source") < agenda.index("Second in source")
 
 
+def test_calendar_build_reports_normalized_id_collisions_without_raising(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_first.yaml",
+        events=[_holiday_event()],
+    )
+    second_path = _write_calendar_document(
+        course,
+        "2_second.yaml",
+        events=[{**_holiday_event(), "id": " independence-day "}],
+    )
+    second_path.write_text(
+        second_path.read_text(encoding="utf-8").replace(
+            "id: term\n",
+            "id: ' term '\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert not report.ok
+    assert {"id", "events.0.id"} <= {item.field for item in report.diagnostics}
+
+
 def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
