@@ -1,7 +1,7 @@
 ---
 id: native-course-calendar-design
 title: Native Course Calendar Design
-status: approved
+status: revised after adversarial review
 workflow: superpowers
 created: 2026-08-10
 ---
@@ -9,51 +9,41 @@ created: 2026-08-10
 
 ## Problem
 
-Raya's current Schedule workspace is a dated view of official assignment,
-exam, project, and task metadata. It cannot represent ordinary class sessions,
-holidays, cancelled meetings, or course milestones without misclassifying them
-as tasks. That makes a course calendar incomplete and creates false task
-semantics.
+Raya's Schedule is currently a dated view of official task-family metadata. It
+cannot represent ordinary class sessions, holidays, cancelled meetings, or
+course milestones without misclassifying them as tasks. Legacy FDD and IA
+templates combine those dates successfully, but their CSV, scripts, and
+Eleventy templates are historical material, not framework dependencies.
 
-The legacy FDD and IA course templates demonstrate a useful student experience:
-one calendar combines scheduled class topics, holidays, homework, projects, and
-exams in month and agenda views. Their CSV, preprocessing scripts, and
-Eleventy templates are historical material only; this design adopts the
-behavior through Raya's source and artifact contracts.
+## Goals And Boundaries
 
-## Goals
-
-1. Give every Raya course one official, static, student-facing Calendar.
-2. Let authors enter only sessions, holidays, and milestones that cannot be
-   inferred from existing official learning objects.
-3. Automatically derive assignment, exam, project, and task dates from their
-   validated official metadata without duplicate authoring.
-4. Preserve a portable static artifact with deployment-neutral links, no
-   external fetches, no personal state, and no calendar synchronization.
-5. Keep `/_raya/schedule/` valid while evolving its student-facing experience
-   into Calendar.
-
-## Non-Goals
-
-- Importing legacy CSV files, depending on a spreadsheet, or retaining legacy
-  preprocessing/Eleventy code.
-- Inferring dates from unstructured prose.
-- iCalendar feeds, external calendar synchronization, reminders, notifications,
-  subscriptions, grades, submissions, personal completion state, or analytics.
-- A recurrence language in version one. Explicit session entries are safer for
-  changed topics, closures, make-up classes, and review.
+Every course gets one static student-facing Calendar. Authors enter only
+non-inferable sessions, holidays, cancellations, and milestones; Raya derives
+all dated assignments, exams, projects, and tasks from their validated official
+metadata. The Calendar is not a feed, reminder system, sync adapter, gradebook,
+personal state, analytics surface, or prose-date extractor. Version one has no
+recurrence language: explicit sessions are safer for changed topics and
+closures.
 
 ## Source Contract
 
-Each academic term has one authored official calendar document:
+`raya.yaml` owns the single effective timezone for the whole course:
 
-```text
-course/_official/calendar/2026-o26.yaml
+```yaml
+calendar:
+  timezone: America/Mexico_City
 ```
 
-It is a term schedule rather than an individual learning object. It contains
-one course-level `id`, `authority: official`, `scope.quantum: course-root`, an
-IANA timezone, and an ordered `events` list. Every event has a stable `id`.
+Each term has one separately discovered official calendar document:
+
+```text
+course/_official/calendar/1_2026-o26.yaml
+```
+
+This is a calendar-document family, not an official learning-object family. It
+is excluded from generic official-object discovery and `data/official.json`,
+but uses the ordinary ordered filename rule. It has `authority: official`,
+`scope.quantum: course-root`, one stable document ID, and ordered events:
 
 ```yaml
 id: ia-o26-calendar
@@ -61,7 +51,6 @@ type: calendar
 authority: official
 scope:
   quantum: course-root
-timezone: America/Mexico_City
 events:
   - id: session-01
     kind: session
@@ -69,7 +58,7 @@ events:
     start_time: "16:00"
     end_time: "18:00"
     title: Introducción a la Inteligencia Artificial
-    page: introduccion
+    page: course-root
 
   - id: independence-day
     kind: holiday
@@ -78,107 +67,118 @@ events:
     summary: No hay clase.
 ```
 
-Version-one event kinds are `session`, `holiday`, and `milestone`. `page` is
-optional and, when present, must resolve to a course page stable ID. Events use
-date-only ISO values; time is optional and has `HH:MM` local-clock format.
+Version-one kinds are `session`, `holiday`, `milestone`, and `cancellation`.
+`page` is optional but must resolve to a course page stable ID. Dates are ISO
+civil dates; optional times are real 24-hour `HH:MM` local times. `end_time`
+requires `start_time` and must be later on that event.
 
-The calendar's `timezone` is an IANA identifier such as
-`America/Mexico_City`, never a fixed GMT offset. It determines current-day
-highlighting, timed-event ordering, and display. Date-only source values remain
-civil dates and must not shift through UTC browser parsing.
+Document IDs, event IDs, and derived occurrences occupy one course-global
+namespace. Calendar occurrence IDs are `calendar:<document-id>:<event-id>`;
+derived occurrence IDs are `official:<object-id>:due` and
+`official:<object-id>:available`. Validation rejects collisions.
 
 ## Automatic Derived Entries
 
-Existing accepted official objects remain the only source for graded or
-date-bound work. During build, the Calendar derives records from:
+Every validated official assignment, exam, project, or task contributes one
+occurrence for each populated structured date field:
 
-| Official object | Authored field | Derived calendar record |
+| Object | Field | Calendar occurrence |
 | --- | --- | --- |
 | assignment | `content.due` | Assignment deadline |
 | exam | `content.due` | Exam |
 | project | `content.due` | Project deadline |
 | task | `content.due` | Task deadline |
-| task-family object | `content.available` | Availability event |
+| task-family object | `content.available` | Availability |
 
-Each derived record retains the official object ID, type, title, public
-preview, tags, owning page/anchor, graph link, and authored date. Raya does not
-guess dates from titles, instructions, Markdown, or any other prose. An
-authored calendar event and a derived work record remain separate even if they
-share a date; there is no fuzzy deduplication.
+An object with both `available` and `due` therefore produces two occurrences.
+Each preserves its source object ID, public allow-listed metadata, owning
+page/anchor, graph target, tags, type, and date role. `content.due` remains the
+canonical dated exam field in v1; legacy `exam.date` is not silently imported.
+Raya never extracts dates from prose and never fuzzy-deduplicates a derived
+record with an authored calendar event.
+
+Validation adds strict `YYYY-MM-DD` checks for every populated `due` or
+`available` field on task-family objects. Invalid values fail validation;
+`status` remains display metadata and does not hide valid official work.
 
 ## Artifact Contract
 
-The builder emits manifest-declared `data/calendar.json`. It combines authored
-term events and derived dated official work into a normalized, chronological
-static data product. Each record exposes a stable ID, kind/type, title,
-date/time, public summary, optional owning page, and deployment-neutral link.
+The builder always emits manifest-declared `data/calendar.json` and
+`/_raya/schedule/`, including for courses with no events:
 
-`data/tasks.json` remains the existing task-family planning index. The calendar
-index is an additional generated artifact surface, not a new canonical source,
-calendar feed, reminder system, or learner-state record.
+```json
+{"version": 1, "timezone": "America/Mexico_City", "events": [], "kinds": []}
+```
 
-## Rendered Calendar Workspace
+Each normalized record has only allow-listed public fields: occurrence ID,
+origin (`calendar` or `official`), source IDs, kind/type, date, optional times,
+title, summary, tags, optional page ID, and optional output/anchor target.
+The index never copies arbitrary object content. It is a generated artifact
+surface; `data/tasks.json` remains the task planning index and neither is a
+calendar integration or learner-state contract.
 
-`/_raya/schedule/` remains a supported URL and becomes the Calendar workspace.
-Its primary heading and navigation label are `Calendar`; compatibility labels
-may retain Schedule where necessary for stable existing controls or links.
+At render time, links are derived with `_relative_href` from the current output
+path. This keeps `/ia_o26/` deployments correct. Calendar events without a
+page render no dead action.
 
-The workspace provides:
+## Calendar Workspace
 
-- agenda view, chronological and grouped by month;
-- month view, with all events displayed on their civil date;
-- filters for All, Sessions, Holidays, Milestones, Assignments, Exams,
-  Projects, Tasks, and Availability;
-- clear type badges/colors and links to the owning page or official anchor;
-- `?page=<page-id>` focus behavior consistent with other workspaces; and
-- a timezone-correct today highlight.
+The compatibility URL remains `/_raya/schedule/`, but all visible UI says
+**Calendar**. It retains the persistent Course map, marks Calendar active,
+omits reader-only Context, and restores neither the legacy command bar nor the
+legacy course rail.
 
-View choice is URL-only or volatile DOM state; it is not written to browser
-storage. The workspace uses only generated local JSON/embedded data and local
-resources. It makes no network request and does not expose private source,
-calendar synchronization, grade, due-state, progress, mastery, or
-recommendation behavior.
+The server renders a chronological, month-grouped agenda as the useful no-JS
+baseline. Local progressive enhancement adds a month view, filters for all
+event kinds/types, and Previous, Next, and Today controls. The initial month
+is the course-timezone current month if it has events, otherwise the nearest
+upcoming event month, then latest past event month, with a stable empty fallback.
+Weeks start Monday; same-day records order all-day first, then start time,
+source order, and occurrence ID.
 
-## Validation
+The browser receives an escaped embedded copy of the normalized payload and
+does not fetch `data/calendar.json`. Today uses timezone-aware `Intl` parts,
+never `new Date("YYYY-MM-DD")` or a UTC round trip. View state is URL-only or
+volatile DOM state, never browser storage.
 
-Validation rejects calendar documents with:
+Month markup is semantic and keyboard-operable: caption, weekday headers,
+accessible view state, textual event badges, real links, and `aria-current`
+plus text for today. It does not copy clickable divs, dot-only events,
+tooltip-only details, or the legacy modal. Agenda remains available on narrow
+screens. `?page=<id>` matches derived records owned by that page and authored
+events whose `page` matches; unlinked course-wide holidays/milestones remain
+visible, while Clear/Escape restores all records.
 
-- an invalid or duplicate document/event ID;
-- invalid IANA timezone, event kind, ISO date, or local time;
-- `end_time` not later than `start_time` on the same event;
-- missing title; or
-- an unresolved `page` stable ID.
+## Validation And Testing
 
-Validation also keeps the existing official-object date checks. Derived records
-are built only from accepted public official objects with valid authored dates.
+Validation rejects invalid timezone, document/event IDs, kinds, dates, times,
+time ordering, missing titles, unresolved pages, and global occurrence
+collisions. Tests cover empty artifacts, due-plus-available derivation,
+timezone boundaries, escaping including embedded `</script>` safety, source
+privacy, no-JS agenda, keyboard navigation, focus/filters, no storage/fetch,
+path-prefix links, persistent map behavior, desktop/mobile overflow, and
+current-day highlighting.
 
 ## IA O26 Adoption
 
-IA O26 is the first reference adoption after the framework change merges.
+After framework merge, IA O26 adds `1_2026-o26.yaml` with each Monday/Wednesday
+session, ITAM closures, and course milestones. It replaces only the five
+calendar-only fake task objects with equivalent events, retains real work
+objects, and adds future homework/projects/exams through normal official Raya
+objects so they appear automatically. It then builds, inspects, deploys, and
+verifies Calendar under `/ia_o26/` without DNS or course-specific renderer code.
 
-1. Add one `2026-o26.yaml` term calendar with every Monday/Wednesday session,
-   its topic, ITAM holidays, and course milestones.
-2. Replace the current calendar-only fake task objects with real calendar
-   events.
-3. Add future homework, projects, and exams as normal official Raya objects;
-   they will appear automatically in Calendar.
-4. Build, inspect, deploy, and verify the Calendar under `/ia_o26/`.
+## Truth Surfaces
 
-## Truth-Surface And Test Changes
-
-Implementation updates the smallest relevant parts of the course, artifact,
-and learning-renderer foundation contracts; schema/docs for authors and role
-guides; artifact validators; fixtures; static builder tests; browser calendar
-tests; and manifest/index assertions. Tests cover validation, timezone-safe
-date handling, automatic derived records, absence of duplicated authoring,
-month/agenda rendering, filters, accessible links, URL focus, local-only
-resources, no storage/fetch, desktop/mobile overflow, and deployment below a
-path prefix.
+Implementation updates the smallest relevant course, artifact, and
+learning-renderer foundation contracts; schemas and validators; author/role
+guides; artifact manifest validators; fixtures; static/browser tests; and the
+Calendar workspace. IA O26 is a downstream reference adoption, not a framework
+exception.
 
 ## Self-Review
 
-- The calendar document owns only non-inferable academic schedule information.
-- Official work remains authored once and is automatically derived.
-- The design introduces one new source document type and one generated index,
-  not a legacy import pipeline or dynamic calendar product.
-- IA O26 is a downstream reference adoption, not a framework exception.
+- Calendar documents own only non-inferable academic schedule information.
+- Official work is authored once and always derived from structured fields.
+- The design adds one validated source family and one generated index, not a
+  legacy import pipeline or dynamic calendar product.
