@@ -337,6 +337,9 @@ _CALENDAR_JAVASCRIPT = r"""
       const url = new URL(window.location.href);
       url.searchParams.delete("page");
       window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+      if (typeof window.rayaSyncCourseMapPageFocus === "function") {
+        window.rayaSyncCourseMapPageFocus();
+      }
     } catch {
       // The Calendar remains useful even when URL mutation is unavailable.
     }

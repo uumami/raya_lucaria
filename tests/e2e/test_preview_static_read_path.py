@@ -9528,6 +9528,16 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                 notice = page.locator("[data-raya-calendar-page-focus]")
                 assert notice.is_visible()
                 assert "first-topic" in notice.inner_text()
+                focused_map_nodes = page.locator(
+                    '#raya-course-map-list [data-raya-map-page-focus="true"]'
+                )
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-page-focus"
+                ) == "first-topic"
+                assert focused_map_nodes.count() == 1
+                assert focused_map_nodes.get_attribute(
+                    "data-raya-map-node"
+                ) == "first-topic"
                 agenda = page.locator("[data-raya-calendar-agenda]")
                 assert agenda.locator(
                     '[data-raya-calendar-event="calendar:browser:today-session"]'
@@ -9546,11 +9556,19 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                 clear.click()
                 assert notice.is_hidden()
                 assert "page=" not in page.url
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-page-focus"
+                ) is None
+                assert focused_map_nodes.count() == 0
                 assert agenda.locator(
                     '[data-raya-calendar-event="calendar:browser:unlinked-session"]'
                 ).is_visible()
 
                 page.goto(focused_url, wait_until="networkidle")
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-page-focus"
+                ) == "first-topic"
+                assert focused_map_nodes.count() == 1
                 agenda.locator(
                     '[data-raya-calendar-event="calendar:browser:today-session"] '
                     ".raya-calendar-open"
@@ -9558,6 +9576,10 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                 page.keyboard.press("Escape")
                 assert "page=" not in page.url
                 assert notice.is_hidden()
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-page-focus"
+                ) is None
+                assert focused_map_nodes.count() == 0
                 assert page.evaluate(
                     """() => document.activeElement?.getAttribute(
                       'aria-label'

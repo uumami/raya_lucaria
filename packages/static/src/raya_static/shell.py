@@ -1412,6 +1412,8 @@ _SHELL_JAVASCRIPT = r"""
     orientCourseMapToCurrentPage({ force: true });
   window.rayaOrientCourseMapToCurrentPageAutomatic = () =>
     orientCourseMapToCurrentPage();
+  window.rayaSyncCourseMapPageFocus = () =>
+    applyWorkspaceCourseMapPageFocus();
 
   function syncLearningRailToggleButtons(nextExpanded) {
     const drawerOpen = root.dataset.rayaLearningRailDrawer === "open";
