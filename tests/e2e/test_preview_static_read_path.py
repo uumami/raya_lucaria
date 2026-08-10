@@ -9440,16 +9440,21 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                 holiday_filter.focus()
                 holiday_filter.press("Space")
                 assert holiday_filter.get_attribute("aria-pressed") == "true"
-                assert "1 visible calendar event" in page.locator(
-                    "[data-raya-calendar-status]"
-                ).inner_text()
+                assert page.locator("[data-raya-calendar-status]").inner_text() == (
+                    "1 event shown in August 2026. "
+                    "1 matching event across the calendar."
+                )
                 page.get_by_role("button", name="All events").press("Enter")
                 assignment_filter = page.get_by_role("button", name="Assignment")
                 assignment_filter.press("Enter")
                 assert assignment_filter.get_attribute("aria-pressed") == "true"
-                assert "1 visible calendar event" in page.locator(
-                    "[data-raya-calendar-status]"
-                ).inner_text()
+                assert page.locator("[data-raya-calendar-status]").inner_text() == (
+                    "0 events shown in August 2026. "
+                    "1 matching event across the calendar."
+                )
+                assert grid.locator(
+                    '[data-raya-calendar-type="assignment"]'
+                ).count() == 0
                 page.get_by_role("button", name="Clear calendar filters").click()
 
                 agenda_view = page.get_by_role("button", name="Agenda view")
@@ -9469,14 +9474,18 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
 
                 opener = page.locator(".raya-mobile-course-map-open")
                 assert opener.is_visible()
+                holiday_filter.press("Enter")
+                assert holiday_filter.get_attribute("aria-pressed") == "true"
                 opener.click()
                 assert page.locator("html").get_attribute(
                     "data-raya-course-map-drawer"
                 ) == "open"
-                page.get_by_role("button", name="Close course map").click()
+                page.keyboard.press("Escape")
                 assert page.locator("html").get_attribute(
                     "data-raya-course-map-drawer"
                 ) == "closed"
+                assert opener.evaluate("element => document.activeElement === element")
+                assert holiday_filter.get_attribute("aria-pressed") == "true"
                 _assert_no_horizontal_overflow(page)
             finally:
                 page.close()

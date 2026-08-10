@@ -185,6 +185,15 @@ _CALENDAR_JAVASCRIPT = r"""
     return `${count} visible calendar ${count === 1 ? "event" : "events"}.`;
   }
 
+  function matchingCountText(count) {
+    return `${count} matching ${count === 1 ? "event" : "events"} across the calendar.`;
+  }
+
+  function monthStatusText(shownCount, matchingCount) {
+    return `${shownCount} ${shownCount === 1 ? "event" : "events"} shown in `
+      + `${monthLabel(displayedMonth)}. ${matchingCountText(matchingCount)}`;
+  }
+
   function updatePressedState() {
     viewButtons.forEach((button) => {
       button.setAttribute(
@@ -301,21 +310,25 @@ _CALENDAR_JAVASCRIPT = r"""
     if (!pageFocus) return;
     pageFocus.hidden = !activePage;
     pageFocus.textContent = activePage
-      ? `Focused on page ${activePage}. ${countText(visibleCount)} Use Clear to show all.`
+      ? `Focused on page ${activePage}. ${matchingCountText(visibleCount)} Use Clear to show all.`
       : "";
   }
 
   function render() {
     const visible = visibleEvents();
+    const shownInMonth = visible.filter(
+      (event) => civilMonth(event.date) === displayedMonth
+    ).length;
     updatePressedState();
     updateAgenda(visible);
     renderMonth(visible);
     agenda.hidden = activeView !== "agenda";
     grid.hidden = activeView !== "month";
-    if (summary) summary.textContent = countText(visible.length);
-    if (status) {
-      status.textContent = `${countText(visible.length)} ${monthLabel(displayedMonth)}.`;
-    }
+    const viewStatus = activeView === "month"
+      ? monthStatusText(shownInMonth, visible.length)
+      : countText(visible.length);
+    if (summary) summary.textContent = viewStatus;
+    if (status) status.textContent = viewStatus;
     updatePageFocus(visible.length);
   }
 
@@ -369,8 +382,13 @@ _CALENDAR_JAVASCRIPT = r"""
     render();
   });
   clear?.addEventListener("click", () => clearCalendar());
-  document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
+  root.addEventListener("keydown", (event) => {
+    const hasCalendarConstraint = activeKind !== "all"
+      || activeType !== "all"
+      || Boolean(activePage);
+    if (event.key !== "Escape" || event.defaultPrevented || !hasCalendarConstraint) {
+      return;
+    }
     event.preventDefault();
     clearCalendar({ focus: true });
   });
