@@ -8978,11 +8978,6 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         )
                         assert page.evaluate("() => localStorage.length") == 0
                         assert page.evaluate("() => sessionStorage.length") == 0
-                        if viewport["width"] < 520:
-                            page.keyboard.press("Escape")
-                            page.wait_for_function(
-                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
-                            )
                         page.click(".raya-text-size-toggle")
                         assert (
                             page.locator("html").get_attribute("data-raya-text-size")
@@ -8990,6 +8985,11 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         )
                         assert page.evaluate("() => localStorage.length") == 0
                         assert page.evaluate("() => sessionStorage.length") == 0
+                        if viewport["width"] < 520:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
+                            )
                         assert page.locator(
                             '[data-raya-task-object="unit-assignment"]'
                         ).is_visible()
