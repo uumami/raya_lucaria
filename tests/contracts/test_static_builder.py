@@ -278,6 +278,37 @@ def test_calendar_index_emits_authored_and_both_derived_dates(tmp_path: Path) ->
     }
 
 
+def test_calendar_index_emits_date_only_official_task_with_safe_fallback_title(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _write_calendar_assignment(
+        course,
+        content_lines=["  due: '2026-09-15'"],
+        include_title=False,
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    index = json.loads((course / "artifact" / "data" / "calendar.json").read_text())
+    assert index["events"] == [
+        {
+            "anchor": "raya-official-unit-assignment",
+            "date": "2026-09-15",
+            "id": "official:unit-assignment:due",
+            "kind": "due",
+            "origin": "official",
+            "page_id": "course-root",
+            "page_output_path": "index.html",
+            "source_object_id": "unit-assignment",
+            "tags": [],
+            "title": "Assignment",
+            "type": "assignment",
+        }
+    ]
+
+
 def test_empty_course_still_publishes_valid_calendar_index(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     _set_calendar_timezone(course, "America/Mexico_City")
@@ -7398,7 +7429,12 @@ def _holiday_event() -> dict[str, str]:
     }
 
 
-def _write_calendar_assignment(course: Path, *, content_lines: list[str]) -> Path:
+def _write_calendar_assignment(
+    course: Path,
+    *,
+    content_lines: list[str],
+    include_title: bool = True,
+) -> Path:
     assignment_path = (
         course / "course" / "_official" / "assignments" / "1_assignment.yaml"
     )
@@ -7412,7 +7448,7 @@ def _write_calendar_assignment(course: Path, *, content_lines: list[str]) -> Pat
                 "scope:",
                 "  quantum: course-root",
                 "content:",
-                "  title: Unit assignment",
+                *( ["  title: Unit assignment"] if include_title else [] ),
                 *content_lines,
                 "",
             ]

@@ -8093,10 +8093,10 @@ def _official_public_task_summary(item: dict[str, Any]) -> dict[str, Any] | None
     )
     if not title and preview:
         title = preview
+    if not title:
+        title = _official_type_label(object_type)
     if not preview:
         preview = title
-    if not title and not preview:
-        return None
     authority = str(item.get("authority") or "official").strip() or "official"
     return {
         "authority": authority,

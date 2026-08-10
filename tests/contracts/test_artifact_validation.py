@@ -4,6 +4,8 @@ import json
 import shutil
 from pathlib import Path
 
+import pytest
+
 from raya_schema import artifacts as artifact_schemas
 from raya_schema import (
     inspect_artifact,
@@ -143,6 +145,48 @@ def test_calendar_index_validation_rejects_invalid_index(tmp_path: Path) -> None
 
     assert not report.ok
     assert any(item.field == "events.0" for item in report.diagnostics)
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        {"date": "2026-99-99"},
+        {"start_time": "29:99"},
+        {"start_time": "18:00", "end_time": "16:00"},
+    ],
+)
+def test_calendar_index_validation_rejects_invalid_calendar_semantics(
+    tmp_path: Path,
+    event: dict[str, str],
+) -> None:
+    calendar = tmp_path / "calendar.json"
+    calendar.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "timezone": "America/Mexico_City",
+                "events": [
+                    {
+                        "id": "calendar:term:session-01",
+                        "origin": "calendar",
+                        "source_document_id": "term",
+                        "source_event_id": "session-01",
+                        "kind": "session",
+                        "date": "2026-09-15",
+                        "title": "Session",
+                        **event,
+                    }
+                ],
+                "kinds": ["session"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = artifact_schemas.validate_calendar_index(calendar)
+
+    assert not report.ok
+    assert any(item.field == "events.0.date" or item.field == "events.0.start_time" or item.field == "events.0.end_time" for item in report.diagnostics)
 
 
 def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
@@ -489,6 +533,43 @@ def test_inspect_artifact_validates_manifest_declared_calendar_index(
 
     assert not report.ok
     assert any("1 was expected" in item.message for item in report.diagnostics)
+
+
+def test_inspect_artifact_rejects_semantically_invalid_calendar_index(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    calendar_path = course / "artifact" / "data" / "calendar.json"
+    calendar_path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "timezone": "America/Mexico_City",
+                "events": [
+                    {
+                        "id": "calendar:term:session-01",
+                        "origin": "calendar",
+                        "source_document_id": "term",
+                        "source_event_id": "session-01",
+                        "kind": "session",
+                        "date": "2026-09-15",
+                        "start_time": "18:00",
+                        "end_time": "16:00",
+                        "title": "Session",
+                    }
+                ],
+                "kinds": ["session"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = inspect_artifact(course / "artifact")
+
+    assert not report.ok
+    assert any(item.field == "events.0.end_time" for item in report.diagnostics)
 
 
 def _copy_minimal(tmp_path: Path) -> Path:

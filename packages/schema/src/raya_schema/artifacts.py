@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, time
 from pathlib import Path
 from typing import Any
 
@@ -217,7 +218,93 @@ def validate_cache_index(index_path: str | Path) -> ValidationReport:
 
 
 def validate_calendar_index(index_path: str | Path) -> ValidationReport:
-    return validate_artifact_index(index_path, "calendar-index.schema.json")
+    report = validate_artifact_index(index_path, "calendar-index.schema.json")
+    if not report.ok:
+        return report
+
+    path = Path(index_path).resolve()
+    data = load_yaml_file(path)
+    if not isinstance(data, dict):
+        return report
+    _validate_calendar_index_semantics(data, path, report)
+    return report
+
+
+def _validate_calendar_index_semantics(
+    data: dict[str, Any],
+    path: Path,
+    report: ValidationReport,
+) -> None:
+    events = data.get("events")
+    if not isinstance(events, list):
+        return
+    for index, event in enumerate(events):
+        if not isinstance(event, dict):
+            continue
+        date_value = event.get("date")
+        if isinstance(date_value, str):
+            try:
+                date.fromisoformat(date_value)
+            except ValueError:
+                report.add_error(
+                    "Calendar event date must be a valid ISO civil date",
+                    path=path,
+                    field=f"events.{index}.date",
+                    next_action="Use a valid date such as 2026-08-10",
+                )
+
+        start_time = _calendar_index_time(
+            event.get("start_time"),
+            index=index,
+            field="start_time",
+            path=path,
+            report=report,
+        )
+        end_time = _calendar_index_time(
+            event.get("end_time"),
+            index=index,
+            field="end_time",
+            path=path,
+            report=report,
+        )
+        if event.get("end_time") is not None and event.get("start_time") is None:
+            report.add_error(
+                "Calendar event end_time requires start_time",
+                path=path,
+                field=f"events.{index}.end_time",
+                next_action="Set start_time before setting end_time",
+            )
+        if start_time is not None and end_time is not None and end_time <= start_time:
+            report.add_error(
+                "Calendar event end_time must be later than start_time",
+                path=path,
+                field=f"events.{index}.end_time",
+                next_action="Set end_time later than start_time on the same date",
+            )
+
+
+def _calendar_index_time(
+    value: Any,
+    *,
+    index: int,
+    field: str,
+    path: Path,
+    report: ValidationReport,
+) -> time | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return None
+    try:
+        return time.fromisoformat(value)
+    except ValueError:
+        report.add_error(
+            "Calendar event time must be a valid local 24-hour time",
+            path=path,
+            field=f"events.{index}.{field}",
+            next_action="Use a time such as 16:00",
+        )
+        return None
 
 
 def validate_artifact_index(index_path: str | Path, schema_name: str) -> ValidationReport:
