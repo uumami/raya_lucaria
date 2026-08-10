@@ -87,4 +87,3 @@ project-site path, local preview, and another future static host.
   course-artifact aggregation is part of this rollout.
 - No DNS wildcard routing or per-course custom domains.
 - No Cloudflare API or Namecheap API credentials are needed for initial setup.
-

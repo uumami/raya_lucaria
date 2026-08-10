@@ -23281,14 +23281,18 @@ def test_workspace_course_map_static_paths_keyboard_and_state_safety(
     browser_executable = _browser_executable()
 
     handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    resources = contextlib.ExitStack()
+    resources.callback(handle.close)
     try:
         assert handle.report.ok, [
             diagnostic.format() for diagnostic in handle.report.diagnostics
         ]
-        base_url = handle.base_url
-        assert base_url is not None
-        course_prefix = f"{base_url}/"
-        workspace_url = f"{base_url}/_raya/{workspace}/index.html"
+        assert handle.base_url is not None
+        mounted_site = tmp_path / "mounted-site"
+        shutil.copytree(course / "artifact" / "site", mounted_site / "ia_o26")
+        base_url = resources.enter_context(_serve(mounted_site))
+        course_prefix = f"{base_url}/ia_o26/"
+        workspace_url = f"{course_prefix}_raya/{workspace}/index.html"
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -23348,15 +23352,15 @@ def test_workspace_course_map_static_paths_keyboard_and_state_safety(
                 for selector, expected_url in (
                     (
                         "#raya-course-map .raya-course-map-home",
-                        f"{base_url}/index.html",
+                        f"{course_prefix}index.html",
                     ),
                     (
                         "#raya-course-map .raya-command-search",
-                        f"{base_url}/_raya/search/index.html",
+                        f"{course_prefix}_raya/search/index.html",
                     ),
                     (
                         "#raya-course-map-list a[data-raya-map-index]",
-                        f"{base_url}/index.html",
+                        f"{course_prefix}index.html",
                     ),
                 ):
                     page.goto(workspace_url, wait_until="networkidle")
@@ -23485,7 +23489,7 @@ def test_workspace_course_map_static_paths_keyboard_and_state_safety(
             finally:
                 browser.close()
     finally:
-        handle.close()
+        resources.close()
 
 
 def test_workspace_course_map_marks_runtime_page_focus(tmp_path: Path) -> None:
