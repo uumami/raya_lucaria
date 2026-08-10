@@ -70,6 +70,7 @@ def _read_calendar_documents(
         return []
 
     validator = validator_for("calendar-document.schema.json")
+    seen_document_orders: dict[int, Path] = {}
     seen_document_ids: dict[str, Path] = {}
     seen_event_ids: dict[str, Path] = {}
     seen_occurrence_ids: dict[str, Path] = {}
@@ -96,6 +97,19 @@ def _read_calendar_documents(
                 path=document_path,
                 next_action="Use an ordered filename such as 1_2026-o26.yaml",
             )
+        else:
+            previous_path = seen_document_orders.get(ordered.order)
+            if previous_path is not None:
+                report.add_error(
+                    "Duplicate calendar document order",
+                    path=document_path,
+                    next_action=(
+                        "Use a unique numeric filename order; "
+                        f"first seen in {previous_path}"
+                    ),
+                )
+            else:
+                seen_document_orders[ordered.order] = document_path
 
         try:
             data = load_yaml_file(document_path)
@@ -124,14 +138,21 @@ def _read_calendar_documents(
 
         document_id = data.get("id")
         if isinstance(document_id, str):
-            _report_duplicate(
-                value=document_id,
-                seen=seen_document_ids,
-                message="Duplicate calendar document ID",
+            if _validate_nonblank_string(
+                document_id,
+                message="Calendar document ID must not be blank",
                 path=document_path,
                 field="id",
                 report=report,
-            )
+            ):
+                _report_duplicate(
+                    value=document_id,
+                    seen=seen_document_ids,
+                    message="Duplicate calendar document ID",
+                    path=document_path,
+                    field="id",
+                    report=report,
+                )
 
         scope = data.get("scope")
         quantum = scope.get("quantum") if isinstance(scope, dict) else None
@@ -158,23 +179,31 @@ def _read_calendar_documents(
                 )
                 event_id = event.get("id")
                 if isinstance(event_id, str):
-                    _report_duplicate(
-                        value=event_id,
-                        seen=seen_event_ids,
-                        message="Duplicate calendar event ID",
+                    event_id_is_valid = _validate_nonblank_string(
+                        event_id,
+                        message="Calendar event ID must not be blank",
                         path=document_path,
                         field=f"events.{index}.id",
                         report=report,
                     )
-                    if isinstance(document_id, str):
+                    if event_id_is_valid:
                         _report_duplicate(
-                            value=f"calendar:{document_id}:{event_id}",
-                            seen=seen_occurrence_ids,
-                            message="Duplicate calendar occurrence ID",
+                            value=event_id,
+                            seen=seen_event_ids,
+                            message="Duplicate calendar event ID",
                             path=document_path,
                             field=f"events.{index}.id",
                             report=report,
                         )
+                        if isinstance(document_id, str) and document_id.strip():
+                            _report_duplicate(
+                                value=f"calendar:{document_id}:{event_id}",
+                                seen=seen_occurrence_ids,
+                                message="Duplicate calendar occurrence ID",
+                                path=document_path,
+                                field=f"events.{index}.id",
+                                report=report,
+                            )
                 normalized_events.append(
                     {field: event[field] for field in _EVENT_FIELDS if field in event}
                 )
@@ -201,6 +230,15 @@ def _validate_event_semantics(
     valid_page_ids: set[str],
     report: ValidationReport,
 ) -> None:
+    title = event.get("title")
+    if isinstance(title, str):
+        _validate_nonblank_string(
+            title,
+            message="Calendar event title must not be blank",
+            path=path,
+            field=f"events.{index}.title",
+            report=report,
+        )
     kind = event.get("kind")
     if isinstance(kind, str) and kind not in CALENDAR_KINDS:
         report.add_error(
@@ -327,6 +365,25 @@ def _report_duplicate(
         )
         return
     seen[value] = path
+
+
+def _validate_nonblank_string(
+    value: str,
+    *,
+    message: str,
+    path: Path,
+    field: str,
+    report: ValidationReport,
+) -> bool:
+    if value.strip():
+        return True
+    report.add_error(
+        message,
+        path=path,
+        field=field,
+        next_action="Use a non-whitespace value",
+    )
+    return False
 
 
 def _schema_error_key(error: ValidationError) -> tuple[str, str]:

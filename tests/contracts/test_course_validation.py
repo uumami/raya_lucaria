@@ -69,6 +69,20 @@ def test_calendar_rejects_invalid_timezone(tmp_path: Path) -> None:
     assert any(item.field == "calendar.timezone" for item in report.diagnostics)
 
 
+def test_calendar_rejects_path_like_timezone_without_crashing(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "/usr/share/zoneinfo/UTC")
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(
+        item.message == "calendar.timezone must be a valid IANA timezone"
+        and item.field == "calendar.timezone"
+        for item in report.diagnostics
+    )
+
+
 def test_calendar_rejects_blank_timezone(tmp_path: Path) -> None:
     course = _copy_minimal_course(tmp_path)
     _set_calendar_timezone(course, "   ")
@@ -88,6 +102,27 @@ def test_calendar_rejects_unordered_document_filename(tmp_path: Path) -> None:
 
     assert not report.ok
     assert any("Unordered calendar document file" == item.message for item in report.diagnostics)
+
+
+def test_calendar_rejects_duplicate_numeric_document_order(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "01_first.yaml", events=[_session_event()])
+    _write_calendar_document(
+        course,
+        "1_second.yaml",
+        document_id="second-term",
+        events=[{**_session_event(), "id": "session-02"}],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(
+        item.message == "Duplicate calendar document order"
+        and item.path == course / "course/_official/calendar/1_second.yaml"
+        for item in report.diagnostics
+    )
 
 
 @pytest.mark.parametrize(
@@ -145,6 +180,40 @@ def test_calendar_rejects_duplicate_event_ids_within_document(tmp_path: Path) ->
 
     assert not report.ok
     assert any("Duplicate calendar event ID" == item.message for item in report.diagnostics)
+
+
+@pytest.mark.parametrize(
+    ("blank_field", "expected_field"),
+    [
+        ("document_id", "id"),
+        ("event_id", "events.0.id"),
+        ("event_title", "events.0.title"),
+    ],
+)
+def test_calendar_rejects_whitespace_only_identifiers_and_titles(
+    tmp_path: Path,
+    blank_field: str,
+    expected_field: str,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    document_id = "'   '" if blank_field == "document_id" else "term"
+    event = _session_event()
+    if blank_field == "event_id":
+        event["id"] = "   "
+    elif blank_field == "event_title":
+        event["title"] = "   "
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        document_id=document_id,
+        events=[event],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == expected_field for item in report.diagnostics)
 
 
 @pytest.mark.parametrize(

@@ -435,6 +435,43 @@ def test_calendar_keeps_schedule_route_but_uses_calendar_copy_and_map(
     assert "View in graph" not in holiday
 
 
+def test_calendar_no_js_agenda_preserves_source_order_for_equal_times(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[
+            {
+                "id": "z-first",
+                "kind": "session",
+                "date": "2026-10-02",
+                "start_time": "16:00",
+                "title": "First in source",
+            },
+            {
+                "id": "a-second",
+                "kind": "session",
+                "date": "2026-10-02",
+                "start_time": "16:00",
+                "title": "Second in source",
+            },
+        ],
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact/site/_raya/schedule/index.html").read_text()
+    agenda = html.split('<div id="raya-calendar-agenda"', maxsplit=1)[1].split(
+        '<script type="application/json" id="raya-calendar-data">',
+        maxsplit=1,
+    )[0]
+    assert agenda.index("First in source") < agenda.index("Second in source")
+
+
 def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 

@@ -320,7 +320,7 @@ def _validate_calendar_timezone(
         return None
     try:
         ZoneInfo(timezone)
-    except ZoneInfoNotFoundError:
+    except (ZoneInfoNotFoundError, ValueError):
         report.add_error(
             "calendar.timezone must be a valid IANA timezone",
             path=config_path,

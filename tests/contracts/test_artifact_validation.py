@@ -189,6 +189,40 @@ def test_calendar_index_validation_rejects_invalid_calendar_semantics(
     assert any(item.field == "events.0.date" or item.field == "events.0.start_time" or item.field == "events.0.end_time" for item in report.diagnostics)
 
 
+@pytest.mark.parametrize(
+    ("fault", "expected_field"),
+    [
+        ("invalid_timezone", "timezone"),
+        ("duplicate_id", "events.1.id"),
+        ("inconsistent_kinds", "kinds"),
+    ],
+)
+def test_calendar_index_validation_rejects_cross_record_semantic_faults(
+    tmp_path: Path,
+    fault: str,
+    expected_field: str,
+) -> None:
+    calendar = tmp_path / "calendar.json"
+    payload = _valid_calendar_payload()
+    if fault == "invalid_timezone":
+        payload["timezone"] = "Mexico/Imaginary"
+    elif fault == "duplicate_id":
+        payload["events"].append(
+            {
+                **payload["events"][0],
+                "source_event_id": "session-02",
+            }
+        )
+    elif fault == "inconsistent_kinds":
+        payload["kinds"] = []
+    calendar.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = artifact_schemas.validate_calendar_index(calendar)
+
+    assert not report.ok
+    assert any(item.field == expected_field for item in report.diagnostics)
+
+
 def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
     tmp_path: Path,
 ) -> None:
@@ -570,6 +604,51 @@ def test_inspect_artifact_rejects_semantically_invalid_calendar_index(
 
     assert not report.ok
     assert any(item.field == "events.0.end_time" for item in report.diagnostics)
+
+
+def test_inspect_artifact_rejects_calendar_cross_record_semantic_faults(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    calendar_path = course / "artifact" / "data" / "calendar.json"
+    payload = _valid_calendar_payload()
+    payload["timezone"] = "Mexico/Imaginary"
+    payload["events"].append(
+        {
+            **payload["events"][0],
+            "source_event_id": "session-02",
+        }
+    )
+    payload["kinds"] = []
+    calendar_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = inspect_artifact(course / "artifact")
+
+    assert not report.ok
+    assert {"timezone", "events.1.id", "kinds"} <= {
+        item.field for item in report.diagnostics
+    }
+
+
+def _valid_calendar_payload() -> dict[str, object]:
+    return {
+        "version": 1,
+        "timezone": "America/Mexico_City",
+        "events": [
+            {
+                "id": "calendar:term:session-01",
+                "origin": "calendar",
+                "source_document_id": "term",
+                "source_event_id": "session-01",
+                "kind": "session",
+                "date": "2026-09-15",
+                "title": "Session",
+            }
+        ],
+        "kinds": ["session"],
+    }
 
 
 def _copy_minimal(tmp_path: Path) -> Path:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, time
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from raya_schema.diagnostics import ValidationReport
 from raya_schema.numbered_objects import validate_numbered_objects_index
@@ -235,12 +236,40 @@ def _validate_calendar_index_semantics(
     path: Path,
     report: ValidationReport,
 ) -> None:
+    timezone = data.get("timezone")
+    if isinstance(timezone, str):
+        try:
+            ZoneInfo(timezone)
+        except (ZoneInfoNotFoundError, ValueError):
+            report.add_error(
+                "Calendar timezone must be a valid IANA timezone",
+                path=path,
+                field="timezone",
+                next_action="Use an IANA timezone such as America/Mexico_City",
+            )
+
     events = data.get("events")
     if not isinstance(events, list):
         return
+    seen_ids: set[str] = set()
+    event_kinds: set[str] = set()
     for index, event in enumerate(events):
         if not isinstance(event, dict):
             continue
+        event_id = event.get("id")
+        if isinstance(event_id, str):
+            if event_id in seen_ids:
+                report.add_error(
+                    "Duplicate calendar event ID",
+                    path=path,
+                    field=f"events.{index}.id",
+                    next_action="Use a unique calendar event ID",
+                )
+            else:
+                seen_ids.add(event_id)
+        kind = event.get("kind")
+        if isinstance(kind, str):
+            event_kinds.add(kind)
         date_value = event.get("date")
         if isinstance(date_value, str):
             try:
@@ -281,6 +310,15 @@ def _validate_calendar_index_semantics(
                 field=f"events.{index}.end_time",
                 next_action="Set end_time later than start_time on the same date",
             )
+
+    kinds = data.get("kinds")
+    if isinstance(kinds, list) and set(kinds) != event_kinds:
+        report.add_error(
+            "Calendar kinds must match the kinds present in events",
+            path=path,
+            field="kinds",
+            next_action="Regenerate kinds from the Calendar events",
+        )
 
 
 def _calendar_index_time(

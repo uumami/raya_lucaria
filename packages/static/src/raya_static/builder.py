@@ -7898,7 +7898,6 @@ def _calendar_events_by_month(
             str(event.get("date") or ""),
             0 if not event.get("start_time") else 1,
             str(event.get("start_time") or ""),
-            str(event.get("id") or ""),
         ),
     )
     grouped: list[tuple[str, list[dict[str, Any]]]] = []

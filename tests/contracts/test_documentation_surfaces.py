@@ -4,6 +4,8 @@ import json
 import shutil
 from pathlib import Path
 
+import yaml
+
 from raya_static import build_course
 
 
@@ -550,3 +552,49 @@ def test_calendar_contract_is_documented_across_truth_surfaces() -> None:
     )
     assert "autoran los campos oficiales due/available una sola vez" in colaboradores_es
     assert "nunca deben duplicarse manualmente en documentos Calendar" in colaboradores_es
+
+
+def test_calendar_course_contract_example_keeps_civil_dates_as_strings() -> None:
+    course_contract = (DOCS_ROOT / "foundation" / "05_course_contract.md").read_text(
+        encoding="utf-8"
+    )
+    calendar_section = course_contract.split("## Calendar", maxsplit=1)[1]
+    yaml_example = calendar_section.split("```yaml", maxsplit=1)[1].split(
+        "```", maxsplit=1
+    )[0]
+
+    document = yaml.safe_load(yaml_example)
+
+    assert all(isinstance(event["date"], str) for event in document["events"])
+
+
+def test_calendar_renderer_contract_matches_persistent_map_without_inspection() -> None:
+    renderer_contract = (
+        DOCS_ROOT / "foundation" / "20_learning_renderer_contract.md"
+    ).read_text(encoding="utf-8")
+    calendar_row = next(
+        line for line in renderer_contract.splitlines() if line.startswith("| Calendar |")
+    )
+    calendar_details = renderer_contract.split(
+        "Calendar is a generated static agenda", maxsplit=1
+    )[1].split("The right learning rail owns", maxsplit=1)[0]
+
+    assert "persistent Course map" in calendar_row
+    assert "hover" not in calendar_row
+    assert "focus inspection" not in calendar_row
+    assert "persistent Course map" in calendar_details
+    assert "show transient context on keyboard movement, hover, or focus" not in (
+        calendar_details
+    )
+
+
+def test_contributor_calendar_guidance_is_explicitly_non_personal_in_en_and_es() -> None:
+    contributor_en = (
+        GUIDES / "en" / "contributors" / "index.md"
+    ).read_text(encoding="utf-8")
+    contributor_es = (
+        GUIDES / "es" / "colaboradores" / "index.md"
+    ).read_text(encoding="utf-8")
+
+    assert "Calendar remains a non-personal-state surface" in contributor_en
+    assert "Calendar sigue siendo una superficie sin estado personal" in contributor_es

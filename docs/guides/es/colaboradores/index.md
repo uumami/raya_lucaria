@@ -141,6 +141,10 @@ hitos bajo `course/_official/calendar/`; autoran los campos oficiales due/availa
 sola vez en el objeto de familia task, y nunca deben duplicarse manualmente en
 documentos Calendar.
 
+Calendar sigue siendo una superficie sin estado personal: sus controles y foco
+de pagina son estructura temporal, nunca progreso del estudiante, recordatorios
+ni estado due guardado.
+
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un solo propietario
 central de scroll vertical nativo y footer fijo. Sus acciones en dos columnas

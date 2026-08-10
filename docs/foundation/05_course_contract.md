@@ -214,21 +214,21 @@ scope:
 events:
   - id: first-session
     kind: session
-    date: 2026-08-17
+    date: "2026-08-17"
     start_time: "09:00"
     end_time: "10:30"
     title: First session
   - id: independence-day
     kind: holiday
-    date: 2026-09-16
+    date: "2026-09-16"
     title: Independence Day
   - id: midterm-window
     kind: milestone
-    date: 2026-10-12
+    date: "2026-10-12"
     title: Midterm week begins
   - id: weather-closure
     kind: cancellation
-    date: 2026-10-19
+    date: "2026-10-19"
     title: Class cancelled
 ```
 
