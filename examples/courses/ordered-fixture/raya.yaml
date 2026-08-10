@@ -4,6 +4,8 @@ description: Representative fixture for ordered source, generated indexes, stabl
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
 appendix_label: Anexo
 hierarchy:
   levels:

@@ -6,7 +6,11 @@ from pathlib import Path
 import pytest
 
 from raya_schema import validate_course
+from raya_schema.content import resolve_course_content
 from raya_schema.numbered_objects import collect_numbered_object_source_references
+from raya_schema.official import discover_official_objects
+from raya_schema.diagnostics import ValidationReport
+from raya_schema.yaml_io import load_yaml_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +27,173 @@ def test_minimal_fixture_validates() -> None:
     report = validate_course(MINIMAL)
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     assert MINIMAL / "raya.yaml" in report.files_read
+
+
+def test_calendar_document_is_separate_from_official_objects(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "1_2026-o26.yaml", events=[_session_event()])
+
+    report = validate_course(course)
+
+    assert report.ok, [item.format() for item in report.diagnostics]
+    objects = _discover_official_objects_for_test(course)
+    assert all(item["type"] != "calendar" for item in objects)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("due", "2026-2-03"), ("available", "tomorrow")],
+)
+def test_task_family_dates_must_be_iso_civil_dates(
+    tmp_path: Path,
+    field: str,
+    value: str,
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _write_assignment(course, content_line=f"  {field}: '{value}'")
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == f"content.{field}" for item in report.diagnostics)
+
+
+def test_calendar_rejects_invalid_timezone(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "Mexico/Imaginary")
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == "calendar.timezone" for item in report.diagnostics)
+
+
+def test_calendar_rejects_blank_timezone(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "   ")
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == "calendar.timezone" for item in report.diagnostics)
+
+
+def test_calendar_rejects_unordered_document_filename(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "term.yaml", events=[_session_event()])
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any("Unordered calendar document file" == item.message for item in report.diagnostics)
+
+
+def test_calendar_rejects_duplicate_document_ids(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "1_first.yaml", events=[_session_event()])
+    _write_calendar_document(
+        course,
+        "2_second.yaml",
+        events=[{**_session_event(), "id": "session-02"}],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any("Duplicate calendar document ID" == item.message for item in report.diagnostics)
+
+
+def test_calendar_rejects_duplicate_event_ids_within_document(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[_session_event(), {**_session_event(), "title": "Repeated session"}],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any("Duplicate calendar event ID" == item.message for item in report.diagnostics)
+
+
+@pytest.mark.parametrize(
+    "event",
+    [
+        {"id": "x", "kind": "meeting", "date": "2026-08-10", "title": "Bad"},
+        {"id": "x", "kind": "session", "date": "2026-08-10", "end_time": "18:00", "title": "Bad"},
+        {
+            "id": "x",
+            "kind": "session",
+            "date": "2026-08-10",
+            "start_time": "18:00",
+            "end_time": "16:00",
+            "title": "Bad",
+        },
+    ],
+)
+def test_calendar_rejects_invalid_event_semantics(
+    tmp_path: Path,
+    event: dict[str, str],
+) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "1_term.yaml", events=[event])
+
+    assert not validate_course(course).ok
+
+
+def test_calendar_rejects_unresolved_event_page(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[{**_session_event(), "page": "missing-page"}],
+    )
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any(item.field == "events.0.page" for item in report.diagnostics)
+
+
+def test_calendar_rejects_duplicate_global_occurrence_id(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "1_first.yaml", events=[_session_event()])
+    _write_calendar_document(course, "2_second.yaml", events=[_session_event()])
+
+    report = validate_course(course)
+
+    assert not report.ok
+    assert any("Duplicate calendar occurrence ID" == item.message for item in report.diagnostics)
+
+
+def test_calendar_accepts_valid_cancellation_event(tmp_path: Path) -> None:
+    course = _copy_minimal_course(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[
+            {
+                "id": "cancellation-01",
+                "kind": "cancellation",
+                "date": "2026-08-12",
+                "title": "Class cancelled",
+                "summary": "Campus closure.",
+            }
+        ],
+    )
+
+    report = validate_course(course)
+
+    assert report.ok, [item.format() for item in report.diagnostics]
 
 
 @pytest.mark.parametrize("skin_value", ["", "   ", 123])
@@ -248,6 +419,8 @@ def test_missing_source_directory_fails(tmp_path: Path) -> None:
                 "language: en",
                 "source: course",
                 "artifact: artifact",
+                "calendar:",
+                "  timezone: America/Mexico_City",
             ]
         ),
         encoding="utf-8",
@@ -947,6 +1120,8 @@ def _write_valid_config(path: Path) -> None:
                 "language: en",
                 "source: course",
                 "artifact: artifact",
+                "calendar:",
+                "  timezone: America/Mexico_City",
             ]
         ),
         encoding="utf-8",
@@ -957,6 +1132,103 @@ def _copy_minimal_course(tmp_path: Path) -> Path:
     destination = tmp_path / "minimal"
     shutil.copytree(MINIMAL, destination)
     return destination
+
+
+def _set_calendar_timezone(course: Path, timezone: str) -> None:
+    config_path = course / "raya.yaml"
+    config_text = config_path.read_text(encoding="utf-8")
+    calendar_block = "calendar:\n"
+    if calendar_block in config_text:
+        before, after = config_text.split(calendar_block, maxsplit=1)
+        _, remaining = after.split("\n", maxsplit=1)
+        config_text = before + remaining
+    config_path.write_text(
+        config_text.rstrip()
+        + "\ncalendar:\n"
+        + f"  timezone: {timezone!r}\n",
+        encoding="utf-8",
+    )
+
+
+def _write_calendar_document(
+    course: Path,
+    filename: str,
+    *,
+    events: list[dict[str, str]],
+    document_id: str = "term",
+) -> Path:
+    calendar_path = course / "course" / "_official" / "calendar" / filename
+    calendar_path.parent.mkdir(parents=True, exist_ok=True)
+    event_lines = []
+    for event in events:
+        event_lines.append(
+            "  - " + "\n    ".join(f"{key}: {value!r}" for key, value in event.items())
+        )
+    calendar_path.write_text(
+        "id: " + document_id + "\n"
+        "type: calendar\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "events:\n"
+        + "\n".join(event_lines)
+        + "\n",
+        encoding="utf-8",
+    )
+    return calendar_path
+
+
+def _session_event() -> dict[str, str]:
+    return {
+        "id": "session-01",
+        "kind": "session",
+        "date": "2026-08-10",
+        "start_time": "16:00",
+        "end_time": "18:00",
+        "title": "Opening session",
+        "page": "course-root",
+    }
+
+
+def _write_assignment(course: Path, *, content_line: str) -> Path:
+    assignment_path = course / "course" / "_official" / "assignments" / "1_assignment.yaml"
+    assignment_path.parent.mkdir(parents=True, exist_ok=True)
+    assignment_path.write_text(
+        "id: course-assignment\n"
+        "type: assignment\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "content:\n"
+        "  title: Course assignment\n"
+        + content_line
+        + "\n",
+        encoding="utf-8",
+    )
+    return assignment_path
+
+
+def _discover_official_objects_for_test(course: Path) -> list[dict[str, object]]:
+    config = load_yaml_file(course / "raya.yaml")
+    assert isinstance(config, dict)
+    source_dir = course / "course"
+    report = ValidationReport(context="test")
+    content_model = resolve_course_content(
+        course_root=course,
+        content_dir=source_dir,
+        course_id=str(config["course_id"]),
+        config=config,
+        report=report,
+    )
+    objects = discover_official_objects(
+        course_root=course,
+        course_id=str(config["course_id"]),
+        source_dir=source_dir,
+        content_model=content_model,
+        report=report,
+    )
+    assert report.ok, [item.format() for item in report.diagnostics]
+    return objects
 
 
 def _write_notebook(path: Path, *, title: str) -> None:

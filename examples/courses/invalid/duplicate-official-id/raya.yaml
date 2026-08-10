@@ -4,3 +4,5 @@ description: Invalid fixture for duplicate official learning object IDs.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City

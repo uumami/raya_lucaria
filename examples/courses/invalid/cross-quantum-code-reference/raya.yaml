@@ -4,6 +4,8 @@ description: Invalid fixture for cross-quantum code reference diagnostics.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
 hierarchy:
   levels:
     - key: section

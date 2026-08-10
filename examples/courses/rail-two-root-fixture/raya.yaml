@@ -4,3 +4,5 @@ description: Fixture with two depth-0 roots and no zero-order index, for course-
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City

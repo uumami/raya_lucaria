@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/calendar-document.schema.json",
+  "title": "Raya Official Calendar Document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "authority", "scope", "events"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "type": {"const": "calendar"},
+    "authority": {"const": "official"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["quantum"],
+      "properties": {
+        "quantum": {"type": "string", "minLength": 1}
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "date", "title"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {
+            "type": "string",
+            "enum": ["session", "holiday", "milestone", "cancellation"]
+          },
+          "date": {"type": "string", "minLength": 1},
+          "start_time": {"type": "string", "minLength": 1},
+          "end_time": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "summary": {"type": "string"},
+          "page": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

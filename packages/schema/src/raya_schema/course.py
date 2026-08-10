@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from jsonschema import ValidationError
 
 from raya_schema.diagnostics import ValidationReport
 from raya_schema.content import markdown_body, resolve_course_content
+from raya_schema.calendar import (
+    discover_calendar_documents,
+    validate_official_calendar_dates,
+)
 from raya_schema.links import (
     classify_markdown_target,
     extract_markdown_links,
@@ -61,6 +66,7 @@ def validate_course(course_path: str | Path) -> ValidationReport:
 
     _validate_schema(config, "raya-course.schema.json", config_path, report)
     _validate_render_config(config, config_path, report)
+    calendar_timezone = _validate_calendar_timezone(config, config_path, report)
 
     source_root = resolve_course_source_root(root=root, config=config, report=report)
     if source_root is None:
@@ -118,13 +124,22 @@ def validate_course(course_path: str | Path) -> ValidationReport:
             report=report,
         )
 
-    discover_official_objects(
+    official_objects = discover_official_objects(
         course_root=root,
         course_id=course_id,
         source_dir=source_dir,
         content_model=content_model,
         report=report,
     )
+    validate_official_calendar_dates(official_objects, report)
+    if calendar_timezone is not None:
+        discover_calendar_documents(
+            course_root=root,
+            source_dir=source_dir,
+            content_model=content_model,
+            timezone=calendar_timezone,
+            report=report,
+        )
     runtime_model = load_runtime_model(root, report)
     references = collect_source_references(
         course_id=course_id,
@@ -283,6 +298,37 @@ def _validate_render_config(
             field="render.skin",
             next_action="Set render.skin to a skin profile ID such as warm-academic.",
         )
+
+
+def _validate_calendar_timezone(
+    config: dict[str, Any],
+    config_path: Path,
+    report: ValidationReport,
+) -> str | None:
+    calendar = config.get("calendar")
+    if not isinstance(calendar, dict):
+        return None
+    timezone = calendar.get("timezone")
+    if not isinstance(timezone, str) or not timezone.strip():
+        if isinstance(timezone, str):
+            report.add_error(
+                "calendar.timezone must be a non-empty IANA timezone",
+                path=config_path,
+                field="calendar.timezone",
+                next_action="Use an IANA timezone such as America/Mexico_City",
+            )
+        return None
+    try:
+        ZoneInfo(timezone)
+    except ZoneInfoNotFoundError:
+        report.add_error(
+            "calendar.timezone must be a valid IANA timezone",
+            path=config_path,
+            field="calendar.timezone",
+            next_action="Use an IANA timezone such as America/Mexico_City",
+        )
+        return None
+    return timezone
 
 
 def _validate_markdown_source_links(

@@ -10,7 +10,8 @@
     "description",
     "language",
     "source",
-    "artifact"
+    "artifact",
+    "calendar"
   ],
   "properties": {
     "course_id": {
@@ -37,6 +38,16 @@
     "artifact": {
       "type": "string",
       "minLength": 1
+    },
+    "calendar": {
+      "type": "object",
+      "required": ["timezone"],
+      "properties": {
+        "timezone": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "institution": {
       "type": "string"

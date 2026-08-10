@@ -4,3 +4,5 @@ description: Invalid fixture for unsafe runtime default diagnostics.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City

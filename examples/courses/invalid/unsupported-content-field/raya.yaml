@@ -5,3 +5,5 @@ language: en
 source: course
 content: content
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City

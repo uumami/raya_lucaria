@@ -4,3 +4,5 @@ description: Invalid fixture for source-root official object scope requirements.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City

@@ -190,6 +190,11 @@ def _official_sources(
         if support_dir.parent.resolve() != source_dir.resolve():
             owner_page = index_pages_by_dir.get(support_dir.parent.resolve())
         for family_dir in sorted(path for path in support_dir.iterdir() if path.is_dir()):
+            if (
+                support_dir.parent.resolve() == source_dir.resolve()
+                and family_dir.name == "calendar"
+            ):
+                continue
             family = family_dir.name
             source_order_by_parent: dict[Path, dict[int, Path]] = defaultdict(dict)
             for object_path in sorted(

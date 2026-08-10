@@ -4,6 +4,8 @@ description: Minimal fixture for Raya Lucaria contract validation.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
 hierarchy:
   levels:
     - key: unit

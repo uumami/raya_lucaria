@@ -4,3 +4,5 @@ description: Fixture for runtime profile and cache metadata behavior.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
