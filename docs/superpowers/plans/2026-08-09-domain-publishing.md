@@ -31,11 +31,11 @@
 
 **Files:** No repository files.
 
-**Interfaces:** Consumes Namecheap ownership and GitHub user `uumami`. Produces a secure `rayalucaria` organization and an undelegated Cloudflare zone.
+**Interfaces:** Consumes Namecheap ownership and GitHub user `uumami`. Produces a secure `raya-lucaria` organization and an undelegated Cloudflare zone.
 
-- [ ] **Step 1: Create the GitHub organization**
+- [x] **Step 1: Create the GitHub organization**
 
-In GitHub’s organization creation screen, create `rayalucaria` on the free plan and make `uumami` its initial owner. Do not create a starter repository. Confirm its URL is `https://github.com/rayalucaria`.
+The `raya-lucaria` organization already exists at `https://github.com/raya-lucaria` and `uumami` is an owner. Do not create a second organization.
 
 - [ ] **Step 2: Secure the organization**
 
@@ -59,9 +59,9 @@ Confirm the GitHub organization exists, Cloudflare reports the zone is awaiting 
 - Modify: GitHub repository ownership and name; no source-file change expected.
 - Verify: `.github/workflows/deploy.yml`.
 
-**Interfaces:** Consumes the new organization and `uumami/raya_lucaria`. Produces `rayalucaria/rayalucaria.github.io`, the organization Pages repository.
+**Interfaces:** Consumes the new organization and `uumami/raya_lucaria`. Produces `raya-lucaria/raya-lucaria.github.io`, the organization Pages repository.
 
-- [ ] **Step 1: Inspect the workflow and repository**
+- [x] **Step 1: Inspect the workflow and repository**
 
 Run:
 
@@ -72,36 +72,36 @@ sed -n '1,140p' .github/workflows/deploy.yml
 
 Expected: the repository is public and the existing workflow deploys `docs/artifact/site` with GitHub Pages actions.
 
-- [ ] **Step 2: Transfer the repository**
+- [x] **Step 2: Transfer the repository**
 
 Run with the authenticated `uumami` GitHub CLI session:
 
 ```bash
-gh repo transfer uumami/raya_lucaria rayalucaria
+gh repo transfer uumami/raya_lucaria raya-lucaria
 ```
 
 After GitHub confirms the transfer, run:
 
 ```bash
-git remote set-url origin https://github.com/rayalucaria/raya_lucaria.git
+git remote set-url origin https://github.com/raya-lucaria/raya_lucaria.git
 git fetch origin --prune
 ```
 
-- [ ] **Step 3: Rename it into the organization Pages repository**
+- [x] **Step 3: Rename it into the organization Pages repository**
 
-In GitHub repository Settings → General → Repository name, rename `raya_lucaria` to `rayalucaria.github.io`. Then run:
+In GitHub repository Settings → General → Repository name, rename `raya_lucaria` to `raya-lucaria.github.io`. Then run:
 
 ```bash
-git remote set-url origin https://github.com/rayalucaria/rayalucaria.github.io.git
+git remote set-url origin https://github.com/raya-lucaria/raya-lucaria.github.io.git
 git ls-remote --exit-code origin HEAD
-gh repo view rayalucaria/rayalucaria.github.io --json nameWithOwner,url,isPrivate
+gh repo view raya-lucaria/raya-lucaria.github.io --json nameWithOwner,url,isPrivate
 ```
 
-Expected: the remote resolves and GitHub reports a public `rayalucaria/rayalucaria.github.io` repository.
+Expected: the remote resolves and GitHub reports a public `raya-lucaria/raya-lucaria.github.io` repository.
 
-- [ ] **Step 4: Enable and verify root Pages deployment**
+- [x] **Step 4: Enable and verify root Pages deployment**
 
-In repository Settings → Pages, select GitHub Actions as source. Manually run `Deploy Docs to GitHub Pages`; wait for success. Open `https://rayalucaria.github.io/` in a private browser window and confirm documentation navigation and static assets load.
+In repository Settings → Pages, select GitHub Actions as source. Manually run `Deploy Docs to GitHub Pages`; wait for success. Open `https://raya-lucaria.github.io/` in a private browser window and confirm documentation navigation and static assets load.
 
 ### Task 3: Verify ownership and delegate DNS
 
@@ -139,11 +139,11 @@ Expected: the query returns the two Cloudflare nameservers. Confirm the GitHub v
 
 - [ ] **Step 1: Add GitHub Pages records in Cloudflare**
 
-Create DNS-only apex `A` records for `@` with `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, and `185.199.111.153`. Create a DNS-only `CNAME` record for `www` pointing to `rayalucaria.github.io`. Preserve the GitHub verification TXT record.
+Create DNS-only apex `A` records for `@` with `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, and `185.199.111.153`. Create a DNS-only `CNAME` record for `www` pointing to `raya-lucaria.github.io`. Preserve the GitHub verification TXT record.
 
 - [ ] **Step 2: Set the GitHub Pages custom domain**
 
-In `rayalucaria/rayalucaria.github.io` Settings → Pages, set Custom domain to `rayalucaria.org`. Wait until GitHub reports DNS is correct, then enable Enforce HTTPS.
+In `raya-lucaria/raya-lucaria.github.io` Settings → Pages, set Custom domain to `rayalucaria.org`. Wait until GitHub reports DNS is correct, then enable Enforce HTTPS.
 
 - [ ] **Step 3: Verify root traffic**
 
@@ -163,20 +163,20 @@ Privately save prior Namecheap nameservers, Cloudflare DNS export, the successfu
 ### Task 5: Prove independent course publishing before creating `ia_o26`
 
 **Files:**
-- Create then delete: public `rayalucaria/pages-path-probe` repository.
+- Create then delete: public `raya-lucaria/pages-path-probe` repository.
 
 **Interfaces:** Consumes the root custom domain. Produces evidence that project repositories publish independently beneath the domain path.
 
 - [ ] **Step 1: Create and deploy a disposable Pages project**
 
-Create public repository `rayalucaria/pages-path-probe` with an `index.html` that contains `Raya Lucaria Pages path probe` and a standard GitHub Actions Pages deployment workflow. The workflow uploads its repository root and has only `contents: read`, `pages: write`, and `id-token: write` permissions. Do not configure a custom domain in this repository.
+Create public repository `raya-lucaria/pages-path-probe` with an `index.html` that contains `Raya Lucaria Pages path probe` and a standard GitHub Actions Pages deployment workflow. The workflow uploads its repository root and has only `contents: read`, `pages: write`, and `id-token: write` permissions. Do not configure a custom domain in this repository.
 
 - [ ] **Step 2: Verify both project paths**
 
 After its workflow succeeds, run:
 
 ```bash
-curl --fail --location https://rayalucaria.github.io/pages-path-probe/
+curl --fail --location https://raya-lucaria.github.io/pages-path-probe/
 curl --fail --location https://rayalucaria.org/pages-path-probe/
 ```
 
@@ -184,19 +184,19 @@ Expected: both responses contain `Raya Lucaria Pages path probe`.
 
 - [ ] **Step 3: Delete the probe**
 
-Record the successful URLs and deployment run, then delete `rayalucaria/pages-path-probe`. Confirm that `https://rayalucaria.org/pages-path-probe/` no longer serves. This avoids reserving a misleading course ID.
+Record the successful URLs and deployment run, then delete `raya-lucaria/pages-path-probe`. Confirm that `https://rayalucaria.org/pages-path-probe/` no longer serves. This avoids reserving a misleading course ID.
 
 ### Task 6: Establish the real course convention when `ia_o26` is ready
 
 **Files:**
-- Create later: `rayalucaria/ia_o26/.github/workflows/deploy.yml`, `raya.yaml`, and course tree.
+- Create later: `raya-lucaria/ia_o26/.github/workflows/deploy.yml`, `raya.yaml`, and course tree.
 - Modify later: relevant English and Spanish professor/contributor guides.
 
 **Interfaces:** Consumes verified project-path behavior. Produces a self-owned course artifact at `https://rayalucaria.org/ia_o26/`.
 
 - [ ] **Step 1: Create the course repository**
 
-Create public `rayalucaria/ia_o26` only when its course source is ready. Keep the repository name exactly `ia_o26`: it is the stable learner-facing path.
+Create public `raya-lucaria/ia_o26` only when its course source is ready. Keep the repository name exactly `ia_o26`: it is the stable learner-facing path.
 
 - [ ] **Step 2: Add the self-contained Pages workflow**
 
@@ -214,4 +214,4 @@ Add concise English and Spanish role-guide instructions: course teams release th
 
 - Spec coverage: Tasks 1–4 cover provider ownership, security, verification, DNS, root hosting, TLS, and rollback. Task 5 proves inherited project paths. Task 6 preserves course repository ownership.
 - Placeholder scan: no `TBD`, `TODO`, or unspecified technical procedure remains; provider-generated nameservers and verification tokens are explicitly obtained at the required dashboard step.
-- Consistency: `rayalucaria/rayalucaria.github.io` is the root repository, `rayalucaria.org` is the root host, and project repositories retain self-owned deployment at `/<course_id>/`.
+- Consistency: `raya-lucaria/raya-lucaria.github.io` is the root repository, `rayalucaria.org` is the root host, and project repositories retain self-owned deployment at `/<course_id>/`.

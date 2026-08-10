@@ -244,3 +244,9 @@ tile, no current course-tree link, and absent reader-only Context alongside the
 workspace-local filters, results, and focused-page strip. These interactions are
 volatile: they must not fetch external resources or write learner, source,
 artifact, or unrelated preference state.
+
+## Publishing independent courses
+
+Use [Publishing Independent Courses](raya:docs-guides-en-contributors-publishing-courses)
+when a course team wants optional GitHub Pages delivery without making the
+provider part of the course contract.

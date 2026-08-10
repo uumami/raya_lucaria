@@ -260,3 +260,9 @@ workspace activo, ningun enlace actual del arbol del curso y la ausencia del
 Context lector junto con filtros, resultados y la franja de pagina enfocada.
 Estas interacciones son volatiles: no deben hacer fetch de recursos externos ni
 escribir estado de estudiante, fuente, artifact o preferencias no relacionadas.
+
+## Publicar cursos independientes
+
+Usa [Publicar Cursos Independientes](raya:docs-guides-es-colaboradores-publicar-cursos)
+cuando un equipo de curso quiera entrega opcional con GitHub Pages sin volver al
+proveedor parte del contrato del curso.

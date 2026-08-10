@@ -1,0 +1,1 @@
+../../../../guides/en/contributors/publishing-courses.md

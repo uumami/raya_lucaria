@@ -12,13 +12,13 @@ status: approved
 remains the registrar. Cloudflare provides authoritative DNS and DNSSEC, but
 does not proxy the GitHub Pages origin.
 
-The public GitHub namespace will be a `rayalucaria` organization. The existing
+The public GitHub namespace is the `raya-lucaria` organization. The existing
 framework repository will move into that organization and become
-`rayalucaria/rayalucaria.github.io`, the organization Pages repository. It
+`raya-lucaria/raya-lucaria.github.io`, the organization Pages repository. It
 serves the framework's main public surface at `https://rayalucaria.org/`.
 
 Each course remains an independently owned source repository under the same
-organization. A course repository such as `rayalucaria/ia_o26` builds and
+organization. A course repository such as `raya-lucaria/ia_o26` builds and
 deploys its own static Raya artifact through its own GitHub Actions workflow.
 GitHub Pages serves it at `https://rayalucaria.org/ia_o26/` without a per-course
 custom domain, DNS entry, central artifact store, or routing proxy.
@@ -38,9 +38,9 @@ per-course custom hosts, or an aggregation repository.
 
 | Surface | GitHub repository | Public URL |
 | --- | --- | --- |
-| Framework home and documentation | `rayalucaria/rayalucaria.github.io` | `https://rayalucaria.org/` |
-| AI course, autumn 2026 | `rayalucaria/ia_o26` | `https://rayalucaria.org/ia_o26/` |
-| Future course `<course_id>` | `rayalucaria/<course_id>` | `https://rayalucaria.org/<course_id>/` |
+| Framework home and documentation | `raya-lucaria/raya-lucaria.github.io` | `https://rayalucaria.org/` |
+| AI course, autumn 2026 | `raya-lucaria/ia_o26` | `https://rayalucaria.org/ia_o26/` |
+| Future course `<course_id>` | `raya-lucaria/<course_id>` | `https://rayalucaria.org/<course_id>/` |
 
 Repository names used for course publication are durable public course IDs.
 Course pages must use deployment-neutral relative links so they work at their
