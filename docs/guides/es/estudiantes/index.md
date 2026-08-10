@@ -52,7 +52,7 @@ lectoras no tienen una franja de comandos lectora sobre el articulo; los
 comandos lectores viven en el riel izquierdo del curso. En anchos estructurales
 es un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un solo propietario central de
 scroll vertical nativo y footer fijo. Presenta seis acciones planas obligatorias:
-Search, Graph, Practice, Tasks, Schedule y Context. Search abre el workspace
+Search, Graph, Practice, Tasks, Calendar y Context. Search abre el workspace
 generado Course Search; el filtro local Content solo limita labels
 visibles del mapa. El footer contiene posicion de pagina y controles de comodidad Text size y OpenDyslexic. Desde 640px, al colapsarlo usa un mini riel
 estructural reservado de 48px con `Expand course map` y los mismos controles.
@@ -120,7 +120,7 @@ u OpenDyslexic cuando esos ajustes sean mas comodos. Las cards al final de
 pagina son enlaces del orden del curso; no son recomendaciones ni marcadores de
 progreso.
 Las seis acciones del riel permanecen presentes como un solo conjunto plano de
-navegacion. Search, Graph, Practice, Tasks y Schedule abren sus workspaces
+navegacion. Search, Graph, Practice, Tasks y Calendar abren sus workspaces
 generados; Context controla el riel de aprendizaje. No representan progreso,
 ranking, finalizacion, importancia, notas, recomendaciones ni guia
 personalizada.
@@ -188,12 +188,12 @@ enlazada cuando el curso tiene esos metadatos. Tambien pueden etiquetar tipo y
 direccion de relacion, como `Content` y `From this page`, usando solo contexto
 explicito generado del grafo. Usalos como mapa de lectura despues de terminar
 la pagina; no son un registro de avance, ranking ni motor de recomendaciones.
-Las paginas Search, Graph, Practice, Tasks y Schedule conservan el mapa de curso persistente para volver al curso o cambiar de workspace desde la misma navegacion. El mosaico del workspace activo es el unico actual, ningun enlace
+Las paginas Search, Graph, Practice, Tasks y Calendar conservan el mapa de curso persistente para volver al curso o cambiar de workspace desde la misma navegacion. El mosaico del workspace activo es el unico actual, ningun enlace
 del arbol del curso es actual y el Context lector no aparece. Search, Practice,
-Tasks y Schedule tambien pueden mostrar controles, resultados y un panel de
+Tasks y Calendar tambien pueden mostrar controles, resultados y un panel de
 contexto en pantallas anchas. Esos controles, filtros y foco de pagina son
 temporales: los workspaces no guardan tu consulta, nodo seleccionado, layout del
-grafo, filtros de practica, filtros de tareas ni filtros de Schedule como estado
+grafo, filtros de practica, filtros de tareas ni filtros de Calendar como estado
 de estudio, ni hacen fetch de recursos externos.
 Los filtros de texto pueden tolerar errores pequenos de escritura al comparar
 titulos publicos, tags, resumenes, labels y texto visible de objetos. Esa
@@ -201,15 +201,15 @@ coincidencia es comportamiento local de la pagina, no ranking, personalizacion
 ni recomendacion.
 Cuando uno de esos workspaces abre enfocado en una pagina, muestra una franja
 de pagina de curso enfocada cerca de arriba con `Open page`, links a Search,
-Graph, Practice, Tasks y Schedule enfocados en la misma pagina, y `Clear focus`.
-Search, Practice, Tasks y Schedule tambien pueden mostrar un aviso compacto con
+Graph, Practice, Tasks y Calendar enfocados en la misma pagina, y `Clear focus`.
+Search, Practice, Tasks y Calendar tambien pueden mostrar un aviso compacto con
 el nombre de esa pagina y el numero de resultados visibles. Clear o Escape
 quitan ese foco y vuelven al workspace estatico completo, incluso cuando el foco
 de teclado esta en un resultado visible o una accion de contexto en vez del
 campo de busqueda. La franja y el aviso no son progreso guardado ni una
 recomendacion.
 Los paneles de contexto tambien pueden mostrar links estaticos directos para el
-resultado, objeto, task o item de Schedule activo, como Open page, View graph u
+resultado, objeto, task o item de Calendar activo, como Open page, View graph u
 otro workspace enfocado en la misma pagina. Son atajos de navegacion sobre datos
 publicos generados del curso, no recomendaciones ni estado de estudio guardado.
 Cuando una pagina esta seleccionada en el grafo, las paginas conectadas pueden
@@ -319,16 +319,18 @@ los tasks visibles. No es registro de progreso
 personal, sistema de entregas, gradebook, pagina adaptativa de recomendaciones,
 sincronizacion de calendario ni superficie de respuestas ocultas.
 
-Algunos cursos tambien pueden incluir un workspace Official Schedule bajo
-`_raya/schedule/`. Usalo para escanear assignments, projects, exams y tasks
-aceptados que tienen fechas `due` o `available` por texto, coincidencia
-aproximada de texto, tipo de evento o tipo de task, y despues abre la pagina que
-los posee para ver el contexto completo. Es una vista estatica fechada sobre
-metadata del curso. Search o Graph pueden abrir Schedule enfocado en una
-pagina, con un aviso visible y reset por Clear o Escape a todos los items
-fechados visibles; no es calendario personal, sistema de recordatorios,
+Algunos cursos incluyen Calendar, una vista de agenda y mes de sesiones,
+feriados, cancelaciones e hitos oficiales, y de fechas due o available validas
+derivadas de assignments, projects, exams y tasks oficiales. El equipo del
+curso autora esas fechas de task una sola vez; Calendar las deriva
+automaticamente y no conserva entradas duplicadas de homework, exam, project o
+task. Usa sus filtros locales y abre la pagina propietaria para el contexto
+completo. Search o Graph pueden abrir Calendar enfocado en una pagina, con un
+aviso visible y reset por Clear o Escape. Calendar es una vista estatica del
+curso, no un calendario personal, sistema de recordatorios, sincronizacion,
 registro de progreso, pagina de recomendaciones, sistema de entregas ni
-gradebook.
+gradebook. El nombre visible es Calendar; `/_raya/schedule/` es solo una URL de
+compatibilidad.
 
 Algunas paginas pueden incluir scripts o notebooks enlazados. Se copian como archivos legibles y pueden mostrar previsualizaciones de fuente, pero el build estatico los etiqueta como `not-executed`. Los archivos fuente no enlazados no forman parte del artifact de la pagina. Usa las instrucciones del curso cuando una clase espere que ejecutes codigo localmente, en Docker, o mediante un futuro workflow aceptado.
 

@@ -4,6 +4,8 @@ description: Renderable documentation surface for foundation and role guidance.
 language: en
 source: render-content
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
 hierarchy:
   levels:
     - key: section

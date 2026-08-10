@@ -393,10 +393,10 @@ def test_reader_rail_visual_parity_truth_surfaces_agree() -> None:
     }
 
     for name in ("foundation", "student_en", "agent_en"):
-        assert "Search, Graph, Practice, Tasks, Schedule, and Context" in text[name]
+        assert "Search, Graph, Practice, Tasks, Calendar, and Context" in text[name]
         assert "Text size and OpenDyslexic" in text[name]
     for name in ("student_es", "agent_es"):
-        assert "Search, Graph, Practice, Tasks, Schedule y Context" in text[name]
+        assert "Search, Graph, Practice, Tasks, Calendar y Context" in text[name]
         assert "Text size y OpenDyslexic" in text[name]
 
     for name in paths:
@@ -452,13 +452,13 @@ def test_role_guides_require_flat_reader_rail_actions() -> None:
 
     for name in ("student_en", "agent_en"):
         assert (
-            "six mandatory flat actions: search, graph, practice, tasks, schedule, "
+            "six mandatory flat actions: search, graph, practice, tasks, calendar, "
             "and context"
         ) in text[name]
     for name in ("student_es", "agent_es"):
         assert (
             "seis acciones planas obligatorias: search, graph, practice, tasks, "
-            "schedule y context"
+            "calendar y context"
         ) in text[name]
 
     stale_phrases = {
@@ -501,3 +501,36 @@ def test_workspace_course_map_contract_is_documented() -> None:
             encoding="utf-8"
         )
         assert "mapa de curso persistente" in guide, role
+
+
+def test_calendar_contract_is_documented_across_truth_surfaces() -> None:
+    """Keep native Calendar authoring, artifact, and role guidance in sync."""
+    course_contract = (DOCS_ROOT / "foundation" / "05_course_contract.md").read_text(
+        encoding="utf-8"
+    )
+    artifact_contract = (DOCS_ROOT / "foundation" / "06_artifact_contract.md").read_text(
+        encoding="utf-8"
+    )
+    renderer_contract = (
+        DOCS_ROOT / "foundation" / "20_learning_renderer_contract.md"
+    ).read_text(encoding="utf-8")
+
+    assert "calendar.timezone" in course_contract
+    assert "course/_official/calendar/" in course_contract
+    assert "IANA timezone" in course_contract
+    assert "data/calendar.json" in artifact_contract
+    assert '"calendar": "data/calendar.json"' in artifact_contract
+    assert "derived automatically" in artifact_contract
+    assert "Calendar" in renderer_contract
+    assert "compatibility URL" in renderer_contract
+    assert "no network" in renderer_contract
+
+    for role in ("contributors", "professors", "students", "agents"):
+        guide = (GUIDES / "en" / role / "index.md").read_text(encoding="utf-8")
+        assert "Calendar" in guide, role
+        assert "derived" in guide, role
+
+    for role in ("colaboradores", "profesores", "estudiantes", "agentes"):
+        guide = (GUIDES / "es" / role / "index.md").read_text(encoding="utf-8")
+        assert "Calendar" in guide, role
+        assert "derivad" in guide, role

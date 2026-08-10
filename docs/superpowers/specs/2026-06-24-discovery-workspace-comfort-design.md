@@ -38,7 +38,7 @@ Each page header becomes a compact workspace intro:
 - Search: `Course Search`, with one structural sentence about page metadata search.
 - Practice: `Official Practice`, with one structural sentence about accepted official objects.
 - Tasks: `Official Tasks`, with one structural sentence about accepted task-family objects.
-- Schedule: `Official Schedule`, with one structural sentence about authored dated task-family objects.
+- Calendar: `Calendar`, with one structural sentence about explicit official events and derived task-family dates.
 
 This reduces vertical noise, especially on mobile, while keeping the course navigation and workspace identity visible.
 

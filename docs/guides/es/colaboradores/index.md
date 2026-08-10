@@ -125,21 +125,21 @@ inspeccion por teclado, layout desktop/movil, sin requests externos, sin
 `fetch` en runtime, sin browser storage y sin lenguaje de grading, entregas,
 progreso, dominio o recomendaciones.
 
-El workspace Official Schedule tambien es comportamiento actual del renderer
-estatico sobre los mismos objetos aceptados de familia task cuando incluyen
-`content.due` o `content.available`. Revisalo como vista fechada de browser
-sobre la semantica de `data/tasks.json`, no como nuevo index de artifact,
-calendar feed, sincronizacion de calendario, sistema de recordatorios ni
-superficie de estado del estudiante. La verificacion debe cubrir
-`_raya/schedule/index.html`, el recurso local `schedule.js`, filtrado solo de
-objetos fechados, anchors de pagina propietaria, links de foco en grafo, sin
-rutas privadas, sin `fetch` en runtime, sin browser storage y sin lenguaje de
-grading, entregas, progreso, dominio o recomendaciones.
+Calendar es comportamiento actual del renderer estatico sobre
+`data/calendar.json` declarado en el manifest: sesiones, feriados,
+cancelaciones e hitos oficiales explicitos, mas fechas due y available
+derivadas automaticamente de objetos oficiales validos de familia task.
+Verifica vistas agenda y mes, filtros locales, anchors de pagina propietaria,
+links de foco en grafo, sin rutas privadas, sin `fetch` en runtime, sin
+requests de red, sin browser storage y sin lenguaje de grading, entregas,
+progreso, dominio, recomendacion, recordatorios, sincronizacion o estado del
+estudiante. El nombre visible es Calendar; `/_raya/schedule/` es solo una URL
+de compatibilidad.
 
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un solo propietario
 central de scroll vertical nativo y footer fijo. Sus acciones en dos columnas
-son Search, Graph, Practice, Tasks, Schedule y Context; Search abre el
+son Search, Graph, Practice, Tasks, Calendar y Context; Search abre el
 workspace generado, mientras el filtro local Content solo limita etiquetas
 renderizadas del mapa. El footer contiene Text size y OpenDyslexic. Desde
 640px, el colapso explicito usa un mini riel estructural reservado de 48px. El
@@ -209,9 +209,9 @@ enlaces graph-focus de resultados de busqueda deben generarse solo desde stable
 IDs y URLs locales del grafo; conserva lenguaje estructural como `View in
 graph`. Los workspaces de descubrimiento Search y Practice pueden usar regiones
 de controles, resultados y contexto en desktop. Search, Practice, Tasks y
-Schedule pueden mostrar una franja compartida de pagina de curso enfocada para
+Calendar pueden mostrar una franja compartida de pagina de curso enfocada para
 un handoff valido `?page=<page-id>`, con links a Search, Graph, Practice, Tasks
-y Schedule enfocados en la misma pagina. Search, Practice, Tasks y Schedule
+y Calendar enfocados en la misma pagina. Search, Practice, Tasks y Calendar
 tambien pueden mostrar avisos compactos de foco de pagina en sus regiones de
 control. La franja y los avisos deben ocultarse cuando el foco falta o no es
 valido y despues de que Clear/Escape restaura el workspace completo. Esas
@@ -254,7 +254,7 @@ La documentacion actual tambien es un curso de docs renderizable. Edita las pagi
 
 Para cambios sustanciales, declara el impacto de documentacion para colaboradores, profesores, estudiantes y agentes. Si cambia la documentacion de rol, manten separadas las paginas en ingles y espanol.
 
-Search, Graph, Practice, Tasks y Schedule usan el mapa de curso persistente con
+Search, Graph, Practice, Tasks y Calendar usan el mapa de curso persistente con
 links relativos generados y recursos locales de shell. Revisa el mosaico del
 workspace activo, ningun enlace actual del arbol del curso y la ausencia del
 Context lector junto con filtros, resultados y la franja de pagina enfocada.

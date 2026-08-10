@@ -50,7 +50,7 @@ The current course shell is a static reading aid. Reader pages do not have a
 reader command strip above the article; reader commands live in the left course
 rail. At structural widths, it is an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed
 header, one central native vertical scroll owner, and a fixed footer. It presents
-six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule, and Context.
+six mandatory flat actions: Search, Graph, Practice, Tasks, Calendar, and Context.
 Search opens the generated Course Search workspace; the local Content
 filter only narrows visible map labels. The footer holds page position and Text size and OpenDyslexic comfort controls. At 640px and wider, collapsing it uses
 a reserved 48px structural mini rail with `Expand course map` and the same
@@ -115,7 +115,7 @@ cards to move through the ordered material, and use Text size or OpenDyslexic
 when those settings are more comfortable. End-of-page cards are course-order
 links; they are not recommendations or progress markers.
 The six rail actions remain present as one flat navigation set. Search, Graph,
-Practice, Tasks, and Schedule open their generated workspaces; Context controls
+Practice, Tasks, and Calendar open their generated workspaces; Context controls
 the learning rail. They do not represent progress, ranking, completion,
 importance, grades, recommendations, or personalized guidance.
 
@@ -171,8 +171,8 @@ counts when the course has that metadata. They may also label relationship kind
 and direction, such as `Content` and `From this page`, using explicit generated
 graph context only. Use them as a reading map after finishing the page; they are
 not a progress tracker, ranking, or recommendation engine.
-Search, Graph, Practice, Tasks, and Schedule pages keep the persistent Course map, so you can return to the course or switch workspaces from the same course navigation. The active workspace tile is current, no course-tree page is current, and reader-only Context is absent. Search, Practice, Tasks, and
-Schedule may also show controls, results, and a context panel on wider screens.
+Search, Graph, Practice, Tasks, and Calendar pages keep the persistent Course map, so you can return to the course or switch workspaces from the same course navigation. The active workspace tile is current, no course-tree page is current, and reader-only Context is absent. Search, Practice, Tasks, and
+Calendar may also show controls, results, and a context panel on wider screens.
 Those controls, filters, and page focus are temporary reading and scanning
 state; the workspaces do not store your query, selected node, graph layout,
 practice filters, or task filters as study state or fetch external resources.
@@ -181,8 +181,8 @@ tags, summaries, labels, and visible object text. That matching is local page
 behavior, not ranking, personalization, or recommendation.
 When one of those workspaces opens focused on a page, it shows a focused course
 page strip near the top with `Open page`, same-page links to Search, Graph,
-Practice, Tasks, and Schedule, and `Clear focus`. Search, Practice, Tasks, and
-Schedule may also show a compact notice naming that page and the number of
+Practice, Tasks, and Calendar, and `Clear focus`. Search, Practice, Tasks, and
+Calendar may also show a compact notice naming that page and the number of
 visible results. Clear or Escape removes the focus and returns to the full
 static workspace, even when keyboard focus is on a visible result or context
 action instead of the search field. The strip and notice are not saved progress
@@ -288,14 +288,16 @@ reset to all visible tasks. It is not a
 personal progress tracker, submission system, gradebook, adaptive
 recommendation page, calendar sync, or hidden answer surface.
 
-Some courses may also include an Official Schedule workspace under
-`_raya/schedule/`. Use it to scan accepted assignments, projects, exams, and
-tasks that have authored due or available dates by text, approximate text match,
-event kind, or task type, then open the owning page for full context. Search or Graph may open Schedule focused on one page, with a
-visible notice and a Clear/Escape reset to all visible dated items. It is a
-static dated view over course metadata; it is not a
-personal calendar, reminder system, progress tracker, recommendation page,
-submission system, or gradebook.
+Some courses include Calendar, an agenda and month view of official sessions,
+holidays, cancellations, milestones, and valid due or available dates derived
+from official assignments, projects, exams, and tasks. The course team authors
+those task dates once; Calendar derives them automatically rather than keeping
+duplicate homework, exam, project, or task entries. Use its local filters, then
+open the owning page for full context. Search or Graph may open Calendar
+focused on one page, with a visible notice and a Clear/Escape reset. Calendar
+is a static course view, not a personal calendar, reminder system, sync,
+progress tracker, recommendation page, submission system, or gradebook. Its
+visible name is Calendar; `/_raya/schedule/` is a compatibility URL only.
 
 Some pages may include linked scripts or notebooks. These are copied as readable files and may show source previews, but the static build labels them as not executed. Unlinked course source files are not part of the page artifact. Use course instructions when a class expects you to run code locally, in Docker, or through a future accepted execution workflow.
 

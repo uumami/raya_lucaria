@@ -277,20 +277,19 @@ reset por Clear/Escape a todos los tasks visibles. No es sistema de entregas,
 gradebook, sincronizacion de calendario personal, registro de progreso, motor
 de recomendaciones ni superficie de respuestas ocultas.
 
-El workspace Official Schedule en `_raya/schedule/index.html` se genera desde
-los mismos objetos aceptados de familia task cuando incluyen `content.due` o
-`content.available`. Ayuda a estudiantes a escanear trabajo oficial fechado y
-volver al anchor de la pagina propietaria. Search o Graph pueden abrirlo
-enfocado en una pagina con una franja de pagina de curso enfocada, un aviso
-visible, handoffs a workspaces enfocados en la misma pagina y reset por
-Clear/Escape a todos los items fechados visibles. No es una fuente de calendario
-separada, sincronizacion de calendario personal, sistema de recordatorios,
-sistema de entregas, gradebook, registro de progreso ni motor de
-recomendaciones.
+Quienes autoran agregan explicitamente sesiones, feriados, cancelaciones e
+hitos en documentos ordenados bajo `course/_official/calendar/`, con una sola
+zona horaria IANA `calendar.timezone` en `raya.yaml`. Autora assignments,
+exams, projects y tasks una sola vez: las fechas `content.due` y
+`content.available` validas se derivan automaticamente en Calendar y no deben
+duplicarse en documentos Calendar. Calendar presenta agenda y mes; la URL
+`/_raya/schedule/` se conserva solo por compatibilidad. No es calendario
+personal, recordatorio, sincronizacion, sistema de entregas, gradebook,
+registro de progreso ni motor de recomendaciones.
 
 Las paginas renderizadas usan un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un
 solo propietario central de scroll vertical nativo y footer fijo. Sus acciones
-de curso en dos columnas son Search, Graph, Practice, Tasks, Schedule y
+de curso en dos columnas son Search, Graph, Practice, Tasks, Calendar y
 Context; Search abre el workspace generado, mientras el filtro local Content
 limita etiquetas visibles de paginas. El footer contiene Text size y
 OpenDyslexic. Desde 640px, el colapso usa un mini riel estructural reservado de
@@ -374,7 +373,7 @@ Las specs OpenSpec describen contratos aceptados. La documentacion de rol explic
 
 La documentacion renderizada del repositorio es guia, no canon de curso. Se construye desde `docs/raya.yaml` y permanece separada del material de clase y de los artifacts oficiales de curso.
 
-Los workspaces generados Search, Graph, Practice, Tasks y Schedule conservan el
+Los workspaces generados Search, Graph, Practice, Tasks y Calendar conservan el
 mapa de curso persistente para mantener estable la navegacion del curso. Sus
 links relativos generados marcan como actual solo el mosaico del workspace
 activo; el Context lector no aparece. Los filtros, resultados y franjas de

@@ -271,18 +271,19 @@ system, gradebook,
 personal calendar sync, progress tracker, recommendation engine, or hidden
 answer surface.
 
-The Official Schedule workspace at `_raya/schedule/index.html` is generated
-from the same accepted task-family objects when they include `content.due` or
-`content.available`. It helps students scan dated official work and return to
-the owning page anchor. Search or Graph may open it focused on one page with a
-focused course page strip, a visible notice, same-page workspace handoffs, and
-Clear/Escape reset to all visible dated items. It is not a separate calendar
-source, personal calendar sync, reminder system, submission system, gradebook,
-progress tracker, or recommendation engine.
+Authors explicitly add sessions, holidays, cancellations, and milestones in
+ordered documents under `course/_official/calendar/`, with one IANA
+`calendar.timezone` in `raya.yaml`. Author official assignments, exams,
+projects, and tasks once: valid `content.due` and `content.available` entries
+are derived automatically in Calendar and must not be copied into Calendar
+documents. Calendar presents the resulting agenda and month views, with
+`/_raya/schedule/` retained only as a compatibility URL. It is not a personal
+calendar, reminder, synchronization, submission, gradebook, progress, or
+recommendation service.
 
 Rendered pages now use an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed header, one
 central native vertical scroll owner, and a fixed footer. Its two-column course
-actions are Search, Graph, Practice, Tasks, Schedule, and Context; Search opens
+actions are Search, Graph, Practice, Tasks, Calendar, and Context; Search opens
 the generated workspace, while the local Content filter narrows visible page
 labels. The footer holds Text size and OpenDyslexic. From 640px, collapse uses a
 reserved 48px structural mini rail for more reading space.
@@ -365,7 +366,7 @@ OpenSpec specs describe accepted contracts. Role documentation explains how to w
 
 Rendered repository documentation is guidance, not course canon. It is built from `docs/raya.yaml` and remains separate from class material and official course artifacts.
 
-Generated Search, Graph, Practice, Tasks, and Schedule workspaces retain the
+Generated Search, Graph, Practice, Tasks, and Calendar workspaces retain the
 persistent Course map so their course navigation stays stable. Its generated
 relative links identify only the active workspace tile as current; reader-only
 Context is absent. Workspace-local filters, results, and focused-page strips

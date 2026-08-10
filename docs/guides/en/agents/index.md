@@ -129,22 +129,25 @@ Enter-to-open behavior, responsive panels, no private paths, no runtime fetch,
 no external requests, no browser storage, and no grading, submission, progress,
 mastery, recommendation, or learner-state language.
 
-For the Official Schedule workspace, inspect the same accepted task-family
-objects and verify that only objects with public `content.due` or
-`content.available` appear in `_raya/schedule/index.html`. Compare the embedded
-payload with `data/tasks.json` semantics and the local `schedule.js` script.
-Verify event-kind and type filters, search, keyboard Enter-to-open behavior,
-owning page anchors, graph focus links, responsive panels, no private paths, no
-runtime fetch, no external requests, no browser storage, and no calendar sync,
-reminder, grading, submission, progress, mastery, recommendation, or
-learner-state language.
+For Calendar, inspect direct ordered official documents in
+`course/_official/calendar/` and valid task-family `content.due` and
+`content.available` fields. Confirm `calendar.timezone` is one IANA timezone,
+then compare source semantics with manifest-declared `data/calendar.json` and
+the Calendar agenda and month views. Explicit sessions, holidays, cancellations,
+and milestones remain authored; task due/available entries are derived
+automatically and must not be duplicated. Verify event-kind and type filters,
+keyboard Enter-to-open behavior, owning page anchors, graph focus links,
+responsive panels, no private paths, no runtime fetch, no external requests,
+no browser storage, and no calendar sync, reminder, grading, submission,
+progress, mastery, recommendation, or learner-state language. Calendar is the
+visible name; `/_raya/schedule/` is a compatibility URL only.
 
 When changing the shell, verify reader pages render no `.raya-top-command-bar`
 and every discovery workspace renders the persistent Course map with local
 `shell.js`, not `.raya-discovery-command-bar`. Verify the structural `Hide map`
 header Map action separately from the central course actions. The header also
 presents the course-home control alongside the `Hide map` icon action. Reader
-maps own six mandatory flat actions: Search, Graph, Practice, Tasks, Schedule,
+maps own six mandatory flat actions: Search, Graph, Practice, Tasks, Calendar,
 and Context; workspace maps preserve the shared navigation but reader-only
 Context is absent. The fixed footer holds structural position plus Text size
 and OpenDyslexic.
@@ -235,7 +238,7 @@ desktop regions are removed from keyboard and assistive navigation as specified.
 When changing the six rail actions, verify their order, labels,
 deployment-neutral hrefs, and unconditional presence as one flat navigation set.
 Practice may use a page-focused href only for direct official ownership, and
-Schedule may use one only for direct dated official tasks. Verify collapsed-map
+Calendar may use one only for direct dated official tasks. Verify collapsed-map
 hiding, desktop/mobile no-overflow behavior, and no storage, fetch, progress,
 ranking, recommendation, or learner-state language.
 
@@ -352,13 +355,13 @@ writing browser storage or changing source authority, including when focus is
 on a visible result link or context action instead of the query input.
 Search result graph-focus links must come from stable page IDs and generated
 local graph URLs, preserve Enter-to-open-page behavior, and avoid recommendation
-or progress language. Search, Graph, Practice, Tasks, and Schedule workspaces
+or progress language. Search, Graph, Practice, Tasks, and Calendar workspaces
 must load the persistent Course map's local `shell.js` and map controls while
 keeping filtering and focus volatile; they must not load external workspace
 assets, persist graph/search/practice/tasks state, fetch external resources, or
 write learner, source, artifact, or unrelated preference state.
 
-When changing Tasks or Schedule, verify URL-only `?page=<page-id>` handoffs from
+When changing Tasks or Calendar, verify URL-only `?page=<page-id>` handoffs from
 Search or Graph. The destination workspace may initially narrow visible public
 task-family objects to the requested page, but Clear and Escape must restore the
 full static workspace without writing browser storage or changing source
@@ -404,9 +407,9 @@ disclosures by default; they must not require storage, fetch, scoring, external
 assets, or browser-side MathJax.
 
 For discovery workspace page-focus failures, open Search, Practice, Tasks, and
-Schedule with a valid `?page=<page-id>` handoff and verify the first-viewport
+Calendar with a valid `?page=<page-id>` handoff and verify the first-viewport
 focused course page strip names the public page, links back to the page, links
-to the same page focus across Search, Graph, Practice, Tasks, and Schedule, and
+to the same page focus across Search, Graph, Practice, Tasks, and Calendar, and
 offers `Clear focus`. Also verify the control region shows a compact page-focus
 notice with the public page title and visible count where that workspace has one.
 Then verify Clear and Escape hide the notice and restore all visible results or

@@ -52,6 +52,15 @@ Initial required ideas:
 - optional hierarchy labels such as Unit/Topic or Chapter/Section,
 - optional institution/course-team metadata.
 
+Every course declares one IANA timezone at `calendar.timezone`. It gives Calendar
+events and official due/available dates one civil-date interpretation.
+
+```yaml
+# raya.yaml
+calendar:
+  timezone: America/Mexico_City
+```
+
 Configuration should be simple enough for a professor, student, or coding agent to edit safely.
 
 `raya.yaml` may configure build-time numbered objects under
@@ -186,6 +195,49 @@ future personal/shared study state
 
 Colocated official object filenames use ordered prefixes for authoring and export order. The object `id` remains the durable identity; the filename prefix is not an ID. Objects under a quantum's `_official/` may omit `scope.quantum`; Glintstone infers the nearest directory page. Source-root `_official/` objects require explicit `scope.quantum`.
 
+## Calendar
+
+Calendar is course-level official source. Authors explicitly add sessions,
+holidays, cancellations, and milestones as direct ordered YAML documents under
+`course/_official/calendar/`; these documents are not colocated under individual
+quanta. Each document is an official `calendar` object with a stable ID and an
+explicit `scope.quantum` pointing to a rendered page. Events use ISO civil dates;
+sessions may also give local `start_time` and `end_time` in `HH:MM`.
+
+```yaml
+# course/_official/calendar/1_term.yaml
+id: autumn-term
+type: calendar
+authority: official
+scope:
+  quantum: course-home
+events:
+  - id: first-session
+    kind: session
+    date: 2026-08-17
+    start_time: "09:00"
+    end_time: "10:30"
+    title: First session
+  - id: independence-day
+    kind: holiday
+    date: 2026-09-16
+    title: Independence Day
+  - id: midterm-window
+    kind: milestone
+    date: 2026-10-12
+    title: Midterm week begins
+  - id: weather-closure
+    kind: cancellation
+    date: 2026-10-19
+    title: Class cancelled
+```
+
+Official assignments, exams, projects, and tasks remain authored once in their
+own `_official/` documents. Valid `content.due` and `content.available` ISO
+civil dates derive Calendar entries automatically. Do not copy those homework,
+exam, project, or task dates into a Calendar document: duplicate source dates
+would create competing official truth.
+
 Colocated assets use `_assets/` beside the page or section that owns them. Rendered Markdown may reference its own `_assets/` or an ancestor `_assets/` inside the authored source tree. Rendered pages must not link into `_official/`, `_drafts/`, `_partials/`, or other non-asset support paths.
 
 Rendered Markdown may link to `.py` and `.ipynb` files as code and notebook source support. Glintstone classifies those references by extension and validates that the target belongs to the page's own learning quantum or an accepted ancestor. Folder names such as `scripts/`, `labs/`, `code/`, and `notebooks/` are ordinary author organization choices; only validated, linked files are copied into generated reference artifacts.
@@ -210,6 +262,7 @@ A course must be validated before build. Validation should check at least:
 - missing, stale, or escaping reviewed execution output files,
 - `policy: frozen` targets without current reviewed output,
 - invalid dates or schema fields,
+- missing or invalid `calendar.timezone`, invalid Calendar documents or events,
 - generated/official authority labels,
 - invalid, unscoped, unordered, duplicated, or mismatched official learning objects.
 

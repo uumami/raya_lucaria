@@ -118,19 +118,18 @@ keyboard inspection, desktop/mobile layout, no external requests, no runtime
 fetch, no browser storage, and no grading, submission, progress, mastery, or
 recommendation language.
 
-The Official Schedule workspace is current static renderer behavior over the
-same accepted task-family objects when they include `content.due` or
-`content.available`. Review it as a browser-facing dated view over
-`data/tasks.json` semantics, not as a new artifact index, calendar feed,
-calendar sync, reminder system, or learner-state surface. Verification should
-cover `_raya/schedule/index.html`, the local `schedule.js` resource, dated-only
-filtering, owning page anchors, graph focus links, no private paths, no
-runtime fetch, no browser storage, and no grading, submission, progress,
-mastery, or recommendation language.
+Calendar is current static renderer behavior over manifest-declared
+`data/calendar.json`: explicit official sessions, holidays, cancellations, and
+milestones plus due and available dates derived automatically from valid
+official task-family objects. Verify agenda and month views, local filters,
+owning page anchors, graph focus links, no private paths, no runtime fetch, no
+network requests, no browser storage, and no grading, submission, progress,
+mastery, recommendation, reminder, synchronization, or learner-state language.
+Its visible name is Calendar; `/_raya/schedule/` is a compatibility URL only.
 
 Review shell controls as accessibility surfaces. The current reader uses an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed header, one central native vertical scroll
 owner, and a fixed footer. Its six two-column actions are Search, Graph,
-Practice, Tasks, Schedule, and Context; Search opens the generated workspace,
+Practice, Tasks, Calendar, and Context; Search opens the generated workspace,
 while the local Content filter narrows only rendered map labels. The footer
 contains Text size and OpenDyslexic. At 640px and wider, explicit collapse uses
 a reserved 48px structural mini rail. Phone-sized layouts may open the course
@@ -194,10 +193,10 @@ than recommendations or alternate authority. Search
 result graph-focus links must be generated from stable page IDs and local graph
 URLs only; keep their wording structural, such as `View in graph`. Search and
 Practice discovery workspaces may use control, results, and context regions on
-desktop. Search, Practice, Tasks, and Schedule may show a shared focused course
+desktop. Search, Practice, Tasks, and Calendar may show a shared focused course
 page strip for a valid `?page=<page-id>` handoff, with same-page links across
-Search, Graph, Practice, Tasks, and Schedule. Search, Practice, Tasks, and
-Schedule may also show compact page-focus notices in their control regions. The
+Search, Graph, Practice, Tasks, and Calendar. Search, Practice, Tasks, and
+Calendar may also show compact page-focus notices in their control regions. The
 strip and notices must hide for missing or invalid page focus and after
 Clear/Escape restores the full workspace. Those regions must stay public,
 responsive, and free of stored discovery state.
@@ -238,7 +237,7 @@ Current documentation is also a renderable docs course. Edit the readable pages 
 
 For substantial changes, state the documentation impact for contributors/collaborators, professors, students, and agents. If role documentation changes, keep the English and Spanish pages separate.
 
-Search, Graph, Practice, Tasks, and Schedule use the persistent Course map with
+Search, Graph, Practice, Tasks, and Calendar use the persistent Course map with
 generated relative links and local shell resources. Review the active workspace
 tile, no current course-tree link, and absent reader-only Context alongside the
 workspace-local filters, results, and focused-page strip. These interactions are

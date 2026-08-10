@@ -19,7 +19,7 @@ Raya Lucaria is an open-source educational framework and commons for serious uni
 - [Pedagogy](03_pedagogy.md) -- learning-first design without hardcoding one doctrine.
 - [Ownership & Permissions](04_ownership_permissions.md) -- official, personal, shared, generated, and accepted authority domains.
 - [Course Contract](05_course_contract.md) -- `raya.yaml`, `source: course`, ordered learning quanta, colocated support material, official objects, and validation.
-- [Artifact Contract](06_artifact_contract.md) -- static site, manifest, generated indexes, and renderer boundary.
+- [Artifact Contract](06_artifact_contract.md) -- static site, manifest, generated indexes including Calendar, and renderer boundary.
 - [CLI Contract](07_cli_contract.md) -- command surface for humans and coding agents.
 - [Package Boundaries](08_package_boundaries.md) -- fresh package map for rebuilding from zero.
 - [Deployment Model](09_deployment_model.md) -- static, local, one-machine, on-prem, free-tier, and paid-cloud profiles.

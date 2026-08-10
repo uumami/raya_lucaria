@@ -23,6 +23,7 @@ artifact/
     numbered-objects.json
     official.json
     reviewed-outputs.json
+    calendar.json
   assets/
   files/
   reviewed/
@@ -45,6 +46,7 @@ It should include:
 - numbered object index location,
 - official learning-object indexes,
 - reviewed execution output indexes,
+- Calendar index location,
 - static site root,
 - optional graph/search data locations.
 
@@ -137,11 +139,15 @@ authored under the object `content`. It is not source authority, learner state,
 submission state, grading state, personal progress, recommendation data, or a
 calendar integration feed.
 
-The static renderer may also publish a browser-facing Schedule workspace over
-the same `data/tasks.json` payload. That page is a dated view of accepted
-official task metadata only; it is not a separate machine authority surface,
-calendar feed, reminder system, synchronization contract, or learner-state
-record.
+Calendar data is manifest-declared as `"calendar": "data/calendar.json"`.
+It records the course timezone and a normalized, date-ordered index of explicit
+official sessions, holidays, cancellations, and milestones from
+`course/_official/calendar/`, plus valid official task-family due and available
+dates derived automatically from their source objects. The derived due and
+available entries must not be authored again in Calendar documents. This index
+is rebuildable artifact data, not a second source authority, calendar feed,
+reminder system, synchronization contract, learner-state record, or personal
+calendar.
 
 ## Study Seed Data
 

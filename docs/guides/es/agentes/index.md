@@ -138,16 +138,19 @@ responsivos, sin rutas privadas, sin `fetch` en runtime, sin requests externos,
 sin browser storage y sin lenguaje de grading, entregas, progreso, dominio,
 recomendacion o estado del estudiante.
 
-Para el workspace Official Schedule, inspecciona los mismos objetos aceptados
-de familia task y verifica que solo objetos con `content.due` o
-`content.available` publico aparezcan en `_raya/schedule/index.html`. Compara
-el payload embebido con la semantica de `data/tasks.json` y el script local
-`schedule.js`. Verifica filtros por tipo y evento, busqueda, Enter por teclado
-para abrir, anchors de pagina propietaria, links de foco en grafo, paneles
-responsivos, sin rutas privadas, sin `fetch` en runtime, sin requests externos,
-sin browser storage, y sin sincronizacion de calendario, recordatorios,
-grading, entregas, progreso, dominio, recomendacion o lenguaje de estado del
-estudiante.
+Para Calendar, inspecciona documentos oficiales directos y ordenados bajo
+`course/_official/calendar/` y campos `content.due` y `content.available` de
+familia task validos. Confirma una sola zona horaria IANA `calendar.timezone`,
+y compara la semantica fuente con `data/calendar.json` declarado en el manifest
+y las vistas agenda y mes de Calendar. Sesiones, feriados, cancelaciones e
+hitos siguen siendo explicitamente autorados; las entradas due/available se
+derivan automaticamente y no deben duplicarse. Verifica filtros por tipo y
+evento, Enter por teclado para abrir, anchors de pagina propietaria, links de
+foco en grafo, paneles responsivos, sin rutas privadas, sin `fetch` en runtime,
+sin requests externos, sin browser storage y sin sincronizacion de calendario,
+recordatorios, grading, entregas, progreso, dominio, recomendacion o lenguaje
+de estado del estudiante. Calendar es el nombre visible; `/_raya/schedule/` es
+solo una URL de compatibilidad.
 
 Al cambiar la shell, verifica que las paginas lectoras no rendericen
 `.raya-top-command-bar` y que cada workspace de descubrimiento renderice el
@@ -155,7 +158,7 @@ mapa de curso persistente con `shell.js` local, no `.raya-discovery-command-bar`
 Verifica la accion Map `Hide map` del header estructural por separado de las
 acciones centrales del curso. El header tambien presenta el control course-home
 junto a la accion icono `Hide map`. Los mapas lectores contienen seis acciones
-planas obligatorias: Search, Graph, Practice, Tasks, Schedule y Context; los
+planas obligatorias: Search, Graph, Practice, Tasks, Calendar y Context; los
 mapas de workspace conservan la navegacion compartida, pero no exponen el
 Context lector. El footer fijo contiene posicion estructural, Text size y
 OpenDyslexic. Verifica que
@@ -258,7 +261,7 @@ especifica.
 Al cambiar las seis acciones del riel, verifica su orden, etiquetas, hrefs
 neutrales al despliegue y presencia incondicional como un solo conjunto plano de
 navegacion. Practice puede usar un href enfocado en pagina solo cuando haya
-propiedad directa de objetos oficiales, y Schedule solo cuando haya tasks
+propiedad directa de objetos oficiales, y Calendar solo cuando haya tasks
 oficiales fechadas directas. Verifica ocultamiento en mapa colapsado,
 comportamiento desktop/movil sin overflow, y ausencia de storage, fetch,
 progreso, ranking, recomendacion o lenguaje de estado del estudiante.
@@ -391,7 +394,7 @@ vez del input de busqueda. Los enlaces
 graph-focus de resultados de busqueda deben venir de stable IDs y URLs locales
 generadas del grafo, preservar Enter para abrir la pagina, y evitar lenguaje de
 recomendacion o progreso. Los workspaces Search, Graph, Practice, Tasks y
-Schedule deben cargar el mapa de curso persistente y su `shell.js` local,
+Calendar deben cargar el mapa de curso persistente y su `shell.js` local,
 manteniendo filtros y foco como estado volatil; no deben cargar assets externos,
 persistir estado de graph/search/practice/tasks, hacer fetch de recursos
 externos ni escribir estado de estudiante, fuente, artifact o preferencias no
@@ -402,11 +405,11 @@ headings u objetos numerados renderizados, pero no deben incluir TeX crudo,
 MathJax CHTML, rutas privadas, texto de respuestas/soporte, internos de artifact
 ni lenguaje de estado del estudiante.
 
-Al cambiar Tasks o Schedule, verifica handoffs solo por URL
+Al cambiar Tasks o Calendar, verifica handoffs solo por URL
 `?page=<page-id>` desde Search o Graph. El workspace destino puede reducir
 inicialmente los objetos publicos de la familia task a la pagina solicitada,
 mostrar una franja de pagina de curso enfocada con link de vuelta a la pagina,
-links a Search, Graph, Practice, Tasks y Schedule enfocados en la misma pagina,
+links a Search, Graph, Practice, Tasks y Calendar enfocados en la misma pagina,
 y `Clear focus`; tambien puede mostrar un aviso compacto con el titulo publico
 de la pagina y el conteo visible. Clear y Escape deben ocultar ese aviso y
 restaurar el workspace estatico completo sin escribir storage del navegador ni
