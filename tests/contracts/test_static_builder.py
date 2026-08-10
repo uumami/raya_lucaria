@@ -351,11 +351,31 @@ def test_calendar_index_only_serializes_public_fields_and_escapes_for_scripts(
 
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     index = json.loads((course / "artifact" / "data" / "calendar.json").read_text())
+    calendar_html = (
+        course / "artifact" / "site" / "_raya" / "schedule" / "index.html"
+    ).read_text(encoding="utf-8")
+    payload_match = re.search(
+        r'<script type="application/json" id="raya-calendar-data">\n(.*?)\n</script>',
+        calendar_html,
+        re.DOTALL,
+    )
+    calendar_script = (
+        course / "artifact" / "site" / "_raya" / "render" / "calendar.js"
+    ).read_text(encoding="utf-8")
     serialized = json.dumps(index, sort_keys=True)
     assert "source_path" not in serialized
     assert "_official" not in serialized
     assert "SHOULD_NOT_LEAK" not in serialized
     assert static_builder._json_script_text(index).count("</script>") == 0
+    assert payload_match is not None
+    assert json.loads(payload_match.group(1)) == index
+    assert calendar_html.count('id="raya-calendar-data"') == 1
+    assert "<script>alert" not in calendar_html
+    assert 'src="../render/calendar.js" defer' in calendar_html
+    assert 'src="../render/schedule.js"' not in calendar_html
+    assert "raya-calendar-data" in calendar_script
+    for forbidden in ("fetch(", "XMLHttpRequest", "localStorage", "sessionStorage"):
+        assert forbidden not in calendar_script
 
 
 def test_calendar_keeps_schedule_route_but_uses_calendar_copy_and_map(

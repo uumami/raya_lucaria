@@ -94,6 +94,11 @@ from raya_static.accessibility import (
     OPEN_DYSLEXIC_VOLATILE_JS_NAME,
     open_dyslexic_resources,
 )
+from raya_static.calendar import (
+    CALENDAR_RESOURCE_PATH,
+    CALENDAR_SCRIPT_NAME,
+    calendar_resources,
+)
 from raya_static.discovery import (
     DISCOVERY_RESOURCE_PATH,
     DISCOVERY_SCRIPT_NAME,
@@ -140,11 +145,6 @@ from raya_static.search import (
     SEARCH_RESOURCE_PATH,
     SEARCH_SCRIPT_NAME,
     search_resources,
-)
-from raya_static.schedule import (
-    SCHEDULE_RESOURCE_PATH,
-    SCHEDULE_SCRIPT_NAME,
-    schedule_resources,
 )
 from raya_static.shell import SHELL_RESOURCE_PATH, SHELL_SCRIPT_NAME, shell_resources
 from raya_static.shell_prepaint import (
@@ -453,7 +453,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_search_resources(site_dir, report)
     _write_practice_resources(site_dir, report)
     _write_tasks_resources(site_dir, report)
-    _write_schedule_resources(site_dir, report)
+    _write_calendar_resources(site_dir, report)
     copied_math_font_files = _write_math_render_resources(
         site_dir,
         math_resources,
@@ -7650,6 +7650,10 @@ def _render_schedule_surface(
         from_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
+    calendar_js_href = _relative_href(
+        from_path,
+        Path(CALENDAR_RESOURCE_PATH) / CALENDAR_SCRIPT_NAME,
+    )
     (
         comfort_prepaint_js_href,
         shell_prepaint_js_href,
@@ -7667,6 +7671,7 @@ def _render_schedule_surface(
     )
     event_count = len(events)
     timezone_name = str(calendar_index.get("timezone") or "UTC")
+    calendar_controls = _render_calendar_controls(events)
     agenda_html = _render_calendar_agenda(events, from_path=from_path)
 
     return "\n".join(
@@ -7718,9 +7723,19 @@ def _render_schedule_surface(
             ),
             "</header>",
             '<section class="raya-calendar-workspace" aria-label="Course Calendar">',
+            calendar_controls,
             (
-                '<p class="raya-calendar-summary" data-raya-schedule-summary-count>'
+                '<p class="raya-calendar-summary" data-raya-calendar-summary-count '
+                'data-raya-schedule-summary-count>'
                 f"{event_count} calendar {'event' if event_count == 1 else 'events'}.</p>"
+            ),
+            (
+                '<p class="raya-calendar-page-focus" data-raya-calendar-page-focus '
+                'hidden aria-live="polite"></p>'
+            ),
+            (
+                '<div id="raya-calendar-grid" class="raya-calendar-grid" '
+                'data-raya-calendar-grid hidden></div>'
             ),
             agenda_html,
             "</section>",
@@ -7731,9 +7746,114 @@ def _render_schedule_surface(
             "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             f'<script src="{html.escape(shell_js_href)}" defer></script>',
+            f'<script src="{html.escape(calendar_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
+        ]
+    )
+
+
+def _render_calendar_controls(events: list[dict[str, Any]]) -> str:
+    kinds = sorted(
+        {
+            str(event.get("kind") or "").strip()
+            for event in events
+            if str(event.get("kind") or "").strip()
+        }
+    )
+    event_types = sorted(
+        {
+            str(event.get("type") or "").strip()
+            for event in events
+            if str(event.get("type") or "").strip()
+        }
+    )
+
+    def filter_button(attribute: str, value: str, label: str, *, pressed: bool) -> str:
+        return (
+            '<button type="button" '
+            f'{attribute}="{html.escape(value, quote=True)}" '
+            f'aria-pressed="{"true" if pressed else "false"}">'
+            f"{html.escape(label)}</button>"
+        )
+
+    kind_buttons = [
+        filter_button(
+            "data-raya-calendar-kind-filter",
+            "all",
+            "All events",
+            pressed=True,
+        ),
+        *(
+            filter_button(
+                "data-raya-calendar-kind-filter",
+                kind,
+                _calendar_label(kind),
+                pressed=False,
+            )
+            for kind in kinds
+        ),
+    ]
+    type_buttons = [
+        filter_button(
+            "data-raya-calendar-type-filter",
+            "all",
+            "All types",
+            pressed=True,
+        ),
+        *(
+            filter_button(
+                "data-raya-calendar-type-filter",
+                event_type,
+                _calendar_label(event_type),
+                pressed=False,
+            )
+            for event_type in event_types
+        ),
+    ]
+    return "\n".join(
+        [
+            '<section class="raya-calendar-controls" data-raya-calendar-controls '
+            'aria-label="Calendar controls" hidden>',
+            '<div class="raya-calendar-view-controls" aria-label="Calendar view">',
+            (
+                '<button type="button" data-raya-calendar-view="agenda" '
+                'aria-controls="raya-calendar-agenda" aria-pressed="true">'
+                "Agenda view</button>"
+            ),
+            (
+                '<button type="button" data-raya-calendar-view="month" '
+                'aria-controls="raya-calendar-grid" aria-pressed="false">'
+                "Month view</button>"
+            ),
+            "</div>",
+            '<div class="raya-calendar-month-controls" aria-label="Calendar month">',
+            '<button type="button" data-raya-calendar-prev aria-label="Previous month">Prev</button>',
+            '<button type="button" data-raya-calendar-today>Today</button>',
+            '<button type="button" data-raya-calendar-next aria-label="Next month">Next</button>',
+            "</div>",
+            '<fieldset class="raya-calendar-filter-group">',
+            "<legend>Event kind</legend>",
+            '<div class="raya-calendar-filter-buttons">',
+            *kind_buttons,
+            "</div>",
+            "</fieldset>",
+            '<fieldset class="raya-calendar-filter-group">',
+            "<legend>Official object type</legend>",
+            '<div class="raya-calendar-filter-buttons">',
+            *type_buttons,
+            "</div>",
+            "</fieldset>",
+            (
+                '<button type="button" class="raya-calendar-clear" '
+                'data-raya-calendar-clear aria-label="Clear calendar filters">Clear</button>'
+            ),
+            (
+                '<p class="raya-calendar-status" data-raya-calendar-status '
+                'aria-live="polite"></p>'
+            ),
+            "</section>",
         ]
     )
 
@@ -7745,7 +7865,8 @@ def _render_calendar_agenda(
     if not grouped:
         return "\n".join(
             [
-                '<div class="raya-calendar-agenda" data-raya-calendar-agenda>',
+                '<div id="raya-calendar-agenda" class="raya-calendar-agenda" '
+                'data-raya-calendar-agenda>',
                 '<p class="raya-calendar-empty" data-raya-calendar-empty>'
                 "No calendar events are currently published.</p>",
                 "</div>",
@@ -7753,7 +7874,8 @@ def _render_calendar_agenda(
         )
     return "\n".join(
         [
-            '<div class="raya-calendar-agenda" data-raya-calendar-agenda>',
+            '<div id="raya-calendar-agenda" class="raya-calendar-agenda" '
+            'data-raya-calendar-agenda>',
             *(
                 _render_calendar_month_agenda(
                     month,
@@ -8715,12 +8837,12 @@ def _write_tasks_resources(site_dir: Path, report: ValidationReport) -> None:
     report.wrote_output(script_path)
 
 
-def _write_schedule_resources(site_dir: Path, report: ValidationReport) -> None:
-    resources = schedule_resources()
-    schedule_dir = site_dir / SCHEDULE_RESOURCE_PATH
-    schedule_dir.mkdir(parents=True, exist_ok=True)
-    report.wrote_output(schedule_dir)
-    script_path = schedule_dir / SCHEDULE_SCRIPT_NAME
+def _write_calendar_resources(site_dir: Path, report: ValidationReport) -> None:
+    resources = calendar_resources()
+    calendar_dir = site_dir / CALENDAR_RESOURCE_PATH
+    calendar_dir.mkdir(parents=True, exist_ok=True)
+    report.wrote_output(calendar_dir)
+    script_path = calendar_dir / CALENDAR_SCRIPT_NAME
     script_path.write_text(resources.javascript, encoding="utf-8")
     report.wrote_output(script_path)
 

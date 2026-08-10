@@ -2265,6 +2265,141 @@ img {
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
+.raya-calendar-controls {
+  align-items: end;
+  background: color-mix(in srgb, var(--raya-color-surface) 92%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: var(--raya-space-card-padding);
+}
+.raya-calendar-controls[hidden],
+.raya-calendar-grid[hidden],
+.raya-calendar-agenda[hidden],
+.raya-calendar-page-focus[hidden],
+.raya-calendar-event-item[hidden],
+.raya-calendar-month[hidden] {
+  display: none !important;
+}
+.raya-calendar-view-controls,
+.raya-calendar-month-controls,
+.raya-calendar-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--raya-space-inline);
+}
+.raya-calendar-controls button {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  color: var(--raya-color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  min-height: var(--raya-space-card-action-min-height);
+  padding: 0.35rem 0.7rem;
+}
+.raya-calendar-controls button[aria-pressed="true"] {
+  background: var(--raya-color-accent-soft);
+  border-color: var(--raya-color-accent);
+}
+.raya-calendar-filter-group {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.raya-calendar-filter-group legend {
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+}
+.raya-calendar-status,
+.raya-calendar-page-focus {
+  color: var(--raya-color-muted);
+  margin: 0;
+}
+.raya-calendar-page-focus {
+  border-inline-start: 0.25rem solid var(--raya-color-accent);
+  padding-inline-start: 0.75rem;
+}
+.raya-calendar-grid {
+  min-width: 0;
+}
+.raya-calendar-grid table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+}
+.raya-calendar-grid caption {
+  font-size: 1.25rem;
+  font-weight: 800;
+  padding: 0 0 0.65rem;
+  text-align: start;
+}
+.raya-calendar-grid th,
+.raya-calendar-grid td {
+  border: 1px solid var(--raya-color-border);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0.35rem;
+  text-align: start;
+  vertical-align: top;
+}
+.raya-calendar-grid th {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 55%, var(--raya-color-surface));
+  font-size: 0.8rem;
+}
+.raya-calendar-grid td[aria-current="date"] {
+  outline: 0.2rem solid var(--raya-color-accent);
+  outline-offset: -0.2rem;
+}
+.raya-calendar-day-number {
+  display: block;
+  font-weight: 800;
+}
+.raya-calendar-today-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+.raya-calendar-outside-month {
+  background: color-mix(in srgb, var(--raya-color-surface) 70%, transparent);
+}
+.raya-calendar-grid-event {
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  padding: 0.4rem;
+}
+.raya-calendar-grid-event .raya-calendar-event-header,
+.raya-calendar-grid-event .raya-calendar-badges {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.raya-calendar-grid-event .raya-calendar-badge {
+  border-radius: 0.3rem;
+  font-size: 0.65rem;
+  max-width: 100%;
+}
+.raya-calendar-grid-event h3 {
+  font-size: 0.8rem;
+  margin: 0.35rem 0;
+}
+.raya-calendar-grid-event .raya-calendar-event-summary,
+.raya-calendar-grid-event .raya-calendar-tags,
+.raya-calendar-grid-event .raya-calendar-graph {
+  display: none;
+}
+.raya-calendar-grid-event .raya-calendar-actions {
+  display: block;
+  margin-top: 0.35rem;
+}
+.raya-calendar-grid-event .raya-calendar-open {
+  font-size: 0.7rem;
+  min-height: 0;
+  padding: 0.2rem;
+}
 .raya-calendar-month {
   min-width: 0;
 }
@@ -2357,6 +2492,21 @@ img {
   .raya-calendar-event-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .raya-calendar-grid th,
+  .raya-calendar-grid td {
+    font-size: 0.68rem;
+    padding: 0.18rem;
+  }
+  .raya-calendar-grid-event {
+    border-inline-start-width: 0.18rem;
+    padding: 0.18rem;
+  }
+  .raya-calendar-grid-event h3,
+  .raya-calendar-grid-event .raya-calendar-badge,
+  .raya-calendar-grid-event .raya-calendar-time,
+  .raya-calendar-grid-event .raya-calendar-open {
+    font-size: 0.62rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {

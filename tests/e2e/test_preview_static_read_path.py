@@ -8883,32 +8883,17 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
         assert base_url is not None
         tasks_html = _fetch_text(f"{base_url}/_raya/tasks/index.html")
         tasks_js = _fetch_text(f"{base_url}/_raya/render/tasks.js")
-        schedule_html = _fetch_text(f"{base_url}/_raya/schedule/index.html")
-        schedule_js = _fetch_text(f"{base_url}/_raya/render/schedule.js")
         script_hrefs = re.findall(r'<script src="([^"]+)"', tasks_html)
 
         assert 'data-raya-surface="tasks"' in tasks_html
         assert "raya-tasks-data" in tasks_html
-        assert 'data-raya-surface="schedule"' in schedule_html
-        assert "raya-schedule-data" in schedule_html
         assert "https://" not in tasks_html
         assert "http://" not in tasks_html
         assert "fetch(" not in tasks_js
         assert "XMLHttpRequest" not in tasks_js
         assert "localStorage" not in tasks_js
         assert "sessionStorage" not in tasks_js
-        assert "fetch(" not in schedule_js
-        assert "XMLHttpRequest" not in schedule_js
-        assert "localStorage" not in schedule_js
-        assert "sessionStorage" not in schedule_js
-        assert "private-task" not in tasks_html
-        assert "private-task" not in schedule_html
-        assert "unit-task" not in schedule_html
-        assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
-        assert 'data-raya-schedule-item="unit-project"' in schedule_html
-        assert 'data-raya-schedule-item="unit-exam"' in schedule_html
         assert "SHOULD_NOT_LEAK" not in tasks_html
-        assert "SHOULD_NOT_LEAK" not in schedule_html
         for script_href in script_hrefs:
             loaded_script = _fetch_text(urljoin(f"{base_url}/_raya/tasks/", script_href))
             assert "fetch(" not in loaded_script
@@ -9027,7 +9012,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('4 visible tasks')"""
+                                  ?.includes('5 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="unit-assignment"]'
@@ -9039,7 +9024,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 '[data-raya-task-object="extension-assignment"]'
                             ).is_hidden()
                             assert (
-                                "4 visible tasks"
+                                "5 visible tasks"
                                 in scoped_tasks.locator(
                                     "[data-raya-tasks-summary-count]"
                                 ).inner_text()
@@ -9053,7 +9038,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 in tasks_focus_notice.inner_text()
                             )
                             assert "First Topic" in tasks_focus_notice.inner_text()
-                            assert "4 visible tasks" in tasks_focus_notice.inner_text()
+                            assert "5 visible tasks" in tasks_focus_notice.inner_text()
                             assert (
                                 scoped_tasks.locator(
                                     '[data-raya-task-active="true"]'
@@ -9097,7 +9082,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                   && document
                                     .querySelector('#raya-tasks-status')
                                     ?.textContent
-                                    ?.includes('5 visible tasks')"""
+                                    ?.includes('6 visible tasks')"""
                             )
                             assert scoped_tasks.input_value("#raya-tasks-search") == ""
                             assert (
@@ -9132,7 +9117,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('4 visible tasks')"""
+                                  ?.includes('5 visible tasks')"""
                             )
                             tasks_focus_notice = scoped_tasks.locator(
                                 "[data-raya-tasks-page-focus]"
@@ -9144,7 +9129,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('5 visible tasks')"""
+                                  ?.includes('6 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="extension-assignment"]'
@@ -9165,7 +9150,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('4 visible tasks')"""
+                                  ?.includes('5 visible tasks')"""
                             )
                             tasks_focus_notice = scoped_tasks.locator(
                                 "[data-raya-tasks-page-focus]"
@@ -9176,7 +9161,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('5 visible tasks')"""
+                                  ?.includes('6 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="extension-assignment"]'
@@ -9332,377 +9317,307 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         assert page.locator(f"#{task_anchor}").is_visible()
                         _assert_no_horizontal_overflow(page)
 
-                        schedule = browser.new_page(viewport=viewport)
-                        try:
-                            schedule_requests: list[str] = []
-                            schedule.on(
-                                "request",
-                                lambda request: schedule_requests.append(request.url),
-                            )
-                            schedule.goto(
-                                f"{base_url}/_raya/schedule/index.html",
-                                wait_until="networkidle",
-                            )
-                            assert schedule_requests
-                            assert all(
-                                url.startswith(f"{base_url}/")
-                                for url in schedule_requests
-                            )
-                            _assert_no_horizontal_overflow(schedule)
-                            assert schedule.locator("#raya-course-map").count() == 1
-                            assert schedule.locator(
-                                ".raya-discovery-command-bar"
-                            ).count() == 0
-                            assert schedule.locator(
-                                ".raya-schedule-header .raya-course-title"
-                            ).count() == 0
-                            assert schedule.locator(
-                                ".raya-schedule-header .raya-graph-back-link"
-                            ).count() == 0
-                            assert schedule.locator(
-                                ".raya-schedule-workspace"
-                            ).is_visible()
-                            assert schedule.locator(
-                                ".raya-schedule-control-panel"
-                            ).is_visible()
-                            assert schedule.locator(
-                                ".raya-schedule-results-panel"
-                            ).is_visible()
-                            assert schedule.locator(
-                                ".raya-schedule-context-panel"
-                            ).is_visible()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-assignment"]'
-                            ).is_visible()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-project"]'
-                            ).is_visible()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-exam"]'
-                            ).is_visible()
-                            scoped_schedule = browser.new_page(viewport=viewport)
-                            try:
-                                scoped_schedule.goto(
-                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
-                                    wait_until="networkidle",
-                                )
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('3 visible schedule items')"""
-                                )
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="unit-assignment"]'
-                                ).is_visible()
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="unit-project"]'
-                                ).is_visible()
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="extension-assignment"]'
-                                ).is_hidden()
-                                assert (
-                                    "3 visible schedule items"
-                                    in scoped_schedule.locator(
-                                        "[data-raya-schedule-summary-count]"
-                                    ).inner_text()
-                                )
-                                schedule_focus_notice = scoped_schedule.locator(
-                                    "[data-raya-schedule-page-focus]"
-                                )
-                                assert schedule_focus_notice.is_visible()
-                                assert (
-                                    "Focused on page"
-                                    in schedule_focus_notice.inner_text()
-                                )
-                                assert (
-                                    "First Topic"
-                                    in schedule_focus_notice.inner_text()
-                                )
-                                assert (
-                                    "3 visible schedule item"
-                                    in schedule_focus_notice.inner_text()
-                                )
-                                assert (
-                                    scoped_schedule.locator(
-                                        '[data-raya-schedule-active="true"]'
-                                    ).count()
-                                    == 1
-                                )
-                                scoped_schedule_actions = scoped_schedule.locator(
-                                    "[data-raya-schedule-context-actions]"
-                                )
-                                assert scoped_schedule_actions.is_visible()
-                                assert scoped_schedule_actions.locator(
-                                    "a", has_text="Open page"
-                                ).evaluate("node => node.href").endswith(
-                                    "/unit/topic/index.html#raya-official-unit-assignment"
-                                )
-                                assert scoped_schedule_actions.locator(
-                                    "a", has_text="View graph"
-                                ).evaluate("node => node.href").endswith(
-                                    "/_raya/graph/index.html?page=first-topic"
-                                )
-                                scoped_schedule.click(
-                                    '[data-raya-schedule-kind-filter="due"]'
-                                )
-                                scoped_schedule.click(
-                                    '[data-raya-schedule-type-filter="assignment"]'
-                                )
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('1 visible schedule item')"""
-                                )
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="unit-project"]'
-                                ).is_hidden()
-                                scoped_schedule.locator(
-                                    '[data-raya-schedule-item="unit-assignment"] '
-                                    ".raya-schedule-open"
-                                ).focus()
-                                scoped_schedule.keyboard.press("Escape")
-                                scoped_schedule.wait_for_function(
-                                    """() => document.activeElement?.id === 'raya-schedule-search'
-                                      && document
-                                        .querySelector('#raya-schedule-status')
-                                        ?.textContent
-                                        ?.includes('4 visible schedule items')"""
-                                )
-                                assert scoped_schedule.input_value(
-                                    "#raya-schedule-search"
-                                ) == ""
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="extension-assignment"]'
-                                ).is_visible()
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="unit-project"]'
-                                ).is_visible()
-                                assert (
-                                    scoped_schedule.locator(
-                                        '[data-raya-schedule-kind-filter="all"]'
-                                    ).get_attribute("aria-pressed")
-                                    == "true"
-                                )
-                                assert (
-                                    scoped_schedule.locator(
-                                        '[data-raya-schedule-type-filter="all"]'
-                                    ).get_attribute("aria-pressed")
-                                    == "true"
-                                )
-                                assert schedule_focus_notice.is_hidden()
-                                assert (
-                                    scoped_schedule.locator(
-                                        '[data-raya-schedule-active="true"]'
-                                    ).count()
-                                    == 0
-                                )
-                                assert scoped_schedule_actions.is_hidden()
-                                scoped_schedule.goto(
-                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
-                                    wait_until="networkidle",
-                                )
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('3 visible schedule items')"""
-                                )
-                                schedule_focus_notice = scoped_schedule.locator(
-                                    "[data-raya-schedule-page-focus]"
-                                )
-                                assert schedule_focus_notice.is_visible()
-                                scoped_schedule.click("#raya-schedule-clear")
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('4 visible schedule items')"""
-                                )
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="extension-assignment"]'
-                                ).is_visible()
-                                assert schedule_focus_notice.is_hidden()
-                                assert (
-                                    scoped_schedule.locator(
-                                        '[data-raya-schedule-active="true"]'
-                                    ).count()
-                                    == 0
-                                )
-                                assert scoped_schedule_actions.is_hidden()
-                                scoped_schedule.goto(
-                                    f"{base_url}/_raya/schedule/index.html?page=first-topic",
-                                    wait_until="networkidle",
-                                )
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('3 visible schedule items')"""
-                                )
-                                schedule_focus_notice = scoped_schedule.locator(
-                                    "[data-raya-schedule-page-focus]"
-                                )
-                                assert schedule_focus_notice.is_visible()
-                                scoped_schedule.locator("#raya-schedule-search").focus()
-                                scoped_schedule.press("#raya-schedule-search", "Escape")
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('4 visible schedule items')"""
-                                )
-                                assert scoped_schedule.locator(
-                                    '[data-raya-schedule-item="extension-assignment"]'
-                                ).is_visible()
-                                assert schedule_focus_notice.is_hidden()
-                                scoped_schedule.goto(
-                                    f"{base_url}/_raya/schedule/index.html?page=missing-page",
-                                    wait_until="networkidle",
-                                )
-                                scoped_schedule.wait_for_function(
-                                    """() => document
-                                      .querySelector('#raya-schedule-status')
-                                      ?.textContent
-                                      ?.includes('0 visible schedule items')"""
-                                )
-                                assert scoped_schedule.locator(
-                                    "[data-raya-schedule-page-focus]"
-                                ).is_hidden()
-                                assert scoped_schedule.locator(
-                                    "[data-raya-schedule-context-actions]"
-                                ).is_hidden()
-                                assert (
-                                    scoped_schedule.evaluate(
-                                        "() => localStorage.length"
-                                    )
-                                    == 0
-                                )
-                                assert (
-                                    scoped_schedule.evaluate(
-                                        "() => sessionStorage.length"
-                                    )
-                                    == 0
-                                )
-                            finally:
-                                scoped_schedule.close()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-task"]'
-                            ).count() == 0
-                            schedule.click('[data-raya-schedule-kind-filter="available"]')
-                            schedule.wait_for_function(
-                                """() => document
-                                  .querySelector('#raya-schedule-status')
-                                  ?.textContent
-                                  ?.includes('1 visible schedule item')"""
-                            )
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-exam"]'
-                            ).is_visible()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-assignment"]'
-                            ).is_hidden()
-                            schedule.click("#raya-schedule-clear")
-                            schedule.fill("#raya-schedule-search", "retrieval")
-                            schedule.wait_for_function(
-                                """() => document
-                                  .querySelector('#raya-schedule-status')
-                                  ?.textContent
-                                  ?.includes('2 visible schedule items')"""
-                            )
-                            schedule.click("#raya-schedule-clear")
-                            schedule.fill("#raya-schedule-search", "retrievel")
-                            schedule.wait_for_function(
-                                """() => document
-                                  .querySelector('#raya-schedule-status')
-                                  ?.textContent
-                                  ?.includes('2 visible schedule items')"""
-                            )
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-assignment"]'
-                            ).is_visible()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-project"]'
-                            ).is_visible()
-                            schedule.click("#raya-schedule-clear")
-                            schedule.fill("#raya-schedule-search", "retrievel plan")
-                            schedule.wait_for_function(
-                                """() => document
-                                  .querySelector('#raya-schedule-status')
-                                  ?.textContent
-                                  ?.includes('1 visible schedule item')"""
-                            )
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-assignment"]'
-                            ).is_hidden()
-                            assert schedule.locator(
-                                '[data-raya-schedule-item="unit-project"]'
-                            ).is_visible()
-                            schedule.click("#raya-schedule-clear")
-                            schedule_context_actions = schedule.locator(
-                                "[data-raya-schedule-context-actions]"
-                            )
-                            assert (
-                                schedule.locator(
-                                    '[data-raya-schedule-active="true"]'
-                                ).count()
-                                == 0
-                            )
-                            assert schedule_context_actions.is_hidden()
-                            schedule.locator("#raya-schedule-search").focus()
-                            schedule.press("#raya-schedule-search", "ArrowDown")
-                            active_item = schedule.locator(
-                                '[data-raya-schedule-active="true"]'
-                            )
-                            assert active_item.count() == 1
-                            assert schedule_context_actions.is_visible()
-                            schedule_context_open = schedule_context_actions.locator(
-                                "a", has_text="Open page"
-                            )
-                            assert (
-                                schedule_context_open.evaluate(
-                                    "node => { node.focus(); return document.activeElement === node; }"
-                                )
-                                is True
-                            )
-                            assert (
-                                "Problem Set 1"
-                                in schedule_context_open.get_attribute("aria-label")
-                            )
-                            assert (
-                                schedule_context_open
-                                .evaluate("node => node.href")
-                                .endswith(
-                                    "/unit/topic/index.html#raya-official-unit-assignment"
-                                )
-                            )
-                            assert (
-                                schedule_context_actions.locator(
-                                    "a", has_text="View graph"
-                                )
-                                .evaluate("node => node.href")
-                                .endswith("/_raya/graph/index.html?page=first-topic")
-                            )
-                            assert (
-                                "2026-09-15"
-                                in schedule.locator(
-                                    "[data-raya-schedule-context-meta]"
-                                ).inner_text()
-                            )
-                            assert schedule.evaluate("() => localStorage.length") == 0
-                            assert schedule.evaluate("() => sessionStorage.length") == 0
-                            schedule_open_href = schedule_context_open.evaluate(
-                                "node => node.href"
-                            )
-                            with schedule.expect_navigation():
-                                schedule_context_open.click()
-                            assert schedule.url == schedule_open_href
-                        finally:
-                            schedule.close()
                     finally:
                         page.close()
             finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_calendar_month_controls_and_timezone_today_are_accessible(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "calendar-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_official_task_objects(course)
+    _add_calendar_browser_events(course)
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        calendar_html = _fetch_text(f"{base_url}/_raya/schedule/index.html")
+        calendar_js = _fetch_text(f"{base_url}/_raya/render/calendar.js")
+        assert 'src="../render/calendar.js" defer' in calendar_html
+        assert 'src="../render/schedule.js"' not in calendar_html
+        for forbidden in ("fetch(", "XMLHttpRequest", "localStorage", "sessionStorage"):
+            assert forbidden not in calendar_js
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            context = browser.new_context(
+                viewport={"width": 390, "height": 844},
+                timezone_id="Pacific/Kiritimati",
+                reduced_motion="reduce",
+            )
+            context.add_init_script(
+                """
+                (() => {
+                  const NativeDate = Date;
+                  const fixed = NativeDate.parse("2026-08-11T04:30:00Z");
+                  class FixedDate extends NativeDate {
+                    constructor(...args) {
+                      super(...(args.length ? args : [fixed]));
+                    }
+                    static now() { return fixed; }
+                  }
+                  globalThis.Date = FixedDate;
+                })();
+                """
+            )
+            page = context.new_page()
+            requests: list[str] = []
+            page.on("request", lambda request: requests.append(request.url))
+            try:
+                page.goto(
+                    f"{base_url}/_raya/schedule/index.html",
+                    wait_until="networkidle",
+                )
+                assert requests
+                assert all(url.startswith(f"{base_url}/") for url in requests)
+                assert page.locator("#raya-course-map").count() == 1
+                assert page.locator("[data-raya-calendar-agenda]").is_visible()
+
+                month_view = page.get_by_role("button", name="Month view")
+                month_view.focus()
+                month_view.press("Enter")
+                assert month_view.get_attribute("aria-pressed") == "true"
+                assert page.evaluate(
+                    "() => document.activeElement?.textContent.trim() === 'Month view'"
+                )
+                grid = page.locator("[data-raya-calendar-grid]")
+                assert grid.locator("table").is_visible()
+                assert grid.get_by_role("columnheader").all_inner_texts() == [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "August 2026"
+                today = grid.locator('[data-raya-calendar-date="2026-08-10"]')
+                assert today.get_attribute("aria-current") == "date"
+                assert today.get_by_text("Today", exact=True).is_visible()
+                assert page.locator('[aria-current="date"]').count() == 1
+                linked_event = grid.locator(
+                    '[data-raya-calendar-event="calendar:browser:today-session"]'
+                )
+                assert linked_event.get_by_text("Session", exact=True).is_visible()
+                assert linked_event.get_by_role("link", name="Open page").count() == 1
+
+                next_month = page.get_by_role("button", name="Next month")
+                next_month.focus()
+                next_month.press("Enter")
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "September 2026"
+                page.get_by_role("button", name="Previous month").press("Enter")
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "August 2026"
+                next_month.press("Enter")
+                page.get_by_role("button", name="Today").press("Space")
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "August 2026"
+
+                holiday_filter = page.get_by_role("button", name="Holiday")
+                holiday_filter.focus()
+                holiday_filter.press("Space")
+                assert holiday_filter.get_attribute("aria-pressed") == "true"
+                assert "1 visible calendar event" in page.locator(
+                    "[data-raya-calendar-status]"
+                ).inner_text()
+                page.get_by_role("button", name="All events").press("Enter")
+                assignment_filter = page.get_by_role("button", name="Assignment")
+                assignment_filter.press("Enter")
+                assert assignment_filter.get_attribute("aria-pressed") == "true"
+                assert "1 visible calendar event" in page.locator(
+                    "[data-raya-calendar-status]"
+                ).inner_text()
+                page.get_by_role("button", name="Clear calendar filters").click()
+
+                agenda_view = page.get_by_role("button", name="Agenda view")
+                agenda_view.focus()
+                agenda_view.press("Space")
+                assert agenda_view.get_attribute("aria-pressed") == "true"
+                assert page.locator("[data-raya-calendar-agenda]").is_visible()
+                assert grid.is_hidden()
+                assert page.evaluate(
+                    "() => document.activeElement?.textContent.trim() === 'Agenda view'"
+                )
+                assert page.evaluate(
+                    """() => getComputedStyle(
+                      document.querySelector('[data-raya-calendar-view="agenda"]')
+                    ).transitionDuration === '0s'"""
+                )
+
+                opener = page.locator(".raya-mobile-course-map-open")
+                assert opener.is_visible()
+                opener.click()
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-drawer"
+                ) == "open"
+                page.get_by_role("button", name="Close course map").click()
+                assert page.locator("html").get_attribute(
+                    "data-raya-course-map-drawer"
+                ) == "closed"
+                _assert_no_horizontal_overflow(page)
+            finally:
+                page.close()
+                context.close()
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_calendar_page_focus_clear_and_escape_restore_all_events(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "calendar-page-focus-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_official_task_objects(course)
+    _add_calendar_browser_events(course)
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            try:
+                focused_url = (
+                    f"{base_url}/_raya/schedule/index.html?page=first-topic"
+                )
+                page.goto(focused_url, wait_until="networkidle")
+                notice = page.locator("[data-raya-calendar-page-focus]")
+                assert notice.is_visible()
+                assert "first-topic" in notice.inner_text()
+                agenda = page.locator("[data-raya-calendar-agenda]")
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:today-session"]'
+                ).is_visible()
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:holiday"]'
+                ).is_visible()
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:milestone"]'
+                ).is_visible()
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:unlinked-session"]'
+                ).is_hidden()
+
+                clear = page.get_by_role("button", name="Clear calendar filters")
+                clear.click()
+                assert notice.is_hidden()
+                assert "page=" not in page.url
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:unlinked-session"]'
+                ).is_visible()
+
+                page.goto(focused_url, wait_until="networkidle")
+                agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:today-session"] '
+                    ".raya-calendar-open"
+                ).focus()
+                page.keyboard.press("Escape")
+                assert "page=" not in page.url
+                assert notice.is_hidden()
+                assert page.evaluate(
+                    """() => document.activeElement?.getAttribute(
+                      'aria-label'
+                    ) === 'Clear calendar filters'"""
+                )
+                assert agenda.locator(
+                    '[data-raya-calendar-event="calendar:browser:unlinked-session"]'
+                ).is_visible()
+
+                page.goto(
+                    f"{base_url}/_raya/schedule/index.html?page=missing-page",
+                    wait_until="networkidle",
+                )
+                assert notice.is_hidden()
+                assert page.locator("[data-raya-calendar-event]:visible").count() == 9
+                assert page.evaluate("() => localStorage.length") == 0
+                assert page.evaluate("() => sessionStorage.length") == 0
+                _assert_no_horizontal_overflow(page)
+            finally:
+                page.close()
+                browser.close()
+    finally:
+        handle.close()
+
+
+def test_calendar_timezone_agenda_stays_useful_without_javascript_on_narrow_view(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "calendar-no-js-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_calendar_browser_events(course)
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            context = browser.new_context(
+                java_script_enabled=False,
+                viewport={"width": 390, "height": 844},
+            )
+            page = context.new_page()
+            try:
+                page.goto(f"{base_url}/_raya/schedule/index.html")
+                assert page.locator("[data-raya-calendar-agenda]").is_visible()
+                assert page.locator("[data-raya-calendar-controls]").is_hidden()
+                assert page.locator("[data-raya-calendar-grid]").is_hidden()
+                assert page.locator("#raya-course-map").count() == 1
+                assert page.locator(
+                    '[data-raya-calendar-event="calendar:browser:today-session"]'
+                ).get_by_role("link", name="Open page").count() == 1
+                assert "America/Mexico_City" in page.locator(
+                    ".raya-calendar-header"
+                ).inner_text()
+                _assert_no_horizontal_overflow(page)
+            finally:
+                page.close()
+                context.close()
                 browser.close()
     finally:
         handle.close()
@@ -23054,6 +22969,44 @@ def _add_official_task_objects(course: Path) -> None:
                 "",
             ]
         ),
+        encoding="utf-8",
+    )
+
+
+def _add_calendar_browser_events(course: Path) -> None:
+    calendar_path = course / "course" / "_official" / "calendar" / "1_browser.yaml"
+    calendar_path.parent.mkdir(parents=True, exist_ok=True)
+    calendar_path.write_text(
+        "id: browser\n"
+        "type: calendar\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "events:\n"
+        "  - id: today-session\n"
+        "    kind: session\n"
+        "    date: '2026-08-10'\n"
+        "    start_time: '16:00'\n"
+        "    end_time: '18:00'\n"
+        "    title: Today session\n"
+        "    page: first-topic\n"
+        "  - id: holiday\n"
+        "    kind: holiday\n"
+        "    date: '2026-08-11'\n"
+        "    title: Course holiday\n"
+        "  - id: milestone\n"
+        "    kind: milestone\n"
+        "    date: '2026-08-12'\n"
+        "    title: Course milestone\n"
+        "  - id: unlinked-session\n"
+        "    kind: session\n"
+        "    date: '2026-08-13'\n"
+        "    title: Course-wide session\n"
+        "  - id: cancellation\n"
+        "    kind: cancellation\n"
+        "    date: '2026-09-02'\n"
+        "    title: Cancelled session\n"
+        "    page: first-topic\n",
         encoding="utf-8",
     )
 
