@@ -1313,7 +1313,7 @@ def _render_course_map_tools(
                 class_name="raya-course-rail-command raya-text-size-toggle",
                 aria_label="Text size: normal",
                 icon="text-size",
-                label="Text size",
+                label="Size",
                 aria_pressed="false",
             ),
             _render_command_button(

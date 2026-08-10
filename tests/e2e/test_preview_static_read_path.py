@@ -1346,7 +1346,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "raya-command-practice": ("practice", "Practice"),
                             "raya-command-tasks": ("tasks", "Tasks"),
                             "raya-command-schedule": ("schedule", "Plan"),
-                            "raya-text-size-toggle": ("text-size", "Text size"),
+                            "raya-text-size-toggle": ("text-size", "Size"),
                             "raya-font-toggle": ("font", "Font"),
                         }
                         for command_class, (icon_name, label) in expected_graph_icons.items():
@@ -9948,12 +9948,12 @@ def test_reader_comfort_labels_are_visible_on_desktop_only(
                           };
                         }"""
                     )
-                    assert desktop["size"]["text"] == "Text size"
-                    # Task 4 requirements change: the rail caption was
-                    # shortened from "OpenDyslexic" to "Font" so it fits
-                    # the four-column tile on one line without shrinking
-                    # type; aria-label still says "Toggle OpenDyslexic
-                    # font".
+                    assert desktop["size"]["text"] == "Size"
+                    # Task 4 requirements change: the rail captions were
+                    # shortened from "Text size" to "Size" and from
+                    # "OpenDyslexic" to "Font" so they fit the four-column
+                    # tiles on one line without shrinking type; accessible
+                    # names retain the full control names.
                     assert desktop["font"]["text"] == "Font"
                     assert desktop["size"]["width"] >= 24
                     assert desktop["font"]["width"] >= 24
@@ -10782,7 +10782,7 @@ def test_render_fixture_command_bar_controls_are_dense_and_operable(
                                 "Tasks",
                                 "Plan",
                                 "Context",
-                                "Text size",
+                                "Size",
                                 "Font",
                             ]
                             # Task 4: four columns in the ~238px tools track
@@ -17479,15 +17479,16 @@ def test_render_fixture_desktop_shell_has_modern_workspace_chrome(
     assert header_collapse["ariaLabel"] == "Hide course map"
     assert header_collapse["text"] == "Hide map"
     # Task 4 requirements change: rail captions shortened ("Schedule" ->
-    # "Plan", "OpenDyslexic" -> "Font") so full words fit one line at
-    # 0.75rem in the four-column tile without shrinking type.
+    # "Plan", "Text size" -> "Size", "OpenDyslexic" -> "Font") so full
+    # words fit one line at 0.75rem in the four-column tile without shrinking
+    # type.
     expected_icons = {
         "raya-command-search": ("search", "Search"),
         "raya-command-graph": ("graph", "Graph"),
         "raya-command-practice": ("practice", "Practice"),
         "raya-command-tasks": ("tasks", "Tasks"),
         "raya-command-schedule": ("schedule", "Plan"),
-        "raya-text-size-toggle": ("text-size", "Text size"),
+        "raya-text-size-toggle": ("text-size", "Size"),
         "raya-font-toggle": ("font", "Font"),
     }
     for command_class, (icon_name, label) in expected_icons.items():
@@ -19131,8 +19132,9 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
             )
             try:
                 # Task 4 requirements change: rail captions shortened
-                # ("Schedule" -> "Plan", "OpenDyslexic" -> "Font") so full
-                # words fit one line at 0.75rem in the four-column tile.
+                # ("Schedule" -> "Plan", "Text size" -> "Size",
+                # "OpenDyslexic" -> "Font") so full words fit one line at
+                # 0.75rem in the four-column tile.
                 expected_commands = [
                     "Search",
                     "Graph",
@@ -19140,7 +19142,7 @@ def test_render_fixture_structural_course_map_uses_stable_command_body(
                     "Tasks",
                     "Plan",
                     "Context",
-                    "Text size",
+                    "Size",
                     "Font",
                 ]
                 page = browser.new_page(viewport={"width": 1280, "height": 918})

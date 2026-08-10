@@ -5172,7 +5172,7 @@ def test_reader_shell_uses_static_learning_shell(tmp_path: Path) -> None:
         '<button class="raya-course-rail-command raya-text-size-toggle"' in html
     )
     assert 'aria-label="Text size: normal"' in html
-    assert '<span class="raya-command-label">Text size</span>' in html
+    assert '<span class="raya-command-label">Size</span>' in html
     assert '<button class="raya-course-rail-command raya-font-toggle"' in html
     assert 'aria-label="Toggle OpenDyslexic font"' in html
     assert (
