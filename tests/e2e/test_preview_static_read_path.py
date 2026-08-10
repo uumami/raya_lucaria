@@ -1302,15 +1302,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         expect(
                             graph_guide.locator(".raya-graph-guide-card").first
                         ).to_be_visible()
-                        assert page.locator(".raya-discovery-command-bar").is_visible()
-                        assert page.locator(
-                            ".raya-discovery-command-bar .raya-command-home"
-                        ).is_visible()
+                        assert page.locator("#raya-course-map").count() == 1
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
                         graph_icons = page.evaluate(
                             """() => Object.fromEntries(
                               Array.from(
                                 document.querySelectorAll(
-                                  '.raya-discovery-command-bar .raya-command'
+                                  '#raya-course-map .raya-course-rail-command'
                                 )
                               ).map((node) => [
                                 Array.from(node.classList)
@@ -1343,13 +1341,13 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             )"""
                         )
                         expected_graph_icons = {
-                            "raya-command-home": ("home", "Course"),
                             "raya-command-search": ("search", "Search"),
+                            "raya-command-graph": ("graph", "Graph"),
                             "raya-command-practice": ("practice", "Practice"),
                             "raya-command-tasks": ("tasks", "Tasks"),
-                            "raya-command-schedule": ("schedule", "Schedule"),
-                            "raya-command-size": ("text-size", "Text size"),
-                            "raya-command-font": ("font", "OpenDyslexic"),
+                            "raya-command-schedule": ("schedule", "Plan"),
+                            "raya-text-size-toggle": ("text-size", "Text size"),
+                            "raya-font-toggle": ("font", "Font"),
                         }
                         for command_class, (icon_name, label) in expected_graph_icons.items():
                             icon = graph_icons[command_class]
@@ -1378,11 +1376,10 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             == 0
                         )
                         if viewport["width"] < 520:
-                            discovery_box = page.locator(
-                                ".raya-discovery-command-bar"
-                            ).bounding_box()
-                            assert discovery_box is not None
-                            assert discovery_box["height"] <= 150
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
                         assert (
                             page.locator(".raya-command-search")
                             .evaluate("node => node.href")
@@ -1390,6 +1387,11 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                         )
                         assert page.locator(".raya-text-size-toggle").is_visible()
                         assert page.locator(".raya-font-toggle").is_visible()
+                        if viewport["width"] < 520:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
+                            )
                         if viewport["width"] < 1280:
                             assert (
                                 page.locator("[data-raya-graph-page]").get_attribute(
@@ -7614,10 +7616,8 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             url.startswith(f"{base_url}/") for url in browser_requests
                         )
                         _assert_no_horizontal_overflow(page)
-                        assert page.locator(".raya-discovery-command-bar").is_visible()
-                        assert page.locator(
-                            ".raya-discovery-command-bar .raya-command-home"
-                        ).is_visible()
+                        assert page.locator("#raya-course-map").count() == 1
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
                         assert (
                             page.locator(
                                 ".raya-search-header .raya-course-title"
@@ -7758,11 +7758,6 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                             assert controls_rail_summary.is_hidden()
                             assert context_rail_summary.is_hidden()
                         if viewport["width"] < 520:
-                            discovery_box = page.locator(
-                                ".raya-discovery-command-bar"
-                            ).bounding_box()
-                            assert discovery_box is not None
-                            assert discovery_box["height"] <= 150
                             mobile_controls_toggle = page.locator(
                                 '[data-raya-discovery-toggle-panel="controls"]'
                             )
@@ -7813,6 +7808,10 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                                 )
                                 is None
                             )
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
                         assert (
                             page.locator(".raya-command-graph")
                             .evaluate("node => node.href")
@@ -7820,6 +7819,11 @@ def test_preview_serves_local_course_search_surface(tmp_path: Path) -> None:
                         )
                         assert page.locator(".raya-text-size-toggle").is_visible()
                         assert page.locator(".raya-font-toggle").is_visible()
+                        if viewport["width"] < 520:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
+                            )
                         before = page.locator(
                             "#raya-search-results [data-raya-search-result]:visible"
                         ).count()
@@ -8319,10 +8323,8 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             url.startswith(f"{base_url}/") for url in browser_requests
                         )
                         _assert_no_horizontal_overflow(page)
-                        assert page.locator(".raya-discovery-command-bar").is_visible()
-                        assert page.locator(
-                            ".raya-discovery-command-bar .raya-command-home"
-                        ).is_visible()
+                        assert page.locator("#raya-course-map").count() == 1
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
                         assert (
                             page.locator(
                                 ".raya-practice-header .raya-course-title"
@@ -8355,6 +8357,11 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             assert (
                                 control_box["x"] < results_box["x"] < context_box["x"]
                             )
+                        if viewport["width"] < 520:
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-text-size-toggle").is_visible()
@@ -8371,6 +8378,11 @@ def test_preview_serves_static_official_practice_workspace(tmp_path: Path) -> No
                             page.locator("html").get_attribute("data-raya-text-size")
                             == "large"
                         )
+                        if viewport["width"] < 520:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
+                            )
                         assert page.locator(
                             '[data-raya-practice-object="first-topic-card"]'
                         ).is_visible()
@@ -8884,8 +8896,6 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
             loaded_script = _fetch_text(urljoin(f"{base_url}/_raya/tasks/", script_href))
             assert "fetch(" not in loaded_script
             assert "XMLHttpRequest" not in loaded_script
-            assert "localStorage" not in loaded_script
-            assert "sessionStorage" not in loaded_script
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
@@ -8914,10 +8924,8 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             url.startswith(f"{base_url}/") for url in browser_requests
                         )
                         _assert_no_horizontal_overflow(page)
-                        assert page.locator(".raya-discovery-command-bar").is_visible()
-                        assert page.locator(
-                            ".raya-discovery-command-bar .raya-command-home"
-                        ).is_visible()
+                        assert page.locator("#raya-course-map").count() == 1
+                        assert page.locator(".raya-discovery-command-bar").count() == 0
                         assert (
                             page.locator(
                                 ".raya-tasks-header .raya-course-title"
@@ -8950,6 +8958,11 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                             assert (
                                 control_box["x"] < results_box["x"] < context_box["x"]
                             )
+                        if viewport["width"] < 520:
+                            page.click(".raya-mobile-course-map-open")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer === 'open'"""
+                            )
                         assert page.locator(".raya-command-search").is_visible()
                         assert page.locator(".raya-command-graph").is_visible()
                         assert page.locator(".raya-command-practice").is_visible()
@@ -8965,6 +8978,11 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                         )
                         assert page.evaluate("() => localStorage.length") == 0
                         assert page.evaluate("() => sessionStorage.length") == 0
+                        if viewport["width"] < 520:
+                            page.keyboard.press("Escape")
+                            page.wait_for_function(
+                                """() => document.documentElement.dataset.rayaCourseMapDrawer !== 'open'"""
+                            )
                         page.click(".raya-text-size-toggle")
                         assert (
                             page.locator("html").get_attribute("data-raya-text-size")
@@ -9310,12 +9328,10 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 for url in schedule_requests
                             )
                             _assert_no_horizontal_overflow(schedule)
+                            assert schedule.locator("#raya-course-map").count() == 1
                             assert schedule.locator(
                                 ".raya-discovery-command-bar"
-                            ).is_visible()
-                            assert schedule.locator(
-                                ".raya-discovery-command-bar .raya-command-home"
-                            ).is_visible()
+                            ).count() == 0
                             assert schedule.locator(
                                 ".raya-schedule-header .raya-course-title"
                             ).count() == 0

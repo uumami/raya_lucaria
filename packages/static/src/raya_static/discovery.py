@@ -150,7 +150,9 @@ _DISCOVERY_JAVASCRIPT = r"""
         ":scope > .raya-course-map-node-row a[href]"
       );
       const title = focusedLink
-        ? focusedLink.getAttribute("data-raya-map-label") || focusedLink.textContent.trim()
+        ? focusedLink.getAttribute("data-raya-map-title")
+          || focusedLink.getAttribute("data-raya-map-label")
+          || focusedLink.textContent.trim()
         : activePage;
       if (activePage && focusedLink) {
         if (focusTitle) {

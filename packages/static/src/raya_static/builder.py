@@ -1817,7 +1817,8 @@ def _render_course_map(
                     "<a "
                     f'href="{html.escape(href)}"{current} '
                     f'data-raya-map-index="{sequence_index[target.id]}" '
-                    f'data-raya-map-label="{html.escape(label, quote=True)}">'
+                    f'data-raya-map-label="{html.escape(label, quote=True)}" '
+                    f'data-raya-map-title="{html.escape(target.nav_title, quote=True)}">'
                     f"{html.escape(label)}"
                     "</a>"
                 ),
