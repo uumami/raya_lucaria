@@ -20,6 +20,7 @@ from raya_schema import (
     ValidationReport,
     validate_artifact_manifest,
     validate_cache_index,
+    validate_calendar_index,
     validate_execution_index,
     validate_graph_index,
     validate_indices_index,
@@ -35,6 +36,7 @@ from raya_schema import (
     validate_search_index,
     validate_tasks_index,
 )
+from raya_schema.calendar import discover_calendar_documents
 from raya_schema.content import ContentModel, ContentPage, resolve_course_content
 from raya_schema.course import resolve_course_source_root
 from raya_schema.links import (
@@ -345,6 +347,27 @@ def build_course(course_path: str | Path) -> ValidationReport:
         content_model=content_model,
         course_id=course_id,
     )
+    calendar_config = config.get("calendar")
+    calendar_timezone = (
+        calendar_config.get("timezone") if isinstance(calendar_config, dict) else None
+    )
+    if not isinstance(calendar_timezone, str):
+        report.add_error(
+            "Calendar timezone is unavailable after course validation",
+            path=config_path,
+            field="calendar.timezone",
+            next_action="Set calendar.timezone to a valid IANA timezone",
+        )
+        return report
+    calendar_documents = discover_calendar_documents(
+        course_root=root,
+        source_dir=source_dir,
+        content_model=content_model,
+        timezone=calendar_timezone,
+        report=report,
+    )
+    if not report.ok:
+        return report
     math_renderer = MathRenderer()
     numbered_object_collection = _collect_numbered_objects(
         course_root=root,
@@ -474,6 +497,12 @@ def build_course(course_path: str | Path) -> ValidationReport:
     indices_index = _indices_index(course_id, content_model, official_counts)
     official_index = _official_index(course_id, official_objects)
     tasks_index = _browser_tasks_payload(content_model, official_by_page)
+    calendar_index = build_calendar_index(
+        content_model,
+        calendar_documents,
+        official_by_page,
+        calendar_timezone,
+    )
     search_index = _search_index(content_model, search_records_by_page)
     references_index = _references_index(course_id, references, reviewed_by_reference)
     reviewed_outputs_data = reviewed_outputs_index(course_id, reviewed_outputs)
@@ -498,6 +527,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
     _write_json(data_dir / "indices.json", indices_index, report)
     _write_json(data_dir / "official.json", official_index, report)
     _write_json(data_dir / "tasks.json", tasks_index, report)
+    _write_json(data_dir / "calendar.json", calendar_index, report)
     _write_json(data_dir / "search-index.json", search_index, report)
     _write_json(data_dir / "references.json", references_index, report)
     _write_json(data_dir / "reviewed-outputs.json", reviewed_outputs_data, report)
@@ -589,6 +619,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
             "indices": "data/indices.json",
             "official": "data/official.json",
             "tasks": "data/tasks.json",
+            "calendar": "data/calendar.json",
             "search_index": "data/search-index.json",
             "references": "data/references.json",
             "reviewed_outputs": "data/reviewed-outputs.json",
@@ -8387,6 +8418,183 @@ def _official_index(
     }
 
 
+def build_calendar_index(
+    content_model: ContentModel,
+    calendar_documents: list[dict[str, Any]],
+    official_by_page: dict[str, list[dict[str, Any]]],
+    timezone: str,
+) -> dict[str, Any]:
+    ordered_events = [
+        *_authored_calendar_events(content_model, calendar_documents),
+        *_official_calendar_occurrences(content_model, official_by_page),
+    ]
+    ordered_events.sort(key=lambda item: item[0])
+    events = [event for _, event in ordered_events]
+    _ensure_unique_calendar_ids(events)
+    return {
+        "version": 1,
+        "timezone": timezone,
+        "events": events,
+        "kinds": _calendar_kinds(events),
+    }
+
+
+def _authored_calendar_events(
+    content_model: ContentModel,
+    calendar_documents: list[dict[str, Any]],
+) -> list[tuple[tuple[Any, ...], dict[str, Any]]]:
+    occurrences: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+    documents = sorted(
+        calendar_documents,
+        key=lambda document: (
+            document.get("source_order")
+            if isinstance(document.get("source_order"), int)
+            else 0,
+            str(document.get("id") or ""),
+        ),
+    )
+    for document_index, document in enumerate(documents):
+        document_id = str(document.get("id") or "").strip()
+        if not document_id:
+            continue
+        source_order = document.get("source_order")
+        normalized_order = source_order if isinstance(source_order, int) else 0
+        source_events = document.get("events")
+        if not isinstance(source_events, list):
+            continue
+        for event_index, source_event in enumerate(source_events):
+            if not isinstance(source_event, dict):
+                continue
+            event_id = str(source_event.get("id") or "").strip()
+            kind = str(source_event.get("kind") or "").strip()
+            date = str(source_event.get("date") or "").strip()
+            title = _official_public_scalar_text(source_event.get("title"))
+            if not event_id or not kind or not date or not title:
+                continue
+            event: dict[str, Any] = {
+                "id": f"calendar:{document_id}:{event_id}",
+                "origin": "calendar",
+                "source_document_id": document_id,
+                "source_event_id": event_id,
+                "kind": kind,
+                "date": date,
+                "title": title,
+            }
+            for field in ("start_time", "end_time", "summary"):
+                value = _official_public_scalar_text(source_event.get(field))
+                if value:
+                    event[field] = value
+            page = _calendar_page(content_model, source_event.get("page"))
+            if page is not None:
+                event["page_id"] = page.id
+                event["page_output_path"] = page.output_path
+            occurrences.append(
+                (
+                    _calendar_event_sort_key(
+                        event,
+                        (normalized_order, document_index, event_index),
+                    ),
+                    event,
+                )
+            )
+    return occurrences
+
+
+def _official_calendar_occurrences(
+    content_model: ContentModel,
+    official_by_page: dict[str, list[dict[str, Any]]],
+) -> list[tuple[tuple[Any, ...], dict[str, Any]]]:
+    occurrences: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
+    for page_index, page in enumerate(content_model.pages):
+        page_objects = sorted(
+            official_by_page.get(page.id, []),
+            key=lambda item: (
+                item.get("source_order")
+                if isinstance(item.get("source_order"), int)
+                else 0,
+                str(item.get("id") or ""),
+            ),
+        )
+        for object_index, item in enumerate(page_objects):
+            summary = _official_public_task_summary(item)
+            if summary is None:
+                continue
+            content = summary["content"]
+            source_order = item.get("source_order")
+            normalized_order = source_order if isinstance(source_order, int) else 0
+            for field_index, (field, kind) in enumerate(
+                (("available", "available"), ("due", "due"))
+            ):
+                date = _official_public_text(content, (field,))
+                if not date:
+                    continue
+                event: dict[str, Any] = {
+                    "id": f"official:{summary['id']}:{field}",
+                    "origin": "official",
+                    "source_object_id": summary["id"],
+                    "kind": kind,
+                    "date": date,
+                    "type": summary["type"],
+                    "title": summary["title"],
+                    "tags": _official_public_tags(content),
+                    "page_id": page.id,
+                    "page_output_path": page.output_path,
+                    "anchor": f"raya-official-{_safe_map_fragment_id(summary['id'])}",
+                }
+                public_summary = _official_public_text(content, ("summary",))
+                if public_summary:
+                    event["summary"] = public_summary
+                occurrences.append(
+                    (
+                        _calendar_event_sort_key(
+                            event,
+                            (normalized_order, page_index, object_index, field_index),
+                        ),
+                        event,
+                    )
+                )
+    return occurrences
+
+
+def _calendar_page(
+    content_model: ContentModel,
+    page_reference: Any,
+) -> ContentPage | None:
+    if not isinstance(page_reference, str):
+        return None
+    return content_model.pages_by_id.get(page_reference) or content_model.pages_by_alias.get(
+        page_reference
+    )
+
+
+def _calendar_event_sort_key(
+    event: dict[str, Any],
+    source_order: tuple[Any, ...],
+) -> tuple[Any, ...]:
+    start_time = event.get("start_time")
+    is_all_day = not isinstance(start_time, str) or not start_time
+    return (
+        str(event["date"]),
+        0 if is_all_day else 1,
+        "" if is_all_day else start_time,
+        source_order,
+        str(event["id"]),
+    )
+
+
+def _calendar_kinds(events: list[dict[str, Any]]) -> list[str]:
+    return sorted({str(event["kind"]) for event in events})
+
+
+def _ensure_unique_calendar_ids(events: list[dict[str, Any]]) -> None:
+    seen: set[str] = set()
+    for event in events:
+        event_id = str(event["id"])
+        if event_id in seen:
+            raise ValueError(f"Duplicate calendar occurrence ID: {event_id}")
+        seen.add(event_id)
+
+
 def _official_counts(
     official_objects: list[dict[str, Any]],
     *,
@@ -8759,6 +8967,7 @@ def _validate_generated_artifact(artifact_dir: Path, report: ValidationReport) -
         validate_indices_index(artifact_dir / "data" / "indices.json"),
         validate_official_index(artifact_dir / "data" / "official.json"),
         validate_tasks_index(artifact_dir / "data" / "tasks.json"),
+        validate_calendar_index(artifact_dir / "data" / "calendar.json"),
         validate_search_index(artifact_dir / "data" / "search-index.json"),
         validate_references_index(artifact_dir / "data" / "references.json"),
         validate_reviewed_outputs_index(

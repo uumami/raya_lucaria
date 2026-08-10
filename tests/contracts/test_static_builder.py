@@ -257,6 +257,71 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert "fetch(" not in topic_html
 
 
+def test_calendar_index_emits_authored_and_both_derived_dates(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(course, "1_term.yaml", events=[_holiday_event()])
+    _write_calendar_assignment(
+        course,
+        content_lines=["  available: '2026-09-01'", "  due: '2026-09-15'"],
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    index = json.loads((course / "artifact" / "data" / "calendar.json").read_text())
+    assert index["timezone"] == "America/Mexico_City"
+    assert {event["id"] for event in index["events"]} >= {
+        "calendar:term:independence-day",
+        "official:unit-assignment:available",
+        "official:unit-assignment:due",
+    }
+
+
+def test_empty_course_still_publishes_valid_calendar_index(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    assert json.loads((course / "artifact" / "data" / "calendar.json").read_text()) == {
+        "version": 1,
+        "timezone": "America/Mexico_City",
+        "events": [],
+        "kinds": [],
+    }
+
+
+def test_calendar_index_only_serializes_public_fields_and_escapes_for_scripts(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _write_calendar_assignment(
+        course,
+        content_lines=[
+            "  title: 'Visible </script> assignment'",
+            "  due: '2026-09-15'",
+            "  answer: SHOULD_NOT_LEAK_ANSWER",
+            "  solution: SHOULD_NOT_LEAK_SOLUTION",
+            "  cache_key: SHOULD_NOT_LEAK_CACHE_KEY",
+            "  tags:",
+            "    - public",
+            "    - hidden: SHOULD_NOT_LEAK_TAG",
+        ],
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    index = json.loads((course / "artifact" / "data" / "calendar.json").read_text())
+    serialized = json.dumps(index, sort_keys=True)
+    assert "source_path" not in serialized
+    assert "_official" not in serialized
+    assert "SHOULD_NOT_LEAK" not in serialized
+    assert static_builder._json_script_text(index).count("</script>") == 0
+
+
 def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
 
@@ -7281,6 +7346,80 @@ def _copy_render_fixture(tmp_path: Path) -> Path:
     course = tmp_path / "render-fixture"
     shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
     return course
+
+
+def _set_calendar_timezone(course: Path, timezone: str) -> None:
+    config_path = course / "raya.yaml"
+    config_text = config_path.read_text(encoding="utf-8")
+    calendar_block = "calendar:\n"
+    if calendar_block in config_text:
+        before, after = config_text.split(calendar_block, maxsplit=1)
+        _, remaining = after.split("\n", maxsplit=1)
+        config_text = before + remaining
+    config_path.write_text(
+        config_text.rstrip() + "\ncalendar:\n" + f"  timezone: {timezone!r}\n",
+        encoding="utf-8",
+    )
+
+
+def _write_calendar_document(
+    course: Path,
+    filename: str,
+    *,
+    events: list[dict[str, str]],
+) -> Path:
+    calendar_path = course / "course" / "_official" / "calendar" / filename
+    calendar_path.parent.mkdir(parents=True, exist_ok=True)
+    event_lines = []
+    for event in events:
+        event_lines.append(
+            "  - " + "\n    ".join(f"{key}: {value!r}" for key, value in event.items())
+        )
+    calendar_path.write_text(
+        "id: term\n"
+        "type: calendar\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "events:\n"
+        + "\n".join(event_lines)
+        + "\n",
+        encoding="utf-8",
+    )
+    return calendar_path
+
+
+def _holiday_event() -> dict[str, str]:
+    return {
+        "id": "independence-day",
+        "kind": "holiday",
+        "date": "2026-09-16",
+        "title": "Independence Day",
+    }
+
+
+def _write_calendar_assignment(course: Path, *, content_lines: list[str]) -> Path:
+    assignment_path = (
+        course / "course" / "_official" / "assignments" / "1_assignment.yaml"
+    )
+    assignment_path.parent.mkdir(parents=True, exist_ok=True)
+    assignment_path.write_text(
+        "\n".join(
+            [
+                "id: unit-assignment",
+                "type: assignment",
+                "authority: official",
+                "scope:",
+                "  quantum: course-root",
+                "content:",
+                "  title: Unit assignment",
+                *content_lines,
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return assignment_path
 
 
 def _copy_reference_fixture(tmp_path: Path) -> Path:

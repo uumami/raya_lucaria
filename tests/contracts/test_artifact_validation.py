@@ -4,6 +4,7 @@ import json
 import shutil
 from pathlib import Path
 
+from raya_schema import artifacts as artifact_schemas
 from raya_schema import (
     inspect_artifact,
     validate_artifact_manifest,
@@ -49,7 +50,8 @@ def test_valid_artifact_manifest(tmp_path: Path) -> None:
     "graph": "data/graph.json",
     "navigation": "data/navigation.json",
     "indices": "data/indices.json",
-    "official": "data/official.json"
+    "official": "data/official.json",
+    "calendar": "data/calendar.json"
   }
 }
 """,
@@ -67,6 +69,80 @@ def test_invalid_artifact_manifest(tmp_path: Path) -> None:
     report = validate_artifact_manifest(manifest)
     assert not report.ok
     assert any("required" in item.message for item in report.diagnostics)
+
+
+def test_artifact_manifest_requires_a_string_calendar_data_path(tmp_path: Path) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        """{
+  "artifact_version": "0.1",
+  "course_id": "minimal-course",
+  "course_version_id": "fixture",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "source_schema_version": "0.1",
+  "static_site_root": "site",
+  "data": {
+    "pages": "data/pages.json",
+    "quanta": "data/quanta.json",
+    "links": "data/links.json",
+    "graph": "data/graph.json",
+    "navigation": "data/navigation.json",
+    "indices": "data/indices.json",
+    "official": "data/official.json",
+    "calendar": []
+  }
+}
+""",
+        encoding="utf-8",
+    )
+
+    report = validate_artifact_manifest(manifest)
+
+    assert not report.ok
+    assert any(item.field == "data.calendar" for item in report.diagnostics)
+
+
+def test_artifact_manifest_requires_calendar_data_path(tmp_path: Path) -> None:
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(
+        """{
+  "artifact_version": "0.1",
+  "course_id": "minimal-course",
+  "course_version_id": "fixture",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "source_schema_version": "0.1",
+  "static_site_root": "site",
+  "data": {
+    "pages": "data/pages.json",
+    "quanta": "data/quanta.json",
+    "links": "data/links.json",
+    "graph": "data/graph.json",
+    "navigation": "data/navigation.json",
+    "indices": "data/indices.json",
+    "official": "data/official.json"
+  }
+}
+""",
+        encoding="utf-8",
+    )
+
+    report = validate_artifact_manifest(manifest)
+
+    assert not report.ok
+    assert any(item.field == "data" and "calendar" in item.message for item in report.diagnostics)
+
+
+def test_calendar_index_validation_rejects_invalid_index(tmp_path: Path) -> None:
+    calendar = tmp_path / "calendar.json"
+    calendar.write_text(
+        '{"version":1,"timezone":"America/Mexico_City","events":[{"id":"bad"}],"kinds":[]}',
+        encoding="utf-8",
+    )
+
+    report = artifact_schemas.validate_calendar_index(calendar)
+
+    assert not report.ok
+    assert any(item.field == "events.0" for item in report.diagnostics)
 
 
 def test_artifact_manifest_rejects_non_string_numbered_objects_data_path(
@@ -395,6 +471,24 @@ def test_inspect_artifact_validates_manifest_declared_numbered_objects_index(
         "numbered objects index version must be 1" in item.message
         for item in report.diagnostics
     )
+
+
+def test_inspect_artifact_validates_manifest_declared_calendar_index(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    build_report = build_course(course)
+    assert build_report.ok, [diagnostic.format() for diagnostic in build_report.diagnostics]
+    calendar_path = course / "artifact" / "data" / "calendar.json"
+    calendar_path.write_text(
+        '{"version":2,"timezone":"America/Mexico_City","events":[],"kinds":[]}',
+        encoding="utf-8",
+    )
+
+    report = inspect_artifact(course / "artifact")
+
+    assert not report.ok
+    assert any("1 was expected" in item.message for item in report.diagnostics)
 
 
 def _copy_minimal(tmp_path: Path) -> Path:

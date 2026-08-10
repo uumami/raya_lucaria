@@ -47,7 +47,8 @@
         "graph",
         "navigation",
         "indices",
-        "official"
+        "official",
+        "calendar"
       ],
       "properties": {
         "pages": {
@@ -75,6 +76,10 @@
           "minLength": 1
         },
         "official": {
+          "type": "string",
+          "minLength": 1
+        },
+        "calendar": {
           "type": "string",
           "minLength": 1
         },

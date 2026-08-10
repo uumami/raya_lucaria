@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raya-lucaria.local/schemas/calendar-index.schema.json",
+  "title": "Raya Calendar Index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "timezone", "events", "kinds"],
+  "properties": {
+    "version": {"const": 1},
+    "timezone": {"type": "string", "minLength": 1},
+    "events": {"type": "array", "items": {"$ref": "#/$defs/event"}},
+    "kinds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["available", "cancellation", "due", "holiday", "milestone", "session"]
+      }
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "origin", "kind", "date", "title"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "origin": {"type": "string", "enum": ["calendar", "official"]},
+        "source_document_id": {"type": "string", "minLength": 1},
+        "source_event_id": {"type": "string", "minLength": 1},
+        "source_object_id": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "enum": ["available", "cancellation", "due", "holiday", "milestone", "session"]},
+        "type": {"type": "string", "enum": ["assignment", "exam", "project", "task"]},
+        "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+        "start_time": {"type": "string", "pattern": "^\\d{2}:\\d{2}$"},
+        "end_time": {"type": "string", "pattern": "^\\d{2}:\\d{2}$"},
+        "title": {"type": "string", "minLength": 1},
+        "summary": {"type": "string", "minLength": 1},
+        "tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "page_id": {"type": "string", "minLength": 1},
+        "page_output_path": {"type": "string", "minLength": 1},
+        "anchor": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"origin": {"const": "calendar"}}},
+          "then": {
+            "required": ["source_document_id", "source_event_id"],
+            "not": {
+              "anyOf": [
+                {"required": ["source_object_id"]},
+                {"required": ["type"]},
+                {"required": ["tags"]},
+                {"required": ["anchor"]}
+              ]
+            }
+          }
+        },
+        {
+          "if": {"properties": {"origin": {"const": "official"}}},
+          "then": {
+            "required": ["source_object_id", "type", "tags", "page_id", "page_output_path", "anchor"],
+            "not": {
+              "anyOf": [
+                {"required": ["source_document_id"]},
+                {"required": ["source_event_id"]},
+                {"required": ["start_time"]},
+                {"required": ["end_time"]}
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

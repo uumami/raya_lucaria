@@ -67,6 +67,7 @@ def inspect_artifact(artifact_path: str | Path) -> ValidationReport:
         "navigation": validate_navigation_index,
         "indices": validate_indices_index,
         "official": validate_official_index,
+        "calendar": validate_calendar_index,
         "tasks": validate_tasks_index,
         "search_index": validate_search_index,
         "references": validate_references_index,
@@ -213,6 +214,10 @@ def validate_execution_results_index(index_path: str | Path) -> ValidationReport
 
 def validate_cache_index(index_path: str | Path) -> ValidationReport:
     return validate_artifact_index(index_path, "cache-index.schema.json")
+
+
+def validate_calendar_index(index_path: str | Path) -> ValidationReport:
+    return validate_artifact_index(index_path, "calendar-index.schema.json")
 
 
 def validate_artifact_index(index_path: str | Path, schema_name: str) -> ValidationReport:
