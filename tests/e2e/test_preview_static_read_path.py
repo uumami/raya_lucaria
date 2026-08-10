@@ -9793,7 +9793,8 @@ def test_render_fixture_applies_course_and_section_skins(tmp_path: Path) -> None
         in index_html
     )
     assert 'class="raya-course-map-list" id="raya-course-map-list"' in index_html
-    assert 'data-raya-map-label="1 Static Path">1 Static Path</a>' in index_html
+    assert 'data-raya-map-label="1 Static Path"' in index_html
+    assert 'data-raya-map-title="Static Path"' in index_html
     assert "data-raya-rail-toggle" in reader_html
     assert 'data-raya-rail-panel-state="expanded"' in reader_html
     assert 'aria-hidden="false"' in reader_html
