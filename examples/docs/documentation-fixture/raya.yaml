@@ -4,6 +4,8 @@ description: Fixture for rendered documentation boundary tests.
 language: en
 source: course
 artifact: artifact
+calendar:
+  timezone: America/Mexico_City
 hierarchy:
   levels:
     - key: language

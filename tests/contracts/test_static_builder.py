@@ -283,7 +283,7 @@ def test_calendar_index_emits_authored_and_both_derived_dates(tmp_path: Path) ->
     }
 
 
-def test_calendar_index_emits_date_only_official_task_with_safe_fallback_title(
+def test_calendar_index_emits_date_only_private_task_without_publishing_it_in_tasks(
     tmp_path: Path,
 ) -> None:
     course = _copy_minimal(tmp_path)
@@ -312,6 +312,8 @@ def test_calendar_index_emits_date_only_official_task_with_safe_fallback_title(
             "type": "assignment",
         }
     ]
+    tasks = json.loads((course / "artifact" / "data" / "tasks.json").read_text())
+    assert tasks["objects"] == []
 
 
 def test_empty_course_still_publishes_valid_calendar_index(tmp_path: Path) -> None:
@@ -3034,8 +3036,8 @@ def test_build_writes_static_calendar_agenda_at_schedule_route(tmp_path: Path) -
     assert "https://" not in calendar_html
     assert "http://" not in calendar_html
     topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
-    assert 'aria-label="Open official tasks, 5 tasks"' in topic_html
-    assert 'aria-label="Open course calendar, 4 dated"' in topic_html
+    assert 'aria-label="Open official tasks, 4 tasks"' in topic_html
+    assert 'aria-label="Open course calendar, 3 dated"' in topic_html
     assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in calendar_html
     assert 'href="../graph/index.html?page=first-topic"' in calendar_html
 
@@ -5110,11 +5112,11 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
     for required in (
         "reader pages have no command strip above the article",
         "reader commands live in the left course rail",
-        "six two-column course actions for Search, Graph, Practice, Tasks, Schedule, and Context",
+        "six two-column course actions for Search, Graph, Practice, Tasks, Calendar, and Context",
         "fixed footer contains structural page position and two fixed-footer comfort controls",
         "collapsed structural mode reserves the 48px mini rail",
         "expanded content is inert, removed from keyboard navigation",
-        "Search, Graph, Practice, Tasks, and Schedule use one persistent Course map",
+        "Search, Graph, Practice, Tasks, and Calendar use one persistent Course map",
         "no separate workspace section",
         "no visible Current, All, Scan, or Less map action buttons",
         "Same-tab sessionStorage may restore only course-scoped collapsed course-map branch identifiers and the explicit left/right structural rail display pair",
@@ -5149,7 +5151,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "left course rail" in text
         assert "persistent Course map" in text
         assert "course search" in lowered
-        assert "Search, Graph, Practice, Tasks, Schedule, and Context" in text
+        assert "Search, Graph, Practice, Tasks, Calendar, and Context" in text
         assert "Text size and OpenDyslexic" in text
         assert "Expand course map" in text
         assert "collapsible course-map branches" in text
@@ -5171,7 +5173,7 @@ def test_reader_shell_guidance_matches_left_rail_contract() -> None:
         assert "riel izquierdo del curso" in text
         assert "mapa de curso persistente" in text
         assert "course search" in lowered
-        assert "Search, Graph, Practice, Tasks, Schedule y Context" in text
+        assert "Search, Graph, Practice, Tasks, Calendar y Context" in text
         assert "Text size y OpenDyslexic" in text
         assert "Expand course map" in text
         assert "ramas plegables del mapa del curso" in text

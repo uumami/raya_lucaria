@@ -75,6 +75,8 @@ def init_course(
                 f"language: {_yaml_string(language)}",
                 "source: course",
                 "artifact: artifact",
+                "calendar:",
+                "  timezone: America/Mexico_City",
                 "",
             ]
         ),

@@ -8170,7 +8170,7 @@ def _official_public_task_summary(item: dict[str, Any]) -> dict[str, Any] | None
     if not title and preview:
         title = preview
     if not title:
-        title = _official_type_label(object_type)
+        return None
     if not preview:
         preview = title
     authority = str(item.get("authority") or "official").strip() or "official"
@@ -8180,6 +8180,27 @@ def _official_public_task_summary(item: dict[str, Any]) -> dict[str, Any] | None
         "id": object_id,
         "preview": preview,
         "title": title,
+        "type": object_type,
+    }
+
+
+def _official_calendar_task_summary(
+    item: dict[str, Any],
+) -> dict[str, Any] | None:
+    task_summary = _official_public_task_summary(item)
+    if task_summary is not None:
+        return task_summary
+    if not isinstance(item, dict):
+        return None
+    object_type = str(item.get("type") or "").strip()
+    object_id = str(item.get("id") or "").strip()
+    if object_type not in _OFFICIAL_TASK_TYPES or not object_id:
+        return None
+    content = item.get("content")
+    return {
+        "content": content if isinstance(content, dict) else {},
+        "id": object_id,
+        "title": _official_type_label(object_type),
         "type": object_type,
     }
 
@@ -8531,7 +8552,7 @@ def _official_calendar_occurrences(
             ),
         )
         for object_index, item in enumerate(page_objects):
-            summary = _official_public_task_summary(item)
+            summary = _official_calendar_task_summary(item)
             if summary is None:
                 continue
             content = summary["content"]

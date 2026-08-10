@@ -1364,7 +1364,7 @@ def test_preview_serves_local_visual_graph_surface(tmp_path: Path) -> None:
                             "raya-command-graph": ("graph", "Graph"),
                             "raya-command-practice": ("practice", "Practice"),
                             "raya-command-tasks": ("tasks", "Tasks"),
-                            "raya-command-schedule": ("schedule", "Schedule"),
+                            "raya-command-schedule": ("schedule", "Calendar"),
                             "raya-text-size-toggle": ("text-size", "Text size"),
                             "raya-font-toggle": ("font", "OpenDyslexic"),
                         }
@@ -9012,7 +9012,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('5 visible tasks')"""
+                                  ?.includes('4 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="unit-assignment"]'
@@ -9024,7 +9024,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 '[data-raya-task-object="extension-assignment"]'
                             ).is_hidden()
                             assert (
-                                "5 visible tasks"
+                                "4 visible tasks"
                                 in scoped_tasks.locator(
                                     "[data-raya-tasks-summary-count]"
                                 ).inner_text()
@@ -9038,7 +9038,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 in tasks_focus_notice.inner_text()
                             )
                             assert "First Topic" in tasks_focus_notice.inner_text()
-                            assert "5 visible tasks" in tasks_focus_notice.inner_text()
+                            assert "4 visible tasks" in tasks_focus_notice.inner_text()
                             assert (
                                 scoped_tasks.locator(
                                     '[data-raya-task-active="true"]'
@@ -9082,7 +9082,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                   && document
                                     .querySelector('#raya-tasks-status')
                                     ?.textContent
-                                    ?.includes('6 visible tasks')"""
+                                    ?.includes('5 visible tasks')"""
                             )
                             assert scoped_tasks.input_value("#raya-tasks-search") == ""
                             assert (
@@ -9117,7 +9117,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('5 visible tasks')"""
+                                  ?.includes('4 visible tasks')"""
                             )
                             tasks_focus_notice = scoped_tasks.locator(
                                 "[data-raya-tasks-page-focus]"
@@ -9129,7 +9129,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('6 visible tasks')"""
+                                  ?.includes('5 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="extension-assignment"]'
@@ -9150,7 +9150,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('5 visible tasks')"""
+                                  ?.includes('4 visible tasks')"""
                             )
                             tasks_focus_notice = scoped_tasks.locator(
                                 "[data-raya-tasks-page-focus]"
@@ -9161,7 +9161,7 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
                                 """() => document
                                   .querySelector('#raya-tasks-status')
                                   ?.textContent
-                                  ?.includes('6 visible tasks')"""
+                                  ?.includes('5 visible tasks')"""
                             )
                             assert scoped_tasks.locator(
                                 '[data-raya-task-object="extension-assignment"]'
@@ -10598,7 +10598,7 @@ def test_course_action_footer_text_size_and_tooltip_contract(tmp_path: Path) -> 
                             "Graph",
                             "Practice",
                             "Tasks",
-                            "Schedule",
+                            "Calendar",
                             "Context",
                         ]
                         first_left = geometry["actions"][0]["left"]
@@ -10973,7 +10973,7 @@ def test_mobile_course_map_drawer_is_modal_and_volatile(
                                 "Graph",
                                 "Practice",
                                 "Tasks",
-                                "Schedule",
+                                "Calendar",
                                 "Context",
                             ],
                             "localKeys": [],
@@ -11742,13 +11742,13 @@ def test_minimal_course_map_current_path_is_expanded_and_collapsible(
                         "Graph",
                         "Practice",
                         "Tasks",
-                        "Schedule",
+                        "Calendar",
                     ]
                     assert "Open official practice, 8 official" in initial[
                         "toolAriaLabels"
                     ]
                     assert "Open official tasks, 4 tasks" in initial["toolAriaLabels"]
-                    assert "Open official schedule, 3 dated" in initial[
+                    assert "Open course calendar, 3 dated" in initial[
                         "toolAriaLabels"
                     ]
                     assert initial["practiceHref"].endswith(
@@ -19243,7 +19243,7 @@ def test_no_script_course_rail_is_static_reachable_and_has_no_inert_controls(
                         "Graph",
                         "Practice",
                         "Tasks",
-                        "Schedule",
+                        "Calendar",
                     ]
                     enhancement_controls = page.locator(enhancement_selector)
                     assert enhancement_controls.count() >= 1
@@ -20025,7 +20025,7 @@ def test_render_fixture_mobile_course_map_drawer_actions_and_context_handoff(
                         "Graph",
                         "Practice",
                         "Tasks",
-                        "Schedule",
+                        "Calendar",
                         "Context",
                     ]
                     assert all(state["actionHrefs"])
@@ -20414,13 +20414,6 @@ def test_compact_skin_makes_discovery_cards_dense_without_shrinking_article_text
                                 ".raya-task-open",
                                 ".raya-task-chip",
                                 ".raya-tasks-controls",
-                            ),
-                            (
-                                "_raya/schedule/index.html",
-                                ".raya-schedule-item",
-                                ".raya-schedule-open",
-                                ".raya-schedule-chip",
-                                ".raya-schedule-controls",
                             ),
                         ):
                             page.goto(f"{base_url}/{path}", wait_until="networkidle")
@@ -21422,13 +21415,11 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
                             "search": "raya-search-results-panel",
                             "practice": "raya-practice-results-panel",
                             "tasks": "raya-tasks-results-panel",
-                            "schedule": "raya-schedule-results-panel",
                         }
                         for workspace_path, kind in (
                             ("_raya/search/index.html", "search"),
                             ("_raya/practice/index.html", "practice"),
                             ("_raya/tasks/index.html", "tasks"),
-                            ("_raya/schedule/index.html", "schedule"),
                         ):
                             page.goto(
                                 f"{base_url}/{workspace_path}",
@@ -21451,7 +21442,6 @@ def test_discovery_workspace_guides_are_visible_without_overflow(
                                     "search": ".raya-search-workspace",
                                     "practice": ".raya-practice-workspace",
                                     "tasks": ".raya-tasks-workspace",
-                                    "schedule": ".raya-schedule-workspace",
                                 }[kind]
                             )
                             workspace_box = workspace.bounding_box()
@@ -21633,9 +21623,13 @@ def test_workspace_course_map_static_paths_keyboard_and_state_safety(
                 assert page.locator(
                     '#raya-course-map-list [data-raya-map-page-focus="true"]'
                 ).is_visible()
-                assert page.locator(
-                    "[data-raya-discovery-focus-strip]"
-                ).is_visible()
+                if workspace == "schedule":
+                    assert page.locator("[data-raya-calendar-page-focus]").count() == 1
+                    assert page.locator("[data-raya-discovery-focus-strip]").count() == 0
+                else:
+                    assert page.locator(
+                        "[data-raya-discovery-focus-strip]"
+                    ).is_visible()
                 _assert_bounded_scroll_region(page, "#raya-course-map-list")
                 _assert_no_horizontal_overflow(page)
 
@@ -21852,7 +21846,6 @@ def test_discovery_workspaces_show_shared_page_focus_strip(tmp_path: Path) -> No
                             ("_raya/graph/index.html", "graph"),
                             ("_raya/practice/index.html", "practice"),
                             ("_raya/tasks/index.html", "tasks"),
-                            ("_raya/schedule/index.html", "schedule"),
                         ):
                             requested_urls.clear()
                             page.goto(
@@ -21958,7 +21951,7 @@ def test_discovery_workspaces_show_shared_page_focus_strip(tmp_path: Path) -> No
                             assert labels_to_paths["Tasks"] == (
                                 "/_raya/tasks/index.html?page=reader-ux"
                             )
-                            assert labels_to_paths["Schedule"] == (
+                            assert labels_to_paths["Calendar"] == (
                                 "/_raya/schedule/index.html?page=reader-ux"
                             )
                             assert labels_to_paths["Open page"] == (
@@ -22013,7 +22006,6 @@ def test_discovery_workspaces_show_shared_page_focus_strip(tmp_path: Path) -> No
                             "_raya/graph/index.html",
                             "_raya/practice/index.html",
                             "_raya/tasks/index.html",
-                            "_raya/schedule/index.html",
                         ):
                             page.goto(
                                 f"{base_url}/{workspace_path}?page=missing-page",

@@ -424,6 +424,8 @@ def _write_natural_execution_course(tmp_path: Path) -> Path:
                 "language: en",
                 "source: course",
                 "artifact: artifact",
+                "calendar:",
+                "  timezone: America/Mexico_City",
             ]
         )
         + "\n",
