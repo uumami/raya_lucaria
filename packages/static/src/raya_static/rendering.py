@@ -2233,6 +2233,138 @@ img {
   min-height: var(--raya-space-card-action-min-height);
   padding: 0.25rem 0.65rem;
 }
+.raya-calendar-page {
+  --raya-calendar-kind-available: var(--raya-color-success);
+  --raya-calendar-kind-cancellation: var(--raya-color-danger);
+  --raya-calendar-kind-due: var(--raya-color-danger);
+  --raya-calendar-kind-holiday: var(--raya-color-warning);
+  --raya-calendar-kind-milestone: var(--raya-color-accent);
+  --raya-calendar-kind-session: var(--raya-color-accent);
+  margin: 0 auto;
+  max-width: 72rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: var(--raya-space-page);
+}
+.raya-calendar-header {
+  border-bottom: 1px solid var(--raya-color-border);
+  margin-bottom: var(--raya-space-block);
+  padding-bottom: var(--raya-space-block);
+}
+.raya-calendar-header h1,
+.raya-calendar-header p,
+.raya-calendar-summary,
+.raya-calendar-month h2,
+.raya-calendar-event h3 {
+  margin-top: 0;
+}
+.raya-calendar-workspace,
+.raya-calendar-agenda {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+.raya-calendar-month {
+  min-width: 0;
+}
+.raya-calendar-month h2 {
+  border-bottom: 1px solid var(--raya-color-border);
+  font-size: 1.25rem;
+  padding-bottom: 0.45rem;
+}
+.raya-calendar-events {
+  display: grid;
+  gap: var(--raya-space-card-gap);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.raya-calendar-event {
+  background: var(--raya-color-surface);
+  border: 1px solid var(--raya-color-border);
+  border-inline-start: 0.25rem solid var(--raya-calendar-kind);
+  border-radius: 0.5rem;
+  min-width: 0;
+  padding: var(--raya-space-card-padding);
+}
+.raya-calendar-event-header,
+.raya-calendar-badges,
+.raya-calendar-actions,
+.raya-calendar-tags {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--raya-space-inline);
+}
+.raya-calendar-event-header {
+  justify-content: space-between;
+}
+.raya-calendar-date {
+  font-weight: 800;
+}
+.raya-calendar-badge,
+.raya-calendar-tags li {
+  border: 1px solid var(--raya-color-border);
+  border-radius: 999px;
+  color: var(--raya-color-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: var(--raya-space-chip-padding-block) var(--raya-space-chip-padding-inline);
+}
+.raya-calendar-kind {
+  border-color: var(--raya-calendar-kind);
+  color: var(--raya-color-text);
+}
+.raya-calendar-type,
+.raya-calendar-tags li {
+  background: color-mix(in srgb, var(--raya-color-accent-soft) 70%, transparent);
+}
+.raya-calendar-tags {
+  list-style: none;
+  margin: var(--raya-space-card-gap) 0 0;
+  padding: 0;
+}
+.raya-calendar-event h3 {
+  font-size: clamp(1.05rem, 1rem + 0.2vw, 1.25rem);
+  margin-bottom: 0.4rem;
+  margin-top: 0.65rem;
+}
+.raya-calendar-time,
+.raya-calendar-event-summary,
+.raya-calendar-empty {
+  color: var(--raya-color-muted);
+}
+.raya-calendar-actions {
+  margin-bottom: 0;
+  margin-top: var(--raya-space-card-gap);
+}
+.raya-calendar-open,
+.raya-calendar-graph {
+  align-items: center;
+  background: color-mix(in srgb, var(--raya-color-surface) 88%, var(--raya-color-accent-soft));
+  border: 1px solid var(--raya-color-border);
+  border-radius: 0.35rem;
+  display: inline-flex;
+  font-weight: 700;
+  min-height: var(--raya-space-card-action-min-height);
+  padding: 0.25rem 0.65rem;
+}
+@media (max-width: 700px) {
+  .raya-calendar-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .raya-calendar-event-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .raya-calendar-page * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
 .raya-discovery-header {
   border-bottom: 1px solid color-mix(in srgb, var(--raya-color-border) 70%, transparent);
   display: grid;

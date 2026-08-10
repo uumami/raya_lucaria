@@ -596,7 +596,7 @@ def build_course(course_path: str | Path) -> ValidationReport:
         site_dir=site_dir,
         content_model=content_model,
         course_id=course_id,
-        official_by_page=official_by_page,
+        calendar_index=calendar_index,
         course_title=str(config["title"]),
         language=str(config["language"]),
         skin_context=skin_context,
@@ -1158,9 +1158,9 @@ def _render_top_command_bar(
             _render_command_link(
                 class_name="raya-command raya-command-schedule",
                 href=schedule_href,
-                aria_label="Open official schedule",
+                aria_label="Open course calendar",
                 icon="schedule",
-                label="Schedule",
+                label="Calendar",
             ),
             "</div>",
             (
@@ -1348,7 +1348,7 @@ def _render_course_actions(
                 href=schedule_href,
                 aria_label=schedule_label,
                 icon="schedule",
-                label="Schedule",
+                label="Calendar",
                 attrs=workspace_attrs("schedule"),
             ),
             "raya-course-action-schedule-tooltip",
@@ -1581,9 +1581,9 @@ def _render_discovery_command_bar(
             workspace_command(
                 kind="schedule",
                 href=schedule_href,
-                aria_label="Open official schedule",
+                aria_label="Open course calendar",
                 icon="schedule",
-                label="Schedule",
+                label="Calendar",
             )
         )
     commands.extend(
@@ -1639,7 +1639,7 @@ def _discovery_workspace_entries(
         ("graph", "Graph", "../graph/index.html", f"{graph_link_count} links"),
         ("practice", "Practice", "../practice/index.html", f"{official_count} official"),
         ("tasks", "Tasks", "../tasks/index.html", f"{task_count} tasks"),
-        ("schedule", "Schedule", "../schedule/index.html", f"{dated_count} dated"),
+        ("schedule", "Calendar", "../schedule/index.html", f"{dated_count} dated"),
     ]
     return [
         {
@@ -1690,7 +1690,7 @@ def _render_discovery_focus_strip(
             handoff("graph", "Graph", STATIC_GRAPH_PATH.as_posix()),
             handoff("practice", "Practice", STATIC_PRACTICE_PATH.as_posix()),
             handoff("tasks", "Tasks", STATIC_TASKS_PATH.as_posix()),
-            handoff("schedule", "Schedule", STATIC_SCHEDULE_PATH.as_posix()),
+            handoff("schedule", "Calendar", STATIC_SCHEDULE_PATH.as_posix()),
             (
                 '<a class="raya-discovery-focus-clear" '
                 'data-raya-discovery-focus-clear href="index.html">Clear focus</a>'
@@ -2258,9 +2258,9 @@ def _render_course_map(
         else "Open official tasks"
     )
     schedule_aria = (
-        f"Open official schedule, {direct_dated_task_count} dated"
+        f"Open course calendar, {direct_dated_task_count} dated"
         if direct_dated_task_count
-        else "Open official schedule"
+        else "Open course calendar"
     )
     actions_html = _render_course_actions(
         search_href=search_href,
@@ -5929,7 +5929,7 @@ def _render_graph_surface(
             '<a data-raya-graph-detail-search-link href="../search/index.html">Find in search</a>',
             '<a data-raya-graph-detail-practice-link href="../practice/index.html">Open practice</a>',
             '<a data-raya-graph-detail-tasks-link hidden>Open tasks</a>',
-            '<a data-raya-graph-detail-schedule-link hidden>Open schedule</a>',
+            '<a data-raya-graph-detail-schedule-link hidden>Open Calendar</a>',
             '<button type="button" data-raya-graph-focus-neighborhood hidden>Focus neighborhood</button>',
             "</p>",
             '<nav class="raya-graph-detail-sequence" data-raya-graph-detail-sequence '
@@ -6442,7 +6442,7 @@ def _render_search_surface(
         )
         schedule_action = (
             f'<a class="raya-search-result-schedule" href="{html.escape(page["schedule_url"])}">'
-            "Open schedule</a>"
+            "Open Calendar</a>"
             if page["schedule_url"]
             else ""
         )
@@ -6651,7 +6651,7 @@ def _render_search_surface(
                     ("View graph", "../graph/index.html"),
                     ("Open practice", "../practice/index.html"),
                     ("Open tasks", "../tasks/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
+                    ("Open Calendar", "../schedule/index.html"),
                 ],
             ),
             _render_discovery_quick_guide(
@@ -7127,7 +7127,7 @@ def _render_practice_surface(
                     ("Open search", "../search/index.html"),
                     ("View graph", "../graph/index.html"),
                     ("Open tasks", "../tasks/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
+                    ("Open Calendar", "../schedule/index.html"),
                 ],
             ),
             _render_discovery_quick_guide(
@@ -7574,7 +7574,7 @@ def _render_tasks_surface(
                     ("Open search", "../search/index.html"),
                     ("View graph", "../graph/index.html"),
                     ("Open practice", "../practice/index.html"),
-                    ("Open schedule", "../schedule/index.html"),
+                    ("Open Calendar", "../schedule/index.html"),
                 ],
             ),
             _render_discovery_quick_guide(
@@ -7606,12 +7606,12 @@ def _write_schedule_surface(
     *,
     site_dir: Path,
     content_model: ContentModel,
-    course_id: str,
-    official_by_page: dict[str, list[dict[str, Any]]],
+    calendar_index: dict[str, Any],
     course_title: str,
     language: str,
     skin_context: SkinContext,
     report: ValidationReport,
+    course_id: str | None = None,
 ) -> None:
     schedule_path = site_dir / STATIC_SCHEDULE_PATH
     schedule_path.parent.mkdir(parents=True, exist_ok=True)
@@ -7620,7 +7620,7 @@ def _write_schedule_surface(
         _render_schedule_surface(
             content_model=content_model,
             course_id=course_id,
-            official_by_page=official_by_page,
+            calendar_index=calendar_index,
             course_title=course_title,
             language=language,
             skin_context=skin_context,
@@ -7633,163 +7633,48 @@ def _write_schedule_surface(
 def _render_schedule_surface(
     *,
     content_model: ContentModel,
-    course_id: str,
-    official_by_page: dict[str, list[dict[str, Any]]],
+    calendar_index: dict[str, Any],
     course_title: str,
     language: str,
     skin_context: SkinContext,
+    course_id: str | None = None,
 ) -> str:
-    stylesheet_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(), RENDER_STYLESHEET_PATH
-    )
-    skin_stylesheet_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(),
-        SKIN_STYLESHEET_PATH,
-    )
+    from_path = STATIC_SCHEDULE_PATH.as_posix()
+    stylesheet_href = _relative_href(from_path, RENDER_STYLESHEET_PATH)
+    skin_stylesheet_href = _relative_href(from_path, SKIN_STYLESHEET_PATH)
     accessibility_css_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(),
+        from_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_CSS_NAME}",
     )
     accessibility_js_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(),
+        from_path,
         f"{ACCESSIBILITY_RESOURCE_PATH}/{OPEN_DYSLEXIC_VOLATILE_JS_NAME}",
     )
     (
         comfort_prepaint_js_href,
         shell_prepaint_js_href,
         shell_js_href,
-    ) = _workspace_shell_resource_hrefs(STATIC_SCHEDULE_PATH.as_posix())
-    discovery_js_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(),
-        Path(DISCOVERY_RESOURCE_PATH) / DISCOVERY_SCRIPT_NAME,
-    )
-    schedule_js_href = _relative_href(
-        STATIC_SCHEDULE_PATH.as_posix(),
-        Path(SCHEDULE_RESOURCE_PATH) / SCHEDULE_SCRIPT_NAME,
-    )
+    ) = _workspace_shell_resource_hrefs(from_path)
     root_skin = skin_id_for_source_path(
         content_model.pages[0].source_path, skin_context
     )
-    schedule_payload = _browser_schedule_payload(content_model, official_by_page)
-    schedule_payload_text = _json_script_text(schedule_payload)
-    dated_event_type_count = sum(
-        1 for count in schedule_payload["event_counts"].values() if count
+    course_identity = course_id or content_model.root_id or course_title
+    events_value = calendar_index.get("events")
+    events = (
+        [event for event in events_value if isinstance(event, dict)]
+        if isinstance(events_value, list)
+        else []
     )
-    type_buttons = [
-        (
-            '<button class="raya-schedule-chip" type="button" '
-            'data-raya-schedule-type-filter="all" aria-pressed="true">'
-            f"All ({len(schedule_payload['items'])})"
-            "</button>"
-        )
-    ]
-    for type_info in schedule_payload["types"]:
-        type_buttons.append(
-            (
-                '<button class="raya-schedule-chip" type="button" '
-                f'data-raya-schedule-type-filter="{html.escape(type_info["type"], quote=True)}" '
-                'aria-pressed="false">'
-                f"{html.escape(type_info['label'])} ({type_info['count']})"
-                "</button>"
-            )
-        )
-    kind_buttons = [
-        (
-            '<button class="raya-schedule-chip" type="button" '
-            'data-raya-schedule-kind-filter="all" aria-pressed="true">'
-            f"All dated ({len(schedule_payload['items'])})"
-            "</button>"
-        ),
-        (
-            '<button class="raya-schedule-chip" type="button" '
-            'data-raya-schedule-kind-filter="due" aria-pressed="false">'
-            f"Due ({schedule_payload['event_counts'].get('due', 0)})"
-            "</button>"
-        ),
-        (
-            '<button class="raya-schedule-chip" type="button" '
-            'data-raya-schedule-kind-filter="available" aria-pressed="false">'
-            f"Available ({schedule_payload['event_counts'].get('available', 0)})"
-            "</button>"
-        ),
-    ]
-
-    cards = []
-    for order, item in enumerate(schedule_payload["items"]):
-        tags_html = "".join(
-            f'<span class="raya-schedule-tag">{html.escape(tag)}</span>'
-            for tag in item["tags"]
-        )
-        meta_bits = [
-            item["event_label"],
-            item["type_label"],
-            f"From {item['page_title']}",
-            item["points"],
-            f"Weight {item['weight']}" if item["weight"] else "",
-            f"Status {item['status']}" if item["status"] else "",
-        ]
-        cards.append(
-            "\n".join(
-                [
-                    (
-                        '<article class="raya-schedule-item" '
-                        f'data-raya-schedule-item="{html.escape(item["id"], quote=True)}" '
-                        f'data-raya-schedule-type="{html.escape(item["type"], quote=True)}" '
-                        f'data-raya-schedule-kind="{html.escape(item["event_kind"], quote=True)}" '
-                        f'data-raya-schedule-page="{html.escape(item["page_id"], quote=True)}" '
-                        f'data-raya-schedule-order="{order}" '
-                        'data-raya-schedule-active="false">'
-                    ),
-                    '<header class="raya-schedule-item-header">',
-                    (
-                        '<span class="raya-schedule-date">'
-                        f"{html.escape(item['event_date'])}</span>"
-                    ),
-                    (
-                        '<span class="raya-schedule-kind">'
-                        f"{html.escape(item['event_kind_label'])}</span>"
-                    ),
-                    "</header>",
-                    f"<h3>{html.escape(item['title'] or item['preview'])}</h3>",
-                    (
-                        '<p class="raya-schedule-preview">'
-                        f"{html.escape(item['preview'])}</p>"
-                        if item["preview"] and item["preview"] != item["title"]
-                        else ""
-                    ),
-                    (
-                        '<p class="raya-schedule-meta">'
-                        f"{html.escape(' | '.join(bit for bit in meta_bits if bit))}"
-                        "</p>"
-                    ),
-                    (
-                        f'<p class="raya-schedule-tags">{tags_html}</p>'
-                        if tags_html
-                        else ""
-                    ),
-                    '<p class="raya-schedule-actions">',
-                    (
-                        '<a class="raya-schedule-open" '
-                        f'href="{html.escape(item["page_url"])}">Open page</a>'
-                    ),
-                    (
-                        '<a class="raya-schedule-graph" '
-                        f'href="{html.escape(item["graph_url"])}" '
-                        f'aria-label="View {html.escape(item["page_title"], quote=True)} in course graph">'
-                        "View in graph</a>"
-                    ),
-                    "</p>",
-                    "</article>",
-                ]
-            )
-        )
+    event_count = len(events)
+    timezone_name = str(calendar_index.get("timezone") or "UTC")
+    agenda_html = _render_calendar_agenda(events, from_path=from_path)
 
     return "\n".join(
         [
             "<!doctype html>",
             (
                 f'<html lang="{html.escape(language)}" '
-                f'data-raya-course-id="{html.escape(course_id, quote=True)}" '
+                f'data-raya-course-id="{html.escape(course_identity, quote=True)}" '
                 'data-raya-shell-mode="workspace" '
                 'data-raya-shell-prepaint="pending" '
                 'data-raya-course-map="expanded" '
@@ -7798,7 +7683,7 @@ def _render_schedule_surface(
             "<head>",
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">',
-            f"<title>Official Schedule - {html.escape(course_title)}</title>",
+            f"<title>Calendar - {html.escape(course_title)}</title>",
             f'<script src="{html.escape(comfort_prepaint_js_href)}"></script>',
             f'<script src="{html.escape(shell_prepaint_js_href)}"></script>',
             f'<link rel="stylesheet" href="{html.escape(stylesheet_href)}">',
@@ -7809,196 +7694,265 @@ def _render_schedule_surface(
                 f'<body data-raya-surface="schedule" '
                 f'data-raya-skin="{html.escape(root_skin, quote=True)}">'
             ),
-            '<a class="raya-skip-link" href="#raya-schedule-main">Skip to schedule</a>',
+            '<a class="raya-skip-link" href="#raya-calendar-main">Skip to Calendar</a>',
             _render_mobile_course_map_opener(),
             '<div class="raya-learning-shell raya-workspace-learning-shell">',
             _render_course_map(
                 course_title,
                 content_model,
-                course_id=course_id,
-                from_output_path=STATIC_SCHEDULE_PATH.as_posix(),
+                course_id=course_identity,
+                from_output_path=from_path,
                 current_page=None,
                 current_workspace="schedule",
             ),
             (
-                '<main id="raya-schedule-main" class="raya-schedule-page raya-workspace-main" '
-                'data-raya-schedule-page data-raya-discovery-page '
-                'data-raya-discovery-controls-state="expanded" '
-                'data-raya-discovery-context-state="expanded" tabindex="-1">'
+                '<main id="raya-calendar-main" '
+                'class="raya-calendar-page raya-schedule-page raya-workspace-main" '
+                'data-raya-calendar-page data-raya-schedule-page tabindex="-1">'
             ),
-            '<header class="raya-schedule-header raya-discovery-header">',
-            "<h1>Official Schedule</h1>",
+            '<header class="raya-calendar-header raya-schedule-header">',
+            "<h1>Calendar</h1>",
             (
-                "<p>Scan dated official assignments, projects, exams, and tasks. "
-                "Dates are authored course metadata from accepted official objects.</p>"
+                "<p>Read course events in chronological order, grouped by month. "
+                f"Times use {html.escape(timezone_name)}.</p>"
             ),
             "</header>",
-            _render_discovery_focus_strip(
-                current_workspace="schedule",
-                from_path=STATIC_SCHEDULE_PATH.as_posix(),
-            ),
-            '<section class="raya-discovery-workspace-shell" aria-label="Course discovery workspace">',
-            '<section class="raya-schedule-workspace" aria-label="Official schedule workspace">',
-            '<aside class="raya-schedule-control-panel" aria-label="Schedule controls panel">',
-            '<div class="raya-discovery-panel-header">',
-            "<h2>Find schedule items</h2>",
+            '<section class="raya-calendar-workspace" aria-label="Course Calendar">',
             (
-                '<p class="raya-discovery-panel-rail-summary" '
-                'data-raya-discovery-panel-rail-summary="controls" '
-                'aria-hidden="true"></p>'
+                '<p class="raya-calendar-summary" data-raya-schedule-summary-count>'
+                f"{event_count} calendar {'event' if event_count == 1 else 'events'}.</p>"
             ),
-            (
-                '<button type="button" data-raya-discovery-toggle-panel="controls" '
-                'aria-controls="raya-schedule-control-panel-body" aria-expanded="true" '
-                'aria-label="Collapse controls panel">'
-                "Collapse controls</button>"
-            ),
-            "</div>",
-            (
-                '<div id="raya-schedule-control-panel-body" class="raya-discovery-panel-body" '
-                'data-raya-discovery-panel-body="controls" aria-hidden="false">'
-            ),
-            '<section class="raya-schedule-controls" aria-label="Official schedule controls">',
-            '<fieldset class="raya-discovery-control-group">',
-            "<legend>Query</legend>",
-            '<label for="raya-schedule-search">Search</label>',
-            '<input id="raya-schedule-search" type="search" autocomplete="off">',
-            "</fieldset>",
-            '<fieldset class="raya-discovery-control-group">',
-            "<legend>Date kind</legend>",
-            '<div class="raya-schedule-filters" aria-label="Schedule event filters">',
-            "\n".join(kind_buttons),
-            "</div>",
-            "</fieldset>",
-            '<fieldset class="raya-discovery-control-group">',
-            "<legend>Object type</legend>",
-            '<div class="raya-schedule-filters" aria-label="Schedule type filters">',
-            "\n".join(type_buttons),
-            "</div>",
-            "</fieldset>",
-            '<fieldset class="raya-discovery-control-group">',
-            "<legend>Reset</legend>",
-            '<button id="raya-schedule-clear" type="button">Clear</button>',
-            "</fieldset>",
+            agenda_html,
             "</section>",
-            '<div class="raya-discovery-control-state" aria-label="Schedule workspace state">',
-            '<p id="raya-schedule-status" class="raya-schedule-status" aria-live="polite"></p>',
-            (
-                '<p class="raya-discovery-summary" '
-                f"data-raya-schedule-summary-count>{len(schedule_payload['items'])} visible schedule item(s).</p>"
-            ),
-            (
-                '<p class="raya-discovery-page-focus" '
-                'data-raya-schedule-page-focus hidden aria-live="polite"></p>'
-            ),
-            "</div>",
-            (
-                '<p class="raya-discovery-results-jump">'
-                '<a href="#raya-schedule-results-panel">Results</a></p>'
-            ),
-            "</div>",
-            "</aside>",
-            (
-                '<section id="raya-schedule-results-panel" '
-                'class="raya-schedule-results-panel" '
-                'aria-label="Official schedule results" tabindex="-1">'
-            ),
-            (
-                '<p id="raya-schedule-empty" class="raya-schedule-empty" hidden>'
-                "No matching dated official work.</p>"
-            ),
-            (
-                '<section class="raya-schedule-results" data-raya-schedule-results '
-                'aria-label="Official schedule results">'
-            ),
-            "\n".join(cards),
-            "</section>",
-            "</section>",
-            (
-                '<aside class="raya-schedule-context-panel" data-raya-schedule-context '
-                'aria-label="Schedule context panel">'
-            ),
-            '<div class="raya-discovery-panel-header">',
-            "<h2>Context</h2>",
-            (
-                '<p class="raya-discovery-panel-rail-summary" '
-                'data-raya-discovery-panel-rail-summary="context" '
-                'aria-hidden="true"></p>'
-            ),
-            (
-                '<button type="button" data-raya-discovery-toggle-panel="context" '
-                'aria-controls="raya-schedule-context-panel-body" aria-expanded="true" '
-                'aria-label="Collapse context panel">'
-                "Collapse context</button>"
-            ),
-            "</div>",
-            (
-                '<div id="raya-schedule-context-panel-body" class="raya-discovery-panel-body" '
-                'data-raya-discovery-panel-body="context" aria-hidden="false" '
-                'aria-live="polite">'
-            ),
-            "<p data-raya-schedule-context-title>Select or filter a dated official item.</p>",
-            (
-                '<p class="raya-discovery-context-meta" '
-                "data-raya-schedule-context-meta>Accepted public dated task metadata only.</p>"
-            ),
-            (
-                '<p class="raya-discovery-context-actions" '
-                "data-raya-schedule-context-actions hidden></p>"
-            ),
-            "</div>",
-            "</aside>",
-            "</section>",
-            "</section>",
-            _render_discovery_overview(
-                kind="schedule",
-                title="Official schedule workspace",
-                summary=(
-                    "Use local filters to scan authored due and available "
-                    "dates across accepted task-family objects."
-                ),
-                meta=[
-                    ("Dated objects", f"{len(schedule_payload['items'])}"),
-                    ("Dated event types", f"{dated_event_type_count}"),
-                    ("Source scope", "Authored due and available dates"),
-                    ("Reset path", "Clear or Escape"),
-                ],
-                actions=[
-                    ("Open search", "../search/index.html"),
-                    ("View graph", "../graph/index.html"),
-                    ("Open practice", "../practice/index.html"),
-                    ("Open tasks", "../tasks/index.html"),
-                ],
-            ),
-            _render_discovery_quick_guide(
-                kind="schedule",
-                cards=[
-                    ("Find", "Filter dated official work by text, date kind, and type."),
-                    (
-                        "Scan dates",
-                        "Read authored due and available dates as course metadata.",
-                    ),
-                    (
-                        "Inspect",
-                        "Select visible dated items to read public planning fields.",
-                    ),
-                    ("Open", "Return to the owning page or graph focus."),
-                ],
-            ),
-            '<script type="application/json" id="raya-schedule-data">',
-            schedule_payload_text,
+            '<script type="application/json" id="raya-calendar-data">',
+            _json_script_text(calendar_index),
             "</script>",
             "</main>",
             "</div>",
             f'<script src="{html.escape(accessibility_js_href)}" defer></script>',
             f'<script src="{html.escape(shell_js_href)}" defer></script>',
-            f'<script src="{html.escape(discovery_js_href)}" defer></script>',
-            f'<script src="{html.escape(schedule_js_href)}" defer></script>',
             "</body>",
             "</html>",
             "",
         ]
     )
+
+
+def _render_calendar_agenda(
+    events: list[dict[str, Any]], *, from_path: str
+) -> str:
+    grouped = _calendar_events_by_month(events)
+    if not grouped:
+        return "\n".join(
+            [
+                '<div class="raya-calendar-agenda" data-raya-calendar-agenda>',
+                '<p class="raya-calendar-empty" data-raya-calendar-empty>'
+                "No calendar events are currently published.</p>",
+                "</div>",
+            ]
+        )
+    return "\n".join(
+        [
+            '<div class="raya-calendar-agenda" data-raya-calendar-agenda>',
+            *(
+                _render_calendar_month_agenda(
+                    month,
+                    month_events,
+                    from_path=from_path,
+                )
+                for month, month_events in grouped
+            ),
+            "</div>",
+        ]
+    )
+
+
+def _calendar_events_by_month(
+    events: list[dict[str, Any]],
+) -> list[tuple[str, list[dict[str, Any]]]]:
+    ordered_events = sorted(
+        events,
+        key=lambda event: (
+            str(event.get("date") or ""),
+            0 if not event.get("start_time") else 1,
+            str(event.get("start_time") or ""),
+            str(event.get("id") or ""),
+        ),
+    )
+    grouped: list[tuple[str, list[dict[str, Any]]]] = []
+    for event in ordered_events:
+        date = str(event.get("date") or "")
+        month = date[:7]
+        if len(month) != 7 or month[4] != "-":
+            continue
+        if not grouped or grouped[-1][0] != month:
+            grouped.append((month, []))
+        grouped[-1][1].append(event)
+    return grouped
+
+
+def _render_calendar_month_agenda(
+    month: str,
+    events: list[dict[str, Any]],
+    *,
+    from_path: str,
+) -> str:
+    month_id = f"raya-calendar-month-{_safe_map_fragment_id(month)}"
+    event_items = "\n".join(
+        f'<li class="raya-calendar-event-item">{_render_calendar_event(event, from_path=from_path)}</li>'
+        for event in events
+    )
+    return "\n".join(
+        [
+            (
+                '<section class="raya-calendar-month" '
+                f'aria-labelledby="{html.escape(month_id, quote=True)}">'
+            ),
+            (
+                f'<h2 id="{html.escape(month_id, quote=True)}">'
+                f'<time datetime="{html.escape(month, quote=True)}">'
+                f"{html.escape(_calendar_month_label(month))}</time></h2>"
+            ),
+            '<ol class="raya-calendar-events">',
+            event_items,
+            "</ol>",
+            "</section>",
+        ]
+    )
+
+
+def _calendar_month_label(month: str) -> str:
+    month_names = (
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    )
+    try:
+        year, month_number = month.split("-", maxsplit=1)
+        return f"{month_names[int(month_number) - 1]} {year}"
+    except (IndexError, TypeError, ValueError):
+        return month
+
+
+def _render_calendar_event(event: dict[str, Any], *, from_path: str) -> str:
+    event_id = str(event.get("id") or "")
+    kind = str(event.get("kind") or "event")
+    event_type = str(event.get("type") or "")
+    date = str(event.get("date") or "")
+    title = str(event.get("title") or "Calendar event")
+    summary = str(event.get("summary") or "")
+    start_time = str(event.get("start_time") or "")
+    end_time = str(event.get("end_time") or "")
+    tags = event.get("tags")
+    tag_values = [str(tag) for tag in tags] if isinstance(tags, list) else []
+    actions = _calendar_event_actions(event, from_path=from_path)
+    kind_fragment = _safe_map_fragment_id(kind.lower())
+    type_attr = (
+        f' data-raya-calendar-type="{html.escape(event_type, quote=True)}"'
+        if event_type
+        else ""
+    )
+    time_text = (
+        f"{start_time}–{end_time}"
+        if start_time and end_time
+        else start_time or end_time
+    )
+    badges = [
+        (
+            '<span class="raya-calendar-badge raya-calendar-kind">'
+            f"{html.escape(_calendar_label(kind))}</span>"
+        )
+    ]
+    if event_type:
+        badges.append(
+            '<span class="raya-calendar-badge raya-calendar-type">'
+            f"{html.escape(_calendar_label(event_type))}</span>"
+        )
+    tag_html = ""
+    if tag_values:
+        tag_html = "\n".join(
+            [
+                '<ul class="raya-calendar-tags" aria-label="Tags">',
+                *(f"<li>{html.escape(tag)}</li>" for tag in tag_values),
+                "</ul>",
+            ]
+        )
+    return "\n".join(
+        [
+            (
+                '<article class="raya-calendar-event" '
+                f'data-raya-calendar-event="{html.escape(event_id, quote=True)}" '
+                f'data-raya-calendar-kind="{html.escape(kind, quote=True)}"'
+                f'{type_attr} data-raya-schedule-item="{html.escape(event_id, quote=True)}" '
+                f'style="--raya-calendar-kind: var(--raya-calendar-kind-{html.escape(kind_fragment, quote=True)}, var(--raya-color-accent));">'
+            ),
+            '<header class="raya-calendar-event-header">',
+            (
+                '<time class="raya-calendar-date" '
+                f'datetime="{html.escape(date, quote=True)}">{html.escape(date)}</time>'
+            ),
+            '<span class="raya-calendar-badges">' + "".join(badges) + "</span>",
+            "</header>",
+            f"<h3>{html.escape(title)}</h3>",
+            (
+                '<p class="raya-calendar-time">'
+                f"<span class=\"raya-visually-hidden\">Time: </span>{html.escape(time_text)}</p>"
+                if time_text
+                else ""
+            ),
+            f'<p class="raya-calendar-event-summary">{html.escape(summary)}</p>'
+            if summary
+            else "",
+            tag_html,
+            actions,
+            "</article>",
+        ]
+    )
+
+
+def _calendar_label(value: str) -> str:
+    return value.replace("-", " ").replace("_", " ").strip().title()
+
+
+def _calendar_event_actions(event: dict[str, Any], *, from_path: str) -> str:
+    if not event.get("page_output_path"):
+        return ""
+    return _render_relative_page_and_graph_actions(event, from_path=from_path)
+
+
+def _render_relative_page_and_graph_actions(
+    event: dict[str, Any], *, from_path: str
+) -> str:
+    page_target = str(event["page_output_path"])
+    page_href = _relative_href(from_path, page_target)
+    anchor = str(event.get("anchor") or "")
+    if anchor:
+        page_href += f"#{quote(anchor, safe='-._~')}"
+    actions = [
+        '<a class="raya-calendar-open" '
+        f'href="{html.escape(page_href, quote=True)}">Open page</a>'
+    ]
+    page_id = str(event.get("page_id") or "")
+    if page_id:
+        graph_href = _href_with_query(
+            _relative_href(from_path, STATIC_GRAPH_PATH.as_posix()),
+            {"page": page_id},
+        )
+        actions.append(
+            '<a class="raya-calendar-graph" '
+            f'href="{html.escape(graph_href, quote=True)}">View in graph</a>'
+        )
+    return '<p class="raya-calendar-actions">' + "\n".join(actions) + "</p>"
+
 
 
 def _browser_tasks_payload(
@@ -8191,61 +8145,6 @@ def _official_graph_preview_text(item: dict[str, Any]) -> str:
     )
 
 
-def _browser_schedule_payload(
-    content_model: ContentModel,
-    official_by_page: dict[str, list[dict[str, Any]]],
-) -> dict[str, Any]:
-    tasks_payload = _browser_tasks_payload(content_model, official_by_page)
-    type_counts: dict[str, int] = defaultdict(int)
-    event_counts: dict[str, int] = defaultdict(int)
-    items: list[dict[str, Any]] = []
-    for task in tasks_payload["objects"]:
-        event_kind, event_date = _task_payload_event(task)
-        if not event_date:
-            continue
-        type_counts[task["type"]] += 1
-        event_counts[event_kind] += 1
-        event_kind_label = "Due" if event_kind == "due" else "Available"
-        item = dict(task)
-        item["event_date"] = event_date
-        item["event_kind"] = event_kind
-        item["event_kind_label"] = event_kind_label
-        item["event_label"] = f"{event_kind_label} {event_date}"
-        items.append(item)
-    items.sort(
-        key=lambda item: (
-            item["event_date"],
-            _page_sequence_index(content_model, str(item["page_id"])),
-            str(item["id"]),
-        )
-    )
-    types = [
-        {
-            "count": count,
-            "label": _official_type_label(object_type),
-            "type": object_type,
-        }
-        for object_type, count in sorted(
-            type_counts.items(),
-            key=lambda pair: (_official_type_label(pair[0]), pair[0]),
-        )
-    ]
-    return {
-        "event_counts": dict(event_counts),
-        "items": items,
-        "types": types,
-        "version": 1,
-    }
-
-
-def _task_payload_event(task: dict[str, Any]) -> tuple[str, str]:
-    due = str(task.get("due") or "").strip()
-    if due:
-        return "due", due
-    available = str(task.get("available") or "").strip()
-    if available:
-        return "available", available
-    return "", ""
 
 
 def _official_task_event_date(item: dict[str, Any]) -> str:
@@ -8256,12 +8155,6 @@ def _official_task_event_date(item: dict[str, Any]) -> str:
         return due
     return _official_public_text(content_map, ("available",))
 
-
-def _page_sequence_index(content_model: ContentModel, page_id: str) -> int:
-    for index, page in enumerate(content_model.pages):
-        if page.id == page_id:
-            return index
-    return 0
 
 
 def _official_public_text(

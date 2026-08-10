@@ -6,6 +6,7 @@ import shutil
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urljoin
 from urllib.request import urlopen
 
 from raya_static import build_course
@@ -338,6 +339,41 @@ def test_examples_gallery_static_read_path_links_built_fixtures(
     assert reviewed_file == "frozen reviewed output fixture\n"
 
 
+def test_calendar_prefix_keeps_owned_actions_below_deployment_prefix(
+    tmp_path: Path,
+) -> None:
+    course = _calendar_fixture(tmp_path)
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    deploy_root = tmp_path / "deploy"
+    prefixed_site = deploy_root / "ia_o26"
+    shutil.copytree(course / "artifact" / "site", prefixed_site)
+
+    with _serve(deploy_root) as base_url:
+        calendar_url = f"{base_url}/ia_o26/_raya/schedule/"
+        calendar_html = _fetch_text(calendar_url)
+        owned_action_hrefs = re.findall(
+            r'<a class="raya-calendar-(?:open|graph)" href="([^"]+)">',
+            calendar_html,
+        )
+        assert owned_action_hrefs
+        for href in owned_action_hrefs:
+            resolved = urljoin(calendar_url, href)
+            assert resolved.startswith(f"{base_url}/ia_o26/")
+            _fetch_text(resolved)
+
+    holiday_match = re.search(
+        r'<article class="raya-calendar-event" '
+        r'data-raya-calendar-event="calendar:term:independence-day".*?</article>',
+        calendar_html,
+        re.DOTALL,
+    )
+    assert holiday_match is not None
+    assert "Open page" not in holiday_match.group(0)
+    assert "View in graph" not in holiday_match.group(0)
+
+
 def test_examples_gallery_contains_only_source_dashboard_files() -> None:
     files = [path for path in EXAMPLES_GALLERY.rglob("*") if path.is_file()]
 
@@ -407,6 +443,48 @@ def _fetch_text(url: str) -> str:
 def _fetch_bytes(url: str) -> bytes:
     with urlopen(url, timeout=10) as response:
         return response.read()
+
+
+def _calendar_fixture(tmp_path: Path) -> Path:
+    course = tmp_path / "calendar-course"
+    shutil.copytree(MINIMAL_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    config_path = course / "raya.yaml"
+    config_path.write_text(
+        config_path.read_text(encoding="utf-8").rstrip()
+        + "\ncalendar:\n  timezone: 'America/Mexico_City'\n",
+        encoding="utf-8",
+    )
+    calendar_path = course / "course" / "_official" / "calendar" / "1_term.yaml"
+    calendar_path.parent.mkdir(parents=True, exist_ok=True)
+    calendar_path.write_text(
+        "id: term\n"
+        "type: calendar\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "events:\n"
+        "  - id: independence-day\n"
+        "    kind: holiday\n"
+        "    date: '2026-09-16'\n"
+        "    title: Independence Day\n",
+        encoding="utf-8",
+    )
+    assignment_path = (
+        course / "course" / "_official" / "assignments" / "1_assignment.yaml"
+    )
+    assignment_path.parent.mkdir(parents=True, exist_ok=True)
+    assignment_path.write_text(
+        "id: unit-assignment\n"
+        "type: assignment\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "content:\n"
+        "  title: Unit assignment\n"
+        "  due: '2026-09-15'\n",
+        encoding="utf-8",
+    )
+    return course
 
 
 def _local_math_font_names_from_css(css: str) -> list[str]:

@@ -150,7 +150,7 @@ def _assert_discovery_quick_guide(
 
 def _assert_discovery_workspace_switcher(html: str, *, current: str) -> None:
     course_map_html = _element_html(html, '<nav id="raya-course-map"', "</nav>")
-    for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
+    for label in ("Search", "Graph", "Practice", "Tasks", "Calendar"):
         assert f'<span class="raya-command-label">{label}</span>' in course_map_html
     assert f'data-raya-current-workspace="{current}"' in course_map_html
     assert course_map_html.count('aria-current="page"') == 1
@@ -172,8 +172,13 @@ def _assert_discovery_focus_strip_shell(html: str, *, current: str) -> None:
     assert "data-raya-discovery-focus-title" in html
     assert "data-raya-discovery-focus-page-link href=\"#\"" in html
     assert "data-raya-discovery-focus-clear href=\"index.html\"" in html
-    for label in ("Search", "Graph", "Practice", "Tasks", "Schedule"):
-        kind = label.lower()
+    for kind, label in (
+        ("search", "Search"),
+        ("graph", "Graph"),
+        ("practice", "Practice"),
+        ("tasks", "Tasks"),
+        ("schedule", "Calendar"),
+    ):
         assert f'data-raya-discovery-focus-handoff="{kind}"' in html
         assert f">{label}</a>" in html
     assert re.search(
@@ -351,6 +356,61 @@ def test_calendar_index_only_serializes_public_fields_and_escapes_for_scripts(
     assert "_official" not in serialized
     assert "SHOULD_NOT_LEAK" not in serialized
     assert static_builder._json_script_text(index).count("</script>") == 0
+
+
+def test_calendar_keeps_schedule_route_but_uses_calendar_copy_and_map(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _set_calendar_timezone(course, "America/Mexico_City")
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[
+            _holiday_event(),
+            {
+                "id": "study-day",
+                "kind": "session",
+                "date": "2026-10-02",
+                "title": "Independent study day",
+            },
+        ],
+    )
+    _write_calendar_assignment(
+        course,
+        content_lines=["  due: '2026-09-15'"],
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact/site/_raya/schedule/index.html").read_text()
+    visible_text = _visible_text(html)
+
+    assert "<title>Calendar - " in html
+    assert ">Calendar<" in html
+    assert "Schedule" not in visible_text
+    assert html.count('data-raya-course-map-root=') == 1
+    assert 'data-raya-current-workspace="schedule"' in html
+    assert "raya-discovery-rail" not in html
+    assert "raya-command-bar" not in html
+    assert "data-raya-discovery-page" not in html
+    assert ">Context<" not in html
+    assert 'data-raya-calendar-agenda' in html
+    assert '<section class="raya-calendar-month"' in html
+    assert "September 2026" in html
+    assert "October 2026" in html
+    assert html.index("2026-09-15") < html.index("2026-09-16")
+    assert html.index("2026-09-16") < html.index("2026-10-02")
+    holiday = _element_html(
+        html,
+        '<article class="raya-calendar-event" '
+        'data-raya-calendar-event="calendar:term:independence-day"',
+        "</article>",
+    )
+    assert "Holiday" in holiday
+    assert "Open page" not in holiday
+    assert "View in graph" not in holiday
 
 
 def test_build_renders_polished_reader_breadcrumbs(tmp_path: Path) -> None:
@@ -1526,7 +1586,7 @@ def test_build_writes_local_visual_graph_surface(tmp_path: Path) -> None:
         in graph_html
     )
     assert (
-        '<a data-raya-graph-detail-schedule-link hidden>Open schedule</a>'
+        '<a data-raya-graph-detail-schedule-link hidden>Open Calendar</a>'
         in graph_html
     )
     assert (
@@ -2241,7 +2301,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "View graph" in search_html
     assert "Open practice" in search_html
     assert "Open tasks" in search_html
-    assert "Open schedule" in search_html
+    assert "Open Calendar" in search_html
     assert "data-raya-search-summary-count" in search_html
     assert "data-raya-search-context" in search_html
     assert "data-raya-search-context-title" in search_html
@@ -2284,7 +2344,7 @@ def test_build_writes_local_course_search_surface(tmp_path: Path) -> None:
     assert "Open tasks" in search_html
     assert 'class="raya-search-result-schedule"' in search_html
     assert 'href="../schedule/index.html?page=authoring-matrix"' in search_html
-    assert "Open schedule" in search_html
+    assert "Open Calendar" in search_html
     assert "raya-search-result-sections" in search_html
     assert "Section matches" in search_html
     assert 'data-raya-search-section="authoring-matrix:raya-object-authoring-theorem"' in search_html
@@ -2610,7 +2670,7 @@ def test_build_writes_static_official_practice_workspace(tmp_path: Path) -> None
     assert "Open search" in practice_html
     assert "View graph" in practice_html
     assert "Open tasks" in practice_html
-    assert "Open schedule" in practice_html
+    assert "Open Calendar" in practice_html
     assert "data-raya-practice-summary-count" in practice_html
     assert "data-raya-practice-context" in practice_html
     assert "data-raya-practice-context-title" in practice_html
@@ -2762,7 +2822,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert '<span class="raya-command-label">Search</span>' in tasks_html
     assert '<span class="raya-command-label">Graph</span>' in tasks_html
     assert '<span class="raya-command-label">Practice</span>' in tasks_html
-    assert '<span class="raya-command-label">Schedule</span>' in tasks_html
+    assert '<span class="raya-command-label">Calendar</span>' in tasks_html
     assert 'src="../render/tasks.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in tasks_html
     assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in tasks_html
@@ -2827,7 +2887,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
     assert "Open search" in tasks_html
     assert "View graph" in tasks_html
     assert "Open practice" in tasks_html
-    assert "Open schedule" in tasks_html
+    assert "Open Calendar" in tasks_html
     assert "data-raya-tasks-context-actions" in tasks_html
     assert 'class="raya-discovery-context-actions"' in tasks_html
     assert 'data-raya-task-object="private-task"' not in tasks_html
@@ -2907,7 +2967,7 @@ def test_build_writes_static_official_tasks_workspace(tmp_path: Path) -> None:
         assert private_token not in tasks_html
 
 
-def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
+def test_build_writes_static_calendar_agenda_at_schedule_route(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     _add_official_task_objects(course)
 
@@ -2916,128 +2976,59 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
     assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
     artifact = course / "artifact"
     site = artifact / "site"
-    schedule_page = site / "_raya" / "schedule" / "index.html"
-    schedule_js = site / "_raya" / "render" / "schedule.js"
+    calendar_page = site / "_raya" / "schedule" / "index.html"
 
-    assert schedule_page.exists()
-    assert schedule_js.exists()
+    assert calendar_page.exists()
 
-    schedule_html = schedule_page.read_text(encoding="utf-8")
-    schedule_script = schedule_js.read_text(encoding="utf-8")
+    calendar_html = calendar_page.read_text(encoding="utf-8")
     payload_match = re.search(
-        r'<script type="application/json" id="raya-schedule-data">\n(.*?)\n</script>',
-        schedule_html,
+        r'<script type="application/json" id="raya-calendar-data">\n(.*?)\n</script>',
+        calendar_html,
         re.DOTALL,
     )
 
-    assert 'data-raya-surface="schedule"' in schedule_html
-    assert 'id="raya-course-map"' in schedule_html
-    assert "Official schedule workspace" in schedule_html
-    assert 'href="../search/index.html"' in schedule_html
-    assert 'href="../graph/index.html"' in schedule_html
-    assert 'href="../practice/index.html"' in schedule_html
-    assert 'href="../tasks/index.html"' in schedule_html
-    assert '<span class="raya-command-label">Search</span>' in schedule_html
-    assert '<span class="raya-command-label">Graph</span>' in schedule_html
-    assert '<span class="raya-command-label">Practice</span>' in schedule_html
-    assert '<span class="raya-command-label">Tasks</span>' in schedule_html
-    assert '<span class="raya-command-label">Schedule</span>' in schedule_html
-    assert 'src="../render/schedule.js"' in schedule_html
-    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in schedule_html
-    assert 'src="../render/accessibility/open-dyslexic-toggle.js"' not in schedule_html
-    assert 'href="../render/rich.css"' in schedule_html
-    assert 'href="../render/skin.css"' in schedule_html
-    assert 'src="../render/shell.js" defer' in schedule_html
-    assert "https://" not in schedule_html
-    assert "http://" not in schedule_html
-    assert "fetch(" not in schedule_script
-    assert "XMLHttpRequest" not in schedule_script
-    assert "localStorage" not in schedule_script
-    assert "sessionStorage" not in schedule_script
-    assert "URLSearchParams" in schedule_script
-    assert "matchesPage" in schedule_script
-    assert "function levenshtein" in schedule_script
-    assert "function fuzzyMatch" in schedule_script
-    assert 'data-raya-discovery-overview="schedule"' in schedule_html
-    assert "raya-discovery-overview-meta" in schedule_html
-    _assert_discovery_workspace_switcher(schedule_html, current="schedule")
-    _assert_discovery_focus_strip_shell(schedule_html, current="schedule")
-    _assert_discovery_results_jump(
-        schedule_html,
-        workspace_class="raya-schedule-results-panel",
-        control_body_id="raya-schedule-control-panel-body",
-        results_id="raya-schedule-results-panel",
-    )
-    _assert_discovery_quick_guide(
-        schedule_html,
-        kind="schedule",
-        labels=("Find", "Scan dates", "Inspect", "Open"),
-        snippets=(
-            "Filter dated official work by text, date kind, and type.",
-            "Read authored due and available dates as course metadata.",
-            "Select visible dated items to read public planning fields.",
-            "Return to the owning page or graph focus.",
-        ),
-    )
-    _assert_discovery_panel_shell(schedule_html, workspace="Schedule")
-    _assert_control_group(schedule_html, "Query")
-    _assert_control_group(schedule_html, "Date kind")
-    _assert_control_group(schedule_html, "Object type")
-    _assert_control_group(schedule_html, "Reset")
-    _assert_control_state_contains(
-        schedule_html,
-        label="Schedule workspace state",
-        tokens=[
-            'id="raya-schedule-status"',
-            "data-raya-schedule-summary-count",
-            "data-raya-schedule-page-focus",
-        ],
-    )
-    assert 'id="raya-schedule-search"' in schedule_html
-    assert 'id="raya-schedule-clear"' in schedule_html
-    assert 'id="raya-schedule-status"' in schedule_html
-    assert 'aria-label="Schedule event filters"' in schedule_html
-    assert 'aria-label="Schedule type filters"' in schedule_html
-    assert 'data-raya-schedule-kind-filter="all"' in schedule_html
-    assert 'data-raya-schedule-kind-filter="due"' in schedule_html
-    assert 'data-raya-schedule-type-filter="all"' in schedule_html
-    assert "Dated objects" in schedule_html
-    assert "Dated event types" in schedule_html
-    assert "Reset path" in schedule_html
-    assert "Clear or Escape" in schedule_html
-    assert "Open search" in schedule_html
-    assert "View graph" in schedule_html
-    assert "Open practice" in schedule_html
-    assert "Open tasks" in schedule_html
-    assert "data-raya-schedule-context-actions" in schedule_html
-    assert 'class="raya-discovery-context-actions"' in schedule_html
-    assert 'data-raya-schedule-item="unit-assignment"' in schedule_html
-    assert 'data-raya-schedule-page="first-topic"' in schedule_html
-    assert 'data-raya-schedule-item="unit-project"' in schedule_html
-    assert 'data-raya-schedule-item="unit-exam"' in schedule_html
-    assert 'data-raya-schedule-item="unit-task"' not in schedule_html
-    assert 'data-raya-schedule-item="private-task"' not in schedule_html
-    assert "2026-09-15" in schedule_html
-    assert "2026-10-01" in schedule_html
-    assert "2026-10-15" in schedule_html
+    assert '<title>Calendar - Minimal Course Fixture</title>' in calendar_html
+    assert 'data-raya-surface="schedule"' in calendar_html
+    assert calendar_html.count('id="raya-course-map"') == 1
+    assert 'data-raya-current-workspace="schedule"' in calendar_html
+    assert '<span class="raya-command-label">Calendar</span>' in calendar_html
+    assert 'data-raya-calendar-agenda' in calendar_html
+    assert 'data-raya-calendar-event="official:unit-assignment:due"' in calendar_html
+    assert 'data-raya-calendar-event="official:unit-project:due"' in calendar_html
+    assert 'data-raya-calendar-event="official:unit-exam:available"' in calendar_html
+    assert 'data-raya-calendar-event="official:unit-task' not in calendar_html
+    assert 'data-raya-calendar-event="official:private-task:due"' in calendar_html
+    assert "2026-09-15" in calendar_html
+    assert "2026-10-01" in calendar_html
+    assert "2026-10-15" in calendar_html
+    assert calendar_html.index("2026-09-15") < calendar_html.index("2026-10-01")
+    assert calendar_html.index("2026-10-01") < calendar_html.index("2026-10-15")
+    assert 'src="../render/schedule.js"' not in calendar_html
+    assert 'src="../render/discovery.js"' not in calendar_html
+    assert 'data-raya-discovery-page' not in calendar_html
+    assert 'raya-command-bar' not in calendar_html
+    assert 'src="../render/accessibility/open-dyslexic-toggle-volatile.js"' in calendar_html
+    assert 'href="../render/rich.css"' in calendar_html
+    assert 'href="../render/skin.css"' in calendar_html
+    assert 'src="../render/shell.js" defer' in calendar_html
+    assert "https://" not in calendar_html
+    assert "http://" not in calendar_html
     topic_html = (site / "unit" / "topic" / "index.html").read_text(encoding="utf-8")
-    assert 'aria-label="Open official tasks, 4 tasks"' in topic_html
-    assert 'aria-label="Open official schedule, 3 dated"' in topic_html
-    assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in schedule_html
-    assert 'href="../graph/index.html?page=first-topic"' in schedule_html
+    assert 'aria-label="Open official tasks, 5 tasks"' in topic_html
+    assert 'aria-label="Open course calendar, 4 dated"' in topic_html
+    assert 'href="../../unit/topic/index.html#raya-official-unit-assignment"' in calendar_html
+    assert 'href="../graph/index.html?page=first-topic"' in calendar_html
 
     assert payload_match is not None
-    schedule_payload = json.loads(payload_match.group(1))
-    assert schedule_payload["version"] == 1
-    by_id = {item["id"]: item for item in schedule_payload["items"]}
-    assert set(by_id) == {"unit-assignment", "unit-project", "unit-exam"}
-    assert by_id["unit-assignment"]["event_kind"] == "due"
-    assert by_id["unit-assignment"]["event_date"] == "2026-09-15"
-    assert by_id["unit-project"]["event_kind"] == "due"
-    assert by_id["unit-project"]["event_date"] == "2026-10-01"
-    assert by_id["unit-exam"]["event_kind"] == "available"
-    assert by_id["unit-exam"]["event_date"] == "2026-10-15"
-    serialized_payload = json.dumps(schedule_payload)
+    calendar_payload = json.loads(payload_match.group(1))
+    assert calendar_payload["version"] == 1
+    assert {item["id"] for item in calendar_payload["events"]} == {
+        "official:unit-assignment:due",
+        "official:unit-project:due",
+        "official:unit-exam:available",
+        "official:private-task:due",
+    }
+    serialized_payload = json.dumps(calendar_payload)
     for private_token in (
         "_official",
         "_reviewed",
@@ -3061,8 +3052,7 @@ def test_build_writes_static_schedule_workspace(tmp_path: Path) -> None:
         "Public nested prompt should not be flattened",
     ):
         assert private_token not in serialized_payload
-        assert private_token not in schedule_html
-    assert "updateContextActions" in schedule_script
+        assert private_token not in calendar_html
 
 
 def test_render_fixture_search_graph_course_map_visible_text_avoids_learner_state_language(
@@ -5325,7 +5315,7 @@ def test_reader_command_shell_uses_static_learning_shell(tmp_path: Path) -> None
         "Graph",
         "Practice",
         "Tasks",
-        "Schedule",
+        "Calendar",
         "Context",
     ]
     footer_html = _tag_html(html, "footer", "raya-course-map-footer")
