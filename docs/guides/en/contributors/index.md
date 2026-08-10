@@ -125,6 +125,10 @@ official task-family objects. Verify agenda and month views, local filters,
 owning page anchors, graph focus links, no private paths, no runtime fetch, no
 network requests, no browser storage, and no grading, submission, progress,
 mastery, recommendation, reminder, synchronization, or learner-state language.
+Course teams author sessions, holidays, cancellations, and milestones explicitly
+under `course/_official/calendar/`; they author official due/available fields once
+on the task-family object, and those dates must not be manually duplicated in
+Calendar documents.
 Its visible name is Calendar; `/_raya/schedule/` is a compatibility URL only.
 
 Review shell controls as accessibility surfaces. The current reader uses an expanded course rail of 256px through 1311px and 288px from 1312px, with a fixed header, one central native vertical scroll

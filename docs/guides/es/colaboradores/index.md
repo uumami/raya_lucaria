@@ -136,6 +136,11 @@ progreso, dominio, recomendacion, recordatorios, sincronizacion o estado del
 estudiante. El nombre visible es Calendar; `/_raya/schedule/` es solo una URL
 de compatibilidad.
 
+Los equipos de curso autoran explicitamente sesiones, feriados, cancelaciones e
+hitos bajo `course/_official/calendar/`; autoran los campos oficiales due/available una
+sola vez en el objeto de familia task, y nunca deben duplicarse manualmente en
+documentos Calendar.
+
 Revisa los controles de la shell como superficies de accesibilidad. El lector
 actual usa un riel expandido de 256px hasta 1311px y 288px a partir de 1312px, con header fijo, un solo propietario
 central de scroll vertical nativo y footer fijo. Sus acciones en dos columnas

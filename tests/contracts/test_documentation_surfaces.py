@@ -530,7 +530,23 @@ def test_calendar_contract_is_documented_across_truth_surfaces() -> None:
         assert "Calendar" in guide, role
         assert "derived" in guide, role
 
+    contributors_en = " ".join(
+        (GUIDES / "en" / "contributors" / "index.md")
+        .read_text(encoding="utf-8")
+        .split()
+    )
+    assert "author official due/available fields once" in contributors_en
+    assert "must not be manually duplicated in Calendar documents" in contributors_en
+
     for role in ("colaboradores", "profesores", "estudiantes", "agentes"):
         guide = (GUIDES / "es" / role / "index.md").read_text(encoding="utf-8")
         assert "Calendar" in guide, role
         assert "derivad" in guide, role
+
+    colaboradores_es = " ".join(
+        (GUIDES / "es" / "colaboradores" / "index.md")
+        .read_text(encoding="utf-8")
+        .split()
+    )
+    assert "autoran los campos oficiales due/available una sola vez" in colaboradores_es
+    assert "nunca deben duplicarse manualmente en documentos Calendar" in colaboradores_es
