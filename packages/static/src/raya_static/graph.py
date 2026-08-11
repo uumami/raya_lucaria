@@ -4096,11 +4096,12 @@ _GRAPH_JAVASCRIPT = r"""
     });
   });
   canvas.addEventListener("mouseleave", () => {
+    const selectionChanged = Boolean(selectedId && (!detailPanel || detailPanel.hidden));
     if (!detailPanel || detailPanel.hidden) {
       selectedId = "";
     }
     clearGraphInspection(inspectedId);
-    render();
+    if (selectionChanged) render();
   });
 
   root.setAttribute("data-raya-graph-neighborhood-focus", "false");
