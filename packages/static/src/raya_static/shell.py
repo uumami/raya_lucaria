@@ -107,10 +107,46 @@ _SHELL_JAVASCRIPT = r"""
   let assetInspector = null;
   let assetInspectorOpener = null;
   let learningRailDrawerOpener = null;
-  let courseMapTransitionTimer = 0;
-  let learningRailTransitionTimer = 0;
+  let cancelCourseMapTransitionWait = null;
+  let cancelLearningRailTransitionWait = null;
   const explicitlyCollapsedCurrentMapNodes = new WeakSet();
   const SHELL_TRANSITION_MS = 240;
+
+  function waitForShellTransition(target, finish) {
+    let active = true;
+    let fallbackFrame = 0;
+    let fallbackTimer = 0;
+
+    const cancel = () => {
+      if (!active) return;
+      active = false;
+      target.removeEventListener("transitionend", handleTransitionEnd);
+      shell.removeEventListener("transitionend", handleTransitionEnd);
+      window.cancelAnimationFrame(fallbackFrame);
+      window.clearTimeout(fallbackTimer);
+    };
+    const complete = () => {
+      if (!active) return;
+      cancel();
+      finish();
+    };
+    const handleTransitionEnd = (event) => {
+      const widthFinished = event.target === target && event.propertyName === "width";
+      const gridFinished =
+        event.target === shell && event.propertyName === "grid-template-columns";
+      if (widthFinished || gridFinished) {
+        complete();
+      }
+    };
+
+    target.addEventListener("transitionend", handleTransitionEnd);
+    shell.addEventListener("transitionend", handleTransitionEnd);
+    fallbackFrame = window.requestAnimationFrame(() => {
+      fallbackFrame = 0;
+      fallbackTimer = window.setTimeout(complete, SHELL_TRANSITION_MS);
+    });
+    return cancel;
+  }
 
   function applyRailBodyInert(body, collapsed) {
     const hide = isStructuralRailShell() && collapsed;
@@ -737,17 +773,25 @@ _SHELL_JAVASCRIPT = r"""
       clearCourseMapFilter();
     }
     if (desktopTransition) {
-      window.clearTimeout(courseMapTransitionTimer);
-      map.dataset.rayaCourseMapTransition = nextExpanded ? "expanding" : "collapsing";
+      if (cancelCourseMapTransitionWait) {
+        cancelCourseMapTransitionWait();
+      }
+      const transitionState = nextExpanded ? "expanding" : "collapsing";
+      map.dataset.rayaCourseMapTransition = transitionState;
       if (desktopExpanding) {
         updateMapLinkTabOrder(false);
       }
-      courseMapTransitionTimer = window.setTimeout(() => {
+      cancelCourseMapTransitionWait = waitForShellTransition(map, () => {
+        cancelCourseMapTransitionWait = null;
+        if (
+          root.dataset.rayaCourseMap !== nextState
+          || map.dataset.rayaCourseMapTransition !== transitionState
+        ) {
+          return;
+        }
         const shouldTransferFocus =
           desktopExpanding
           && focusAfterExpansion
-          && root.dataset.rayaCourseMap === "expanded"
-          && map.dataset.rayaCourseMapTransition === "expanding"
           && (
             document.activeElement === mapExpandButton
             || document.activeElement === document.body
@@ -759,9 +803,12 @@ _SHELL_JAVASCRIPT = r"""
         if (shouldTransferFocus) {
           mapCollapseButton.focus();
         }
-      }, SHELL_TRANSITION_MS);
+      });
     } else {
-      window.clearTimeout(courseMapTransitionTimer);
+      if (cancelCourseMapTransitionWait) {
+        cancelCourseMapTransitionWait();
+        cancelCourseMapTransitionWait = null;
+      }
       delete map.dataset.rayaCourseMapTransition;
     }
     syncCourseMapToggleButtons(nextExpanded);
@@ -1498,24 +1545,33 @@ _SHELL_JAVASCRIPT = r"""
       nextExpanded && options.focusAfterExpansion
     );
     if (desktopTransition) {
-      window.clearTimeout(learningRailTransitionTimer);
-      learningRail.dataset.rayaLearningRailTransition = nextExpanded
-        ? "expanding"
-        : "collapsing";
-      learningRailTransitionTimer = window.setTimeout(() => {
+      if (cancelLearningRailTransitionWait) {
+        cancelLearningRailTransitionWait();
+      }
+      const transitionState = nextExpanded ? "expanding" : "collapsing";
+      learningRail.dataset.rayaLearningRailTransition = transitionState;
+      cancelLearningRailTransitionWait = waitForShellTransition(learningRail, () => {
+        cancelLearningRailTransitionWait = null;
+        if (
+          root.dataset.rayaLearningRail !== nextState
+          || learningRail.dataset.rayaLearningRailTransition !== transitionState
+        ) {
+          return;
+        }
         const shouldTransferFocus =
           desktopExpanding
           && focusAfterExpansion
-          && root.dataset.rayaLearningRail === "expanded"
-          && learningRail.dataset.rayaLearningRailTransition === "expanding"
           && document.activeElement === learningRailExpand;
         delete learningRail.dataset.rayaLearningRailTransition;
         if (shouldTransferFocus && learningRailCollapse) {
           learningRailCollapse.focus();
         }
-      }, SHELL_TRANSITION_MS);
+      });
     } else {
-      window.clearTimeout(learningRailTransitionTimer);
+      if (cancelLearningRailTransitionWait) {
+        cancelLearningRailTransitionWait();
+        cancelLearningRailTransitionWait = null;
+      }
       delete learningRail.dataset.rayaLearningRailTransition;
     }
     syncLearningRailToggleButtons(nextExpanded);

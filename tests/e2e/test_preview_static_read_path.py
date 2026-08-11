@@ -18538,6 +18538,85 @@ def test_render_fixture_desktop_learning_rail_expansion_keeps_body_accessible_du
         handle.close()
 
 
+def test_render_fixture_learning_rail_transition_survives_delayed_first_paint(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "render-fixture"
+    shutil.copytree(RENDER_FIXTURE, course, ignore=shutil.ignore_patterns("artifact"))
+    browser_executable = _browser_executable()
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        assert handle.base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(browser_executable),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 950})
+                try:
+                    page.goto(
+                        f"{handle.base_url}/reader-ux/index.html",
+                        wait_until="networkidle",
+                    )
+                    page.click("[data-raya-learning-rail-collapse]")
+                    page.wait_for_function(
+                        """() => document.documentElement.dataset.rayaLearningRail
+                            === 'collapsed'
+                          && !document.querySelector('#raya-learning-rail')
+                            ?.dataset.rayaLearningRailTransition"""
+                    )
+
+                    delayed_first_paint = page.evaluate(
+                        """async () => {
+                          const rail = document.querySelector('#raya-learning-rail');
+                          document.querySelector(
+                            '[data-raya-learning-rail-expand]'
+                          ).click();
+                          const blockedUntil = performance.now() + 320;
+                          while (performance.now() < blockedUntil) {
+                            // Keep the main thread busy past the old timer-only
+                            // cleanup so CSS cannot begin its first frame.
+                          }
+                          await new Promise((resolve) => requestAnimationFrame(resolve));
+                          return {
+                            rootState: document.documentElement.dataset.rayaLearningRail,
+                            transition: rail?.dataset.rayaLearningRailTransition,
+                            width: rail?.getBoundingClientRect().width,
+                            bodyVisibility: getComputedStyle(
+                              document.querySelector('#raya-learning-rail-body')
+                            ).visibility,
+                          };
+                        }"""
+                    )
+                    assert delayed_first_paint["rootState"] == "expanded"
+                    assert delayed_first_paint["width"] < 220
+                    assert delayed_first_paint["transition"] == "expanding"
+                    assert delayed_first_paint["bodyVisibility"] == "hidden"
+
+                    page.wait_for_function(
+                        """() => !document.querySelector('#raya-learning-rail')
+                          ?.dataset.rayaLearningRailTransition"""
+                    )
+                    assert page.locator("#raya-learning-rail").evaluate(
+                        "(rail) => rail.getBoundingClientRect().width >= 220"
+                    )
+                finally:
+                    page.close()
+            finally:
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_render_fixture_learning_rail_content_starts_in_first_viewport(
     tmp_path: Path,
 ) -> None:
