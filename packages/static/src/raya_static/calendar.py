@@ -151,7 +151,9 @@ _CALENDAR_JAVASCRIPT = r"""
     : eventMonths.find((month) => month > todayMonth)
       || eventMonths[eventMonths.length - 1]
       || todayMonth;
-  let activeView = "agenda";
+  let activeView = window.matchMedia("(max-width: 700px)").matches
+    ? "agenda"
+    : "month";
   let activeKind = "all";
   let activeType = "all";
   let activePage = "";
@@ -319,6 +321,12 @@ _CALENDAR_JAVASCRIPT = r"""
       article.setAttribute("data-raya-calendar-detail-event", String(event.id || ""));
       if (selectedId && event.id === selectedId) {
         article.setAttribute("data-raya-calendar-detail-selected", "true");
+        appendTextElement(
+          article,
+          "p",
+          "raya-calendar-detail-selected-label",
+          "Selected event"
+        );
       }
       appendTextElement(
         article,
@@ -367,7 +375,10 @@ _CALENDAR_JAVASCRIPT = r"""
     opener.setAttribute("data-raya-calendar-selected-id", selectedId || "");
     renderCalendarDialog(dialogEvents, opener);
     detail.dataset.rayaCalendarOpener = calendarOpenerId(opener);
-    if (!detail.open) detail.showModal();
+    if (!detail.open) {
+      detail.showModal();
+      detail.querySelector("[data-raya-calendar-detail-close]")?.focus();
+    }
   }
 
   function appendGridEvent(cell, event, date) {
@@ -398,7 +409,8 @@ _CALENDAR_JAVASCRIPT = r"""
     button.textContent = `+${hiddenCount} more`;
     button.setAttribute(
       "aria-label",
-      `Show ${hiddenCount} more events for ${civilDateLabel(date)}`
+      `Show ${hiddenCount} more ${hiddenCount === 1 ? "event" : "events"} for `
+        + civilDateLabel(date)
     );
     button.addEventListener("click", () => openCalendarDetail(date, button, ""));
     cell.appendChild(button);
@@ -559,7 +571,22 @@ _CALENDAR_JAVASCRIPT = r"""
     render();
   });
   clear?.addEventListener("click", () => clearCalendar());
+  detail.addEventListener("close", () => {
+    const openerId = detail.dataset.rayaCalendarOpener || "";
+    delete detail.dataset.rayaCalendarOpener;
+    const opener = openerId ? document.getElementById(openerId) : null;
+    if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+  });
+  detail.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    detail.close();
+  });
   root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && detail.open) {
+      event.preventDefault();
+      detail.close();
+      return;
+    }
     const hasCalendarConstraint = activeKind !== "all"
       || activeType !== "all"
       || Boolean(activePage);
@@ -570,6 +597,8 @@ _CALENDAR_JAVASCRIPT = r"""
     clearCalendar({ focus: true });
   });
 
+  status?.classList.add("raya-visually-hidden");
+  pageFocus?.removeAttribute("aria-live");
   controls.hidden = false;
   root.setAttribute("data-raya-calendar-enhanced", "true");
   render();
