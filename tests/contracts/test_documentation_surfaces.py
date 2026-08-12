@@ -526,6 +526,8 @@ def test_calendar_contract_is_documented_across_truth_surfaces() -> None:
     assert "Calendar" in renderer_contract
     assert "compatibility URL" in renderer_contract
     assert "no network" in renderer_contract
+    assert "accessible day-detail dialog" in renderer_contract
+    assert "Agenda is the enhanced default on narrow screens" in renderer_contract
 
     for role in ("contributors", "professors", "students", "agents"):
         guide = (GUIDES / "en" / role / "index.md").read_text(encoding="utf-8")
