@@ -6011,6 +6011,28 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   overflow-x: auto;
   padding: 0.85rem 1rem;
 }
+.raya-main-article table {
+  border-collapse: collapse;
+  display: block;
+  margin: 1.25rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+  width: fit-content;
+}
+.raya-main-article table th,
+.raya-main-article table td {
+  border: 1px solid var(--raya-color-border);
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  vertical-align: top;
+}
+.raya-main-article table th {
+  background: color-mix(in srgb, var(--raya-color-accent) 14%, var(--raya-color-surface));
+  font-weight: 700;
+}
+.raya-main-article table tbody tr:nth-child(even) > * {
+  background: color-mix(in srgb, var(--raya-color-text) 5%, var(--raya-color-page));
+}
 .raya-callout {
   border-left: 0.25rem solid #6e7781;
   margin: 1rem 0;
