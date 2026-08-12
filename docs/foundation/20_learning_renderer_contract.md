@@ -83,12 +83,16 @@ personal-state surface. It must not parse prose for dates, fetch data at
 runtime, make network requests, load external resources, persist state, or
 expose private paths or hidden answer/support content. It performs no network
 requests. Agenda is the enhanced default on narrow screens. In the Month view,
-each day with visible events is an ordinary keyboard-reachable control that
-opens an accessible day-detail dialog. The dialog places focus on its close
-control when opened, supports Escape dismissal, and restores focus to the
-invoking day control when closed. It presents only the events visible under the
-current local filters and retains the same local owning-page and graph-focus
-links; it neither fetches nor persists detail state.
+each visible event is an ordinary keyboard-reachable event-chip button that
+opens an accessible day-detail dialog. Each day cell renders at most two
+event-chip buttons; additional visible events are represented by one `+N`
+overflow button that opens the same dialog. At narrow widths, month cells
+suppress event-chip titles while retaining their kind labels and accessible
+names. The dialog places focus on its close control when opened, supports
+Escape dismissal, and restores focus to the invoking event-chip or overflow
+button when closed. It presents only the events visible under the current local
+filters and retains the same local owning-page and graph-focus links; it neither
+fetches nor persists detail state.
 
 The right learning rail owns compact page context. It is expanded by default when the approved `894px+` reader geometry is active and may collapse through an explicit rail control or the left course rail Context command into its explicit Context expansion control without reserving a shell grid column. Collapsed rail content must be hidden from keyboard and screen-reader navigation. When the layout is phone-sized and the collapse controls are not visible, the rail must remain visually expanded and screen-reader reachable; responsive changes from the expanded geometry back to a narrower layout must restore that accessible expanded state. When generated heading anchors exist, current-section context and page contents appear before general page metadata so the rail works as a dedicated section-orientation surface first. It may also show reading flow, normalized `summary` and `status`, optional authored estimated time or computed estimated read time, tags when accepted data exists, stable-ID prerequisites when they resolve to current pages, static Connections summaries for explicit incoming and outgoing content links from generated graph data, native previews for linked pages using public generated metadata and explicit relationship kind and direction, graph-focus links for those explicit relationships, and previous/next links from generated navigation. Current-section context, estimated read time, and right-rail Context behavior are structural reading orientation only; they must not become reading percentage, completion, mastery, recommendation, or personal progress state.
 

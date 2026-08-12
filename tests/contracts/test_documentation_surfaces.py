@@ -580,6 +580,7 @@ def test_calendar_renderer_contract_matches_persistent_map_without_inspection() 
     calendar_details = renderer_contract.split(
         "Calendar is a generated static agenda", maxsplit=1
     )[1].split("The right learning rail owns", maxsplit=1)[0]
+    calendar_details = " ".join(calendar_details.split())
 
     assert "persistent Course map" in calendar_row
     assert "hover" not in calendar_row
@@ -588,6 +589,12 @@ def test_calendar_renderer_contract_matches_persistent_map_without_inspection() 
     assert "show transient context on keyboard movement, hover, or focus" not in (
         calendar_details
     )
+    assert "each visible event is an ordinary keyboard-reachable event-chip button" in (
+        calendar_details
+    )
+    assert "at most two event-chip buttons" in calendar_details
+    assert "one `+N` overflow button" in calendar_details
+    assert "month cells suppress event-chip titles" in calendar_details
 
 
 def test_contributor_calendar_guidance_is_explicitly_non_personal_in_en_and_es() -> None:
