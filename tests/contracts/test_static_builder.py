@@ -435,6 +435,45 @@ def test_calendar_keeps_schedule_route_but_uses_calendar_copy_and_map(
     assert "View in graph" not in holiday
 
 
+def test_calendar_compact_calendar_dialog_uses_buttons_and_one_native_dialog(
+    tmp_path: Path,
+) -> None:
+    course = _copy_minimal(tmp_path)
+    _write_calendar_document(
+        course,
+        "1_term.yaml",
+        events=[
+            _holiday_event(),
+            {
+                "id": "study-day",
+                "kind": "session",
+                "date": "2026-09-16",
+                "title": "Independent study day",
+            },
+            {
+                "id": "review-day",
+                "kind": "milestone",
+                "date": "2026-09-16",
+                "title": "Review day",
+            },
+        ],
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    calendar_html = (
+        course / "artifact/site/_raya/schedule/index.html"
+    ).read_text(encoding="utf-8")
+    calendar_script = (
+        course / "artifact/site/_raya/render/calendar.js"
+    ).read_text(encoding="utf-8")
+    assert 'data-raya-calendar-event-open' in calendar_script
+    assert 'data-raya-calendar-overflow' in calendar_script
+    assert '<dialog id="raya-calendar-detail"' in calendar_html
+    assert calendar_html.count('<dialog id="raya-calendar-detail"') == 1
+
+
 def test_calendar_no_js_agenda_preserves_source_order_for_equal_times(
     tmp_path: Path,
 ) -> None:

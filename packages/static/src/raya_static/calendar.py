@@ -39,8 +39,17 @@ _CALENDAR_JAVASCRIPT = r"""
   const previous = document.querySelector("[data-raya-calendar-prev]");
   const next = document.querySelector("[data-raya-calendar-next]");
   const todayButton = document.querySelector("[data-raya-calendar-today]");
+  const detail = document.querySelector("[data-raya-calendar-detail]");
+  const detailTitle = document.querySelector("[data-raya-calendar-detail-title]");
+  const detailEvents = document.querySelector("[data-raya-calendar-detail-events]");
 
-  if (!root || !dataElement || !controls || !agenda || !grid) return;
+  if (
+    !root || !dataElement || !controls || !agenda || !grid
+    || !detail || !detailTitle || !detailEvents
+  ) return;
+
+  const MAX_WIDE_DAY_EVENTS = 2;
+  let calendarOpenerSequence = 0;
 
   let payload;
   try {
@@ -142,7 +151,9 @@ _CALENDAR_JAVASCRIPT = r"""
     : eventMonths.find((month) => month > todayMonth)
       || eventMonths[eventMonths.length - 1]
       || todayMonth;
-  let activeView = "agenda";
+  let activeView = window.matchMedia("(max-width: 700px)").matches
+    ? "agenda"
+    : "month";
   let activeKind = "all";
   let activeType = "all";
   let activePage = "";
@@ -179,6 +190,23 @@ _CALENDAR_JAVASCRIPT = r"""
       "July", "August", "September", "October", "November", "December",
     ];
     return `${names[parsed.month - 1]} ${parsed.year}`;
+  }
+
+  function civilDateLabel(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+    if (!match) return String(value || "");
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const weekdays = [
+      "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+    ];
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    return `${weekdays[mondayFirstWeekday(year, month, day)]}, `
+      + `${months[month - 1]} ${day}, ${year}`;
   }
 
   function countText(count) {
@@ -231,13 +259,161 @@ _CALENDAR_JAVASCRIPT = r"""
     });
   }
 
-  function appendGridEvent(cell, event) {
-    const agendaItem = agendaItems.get(event.id);
-    if (!agendaItem) return;
-    const clone = agendaItem.eventElement.cloneNode(true);
-    clone.classList.add("raya-calendar-grid-event");
-    clone.querySelector(".raya-calendar-date")?.remove();
-    cell.appendChild(clone);
+  function calendarOpenerId(opener) {
+    if (!opener.id) {
+      calendarOpenerSequence += 1;
+      opener.id = `raya-calendar-opener-${calendarOpenerSequence}`;
+    }
+    return opener.id;
+  }
+
+  function eventTimeText(event) {
+    const start = typeof event.start_time === "string" ? event.start_time : "";
+    const end = typeof event.end_time === "string" ? event.end_time : "";
+    return start && end ? `${start}–${end}` : start || end;
+  }
+
+  function appendTextElement(parent, tagName, className, text) {
+    if (!text) return null;
+    const element = document.createElement(tagName);
+    if (className) element.className = className;
+    element.textContent = text;
+    parent.appendChild(element);
+    return element;
+  }
+
+  function appendDialogActions(article, event) {
+    const pagePath = typeof event.page_output_path === "string"
+      ? event.page_output_path
+      : "";
+    if (!pagePath) return;
+    const actions = document.createElement("p");
+    actions.className = "raya-calendar-actions";
+    const pageLink = document.createElement("a");
+    pageLink.className = "raya-calendar-open";
+    const siteRoot = detail.getAttribute("data-raya-calendar-site-root") || "../../";
+    const anchor = typeof event.anchor === "string" && event.anchor
+      ? `#${encodeURIComponent(event.anchor)}`
+      : "";
+    pageLink.href = `${siteRoot}${pagePath}${anchor}`;
+    pageLink.textContent = "Open page";
+    actions.appendChild(pageLink);
+    if (typeof event.page_id === "string" && event.page_id) {
+      const graphLink = document.createElement("a");
+      graphLink.className = "raya-calendar-graph";
+      const graphHref = detail.getAttribute("data-raya-calendar-graph-href")
+        || "../graph/index.html";
+      graphLink.href = `${graphHref}?page=${encodeURIComponent(event.page_id)}`;
+      graphLink.textContent = "View in graph";
+      actions.appendChild(graphLink);
+    }
+    article.appendChild(actions);
+  }
+
+  function renderCalendarDialog(dialogEvents, opener) {
+    detailEvents.replaceChildren();
+    const date = dialogEvents.length > 0 ? String(dialogEvents[0].date || "") : "";
+    detailTitle.textContent = date ? `Events for ${civilDateLabel(date)}` : "Calendar details";
+    const selectedId = opener.getAttribute("data-raya-calendar-selected-id") || "";
+    dialogEvents.forEach((event) => {
+      const article = document.createElement("article");
+      article.className = "raya-calendar-event raya-calendar-detail-event";
+      article.setAttribute("data-raya-calendar-detail-event", String(event.id || ""));
+      if (selectedId && event.id === selectedId) {
+        article.setAttribute("data-raya-calendar-detail-selected", "true");
+        appendTextElement(
+          article,
+          "p",
+          "raya-calendar-detail-selected-label",
+          "Selected event"
+        );
+      }
+      appendTextElement(
+        article,
+        "h3",
+        "raya-calendar-detail-event-title",
+        String(event.title || "Calendar event")
+      );
+      const kind = typeof event.kind === "string" ? calendarLabel(event.kind) : "Event";
+      const type = typeof event.type === "string" ? calendarLabel(event.type) : "";
+      const time = eventTimeText(event);
+      appendTextElement(
+        article,
+        "p",
+        "raya-calendar-detail-meta",
+        [kind, type, time ? `Time: ${time}` : ""].filter(Boolean).join(" · ")
+      );
+      if (typeof event.summary === "string") {
+        appendTextElement(
+          article,
+          "p",
+          "raya-calendar-event-summary",
+          event.summary
+        );
+      }
+      if (Array.isArray(event.tags) && event.tags.length > 0) {
+        const tags = document.createElement("ul");
+        tags.className = "raya-calendar-tags";
+        tags.setAttribute("aria-label", "Tags");
+        event.tags.forEach((tag) => appendTextElement(tags, "li", "", String(tag)));
+        article.appendChild(tags);
+      }
+      appendDialogActions(article, event);
+      detailEvents.appendChild(article);
+    });
+  }
+
+  function calendarLabel(value) {
+    return String(value || "")
+      .replaceAll("-", " ")
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  function openCalendarDetail(date, opener, selectedId) {
+    const dialogEvents = visibleEvents().filter((event) => event.date === date);
+    opener.setAttribute("data-raya-calendar-selected-id", selectedId || "");
+    renderCalendarDialog(dialogEvents, opener);
+    detail.dataset.rayaCalendarOpener = calendarOpenerId(opener);
+    if (!detail.open) {
+      detail.showModal();
+      detail.querySelector("[data-raya-calendar-detail-close]")?.focus();
+    }
+  }
+
+  function appendGridEvent(cell, event, date) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "raya-calendar-grid-event";
+    button.setAttribute("data-raya-calendar-event-open", String(event.id || ""));
+    calendarOpenerId(button);
+    const title = String(event.title || "Calendar event");
+    const kind = typeof event.kind === "string" ? calendarLabel(event.kind) : "Event";
+    const time = eventTimeText(event);
+    button.setAttribute(
+      "aria-label",
+      `Open ${title}, ${kind}${time ? `, ${time}` : ""} on ${civilDateLabel(date)}`
+    );
+    appendTextElement(button, "span", "raya-calendar-grid-event-kind", kind);
+    appendTextElement(button, "span", "raya-calendar-grid-event-title", title);
+    button.addEventListener("click", () => openCalendarDetail(date, button, event.id));
+    cell.appendChild(button);
+  }
+
+  function appendCalendarOverflow(cell, date, hiddenCount) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "raya-calendar-overflow";
+    button.setAttribute("data-raya-calendar-overflow", "");
+    calendarOpenerId(button);
+    button.textContent = `+${hiddenCount} more`;
+    button.setAttribute(
+      "aria-label",
+      `Show ${hiddenCount} more ${hiddenCount === 1 ? "event" : "events"} for `
+        + civilDateLabel(date)
+    );
+    button.addEventListener("click", () => openCalendarDetail(date, button, ""));
+    cell.appendChild(button);
   }
 
   function renderMonth(visible) {
@@ -293,7 +469,17 @@ _CALENDAR_JAVASCRIPT = r"""
             todayLabel.textContent = "Today";
             cell.appendChild(todayLabel);
           }
-          (byDate.get(date) || []).forEach((event) => appendGridEvent(cell, event));
+          const dayEvents = byDate.get(date) || [];
+          dayEvents
+            .slice(0, MAX_WIDE_DAY_EVENTS)
+            .forEach((event) => appendGridEvent(cell, event, date));
+          if (dayEvents.length > MAX_WIDE_DAY_EVENTS) {
+            appendCalendarOverflow(
+              cell,
+              date,
+              dayEvents.length - MAX_WIDE_DAY_EVENTS
+            );
+          }
         } else {
           cell.className = "raya-calendar-outside-month";
           cell.setAttribute("aria-hidden", "true");
@@ -385,7 +571,22 @@ _CALENDAR_JAVASCRIPT = r"""
     render();
   });
   clear?.addEventListener("click", () => clearCalendar());
+  detail.addEventListener("close", () => {
+    const openerId = detail.dataset.rayaCalendarOpener || "";
+    delete detail.dataset.rayaCalendarOpener;
+    const opener = openerId ? document.getElementById(openerId) : null;
+    if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+  });
+  detail.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    detail.close();
+  });
   root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && detail.open) {
+      event.preventDefault();
+      detail.close();
+      return;
+    }
     const hasCalendarConstraint = activeKind !== "all"
       || activeType !== "all"
       || Boolean(activePage);
@@ -396,6 +597,8 @@ _CALENDAR_JAVASCRIPT = r"""
     clearCalendar({ focus: true });
   });
 
+  status?.classList.add("raya-visually-hidden");
+  pageFocus?.removeAttribute("aria-live");
   controls.hidden = false;
   root.setAttribute("data-raya-calendar-enhanced", "true");
   render();

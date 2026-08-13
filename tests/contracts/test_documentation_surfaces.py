@@ -526,6 +526,8 @@ def test_calendar_contract_is_documented_across_truth_surfaces() -> None:
     assert "Calendar" in renderer_contract
     assert "compatibility URL" in renderer_contract
     assert "no network" in renderer_contract
+    assert "accessible day-detail dialog" in renderer_contract
+    assert "Agenda is the enhanced default on narrow screens" in renderer_contract
 
     for role in ("contributors", "professors", "students", "agents"):
         guide = (GUIDES / "en" / role / "index.md").read_text(encoding="utf-8")
@@ -578,6 +580,7 @@ def test_calendar_renderer_contract_matches_persistent_map_without_inspection() 
     calendar_details = renderer_contract.split(
         "Calendar is a generated static agenda", maxsplit=1
     )[1].split("The right learning rail owns", maxsplit=1)[0]
+    calendar_details = " ".join(calendar_details.split())
 
     assert "persistent Course map" in calendar_row
     assert "hover" not in calendar_row
@@ -586,6 +589,14 @@ def test_calendar_renderer_contract_matches_persistent_map_without_inspection() 
     assert "show transient context on keyboard movement, hover, or focus" not in (
         calendar_details
     )
+    assert (
+        "up to two visible events per day appear as ordinary keyboard-reachable "
+        "event-chip buttons"
+    ) in calendar_details
+    assert "any additional visible events are represented by one `+N` overflow button" in (
+        calendar_details
+    )
+    assert "month cells suppress event-chip titles" in calendar_details
 
 
 def test_contributor_calendar_guidance_is_explicitly_non_personal_in_en_and_es() -> None:

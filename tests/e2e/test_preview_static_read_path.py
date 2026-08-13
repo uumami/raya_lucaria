@@ -9325,6 +9325,147 @@ def test_preview_serves_static_official_tasks_workspace(tmp_path: Path) -> None:
         handle.close()
 
 
+def test_calendar_dialog_escape_restores_overflow_focus_before_filter_reset(
+    tmp_path: Path,
+) -> None:
+    from playwright.sync_api import sync_playwright
+    from raya_cli.preview import create_preview
+
+    course = tmp_path / "calendar-dialog-course"
+    shutil.copytree(MINIMAL, course, ignore=shutil.ignore_patterns("artifact"))
+    _add_calendar_browser_events(course)
+    _add_crowded_calendar_browser_events(course)
+
+    handle = create_preview(course, host="127.0.0.1", port=0, dry_run=False)
+    try:
+        assert handle.report.ok, [
+            diagnostic.format() for diagnostic in handle.report.diagnostics
+        ]
+        base_url = handle.base_url
+        assert base_url is not None
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(
+                executable_path=str(_browser_executable()),
+                headless=True,
+                args=["--no-sandbox"],
+            )
+            context = browser.new_context(viewport={"width": 1280, "height": 900})
+            context.add_init_script(
+                """
+                (() => {
+                  const NativeDate = Date;
+                  const fixed = NativeDate.parse("2026-08-11T04:30:00Z");
+                  class FixedDate extends NativeDate {
+                    constructor(...args) {
+                      super(...(args.length ? args : [fixed]));
+                    }
+                    static now() { return fixed; }
+                  }
+                  globalThis.Date = FixedDate;
+                })();
+                """
+            )
+            page = context.new_page()
+            try:
+                page.goto(
+                    f"{base_url}/_raya/schedule/index.html",
+                    wait_until="networkidle",
+                )
+                assert (
+                    page.get_by_role("button", name="Month view").get_attribute(
+                        "aria-pressed"
+                    )
+                    == "true"
+                )
+                summary = page.locator("[data-raya-calendar-summary-count]")
+                live_status = page.locator("[data-raya-calendar-status]")
+                assert summary.is_visible()
+                assert "raya-visually-hidden" in (
+                    live_status.get_attribute("class") or ""
+                ).split()
+                assert page.locator('[aria-live="polite"]').count() == 1
+                event_opener = page.locator(
+                    '[data-raya-calendar-event-open="calendar:browser:unlinked-session"]'
+                )
+                assert event_opener.evaluate(
+                    """element => {
+                      const kind = element.querySelector(
+                        '.raya-calendar-grid-event-kind'
+                      ).getBoundingClientRect();
+                      const title = element.querySelector(
+                        '.raya-calendar-grid-event-title'
+                      ).getBoundingClientRect();
+                      return Math.round(kind.top) === Math.round(title.top);
+                    }"""
+                )
+                event_opener.click()
+                selected = page.locator("[data-raya-calendar-detail-selected]")
+                assert selected.locator(
+                    ".raya-calendar-detail-selected-label"
+                ).inner_text() == "Selected event"
+                page.keyboard.press("Escape")
+                assert event_opener.evaluate(
+                    "element => document.activeElement === element"
+                )
+                overflow = page.get_by_role(
+                    "button",
+                    name="Show 2 more events for Thursday, August 13, 2026",
+                )
+                overflow.click()
+                dialog = page.get_by_role("dialog")
+                assert dialog.is_visible()
+                assert dialog.locator("[data-raya-calendar-detail-event]").count() == 4
+                assert page.get_by_role("button", name="Close").evaluate(
+                    "element => document.activeElement === element"
+                )
+
+                page.keyboard.press("Escape")
+
+                assert dialog.is_hidden()
+                assert overflow.evaluate(
+                    "element => document.activeElement === element"
+                )
+
+                session_filter = page.get_by_role(
+                    "button", name="Session", exact=True
+                )
+                session_filter.click()
+                filtered_overflow = page.get_by_role(
+                    "button",
+                    name="Show 1 more event for Thursday, August 13, 2026",
+                )
+                assert filtered_overflow.is_visible()
+                filtered_overflow.click()
+                page.keyboard.press("Escape")
+                assert session_filter.get_attribute("aria-pressed") == "true"
+
+                page.keyboard.press("Escape")
+
+                assert session_filter.get_attribute("aria-pressed") == "false"
+                assert page.get_by_role(
+                    "button", name="Clear calendar filters"
+                ).evaluate("element => document.activeElement === element")
+
+                page.get_by_role("button", name="Next month").click()
+                session_filter.click()
+                page.get_by_role("button", name="Clear calendar filters").click()
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "September 2026"
+                assert (
+                    page.get_by_role("button", name="Month view").get_attribute(
+                        "aria-pressed"
+                    )
+                    == "true"
+                )
+            finally:
+                page.close()
+                context.close()
+                browser.close()
+    finally:
+        handle.close()
+
+
 def test_calendar_month_controls_and_timezone_today_are_accessible(
     tmp_path: Path,
 ) -> None:
@@ -9357,7 +9498,7 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                 args=["--no-sandbox"],
             )
             context = browser.new_context(
-                viewport={"width": 390, "height": 844},
+                viewport={"width": 320, "height": 844},
                 timezone_id="Pacific/Kiritimati",
                 reduced_motion="reduce",
             )
@@ -9415,10 +9556,40 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                 assert today.get_by_text("Today", exact=True).is_visible()
                 assert page.locator('[aria-current="date"]').count() == 1
                 linked_event = grid.locator(
-                    '[data-raya-calendar-event="calendar:browser:today-session"]'
+                    '[data-raya-calendar-event-open="calendar:browser:today-session"]'
                 )
-                assert linked_event.get_by_text("Session", exact=True).is_visible()
-                assert linked_event.get_by_role("link", name="Open page").count() == 1
+                assert linked_event.locator(
+                    ".raya-calendar-grid-event-kind"
+                ).inner_text() == "Session"
+                assert linked_event.locator(
+                    ".raya-calendar-grid-event-title"
+                ).is_hidden()
+                assert linked_event.get_by_role("link", name="Open page").count() == 0
+
+                linked_event.click()
+                dialog = page.get_by_role("dialog")
+                assert dialog.is_visible()
+                assert dialog.evaluate(
+                    """element => {
+                      const rect = element.getBoundingClientRect();
+                      return Math.round(rect.width) === innerWidth
+                        && Math.round(rect.height) === innerHeight;
+                    }"""
+                )
+                page.get_by_role("button", name="Close").click()
+                assert dialog.is_hidden()
+
+                page.evaluate(
+                    "document.documentElement.style.fontSize = '200%'"
+                )
+                linked_event.click()
+                assert page.get_by_role("button", name="Close").is_visible()
+                assert dialog.locator(
+                    "[data-raya-calendar-detail-events]"
+                ).evaluate("element => element.scrollWidth <= element.clientWidth")
+                _assert_no_horizontal_overflow(page)
+                page.get_by_role("button", name="Close").click()
+                page.evaluate("document.documentElement.style.fontSize = ''")
 
                 next_month = page.get_by_role("button", name="Next month")
                 next_month.focus()
@@ -9436,11 +9607,21 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                     "[data-raya-calendar-month-caption]"
                 ).inner_text() == "August 2026"
 
-                holiday_filter = page.get_by_role("button", name="Holiday")
+                holiday_filter = page.get_by_role(
+                    "button", name="Holiday", exact=True
+                )
                 holiday_filter.focus()
                 holiday_filter.press("Space")
                 assert holiday_filter.get_attribute("aria-pressed") == "true"
-                assert page.locator("[data-raya-calendar-status]").inner_text() == (
+                assert page.locator(
+                    "[data-raya-calendar-summary-count]"
+                ).inner_text() == (
+                    "1 event shown in August 2026. "
+                    "1 matching event across the calendar."
+                )
+                assert page.locator(
+                    "[data-raya-calendar-status]"
+                ).text_content() == (
                     "1 event shown in August 2026. "
                     "1 matching event across the calendar."
                 )
@@ -9448,14 +9629,22 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                 assignment_filter = page.get_by_role("button", name="Assignment")
                 assignment_filter.press("Enter")
                 assert assignment_filter.get_attribute("aria-pressed") == "true"
-                assert page.locator("[data-raya-calendar-status]").inner_text() == (
+                assert page.locator(
+                    "[data-raya-calendar-summary-count]"
+                ).inner_text() == (
                     "0 events shown in August 2026. "
                     "1 matching event across the calendar."
                 )
                 assert grid.locator(
                     '[data-raya-calendar-type="assignment"]'
                 ).count() == 0
+                next_month.press("Enter")
                 page.get_by_role("button", name="Clear calendar filters").click()
+                assert page.locator(
+                    "[data-raya-calendar-month-caption]"
+                ).inner_text() == "September 2026"
+                assert month_view.get_attribute("aria-pressed") == "true"
+                page.get_by_role("button", name="Previous month").press("Enter")
 
                 agenda_view = page.get_by_role("button", name="Agenda view")
                 agenda_view.focus()
@@ -9471,6 +9660,12 @@ def test_calendar_month_controls_and_timezone_today_are_accessible(
                       document.querySelector('[data-raya-calendar-view="agenda"]')
                     ).transitionDuration === '0s'"""
                 )
+                assert page.locator("[data-raya-calendar-summary-count]").is_visible()
+                assert "raya-visually-hidden" in (
+                    page.locator("[data-raya-calendar-status]").get_attribute("class")
+                    or ""
+                ).split()
+                assert page.locator('[aria-live="polite"]').count() == 1
 
                 opener = page.locator(".raya-mobile-course-map-open")
                 assert opener.is_visible()
@@ -9538,6 +9733,7 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                 assert focused_map_nodes.get_attribute(
                     "data-raya-map-node"
                 ) == "first-topic"
+                page.get_by_role("button", name="Agenda view").click()
                 agenda = page.locator("[data-raya-calendar-agenda]")
                 assert agenda.locator(
                     '[data-raya-calendar-event="calendar:browser:today-session"]'
@@ -9569,6 +9765,7 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                     "data-raya-course-map-page-focus"
                 ) == "first-topic"
                 assert focused_map_nodes.count() == 1
+                page.get_by_role("button", name="Agenda view").click()
                 agenda.locator(
                     '[data-raya-calendar-event="calendar:browser:today-session"] '
                     ".raya-calendar-open"
@@ -9594,6 +9791,7 @@ def test_calendar_page_focus_clear_and_escape_restore_all_events(
                     wait_until="networkidle",
                 )
                 assert notice.is_hidden()
+                page.get_by_role("button", name="Agenda view").click()
                 assert page.locator("[data-raya-calendar-event]:visible").count() == 9
                 assert page.evaluate("() => localStorage.length") == 0
                 assert page.evaluate("() => sessionStorage.length") == 0
@@ -23109,6 +23307,31 @@ def _add_calendar_browser_events(course: Path) -> None:
         "    date: '2026-09-02'\n"
         "    title: Cancelled session\n"
         "    page: first-topic\n",
+        encoding="utf-8",
+    )
+
+
+def _add_crowded_calendar_browser_events(course: Path) -> None:
+    calendar_path = course / "course" / "_official" / "calendar" / "2_crowded.yaml"
+    calendar_path.write_text(
+        "id: crowded\n"
+        "type: calendar\n"
+        "authority: official\n"
+        "scope:\n"
+        "  quantum: course-root\n"
+        "events:\n"
+        "  - id: session-two\n"
+        "    kind: session\n"
+        "    date: '2026-08-13'\n"
+        "    title: Second course-wide session\n"
+        "  - id: session-three\n"
+        "    kind: session\n"
+        "    date: '2026-08-13'\n"
+        "    title: Third course-wide session\n"
+        "  - id: holiday-two\n"
+        "    kind: holiday\n"
+        "    date: '2026-08-13'\n"
+        "    title: Course-wide holiday\n",
         encoding="utf-8",
     )
 

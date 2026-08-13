@@ -7673,6 +7673,7 @@ def _render_schedule_surface(
     timezone_name = str(calendar_index.get("timezone") or "UTC")
     calendar_controls = _render_calendar_controls(events)
     agenda_html = _render_calendar_agenda(events, from_path=from_path)
+    detail_dialog_html = _render_calendar_detail_dialog(from_path=from_path)
 
     return "\n".join(
         [
@@ -7738,6 +7739,7 @@ def _render_schedule_surface(
                 'data-raya-calendar-grid hidden></div>'
             ),
             agenda_html,
+            detail_dialog_html,
             "</section>",
             '<script type="application/json" id="raya-calendar-data">',
             _json_script_text(calendar_index),
@@ -7750,6 +7752,39 @@ def _render_schedule_surface(
             "</body>",
             "</html>",
             "",
+        ]
+    )
+
+
+def _render_calendar_detail_dialog(*, from_path: str) -> str:
+    site_root_href = _relative_href(from_path, ".").rstrip("/") + "/"
+    graph_href = _relative_href(from_path, STATIC_GRAPH_PATH.as_posix())
+    return "\n".join(
+        [
+            (
+                '<dialog id="raya-calendar-detail" class="raya-calendar-detail" '
+                'data-raya-calendar-detail '
+                'aria-labelledby="raya-calendar-detail-title" '
+                f'data-raya-calendar-site-root="{html.escape(site_root_href, quote=True)}" '
+                f'data-raya-calendar-graph-href="{html.escape(graph_href, quote=True)}">'
+            ),
+            '<section class="raya-calendar-detail-panel">',
+            '<header class="raya-calendar-detail-header">',
+            (
+                '<h2 id="raya-calendar-detail-title" '
+                'data-raya-calendar-detail-title>Calendar details</h2>'
+            ),
+            '<form method="dialog">',
+            (
+                '<button type="submit" data-raya-calendar-detail-close>'
+                "Close</button>"
+            ),
+            "</form>",
+            "</header>",
+            '<div class="raya-calendar-detail-events" '
+            'data-raya-calendar-detail-events></div>',
+            "</section>",
+            "</dialog>",
         ]
     )
 
