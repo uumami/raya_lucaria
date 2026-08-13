@@ -83,10 +83,10 @@ personal-state surface. It must not parse prose for dates, fetch data at
 runtime, make network requests, load external resources, persist state, or
 expose private paths or hidden answer/support content. It performs no network
 requests. Agenda is the enhanced default on narrow screens. In the Month view,
-each visible event is an ordinary keyboard-reachable event-chip button that
-opens an accessible day-detail dialog. Each day cell renders at most two
-event-chip buttons; additional visible events are represented by one `+N`
-overflow button that opens the same dialog. At narrow widths, month cells
+up to two visible events per day appear as ordinary keyboard-reachable event-chip
+buttons that open an accessible day-detail dialog; any additional visible events
+are represented by one `+N` overflow button that opens the same dialog. At narrow
+widths, month cells
 suppress event-chip titles while retaining their kind labels and accessible
 names. The dialog places focus on its close control when opened, supports
 Escape dismissal, and restores focus to the invoking event-chip or overflow

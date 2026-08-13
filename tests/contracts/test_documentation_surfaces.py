@@ -589,11 +589,13 @@ def test_calendar_renderer_contract_matches_persistent_map_without_inspection() 
     assert "show transient context on keyboard movement, hover, or focus" not in (
         calendar_details
     )
-    assert "each visible event is an ordinary keyboard-reachable event-chip button" in (
+    assert (
+        "up to two visible events per day appear as ordinary keyboard-reachable "
+        "event-chip buttons"
+    ) in calendar_details
+    assert "any additional visible events are represented by one `+N` overflow button" in (
         calendar_details
     )
-    assert "at most two event-chip buttons" in calendar_details
-    assert "one `+N` overflow button" in calendar_details
     assert "month cells suppress event-chip titles" in calendar_details
 
 
