@@ -992,6 +992,7 @@ def _render_page(
             target,
             wikilink_resolver,
         ),
+        language=language,
     )
     article_html, toc_html = _extract_page_toc(article_html)
     public_article_text = _public_article_search_text(article_html)

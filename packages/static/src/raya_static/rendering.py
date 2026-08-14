@@ -96,12 +96,14 @@ class RichMarkdownRenderer:
         report: ValidationReport,
         math_renderer: MathRenderer,
         resolve_wikilink: Callable[[str], str | None] | None = None,
+        language: str = "en",
     ) -> None:
         self._resolve_href = resolve_href
         self._source_path = source_path
         self._report = report
         self._math_renderer = math_renderer
         self._resolve_wikilink = resolve_wikilink
+        self._language = language
         self._md = MarkdownIt("commonmark", {"html": False})
         self._md.enable("table")
         self._md.use(footnote_plugin)
@@ -310,7 +312,7 @@ class RichMarkdownRenderer:
         return html_fragment
 
     def _render_callout(self, callout: _Callout, inner_html: str) -> str:
-        label = _callout_label(callout.kind)
+        label = _callout_label(callout.kind, self._language)
         inner = inner_html.strip()
         body = inner if inner else "<p></p>"
         return "\n".join(
@@ -479,6 +481,7 @@ def render_markdown_body(
     numbered_objects: NumberedObjectRenderContext | None = None,
     proofs: StaticEnvironmentRenderContext | None = None,
     resolve_wikilink: Callable[[str], str | None] | None = None,
+    language: str = "en",
 ) -> str:
     return RichMarkdownRenderer(
         resolve_href,
@@ -486,6 +489,7 @@ def render_markdown_body(
         report=report,
         math_renderer=math_renderer,
         resolve_wikilink=resolve_wikilink,
+        language=language,
     ).render(
         body,
         generated_index,
@@ -6149,6 +6153,19 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-main-article table tbody tr:nth-child(even) > * {
   background: color-mix(in srgb, var(--raya-color-text) 5%, var(--raya-color-page));
 }
+.raya-main-article blockquote {
+  border-left: 0.25rem solid var(--raya-color-accent);
+  background: color-mix(in srgb, var(--raya-color-accent) 7%, var(--raya-color-surface));
+  border-radius: 0 0.35rem 0.35rem 0;
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+}
+.raya-main-article blockquote > :first-child {
+  margin-top: 0;
+}
+.raya-main-article blockquote > :last-child {
+  margin-bottom: 0;
+}
 .raya-callout {
   border-left: 0.25rem solid #6e7781;
   margin: 1rem 0;
@@ -8147,13 +8164,25 @@ def _highlight_code(code: str, language: str) -> str:
     return highlight(code, lexer, HtmlFormatter(nowrap=True))
 
 
-def _callout_label(kind: str) -> str:
-    return {
+_CALLOUT_LABELS: dict[str, dict[str, str]] = {
+    "en": {
         "note": "Note",
         "tip": "Tip",
         "warning": "Warning",
         "caution": "Caution",
-    }[kind]
+    },
+    "es": {
+        "note": "Nota",
+        "tip": "Consejo",
+        "warning": "Advertencia",
+        "caution": "Precaución",
+    },
+}
+
+
+def _callout_label(kind: str, language: str = "en") -> str:
+    code = (language or "en").split("-")[0].lower()
+    return _CALLOUT_LABELS.get(code, _CALLOUT_LABELS["en"])[kind]
 
 
 def _without_fenced_blocks(body: str) -> str:
