@@ -7868,3 +7868,39 @@ def test_breadcrumb_home_resolves_course_root_not_first_sorted_page(
     assert "Appendix" not in breadcrumb_html, breadcrumb_html
     assert 'href="../../index.html"' in breadcrumb_html, breadcrumb_html
     assert "appendix" not in breadcrumb_html.lower(), breadcrumb_html
+
+
+def test_callout_label_uses_course_language(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    config = course / "raya.yaml"
+    config.write_text(
+        config.read_text(encoding="utf-8").replace("language: en", "language: es"),
+        encoding="utf-8",
+    )
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8") + "\n\n> [!NOTE]\n> Cuerpo de la nota.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert '<p class="raya-callout-title">Nota</p>' in html
+    assert '<p class="raya-callout-title">Note</p>' not in html
+
+
+def test_callout_label_defaults_to_english(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    index = course / "course" / "0_index.md"
+    index.write_text(
+        index.read_text(encoding="utf-8") + "\n\n> [!WARNING]\n> Body of the warning.\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert '<p class="raya-callout-title">Warning</p>' in html
