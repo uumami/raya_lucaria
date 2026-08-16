@@ -3620,8 +3620,10 @@ def test_build_emits_native_width_scroll_rule_for_svg_figures(tmp_path: Path) ->
         course / "artifact" / "site" / "_raya" / "render" / "rich.css"
     ).read_text(encoding="utf-8")
     assert (
-        '.raya-numbered-object--figure .raya-numbered-object-body img[src$=".svg"] {\n'
-        "  max-width: none;\n"
+        "@media (max-width: 1469px) {\n"
+        '  .raya-numbered-object--figure .raya-numbered-object-body img[src$=".svg"] {\n'
+        "    max-width: none;\n"
+        "  }\n"
         "}"
     ) in rich_css
     # Illustrations (.jpg) must keep shrinking; the rule is svg-only.
