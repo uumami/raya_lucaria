@@ -6191,6 +6191,16 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
 .raya-callout-caution {
   border-left-color: #bf8700;
 }
+/* Diagram SVGs are authored with fixed-pixel text sized for their native
+   canvas (commonly ~880px); shrinking them to fit a phone viewport renders
+   that text unreadably small. Keep them at native size instead and let the
+   figure body's overflow-x: auto (see .raya-numbered-object-body) scroll
+   horizontally. Only .svg is targeted: raster illustrations must keep
+   shrinking to fit, and the .raya-numbered-object--figure scope keeps this
+   away from SVGs used elsewhere (e.g. icons). */
+.raya-numbered-object--figure .raya-numbered-object-body img[src$=".svg"] {
+  max-width: none;
+}
 .raya-numbered-object {
   --raya-numbered-accent: var(--raya-color-accent);
   --raya-numbered-soft: color-mix(in srgb, var(--raya-numbered-accent) 13%, var(--raya-color-surface));
