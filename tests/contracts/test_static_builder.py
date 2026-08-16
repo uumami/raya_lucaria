@@ -3580,6 +3580,56 @@ def test_numbered_objects_default_scannable_keeps_caption_and_equation_styles(
     assert "raya-numbered-object--equation" in html
 
 
+def test_build_emits_native_width_scroll_rule_for_svg_figures(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    page = course / "course" / "0_index.md"
+    page.write_text(
+        "---\n"
+        "id: figure-scroll-demo\n"
+        "title: Figure Scroll Demo\n"
+        "summary: SVG figure scroll fixture.\n"
+        "status: ready\n"
+        "---\n"
+        "# Figure Scroll Demo\n\n"
+        '::: figure {#diagram-figure title="Diagram"}\n'
+        "![Diagram asset](_assets/diagram.svg)\n"
+        ":::\n\n"
+        '::: figure {#photo-figure title="Photo"}\n'
+        "![Photo asset](_assets/photo.jpg)\n"
+        ":::\n",
+        encoding="utf-8",
+    )
+    assets = course / "course" / "_assets"
+    assets.mkdir(exist_ok=True)
+    (assets / "diagram.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="880" height="200">'
+        '<text x="10" y="20">diagram</text></svg>\n',
+        encoding="utf-8",
+    )
+    (assets / "photo.jpg").write_bytes(b"\xff\xd8\xff\xdb\x00")
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    html = (course / "artifact" / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'src="_raya/assets/_source/_local/diagram.svg"' in html
+    assert 'src="_raya/assets/_source/_local/photo.jpg"' in html
+    assert 'class="raya-numbered-object raya-numbered-object--caption ' in html
+
+    rich_css = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
+    assert (
+        "@media (max-width: 1469px) {\n"
+        '  .raya-numbered-object--figure .raya-numbered-object-body img[src$=".svg"] {\n'
+        "    max-width: none;\n"
+        "  }\n"
+        "}"
+    ) in rich_css
+    # Illustrations (.jpg) must keep shrinking; the rule is svg-only.
+    assert 'img[src$=".jpg"]' not in rich_css
+
+
 def test_build_renders_proof_of_numbered_object(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     course.joinpath("raya.yaml").write_text(
