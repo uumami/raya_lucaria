@@ -5208,9 +5208,25 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   gap: 0.65rem;
 }
 .raya-official-options,
-.raya-official-answer-list {
+.raya-official-answer-list,
+.raya-official-resources {
   margin: 0;
   padding-left: 1.35rem;
+}
+.raya-official-resources {
+  display: grid;
+  gap: 0.65rem;
+}
+.raya-official-resources > li {
+  line-height: 1.45;
+  padding-left: 0.2rem;
+}
+.raya-official-resources a {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.raya-official-resources span {
+  color: var(--raya-color-muted);
 }
 .raya-official-options {
   display: grid;

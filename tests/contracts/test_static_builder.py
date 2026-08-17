@@ -262,6 +262,50 @@ def test_build_minimal_fixture_into_temporary_course(tmp_path: Path) -> None:
     assert "fetch(" not in topic_html
 
 
+def test_official_assignment_resources_render_as_safe_linked_list(tmp_path: Path) -> None:
+    course = _copy_minimal(tmp_path)
+    assignments = (
+        course / "course" / "1_unit" / "1_topic" / "_official" / "assignments"
+    )
+    assignments.mkdir(parents=True)
+    (assignments / "1_videos.yaml").write_text(
+        "id: videos\n"
+        "type: assignment\n"
+        "authority: official\n"
+        "content:\n"
+        "  title: Watch the videos\n"
+        "  instructions: Watch these before class.\n"
+        "  resources:\n"
+        "    - title: How a computer works\n"
+        "      url: https://example.com/computer\n"
+        "    - title: Memory hierarchy\n"
+        "      url: javascript:alert(1)\n",
+        encoding="utf-8",
+    )
+
+    report = build_course(course)
+
+    assert report.ok, [diagnostic.format() for diagnostic in report.diagnostics]
+    topic_html = (
+        course / "artifact" / "site" / "unit" / "topic" / "index.html"
+    ).read_text(encoding="utf-8")
+    assert '<h3 class="raya-official-title">Watch the videos</h3>' in topic_html
+    assert "<strong>Title:</strong>" not in topic_html
+    assert '<p class="raya-official-instructions">Watch these before class.</p>' in topic_html
+    assert "<strong>Instructions:</strong>" not in topic_html
+    assert '<ol class="raya-official-resources">' in topic_html
+    assert (
+        '<a href="https://example.com/computer">How a computer works</a>'
+        in topic_html
+    )
+    assert "javascript:alert(1)" not in topic_html
+    stylesheet = (
+        course / "artifact" / "site" / "_raya" / "render" / "rich.css"
+    ).read_text(encoding="utf-8")
+    assert ".raya-official-resources" in stylesheet
+    assert ".raya-official-resources > li" in stylesheet
+
+
 def test_calendar_index_emits_authored_and_both_derived_dates(tmp_path: Path) -> None:
     course = _copy_minimal(tmp_path)
     _set_calendar_timezone(course, "America/Mexico_City")

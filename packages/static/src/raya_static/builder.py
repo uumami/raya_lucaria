@@ -4133,24 +4133,59 @@ def _render_official_quiz(content: dict[str, Any]) -> str:
 
 def _render_generic_official_content(content: dict[str, Any]) -> str:
     visible_fields = [
-        ("title", "Title"),
         ("summary", "Summary"),
         ("prompt", "Prompt"),
-        ("instructions", "Instructions"),
         ("body", "Details"),
         ("question", "Question"),
     ]
     support_fields = [("answer", "Reveal answer"), ("solution", "Reveal solution")]
     parts: list[str] = []
+    title = _official_text(content.get("title"))
+    if title:
+        parts.append(f'<h3 class="raya-official-title">{title}</h3>')
+    instructions = _official_text(content.get("instructions"))
+    if instructions:
+        parts.append(f'<p class="raya-official-instructions">{instructions}</p>')
     for field, label in visible_fields:
         value = _official_text(content.get(field))
         if value:
             parts.append(f"<p><strong>{html.escape(label)}:</strong> {value}</p>")
+    resources_html = _render_official_resources(content.get("resources"))
+    if resources_html:
+        parts.append(resources_html)
     for field, summary in support_fields:
         value = _official_text(content.get(field))
         if value:
             parts.append(_official_reveal(summary, value, "raya-official-answer"))
     return "\n".join(parts)
+
+
+def _render_official_resources(value: Any) -> str:
+    if not isinstance(value, list):
+        return ""
+    items: list[str] = []
+    for resource in value:
+        if not isinstance(resource, dict):
+            continue
+        title = _official_public_scalar_text(resource.get("title"))
+        url = _official_public_scalar_text(resource.get("url"))
+        parsed = urlsplit(url)
+        if not title or parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            continue
+        note = _official_public_scalar_text(resource.get("note"))
+        suffix = f" <span>— {html.escape(note)}</span>" if note else ""
+        items.append(
+            '<li><a href="'
+            + html.escape(url, quote=True)
+            + '">'
+            + html.escape(title)
+            + "</a>"
+            + suffix
+            + "</li>"
+        )
+    if not items:
+        return ""
+    return '<ol class="raya-official-resources">' + "".join(items) + "</ol>"
 
 
 def _official_type_label(object_type: str) -> str:
