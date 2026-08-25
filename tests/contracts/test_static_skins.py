@@ -593,6 +593,10 @@ def test_rich_render_css_consumes_font_and_density_tokens() -> None:
     assert "font-family: var(--raya-font-mono)" in css
     assert "padding: var(--raya-space-page)" in css
     assert "gap: var(--raya-space-block)" in css
+    assert ".raya-static-environment {" in css
+    assert "border: 1px solid var(--raya-color-border);" in css
+    assert "background: var(--raya-color-surface);" in css
+    assert "border-left-color: var(--raya-color-warning);" in css
 
 
 def _skin_yaml(skin_id: str) -> str:

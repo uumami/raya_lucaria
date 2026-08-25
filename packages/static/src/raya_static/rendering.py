@@ -6384,23 +6384,23 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   margin-left: 0.75rem;
 }
 .raya-static-environment {
-  border: 1px solid #d8dee4;
+  border: 1px solid var(--raya-color-border);
   border-left-width: 4px;
   margin: 1.25rem 0;
   overflow: hidden;
 }
 .raya-static-environment--solution {
-  border-left-color: #1a7f37;
+  border-left-color: var(--raya-color-success);
 }
 .raya-static-environment--hint {
-  border-left-color: #9a6700;
+  border-left-color: var(--raya-color-warning);
 }
 .raya-static-environment--answer {
-  border-left-color: #0969da;
+  border-left-color: var(--raya-color-accent);
 }
 .raya-static-environment-heading {
-  background: #f6f8fa;
-  border-bottom: 1px solid #d8dee4;
+  background: var(--raya-color-surface);
+  border-bottom: 1px solid var(--raya-color-border);
   font-family: var(--raya-font-heading), var(--raya-font-body), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 650;
   margin: 0;
@@ -6421,7 +6421,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   display: none;
 }
 .raya-static-environment-reference {
-  color: var(--raya-color-text);
+  color: var(--raya-color-accent);
 }
 .raya-static-environment-title {
   color: var(--raya-color-muted);
