@@ -709,6 +709,43 @@ def render_skin_css(context: SkinContext) -> str:
         for key, value in DENSITY_SPACING[profile.density].items():
             lines.append(f"  --raya-space-{key}: {value};")
         lines.append("}")
+        lines.extend(
+            [
+                "",
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight {{',
+                (
+                    "  background: color-mix(in srgb, "
+                    f"{profile.colors['page']} 88%, #000000);"
+                ),
+                f"  color: {profile.colors['text']};",
+                "}",
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .c,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .ch,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .cm,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .c1 {{',
+                f"  color: {profile.colors['muted']};",
+                "}",
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .k,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .kn,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .kp,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .kr,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .nb {{',
+                f"  color: {profile.colors['accent']};",
+                "}",
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .s,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .s1,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .s2,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .sa {{',
+                f"  color: {profile.colors['warning']};",
+                "}",
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .m,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .mi,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .mf,',
+                f'[data-raya-skin="{selector}"] .raya-code-block .highlight .nv {{',
+                f"  color: {profile.colors['success']};",
+                "}",
+            ]
+        )
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks) + "\n"
 

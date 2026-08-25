@@ -550,6 +550,9 @@ def test_render_skin_css_is_deterministic_and_writes_token_variables() -> None:
     assert "--raya-density: comfortable;" in css
     assert "--raya-space-page: 1rem;" in css
     assert "--raya-space-card-padding: 1rem;" in css
+    assert ".raya-code-block .highlight" in css
+    assert "background: color-mix(in srgb, #ffffff 88%, #000000);" in css
+    assert "color: #111111;" in css
 
 
 def test_render_skin_css_maps_density_to_spacing_variables() -> None:
