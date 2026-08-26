@@ -260,6 +260,7 @@ class RichMarkdownRenderer:
             placeholder: _render_static_environment_html(
                 self._md.renderer.render(proof_tokens, self._md.options, proof_env),
                 item=item,
+                language=self._language,
             )
             for placeholder, (
                 item,
@@ -524,7 +525,15 @@ def has_unsupported_nested_math_delimiters(body: str) -> bool:
     return False
 
 
-def rich_render_css() -> str:
+def rich_render_css(code_style: str = "default") -> str:
+    """CSS de los componentes ricos.
+
+    code_style nombra el estilo de Pygments del bloque de codigo. El unico valor
+    posible antes era el de fabrica, que es CLARO: sobre un skin oscuro el
+    resaltado salia en colores de tema claro y quedaba ilegible. Se configura
+    con render.code_style en raya.yaml -- no por idioma, porque es una decision
+    de piel, no de lengua.
+    """
     base = """
 * {
   box-sizing: border-box;
@@ -654,7 +663,7 @@ img {
 }
 .raya-skip-link {
   background: #ffffff;
-  border: 1px solid #d8dee4;
+  border: 1px solid var(--raya-color-border);
   left: 1rem;
   padding: 0.5rem 0.75rem;
   position: absolute;
@@ -6042,7 +6051,7 @@ html[data-raya-learning-rail-scroll-lock="true"] body {
   outline-offset: 3px;
 }
 .raya-page-toc {
-  border: 1px solid #d8dee4;
+  border: 1px solid var(--raya-color-border);
   margin: 1rem 0 1.5rem;
   padding: 0.75rem 1rem;
 }
@@ -6469,7 +6478,7 @@ mjx-container[display="true"] {
   font-size: 0.875rem;
 }
 .raya-reference-preview {
-  background: #f6f8fa;
+  background: var(--raya-color-surface);
   max-width: 100%;
   overflow-x: auto;
   padding: 0.75rem;
@@ -6490,7 +6499,7 @@ mjx-container[display="true"] {
   font-size: 0.875rem;
 }
 .raya-reviewed-output-excerpt {
-  background: #f6f8fa;
+  background: var(--raya-color-surface);
   max-width: 100%;
   overflow-x: auto;
   padding: 0.75rem;
@@ -7796,8 +7805,19 @@ html:not([data-raya-shell-ready="true"]) .raya-learning-rail {
 }
 """.strip()
     return apply_rail_geometry_tokens(
-        base + "\n" + HtmlFormatter().get_style_defs(".highlight") + "\n"
+        base + "\n" + _formateador_de_codigo(code_style).get_style_defs(".highlight") + "\n"
     )
+
+
+def _formateador_de_codigo(code_style: str) -> HtmlFormatter:
+    """HtmlFormatter con el estilo pedido, cayendo al de fabrica si no existe.
+
+    Un nombre invalido no debe tumbar el build de un curso entero: degrada al
+    comportamiento anterior."""
+    try:
+        return HtmlFormatter(style=code_style)
+    except ClassNotFound:
+        return HtmlFormatter()
 
 
 def _new_env(
@@ -8106,31 +8126,61 @@ def _render_numbered_object_html(
     )
 
 
-def _static_environment_reference(item: StaticEnvironmentRenderItem) -> str:
+# Misma forma que _CALLOUT_LABELS: por codigo de idioma, con "en" de respaldo.
+# Cada idioma trae dos juegos, porque el encabezado cambia de forma segun el
+# bloque apunte a otro objeto ("Respuesta a Ejercicio 3.1.1") o vaya suelto
+# ("Respuesta"), y en espaniol esa diferencia no es solo agregar una palabra.
+_STATIC_ENVIRONMENT_LABELS: dict[str, dict[str, str]] = {
+    "en": {
+        "proof": "Proof of",
+        "solution": "Solution of",
+        "hint": "Hint for",
+        "answer": "Answer to",
+        "proof_standalone": "Proof",
+        "solution_standalone": "Solution",
+        "hint_standalone": "Hint",
+        "answer_standalone": "Answer",
+    },
+    "es": {
+        "proof": "Demostración de",
+        "solution": "Solución de",
+        "hint": "Pista para",
+        "answer": "Respuesta a",
+        "proof_standalone": "Demostración",
+        "solution_standalone": "Solución",
+        "hint_standalone": "Pista",
+        "answer_standalone": "Respuesta",
+    },
+}
+
+
+def _static_environment_reference(
+    item: StaticEnvironmentRenderItem,
+    language: str = "en",
+) -> str:
+    """Encabezado de un entorno estatico, en el idioma del curso.
+
+    Estaba hardcodeado en ingles, asi que un curso en espaniol publicaba
+    "Answer to Ejercicio 3.1.1": la mitad en cada idioma. Sigue el mismo camino
+    que _callout_label, que ya se localizaba asi.
+    """
+    code = (language or "en").split("-")[0].lower()
+    labels = _STATIC_ENVIRONMENT_LABELS.get(code, _STATIC_ENVIRONMENT_LABELS["en"])
     kind = item.source.kind
-    label = {
-        "proof": "Proof",
-        "solution": "Solution",
-        "hint": "Hint",
-        "answer": "Answer",
-    }[kind]
     if item.target is None:
-        return label
-    if kind == "hint":
-        return f"Hint for {item.target.reference_text}"
-    if kind == "answer":
-        return f"Answer to {item.target.reference_text}"
-    return f"{label} of {item.target.reference_text}"
+        return labels[f"{kind}_standalone"]
+    return f"{labels[kind]} {item.target.reference_text}"
 
 
 def _render_static_environment_html(
     rendered_body: str,
     *,
     item: StaticEnvironmentRenderItem,
+    language: str = "en",
 ) -> str:
     env_id = item.source.id
     kind = item.source.kind
-    reference = _static_environment_reference(item)
+    reference = _static_environment_reference(item, language)
     title = item.source.title or ""
     body = rendered_body.strip() or "<p></p>"
     if kind == "proof":

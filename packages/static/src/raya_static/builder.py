@@ -446,7 +446,12 @@ def build_course(course_path: str | Path) -> ValidationReport:
     ):
         directory.mkdir(parents=True, exist_ok=True)
         report.wrote_output(directory)
-    _write_rich_render_resources(site_dir, report, skin_context=skin_context)
+    _write_rich_render_resources(
+        site_dir,
+        report,
+        skin_context=skin_context,
+        code_style=_code_style(config),
+    )
     _write_shell_resources(site_dir, report)
     _write_graph_resources(site_dir, report)
     _write_discovery_resources(site_dir, report)
@@ -885,6 +890,22 @@ def _collect_static_environments(
         items_by_page_id=items_by_page_id,
         prepared_bodies_by_page_id=static_environment_prepared_bodies_by_page_id,
     )
+
+
+
+def _code_style(course_config: dict) -> str:
+    """Estilo de Pygments para los bloques de codigo, desde raya.yaml.
+
+    El de fabrica es claro, asi que un curso con skin oscuro publicaba el codigo
+    ilegible. Va por configuracion y no por idioma porque es una decision de
+    piel: el builder no tiene forma de saber si un skin es oscuro.
+    """
+    render = course_config.get("render")
+    if isinstance(render, dict):
+        estilo = render.get("code_style")
+        if isinstance(estilo, str) and estilo.strip():
+            return estilo.strip()
+    return "default"
 
 
 def _render_page(
@@ -8823,10 +8844,11 @@ def _write_rich_render_resources(
     report: ValidationReport,
     *,
     skin_context: SkinContext,
+    code_style: str = "default",
 ) -> None:
     stylesheet = site_dir / RENDER_STYLESHEET_PATH
     stylesheet.parent.mkdir(parents=True, exist_ok=True)
-    stylesheet.write_text(rich_render_css(), encoding="utf-8")
+    stylesheet.write_text(rich_render_css(code_style), encoding="utf-8")
     report.wrote_output(stylesheet)
     skin_stylesheet = site_dir / SKIN_STYLESHEET_PATH
     skin_stylesheet.parent.mkdir(parents=True, exist_ok=True)
