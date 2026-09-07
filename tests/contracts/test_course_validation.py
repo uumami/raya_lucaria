@@ -1372,3 +1372,21 @@ def _write_notebook(path: Path, *, title: str) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def test_los_enlaces_externos_abren_en_pestana_nueva(tmp_path):
+    """Un enlace que sale del curso abre en otra pestana; uno interno no.
+
+    Sin esto, hacer clic en un notebook de Colab o en una lectura se lleva por
+    delante la pagina del curso que el lector estaba siguiendo. Y target sin
+    rel="noopener" le entrega al destino una referencia a window.opener, que
+    puede usar para navegar la pestana de origen.
+    """
+    from raya_static.rendering import _is_external_href
+
+    assert _is_external_href("https://colab.research.google.com/github/x/y")
+    assert _is_external_href("http://example.org")
+    assert not _is_external_href("../_assets/diagrama.svg")
+    assert not _is_external_href("/curso/pagina/")
+    assert not _is_external_href("#una-seccion")
+    assert not _is_external_href("mailto:alguien@example.org")

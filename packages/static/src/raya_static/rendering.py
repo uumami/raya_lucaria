@@ -73,6 +73,16 @@ class _Callout:
     body: str
 
 
+def _is_external_href(href: str) -> bool:
+    """Un enlace es externo si apunta a otro sitio por http o https.
+
+    Los enlaces internos del curso salen resueltos como rutas relativas, y los
+    anclas empiezan con '#'; ni unos ni otros deben abrir pestana nueva. mailto:
+    y tel: tampoco: los maneja el sistema operativo, no el navegador.
+    """
+    return href.startswith(("http://", "https://"))
+
+
 def _is_inspectable_local_image_src(src: str) -> bool:
     lowered = src.lower().split("#", 1)[0].split("?", 1)[0]
     if lowered.startswith(("http://", "https://", "//", "data:", "mailto:", "tel:")):
@@ -358,7 +368,16 @@ class RichMarkdownRenderer:
         env["raya_link_depth"] = int(env.get("raya_link_depth", 0)) + 1
         href = tokens[idx].attrGet("href")
         if href:
-            tokens[idx].attrSet("href", self._resolve_href(href))
+            resolved = self._resolve_href(href)
+            tokens[idx].attrSet("href", resolved)
+            if _is_external_href(resolved):
+                # Un enlace que sale del curso abre en otra pestana, para que el
+                # lector no pierda la pagina donde estaba. rel="noopener" es
+                # obligatorio con target="_blank": sin el, la pagina destino
+                # recibe una referencia a window.opener y puede navegar la
+                # pestana de origen.
+                tokens[idx].attrSet("target", "_blank")
+                tokens[idx].attrSet("rel", "noopener noreferrer")
         return self._md.renderer.renderToken(tokens, idx, options, env)
 
     def _render_link_close(
